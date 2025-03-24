@@ -29,4 +29,5 @@ export interface HeaderTypeEntities {
     };
     refreshTime: string | null;
     dashboardRefresh: boolean;
+    multiDataStatus: any;
 }

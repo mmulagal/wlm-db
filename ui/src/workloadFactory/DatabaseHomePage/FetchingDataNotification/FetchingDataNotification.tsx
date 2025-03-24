@@ -5,19 +5,15 @@ import { padEnd } from 'lodash';
 
 const FetchingDataNotification = ({
     pendingQueriesCounter,
-    pendingQueriesLength,
-    queriesLength,
+    completedTask,
     regions,
     credentials
 }: {
     pendingQueriesCounter: number;
-    pendingQueriesLength: number;
-    queriesLength: number | any;
+    completedTask: number;
     regions?: any;
     credentials?: any;
 }) => {
-    const pendingDiff = pendingQueriesCounter - pendingQueriesLength;
-    const pendingIndex = queriesLength - pendingQueriesLength;
     return (
         <div
             style={{
@@ -37,7 +33,7 @@ const FetchingDataNotification = ({
                     {/* <Text style={{ padding: '0', margin: '0' }}>Credentails / US East (N. Virginia) | us-east-1</Text> */}
                 </GridItem>
                 <GridItem lg={4}>
-                    <ProgressLoader style={{ marginTop: 16 }} percent={(pendingDiff / pendingQueriesCounter) * 100} />
+                    <ProgressLoader style={{ marginTop: 16 }} percent={(completedTask / pendingQueriesCounter) * 100} />
                 </GridItem>
             </Grid>
         </div>

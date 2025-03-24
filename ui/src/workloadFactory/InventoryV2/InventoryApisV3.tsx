@@ -100,7 +100,7 @@ const InventoryApisV3 = () => {
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
-    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
+    const [regionId, setRegionId] = useState(headerSelectedRegion?.data?.regionCode || '');
     const [partnerInstanceList, setPartnerInstanceList] = useState<any>([]);
 
     // getManagedHostList function values update
@@ -606,7 +606,7 @@ const InventoryApisV3 = () => {
         try {
             const result: any = await getMssqlInstanceDataApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                regionId: headerSelectedRegion?.data?.regionCode,
                 instances: instanceId,
                 fields: fields.join(','),
                 nextToken: nextToken
@@ -665,6 +665,7 @@ const InventoryApisV3 = () => {
                 let mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
                     isManagedHost: isManagedHost,
+                    loading: false,
                     data: null,
                     error: result?.error?.data?.message,
                     fields: fields
@@ -675,6 +676,7 @@ const InventoryApisV3 = () => {
             let mssqlInstancesDataErr: any = {};
             mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
                 isManagedHost: isManagedHost,
+                loading: false,
                 data: null,
                 error: error,
                 fields: fields
@@ -721,7 +723,7 @@ const InventoryApisV3 = () => {
         try {
             const result: any = await getMssqlInstanceDataApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                regionId: headerSelectedRegion?.data?.regionCode,
                 instances: instanceId,
                 fields: fields.join(','),
                 nextToken: nextToken
@@ -757,6 +759,7 @@ const InventoryApisV3 = () => {
                 let mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
                     isManagedHost: isManagedHost,
+                    loading: false,
                     data: null,
                     error: result?.error?.data?.message,
                     fields: fields
@@ -767,6 +770,7 @@ const InventoryApisV3 = () => {
             let mssqlInstancesDataErr: any = {};
             mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
                 isManagedHost: isManagedHost,
+                loading: false,
                 data: null,
                 error: error,
                 fields: fields
@@ -994,7 +998,7 @@ const InventoryApisV3 = () => {
         try {
             const result: any = await getStorageSavingsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                regionId: headerSelectedRegion?.data?.regionCode,
                 instanceId: selectedInstanceId,
                 payload: payload,
                 type: savingsCalculatorType === GENERAL.EBS ? 'ebs' : 'fsxw'
@@ -1206,7 +1210,7 @@ const InventoryApisV3 = () => {
     useEffect(() => {
         if (headerSelectedCred && headerSelectedRegion) {
             setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
+            setRegionId(headerSelectedRegion?.data?.regionCode);
         }
     }, [headerSelectedCred, headerSelectedRegion]);
 

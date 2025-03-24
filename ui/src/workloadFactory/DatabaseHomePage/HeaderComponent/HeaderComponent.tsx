@@ -43,6 +43,7 @@ import {
     setHeaderSelectedMultiRegion,
     setHeaderSelectedRegion,
     setHeaderSelectedRegionSandbox,
+    setMultiDataStatus,
     setRefreshTime
 } from '../../../store/workloadFactory/headersSlice';
 import {
@@ -127,14 +128,29 @@ const HeaderComponent = ({ tab }: Tab) => {
         headerSelectedMultiRegion,
         headerSelectedRegion,
         headerSelectedCredSandbox,
-        headerSelectedRegionSandbox
+        headerSelectedRegionSandbox,
+        multiDataStatus
     } = useAppSelector(state => state.headers);
+    const {
+        isManagedHostListLoading,
+        allmssqlHostAssessmentLoading,
+        fsxCredentialStatusLoading,
+        mssqlInstancesData,
+        perfMssqlInstancesData,
+        potentialSavingsHostData
+    } = useAppSelector(state => state.inventoryV2);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
+        useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
+    const { loading: dashSandboxListLoading } = useAppSelector(state => state.inventoryV2.dashSandboxList);
+    const { loading: dashSandboxSavingsLoading } = useAppSelector(state => state.inventoryV2.dashSandboxSavings);
+    const { discoverHostLoading } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     //Added for widget
-    const [pendingQueriesLength, setPendingQueriesLength] = useState(0);
     const [currentCred, setCurrentCred] = useState<string | null>(null);
     const [currentRegion, setCurrentRegion] = useState<string | null>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [queue, setQueue] = useState<any>([]);
+    // const [multiDataStatus, setMultiDataStatus] = useState<any>({});
 
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
@@ -409,35 +425,89 @@ const HeaderComponent = ({ tab }: Tab) => {
     //     dispatch(setSelectedRegionData(option));
     // }, [headerSelectedRegion]);
 
-    // Calculate total queries length
-    const queriesLength = useMemo(() => {
+    useEffect(() => {
         if (
-            headerSelectedMultiCred &&
-            headerSelectedMultiCred.length > 0 &&
-            headerSelectedMultiRegion &&
-            headerSelectedMultiRegion.length > 0
+            headerSelectedCred &&
+            headerSelectedRegion &&
+            !isManagedHostListLoading &&
+            !databaseHostsLoading &&
+            !fullHostDataLoading &&
+            !pgsqlDatabaseHostsLoading &&
+            !pgsqlFullHostDataLoading &&
+            !allmssqlHostAssessmentLoading &&
+            !dashSandboxListLoading &&
+            !dashSandboxSavingsLoading &&
+            !discoverHostLoading &&
+            !fsxCredentialStatusLoading
         ) {
-            if (headerSelectedMultiCred[0] !== undefined && headerSelectedMultiRegion[0] !== undefined) {
-                const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
-                setPendingQueriesCounter(total);
-                setPendingQueriesLength(total);
-                return total;
+            let currentCredId = headerSelectedCred?.data?.credentialsId;
+            let currentRegionId = headerSelectedRegion?.data?.regionCode;
+            let isMssqlInstanceDataLoading = false;
+            Object.keys(mssqlInstancesData)?.map((key: any) => {
+                let keyList = key.split('_');
+                if (
+                    keyList?.length === 3 &&
+                    keyList[1] === currentCredId &&
+                    keyList[2] === currentRegionId &&
+                    mssqlInstancesData?.[key]?.loading
+                ) {
+                    isMssqlInstanceDataLoading = true;
+                }
+            });
+            let perfMssqlInstancesDataLoading = false;
+            Object.keys(perfMssqlInstancesData)?.map((key: any) => {
+                let keyList = key.split('_');
+                if (
+                    keyList?.length === 3 &&
+                    keyList[1] === currentCredId &&
+                    keyList[2] === currentRegionId &&
+                    perfMssqlInstancesData?.[key]?.loading
+                ) {
+                    perfMssqlInstancesDataLoading = true;
+                }
+            });
+            let potentialSavingsHostDataLoading = false;
+            Object.keys(potentialSavingsHostData)?.map((key: any) => {
+                let keyList = key.split('_');
+                if (
+                    keyList?.length === 3 &&
+                    keyList[1] === currentCredId &&
+                    keyList[2] === currentRegionId &&
+                    potentialSavingsHostData?.[key]?.loading
+                ) {
+                    potentialSavingsHostDataLoading = true;
+                }
+            });
+            if (!isMssqlInstanceDataLoading && !perfMssqlInstancesDataLoading && !potentialSavingsHostDataLoading) {
+                let newStatus = { ...multiDataStatus };
+                newStatus[currentCredId + '_' + currentRegionId] = true;
+                dispatch(setMultiDataStatus(newStatus));
+                // console.log('combo completed for ', currentCredId , currentRegionId)
             }
-            return 0;
         }
-    }, [headerSelectedMultiCred, headerSelectedMultiRegion]);
+    }, [
+        isManagedHostListLoading,
+        databaseHostsLoading,
+        fullHostDataLoading,
+        pgsqlDatabaseHostsLoading,
+        pgsqlFullHostDataLoading,
+        allmssqlHostAssessmentLoading,
+        dashSandboxListLoading,
+        dashSandboxSavingsLoading,
+        discoverHostLoading,
+        fsxCredentialStatusLoading,
+        mssqlInstancesData,
+        perfMssqlInstancesData,
+        potentialSavingsHostData
+    ]);
 
     // Function to check if all APIs are completed for a cred-region set
     const isApiCompletedForSet = (cred: string, region: string) => {
-        // const key = `${cred}/${region}`;
-        // const apiResponses = multiSelectData?.[key];
-
-        // // Ensure there are API responses stored
-        // if (!apiResponses) return false;
-
-        // // Check if all APIs for this set have status === true
-        // return Object.values(apiResponses).every((api: any) => api.status === true);
-        return false;
+        if (multiDataStatus) {
+            return multiDataStatus[cred + '_' + region];
+        } else {
+            return false;
+        }
     };
 
     // Compute total queries count and initialize queue
@@ -451,9 +521,27 @@ const HeaderComponent = ({ tab }: Tab) => {
             if (headerSelectedMultiCred[0] !== undefined && headerSelectedMultiRegion[0] !== undefined) {
                 const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
                 setPendingQueriesCounter(total);
-                setPendingQueriesLength(total);
                 let queueLength = queue?.length;
                 let newQueue: any = [...queue];
+                let newMultiDataStatus: any = { ...multiDataStatus };
+                newQueue?.forEach((item: any, index: number) => {
+                    let isPresent = false;
+                    for (let cred of headerSelectedMultiCred) {
+                        for (let region of headerSelectedMultiRegion) {
+                            if (
+                                item.cred?.data?.credentialsId === cred?.data?.credentialsId &&
+                                item.region?.data?.regionCode === region?.data?.regionCode
+                            ) {
+                                isPresent = true;
+                            }
+                        }
+                    }
+                    if (!isPresent) {
+                        const key = `${newQueue[index]?.cred?.data?.credentialsId}_${newQueue[index]?.region?.data?.regionCode}`;
+                        delete newMultiDataStatus[key];
+                        newQueue.splice(index, 1);
+                    }
+                });
                 for (let cred of headerSelectedMultiCred) {
                     for (let region of headerSelectedMultiRegion) {
                         let isAlreadyInQueue = newQueue?.filter((item: any) => {
@@ -464,52 +552,101 @@ const HeaderComponent = ({ tab }: Tab) => {
                         });
                         if (isAlreadyInQueue?.length === 0) {
                             newQueue.push({ cred, region });
+                            newMultiDataStatus[cred?.data?.credentialsId + '_' + region?.data?.regionCode] = false;
                         }
                     }
                 }
                 setQueue(newQueue);
-                if (queueLength === 0) {
+                dispatch(setMultiDataStatus(newMultiDataStatus));
+                if (queueLength === 0 || !headerSelectedCred || !headerSelectedRegion) {
                     setCurrentIndex(0);
+                } else {
+                    let isPresentVal = false;
+                    newQueue?.forEach((item: any, index: number) => {
+                        if (
+                            item.cred?.data?.credentialsId === headerSelectedCred?.data?.credentialsId &&
+                            item.region?.data?.regionCode === headerSelectedRegion?.data?.regionCode
+                        ) {
+                            isPresentVal = true;
+                            setCurrentIndex(index);
+                        }
+                    });
+                    if (!isPresentVal) {
+                        setCurrentIndex(0);
+                    }
                 }
+
+                // console.log('queue', newQueue);
+                // console.log('currentIndex', currentIndex);
+                // console.log('multiDataStatus', newMultiDataStatus);
             }
         }
     }, [headerSelectedMultiCred, headerSelectedMultiRegion]);
 
-    // Process next set when API completion flag changes
-    useEffect(() => {
-        if (queue.length > 0 && currentIndex < queue.length) {
-            const { cred, region } = queue[currentIndex];
-            if (currentIndex === 0 || isApiCompletedForSet(cred?.data?.credentialsId, region?.data?.regionCode)) {
-                //true is the flag for API call
-                const { cred, region } = queue[currentIndex];
+    const isItemCompleted = (item: any): boolean => {
+        const { cred, region } = item;
+        return isApiCompletedForSet(cred?.data?.credentialsId, region?.data?.regionCode);
+    };
 
-                // Set current cred and region
-                setCurrentCred(cred?.data?.name || '');
-                setCurrentRegion(region?.value);
-                dispatch(setHeaderSelectedCred(cred));
-                dispatch(setHeaderSelectedRegion(region));
+    const updateCurrentItem = (item: any): void => {
+        const { cred, region } = item;
+        setCurrentCred(cred?.data?.name || '');
+        setCurrentRegion(region?.value);
+        dispatch(setHeaderSelectedCred(cred));
+        dispatch(setHeaderSelectedRegion(region));
+    };
 
-                // Dispatch API call for the current set
-                //Dispatch logic here
+    const processNextIncompleteItem = (): boolean => {
+        let nextIndex = currentIndex + 1;
 
-                // Reduce pending counters
-
-                setPendingQueriesLength(prev => Math.max(0, prev - 1));
-
-                // Wait for the API completion before moving to next set
-                // setTimeout(() => {
-                //     if (isApiCompletedForSet(cred?.data?.credentialsId, region?.data?.regionCode)) {
-                //         //true is the flag for API call
-                //         setCurrentIndex(prev => prev + 1);
-                //     } else {
-                //         setPendingQueriesCounter(0);
-                //     }
-                // }, 5000);
+        while (nextIndex < queue.length) {
+            const nextItem = queue[nextIndex];
+            if (nextItem && nextItem.cred && nextItem.region) {
+                if (isItemCompleted(nextItem)) {
+                    // Advance if the item is complete.
+                    setCurrentIndex(prev => prev + 1);
+                } else {
+                    // Found an incomplete item: update the current item and exit.
+                    setCurrentIndex(prev => prev + 1);
+                    updateCurrentItem(nextItem);
+                    return true;
+                }
             }
-        } else {
-            setPendingQueriesCounter(0);
+            nextIndex++;
         }
-    }, [currentIndex, queue]); //Add Api call flag here
+        return false;
+    };
+
+    const queueProcess = () => {
+        if (!queue.length || currentIndex >= queue.length) {
+            // No more items to process: reset pending queries counter.
+            setPendingQueriesCounter(0);
+            return;
+        }
+
+        // Handle the current item.
+        const currentItem = queue[currentIndex];
+        const completed = isItemCompleted(currentItem);
+
+        if (currentIndex === 0 && !completed) {
+            // For the very first item that is not complete, update state and initiate API call.
+            updateCurrentItem(currentItem);
+            return;
+        }
+
+        if (completed) {
+            // If the current item is complete, check and process the next incomplete item.
+            const foundNext = processNextIncompleteItem();
+            if (!foundNext) {
+                // No incomplete item was found: reset the pending queries.
+                setPendingQueriesCounter(0);
+            }
+        }
+    };
+
+    useEffect(() => {
+        queueProcess();
+    }, [currentIndex, queue, multiDataStatus]);
 
     const handleClick = (value: string) => {
         setSelectedTab(value);
@@ -1214,9 +1351,8 @@ const HeaderComponent = ({ tab }: Tab) => {
 
             {pendingQueriesCounter > 0 && (
                 <FetchingDataNotification
-                    queriesLength={queriesLength}
                     pendingQueriesCounter={pendingQueriesCounter}
-                    pendingQueriesLength={pendingQueriesLength}
+                    completedTask={currentIndex}
                     regions={currentRegion}
                     credentials={currentCred}
                 />
