@@ -43,12 +43,14 @@ const headersSlice = createSlice({
         },
         setHeaderSelectedMultiCred(state, action: PayloadAction<any>) {
             state.headerSelectedMultiCred = action.payload;
+            state.headerSelectedMultiCredIdsList = [];
             action.payload?.forEach((item: any) => {
                 state.headerSelectedMultiCredIdsList.push(item?.data?.credentialsId);
             });
         },
         setHeaderSelectedMultiRegion(state, action: PayloadAction<any>) {
             state.headerSelectedMultiRegion = action.payload;
+            state.headerSelectedMultiRegionIdsList = [];
             action.payload?.forEach((item: any) => {
                 state.headerSelectedMultiRegionIdsList.push(item?.data?.regionCode);
             });
