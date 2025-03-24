@@ -23,6 +23,27 @@ const monthsMap = {
     12: 'December'
 };
 
+function formatRetentionDuration(duration) {
+    if (duration === 'PS0S' || duration === 'PT0S') return 'No retention';
+
+    const match = duration.match(/P(\d+)(Y|M|D|TH|TM)/);
+
+    if (!match) return 'Invalid duration';
+
+    const [, value, unit] = match;
+    const numericValue = parseInt(value, 10);
+
+    const unitLabels = {
+        Y: 'year',
+        M: 'month',
+        D: 'day',
+        TH: 'hour',
+        TM: 'minute'
+    };
+
+    return `${numericValue} ${unitLabels[unit]}${numericValue > 1 ? 's' : ''}`;
+}
+
 // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
 const getOrdinalSuffix = n => {
     if (n >= 11 && n <= 13) return 'th';
@@ -77,5 +98,5 @@ export const formatCronSchedule = schedule => {
         description += 'every day';
     }
 
-    return description.trim();
+    return `${description.trim()} , Retention: ${formatRetentionDuration(schedule?.retention)}`;
 };
