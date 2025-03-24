@@ -1127,7 +1127,7 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
                 if ($currentRssSettings.NumberOfReceiveQueues -ne $optimalRssReceiveQueues) {
                     $parameters['NumberOfReceiveQueues'] = $optimalRssReceiveQueues
                 }
-                if ($currentRssSettings.BaseProcessorNumber -ne $optimalBaseProcessorNumber) {
+                if ($currentRssSettings.BaseProcessorNumber -lt $optimalBaseProcessorNumber) {
                     $parameters['BaseProcessorNumber'] = $optimalBaseProcessorNumber
                 }
                 if ($currentRssSettings.Profile -ne $optimalRssProfile) {
@@ -1160,9 +1160,8 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
     if([string]::IsNullOrEmpty($response)) {
         throw "Failed to compress the response because the response is either null or empty. $response"
     }
-    ${compressResponse}
     Stop-Transcript | Out-Null
-    return (Deflate-String $response)
+    return ($response)
     
 `;
 

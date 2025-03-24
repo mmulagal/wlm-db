@@ -44,6 +44,7 @@ interface StorageDetails {
     fsxId: string;
 }
 const logger = getLogger();
+const COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT = '300';
 
 async function handleComputeRemediation(
     credentialsId: string,
@@ -114,7 +115,7 @@ async function handleComputeRemediation(
                     'Get cluster network IPs',
                     accountId,
                     undefined,
-                    '300'
+                    COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
                 );
                 if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
                     throw createError('Failed to get network interface details during compute optimization.');
@@ -228,7 +229,7 @@ async function handleComputeRemediation(
                             'Get all node names in the cluster',
                             accountId,
                             undefined,
-                            '300'
+                            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
                         );
                         const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
                         // pick one of the nodes in the cluster to transfer primary node ownership
@@ -527,7 +528,7 @@ async function checkRunningStatus(
         'Checking running status of the service',
         accountId,
         undefined,
-        '300'
+        COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
     );
 
     let statusResponse: { status: string; error?: string };
@@ -672,7 +673,7 @@ async function moveClusterGroupOwnership(
             'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.',
             undefined,
             undefined,
-            '300'
+            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
         ),
         3,
         5000
@@ -746,7 +747,7 @@ async function updateDnsSettings(
                 'Sets the DNS server addresses for all network adapters to the specified addresses.',
                 accountId,
                 undefined,
-                '300'
+                COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
             ),
             3,
             5000
@@ -826,7 +827,7 @@ async function handleIscsiSessions(
                 'Enable MPIO and configure ISCSI sessions',
                 accountId,
                 false,
-                '300'
+                COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
             ),
             3,
             5000
@@ -918,7 +919,7 @@ async function getClusterNodeInstanceIds(accountId: string, credentialsId: strin
         'Get cluster network IPs',
         accountId,
         undefined,
-        '300'
+        COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
     );
     let clusterNodeInstanceIds: string[] = [];
     if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
@@ -950,7 +951,7 @@ async function transferClusterOwnershipToStandbyNode(
             'Get all node names in the cluster',
             accountId,
             undefined,
-            '300'
+            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
         );
         const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
         // pick one of the nodes in the cluster to transfer primary node ownership
