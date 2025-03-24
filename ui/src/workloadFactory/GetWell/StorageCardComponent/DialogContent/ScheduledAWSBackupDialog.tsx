@@ -157,7 +157,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 options={generateMinutes}
                             />
                         </div>
-                        <DsTypography style={{ position: 'relative', top: '-5px' }} variant="Regular_20">
+                        <DsTypography style={{ position: 'relative', top: '-5px' }} variant="Regular_16">
                             UTC
                         </DsTypography>
                     </div>
