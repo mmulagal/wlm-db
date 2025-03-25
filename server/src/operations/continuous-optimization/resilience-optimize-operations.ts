@@ -340,7 +340,7 @@ async function handleResiliecyOptimize(
         databaseHostId,
         request
     });
-    const shouldOptimizeSnapshotPolicy = !!request.type.filter(
+    const shouldOptimizeSnapshotPolicy = !!request.configurationName.filter(
         type => type === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
     ).length;
     const params = request.params!;

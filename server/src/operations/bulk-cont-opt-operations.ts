@@ -24,11 +24,11 @@ import { listResources } from '../lib/database/db';
 const logger = getLogger();
 
 async function formatJobMetadata(hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]) {
-    return hostsToOptimize.flatMap(({ type, databaseHosts }) =>
+    return hostsToOptimize.flatMap(({ configurationName, databaseHosts }) =>
         databaseHosts.map(({ id, sqlServerInstances, fsxFileSystemId, backupRetentionDays, backupStartTime }) => ({
             resourceId: id,
             sqlServerInstances,
-            optimizationType: type,
+            optimizationType: configurationName,
             fsxFileSystemId,
             backupRetentionDays,
             backupStartTime
@@ -164,7 +164,7 @@ async function handleBulkOptimization(
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     try {
         await Promise.all(
-            hostsToOptimize.map(async ({ type: optimizationSubcategory, databaseHosts }) => {
+            hostsToOptimize.map(async ({ configurationName: optimizationSubcategory, databaseHosts }) => {
                 if (optimizationSubcategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
                     await handleUpdateAwsBackup(
                         accountId,
