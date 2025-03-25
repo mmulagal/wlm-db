@@ -241,7 +241,7 @@ const DashboardInnerPage = () => {
             } else {
                 apiCall = optimizeStorageSizing;
                 payload = {
-                    type:
+                    configurationName:
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                             ? 'log-drive-size'
                             : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
