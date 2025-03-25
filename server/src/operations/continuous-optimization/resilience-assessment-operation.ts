@@ -24,7 +24,7 @@ import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
 import {
     DatabaseInstance,
-    databaseInstanceMetadata,
+    DatabaseInstanceMetadata,
     StorageAssessment,
     WorkloadInstance
 } from '../../utils/common-types';
@@ -205,7 +205,7 @@ async function getSnapshotPolicyDriftData(
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { configsOptimized } =
-                ((instanceDetail as unknown as DatabaseInstance)?.metadata as databaseInstanceMetadata) ?? {};
+                ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
             if (configsOptimized?.STORAGE?.includes(OptimizeStorageConfigs.SNAPSHOT_POLICY)) {
                 snapshotPolicyAssesmentData.violations = [];
             }

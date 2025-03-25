@@ -41,7 +41,7 @@ import {
     getConnectionInfo,
     invokeVirtualMountScript
 } from './workloads/mssql/sandbox-scripts';
-import { DatabaseInstance, Metadata, ResourceDetails, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
+import { DatabaseInstance, Metadata, ResourceDetails, Sandbox, DatabaseInstanceMetadata } from '../utils/common-types';
 import {
     ActiveSqlNodeDetails,
     checkDatabaseExists,
@@ -240,7 +240,7 @@ async function getSandboxDetails(
                 database_instance_name: databaseInstanceName
             } = instance as DatabaseInstance;
             const updatedDatabaseInstanceName = databaseInstanceName.replace(resourceName!, '');
-            const instanceSandboxes = (instanceMetadata as databaseInstanceMetadata)?.sandboxes || [];
+            const instanceSandboxes = (instanceMetadata as DatabaseInstanceMetadata)?.sandboxes || [];
             if (instanceSandboxes.length === 0) {
                 return [];
             }
@@ -468,7 +468,7 @@ interface HostAndDbInfo extends DbInfo {
     activeNodeInstanceId: string;
     metadata: Metadata;
     databaseInstanceName?: string;
-    instanceMetadata?: databaseInstanceMetadata;
+    instanceMetadata?: DatabaseInstanceMetadata;
     activeNodeDetails?: ActiveSqlNodeDetails;
     databaseInstanceId?: string;
     sqlAuthEnabled?: boolean;
@@ -1640,7 +1640,7 @@ async function updateMetadataForSanboxDeletion(
     const { metadata } = resourceDetail;
     const newMetadata = metadata as unknown as Metadata;
 
-    const newInstanceMetadata = instanceMetadata as unknown as databaseInstanceMetadata;
+    const newInstanceMetadata = instanceMetadata as unknown as DatabaseInstanceMetadata;
 
     newInstanceMetadata.sandboxes = instanceMetadata?.sandboxes?.filter(
         sandbox => sandbox.databaseName !== databaseNameToRemove
@@ -3343,8 +3343,8 @@ async function runSandboxPreValidations(
         );
     }
 
-    const { metadata: srcInstanceMetadata } = srcInstanceDetail as { metadata: databaseInstanceMetadata };
-    const { metadata: destInstanceMetadata } = destInstanceDetail as { metadata: databaseInstanceMetadata };
+    const { metadata: srcInstanceMetadata } = srcInstanceDetail as { metadata: DatabaseInstanceMetadata };
+    const { metadata: destInstanceMetadata } = destInstanceDetail as { metadata: DatabaseInstanceMetadata };
 
     return {
         srcDetails: {
