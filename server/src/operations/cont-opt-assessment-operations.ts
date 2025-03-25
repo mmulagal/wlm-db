@@ -84,7 +84,10 @@ import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 const isDemoFlow = isDemo();
 const logger = getLogger();
 
-async function updateAssesmentDataInInstanceMetadata(managedInstance: DatabaseInstancesIncludingResource) {
+async function updateAssesmentDataInInstanceMetadata(
+    managedInstance: DatabaseInstancesIncludingResource,
+    updateHostMetadata = false
+) {
     const {
         account_id: accountId,
         region,
@@ -92,7 +95,13 @@ async function updateAssesmentDataInInstanceMetadata(managedInstance: DatabaseIn
         resource_id: databaseHostId,
         database_instance_id: databaseInstanceId
     } = managedInstance;
-    const { metadata } = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    logger.info('Update assessment results in instance metadata', {
+        accountId,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId,
+        updateHostMetadata
+    });
     const driftAssessmentData = await fetchDriftAssessment(
         accountId,
         credentialsId,
@@ -100,11 +109,32 @@ async function updateAssesmentDataInInstanceMetadata(managedInstance: DatabaseIn
         databaseHostId,
         databaseInstanceId
     );
-    (metadata as unknown as DatabaseInstanceMetadata).assessment = driftAssessmentData;
+    if (updateHostMetadata) {
+        const [{ metadata }] = await listResources(accountId, databaseHostId, credentialsId, region);
+        (metadata as unknown as Metadata).assessmentResults = {
+            license: driftAssessmentData.license || undefined,
+            compute: driftAssessmentData.compute || undefined,
+            hostOsPatch: driftAssessmentData.hostOsPatch || undefined,
+            rssConfig: driftAssessmentData.rssConfig || undefined,
+            mssqlPatch: driftAssessmentData.mssqlPatch || undefined
+        };
+        try {
+            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        } catch (error) {
+            logger.error('Error while updating assessment results in resource metadata', {
+                accountId,
+                databaseHostId,
+                databaseInstanceId,
+                error
+            });
+        }
+    }
+    const { metadata } = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    (metadata as unknown as DatabaseInstanceMetadata).assessmentResults = driftAssessmentData;
     try {
         await updateInstanceMetadata(accountId, databaseInstanceId, metadata);
     } catch (error) {
-        logger.error('Error while updating assessment data in instance metadata', {
+        logger.error('Error while updating assessment results in instance metadata', {
             accountId,
             databaseHostId,
             databaseInstanceId,
@@ -786,6 +816,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                             await updateAssesmentDataInInstanceMetadata(managedInstance);
                         })
                     );
+                    await updateAssesmentDataInInstanceMetadata(managedInstances[0], true);
                 }
             }
         })
@@ -1261,9 +1292,8 @@ async function handleAssessment(
             // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
             await updateParentJobStatus(accountId, masterAssessmentJobId);
         }
-
         // Lets update assessment result in instance metadata
-        await updateAssesmentDataInInstanceMetadata(managedInstance);
+        await updateAssesmentDataInInstanceMetadata(managedInstance, true);
     }
     if (initiatedBy === AssessmentTriggeredBy.USER) {
         const auditStatus = jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED;

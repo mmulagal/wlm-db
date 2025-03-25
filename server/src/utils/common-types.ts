@@ -100,6 +100,16 @@ interface ResourceAssessmentData {
         license?: string;
     };
 }
+
+interface ResourceAssessmentResults {
+    license?: any;
+    compute?: any;
+    hostOsPatch?: any;
+    rssConfig?: any;
+    maxDOP?: any;
+    mssqlPatch?: any;
+}
+
 interface Metadata {
     node1InstanceId: string;
     node2InstanceId?: string;
@@ -121,6 +131,7 @@ interface Metadata {
     isLicenseOptimized?: boolean;
     isHostOsPatchOptimized?: boolean;
     assessment?: ResourceAssessmentData;
+    assessmentResults?: ResourceAssessmentResults;
 }
 
 interface DatabaseInstanceMetadata {
@@ -128,7 +139,7 @@ interface DatabaseInstanceMetadata {
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
     configsOptimized?: any;
-    assessment?: any;
+    assessmentResults?: any;
 }
 
 interface CreateDbMetrics {
