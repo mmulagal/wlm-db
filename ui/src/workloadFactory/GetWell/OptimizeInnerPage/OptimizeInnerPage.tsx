@@ -211,7 +211,7 @@ const OptimizeInnerPage = () => {
                             configurationName: 'rss-config',
                             databaseHosts: [
                                 {
-                                    id: selectedHostname,
+                                    id: selectedResourceId,
                                     sqlServerInstances: [selectedDatabaseInstance],
                                     networkAdapters: selectedRowsForOptimizeInnerPage.map(
                                         (item: any) => item?.adapterName
@@ -228,7 +228,7 @@ const OptimizeInnerPage = () => {
                             configurationName: 'rss-config',
                             databaseHosts: [
                                 {
-                                    id: selectedHostname,
+                                    id: selectedResourceId,
                                     sqlServerInstances: [selectedDatabaseInstance],
                                     networkAdapters: [singleRowData?.adapterName]
                                 }

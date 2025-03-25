@@ -174,12 +174,16 @@ const DashboardInnerPage = () => {
                             configurationName: 'rss-config',
                             databaseHosts: Object.values(
                                 //@ts-ignore
-                                rowData.reduce((acc, { hostName, instanceId, networkAdapters }) => {
-                                    if (!acc[hostName]) {
-                                        acc[hostName] = { id: hostName, sqlServerInstances: [], networkAdapters: [] };
+                                rowData.reduce((acc, { databaseHostId, instanceId, networkAdapters }) => {
+                                    if (!acc[databaseHostId]) {
+                                        acc[databaseHostId] = {
+                                            id: databaseHostId,
+                                            sqlServerInstances: [],
+                                            networkAdapters: []
+                                        };
                                     }
-                                    acc[hostName].sqlServerInstances.push(instanceId);
-                                    acc[hostName].networkAdapters.push(...networkAdapters);
+                                    acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                    acc[databaseHostId].networkAdapters.push(...networkAdapters);
                                     return acc;
                                 }, {})
                             )
@@ -194,7 +198,7 @@ const DashboardInnerPage = () => {
                             configurationName: 'rss-config',
                             databaseHosts: [
                                 {
-                                    id: rowData?.hostName,
+                                    id: rowData?.databaseHostId,
                                     sqlServerInstances: [rowData?.instanceId],
                                     networkAdapters: rowData?.networkAdapters
                                 }
