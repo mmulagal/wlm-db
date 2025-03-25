@@ -1884,7 +1884,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                         credentials_id: credentialsId,
                                         region,
                                         resource_id: resourceId,
-                                        database_instance_id: serverGuid,
+                                        database_instance_id: serverGuid!,
                                         creation_time: new Date(Date.now()),
                                         config_data_type: AssessmentCategories.CRR,
                                         config_data: ASSESSMENT_CRR_CONFIG_DATA
