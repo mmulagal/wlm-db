@@ -41,7 +41,7 @@ async function updateAsssementErrorInResourceMetadata(
             errors: assessmentErrors,
             lastAssessedDate: new Date().getTime().toString()
         };
-        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        return updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     } catch (error: any) {
         logger.error('Error updating assessment error in resource metadata', {
             accountId,
