@@ -341,7 +341,7 @@ async function handleResiliecyOptimize(
         request
     });
     const shouldOptimizeSnapshotPolicy = !!request.configurationName.filter(
-        type => type === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
+        configurationName => configurationName === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
     ).length;
     const params = request.params!;
     const { instanceRecord, instanceMetadata } = await getActiveNodeInfo(
