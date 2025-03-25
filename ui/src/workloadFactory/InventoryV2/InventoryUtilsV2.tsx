@@ -1564,7 +1564,8 @@ export const updateSqlServerInstancesForUnmanaged = (
                         isManagedHost && statusObj?.[0]?.status ? statusObj?.[0]?.status : instRow?.statusColText,
                     fileSystemDeploymentMode:
                         instRow?.fileSystemDeploymentMode ||
-                        getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
+                        getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
+                    sqlServerDeploymentType: instRow?.sqlServerDeploymentType || perRow?.sqlServerDeploymentType
                 };
             } else {
                 const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);

@@ -194,7 +194,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                jobId,
+                databaseHostId
             );
         }
         if (fields?.includes(AssessmentCategories.COMPUTE)) {
@@ -205,7 +206,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 awsAccountId!,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                jobId,
+                databaseHostId
             );
             if (computeAssessment) {
                 // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
@@ -263,7 +265,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                jobId,
+                databaseHostId
             );
         }
         if (fields?.includes(AssessmentCategories.MAXDOP)) {
