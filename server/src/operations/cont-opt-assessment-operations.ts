@@ -13,6 +13,7 @@ import {
     DatabaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     Metadata,
+    ResourceDetails,
     StorageAssessment,
     WorkloadInstance
 } from '../utils/common-types';
@@ -84,9 +85,36 @@ import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 const isDemoFlow = isDemo();
 const logger = getLogger();
 
-async function updateAssesmentDataInInstanceMetadata(
+async function updateAssessmentResultsInHostMetadata(
+    driftAssessmentData: DriftAssessmentResponseType,
+    resourceDetails: ResourceDetails
+) {
+    const {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        resource_id: databaseHostId,
+        metadata
+    } = resourceDetails as unknown as ResourceDetails;
+    (metadata as unknown as Metadata).assessmentResults = {
+        license: driftAssessmentData.license || undefined,
+        compute: driftAssessmentData.compute || undefined,
+        hostOsPatch: driftAssessmentData.hostOsPatch || undefined,
+        rssConfig: driftAssessmentData.rssConfig || undefined,
+        mssqlPatch: driftAssessmentData.mssqlPatch || undefined
+    };
+    try {
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+    } catch (error) {
+        logger.error('Error while updating assessment results in resource metadata', {
+            accountId,
+            databaseHostId,
+            error
+        });
+    }
+}
+async function updateAssesmentResultsInInstanceMetadata(
     managedInstance: DatabaseInstancesIncludingResource,
-    updateHostMetadata = false
+    updateInHost?: boolean
 ) {
     const {
         account_id: accountId,
@@ -100,36 +128,15 @@ async function updateAssesmentDataInInstanceMetadata(
         credentialsId,
         databaseHostId,
         databaseInstanceId,
-        updateHostMetadata
+        updateInHost
     });
-    const driftAssessmentData = await fetchDriftAssessment(
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceId
-    );
-    if (updateHostMetadata) {
-        const [{ metadata }] = await listResources(accountId, databaseHostId, credentialsId, region);
-        (metadata as unknown as Metadata).assessmentResults = {
-            license: driftAssessmentData.license || undefined,
-            compute: driftAssessmentData.compute || undefined,
-            hostOsPatch: driftAssessmentData.hostOsPatch || undefined,
-            rssConfig: driftAssessmentData.rssConfig || undefined,
-            mssqlPatch: driftAssessmentData.mssqlPatch || undefined
-        };
-        try {
-            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
-        } catch (error) {
-            logger.error('Error while updating assessment results in resource metadata', {
-                accountId,
-                databaseHostId,
-                databaseInstanceId,
-                error
-            });
-        }
-    }
-    const { metadata } = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    const [driftAssessmentData, instanceDetails, [resourceDetails]] = await Promise.all([
+        fetchDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
+        getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId),
+        updateInHost ? listResources(accountId, databaseHostId, credentialsId, region) : Promise.resolve({})
+    ]);
+    const { metadata } = instanceDetails as unknown as DatabaseInstance;
+
     (metadata as unknown as DatabaseInstanceMetadata).assessmentResults = driftAssessmentData;
     try {
         await updateInstanceMetadata(accountId, databaseInstanceId, metadata);
@@ -140,6 +147,9 @@ async function updateAssesmentDataInInstanceMetadata(
             databaseInstanceId,
             error
         });
+    }
+    if (updateInHost) {
+        await updateAssessmentResultsInHostMetadata(driftAssessmentData, resourceDetails);
     }
 }
 async function initiateComputeLicenseAssessmentCollection(
@@ -814,12 +824,12 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     }
 
                     // Lets update assessment result in instance metadata
+                    // Host level assessments are run for all the instances in the account. So we will update the results from one of the instance
                     await Promise.all(
-                        managedInstances.map(async managedInstance => {
-                            await updateAssesmentDataInInstanceMetadata(managedInstance);
+                        managedInstances.map(async (managedInstance, index) => {
+                            await updateAssesmentResultsInInstanceMetadata(managedInstance, index === 0);
                         })
                     );
-                    await updateAssesmentDataInInstanceMetadata(managedInstances[0], true);
                 }
             }
         })
@@ -1296,7 +1306,7 @@ async function handleAssessment(
             await updateParentJobStatus(accountId, masterAssessmentJobId);
         }
         // Lets update assessment result in instance metadata
-        await updateAssesmentDataInInstanceMetadata(managedInstance, true);
+        await updateAssesmentResultsInInstanceMetadata(managedInstance, true);
     }
     if (initiatedBy === AssessmentTriggeredBy.USER) {
         const auditStatus = jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED;
