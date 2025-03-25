@@ -103,7 +103,7 @@ import { copyScriptsToHost } from './resource-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
-import { ASSESMENT_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
+import { ASSESMENT_CONFIG_DATA, ASSESSMENT_CRR_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -1878,6 +1878,19 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                         config_data: ASSESMENT_CONFIG_DATA
                                     };
                                     await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
+
+                                    const instanceCRRConfigDataRecord = {
+                                        account_id: accountId,
+                                        credentials_id: credentialsId,
+                                        region,
+                                        resource_id: resourceId,
+                                        database_instance_id: serverGuid!,
+                                        creation_time: new Date(Date.now()),
+                                        config_data_type: AssessmentCategories.CRR,
+                                        config_data: ASSESSMENT_CRR_CONFIG_DATA
+                                    };
+
+                                    await createDatabaseInstanceConfigData([instanceCRRConfigDataRecord]);
                                 }
 
                                 let errorMessage = '';
