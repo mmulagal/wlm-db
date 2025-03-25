@@ -40,6 +40,28 @@ import { isFsxnAwsBackupEnabled } from '../aws/fsx-operations';
 const isDemoFlow = isDemo();
 const logger = getLogger();
 
+function filterDataLogVolumes(instanceVolumeMapping: MappedOnTapVolumeResponse[]) {
+    const volumeRecords =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeRecords)
+            .flat() || [];
+    const volumeDBMap =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeDBMap)
+            .flat() || {};
+    // Ignore tempdb volumes from resiliency assessment
+    const dataLogVolumeUuids = volumeDBMap
+        .filter(volume => volume.databaseName !== 'tempdb')
+        .map(volume => volume.ontapVolumeuuid);
+    const mappedVolumesUuids = volumeRecords
+        .filter(volume => dataLogVolumeUuids.includes(volume.uuid as string))
+        .map(volume => volume.uuid as string);
+    const mappedVolumeNames = volumeRecords
+        .filter(volume => dataLogVolumeUuids.includes(volume.uuid as string))
+        .map(volume => volume.name as string);
+    return { mappedVolumesUuids, mappedVolumeNames };
+}
+
 function getVolumesWithoutSnapshotPolicy(volumes: Array<{ Key?: string; Value?: string }> = []) {
     // if instance has volumes in violation list for snapshot-policy, collect snapshot copy data for additional checks.
     const violations: string[] = [];
@@ -367,12 +389,9 @@ async function initiateCrossRegionResiliencyAssessment(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    const volumeRecords =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeRecords)
-            .flat() || [];
-    instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
-    instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
+    const { mappedVolumesUuids, mappedVolumeNames } = filterDataLogVolumes(instanceVolumeMapping);
+    instanceRecord.mappedVolumesUuids = mappedVolumesUuids;
+    instanceRecord.mappedVolumeNames = mappedVolumeNames;
 
     const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord)];
     const ssmComment = 'Get Cross Region Replication Assessment';
