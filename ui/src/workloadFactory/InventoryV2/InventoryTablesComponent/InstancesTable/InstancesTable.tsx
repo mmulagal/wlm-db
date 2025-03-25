@@ -317,7 +317,7 @@ const InstancesTable = () => {
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         }
         // if fsx register is false and only db cred is added than call instance API
-        dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]]));
+        // dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]]));
         if (!isFsxRegister) {
             dispatch(setDetectedInstanceId(rowData?.ec2InstanceId));
         }

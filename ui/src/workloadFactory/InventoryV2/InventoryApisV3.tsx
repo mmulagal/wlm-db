@@ -1184,8 +1184,8 @@ const InventoryApisV3 = () => {
         if (!refreshBlocked) {
             let managedList: string[] = [];
             if (credId && regionId) {
-                // resetPerComboValues();
-                resetFullData(); // For now will reset all data on change of cred and region.
+                resetPerComboValues();
+                // resetFullData(); // For now will reset all data on change of cred and region.
                 setTimeout(() => {
                     getManagedHostList(managedList, null, credId, regionId);
                 }, 10);
