@@ -354,4 +354,4 @@ function getUniqueMissingPatchesAndCountSeverities(patchAssessment: MSSQLPatchAs
     return { uniqueMissingPatches, criticalPatchesCount, importantPatchesCount };
 }
 
-export { managedHostMSSQLPatchAssessment, calculateMSSQLPatchDrift, runMSSQLPatchAssessment };
+export { managedHostMSSQLPatchAssessment, calculateMSSQLPatchDrift, runMSSQLPatchAssessment, getTheMSSqlversion };
