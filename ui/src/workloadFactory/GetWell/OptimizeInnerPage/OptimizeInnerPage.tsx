@@ -243,7 +243,7 @@ const OptimizeInnerPage = () => {
         ) {
             apiCall = optimizeStorageSizing;
             payload = {
-                type: [selectedOptimizeConfig?.data?.id]
+                configurationName: [selectedOptimizeConfig?.data?.id]
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) {
             apiCall = optimizeStorageSizing;
