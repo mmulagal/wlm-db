@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import moment from 'moment';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import {
     OntapVolumeType,
     ParameterDriftResponseType,
@@ -389,9 +389,17 @@ async function initiateCrossRegionResiliencyAssessment(
 
     const { crrDetails, errorMessage } = response ? sqlResponseParsing(response) : { crrDetails: [], errorMessage: '' };
 
-    const peerFileSystemIds = crrDetails
-        ?.filter((crrDetail: { peerClusterFsxId: string }) => crrDetail.peerClusterFsxId)
-        .map((crrDetail: { peerClusterFsxId: string }) => crrDetail.peerClusterFsxId);
+    const peerFileSystemIds = [
+        ...new Set(
+            compact(
+                crrDetails
+                    .map((crrDetail: { peerClusterFsxId: string | string[] }) => crrDetail.peerClusterFsxId)
+                    .flat()
+            ) as string[]
+        )
+    ];
+
+    logger.info('peerFileSystemIds:', peerFileSystemIds);
 
     // Check if PeerFileSystemIds are NOT deployed in the same region as source fsx
     // 1. No two fsx in any region can have same id.
@@ -410,18 +418,30 @@ async function initiateCrossRegionResiliencyAssessment(
                     );
                     const resourceArn = fsxInfo?.FileSystems?.[0]?.ResourceARN;
 
-                    crrDetails.forEach((crrDetail: { peerClusterFsxId: string; isCRREnabled: boolean }) => {
-                        if (crrDetail.peerClusterFsxId === peerFileSystemId) {
+                    crrDetails.forEach((crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
+                        if (crrDetail.peerClusterFsxId === undefined) {
+                            crrDetail.isCRREnabled = false;
+                        } else if (
+                            crrDetail.peerClusterFsxId === peerFileSystemId ||
+                            crrDetail.peerClusterFsxId.includes(peerFileSystemId)
+                        ) {
                             crrDetail.isCRREnabled = !resourceArn?.includes(region);
                         }
                     });
                 } catch (error: any) {
                     if (error?.name && error.name === 'FileSystemNotFound') {
-                        crrDetails.forEach((crrDetail: { peerClusterFsxId: string; isCRREnabled: boolean }) => {
-                            if (crrDetail.peerClusterFsxId === peerFileSystemId) {
-                                crrDetail.isCRREnabled = true;
+                        crrDetails.forEach(
+                            (crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
+                                if (crrDetail.peerClusterFsxId === undefined) {
+                                    crrDetail.isCRREnabled = false;
+                                } else if (
+                                    crrDetail.peerClusterFsxId === peerFileSystemId ||
+                                    crrDetail.peerClusterFsxId.includes(peerFileSystemId)
+                                ) {
+                                    crrDetail.isCRREnabled = true;
+                                }
                             }
-                        });
+                        );
                     }
                 }
             })
