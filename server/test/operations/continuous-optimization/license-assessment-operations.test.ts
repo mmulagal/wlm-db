@@ -68,7 +68,8 @@ describe('License assessment operations', () => {
             DEFAULT_AWS_REGION,
             'i-07e76a4b916548dc0',
             'test-resource',
-            'test-job-id'
+            'test-job-id',
+            RESOURCE_ID
         );
         expect(response?.licenseFinding).toBeDefined();
     });

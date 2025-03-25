@@ -113,6 +113,9 @@ const InventoryV2 = () => {
                             perRow?.databaseInstanceId,
                             optimizationStatusList
                         );
+                        if (perRow?.statusColText === INVENTORY_STATUS.MANAGED) {
+                            optimizationStatusLoading = allmssqlHostAssessmentLoading;
+                        }
                         let perRowData = {
                             ...perRow,
                             id: String(instanceUniqueId++),

@@ -9,14 +9,10 @@ import {
     OptimizeResiliencyBodyType,
     SnapshotPolicyDetailsType,
     SnapshotPolicyType,
-    SnapshotScheduleType
+    SnapshotScheduleType,
+    BulkOptimizeSnapshotPolicyParamsType
 } from '../../routes/types/continuous-optimization.types';
-import {
-    BulkOptimizeSnapshotPolicyParamsType,
-    databaseInstanceMetadata,
-    Metadata,
-    WorkloadInstance
-} from '../../utils/common-types';
+import { DatabaseInstanceMetadata, Metadata, WorkloadInstance } from '../../utils/common-types';
 import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
 import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
 import {
@@ -210,7 +206,7 @@ async function setSnapshotPolicyForVolumes(
     region: string,
     snapshotPolicy: SnapshotPolicyType,
     parentJobId?: string,
-    instanceMetadata?: databaseInstanceMetadata,
+    instanceMetadata?: DatabaseInstanceMetadata,
     volumesToOptimize?: OntapVolumeType[]
 ) {
     logger.info('Setting snapshot policy for volumes of instace: ', { instanceRecord, snapshotPolicy });
@@ -293,7 +289,7 @@ async function setSnapshotPolicyForVolumes(
                 instanceRecord.id,
                 [OptimizeStorageConfigs.SNAPSHOT_POLICY],
                 'STORAGE',
-                instanceMetadata || ({} as databaseInstanceMetadata)
+                instanceMetadata || ({} as DatabaseInstanceMetadata)
             );
         }
         jobStatus = JOBSTATUS.COMPLETED;
@@ -340,8 +336,8 @@ async function handleResiliecyOptimize(
         databaseHostId,
         request
     });
-    const shouldOptimizeSnapshotPolicy = !!request.type.filter(
-        type => type === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
+    const shouldOptimizeSnapshotPolicy = !!request.configurationName.filter(
+        configurationName => configurationName === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
     ).length;
     const params = request.params!;
     const { instanceRecord, instanceMetadata } = await getActiveNodeInfo(
@@ -385,7 +381,7 @@ async function handleResiliecyOptimize(
             region,
             snapshotPolicy,
             jobId,
-            (instanceMetadata ?? {}) as databaseInstanceMetadata,
+            (instanceMetadata ?? {}) as DatabaseInstanceMetadata,
             volumes
         );
 

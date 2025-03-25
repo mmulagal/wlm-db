@@ -1,9 +1,5 @@
-import {
-    BulkOptimizeSnapshotPolicyParamsType,
-    OntapRequestParams,
-    OptimizeStorageParams,
-    WorkloadInstance
-} from '../../../utils/common-types';
+import { BulkOptimizeSnapshotPolicyParamsType } from '../../../routes/types/continuous-optimization.types';
+import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
     COMPUTE_OPTIMIZE_LOG_PATH,

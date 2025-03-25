@@ -24,7 +24,7 @@ import {
     updateResourceMetaData,
     upsertDatabaseInstance
 } from '../lib/database/db';
-import { Metadata, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
+import { Metadata, Sandbox, DatabaseInstanceMetadata } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
@@ -406,7 +406,7 @@ async function updateUserDBIntoInstanceTable(
     accountId: string,
     instanceId: string,
     databaseName: string,
-    metaData: databaseInstanceMetadata
+    metaData: DatabaseInstanceMetadata
 ) {
     logger.info('updating user db into resource meta data', accountId, instanceId, databaseName);
 
@@ -441,7 +441,7 @@ async function updateOptimizedConfigNameInInstanceTable(
     instanceId: string,
     configNames: string[],
     configType: string,
-    metaData: databaseInstanceMetadata
+    metaData: DatabaseInstanceMetadata
 ) {
     logger.info(
         'updating optimized config name into instance meta data',
@@ -485,7 +485,7 @@ async function updateSandboxDBIntoInstanceData(
     accountId: string,
     instanceID: string,
     sandboxDetails: Sandbox,
-    instanceMetaData: databaseInstanceMetadata
+    instanceMetaData: DatabaseInstanceMetadata
 ) {
     logger.info('updating sandbox db into database instance  meta data', accountId, instanceID, sandboxDetails);
 

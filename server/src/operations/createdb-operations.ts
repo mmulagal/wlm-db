@@ -41,7 +41,7 @@ import {
     FileConfigType
 } from '../routes/types/database-hosts.types';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
-import { DatabaseInstance, Metadata, databaseInstanceMetadata } from '../utils/common-types';
+import { DatabaseInstance, Metadata, DatabaseInstanceMetadata } from '../utils/common-types';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateUserDBIntoInstanceTable, updateUserDBIntoResourceData } from './demo-operations';
@@ -752,7 +752,7 @@ async function invokeSSMForDatabaseDeployment(
                         accountId,
                         instanceId,
                         databaseName,
-                        instanceMetadata as databaseInstanceMetadata
+                        instanceMetadata as DatabaseInstanceMetadata
                     );
                 }
             }
@@ -882,7 +882,7 @@ async function invokeSSMForDatabaseDeployment(
                         accountId,
                         instanceId,
                         databaseName,
-                        instanceMetadata as databaseInstanceMetadata
+                        instanceMetadata as DatabaseInstanceMetadata
                     );
                 }
             }
