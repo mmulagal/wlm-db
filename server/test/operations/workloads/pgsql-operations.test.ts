@@ -4,6 +4,7 @@ import {
     getPgSqlDatabasesList,
     getPgSqlInstanceInfo,
     getPgSqlPerformaceMetrics,
+    getPgSqlProtectionStatus,
     getPgSqlStorageSavingsVolumeData
 } from '../../../src/operations/workloads/pgsql/pgsql-operations';
 import { DatabaseInstance, PgSqlInstanceDetails } from '../../../src/utils/common-types';
@@ -12,6 +13,7 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import { parsePgSqlInstanceInfo } from '../../../src/utils/utils';
+import '../../simulator/scopes/aws/fsx-scope';
 
 describe('PgSql Database Operations', () => {
     const credentialsId = 'test-credentials-id';
@@ -204,6 +206,16 @@ describe('PgSql Database Operations', () => {
                 read: 0.001,
                 write: 0.545
             }
+        });
+    });
+    it('should return the protection status for a given PGSQL instance', async () => {
+        const result = await getPgSqlProtectionStatus(accountId, credentialsId, region, node1InstanceId, fsxNId);
+
+        expect(result).toEqual({
+            isAwsBackupEnabled: {
+                fsxn: true
+            },
+            isFsxOntapSnapshotsEnabled: true
         });
     });
 });

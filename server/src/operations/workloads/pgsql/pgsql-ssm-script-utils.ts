@@ -25,6 +25,27 @@ const getPgSqlStorageSavings = (fsxnId: string, region: string, endpoint: string
     echo $result
 `;
 
+const getPgSqlProtection = (fsxnId: string, region: string) => `
+    #!/bin/bash
+    #pgsql protection script
+    filesystemid="${fsxnId}"
+    region="${region}"
+ 
+    ${getMappedOntapDataVolume}
+    endpoint="storage/volumes?fields=snapshot_count&name=$mountedVolume"
+    ${ontapRestApi}
+    result=$(ontap_request 'GET' $endpoint)
+    corrected_res=$(echo "$result" | sed 's/.records\\n$//')
+    echo "$corrected_res" | jq -c '.records[]' | while read -r record; do
+    uuid=$(echo "$record" | jq -r '.uuid')
+    name=$(echo "$record" | jq -r '.name')
+    snapshot_count=$(echo "$record" | jq -r '.snapshot_count')
+
+    jq -n --arg uuid "$uuid" --arg name "$name" --arg snapshot_count "$snapshot_count" \
+    '{uuid: $uuid, name: $name, snapshotCount: $snapshot_count}'
+    done
+`;
+
 const ontapRestApi = `
     creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$filesystemid" --with-decryption --query "Parameter.Value"  --output text)
     
@@ -64,4 +85,4 @@ const getPgsqlInstanceData = (fsxDataVolumeName: string) => `
     sudo -u postgres pg_controldata /${fsxDataVolumeName} | jq -R -s -c 'split("\\n")[:-1]'
 `;
 
-export { getPgSqlStorageSavings, getPgsqlInstanceData };
+export { getPgSqlStorageSavings, getPgsqlInstanceData, getPgSqlProtection };

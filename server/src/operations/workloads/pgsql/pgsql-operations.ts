@@ -17,10 +17,11 @@ import {
 import { DatabaseInstance, PgSqlInstanceDetails, ResourceDetails } from '../../../utils/common-types';
 import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
 import { DATABASES_COUNT, LIST_DATABASES, PERFORMANCE_METRICS } from './queries';
-import { getPgSqlStorageSavings, getPgsqlInstanceData } from './pgsql-ssm-script-utils';
+import { getPgSqlProtection, getPgSqlStorageSavings, getPgsqlInstanceData } from './pgsql-ssm-script-utils';
 import getDatabaseInstanceTopology from '../../../utils/sql-utils';
 import { SSM_RUN_SHELL_SCRIPT_DOC } from './const';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../mssql/const';
+import { isBackupAvailableForVolumeUuid } from '../../aws/fsx-operations';
 
 const logger = getLogger();
 
@@ -200,60 +201,75 @@ async function getPgSqlDatabaseInstancesSummary(
         DatabaseHostsQueryFields.DATABASE_INSTANCE_TOPOLOGY.toLocaleLowerCase()
     );
     const getPerformanceMetrics = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE.toLocaleLowerCase());
+    const getProtectionStatus = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION.toLocaleLowerCase());
+
     const sqlDeploymentType = databaseInstances[0].database_deployment_type;
     let storageData: any;
     let databasesCount: any;
     let databases: any;
     let performanceData: any;
     let databaseInstancetopologyData: any;
+    let protectionData: any;
     const errormessages: { [index: string]: string } = {};
     try {
-        [storageData, databaseInstancetopologyData, databasesCount, databases, performanceData] = await Promise.all(
-            [
-                ...(getStorageSavings
-                    ? [
-                          Promise.all(
-                              databaseInstances.map(dbInstance =>
-                                  getPgSqlStorageSavingsVolumeData(
-                                      accountId,
-                                      credentialsId,
-                                      region,
-                                      activeNodeInstanceId,
-                                      dbInstance.fsxn_ids
+        [storageData, databaseInstancetopologyData, databasesCount, databases, performanceData, protectionData] =
+            await Promise.all(
+                [
+                    ...(getStorageSavings
+                        ? [
+                              Promise.all(
+                                  databaseInstances.map(dbInstance =>
+                                      getPgSqlStorageSavingsVolumeData(
+                                          accountId,
+                                          credentialsId,
+                                          region,
+                                          activeNodeInstanceId,
+                                          dbInstance.fsxn_ids
+                                      )
                                   )
                               )
-                          )
-                      ]
-                    : [Promise.resolve()]), // Fetch storage savings data
-                ...(shouldQueryDatabaseTopology
-                    ? [
-                          getDatabaseInstanceTopology(
-                              accountId,
-                              credentialsId,
-                              region,
-                              activeNodeInstanceId,
-                              databaseInstances[0]
-                          )
-                      ]
-                    : [Promise.resolve()]),
-                ...(getDbCount
-                    ? [getPgSqlDatabaseCount(accountId, credentialsId, region, activeNodeInstanceId)]
-                    : [Promise.resolve()]),
-                ...(getDatabasesWithoutProtection
-                    ? [getPgSqlDatabasesList(accountId, credentialsId, region, activeNodeInstanceId)]
-                    : [Promise.resolve()]),
-                ...(getPerformanceMetrics
-                    ? [getPgSqlPerformaceMetrics(accountId, credentialsId, region, activeNodeInstanceId)]
-                    : [Promise.resolve()])
-            ].map((p, index) =>
-                p.catch(error => {
-                    if (PGSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
-                        errormessages[PGSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
-                    }
-                    logger.error(`Error while fetching data: ${error}.`);
-                })
-            )
-        );
+                          ]
+                        : [Promise.resolve()]), // Fetch storage savings data
+                    ...(shouldQueryDatabaseTopology
+                        ? [
+                              getDatabaseInstanceTopology(
+                                  accountId,
+                                  credentialsId,
+                                  region,
+                                  activeNodeInstanceId,
+                                  databaseInstances[0]
+                              )
+                          ]
+                        : [Promise.resolve()]),
+                    ...(getDbCount
+                        ? [getPgSqlDatabaseCount(accountId, credentialsId, region, activeNodeInstanceId)]
+                        : [Promise.resolve()]),
+                    ...(getDatabasesWithoutProtection
+                        ? [getPgSqlDatabasesList(accountId, credentialsId, region, activeNodeInstanceId)]
+                        : [Promise.resolve()]),
+                    ...(getPerformanceMetrics
+                        ? [getPgSqlPerformaceMetrics(accountId, credentialsId, region, activeNodeInstanceId)]
+                        : [Promise.resolve()]),
+                    ...(getProtectionStatus
+                        ? [
+                              getPgSqlProtectionStatus(
+                                  accountId,
+                                  credentialsId,
+                                  region,
+                                  activeNodeInstanceId,
+                                  databaseInstances[0].fsxn_ids
+                              )
+                          ]
+                        : [Promise.resolve()])
+                ].map((p, index) =>
+                    p.catch(error => {
+                        if (PGSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
+                            errormessages[PGSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
+                        }
+                        logger.error(`Error while fetching data: ${error}.`);
+                    })
+                )
+            );
     } catch (error) {
         logger.error(`Error while fetching PGSQL database instance summary ${accountId}, ${error}`);
         throw createError(
@@ -291,6 +307,10 @@ async function getPgSqlDatabaseInstancesSummary(
         }
         databaseInstanceDetails.sqlServerDeploymentType = sqlDeploymentType;
         databaseInstanceDetails.storage = storageData?.[index];
+
+        if (getProtectionStatus && protectionData) {
+            databaseInstanceDetails.protection = protectionData;
+        }
 
         if (!isEmpty(errormessages)) {
             databaseInstanceDetails.errors = errormessages;
@@ -452,6 +472,39 @@ async function getPgSqlPerformaceMetrics(
     }
 }
 
+async function getPgSqlProtectionStatus(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    node1InstanceId: string,
+    fsxId: string
+) {
+    logger.info('Fetching pgsql protection', { accountId, credentialsId, region, node1InstanceId, fsxId });
+    const command = getPgSqlProtection(fsxId, region);
+    const comment = 'pgsql protection data';
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        [command],
+        node1InstanceId,
+        comment,
+        accountId,
+        undefined,
+        undefined,
+        SSM_RUN_SHELL_SCRIPT_DOC,
+        SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+    );
+    if (response) {
+        const parsedResponse = sqlResponseParsing(response);
+        const { snapshotCount, uuid } = parsedResponse;
+        const fsxnBackup = await isBackupAvailableForVolumeUuid(credentialsId, region, fsxId, uuid);
+        return {
+            isAwsBackupEnabled: { fsxn: fsxnBackup },
+            isFsxOntapSnapshotsEnabled: snapshotCount > 0
+        };
+    }
+}
+
 export {
     getPgSqlResourceId,
     getPgSqlInstanceInfo,
@@ -460,5 +513,6 @@ export {
     getPgSqlDatabaseInstancesSummary,
     getPgSqlDatabaseInstancesDetails,
     getPgSqlDatabasesList,
-    getPgSqlPerformaceMetrics
+    getPgSqlPerformaceMetrics,
+    getPgSqlProtectionStatus
 };

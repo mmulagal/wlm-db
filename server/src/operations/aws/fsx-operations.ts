@@ -771,6 +771,30 @@ async function updateFsxBackup(
     }
 }
 
+async function isBackupAvailableForVolumeUuid(
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    volumeUuid: string
+) {
+    logger.info('Check if FSX for Windows AWS backup is enabled', { credentialsId, region, fsxId, volumeUuid });
+
+    const { volumeIds } = await getFsxnVolIdsFromOntapVolIds(credentialsId, region, fsxId, [volumeUuid]);
+    if (!isEmpty(volumeIds)) {
+        const input: DescribeBackupsCommandInput = {
+            Filters: [
+                {
+                    Name: 'volume-id',
+                    Values: volumeIds
+                }
+            ]
+        };
+        const backups = await describeFSxBackups(credentialsId, region, input);
+        const fsxnBackup = (backups.Backups?.length ?? 0) > 0;
+        return fsxnBackup;
+    }
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -789,5 +813,6 @@ export {
     getFsxnVolIdsFromOntapVolIds,
     updateVolumeSizeAndWaitForUpdate,
     getIscsiTargetAddresses,
-    updateFsxBackup
+    updateFsxBackup,
+    isBackupAvailableForVolumeUuid
 };
