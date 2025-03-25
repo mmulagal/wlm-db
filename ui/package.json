@@ -13,7 +13,7 @@
         "@svgr/rollup": "^8.1.0",
         "@vitejs/plugin-react-swc": "^3.8.0",
         "auth0-js": "^9.28.0",
-        "axios": "^1.7.9",
+        "axios": "^1.8.2",
         "classnames": "^2.5.1",
         "dom-to-image": "^2.6.0",
         "fflate": "^0.8.2",
