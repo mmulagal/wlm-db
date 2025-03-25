@@ -17,6 +17,7 @@ import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/c
 import { extractKbNumber } from '../../utils/utils';
 import { HttpErrorCodes } from '../../utils/consts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
+import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 
 const logger = getLogger();
 
@@ -190,6 +191,16 @@ async function managedHostMSSQLPatchAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+        if (errorMessage) {
+            await updateAsssementErrorInResourceMetadata(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                errorMessage,
+                'mssqlPatch'
+            );
+        }
     }
 
     return patchAssessment;
