@@ -633,7 +633,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         ) {
             apiCall = optimizeStorageSizing;
             payload = {
-                type: [cardData?.id]
+                configurationName: [cardData?.id]
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
@@ -643,7 +643,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 hostsToOptimize: [
                     {
-                        type: 'max-dop',
+                        configurationName: 'max-dop',
                         databaseHosts: [
                             {
                                 id: selectedResourceId,
@@ -660,7 +660,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 hostsToOptimize: [
                     {
-                        type: ['aws-backup'],
+                        configurationName: ['aws-backup'],
                         databaseHosts: [
                             {
                                 id: selectedResourceId,

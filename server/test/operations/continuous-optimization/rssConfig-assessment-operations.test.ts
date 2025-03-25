@@ -90,7 +90,8 @@ describe('calculateRssConfigDrift', () => {
             DEFAULT_AWS_REGION,
             activeNodeInstanceId,
             'test-resource',
-            'test-job-id'
+            'test-job-id',
+            RESOURCE_ID
         );
         expect(response?.rssConfigFinding).toBeDefined();
     });
