@@ -27,7 +27,8 @@ import {
     StartInstancesCommand,
     DescribeInstanceStatusCommand,
     ModifyInstanceAttributeCommand,
-    DescribeAddressesCommand
+    DescribeAddressesCommand,
+    paginateDescribeInstances
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
@@ -162,6 +163,8 @@ ec2Mock.on(DescribeKeyPairsCommand).resolves(keyPairsResponse);
 
 ec2Mock.on(DescribeNetworkInterfacesCommand).resolves(networkInterfaceResponse);
 
+ec2Mock.on(paginateDescribeInstances).resolves(describeInstanceResponse);
+
 ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstancesCommand) => {
     const instanceFilters = command?.Filters || [];
 
@@ -201,7 +204,7 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
         return { Reservations: reservations };
     }
 
-    if (command.InstanceIds[0] === TEST_STOPPED_EC2_INSTANCE_ID) {
+    if (command.InstanceIds?.[0] === TEST_STOPPED_EC2_INSTANCE_ID) {
         const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
         dummyResevation.Instances[0].State.Name = 'stopped';
         return { Reservations: [dummyResevation] };
@@ -220,7 +223,7 @@ ec2Mock.on(DescribeVolumesCommand).callsFake(async (command: DescribeVolumesComm
     // Get the VolumeIds from the command parameters if not passed assign a random volumeId
     const volumeIds = command.VolumeIds ? command.VolumeIds : [`vol-${faker.string.alphanumeric(8)}`];
 
-    const volumes: Volume[] = volumeIds.map(volumeId => ({
+    const volumes: Volume[] = volumeIds?.map(volumeId => ({
         VolumeId: volumeId,
         AvailabilityZone: 'us-east-1a',
         Attachments: [

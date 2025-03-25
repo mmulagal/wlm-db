@@ -1,0 +1,36 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "H3JZMZGFPYFE3DSM",
+        "extendedRequestId": "5gNxynV5pQgs/kmecMtXoUq/0PCDHxD563XvbpjUJC4MIij7e/Ab8M7pHJC3V3V3jrkusxCQNQ8=",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "InstanceInformationList": [
+        {
+            "InstanceId": "i-039eb3334526ae1ca",
+            "PingStatus": "Online",
+            "LastPingDateTime": "2025-02-24T23:24:39.249000+05:30",
+            "AgentVersion": "3.3.1802.0",
+            "IsLatestVersion": true,
+            "PlatformType": "Linux",
+            "PlatformName": "Amazon Linux",
+            "PlatformVersion": "2023",
+            "ResourceType": "EC2Instance",
+            "IPAddress": "10.20.30.92",
+            "ComputerName": "ip-10-20-30-92.ec2.internal",
+            "AssociationStatus": "Failed",
+            "LastAssociationExecutionDate": "2025-02-24T23:21:36.514000+05:30",
+            "AssociationOverview": {
+                "DetailedStatus": "Failed",
+                "InstanceAssociationStatusAggregatedCount": {
+                    "Failed": 2,
+                    "Skipped": 2,
+                    "Success": 2
+                }
+            },
+            "SourceId": "i-039eb3334526ae1ca",
+            "SourceType": "AWS::EC2::Instance"
+        }
+    ]
+}

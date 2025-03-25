@@ -10,7 +10,8 @@ import {
     getParameter,
     describeInstancePatchStates,
     describeInstancePatches,
-    listSsmCommands
+    listSsmCommands,
+    describeInstanceInformation
 } from '../../../src/lib/aws/ssm';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
@@ -140,5 +141,18 @@ describe('sendSSMCommand', () => {
         };
         const response = await listSsmCommands(credentialsId, 'us-east-1', params);
         expect(response.Commands?.length).toEqual(0);
+    });
+
+    it('Describe instance information', async () => {
+        const params = {
+            Filters: [
+                {
+                    Key: 'InstanceIds',
+                    Values: ['i-039eb3334526ae1ca']
+                }
+            ]
+        };
+        const response = await describeInstanceInformation(credentialsId, 'us-east-1', params);
+        expect(response.length).toEqual(1);
     });
 });

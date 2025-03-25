@@ -88,7 +88,8 @@ import {
     PGSQL_MASTER_TEMPLATE_PATH,
     AL2023_AMI_NAME,
     CF_QUOTA_REACHED,
-    HA
+    HA,
+    AMAZON_LINUX_AMI_PATH
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -837,11 +838,7 @@ async function getPGSQLTerraformSetup(
     const { sqlServerName } = sqlConfiguration;
 
     try {
-        const amazonLinuxAmis = await getParametersByPath(
-            credentialsId,
-            region,
-            '/aws/service/ami-amazon-linux-latest'
-        );
+        const amazonLinuxAmis = await getParametersByPath(credentialsId, region, AMAZON_LINUX_AMI_PATH);
         const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
         if (al2023AmiId) {
             sqlConfiguration.sqlAmiId = al2023AmiId;

@@ -574,7 +574,11 @@ function getArtifactsRegionBucketName(region: string) {
 function sqlResponseParsing(response: string) {
     try {
         // Some responses have \\r\\n in them, so repeating this step twice to remove all of them
-        const cleanResponse = response.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
+        const cleanResponse = response
+            .replaceAll('\r\n', '')
+            ?.replaceAll('\\r\\n', '')
+            ?.replaceAll('\n', '')
+            ?.replaceAll('\\n', '');
         const jsonResponse = JSON.parse(cleanResponse);
         return jsonResponse;
     } catch (error) {
@@ -954,6 +958,10 @@ function divideArrayIntoChunks(array: any[], chunkSize: number) {
     return chunksArray;
 }
 
+function isValidProp(propName: string) {
+    return propName && propName !== 'undefined' && propName !== 'null';
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1009,5 +1017,6 @@ export {
     isValidEmail,
     isRateLimited,
     parseMultipleCommandResponse,
-    divideArrayIntoChunks
+    divideArrayIntoChunks,
+    isValidProp
 };

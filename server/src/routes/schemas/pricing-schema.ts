@@ -4,8 +4,8 @@ import { AccountIdParams } from '../types/generic.types';
 
 const CalculatePriceSchema = {
     tags: [RouteTags.PRICING],
-    summary: 'MSSQL Server deployment cost estimation',
-    description: 'Estimates monthly cost of deployable resources in USD for MSSQL server',
+    summary: 'Database Server deployment cost estimation',
+    description: 'Estimates monthly cost of deployable resources in USD for the given database server configuration',
     params: AccountIdParams,
     body: PricingServiceRequest,
     response: {
