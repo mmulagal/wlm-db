@@ -817,9 +817,18 @@ function extractKbNumber(displayName: string): string | null {
     return match ? match[1] : null;
 }
 
-function extractVersionYear(sqlVersion: string) {
-    const match = sqlVersion.match(/Microsoft SQL Server (\d{4})/);
-    return match ? match[1] : 'Unknown';
+function extractVersionDetails(sqlVersion: string) {
+    const normalizedSqlVersion = sqlVersion.trim();
+
+    const match = normalizedSqlVersion.match(/Microsoft SQL Server (\d{4})/);
+
+    const dateMatch = normalizedSqlVersion.match(/(\w{3}\s+\d{1,2}\s+\d{4})/);
+    const releaseDate = dateMatch ? dateMatch[1] : 'Unknown';
+
+    return {
+        version: match ? match[1] : 'Unknown',
+        releaseDate
+    };
 }
 
 function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: string) {
@@ -1003,7 +1012,7 @@ export {
     parsePgSqlInstanceInfo,
     getServerNameWithHostname,
     extractKbNumber,
-    extractVersionYear,
+    extractVersionDetails,
     isMssql,
     isPgsql,
     isValidEmail,
