@@ -585,7 +585,10 @@ const InstancesTable = () => {
                     }
 
                     if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
-                        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+                        if (
+                            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                            rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
+                        ) {
                             disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
                             return true;
                         } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
@@ -595,9 +598,7 @@ const InstancesTable = () => {
                     }
 
                     if (
-                        (!cellData &&
-                            rowData.statusColText !== INVENTORY_STATUS.IN_PROGRESS &&
-                            !rowData?.optimizationStatusLoading) ||
+                        (!cellData && !rowData?.optimizationStatusLoading) ||
                         cellData === INVENTORY_STATUS.IN_PROGRESS
                     ) {
                         disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
@@ -621,8 +622,7 @@ const InstancesTable = () => {
                                 />
                                 <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                             </div>
-                        ) : rowData?.optimizationStatusLoading ||
-                          rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS ? (
+                        ) : rowData?.optimizationStatusLoading ? (
                             <DsFlashingDotsLoader />
                         ) : (
                             <div className={styles.statusCol}>
