@@ -643,7 +643,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 hostsToOptimize: [
                     {
-                        type: 'max-dop',
+                        configurationName: 'max-dop',
                         databaseHosts: [
                             {
                                 id: selectedResourceId,
@@ -660,7 +660,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 hostsToOptimize: [
                     {
-                        type: ['aws-backup'],
+                        configurationName: ['aws-backup'],
                         databaseHosts: [
                             {
                                 id: selectedResourceId,

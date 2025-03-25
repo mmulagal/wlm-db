@@ -208,7 +208,7 @@ const OptimizeInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'rss-config',
+                            configurationName: 'rss-config',
                             databaseHosts: [
                                 {
                                     id: selectedHostname,
@@ -225,7 +225,7 @@ const OptimizeInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'rss-config',
+                            configurationName: 'rss-config',
                             databaseHosts: [
                                 {
                                     id: selectedHostname,
@@ -278,7 +278,7 @@ const OptimizeInnerPage = () => {
             const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
             if (operation === 'bulk') {
                 payload = {
-                    type: ['snapshot-policy'],
+                    configurationName: ['snapshot-policy'],
                     params: [
                         {
                             snapshotPolicy: {
@@ -294,7 +294,7 @@ const OptimizeInnerPage = () => {
                 };
             } else {
                 payload = {
-                    type: ['snapshot-policy'],
+                    configurationName: ['snapshot-policy'],
                     params: [
                         {
                             snapshotPolicy: {
