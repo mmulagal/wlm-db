@@ -152,6 +152,7 @@ export interface InventoryTableInstanceDatInterface {
         serverEdition?: string;
         serverVersion?: string;
     };
+    sqlServerDeploymentType?: string;
 }
 
 export interface StorageInterface {
