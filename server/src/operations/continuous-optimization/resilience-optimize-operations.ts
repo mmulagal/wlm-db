@@ -340,8 +340,8 @@ async function handleResiliecyOptimize(
         databaseHostId,
         request
     });
-    const shouldOptimizeSnapshotPolicy = !!request.type.filter(
-        type => type === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
+    const shouldOptimizeSnapshotPolicy = !!request.configurationName.filter(
+        configurationName => configurationName === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
     ).length;
     const params = request.params!;
     const { instanceRecord, instanceMetadata } = await getActiveNodeInfo(

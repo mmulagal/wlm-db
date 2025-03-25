@@ -127,7 +127,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'compute',
+                            configurationName: 'compute',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -171,15 +171,19 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'rss-config',
+                            configurationName: 'rss-config',
                             databaseHosts: Object.values(
                                 //@ts-ignore
-                                rowData.reduce((acc, { hostName, instanceId, networkAdapters }) => {
-                                    if (!acc[hostName]) {
-                                        acc[hostName] = { id: hostName, sqlServerInstances: [], networkAdapters: [] };
+                                rowData.reduce((acc, { databaseHostId, instanceId, networkAdapters }) => {
+                                    if (!acc[databaseHostId]) {
+                                        acc[databaseHostId] = {
+                                            id: databaseHostId,
+                                            sqlServerInstances: [],
+                                            networkAdapters: []
+                                        };
                                     }
-                                    acc[hostName].sqlServerInstances.push(instanceId);
-                                    acc[hostName].networkAdapters.push(...networkAdapters);
+                                    acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                    acc[databaseHostId].networkAdapters.push(...networkAdapters);
                                     return acc;
                                 }, {})
                             )
@@ -191,10 +195,10 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'rss-config',
+                            configurationName: 'rss-config',
                             databaseHosts: [
                                 {
-                                    id: rowData?.hostName,
+                                    id: rowData?.databaseHostId,
                                     sqlServerInstances: [rowData?.instanceId],
                                     networkAdapters: rowData?.networkAdapters
                                 }
@@ -214,7 +218,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type:
+                            configurationName:
                                 type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                                     ? 'log-drive-size'
                                     : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
@@ -241,7 +245,7 @@ const DashboardInnerPage = () => {
             } else {
                 apiCall = optimizeStorageSizing;
                 payload = {
-                    type:
+                    configurationName:
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                             ? 'log-drive-size'
                             : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
@@ -256,7 +260,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'storage-tier',
+                            configurationName: 'storage-tier',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -285,7 +289,7 @@ const DashboardInnerPage = () => {
             const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
 
             payload = {
-                type: ['snapshot-policy'],
+                configurationName: ['snapshot-policy'],
                 params: [
                     {
                         snapshotPolicy: {
@@ -304,7 +308,7 @@ const DashboardInnerPage = () => {
             payload = {
                 hostsToOptimize: [
                     {
-                        type: ['aws-backup'],
+                        configurationName: ['aws-backup'],
                         databaseHosts: [
                             {
                                 id: rowData?.databaseHostId,
@@ -323,7 +327,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'max-dop',
+                            configurationName: 'max-dop',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -353,7 +357,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'max-dop',
+                            configurationName: 'max-dop',
                             databaseHosts: [
                                 {
                                     id: rowData?.databaseHostId,

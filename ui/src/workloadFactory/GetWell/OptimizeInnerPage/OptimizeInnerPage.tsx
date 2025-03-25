@@ -208,10 +208,10 @@ const OptimizeInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'rss-config',
+                            configurationName: 'rss-config',
                             databaseHosts: [
                                 {
-                                    id: selectedHostname,
+                                    id: selectedResourceId,
                                     sqlServerInstances: [selectedDatabaseInstance],
                                     networkAdapters: selectedRowsForOptimizeInnerPage.map(
                                         (item: any) => item?.adapterName
@@ -225,10 +225,10 @@ const OptimizeInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'rss-config',
+                            configurationName: 'rss-config',
                             databaseHosts: [
                                 {
-                                    id: selectedHostname,
+                                    id: selectedResourceId,
                                     sqlServerInstances: [selectedDatabaseInstance],
                                     networkAdapters: [singleRowData?.adapterName]
                                 }
@@ -243,7 +243,7 @@ const OptimizeInnerPage = () => {
         ) {
             apiCall = optimizeStorageSizing;
             payload = {
-                type: [selectedOptimizeConfig?.data?.id]
+                configurationName: [selectedOptimizeConfig?.data?.id]
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) {
             apiCall = optimizeStorageSizing;
@@ -278,7 +278,7 @@ const OptimizeInnerPage = () => {
             const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
             if (operation === 'bulk') {
                 payload = {
-                    type: ['snapshot-policy'],
+                    configurationName: ['snapshot-policy'],
                     params: [
                         {
                             snapshotPolicy: {
@@ -294,7 +294,7 @@ const OptimizeInnerPage = () => {
                 };
             } else {
                 payload = {
-                    type: ['snapshot-policy'],
+                    configurationName: ['snapshot-policy'],
                     params: [
                         {
                             snapshotPolicy: {

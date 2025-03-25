@@ -70,7 +70,8 @@ describe('Compute assessment operations', () => {
             DEMO_AWS_ACCOUNT_ID,
             'i-07e76a4b916548dc0',
             'test-resource',
-            'test-job-id'
+            'test-job-id',
+            RESOURCE_ID
         );
         expect(response?.finding).toBeDefined();
     });

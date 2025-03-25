@@ -12,6 +12,7 @@ import {
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
+import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { GET_RSS_CONFIG_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
@@ -106,6 +107,7 @@ async function managedHostsRssConfigAssessment(
     activeNodeInstanceId: string,
     resourceName: string,
     parentJobId?: string,
+    databaseHostId?: string,
     metadata?: Metadata
 ) {
     logger.info('Managed hosts rss config assessment', {
@@ -149,6 +151,16 @@ async function managedHostsRssConfigAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+        if (errorMessage) {
+            await updateAsssementErrorInResourceMetadata(
+                accountId,
+                databaseHostId!,
+                credentialsId,
+                region,
+                errorMessage,
+                'rssConfig'
+            );
+        }
     }
 
     return rssConfigAssessment;

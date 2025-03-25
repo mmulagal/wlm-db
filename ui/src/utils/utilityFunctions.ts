@@ -1576,7 +1576,7 @@ export const removeOldApisError = (data: any) => {
         if (
             data?.originalArgs &&
             (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialsId) ||
-                !headerSelectedMultiRegionIdsList(data?.originalArgs?.regionId))
+                !headerSelectedMultiRegionIdsList.includes(data?.originalArgs?.regionId))
         ) {
             return true;
         } else {
