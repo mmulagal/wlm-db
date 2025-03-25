@@ -565,12 +565,13 @@ async function driftAssessmentDataCollection(
                 }
             ]);
         } catch (error) {
+            const databaseInstanceId = databaseInstanceRecord.id;
             logger.error('Error while persisting mapped ontap volumes data', {
                 accountId,
                 credentialsId,
                 region,
                 databaseHostId,
-                databaseInstanceRecord,
+                databaseInstanceId,
                 error
             });
         }
