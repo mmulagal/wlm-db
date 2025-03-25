@@ -11,6 +11,7 @@ import {
     getDiscoveredHostDeploymentV2,
     getOptimizationStatus,
     getProtectionText,
+    sortInstanceTableData,
     sortInventoryTableData,
     uniqueHostRow
 } from './InventoryUtilsV2';
@@ -26,6 +27,7 @@ const InventoryV2 = () => {
         allmssqlHostAssessmentLoading,
         allmssqlHostAssessmentData
     } = useAppSelector(state => state.inventoryV2);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
 
     useEffect(() => {
         if (inventoryTableData) {
@@ -38,6 +40,12 @@ const InventoryV2 = () => {
                     return;
                 }
                 if (inventoryTableData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
+                    return;
+                }
+                if (
+                    !headerSelectedMultiCredIdsList.includes(inventoryTableData[key]?.credentialId) ||
+                    !headerSelectedMultiRegionIdsList.includes(inventoryTableData[key]?.regionId)
+                ) {
                     return;
                 }
                 let instanceList: any = [];
@@ -114,7 +122,13 @@ const InventoryV2 = () => {
                             subLoading: perRow?.loading,
                             optimizationStatusLoading: optimizationStatusLoading,
                             optimizationStatus: optimizationStatus,
-                            protectionText: protectionText,
+                            protectionText:
+                                protectionText === PROTECTION_TEXT_STATUS.YES
+                                    ? 'Protected'
+                                    : protectionText === PROTECTION_TEXT_STATUS.NO
+                                    ? 'Not Protected'
+                                    : GENERAL.NOT_AVAILABLE,
+
                             allocatedCapacityText: perRow?.allocatedCapacity
                                 ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
                                 : '',
@@ -192,7 +206,7 @@ const InventoryV2 = () => {
             dispatch(
                 setInventoryTablesRows({
                     hosts: sortInventoryTableData(hostTableRows),
-                    instances: instanceTableRows,
+                    instances: sortInstanceTableData(instanceTableRows),
                     databases: databaseTableRows
                 })
             );

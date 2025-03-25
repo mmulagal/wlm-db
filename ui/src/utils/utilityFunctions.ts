@@ -191,6 +191,10 @@ export const categorizeStorageSize = (value: string): string => {
     }
 };
 
+export const backupStartTime = (selectedAWSBackup: any) => {
+    return `${selectedAWSBackup?.hour}:${selectedAWSBackup?.minute}`;
+};
+
 // Helper function to convert "GiB" into bytes
 const convertToBytes = (sizeStr: string): number => {
     const units: { [key: string]: number } = {
@@ -1572,7 +1576,7 @@ export const removeOldApisError = (data: any) => {
         if (
             data?.originalArgs &&
             (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialsId) ||
-                !headerSelectedMultiRegionIdsList(data?.originalArgs?.regionId))
+                !headerSelectedMultiRegionIdsList.includes(data?.originalArgs?.regionId))
         ) {
             return true;
         } else {

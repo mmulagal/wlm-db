@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import {
+    OntapVolumeType,
     ParameterDriftResponseType,
     ResilienceDriftAssessmentResponseType,
     SnapshotPolicyAssesmentDataType
@@ -193,11 +194,12 @@ async function getSnapshotPolicyDriftData(
                 parseInt(volDetails?.[OptimizeStorageConfigs.MOST_RECENT_SNAPSHOT_TIMESTAMP] ?? 0, 10)
             );
             if (
-                isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
-                volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none' ||
+                (isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
+                    volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none') &&
                 latestSnapshotTimestamp <= new Date(moment().subtract(2, 'days').format())
             ) {
-                snapshotPolicyAssesmentData.violations.push(volDetails?.name);
+                const vol: OntapVolumeType = { ontapVolumeName: volDetails?.name, ontapVolumeUuid: volDetails?.uuid };
+                snapshotPolicyAssesmentData.violations.push(vol);
             }
         });
         if (isDemoFlow) {
@@ -439,6 +441,7 @@ async function initiateCrossRegionResiliencyAssessment(
         }
     ]);
 }
+
 async function getCrrDriftData(
     accountId: string,
     credentialsId: string,

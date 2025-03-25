@@ -46,6 +46,7 @@ import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDi
 import store from '../../../store/store';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { handleDialog } from './optimizeUtils';
+import { backupStartTime } from '../../../utils/utilityFunctions';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -657,14 +658,18 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             const state = store.getState();
             const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
             payload = {
-                type: ['aws-backup'],
-                databaseHosts: [
+                hostsToOptimize: [
                     {
-                        id: selectedResourceId,
-                        sqlServerInstances: [selectedDatabaseInstance],
-                        fsxFileSystemId: selectedRowFsxId,
-                        backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                        backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
+                        type: ['aws-backup'],
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                sqlServerInstances: [selectedDatabaseInstance],
+                                fsxFileSystemId: selectedRowFsxId,
+                                backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                                backupStartTime: backupStartTime(selectedAWSBackup)
+                            }
+                        ]
                     }
                 ]
             };

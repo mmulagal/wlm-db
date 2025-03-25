@@ -335,8 +335,6 @@ interface LogDriveDetails {
     lunUuid: string;
     svmName: string;
     databaseName: string;
-    logDrivePath: string;
-    dataDrivePath: string;
     logAccessPath: string;
     dataAccessPath: string;
     logDriveLetter: string;
@@ -491,6 +489,12 @@ interface DatabaseInstancesIncludingResource extends DatabaseInstances {
 interface StorageTierParams extends OptimizeParams {
     svmId: string;
     svmName: string;
+    volumesToOptimize?: string[];
+}
+
+interface AwsFsxNBackupConfig {
+    automaticBackupRetentionDays: number;
+    dailyAutomaticBackupStartTime: string;
 }
 
 export {
@@ -532,5 +536,6 @@ export {
     PgSqlInstanceDetails,
     RssConfigAssesment,
     MaxDOPAssesment,
-    PatchDetail
+    PatchDetail,
+    AwsFsxNBackupConfig
 };

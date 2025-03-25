@@ -251,12 +251,12 @@ const OptimizeInnerPage = () => {
             if (operation === 'bulk') {
                 payload = {
                     configurationName: 'log-drive-size',
-                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.ontapVolumeName)
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.logAccessPath)
                 };
             } else {
                 payload = {
                     configurationName: 'log-drive-size',
-                    objectsToOptimize: [singleRowData?.ontapVolumeName]
+                    objectsToOptimize: [singleRowData?.logAccessPath]
                 };
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
@@ -284,11 +284,11 @@ const OptimizeInnerPage = () => {
                             snapshotPolicy: {
                                 uuid: selectedSnapshot?.data?.uuid,
                                 name: selectedSnapshot?.data?.name
-                            }
-                            // volumes: selectedRowsForOptimizeInnerPage.map(({ volumeName, id }: any) => ({
-                            //     ontapVolumeName: volumeName,
-                            //     ontapVolumeUuid: id
-                            // }))
+                            },
+                            volumes: selectedRowsForOptimizeInnerPage.map(({ volumeName, ontapVolumeUuid }: any) => ({
+                                ontapVolumeName: volumeName,
+                                ontapVolumeUuid: ontapVolumeUuid
+                            }))
                         }
                     ]
                 };
@@ -300,11 +300,13 @@ const OptimizeInnerPage = () => {
                             snapshotPolicy: {
                                 uuid: selectedSnapshot?.data?.uuid,
                                 name: selectedSnapshot?.data?.name
-                            }
-                            // volumes: {
-                            //     ontapVolumeName: singleRowData?.volumeName,
-                            //     ontapVolumeUuid: singleRowData?.id
-                            // }
+                            },
+                            volumes: [
+                                {
+                                    ontapVolumeName: singleRowData?.volumeName,
+                                    ontapVolumeUuid: singleRowData?.ontapVolumeUuid
+                                }
+                            ]
                         }
                     ]
                 };
@@ -404,6 +406,7 @@ const OptimizeInnerPage = () => {
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
                         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        dispatch(setLandingFromInnerPage(true));
                     }
                 }, 1000);
 
@@ -420,7 +423,10 @@ const OptimizeInnerPage = () => {
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                type
+                type,
+                '',
+                {},
+                true
             );
         });
     };

@@ -886,6 +886,12 @@ async function fetchDriftAssessment(
         databaseInstanceId,
         fields
     });
+    try {
+        await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    } catch (error) {
+        logger.error('Error fetching instance details:', error);
+        throw error;
+    }
 
     let shouldCalculateStorageAssessment = false;
     let shouldCalculateComputeAssessment = false;
@@ -958,7 +964,7 @@ async function fetchDriftAssessment(
             : Promise.resolve({})
     ]);
 
-    if (!isEmpty(storageAssessmentResponse)) {
+    if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;

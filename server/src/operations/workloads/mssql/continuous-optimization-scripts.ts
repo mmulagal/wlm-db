@@ -101,18 +101,27 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             $responseObject = [ordered]@{}
             $responseObject['data'] = @()
             $responseObject['log'] = @()
-             $responseObject['tempDb'] = @()
+            $responseObject['tempDb'] = @()
+            $partitionmap = @{}
             $winvolumes = $sqlresponse | ConvertFrom-Json
             foreach ($winvolume in $winvolumes) {
                 # check in winvolume volume id is null or empty string
                 if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
-                    
-                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
-                    $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
+                    if( -not $partitionmap.Contains( $winvolume.volumeid ) ) {
+                        $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
+                        $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
+                        $partitionmap[$winvolume.volumeid] = @{"volume"= $vol
+                                                      "partition" = $partition
+                                         }
+                    } else {
+                        $vol = $partitionmap[$winvolume.volumeid]["volume"]
+                        $partition = $partitionmap[$winvolume.volumeid]["partition"]
+                
+                }
+                
                     if ($vol.bustype -eq 'iscsi') {
                         $object = @{
                         "name" = $winvolume.name
-                        "fileName" = $winvolume.filename
                         "lunSerialNumber" = $vol.serialnumber
                         "sizeInMb" = $winvolume.sizeInMb
                         "diskNumber" = $vol.number
@@ -136,14 +145,14 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
     
             $QueryFilter = ''
-            foreach ($vol in $responseObject.data) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
-            }
-            foreach ($vol in $responseObject.log) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
-            }
-            foreach ($vol in $responseObject.tempDb) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
+            $serialNumbers = @()
+            $serialNumbers += $responseObject.data | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers += $responseObject.log | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers += $responseObject.tempDb | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers = $serialNumbers | Select-Object -Unique
+
+            foreach ($serialNumber in $serialNumbers) {
+                $QueryFilter += $serialNumber + '|'
             }
             $QueryFilter = $QueryFilter.TrimEnd('|')
             $Params = @{
@@ -345,7 +354,6 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
                         $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
                     }
                     $driveObject | Add-Member -MemberType NoteProperty -Name "logDriveLetter" -Value $logDrive.logDriveLetter 
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "logDrivePath" -Value $logDrive.logDrivePath
                     $driveObject | Add-Member -MemberType NoteProperty -Name "logDriveTotalSizeMB" -Value $logDrive.logDriveTotalSizeMB
                     $allDriveDetails += $driveObject
                 }
@@ -375,7 +383,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     if($netappDataDrives -notcontains $defaultDataDriveDetails.dataDriveLetter) 
     {
         $driveDetailsErrors["instanceDataDrivesError"] = "Data drive is not a NetApp drive."
-        Write-Information "Data drive is not a NetApp drive. $defaultDataDriveDetails"
+        Write-Information "Data drive $defaultDataDriveDetails.dataDriveLetter is not a NetApp drive."
     }
     else {
     if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails )) {
@@ -386,7 +394,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
    if($netappDataDrives -notcontains $defaultLogDriveDetails.logDriveLetter) 
     {
         $driveDetailsErrors["instanceLogDrivesError"] = "Log drive is not a NetApp drive."
-        Write-Information "Log drive is not a NetApp drive. $defaultLogDriveDetails"
+        Write-Information "Log drive $defaultLogDriveDetails.logDriveLetter is not a NetApp drive."
     }
     else {
     $defaultLogDrive = 'shared-drive'
@@ -399,7 +407,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     if($netappDataDrives -notcontains $defaultTempDBDriveDetails.tempdbDriveLetter) 
     {
         $driveDetailsErrors["instanceTempDBDriveError"] = "TempDB drive is not a NetApp drive."
-        Write-Information "TempDB drive is not a NetApp drive. $defaultTempDBDriveDetails"
+        Write-Information "TempDB drive $defaultTempDBDriveDetails.tempdbDriveLetter is not a NetApp drive."
     }
     else {
     if(($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter) -and ($defaultTempDBDriveDetails -notcontains $defaultLogDriveDetails.logDriveLetter)) {
@@ -724,8 +732,47 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $DriftAssessmentData['layout']['default-log-files-location'] =  $defaultLogDrive;
         }
 
-        $DriftAssessmentData['layout']['user-database-layout'] = $($responseObject)
+        $SimplifiedDataDriveDetails = @()
+        foreach($drive in $responseObject.data) {
+            $Detail = $SimplifiedDataDriveDetails | Where-Object { $_.diskNumber -eq $drive.diskNumber }
+             $object = @{
+                    "name" = $drive.name
+                    "sizeInMb" = $drive.sizeInMb
+                }
+            if($null -eq $Detail) {
+                $drive.PSObject.Properties.Remove('name')
+                $drive.PSObject.Properties.Remove('sizeInMb')
+                $drive.databaseDetails = @($object)
+                $SimplifiedDataDriveDetails += $drive
+            }  else {
+                $Detail.databaseDetails += $object
+            }
+        }
 
+        $SimplifiedLogDriveDetails = @()
+        foreach($drive in $responseObject.log) {
+            $Detail = $SimplifiedLogDriveDetails | Where-Object { $_.diskNumber -eq $drive.diskNumber }
+            $object = @{
+                    "name" = $drive.name
+                    "sizeInMb" = $drive.sizeInMb
+                }
+            if($null -eq $Detail) {
+                $drive.PSObject.Properties.Remove('name')
+                $drive.PSObject.Properties.Remove('sizeInMb')
+                $drive.databaseDetails = @($object)
+                $SimplifiedLogDriveDetails += $drive
+            }  else {
+               
+                $Detail.databaseDetails += $object
+            }
+        }
+
+        $userDatabaseLayout = @{
+            "data" = $SimplifiedDataDriveDetails
+            "log" = $SimplifiedLogDriveDetails
+            "tempDb" = $responseObject.tempDb
+        }
+        $DriftAssessmentData['layout']['user-database-layout'] = $($userDatabaseLayout)
 
         $DriftAssessmentData['sizing'] = @{}
         if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"] ))) {
@@ -736,7 +783,18 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         }
 
         $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierDetails);
-        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($consolidatedDriveDetails));
+
+        $SimplifiedDriveDetails = @()
+        foreach($drive in $consolidatedDriveDetails) {
+            $Detail = $SimplifiedDriveDetails | Where-Object { $_.logAccessPath -eq $drive.logAccessPath -and $_.dataAccessPath -eq $drive.dataAccessPath }
+            if($null -eq $Detail) {
+                $SimplifiedDriveDetails += $drive
+            }  else {
+                $Detail.databaseName =  $Detail.databaseName + ',' + $drive.databaseName
+            }
+        }
+
+        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($SimplifiedDriveDetails));
         
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
@@ -811,7 +869,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $DriftAssessmentData['os']['ntfs-allocation-unit-size'] = $($ntfsUnitSize)
     } catch {$DriftAssessmentData['errors']['ntfs-allocation'] = $_.Exception.Message}
 
-    $response = $DriftAssessmentData | ConvertTo-Json -Depth 5
+    $response = $DriftAssessmentData | ConvertTo-Json -Depth 8 -Compress
 
     if([string]::IsNullOrEmpty($response)) {
         throw "Failed to compress the response because the response is either null or empty. $response"

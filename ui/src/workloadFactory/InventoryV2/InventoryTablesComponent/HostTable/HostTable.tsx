@@ -129,6 +129,9 @@ const HostTable = () => {
         checkForAllFsxnManagedInstance: boolean,
         checkForAllStorageType: boolean
     ) => {
+        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+            return GENERAL.PGSQL_CTA_NA;
+        }
         //Condition if installation mode is AOAG than disable manage
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
             return GENERAL.AOAG_MANAGE_DISABLE;
@@ -234,42 +237,70 @@ const HostTable = () => {
     const findManageOption = (rowData: any) => {
         let disableOption = false;
         let disableMessage: any = '';
-        const checkForAllManaged = rowData?.sqlServerInstances?.every(
-            (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
-        );
-        const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
-            (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
-        );
-        const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
-            (item: any) =>
-                item?.statusColText === INVENTORY_STATUS.UNDETECTED || item?.statusColText === INVENTORY_STATUS.MANAGED
-        );
-        const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
-            (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
-        );
-        const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
-            return (
-                (item?.statusColText === INVENTORY_STATUS.MANAGED && item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
-                (item?.statusColText !== INVENTORY_STATUS.MANAGED && item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
-            );
-        });
-        const checkForAllStorageType = rowData?.sqlServerInstances?.every(
-            (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
-        );
-
-        disableMessage = manageDisableMsg(
-            rowData,
-            checkForAllManaged,
-            checkForAllUnDetectInstance,
-            checkForAllUnDetectOrManageInstance,
-            checkForAllUnManagedInstance,
-            checkForAllFsxnManagedInstance,
-            checkForAllStorageType
-        );
-        if (disableMessage) {
+        if (
+            rowData?.status === INVENTORY_STATUS.STOPPED ||
+            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
+            rowData?.status === INVENTORY_STATUS.OFFLINE
+        ) {
             disableOption = true;
+            disableMessage = GENERAL.HOST_DOWN;
+        } else {
+            const checkForAllManaged = rowData?.sqlServerInstances?.every(
+                (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
+            );
+            const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
+                (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
+            );
+            const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
+                (item: any) =>
+                    item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                    item?.statusColText === INVENTORY_STATUS.MANAGED
+            );
+            const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
+                (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
+            );
+            const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
+                return (
+                    (item?.statusColText === INVENTORY_STATUS.MANAGED &&
+                        item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
+                    (item?.statusColText !== INVENTORY_STATUS.MANAGED && item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
+                );
+            });
+            const checkForAllStorageType = rowData?.sqlServerInstances?.every(
+                (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
+            );
+
+            disableMessage = manageDisableMsg(
+                rowData,
+                checkForAllManaged,
+                checkForAllUnDetectInstance,
+                checkForAllUnDetectOrManageInstance,
+                checkForAllUnManagedInstance,
+                checkForAllFsxnManagedInstance,
+                checkForAllStorageType
+            );
+            if (disableMessage) {
+                disableOption = true;
+            }
         }
         return { disableOption, disableMessage };
+    };
+
+    const findDatabaseOption = (rowData: any) => {
+        let disableOptionDatabase = false;
+        let disableMessageDatabase: any = '';
+        if (
+            rowData?.status === INVENTORY_STATUS.STOPPED ||
+            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
+            rowData?.status === INVENTORY_STATUS.OFFLINE
+        ) {
+            disableOptionDatabase = true;
+            disableMessageDatabase = GENERAL.HOST_DOWN;
+        } else if (rowData?.managedInstance <= 0) {
+            disableOptionDatabase = true;
+            disableMessageDatabase = GENERAL.DATABASE_AVAILABLE_MSG;
+        }
+        return { disableOptionDatabase, disableMessageDatabase };
     };
 
     const DatabasesColDefs: ColumnProps[] = [
@@ -495,6 +526,7 @@ const HostTable = () => {
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 const { disableOption, disableMessage } = findManageOption(rowData);
+                const { disableOptionDatabase, disableMessageDatabase } = findDatabaseOption(rowData);
                 const menu = [
                     {
                         id: 'manage',
@@ -508,7 +540,9 @@ const HostTable = () => {
                     },
                     {
                         id: 'viewDatabases',
-                        displayName: 'View databases'
+                        displayName: 'View databases',
+                        disabled: disableOptionDatabase,
+                        infoText: disableMessageDatabase
                     }
                 ];
 
@@ -598,7 +632,7 @@ const HostTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Hosts"
                         singularTitle="Host"
-                        exportToCsvOptions={{ fileName: 'hostTable.csv' }}
+                        exportToCsvOptions={{ fileName: `hostTable-${Date.now()}.csv` }}
                         className={styles.topBarStyle}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                         actionsRight={

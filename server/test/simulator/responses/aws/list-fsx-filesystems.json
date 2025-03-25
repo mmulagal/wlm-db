@@ -8,8 +8,6 @@
             "Lifecycle": "AVAILABLE",
             "NetworkInterfaceIds": ["eni-0f21c7486b651ca11", "eni-01a4d0d5f61d75ee4"],
             "OntapConfiguration": {
-                "AutomaticBackupRetentionDays": 30,
-                "DailyAutomaticBackupStartTime": "15:30",
                 "DeploymentType": "MULTI_AZ_1",
                 "DiskIopsConfiguration": {
                     "Iops": 3072,

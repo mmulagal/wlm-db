@@ -316,6 +316,9 @@ const DatabasesTable = () => {
                 if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
                     disableOption = true;
                     disableMessage = 'Create sandbox option is not available for PostgreSQL databases.';
+                } else if (rowData?.type === GENERAL.SYSTEM_DATABASE) {
+                    disableOption = true;
+                    disableMessage = 'Create sandbox option is not available for system database.';
                 }
                 const menu = [
                     {
@@ -384,7 +387,7 @@ const DatabasesTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Databases"
                         singularTitle="Database"
-                        exportToCsvOptions={{ fileName: 'databaseTable.csv' }}
+                        exportToCsvOptions={{ fileName: `databaseTable-${Date.now()}.csv` }}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     />
                     <Table

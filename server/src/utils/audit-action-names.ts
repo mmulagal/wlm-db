@@ -28,33 +28,41 @@ const storageOSDescriptions: { [key: string]: string } = {
     'mpio-enabled': 'Multipath I/O Status'
 };
 
+const resiliencyDescriptions: { [key: string]: string } = {
+    'snapshot-policy': 'Snapshot policy'
+};
+
 const getActionName = (request: FastifyRequest) => {
+    let param = '';
+    const { body } = castRequest(request);
+
     switch (true) {
         case request.url.includes('/optimize/storage-sizing'): {
-            const { body } = castRequest(request);
             if (body && body?.type && body.type.length > 0) {
-                const param = storageSizingDescriptions[body.type[0]] || 'storage sizing';
-                return `Optimize ${param} parameters as per the best practice for the selected database instance.`;
+                param = storageSizingDescriptions[body.type[0]] || 'storage sizing';
             }
-            break;
+            return `Optimize ${param} parameters as per the best practice for the selected database instance.`;
         }
+
         case request.url.includes('/optimize/storage-configuration'): {
-            const { body } = castRequest(request);
-            if (body && body?.type && body.assessments.length > 0) {
-                let param = storageConfigDescriptions[body.assessments[0]?.configurationName];
-                param = param ? `(${param})` : '';
-                return `Optimize storage parameters ${param} as per the best practice for the selected database instance.`;
+            if (body && body.assessments.length > 0) {
+                param = storageConfigDescriptions[body.assessments[0]?.configurationName];
             }
-            break;
+            return `Optimize storage parameters ${param} as per the best practice for the selected database instance.`;
         }
+
         case request.url.includes('/optimize/storage-operating-system'): {
-            const { body } = castRequest(request);
             if (body && body.configurationName) {
-                let param = storageOSDescriptions[body.configurationName];
-                param = param ? `(${param})` : '';
-                return `Optimize MPIO settings ${param} parameters as per the best practice for the selected database instance.`;
+                param = storageOSDescriptions[body.configurationName];
             }
-            break;
+            return `Optimize MPIO settings ${param} parameters as per the best practice for the selected database instance.`;
+        }
+
+        case request.url.includes('/optimize/resiliency'): {
+            if (body && body.type && body.type.length > 0) {
+                param = resiliencyDescriptions[body.type[0]];
+            }
+            return `Optimize resiliency ${param} parameters as per the best practice for the selected database instance.`;
         }
 
         default:
