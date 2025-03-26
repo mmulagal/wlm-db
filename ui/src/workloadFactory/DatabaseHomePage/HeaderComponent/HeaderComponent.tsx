@@ -469,41 +469,50 @@ const HeaderComponent = ({ tab }: Tab) => {
             let currentCredId = headerSelectedCred?.data?.credentialsId;
             let currentRegionId = headerSelectedRegion?.data?.regionCode;
             let isMssqlInstanceDataLoading = false;
-            Object.keys(mssqlInstancesData)?.map((key: any) => {
-                let keyList = key.split('_');
-                if (
-                    keyList?.length === 3 &&
-                    keyList[1] === currentCredId &&
-                    keyList[2] === currentRegionId &&
-                    mssqlInstancesData?.[key]?.loading
-                ) {
-                    isMssqlInstanceDataLoading = true;
-                }
-            });
+            if (mssqlInstancesData) {
+                Object.keys(mssqlInstancesData)?.map((key: any) => {
+                    let keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[1] === currentCredId &&
+                        keyList[2] === currentRegionId &&
+                        mssqlInstancesData?.[key]?.loading
+                    ) {
+                        isMssqlInstanceDataLoading = true;
+                    }
+                });
+            }
+            
             let perfMssqlInstancesDataLoading = false;
-            Object.keys(perfMssqlInstancesData)?.map((key: any) => {
-                let keyList = key.split('_');
-                if (
-                    keyList?.length === 3 &&
-                    keyList[1] === currentCredId &&
-                    keyList[2] === currentRegionId &&
-                    perfMssqlInstancesData?.[key]?.loading
-                ) {
-                    perfMssqlInstancesDataLoading = true;
-                }
-            });
+            if (perfMssqlInstancesData) {
+                Object.keys(perfMssqlInstancesData)?.map((key: any) => {
+                    let keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[1] === currentCredId &&
+                        keyList[2] === currentRegionId &&
+                        perfMssqlInstancesData?.[key]?.loading
+                    ) {
+                        perfMssqlInstancesDataLoading = true;
+                    }
+                });
+            }
+            
             let potentialSavingsHostDataLoading = false;
-            Object.keys(potentialSavingsHostData)?.map((key: any) => {
-                let keyList = key.split('_');
-                if (
-                    keyList?.length === 3 &&
-                    keyList[1] === currentCredId &&
-                    keyList[2] === currentRegionId &&
-                    potentialSavingsHostData?.[key]?.loading
-                ) {
-                    potentialSavingsHostDataLoading = true;
-                }
-            });
+            if (potentialSavingsHostData) {
+                Object.keys(potentialSavingsHostData)?.map((key: any) => {
+                    let keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[1] === currentCredId &&
+                        keyList[2] === currentRegionId &&
+                        potentialSavingsHostData?.[key]?.loading
+                    ) {
+                        potentialSavingsHostDataLoading = true;
+                    }
+                });
+            }
+            
             if (!isMssqlInstanceDataLoading && !perfMssqlInstancesDataLoading && !potentialSavingsHostDataLoading) {
                 let newStatus = { ...multiDataStatusRef.current };
                 newStatus[currentCredId + '_' + currentRegionId] = true;
