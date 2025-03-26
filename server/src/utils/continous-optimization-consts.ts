@@ -88,6 +88,11 @@ enum OptimizeComputeParams {
     RSS_CONFIG = 'rss-config'
 }
 
+enum OptimizeComputeJobNames {
+    'rss-config' = 'RSS Config',
+    compute = 'Compute'
+}
+
 enum OPTIMIZE_SIZING_CONFIGS {
     HEADROOM = 'headroom',
     LOG_DRIVE_SIZE = 'log-drive-size',
@@ -254,5 +259,6 @@ export {
     OptimizeMaxDopParams,
     ASSESSMENT_RESOURCE_TYPE,
     OPTIMIZE_RESILIENCY_CONFIGS,
-    VALID_MPIO_LB_POLICIES
+    VALID_MPIO_LB_POLICIES,
+    OptimizeComputeJobNames
 };

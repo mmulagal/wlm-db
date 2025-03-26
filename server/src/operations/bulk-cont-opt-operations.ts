@@ -20,6 +20,7 @@ import {
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
+    OptimizeComputeJobNames,
     OptimizeComputeParams
 } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
@@ -273,6 +274,22 @@ async function handleBulkComputeOptimization(
                             if (isEmpty(sqlServerInstances)) {
                                 logger.error(`No instances given for resource ${databaseHostId}.`);
                             }
+                            const jobMetadata: JobMetadata = {
+                                hostsToOptimize: await formatJobMetadata(hostsToOptimize)
+                            };
+                            const optimizationName =
+                                OptimizeComputeJobNames[optimizationCategory as keyof typeof OptimizeComputeJobNames];
+                            const parentJobId = await handleOptimizeJobCreation(
+                                accountId,
+                                credentialsId,
+                                region,
+                                accountId,
+                                JOBTYPE.OPTIMIZATION,
+                                `Optimize ${optimizationName}`,
+                                `Optimize ${optimizationName}`,
+                                masterOptimizeParentId,
+                                jobMetadata
+                            );
                             try {
                                 switch (optimizationCategory) {
                                     case OptimizeComputeParams.RSS_CONFIG:
@@ -283,7 +300,7 @@ async function handleBulkComputeOptimization(
                                             databaseHostId,
                                             sqlServerInstances[0],
                                             networkAdapters!,
-                                            masterOptimizeParentId
+                                            parentJobId
                                         );
                                         break;
                                     case OptimizeComputeParams.COMPUTE:
@@ -298,7 +315,7 @@ async function handleBulkComputeOptimization(
                                             databaseHostId,
                                             sqlServerInstances[0], // Since compute remediation is at host level. It is okay to pick one instance.
                                             instanceType as string,
-                                            masterOptimizeParentId
+                                            parentJobId
                                         );
                                 }
                                 masterOptimizeParentStatus = JOBSTATUS.COMPLETED;

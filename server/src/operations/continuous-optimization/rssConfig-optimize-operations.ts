@@ -18,9 +18,10 @@ import {
     moveClusterGroupOwnership,
     transferClusterOwnershipToStandbyNode
 } from './compute-optimize-operations';
-import { waitForInstanceOk } from '../../lib/aws/ec2';
+import { startInstance, stopInstance, waitForInstanceOk } from '../../lib/aws/ec2';
 import { AuditStatus } from '../../utils/consts';
 import { managedHostsRssConfigAssessment } from './rssConfig-assessment-operations';
+import { waitForInstanceToBeStopped } from '../aws/ec2-operations';
 
 const logger = getLogger();
 async function optimizeNetworkAdapters(
@@ -57,6 +58,11 @@ async function optimizeNetworkAdapters(
             logger.error(msg, ssmError);
             throw new Error(msg);
         }
+        await stopInstance(credentialsId, region, instanceId);
+        if (!isDemo()) {
+            await waitForInstanceToBeStopped(credentialsId, region, instanceId);
+        }
+        await startInstance(credentialsId, region, instanceId);
         await waitForInstanceOk(credentialsId, region, instanceId);
     } catch (error) {
         errMsg = (error as Error).message;

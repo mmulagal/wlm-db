@@ -1132,7 +1132,7 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
                 if ($parameters.Count -gt 0) {
                     Write-Information "Setting RSS best practices values on adapter: $adapterName, $parameters"
                     $parameters['Name'] = $adapterName
-                    Set-NetAdapterRss @parameters
+                    Set-NetAdapterRss @parameters -NoRestart
                 }
             } catch {
                 $errMsg = "Error occurred while optimizing network adapter: $adapterName $_.Exception.Message"
