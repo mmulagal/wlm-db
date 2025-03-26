@@ -404,20 +404,24 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
 
 type BulkOptimizeGeneralPerHostRequestBodyType = Static<typeof BulkOptimizeGeneralPerHostRequestBody>;
 
-const BulkOptimizeComputePerHostRequestBody = Type.Object({
-    type: Type.Enum({
-        ...OptimizeComputeParams
-    }),
-    databaseHosts: Type.Array(OptimizePerHostRequestBody)
-});
-
-type BulkOptimizeComputePerHostRequestBodyType = Static<typeof BulkOptimizeComputePerHostRequestBody>;
-
 const BulkOptimizeGeneralRequestBody = Type.Object({
     hostsToOptimize: Type.Array(BulkOptimizeGeneralPerHostRequestBody)
 });
 
 type BulkOptimizeGeneralRequestBodyType = Static<typeof BulkOptimizeGeneralRequestBody>;
+
+const BulkOptimizeComputePerHostRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OptimizeComputeParams
+    }),
+    databaseHosts: Type.Array(OptimizePerHostRequestBody)
+});
+type BulkOptimizeComputePerHostRequestBodyType = Static<typeof BulkOptimizeComputePerHostRequestBody>;
+
+const BulkOptimizeComputeRequestBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeComputePerHostRequestBody)
+});
+type BulkOptimizeComputeRequestBodyType = Static<typeof BulkOptimizeComputeRequestBody>;
 
 export {
     DriftAssessmentResponse,
@@ -465,5 +469,7 @@ export {
     OptimizeResiliencyBody,
     BulkOptimizeComputePerHostRequestBodyType,
     BulkOptimizeComputePerHostRequestBody,
+    BulkOptimizeComputeRequestBody,
+    BulkOptimizeComputeRequestBodyType,
     OptimizeGenericRequestBody
 };

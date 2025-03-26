@@ -219,18 +219,18 @@ async function bulkComputeOptimization(
     accountId: string,
     credentialsId: string,
     region: string,
-    hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType
+    hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType[]
 ) {
     logger.info(`Bulk optimizing compute: ${accountId}, ${credentialsId}, ${region}, ${hostsToOptimize}`);
 
-    if (isEmpty([hostsToOptimize])) {
+    if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
     const jobMetadata: JobMetadata = {
-        hostsToOptimize: await formatJobMetadata([hostsToOptimize])
+        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
     };
 
     const parentJobId = await handleOptimizeJobCreation(
@@ -246,7 +246,7 @@ async function bulkComputeOptimization(
     );
 
     try {
-        handleBulkComputeOptimization(accountId, credentialsId, region, [hostsToOptimize], parentJobId);
+        handleBulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize, parentJobId);
         return { jobId: parentJobId };
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, (error as Error).message);
@@ -257,7 +257,7 @@ async function handleBulkComputeOptimization(
     accountId: string,
     credentialsId: string,
     region: string,
-    hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[],
+    hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType[],
     masterOptimizeParentId: string
 ) {
     logger.info(
@@ -266,15 +266,12 @@ async function handleBulkComputeOptimization(
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     try {
         await Promise.all(
-            hostsToOptimize.map(async ({ databaseHosts, type: optimizationCategory }) => {
+            hostsToOptimize.map(async ({ databaseHosts, configurationName: optimizationCategory }) => {
                 await Promise.all(
                     databaseHosts.map(
                         async ({ id: databaseHostId, sqlServerInstances, instanceType, networkAdapters }) => {
                             if (isEmpty(sqlServerInstances)) {
                                 logger.error(`No instances given for resource ${databaseHostId}.`);
-                            }
-                            if (!instanceType) {
-                                logger.error(`instanceType cannot be empty, ${databaseHostId}.`);
                             }
                             try {
                                 switch (optimizationCategory) {
@@ -291,6 +288,9 @@ async function handleBulkComputeOptimization(
                                         break;
                                     case OptimizeComputeParams.COMPUTE:
                                     default:
+                                        if (!instanceType) {
+                                            logger.error(`instanceType cannot be empty, ${databaseHostId}.`);
+                                        }
                                         await optimizeCompute(
                                             accountId,
                                             credentialsId,
@@ -301,6 +301,7 @@ async function handleBulkComputeOptimization(
                                             masterOptimizeParentId
                                         );
                                 }
+                                masterOptimizeParentStatus = JOBSTATUS.COMPLETED;
                             } catch (error: any) {
                                 logger.error(
                                     `Error occurred while optimizing compute for account ${accountId}, ${databaseHostId}. Error: ${error}`

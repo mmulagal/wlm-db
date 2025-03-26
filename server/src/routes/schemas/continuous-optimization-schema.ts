@@ -18,8 +18,8 @@ import {
     BulkOptimizeGeneralRequestBody,
     AvailableSnapshotPoliciesResponse,
     OptimizeResiliencyBody,
-    BulkOptimizeComputePerHostRequestBody,
-    OptimizeGenericRequestBody
+    OptimizeGenericRequestBody,
+    BulkOptimizeComputeRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -216,7 +216,7 @@ const BulkOptimizeComputeSchema = {
     ...resourceRequest,
     params: CredentialsIdParams,
     tags: [RouteTags.ASSESSMENT],
-    body: BulkOptimizeComputePerHostRequestBody,
+    body: BulkOptimizeComputeRequestBody,
     summary: 'Optimize compute',
     description: 'Optimize compute parameters as per the best practice for selected database instances.',
     response: {

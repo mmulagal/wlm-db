@@ -42,6 +42,14 @@ async function calculateRssConfigDrift(
         const { assessment: { rssConfig } = {} } = metadata as unknown as Metadata;
         if (!isEmpty(rssConfig)) {
             rssConfigAssessment = rssConfig as RssConfigAssesment;
+            if (isDemo()) {
+                rssConfigAssessment.rssAdapters = rssConfigAssessment?.rssAdapters?.filter(
+                    adapter => !(metadata as Metadata)?.isRssConfigOptimized?.includes(adapter.adapterName)
+                );
+                if (rssConfigAssessment?.rssAdapters?.length === 0) {
+                    rssConfigAssessment.rssConfigFinding = AssessmentStatus.OPTIMIZED;
+                }
+            }
         } else {
             const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
             const { activeNodeInstanceId } = await getActiveSqlNode(

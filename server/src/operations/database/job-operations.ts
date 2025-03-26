@@ -443,27 +443,29 @@ async function updateParentJobStatus(
     while (parentJob.status === JOBSTATUS.IN_PROGRESS) {
         const allSubJobs = await listJobs(accountId, '', '', parentId);
 
-        let jobStatus: JOBSTATUS;
+        let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
 
-        if (allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)) {
-            jobStatus = JOBSTATUS.IN_PROGRESS;
-        } else if (allSubJobs.every(job => job.status === JOBSTATUS.FAILED)) {
-            jobStatus = JOBSTATUS.FAILED;
-        } else if (allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)) {
-            jobStatus = JOBSTATUS.COMPLETED;
-        } else if (
-            isSandboxJob &&
-            allSubJobs.some(
-                job => job.status === JOBSTATUS.FAILED && job.name?.includes('Clean up resources for sandbox')
-            )
-        ) {
-            jobStatus = JOBSTATUS.WARNING;
-        } else if (isSandboxJob && allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
-            jobStatus = JOBSTATUS.FAILED;
-        } else if (allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
-            jobStatus = JOBSTATUS.WARNING;
-        } else {
-            jobStatus = JOBSTATUS.IN_PROGRESS;
+        if (allSubJobs.length) {
+            if (allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)) {
+                jobStatus = JOBSTATUS.IN_PROGRESS;
+            } else if (allSubJobs.every(job => job.status === JOBSTATUS.FAILED)) {
+                jobStatus = JOBSTATUS.FAILED;
+            } else if (allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)) {
+                jobStatus = JOBSTATUS.COMPLETED;
+            } else if (
+                isSandboxJob &&
+                allSubJobs.some(
+                    job => job.status === JOBSTATUS.FAILED && job.name?.includes('Clean up resources for sandbox')
+                )
+            ) {
+                jobStatus = JOBSTATUS.WARNING;
+            } else if (isSandboxJob && allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
+                jobStatus = JOBSTATUS.FAILED;
+            } else if (allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
+                jobStatus = JOBSTATUS.WARNING;
+            } else {
+                jobStatus = JOBSTATUS.IN_PROGRESS;
+            }
         }
 
         const modifiedJobData = {

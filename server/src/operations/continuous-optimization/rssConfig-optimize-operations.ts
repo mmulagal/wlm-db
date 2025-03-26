@@ -313,6 +313,7 @@ async function handleOptimizeRssOptimization(
                 activeNodeInstanceId,
                 resourceName!,
                 parentJobId,
+                undefined,
                 metadata as unknown as Metadata
             );
         }
