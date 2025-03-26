@@ -2,7 +2,7 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import { RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
 
-const DiscoverMsSqlQuery = Type.Object({
+const DiscoverQuery = Type.Object({
     pageSize: Type.Number({
         description: 'Number of EC2 instances to discover per call of the API.',
         minimum: 5,
@@ -258,8 +258,78 @@ const MsSqlInstancesRequestQuery = Type.Object({
     fields: Type.Optional(Type.String())
 });
 
+const pgSqlServerNode = Type.Object({
+    ec2InstanceName: Type.Optional(Type.String({ description: 'Primary node name' })),
+    ec2InstanceId: Type.Optional(Type.String({ description: 'Primary node ID' })),
+    ec2InstancePrivateIpAddress: Type.Optional(Type.String({ description: 'Primary node IP address' }))
+});
+
+const DiscoverPgSqlResponseInfo = Type.Intersect([
+    Type.Omit(DiscoverResponseInfo, ['sqlServerInstances']),
+    Type.Object({
+        pgsqlServerInstance: Type.Optional(
+            Type.String({ description: 'PostgreSQL instance name', default: 'postgres' })
+        ),
+        pgsqlServerState: Type.Optional(
+            Type.String({
+                description: 'PostgreSQL server state',
+                enum: ['running', 'stopped']
+            })
+        ),
+        pgsqlServerVersion: Type.Optional(Type.String({ description: 'PostgreSQL version' })),
+        pgsqlServerName: Type.Optional(Type.String({ description: 'PostgreSQL server name' })),
+        pgsqlServerDeploymentType: Type.Optional(
+            Type.String({
+                description: 'PostgreSQL deployment architecture.',
+                enum: ['standalone', 'ha']
+            })
+        ),
+        databaseCount: Type.Optional(Type.Number({ description: 'Number of databases in the PostgreSQL instance.' })),
+        isPrimary: Type.Optional(Type.Boolean({ description: 'Is this primary PostgreSQL instance' })),
+        nodes: Type.Optional(Type.Array(pgSqlServerNode)),
+        primaryNode: Type.Optional(pgSqlServerNode),
+        storage: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    type: Type.String({ description: 'Underlying storage types of the PostgreSQL instance' }),
+                    id: Type.String({ description: 'ID of the storage' }),
+                    svmId: Type.Optional(
+                        Type.String({
+                            description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP'
+                        })
+                    ),
+                    protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' })),
+                    fileSystemStorageType: Type.Optional(
+                        Type.String({ description: 'File system storage type, SSD or HDD' })
+                    ),
+                    deploymentType: Type.Optional(Type.String({ description: 'Deployment type of storage' })),
+                    zones: Type.Optional(
+                        Type.Array(Type.Optional(Type.String({ description: 'Availability zones of storage' })))
+                    ),
+                    nfsMountPoint: Type.Optional(Type.String({ description: 'Mount point of storage' }))
+                })
+            )
+        ),
+        error: Type.Optional(Type.String({ description: 'Error details, if any.' }))
+    })
+]);
+
+const DiscoverPgSqlResponseBody = Type.Object({
+    count: Type.Number({ description: 'Number of discovered items' }),
+    items: Type.Array(DiscoverPgSqlResponseInfo),
+    nextToken: Type.Optional(
+        Type.String({
+            description: 'Pagination token for each page.  A non-empty token indicates more more results are available.'
+        })
+    )
+});
+
+type DiscoverPgSqlResponseBodyType = Static<typeof DiscoverPgSqlResponseBody>;
+type DiscoverPgSqlResponseType = Static<typeof DiscoverPgSqlResponseInfo>;
+type pgsqlNodeDetailsType = Static<typeof pgSqlServerNode>;
+
 export {
-    DiscoverMsSqlQuery,
+    DiscoverQuery,
     DiscoverMsSqlResponseBody,
     DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
@@ -276,5 +346,9 @@ export {
     DatabaseInstanceQueryString,
     MultiInstanceManageMsSqlRequestBody,
     MultiInstanceManageMsSqlRequestBodyType,
-    MultiInstanceManageResponseBodyType
+    MultiInstanceManageResponseBodyType,
+    DiscoverPgSqlResponseBody,
+    DiscoverPgSqlResponseBodyType,
+    DiscoverPgSqlResponseType,
+    pgsqlNodeDetailsType
 };

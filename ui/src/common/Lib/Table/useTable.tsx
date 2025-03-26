@@ -54,9 +54,13 @@ const filterFunc = (
         if (textFilter) {
             _forEach(columns, column => {
                 const accessor = column.accessor;
+                const customAccessor = column?.customAccessor; // Custom accessor
                 const accessorForTextFilter = column.accessorForTextFilter;
 
-                const value = accessorForTextFilter ? _get(row, accessorForTextFilter) : _get(row, accessor);
+                // Get value from `customAccessor` if available, otherwise use `accessor`
+                const value = accessorForTextFilter
+                    ? _get(row, accessorForTextFilter)
+                    : _get(row, customAccessor || accessor);
 
                 if (_isString(value) && value.toLowerCase().includes(lowerCaseTextFilter)) {
                     isTextFilterMatch = true;
@@ -66,6 +70,7 @@ const filterFunc = (
                     return false;
                 }
             });
+
             additionalSearchKeys &&
                 _forEach(additionalSearchKeys, (searchKey: string) => {
                     const value = _get(row, searchKey);
@@ -81,7 +86,9 @@ const filterFunc = (
         _forEach(filterState.columns, (filter, key) => {
             if (_isObject(filter) && filter!.activeCount > 0) {
                 const accessor = columnsMap[key].accessor;
-                const rowAccessor = _get(row, accessor);
+                const customAccessor = columnsMap[key]?.customAccessor; // Use custom accessor if present
+                const rowAccessor = _get(row, customAccessor || accessor);
+
                 if (columnsMap[key]?.customFilter) {
                     const isMatch =
                         columnsMap[key]?.customFilter?.({

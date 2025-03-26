@@ -2154,8 +2154,12 @@
                         "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
                         "name": "daily",
                         "cron": {
-                            "minutes": [10],
-                            "hours": [0]
+                            "minutes": [
+                                10
+                            ],
+                            "hours": [
+                                0
+                            ]
                         },
                         "_links": {
                             "self": {
@@ -2212,6 +2216,15 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "discoverPgsqlServer": {
+        "version": "psql (PostgreSQL) 16.5",
+        "ip_address": "10.0.132.47",
+        "status": "running",
+        "hostname": "pgsqlservermm",
+        "mount_point": "/wlmdb_pgsqldata_1742007997310",
+        "postgres_server": "localhost",
+        "database_count": "1"
     },
     "getPgsqlDatabasesCommandResponse": {
         "$metadata": {

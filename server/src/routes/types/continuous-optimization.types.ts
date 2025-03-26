@@ -410,6 +410,14 @@ const BulkOptimizeGeneralRequestBody = Type.Object({
 
 type BulkOptimizeGeneralRequestBodyType = Static<typeof BulkOptimizeGeneralRequestBody>;
 
+const BulkOptimizeSnapshotPolicyParams = Type.Object({
+    fsxId: Type.String(),
+    region: Type.String(),
+    volUuids: Type.String(),
+    apiBody: Type.String()
+});
+type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
+
 const BulkOptimizeComputePerHostRequestBody = Type.Object({
     configurationName: Type.Enum({
         ...OptimizeComputeParams
@@ -467,6 +475,8 @@ export {
     GenericViolationResponseType,
     OptimizeResiliencyBodyType,
     OptimizeResiliencyBody,
+    BulkOptimizeSnapshotPolicyParams,
+    BulkOptimizeSnapshotPolicyParamsType,
     BulkOptimizeComputePerHostRequestBodyType,
     BulkOptimizeComputePerHostRequestBody,
     BulkOptimizeComputeRequestBody,

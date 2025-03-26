@@ -54,8 +54,11 @@ import {
     waitUntilInstanceStatusOk,
     DescribeInstanceStatusCommandInput,
     DescribeAddressesCommand,
-    DescribeAddressesCommandInput
+    DescribeAddressesCommandInput,
+    paginateDescribeInstances,
+    Reservation
 } from '@aws-sdk/client-ec2';
+import { PaginationConfiguration } from '@aws-sdk/types';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -489,6 +492,35 @@ async function describeAddresses(credentialsId: string, region: string, params: 
     return response;
 }
 
+async function describeInstancesWithPagination(
+    credentialsId: string,
+    region: string,
+    params: DescribeInstancesCommandInput,
+    pageSize = 10,
+    nextToken?: string
+) {
+    logger.info('Paginate describe instances', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+    const paginatorConfig: PaginationConfiguration = {
+        client: ec2,
+        pageSize,
+        ...(nextToken && { startingToken: nextToken })
+    };
+    const reservations: Reservation[] = [];
+    let newToken;
+    for await (const { Reservations, NextToken } of paginateDescribeInstances(paginatorConfig, params)) {
+        newToken = NextToken;
+        if (Reservations?.length) {
+            reservations.push(...Reservations);
+            if (reservations.length >= pageSize) {
+                return [reservations, newToken];
+            }
+        }
+    }
+    return [reservations, newToken];
+}
+
 const waitForInstanceOkWrapper = { waitForInstanceOk };
 
 export {
@@ -520,5 +552,6 @@ export {
     modifyInstanceType,
     waitForInstanceOk,
     describeAddresses,
+    describeInstancesWithPagination,
     waitForInstanceOkWrapper
 };

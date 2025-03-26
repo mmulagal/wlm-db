@@ -381,6 +381,395 @@
             "OwnerId": "464262061435",
             "RequesterId": "422253915474",
             "ReservationId": "r-0f987a91e4ba851c4"
+        },
+        {
+            "ReservationId": "r-048fe603e52b44495",
+            "OwnerId": "464262061435",
+            "RequesterId": "422253915474",
+            "Groups": [],
+            "Instances": [
+                {
+                    "Architecture": "x86_64",
+                    "BlockDeviceMappings": [
+                        {
+                            "DeviceName": "/dev/xvda",
+                            "Ebs": {
+                                "AttachTime": "2025-03-07T03:34:27.000Z",
+                                "DeleteOnTermination": true,
+                                "Status": "attached",
+                                "VolumeId": "vol-0e23df37c6089b3c7"
+                            }
+                        }
+                    ],
+                    "ClientToken": "aa888d47-3c5c-9c54-45b6-fa310ac5595d",
+                    "EbsOptimized": false,
+                    "EnaSupport": true,
+                    "Hypervisor": "xen",
+                    "IamInstanceProfile": {
+                        "Arn": "arn:aws:iam::464262061435:instance-profile/WLMDB-PgSqlStandaloneStack-1741316774356-PGSQLServerStack-A7JJLR4VG3XS-LaunchWizardSqlFSxProfile-TpSsgPGVFlEQ",
+                        "Id": "AIPAWYGBM3V57GFOXYTJR"
+                    },
+                    "NetworkInterfaces": [
+                        {
+                            "Attachment": {
+                                "AttachTime": "2025-03-07T03:34:27.000Z",
+                                "AttachmentId": "eni-attach-0f86db2eb88816dfe",
+                                "DeleteOnTermination": false,
+                                "DeviceIndex": 0,
+                                "Status": "attached",
+                                "NetworkCardIndex": 0
+                            },
+                            "Description": "",
+                            "Groups": [
+                                {
+                                    "GroupId": "sg-01505c5fb590838cc",
+                                    "GroupName": "WLMDB-PgSqlStandaloneStack-1741316774356-NewFSxStack-1EYIHTUHYNVZ1-ONTAPSecurityGroup-gVFrXqSV97kt"
+                                },
+                                {
+                                    "GroupId": "sg-06a8ba15b7b944c8d",
+                                    "GroupName": "WLMDB-PgSqlStandaloneStack-1741316774356-PGSQLServerStack-A7JJLR4VG3XS-WorkloadSecurityGroup-SuWWdO25iK3r"
+                                }
+                            ],
+                            "Ipv6Addresses": [],
+                            "MacAddress": "06:00:f3:a9:2e:db",
+                            "NetworkInterfaceId": "eni-036e06d87b257595b",
+                            "OwnerId": "464262061435",
+                            "PrivateDnsName": "ip-10-0-134-104.ap-southeast-1.compute.internal",
+                            "PrivateIpAddress": "10.0.134.104",
+                            "PrivateIpAddresses": [
+                                {
+                                    "Primary": true,
+                                    "PrivateDnsName": "ip-10-0-134-104.ap-southeast-1.compute.internal",
+                                    "PrivateIpAddress": "10.0.134.104"
+                                },
+                                {
+                                    "Primary": false,
+                                    "PrivateDnsName": "ip-10-0-139-220.ap-southeast-1.compute.internal",
+                                    "PrivateIpAddress": "10.0.139.220"
+                                },
+                                {
+                                    "Primary": false,
+                                    "PrivateDnsName": "ip-10-0-128-140.ap-southeast-1.compute.internal",
+                                    "PrivateIpAddress": "10.0.128.140"
+                                }
+                            ],
+                            "SourceDestCheck": true,
+                            "Status": "in-use",
+                            "SubnetId": "subnet-06d046751a5ebe220",
+                            "VpcId": "vpc-0100cefdf732ef9e9",
+                            "InterfaceType": "interface",
+                            "Operator": {
+                                "Managed": false
+                            }
+                        }
+                    ],
+                    "RootDeviceName": "/dev/xvda",
+                    "RootDeviceType": "ebs",
+                    "SecurityGroups": [
+                        {
+                            "GroupId": "sg-01505c5fb590838cc",
+                            "GroupName": "WLMDB-PgSqlStandaloneStack-1741316774356-NewFSxStack-1EYIHTUHYNVZ1-ONTAPSecurityGroup-gVFrXqSV97kt"
+                        },
+                        {
+                            "GroupId": "sg-06a8ba15b7b944c8d",
+                            "GroupName": "WLMDB-PgSqlStandaloneStack-1741316774356-PGSQLServerStack-A7JJLR4VG3XS-WorkloadSecurityGroup-SuWWdO25iK3r"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Tags": [
+                        {
+                            "Key": "wlmdb-cost-resource",
+                            "Value": "i-039eb3334526ae1ca"
+                        },
+                        {
+                            "Key": "aws:cloudformation:stack-id",
+                            "Value": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-PgSqlStandaloneStack-1741316774356-PGSQLServerStack-A7JJLR4VG3XS/bfec9a90-fb04-11ef-be12-0684b12dceab"
+                        },
+                        {
+                            "Key": "created_by_flow",
+                            "Value": "WLMDB"
+                        },
+                        {
+                            "Key": "Name",
+                            "Value": "pgsqlnode-3680"
+                        },
+                        {
+                            "Key": "aws:cloudformation:stack-name",
+                            "Value": "WLMDB-PgSqlStandaloneStack-1741316774356-PGSQLServerStack-A7JJLR4VG3XS"
+                        },
+                        {
+                            "Key": "aws:cloudformation:logical-id",
+                            "Value": "SqlNode1"
+                        }
+                    ],
+                    "VirtualizationType": "hvm",
+                    "CpuOptions": {
+                        "CoreCount": 1,
+                        "ThreadsPerCore": 2
+                    },
+                    "CapacityReservationSpecification": {
+                        "CapacityReservationPreference": "open"
+                    },
+                    "HibernationOptions": {
+                        "Configured": false
+                    },
+                    "MetadataOptions": {
+                        "State": "applied",
+                        "HttpTokens": "required",
+                        "HttpPutResponseHopLimit": 2,
+                        "HttpEndpoint": "enabled",
+                        "HttpProtocolIpv6": "disabled",
+                        "InstanceMetadataTags": "disabled"
+                    },
+                    "EnclaveOptions": {
+                        "Enabled": false
+                    },
+                    "BootMode": "uefi-preferred",
+                    "PlatformDetails": "Linux/UNIX",
+                    "UsageOperation": "RunInstances",
+                    "UsageOperationUpdateTime": "2025-03-07T03:34:27.000Z",
+                    "PrivateDnsNameOptions": {
+                        "HostnameType": "ip-name",
+                        "EnableResourceNameDnsARecord": false,
+                        "EnableResourceNameDnsAAAARecord": false
+                    },
+                    "MaintenanceOptions": {
+                        "AutoRecovery": "default"
+                    },
+                    "CurrentInstanceBootMode": "uefi",
+                    "NetworkPerformanceOptions": {
+                        "BandwidthWeighting": "default"
+                    },
+                    "Operator": {
+                        "Managed": false
+                    },
+                    "InstanceId": "i-039eb3334526ae1ca",
+                    "ImageId": "ami-0b03299ddb99998e9",
+                    "State": {
+                        "Code": 16,
+                        "Name": "running"
+                    },
+                    "PrivateDnsName": "ip-10-0-134-104.ap-southeast-1.compute.internal",
+                    "PublicDnsName": "",
+                    "StateTransitionReason": "",
+                    "KeyName": "occm_qa",
+                    "AmiLaunchIndex": 0,
+                    "ProductCodes": [],
+                    "InstanceType": "m5.large",
+                    "LaunchTime": "2025-03-07T03:34:27.000Z",
+                    "Placement": {
+                        "GroupName": "",
+                        "Tenancy": "default",
+                        "AvailabilityZone": "ap-southeast-1a"
+                    },
+                    "Monitoring": {
+                        "State": "disabled"
+                    },
+                    "SubnetId": "subnet-06d046751a5ebe220",
+                    "VpcId": "vpc-0100cefdf732ef9e9",
+                    "PrivateIpAddress": "10.0.134.104"
+                }
+            ]
+        },
+        {
+            "ReservationId": "r-0ae2d8b272f438921",
+            "OwnerId": "464262061435",
+            "RequesterId": "422253915474",
+            "Groups": [],
+            "Instances": [
+                {
+                    "Architecture": "x86_64",
+                    "BlockDeviceMappings": [
+                        {
+                            "DeviceName": "/dev/xvda",
+                            "Ebs": {
+                                "AttachTime": "2025-03-07T03:34:25.000Z",
+                                "DeleteOnTermination": true,
+                                "Status": "attached",
+                                "VolumeId": "vol-04e1e7e34f708994c"
+                            }
+                        }
+                    ],
+                    "ClientToken": "19f1ff15-d41f-c6b4-96a3-e255dc4b73ad",
+                    "EbsOptimized": false,
+                    "EnaSupport": true,
+                    "Hypervisor": "xen",
+                    "IamInstanceProfile": {
+                        "Arn": "arn:aws:iam::464262061435:instance-profile/WLMDB-PgSqlStandaloneStack-1741316771481-PGSQLServerStack-1HL3CDEV9TBZ6-LaunchWizardSqlFSxProfile-jQH9U2IUQIOY",
+                        "Id": "AIPAWYGBM3V57OMWV7IZF"
+                    },
+                    "NetworkInterfaces": [
+                        {
+                            "Association": {
+                                "IpOwnerId": "amazon",
+                                "PublicDnsName": "ec2-13-214-193-48.ap-southeast-1.compute.amazonaws.com",
+                                "PublicIp": "13.214.193.48"
+                            },
+                            "Attachment": {
+                                "AttachTime": "2025-03-07T03:34:25.000Z",
+                                "AttachmentId": "eni-attach-0a645c54aa3c999c7",
+                                "DeleteOnTermination": false,
+                                "DeviceIndex": 0,
+                                "Status": "attached",
+                                "NetworkCardIndex": 0
+                            },
+                            "Description": "",
+                            "Groups": [
+                                {
+                                    "GroupId": "sg-084bd3ac79262b8ff",
+                                    "GroupName": "WLMDB-PgSqlStandaloneStack-1741316771481-PGSQLServerStack-1HL3CDEV9TBZ6-WorkloadSecurityGroup-JbtprFtAskX5"
+                                },
+                                {
+                                    "GroupId": "sg-089eacaca8780acbf",
+                                    "GroupName": "WLMDB-PgSqlStandaloneStack-1741316771481-NewFSxStack-1M9KSTEMTMFOM-ONTAPSecurityGroup-GUmsBLpOuFIP"
+                                }
+                            ],
+                            "Ipv6Addresses": [],
+                            "MacAddress": "06:79:62:c0:36:2b",
+                            "NetworkInterfaceId": "eni-0905ba4993d2e46a4",
+                            "OwnerId": "464262061435",
+                            "PrivateDnsName": "ip-10-0-138-119.ap-southeast-1.compute.internal",
+                            "PrivateIpAddress": "10.0.138.119",
+                            "PrivateIpAddresses": [
+                                {
+                                    "Association": {
+                                        "IpOwnerId": "amazon",
+                                        "PublicDnsName": "ec2-13-214-193-48.ap-southeast-1.compute.amazonaws.com",
+                                        "PublicIp": "13.214.193.48"
+                                    },
+                                    "Primary": true,
+                                    "PrivateDnsName": "ip-10-0-138-119.ap-southeast-1.compute.internal",
+                                    "PrivateIpAddress": "10.0.138.119"
+                                },
+                                {
+                                    "Primary": false,
+                                    "PrivateDnsName": "ip-10-0-129-168.ap-southeast-1.compute.internal",
+                                    "PrivateIpAddress": "10.0.129.168"
+                                },
+                                {
+                                    "Primary": false,
+                                    "PrivateDnsName": "ip-10-0-131-159.ap-southeast-1.compute.internal",
+                                    "PrivateIpAddress": "10.0.131.159"
+                                }
+                            ],
+                            "SourceDestCheck": true,
+                            "Status": "in-use",
+                            "SubnetId": "subnet-03302cffd47acd237",
+                            "VpcId": "vpc-046f7e26255458373",
+                            "InterfaceType": "interface",
+                            "Operator": {
+                                "Managed": false
+                            }
+                        }
+                    ],
+                    "RootDeviceName": "/dev/xvda",
+                    "RootDeviceType": "ebs",
+                    "SecurityGroups": [
+                        {
+                            "GroupId": "sg-084bd3ac79262b8ff",
+                            "GroupName": "WLMDB-PgSqlStandaloneStack-1741316771481-PGSQLServerStack-1HL3CDEV9TBZ6-WorkloadSecurityGroup-JbtprFtAskX5"
+                        },
+                        {
+                            "GroupId": "sg-089eacaca8780acbf",
+                            "GroupName": "WLMDB-PgSqlStandaloneStack-1741316771481-NewFSxStack-1M9KSTEMTMFOM-ONTAPSecurityGroup-GUmsBLpOuFIP"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Tags": [
+                        {
+                            "Key": "aws:cloudformation:stack-name",
+                            "Value": "WLMDB-PgSqlStandaloneStack-1741316771481-PGSQLServerStack-1HL3CDEV9TBZ6"
+                        },
+                        {
+                            "Key": "aws:cloudformation:logical-id",
+                            "Value": "SqlNode1"
+                        },
+                        {
+                            "Key": "created_by_flow",
+                            "Value": "WLMDB"
+                        },
+                        {
+                            "Key": "wlmdb-cost-resource",
+                            "Value": "i-04e8af560e574bd88"
+                        },
+                        {
+                            "Key": "Name",
+                            "Value": "pgsqlnode-8094"
+                        },
+                        {
+                            "Key": "aws:cloudformation:stack-id",
+                            "Value": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-PgSqlStandaloneStack-1741316771481-PGSQLServerStack-1HL3CDEV9TBZ6/be9a5100-fb04-11ef-9ad7-0adcc75baf95"
+                        }
+                    ],
+                    "VirtualizationType": "hvm",
+                    "CpuOptions": {
+                        "CoreCount": 1,
+                        "ThreadsPerCore": 2
+                    },
+                    "CapacityReservationSpecification": {
+                        "CapacityReservationPreference": "open"
+                    },
+                    "HibernationOptions": {
+                        "Configured": false
+                    },
+                    "MetadataOptions": {
+                        "State": "applied",
+                        "HttpTokens": "required",
+                        "HttpPutResponseHopLimit": 2,
+                        "HttpEndpoint": "enabled",
+                        "HttpProtocolIpv6": "disabled",
+                        "InstanceMetadataTags": "disabled"
+                    },
+                    "EnclaveOptions": {
+                        "Enabled": false
+                    },
+                    "BootMode": "uefi-preferred",
+                    "PlatformDetails": "Linux/UNIX",
+                    "UsageOperation": "RunInstances",
+                    "UsageOperationUpdateTime": "2025-03-07T03:34:25.000Z",
+                    "PrivateDnsNameOptions": {
+                        "HostnameType": "ip-name",
+                        "EnableResourceNameDnsARecord": false,
+                        "EnableResourceNameDnsAAAARecord": false
+                    },
+                    "MaintenanceOptions": {
+                        "AutoRecovery": "default"
+                    },
+                    "CurrentInstanceBootMode": "uefi",
+                    "NetworkPerformanceOptions": {
+                        "BandwidthWeighting": "default"
+                    },
+                    "Operator": {
+                        "Managed": false
+                    },
+                    "InstanceId": "i-04e8af560e574bd88",
+                    "ImageId": "ami-0b03299ddb99998e9",
+                    "State": {
+                        "Code": 16,
+                        "Name": "running"
+                    },
+                    "PrivateDnsName": "ip-10-0-138-119.ap-southeast-1.compute.internal",
+                    "PublicDnsName": "ec2-13-214-193-48.ap-southeast-1.compute.amazonaws.com",
+                    "StateTransitionReason": "",
+                    "KeyName": "occm_qa",
+                    "AmiLaunchIndex": 0,
+                    "ProductCodes": [],
+                    "InstanceType": "m5.large",
+                    "LaunchTime": "2025-03-07T03:34:25.000Z",
+                    "Placement": {
+                        "GroupName": "",
+                        "Tenancy": "default",
+                        "AvailabilityZone": "ap-southeast-1a"
+                    },
+                    "Monitoring": {
+                        "State": "disabled"
+                    },
+                    "SubnetId": "subnet-03302cffd47acd237",
+                    "VpcId": "vpc-046f7e26255458373",
+                    "PrivateIpAddress": "10.0.138.119",
+                    "PublicIpAddress": "13.214.193.48"
+                }
+            ]
         }
     ]
 }

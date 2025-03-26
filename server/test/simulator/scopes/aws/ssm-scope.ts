@@ -16,7 +16,8 @@ import {
     DescribeInstancePatchStatesCommand,
     DescribeInstancePatchesCommand,
     DescribeAvailablePatchesCommand,
-    ListCommandsCommand
+    ListCommandsCommand,
+    DescribeInstanceInformationCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import {
@@ -35,6 +36,7 @@ import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-
 import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
 import describeAvailablePatchesResponse from '../../responses/aws/ssm-describe-available-patches.json';
 import listCommandsCommandResponse from '../../responses/aws/list-commands-command.json';
+import getSsmInstanceInformationResponse from '../../responses/aws/ssm-instance-information.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
     restGetUtilForOntap,
@@ -826,7 +828,9 @@ ssmMock
     .on(SendCommandCommand, params => {
         return crrAssessmentDataRegex.test(params.Parameters.commands?.[0]);
     })
-    .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand);
+    .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand)
+    .on(SendCommandCommand, params => params.Comment === 'Discover PostgreSQL resources')
+    .resolves(getSampleCommandResponse('discoverPgsqlResources'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1105,6 +1109,15 @@ ssmMock
         )
     )
     .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-discoverPgsqlResources'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'discoverPgsqlResources',
+            JSON.stringify(getCommandInvocationResponse.discoverPgsqlServer)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getVCPUAndMaxDOPDetails'
     })
     .resolves(getSampleCommandResponseWithOutput('getVCPUAndMaxDOPDetails', '{"vcpuCount":4,"maxDOP":"4"}\r\n'))
@@ -1152,3 +1165,4 @@ ssmMock.on(ListCommandsCommand).callsFake(async (command: ListCommandsCommand) =
     response.Commands = [];
     return response;
 });
+ssmMock.on(DescribeInstanceInformationCommand).resolves(getSsmInstanceInformationResponse);

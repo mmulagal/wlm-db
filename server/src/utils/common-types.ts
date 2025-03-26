@@ -1,7 +1,7 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
-import { Static, Type } from '@sinclair/typebox';
+import { GetCommandInvocationCommandOutput } from '@aws-sdk/client-ssm';
 
 interface LicenseAssessment {
     licenseFinding: string;
@@ -101,6 +101,16 @@ interface ResourceAssessmentData {
         license?: string;
     };
 }
+
+interface ResourceAssessmentResults {
+    license?: any;
+    compute?: any;
+    hostOsPatch?: any;
+    rssConfig?: any;
+    maxDOP?: any;
+    mssqlPatch?: any;
+}
+
 interface Metadata {
     node1InstanceId: string;
     node2InstanceId?: string;
@@ -123,12 +133,15 @@ interface Metadata {
     isHostOsPatchOptimized?: boolean;
     isRssConfigOptimized?: string[];
     assessment?: ResourceAssessmentData;
+    assessmentResults?: ResourceAssessmentResults;
 }
-interface databaseInstanceMetadata {
+
+interface DatabaseInstanceMetadata {
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
     configsOptimized?: any;
+    assessmentResults?: any;
 }
 
 interface CreateDbMetrics {
@@ -282,7 +295,7 @@ interface DatabaseInstance {
     database_instance_id: string;
     database_type: string;
     is_default: boolean;
-    metadata: databaseInstanceMetadata | JsonValue;
+    metadata: DatabaseInstanceMetadata | JsonValue;
     created_time?: string | Date;
     database_deployment_type?: string;
     fsxn_ids: string;
@@ -492,18 +505,17 @@ interface StorageTierParams extends OptimizeParams {
     volumesToOptimize?: string[];
 }
 
-const BulkOptimizeSnapshotPolicyParams = Type.Object({
-    fsxId: Type.String(),
-    region: Type.String(),
-    volUuids: Type.String(),
-    apiBody: Type.String()
-});
-type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
-
 interface AwsFsxNBackupConfig {
     automaticBackupRetentionDays: number;
     dailyAutomaticBackupStartTime: string;
 }
+
+type MultipleCommandSsmResponse = {
+    commandId: string;
+    instanceId: string;
+    response?: GetCommandInvocationCommandOutput;
+    error?: string;
+};
 
 export {
     Metadata,
@@ -519,7 +531,7 @@ export {
     UserDatabase,
     MissingPermission,
     MissingPermissionInterface,
-    databaseInstanceMetadata,
+    DatabaseInstanceMetadata,
     Sandbox,
     DatabaseInstance,
     InstanceDetails,
@@ -545,7 +557,6 @@ export {
     RssConfigAssesment,
     MaxDOPAssesment,
     PatchDetail,
-    BulkOptimizeSnapshotPolicyParams,
-    BulkOptimizeSnapshotPolicyParamsType,
-    AwsFsxNBackupConfig
+    AwsFsxNBackupConfig,
+    MultipleCommandSsmResponse
 };

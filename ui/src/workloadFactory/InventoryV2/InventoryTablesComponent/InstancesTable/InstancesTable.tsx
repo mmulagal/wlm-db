@@ -64,14 +64,14 @@ import {
     setCdbPageData
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../../store/authSlice';
-import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
-import { Table } from '../../../../common/Lib/Table/Table';
+import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
@@ -423,8 +423,13 @@ const InstancesTable = () => {
         {
             Header: 'Instance name',
             accessor: 'databaseInstanceName',
+            customAccessor: 'statusAccessor',
             id: '1',
             isSortable: true,
+            filterOptions: [
+                { label: 'Online', value: 'Online' },
+                { label: 'Offline', value: 'Offline' }
+            ],
             width: '256px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
@@ -585,7 +590,10 @@ const InstancesTable = () => {
                     }
 
                     if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
-                        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+                        if (
+                            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                            rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
+                        ) {
                             disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
                             return true;
                         } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
@@ -595,9 +603,7 @@ const InstancesTable = () => {
                     }
 
                     if (
-                        (!cellData &&
-                            rowData.statusColText !== INVENTORY_STATUS.IN_PROGRESS &&
-                            !rowData?.optimizationStatusLoading) ||
+                        (!cellData && !rowData?.optimizationStatusLoading) ||
                         cellData === INVENTORY_STATUS.IN_PROGRESS
                     ) {
                         disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
@@ -621,8 +627,7 @@ const InstancesTable = () => {
                                 />
                                 <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                             </div>
-                        ) : rowData?.optimizationStatusLoading ||
-                          rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS ? (
+                        ) : rowData?.optimizationStatusLoading ? (
                             <DsFlashingDotsLoader />
                         ) : (
                             <div className={styles.statusCol}>
@@ -779,11 +784,25 @@ const InstancesTable = () => {
         return { isDisabled, errorMessage };
     };
 
+    const setStatusForFilter = (rowData?: any) => {
+        if (rowData?.status === INVENTORY_STATUS.RUNNING || rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) {
+            return INVENTORY_STATUS.ONLINE;
+        } else if (
+            rowData?.status === INVENTORY_STATUS.STOPPED ||
+            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+        ) {
+            return INVENTORY_STATUS.OFFLINE;
+        } else {
+            return rowData?.status;
+        }
+    };
+
     const updatedTableData = useMemo(() => {
         return instanceTableRows?.map((row: any) => {
             const { isDisabled, errorMessage } = disableManageCheck(row);
             return {
                 ...row,
+                statusAccessor: setStatusForFilter(row),
                 cellProps: {
                     ...row.cellProps,
                     isDisabled: isDisabled,
