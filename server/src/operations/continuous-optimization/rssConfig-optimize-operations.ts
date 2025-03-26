@@ -270,7 +270,7 @@ async function handleOptimizeRssOptimization(
                 });
                 throw error;
             }
-            if (shouldRollbackClusterOwnership && node2InstanceId) {
+            if (shouldRollbackClusterOwnership) {
                 // Transfer cluster ownership back to primary node instance
                 jobDescription = 'Transfer cluster node ownership from primary to another node in the cluster';
                 const transferOwnershipJobId = await handleOptimizeJobCreation(
@@ -312,7 +312,7 @@ async function handleOptimizeRssOptimization(
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
             // Trigger assessment after optimize
-            managedHostsRssConfigAssessment(
+            await managedHostsRssConfigAssessment(
                 accountId,
                 credentialsId,
                 region,
