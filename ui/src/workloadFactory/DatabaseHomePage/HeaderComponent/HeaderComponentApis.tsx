@@ -18,11 +18,14 @@ import { makeCredMapping, makeRegionMapping } from '../../../utils/utilityFuncti
 
 const HeaderComponentApi = () => {
     const dispatch = useAppDispatch();
-    const selectedCredential = useAppSelector(state => state.headers.headerSelectedCred);
+    const { headerSelectedMultiCred, headerSelectedCredSandbox } = useAppSelector(state => state.headers);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     // CredentialId state
     const [selectedCredId, setSelectedCredId] = useState(undefined);
+
+    // credSkip to skip APi call when credentialId is not defined
+    const [credSkip, setCredSkip] = useState(true);
 
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
@@ -44,7 +47,7 @@ const HeaderComponentApi = () => {
     } = useGetHeadersRegionsWithoutCredQuery(
         {},
         {
-            skip: skipApiCall
+            skip: credSkip
         }
     );
 
@@ -61,11 +64,18 @@ const HeaderComponentApi = () => {
     }, [statusData, statusLoading, statusError]);
 
     useEffect(() => {
-        const credId = selectedCredential?.data ? selectedCredential.data?.credentialsId : undefined;
+        const credId = headerSelectedMultiCred?.[0]?.data
+            ? headerSelectedMultiCred[0].data?.credentialsId
+            : headerSelectedCredSandbox?.data
+            ? headerSelectedCredSandbox.data?.credentialsId
+            : null;
         if (credId) {
             setSelectedCredId(credId);
+            setCredSkip(false);
+        } else {
+            setCredSkip(true);
         }
-    }, [selectedCredential]);
+    }, [headerSelectedMultiCred, headerSelectedCredSandbox]);
 
     useEffect(() => {
         dispatch(addCredentialsHeaderList({ credentialData, credentialLoading, credentialError }));

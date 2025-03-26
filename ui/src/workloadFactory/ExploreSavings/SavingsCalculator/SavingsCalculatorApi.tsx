@@ -395,10 +395,10 @@ const SavingsCalculatorApi = () => {
             if (!isDemoMode && selectedPartnerInstanceId) {
                 dispatch(setSelectedPartnerHostDetails(null));
                 dispatch(setGetPartnerHostDetailsLoading(true));
-                getMssqlDataForPartnerNode();
+                // getMssqlDataForPartnerNode();
             }
             dispatch(setSelectedHostDetails(null));
-            getMssqlData();
+            // getMssqlData();
             triggerRefreshApi();
         }
         dispatch(setSavingsCalculatorRefresh(false));
