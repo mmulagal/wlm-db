@@ -1,18 +1,13 @@
 import getLogger from '../../utils/logger';
 import { callSsmExecution } from './ssm-operations';
 import { describeAvailablePatches } from '../../lib/aws/ssm';
-import { extractVersionYear, sqlResponseParsing } from '../../utils/utils';
-import {
-    GET_INSTALLED_MSSQL_VERSION,
-    GET_INSTALLED_SQL_PATCHES
-} from '../workloads/mssql/continuous-optimization-scripts';
+import { sqlResponseParsing } from '../../utils/utils';
+import { GET_INSTALLED_SQL_PATCHES } from '../workloads/mssql/continuous-optimization-scripts';
 
 const logger = getLogger();
 
-async function getAvailablePatches(credentialsId: string, region: string, instanceId: string) {
+async function getAvailablePatches(credentialsId: string, region: string, instanceId: string, sqlServerYear: string) {
     logger.info('Get Available Patch Details', { credentialsId, region, instanceId });
-
-    const sqlServerYear = await getTheMSSqlversion(credentialsId, region, instanceId);
 
     const params = {
         Filters: [
@@ -43,23 +38,6 @@ async function getAvailablePatches(credentialsId: string, region: string, instan
     return availablePatches;
 }
 
-async function getTheMSSqlversion(credentialsId: string, region: string, instanceId: string) {
-    const ssmCommand = GET_INSTALLED_MSSQL_VERSION();
-
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        [ssmCommand],
-        instanceId,
-        'Get Installed SQL version'
-    );
-    const [parsedResponse] = sqlResponseParsing(response);
-    const { version } = parsedResponse;
-    const versionYear = extractVersionYear(version);
-
-    return versionYear;
-}
-
 async function getInstalledSQLPatchDetails(credentialsId: string, region: string, instanceIds: string[]) {
     logger.info('Get Installed SQL Patch Details', { credentialsId, region, instanceIds });
     const ssmCommand = GET_INSTALLED_SQL_PATCHES();
@@ -84,4 +62,4 @@ async function getInstalledSQLPatchDetails(credentialsId: string, region: string
     );
 }
 
-export { getAvailablePatches, getInstalledSQLPatchDetails, getTheMSSqlversion };
+export { getAvailablePatches, getInstalledSQLPatchDetails };

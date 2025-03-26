@@ -19,7 +19,8 @@ import {
     getServerNameWithHostname,
     parseMultipleCommandResponse,
     decompressSSMResponse,
-    divideArrayIntoChunks
+    divideArrayIntoChunks,
+    extractVersionDetails
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -171,5 +172,23 @@ describe(' Secrets Manager string', () => {
         const array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         const response = divideArrayIntoChunks(array, 3);
         expect(response.length).toEqual(4);
+    });
+
+    it('Extracts MSSQL version details from sql version string', () => {
+        const sqlVersion = `Microsoft SQL Server 2016 (SP3-GDR) (KB5046855) - 13.0.6455.2 (X64)
+ \n\tOct 15 2024 11:23:31 \n\tCopyright (c) Microsoft Corporation\n\tStandard Ed
+ition (64-bit) on Windows Server 2016 Datacenter 10.0 <X64> (Build 14393: ) (Hyp
+ervisor)\n`;
+
+        const { releaseDate, version } = extractVersionDetails(sqlVersion);
+        expect(releaseDate).toEqual('Oct 15 2024');
+        expect(version).toEqual('2016');
+    });
+
+    it('Extracts unknown version details from sql version string', () => {
+        const sqlVersion = 'Some random string';
+
+        const { releaseDate } = extractVersionDetails(sqlVersion);
+        expect(releaseDate).toEqual('Unknown');
     });
 });
