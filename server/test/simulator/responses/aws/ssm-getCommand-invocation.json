@@ -2185,6 +2185,10 @@
             "438cc269-edeb-11ef-994b-3b81e03bea3e": "2025-03-10T10:17:03+00:00"
         }
     },
+    "optimizeNetworkAdaptersResponse": {
+        "errors": {},
+        "response":  "SUCCESS"
+    },
     "getCRRAssessmentCommandResponse": {
         "$metadata": {
             "httpStatusCode": 200,

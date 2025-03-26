@@ -816,6 +816,11 @@ ssmMock
         return getVCPUAndMaxDopDetails.test(params.Parameters.commands?.[0]);
     })
     .resolves(getSampleCommandResponse('getVCPUAndMaxDOPDetails'))
+    .on(SendCommandCommand, params => {
+        const commentString = /# Optimize Network Adapters/;
+        return commentString.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('optimizeNetworkAdapters'))
     .on(SendCommandCommand, { Parameters: pgsqlDatabases })
     .resolves(listSendCommandCommandResponse.getPgsqldatabasesCommand)
     .on(SendCommandCommand, { Parameters: pgsqlPerformanceMetrics })
@@ -1116,6 +1121,15 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getVCPUAndMaxDOPDetails'
     })
     .resolves(getSampleCommandResponseWithOutput('getVCPUAndMaxDOPDetails', '{"vcpuCount":4,"maxDOP":"4"}\r\n'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeNetworkAdapters'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeNetworkAdapters',
+            JSON.stringify(getCommandInvocationResponse.optimizeNetworkAdaptersResponse)
+        )
+    )
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqldatabasesCommand' })
     .resolves(getCommandInvocationResponse.getPgsqlDatabasesCommandResponse)
     .on(GetCommandInvocationCommand, {

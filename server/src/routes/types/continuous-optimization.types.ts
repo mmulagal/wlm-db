@@ -364,7 +364,8 @@ const OptimizePerHostRequestBody = Type.Intersect([
     Type.Object({
         id: Type.String({ minLength: 1 }),
         sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
-        instanceType: Type.Optional(Type.String())
+        instanceType: Type.Optional(Type.String()),
+        networkAdapters: Type.Optional(Type.Array(Type.String()))
     }),
     UpdateFSxNBackupRequestBody
 ]);
@@ -417,6 +418,19 @@ const BulkOptimizeSnapshotPolicyParams = Type.Object({
 });
 type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
 
+const BulkOptimizeComputePerHostRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OptimizeComputeParams
+    }),
+    databaseHosts: Type.Array(OptimizePerHostRequestBody)
+});
+type BulkOptimizeComputePerHostRequestBodyType = Static<typeof BulkOptimizeComputePerHostRequestBody>;
+
+const BulkOptimizeComputeRequestBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeComputePerHostRequestBody)
+});
+type BulkOptimizeComputeRequestBodyType = Static<typeof BulkOptimizeComputeRequestBody>;
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -463,5 +477,9 @@ export {
     OptimizeResiliencyBody,
     BulkOptimizeSnapshotPolicyParams,
     BulkOptimizeSnapshotPolicyParamsType,
+    BulkOptimizeComputePerHostRequestBodyType,
+    BulkOptimizeComputePerHostRequestBody,
+    BulkOptimizeComputeRequestBody,
+    BulkOptimizeComputeRequestBodyType,
     OptimizeGenericRequestBody
 };

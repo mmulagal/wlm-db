@@ -5,6 +5,7 @@ import {
     COMPUTE_OPTIMIZE_LOG_PATH,
     DISCOVER_OPERATION_LOG_PATH,
     RESILIENCY_OPTIMIZE_LOG_PATH,
+    RSS_OPTIMIZE_LOG_PATH,
     SIZING_OPERATIONS_LOG_PATH,
     STORAGE_ASSESSMENT_LOG_PATH
 } from './const';
@@ -1078,6 +1079,88 @@ const GET_RSS_CONFIG_DETAILS = () => `
     Write-Output $jsonResult
 `;
 
+const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
+    # Optimize Network Adapters
+    Start-Transcript -Path ${RSS_OPTIMIZE_LOG_PATH} -Append | Out-Null
+
+    $response = @{}
+    $response['errors'] = @{}
+    $response['response'] = @{}
+
+    $networkAdapters = @(${networkAdapters.map(name => `'${name}'`).join(', ')})
+    $optimalRssProfile = 'NUMAStatic'
+
+    try {
+        # Disable global TCP Offload
+        Set-NetOffloadGlobalSetting -Chimney Disabled
+
+        # Optimize RSS settings for each network adapter
+        if($networkAdapters.Count -eq 0) {
+            Write-Information "No network adapters passed to optimize, checking for network adapters"
+            $networkAdapters = Get-NetAdapterRss | Select-Object -ExpandProperty Name
+        }
+
+        foreach($adapterName in $networkAdapters) {
+            try {
+                $currentRssSettings = Get-NetAdapterRss -Name $adapterName
+                $parameters = @{}
+                $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+                
+                $optimalRssReceiveQueues = $vcpus
+                $optimalBaseProcessorNumber = $currentRssSettings.BaseProcessorNumber
+                if($vcpus -ge 4) {
+                    $optimalBaseProcessorNumber = 2
+                } else {
+                    Write-Information "Number of vCPUs is less than 4. Not optimizing base processor number for adapter: $adapterName"
+                }
+                if($vcpus -gt 8) {
+                    $optimalRssReceiveQueues = 8
+                }
+                if ($currentRssSettings.Enabled -eq $false) {
+                    Write-Information "Enabling RSS on adapter: $adapterName"
+                    Enable-NetAdapterRss -Name $adapterName -NoRestart
+                }
+                if ($currentRssSettings.NumberOfReceiveQueues -ne $optimalRssReceiveQueues) {
+                    $parameters['NumberOfReceiveQueues'] = $optimalRssReceiveQueues
+                }
+                if ($currentRssSettings.BaseProcessorNumber -lt $optimalBaseProcessorNumber) {
+                    $parameters['BaseProcessorNumber'] = $optimalBaseProcessorNumber
+                }
+                if ($currentRssSettings.Profile -ne $optimalRssProfile) {
+                    $parameters['Profile'] = $optimalRssProfile
+                }
+                if ($parameters.Count -gt 0) {
+                    Write-Information "Setting RSS best practices values on adapter: $adapterName, $parameters"
+                    $parameters['Name'] = $adapterName
+                    Set-NetAdapterRss @parameters -NoRestart
+                }
+            } catch {
+                $errMsg = "Error occurred while optimizing network adapter: $adapterName $_.Exception.Message"
+                Write-Information $errMsg
+                $response['errors'][$adapterName] = $errMsg
+            }          
+        }
+    } catch {
+        $errMsg = "Error occurred while optimizing network adapters: $_.Exception.Message"
+        Write-Information $errMsg
+        $response['errors']['networkAdapters'] = $errMsg
+    }
+         
+    if($response.errors.Count -eq 0) {
+        $response['response'] = "SUCCESS"
+    } else {
+        $response['response'] = "FAILED"
+    }
+    
+    $response = $response | ConvertTo-Json
+    if([string]::IsNullOrEmpty($response)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
+    Stop-Transcript | Out-Null
+    return ($response)
+    
+`;
+
 const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
     Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     $result = @{}
@@ -1377,6 +1460,7 @@ export {
     MOVE_ALL_CLUSTER_GROUPS,
     GET_CLUSTER_NODE_NAMES,
     GET_RSS_CONFIG_DETAILS,
+    OPTIMIZE_NETWORK_ADAPTERS,
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_SQL_PATCHES,

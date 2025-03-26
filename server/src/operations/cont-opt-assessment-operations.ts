@@ -276,7 +276,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 activeNodeInstanceId,
                 resourceName,
                 jobId,
-                databaseHostId
+                databaseHostId,
+                metadata as unknown as Metadata
             );
         }
         if (fields?.includes(AssessmentCategories.MAXDOP)) {
