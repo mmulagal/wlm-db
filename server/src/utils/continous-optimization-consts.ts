@@ -89,7 +89,7 @@ enum OptimizeComputeParams {
 }
 
 enum OptimizeComputeJobNames {
-    'rss-config' = 'RSS Config',
+    'rss-config' = 'Network adapter configuration',
     compute = 'Compute'
 }
 

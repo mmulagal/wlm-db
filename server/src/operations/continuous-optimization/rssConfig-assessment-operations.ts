@@ -128,8 +128,8 @@ async function managedHostsRssConfigAssessment(
     });
 
     const { id: rssConfigAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server RSS Config assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server RSS Config assessment for ${resourceName}`,
+        name: `Microsoft SQL server network adapters configuration assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL server network adapters configuration assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -188,7 +188,7 @@ async function runRssConfigAssessment(
         region,
         [ssmCommand],
         activeNodeInstanceId,
-        'Get RSS configuration details'
+        'Get network adapters configuration details'
     );
     const parsedResponse = sqlResponseParsing(response);
     const { adapters: rssConfigAdapters, vcpuCount, tcpOffloadState } = parsedResponse;
