@@ -11,7 +11,8 @@ enum AssessmentCategories {
     MSSQL_PATCH = 'mssql-patch',
     RESILIENCY = 'resiliency',
     AWS_BACKUP = 'aws-backup',
-    CRR = 'crr'
+    CRR = 'crr',
+    MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes'
 }
 
 enum AssessmentTriggeredBy {

@@ -551,6 +551,31 @@ async function driftAssessmentDataCollection(
             databaseInstanceRecord.svmOntapUuid
         )) as MappedOnTapVolumeResponse[];
 
+        try {
+            await createDatabaseInstanceConfigData([
+                {
+                    account_id: accountId,
+                    credentials_id: credentialsId,
+                    region,
+                    resource_id: databaseHostId,
+                    database_instance_id: databaseInstanceRecord.id,
+                    creation_time: new Date(Date.now()),
+                    config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
+                    config_data: instanceVolumeMapping
+                }
+            ]);
+        } catch (error) {
+            const databaseInstanceId = databaseInstanceRecord.id;
+            logger.error('Error while persisting mapped ontap volumes data', {
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                error
+            });
+        }
+
         await initiateStorageAssessmentCollection(
             accountId,
             credentialsId,

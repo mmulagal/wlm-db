@@ -169,7 +169,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'TempBD drive size',
+            type: 'TempDB drive size',
             value: ''
         },
         recommendation: {

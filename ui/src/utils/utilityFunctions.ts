@@ -10,6 +10,7 @@ import {
     CREATE_DATABASE_YAML,
     CREDENTIAL_PROD_LINK,
     CREDENTIAL_STAGE_LINK,
+    DBType,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DETECT_HOST_VAR,
@@ -315,11 +316,20 @@ export const fsxPassVal = (password: string) => {
         const hasAtLeastOneNumber = /[0-9]/.test(password);
         const hasAtLeastOneAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 1;
 
-        if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName)) {
-            return '';
-        } else {
-            return GENERAL.PASSWORD_ERROR_CHECK;
+        if(state.postgreForm.selectedDatabaseType === DBType.POSTGRESQL) {
+            if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName) && !password.includes('admin')) {
+                return '';
+            } else {
+                return GENERAL.PASSWORD_ERROR_CHECK;
+            }
+        }else {
+            if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName)) {
+                return '';
+            } else {
+                return GENERAL.PASSWORD_ERROR_CHECK;
+            }
         }
+       
     }
 };
 
