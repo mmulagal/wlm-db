@@ -228,80 +228,80 @@ async function handleOptimizeRssOptimization(
                     isAnySubjobFailed = true;
                     throw error;
                 }
-            } else {
-                // Optimizing network adapters of primary nodes
-                let jobDescription = `Optimize network adapters of primary node for ${formattedInstanceName}`;
-                const jobMetadata: JobMetadata = {
-                    hostsToOptimize: [
-                        {
-                            optimizationType: OPTIMIZATION_CATEGORIES.RSS_CONFIG.toString(),
-                            resourceId: databaseHostId,
-                            sqlServerInstances: [databaseInstanceId]
-                        }
-                    ]
-                };
-                const jobId = await handleOptimizeJobCreation(
+            }
+            // Optimizing network adapters of primary nodes
+            let jobDescription = `Optimize network adapters of primary node for ${formattedInstanceName}`;
+            const jobMetadata: JobMetadata = {
+                hostsToOptimize: [
+                    {
+                        optimizationType: OPTIMIZATION_CATEGORIES.RSS_CONFIG.toString(),
+                        resourceId: databaseHostId,
+                        sqlServerInstances: [databaseInstanceId]
+                    }
+                ]
+            };
+            const jobId = await handleOptimizeJobCreation(
+                accountId,
+                credentialsId,
+                region,
+                resourceName!,
+                JOBTYPE.OPTIMIZATION,
+                jobDescription,
+                jobDescription,
+                parentJobId,
+                jobMetadata
+            );
+            try {
+                await optimizeNetworkAdapters(
                     accountId,
                     credentialsId,
                     region,
+                    databaseHostId,
+                    activeNodeInstanceId,
                     resourceName!,
+                    networkAdapters
+                );
+            } catch (error) {
+                isAnySubjobFailed = true;
+                await updateJobDetails(accountId, jobId, {
+                    status: JOBSTATUS.FAILED,
+                    endTime: Date.now(),
+                    error: (error as Error).message
+                });
+                throw error;
+            }
+            if (shouldRollbackClusterOwnership && node2InstanceId) {
+                // Transfer cluster ownership back to primary node instance
+                jobDescription = 'Transfer cluster node ownership from primary to another node in the cluster';
+                const transferOwnershipJobId = await handleOptimizeJobCreation(
+                    accountId,
+                    credentialsId,
+                    region,
+                    formattedInstanceName,
                     JOBTYPE.OPTIMIZATION,
                     jobDescription,
                     jobDescription,
-                    parentJobId,
-                    jobMetadata
+                    parentJobId
                 );
                 try {
-                    await optimizeNetworkAdapters(
-                        accountId,
-                        credentialsId,
-                        region,
-                        databaseHostId,
-                        activeNodeInstanceId,
-                        resourceName!,
-                        networkAdapters
-                    );
+                    await moveClusterGroupOwnership(credentialsId, region, ownerNode!, activeNodeInstanceId);
+                    await updateJobDetails(accountId, transferOwnershipJobId, {
+                        status: JOBSTATUS.COMPLETED,
+                        endTime: Date.now()
+                    });
+                    shouldRollbackClusterOwnership = false;
                 } catch (error) {
-                    isAnySubjobFailed = true;
-                    await updateJobDetails(accountId, jobId, {
+                    const errMsg = `Failed to transfer sql node ownership in the cluster, ${error}`;
+                    await updateJobDetails(accountId, transferOwnershipJobId, {
                         status: JOBSTATUS.FAILED,
                         endTime: Date.now(),
-                        error: (error as Error).message
+                        error: errMsg
                     });
+                    isAnySubjobFailed = true;
                     throw error;
                 }
-                if (shouldRollbackClusterOwnership) {
-                    // Transfer cluster ownership back to primary node instance
-                    jobDescription = 'Transfer cluster node ownership from primary to another node in the cluster';
-                    const transferOwnershipJobId = await handleOptimizeJobCreation(
-                        accountId,
-                        credentialsId,
-                        region,
-                        formattedInstanceName,
-                        JOBTYPE.OPTIMIZATION,
-                        jobDescription,
-                        jobDescription,
-                        parentJobId
-                    );
-                    try {
-                        await moveClusterGroupOwnership(credentialsId, region, ownerNode!, activeNodeInstanceId);
-                        await updateJobDetails(accountId, transferOwnershipJobId, {
-                            status: JOBSTATUS.COMPLETED,
-                            endTime: Date.now()
-                        });
-                        shouldRollbackClusterOwnership = false;
-                    } catch (error) {
-                        const errMsg = `Failed to transfer sql node ownership in the cluster, ${error}`;
-                        await updateJobDetails(accountId, transferOwnershipJobId, {
-                            status: JOBSTATUS.FAILED,
-                            endTime: Date.now(),
-                            error: errMsg
-                        });
-                        isAnySubjobFailed = true;
-                        throw error;
-                    }
-                }
             }
+
             if (isDemo()) {
                 const resourceMeta = metadata as unknown as Metadata;
                 let optimizedAdapters = resourceMeta?.isRssConfigOptimized;
