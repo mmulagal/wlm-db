@@ -123,7 +123,7 @@ function PostgressLayout() {
 
                     <>
                         {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <InstanceType />}
-                        <FSxNSystem />
+                        <FSxNSystem wizardType={WIZARD_TYPE.PGSQL} />
                         {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <SnapshotPolicy />}
                         <StorageCapacity wizardType={WIZARD_TYPE.PGSQL} />
                         {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
