@@ -281,7 +281,9 @@ const DashboardInnerPage = () => {
                 };
             } else {
                 apiCall = optimizeStorageTier;
-                payload = {};
+                payload = {
+                    configurationName: 'storage-tier'
+                };
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
             apiCall = optimizeResiliency;
