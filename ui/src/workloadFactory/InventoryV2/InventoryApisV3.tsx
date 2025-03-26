@@ -5,6 +5,7 @@ import {
     addDatabaseHostsDataV2,
     addPgSqlDatabaseHostsData,
     resetPerComboData,
+    resetRefreshData,
     setAllMssqlHostAssessmentLoading,
     setDashSandboxListData,
     setDashSandboxListLoading,
@@ -1159,23 +1160,10 @@ const InventoryApisV3 = () => {
 
     const resetFullData = () => {
         resetPerComboValues();
-        // inventory table reset
-        dispatch(setInventoryTableData(null));
-        // FSX cred object reset
-        dispatch(setFsxCredentialStatus({}));
+        dispatch(resetRefreshData(null));
         // Explore savings data
         dispatch(setUnmanagedExploreSavingsHost([]));
         dispatch(setPotentialSavingsValues(null));
-        dispatch(addAllMssqlHostAssessmentData([]));
-        dispatch(setDashSandboxListData([]));
-        dispatch(setDashSandboxSavingsData([]));
-        dispatch(
-            setInventoryTablesRows({
-                hosts: [],
-                instances: [],
-                databases: []
-            })
-        );
         dispatch(addInitialData(initialDBHomepageState));
     };
 
@@ -1194,19 +1182,11 @@ const InventoryApisV3 = () => {
     }, [credId, regionId, refreshBlocked, isRefreshed]);
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
-    // useEffect(() => {
-    //     if (!refreshBlocked && isRefreshed) {
-    //         // let managedList: string[] = [];
-    //         // if (credId && regionId && isRefreshed) {
-    //         //     resetFullData();
-    //         //     setTimeout(() => {
-    //         //         getManagedHostList(managedList, null, credId, regionId);
-    //         //     }, 10);
-    //         // }
-    //         resetFullData();
-    //         dispatch(setIsRefreshed(false));
-    //     }
-    // }, [isRefreshed, refreshBlocked]);
+    useEffect(() => {
+        if (!refreshBlocked && isRefreshed) {
+            resetFullData();
+        }
+    }, [isRefreshed, refreshBlocked]);
 
     useEffect(() => {
         if (headerSelectedCred && headerSelectedRegion) {

@@ -275,6 +275,16 @@ const inventoryV2Slice = createSlice({
             state.managedAssessmentHostData = {};
             state.allmssqlHostAssessmentData = [];
             state.potentialSavingsHostData = {};
+        },
+        resetRefreshData: (state, action: PayloadAction<any>) => {
+            state.inventoryTableData = null;
+            state.fsxCredentialStatusObj = {};
+            state.allmssqlHostAssessmentData = [];
+            state.dashSandboxList.data = [];
+            state.dashSandboxSavings.data = [];
+            state.hostTableRows = [];
+            state.instanceTableRows = [];
+            state.databaseTableRows = [];
         }
     }
 });
@@ -333,7 +343,8 @@ export const {
     setDashSandboxListData,
     setDashSandboxListLoading,
     setDashSandboxSavingsData,
-    setDashSandboxSavingsLoading
+    setDashSandboxSavingsLoading,
+    resetRefreshData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

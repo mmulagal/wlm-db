@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import styles from './HeaderComponent.module.scss';
 
 import {
@@ -45,7 +45,8 @@ import {
     setHeaderSelectedRegionSandbox,
     setMultiDataStatus,
     setRefreshTime,
-    setRefreshTimeSandbox
+    setRefreshTimeSandbox,
+    setSingleComboCredAndRegion
 } from '../../../store/workloadFactory/headersSlice';
 import {
     inventoryApi,
@@ -94,6 +95,7 @@ import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
 import {
     addAllMssqlHostAssessmentData,
+    resetRefreshData,
     setDashSandboxListData,
     setDashSandboxSavingsData,
     setFsxCredentialStatus,
@@ -176,6 +178,12 @@ const HeaderComponent = ({ tab }: Tab) => {
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
+
+    const multiDataStatusRef: any = useRef(null);
+
+    useEffect(() => {
+        multiDataStatusRef.current = multiDataStatus;
+    }, [multiDataStatus]);
 
     HeaderComponentApi();
     InventoryApisV3();
@@ -497,7 +505,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 }
             });
             if (!isMssqlInstanceDataLoading && !perfMssqlInstancesDataLoading && !potentialSavingsHostDataLoading) {
-                let newStatus = { ...multiDataStatus };
+                let newStatus = { ...multiDataStatusRef.current };
                 newStatus[currentCredId + '_' + currentRegionId] = true;
                 dispatch(setMultiDataStatus(newStatus));
                 // console.log('combo completed for ', currentCredId , currentRegionId)
@@ -521,8 +529,8 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     // Function to check if all APIs are completed for a cred-region set
     const isApiCompletedForSet = (cred: string, region: string) => {
-        if (multiDataStatus) {
-            return multiDataStatus[cred + '_' + region];
+        if (multiDataStatusRef.current) {
+            return multiDataStatusRef.current[cred + '_' + region];
         } else {
             return false;
         }
@@ -530,32 +538,26 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     useEffect(() => {
         if (isRefreshed) {
-            dispatch(setInventoryTableData(null));
-            // FSX cred object reset
-            dispatch(setFsxCredentialStatus({}));
+            dispatch(resetRefreshData(null));
             // Explore savings data
             dispatch(setUnmanagedExploreSavingsHost([]));
             dispatch(setPotentialSavingsValues(null));
-            dispatch(addAllMssqlHostAssessmentData([]));
-            dispatch(setDashSandboxListData([]));
-            dispatch(setDashSandboxSavingsData([]));
-            dispatch(
-                setInventoryTablesRows({
-                    hosts: [],
-                    instances: [],
-                    databases: []
-                })
-            );
             dispatch(addInitialData(initialDBHomepageState));
             dispatch(setIsRefreshed(false));
 
             dispatch(setMultiDataStatus({}));
             const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
             setPendingQueriesCounter(total);
-            dispatch(setHeaderSelectedCred(null));
-            dispatch(setHeaderSelectedRegion(null));
+            dispatch(
+                setSingleComboCredAndRegion({
+                    cred: null,
+                    region: null
+                })
+            );
             setCurrentIndex(0);
-            initialMultiCall();
+            setTimeout(() => {
+                initialMultiCall();
+            }, 10);
         }
     }, [isRefreshed]);
 
@@ -571,7 +573,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 setPendingQueriesCounter(total);
                 let queueLength = queue?.length;
                 let newQueue: any = [...queue];
-                let newMultiDataStatus: any = { ...multiDataStatus };
+                let newMultiDataStatus: any = { ...multiDataStatusRef.current };
                 newQueue?.forEach((item: any, index: number) => {
                     let isPresent = false;
                     for (let cred of headerSelectedMultiCred) {
@@ -649,8 +651,12 @@ const HeaderComponent = ({ tab }: Tab) => {
         const { cred, region } = item;
         setCurrentCred(cred?.data?.name || '');
         setCurrentRegion(region?.value);
-        dispatch(setHeaderSelectedCred(cred));
-        dispatch(setHeaderSelectedRegion(region));
+        dispatch(
+            setSingleComboCredAndRegion({
+                cred: cred,
+                region: region
+            })
+        );
     };
 
     const processNextIncompleteItem = (): boolean => {
@@ -697,8 +703,12 @@ const HeaderComponent = ({ tab }: Tab) => {
             if (!foundNext) {
                 // No incomplete item was found: reset the pending queries.
                 setPendingQueriesCounter(0);
-                dispatch(setHeaderSelectedCred(null));
-                dispatch(setHeaderSelectedRegion(null));
+                dispatch(
+                    setSingleComboCredAndRegion({
+                        cred: null,
+                        region: null
+                    })
+                );
             }
         }
     };

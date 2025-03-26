@@ -89,6 +89,10 @@ const headersSlice = createSlice({
         },
         setMultiDataStatus: (state, action: PayloadAction<any>) => {
             state.multiDataStatus = action.payload;
+        },
+        setSingleComboCredAndRegion: (state, action: PayloadAction<any>) => {
+            state.headerSelectedCred = action.payload?.cred;
+            state.headerSelectedRegion = action.payload?.region;
         }
     }
 });
@@ -108,7 +112,8 @@ export const {
     setDashboardRefresh,
     setCredentialMapping,
     setRegionMapping,
-    setMultiDataStatus
+    setMultiDataStatus,
+    setSingleComboCredAndRegion
 } = headersSlice.actions;
 
 export default headersSlice;
