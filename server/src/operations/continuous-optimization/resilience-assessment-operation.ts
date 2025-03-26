@@ -419,27 +419,22 @@ async function initiateCrossRegionResiliencyAssessment(
                     const resourceArn = fsxInfo?.FileSystems?.[0]?.ResourceARN;
 
                     crrDetails.forEach((crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
-                        if (crrDetail.peerClusterFsxId === undefined) {
-                            crrDetail.isCRREnabled = false;
-                        } else if (
-                            crrDetail.peerClusterFsxId === peerFileSystemId ||
-                            crrDetail.peerClusterFsxId.includes(peerFileSystemId)
-                        ) {
-                            crrDetail.isCRREnabled = !resourceArn?.includes(region);
-                        }
+                        crrDetail.isCRREnabled =
+                            crrDetail.isCRREnabled ||
+                            ((crrDetail.peerClusterFsxId === peerFileSystemId ||
+                                crrDetail.peerClusterFsxId?.includes(peerFileSystemId)) &&
+                                !resourceArn?.includes(region)) ||
+                            false;
                     });
                 } catch (error: any) {
                     if (error?.name && error.name === 'FileSystemNotFound') {
                         crrDetails.forEach(
                             (crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
-                                if (crrDetail.peerClusterFsxId === undefined) {
-                                    crrDetail.isCRREnabled = false;
-                                } else if (
+                                crrDetail.isCRREnabled =
+                                    crrDetail.isCRREnabled ||
                                     crrDetail.peerClusterFsxId === peerFileSystemId ||
-                                    crrDetail.peerClusterFsxId.includes(peerFileSystemId)
-                                ) {
-                                    crrDetail.isCRREnabled = true;
-                                }
+                                    crrDetail.peerClusterFsxId?.includes(peerFileSystemId) ||
+                                    false;
                             }
                         );
                     }

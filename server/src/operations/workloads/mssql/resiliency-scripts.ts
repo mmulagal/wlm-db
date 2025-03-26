@@ -137,36 +137,49 @@ const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance) => `
             $object["isSnapMirrored"] = $false
             $object["isCRREnabled"] = $false
         } else {
-                    $PeerClusterNames = @()
-                    $PeerClusterFsxIds = @()
-                    $PeerSVMNames = @()
-                    $DestinationPaths = @()
-                    foreach($VPDetail in $VserverPeerDetail) {
-                        $SVMName = $VPDetail.svmname
-                        $PeerSVMName = $VPDetail.peerSvmName
-                        $PeerFsxClusterName = $VPDetail.peerClusterName
-                        $PeerClusterFsxId = 'fs-' + ($PeerFsxClusterName -split "FsxId" )[-1]
-                        $SVMVolumeName = $SVMName + ':' + $volume
-                        $SnapMDestinationDetail = $SnapMirrorDestinationDetails | Where-Object { $_.sourcePath -eq $SVMVolumeName }
-                        if([string]::IsNullOrEmpty($SnapMDestinationDetail)) {
-                            $object["isSnapMirrored"] = $false
-                            $object["isCRREnabled"] = $false
-                        } else {
-                                foreach($SMDestinationDetail in $SnapMDestinationDetail) {
-                                        $PeerClusterNames += $PeerFsxClusterName
-                                        $PeerClusterFsxIds += $PeerClusterFsxId
-                                        $PeerSVMNames += $SMDestinationDetail.destinationVserverName
-                                        $DestinationPaths += $SMDestinationDetail.destinationPath
-                                    }
-                                $object["isSnapMirrored"] = $true
-                                $object["peerSVMName"] = $PeerSVMNames | Select-Object -Unique
-                                $object["destinationPath"] = $DestinationPaths | Select-Object -Unique
-                                $object["peerClusterName"] = $PeerClusterNames | Select-Object -Unique
-                                $object["peerClusterFsxId"] = $PeerClusterFsxIds | Select-Object -Unique
-                                    
-                                }
-                            }
+                $SVMSnapMirrorMapping = @()
+                foreach($VPDetail in $VserverPeerDetail) {
+                    $SVMName = $VPDetail.svmname
+                    $SVMSnapMirrorMappingDetails = $SVMSnapMirrorMapping | Where-Object { $_.sourceSvmName -eq $SVMName}
+                    $PeerClusterId = 'fs-' + ($VPDetail.peerClusterName -split "FsxId" )[-1]
+                    if([string]::IsNullOrEmpty($SVMSnapMirrorMappingDetails)) {
+                        $SvmObject = @{
+                            'sourceSvmName' = $SVMName
+                            'peerSvmNames' = @($VPDetail.peerSvmName)
+                            'peerClusterNames' = @($VPDetail.peerClusterName)
+                            'peerClusterIds' = @($PeerClusterId)
                         }
+                        $SVMSnapMirrorMapping += $SvmObject
+                    } else {
+                        $SVMSnapMirrorMappingDetails.peerSvmNames += $VPDetail.peerSvmName
+                        $SVMSnapMirrorMappingDetails.peerClusterNames += $VPDetail.peerClusterName
+                        $SVMSnapMirrorMappingDetails.peerClusterIds += $PeerClusterId
+                    }
+                }
+
+                [string[]]$DestinationPaths = @()
+                foreach($Mapping in $SVMSnapMirrorMapping) {
+                    $SVMName = $Mapping.sourceSvmName
+                    $SVMVolumeName = $SVMName + ':' + $volume
+                    $SnapMDestinationDetail = $SnapMirrorDestinationDetails | Where-Object { $_.sourcePath -eq $SVMVolumeName }
+                    if([string]::IsNullOrEmpty($SnapMDestinationDetail)) {
+                        $object["isSnapMirrored"] = $false
+                        $object["isCRREnabled"] = $false
+                    } else {
+                            foreach($SMDestinationDetail in $SnapMDestinationDetail) {
+                                $DestinationPaths += $SMDestinationDetail.destinationPath
+                            }
+                            $SVMSnapMirrorMappingDetails = $SVMSnapMirrorMapping | Where-Object { $_.sourceSvmName -eq $SVMName }
+                            
+                            $object["isSnapMirrored"] = $true
+                            $object["peerSVMName"] = @($SVMSnapMirrorMappingDetails.peerSvmNames | Select-Object -Unique)
+                            $object["destinationPath"] = @($DestinationPaths | Select-Object -Unique)
+                            $object["peerClusterName"] = @($SVMSnapMirrorMappingDetails.peerClusterNames | Select-Object -Unique)
+                            $object["peerClusterFsxId"] = @($SVMSnapMirrorMappingDetails.peerClusterIds | Select-Object -Unique)
+                                
+                        }
+                    }
+                }
         $CRRDetails['crrDetails'] += $object
     }
     
