@@ -1,6 +1,7 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
+import { GetCommandInvocationCommandOutput } from '@aws-sdk/client-ssm';
 
 interface LicenseAssessment {
     licenseFinding: string;
@@ -508,6 +509,13 @@ interface AwsFsxNBackupConfig {
     dailyAutomaticBackupStartTime: string;
 }
 
+type MultipleCommandSsmResponse = {
+    commandId: string;
+    instanceId: string;
+    response?: GetCommandInvocationCommandOutput;
+    error?: string;
+};
+
 export {
     Metadata,
     NodeDetails,
@@ -548,5 +556,6 @@ export {
     RssConfigAssesment,
     MaxDOPAssesment,
     PatchDetail,
-    AwsFsxNBackupConfig
+    AwsFsxNBackupConfig,
+    MultipleCommandSsmResponse
 };

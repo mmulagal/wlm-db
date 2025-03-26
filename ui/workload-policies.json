@@ -224,6 +224,7 @@
                     "ssm:DescribePatchBaselines",
                     "ssm:DescribeInstancePatchStates",
                     "ssm:ListCommands",
+                    "ssm:DescribeInstanceInformation",
                     "fsx:ListTagsForResource"
                 ],
                 "Resource": ["*"]
