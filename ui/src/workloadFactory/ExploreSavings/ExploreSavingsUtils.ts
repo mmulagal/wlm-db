@@ -128,7 +128,7 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(
         setSelectedEsPageInstance({
-            instanceId: rowData?.id,
+            instanceId: rowData?.ec2InstanceId,
             credentialId: rowData?.credentialId,
             regionId: rowData?.regionId,
             deploymentModel: deploymentModel,

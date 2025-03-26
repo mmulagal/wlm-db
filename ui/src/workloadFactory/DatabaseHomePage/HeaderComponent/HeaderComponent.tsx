@@ -44,7 +44,8 @@ import {
     setHeaderSelectedRegion,
     setHeaderSelectedRegionSandbox,
     setMultiDataStatus,
-    setRefreshTime
+    setRefreshTime,
+    setRefreshTimeSandbox
 } from '../../../store/workloadFactory/headersSlice';
 import {
     inventoryApi,
@@ -78,7 +79,8 @@ import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/Savings
 import {
     addExploreSavingsInitialData,
     setSavingsCalculatorFrom,
-    setSavingsCalculatorRefresh
+    setSavingsCalculatorRefresh,
+    setUnmanagedExploreSavingsHost
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import InventoryV2 from '../../InventoryV2/InventoryV2';
 import DatabaseHostOverviewV2 from '../../ResourcePage/ResourceHomePage/DatabaseHostOverviewV2';
@@ -90,17 +92,32 @@ import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
-import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import {
+    addAllMssqlHostAssessmentData,
+    setDashSandboxListData,
+    setDashSandboxSavingsData,
+    setFsxCredentialStatus,
+    setInventoryTableData,
+    setInventoryTablesRows,
+    setIsRefreshed,
+    setSelectedHeaderTab
+} from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
-import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
+import {
+    addInitialData,
+    initialDBHomepageState,
+    setPotentialSavingsValues,
+    setSandboxAgeRange
+} from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
 import FetchingDataNotification from '../FetchingDataNotification/FetchingDataNotification';
 import OptimizeInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeInnerPage';
 import OptimizeOntapInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeOntapInnerPage';
 import Marketing from '../../../Marketing/Marketing';
 import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
+import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSlice';
 
 type Tab = {
     tab: string;
@@ -152,10 +169,11 @@ const HeaderComponent = ({ tab }: Tab) => {
     const [queue, setQueue] = useState<any>([]);
     // const [multiDataStatus, setMultiDataStatus] = useState<any>({});
 
-    const refreshTime = useAppSelector(state => state.headers.refreshTime);
+    const { refreshTime, refreshTimeSandbox } = useAppSelector(state => state.headers);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
+    const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
@@ -510,8 +528,38 @@ const HeaderComponent = ({ tab }: Tab) => {
         }
     };
 
-    // Compute total queries count and initialize queue
     useEffect(() => {
+        if (isRefreshed) {
+            dispatch(setInventoryTableData(null));
+            // FSX cred object reset
+            dispatch(setFsxCredentialStatus({}));
+            // Explore savings data
+            dispatch(setUnmanagedExploreSavingsHost([]));
+            dispatch(setPotentialSavingsValues(null));
+            dispatch(addAllMssqlHostAssessmentData([]));
+            dispatch(setDashSandboxListData([]));
+            dispatch(setDashSandboxSavingsData([]));
+            dispatch(
+                setInventoryTablesRows({
+                    hosts: [],
+                    instances: [],
+                    databases: []
+                })
+            );
+            dispatch(addInitialData(initialDBHomepageState));
+            dispatch(setIsRefreshed(false));
+
+            dispatch(setMultiDataStatus({}));
+            const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
+            setPendingQueriesCounter(total);
+            dispatch(setHeaderSelectedCred(null));
+            dispatch(setHeaderSelectedRegion(null));
+            setCurrentIndex(0);
+            initialMultiCall();
+        }
+    }, [isRefreshed]);
+
+    const initialMultiCall = () => {
         if (
             headerSelectedMultiCred &&
             headerSelectedMultiCred.length > 0 &&
@@ -537,8 +585,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                         }
                     }
                     if (!isPresent) {
-                        const key = `${newQueue[index]?.cred?.data?.credentialsId}_${newQueue[index]?.region?.data?.regionCode}`;
-                        delete newMultiDataStatus[key];
+                        // If any combo is removed and added back again than not calling apis again
+                        // const key = `${newQueue[index]?.cred?.data?.credentialsId}_${newQueue[index]?.region?.data?.regionCode}`;
+                        // delete newMultiDataStatus[key];
                         newQueue.splice(index, 1);
                     }
                 });
@@ -552,7 +601,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                         });
                         if (isAlreadyInQueue?.length === 0) {
                             newQueue.push({ cred, region });
-                            newMultiDataStatus[cred?.data?.credentialsId + '_' + region?.data?.regionCode] = false;
+                            // If any combo is removed and added back again than not calling apis again
+                            if (!newMultiDataStatus?.[cred?.data?.credentialsId + '_' + region?.data?.regionCode]) {
+                                newMultiDataStatus[cred?.data?.credentialsId + '_' + region?.data?.regionCode] = false;
+                            }
                         }
                     }
                 }
@@ -581,6 +633,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                 // console.log('multiDataStatus', newMultiDataStatus);
             }
         }
+    };
+
+    // Compute total queries count and initialize queue
+    useEffect(() => {
+        initialMultiCall();
     }, [headerSelectedMultiCred, headerSelectedMultiRegion]);
 
     const isItemCompleted = (item: any): boolean => {
@@ -640,6 +697,8 @@ const HeaderComponent = ({ tab }: Tab) => {
             if (!foundNext) {
                 // No incomplete item was found: reset the pending queries.
                 setPendingQueriesCounter(0);
+                dispatch(setHeaderSelectedCred(null));
+                dispatch(setHeaderSelectedRegion(null));
             }
         }
     };
@@ -657,26 +716,30 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     useEffect(() => {
         dispatch(setRefreshTime(getCurrentDateTime()));
+        dispatch(setRefreshTimeSandbox(getCurrentDateTime()));
     }, []);
 
     const refreshPage = () => {
         dispatch(updateRefreshBlocked(false));
-        dispatch(setRefreshTime(getCurrentDateTime()));
         if (selectedHeaderTab === WLF_TABS.DASHBOARD) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
             resetDBHomePageState(dispatch);
             dispatch(setDashboardRefresh(true));
             dispatch(inventoryApi.util.resetApiState());
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
             resetDBHomePageState(dispatch);
             dispatch(inventoryApi.util.resetApiState());
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(workloadFactoryResourceApiV2.util.resetApiState());
             dispatch(setIsResourceRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
             dispatch(setIsRefreshed(true));
@@ -684,9 +747,11 @@ const HeaderComponent = ({ tab }: Tab) => {
             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
         ) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(setSavingsCalculatorRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.SANDBOXES) {
-            dispatch(setIsRefreshed(true));
+            dispatch(setRefreshTimeSandbox(getCurrentDateTime()));
+            dispatch(setIsRefreshedSandbox(true));
         }
         fetchOnPremData(true);
     };
@@ -697,6 +762,23 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <Popover
                     popoverClass={styles['copy-popover']}
                     children={`Last update: ${refreshTime}`}
+                    trigger="hover"
+                    container={
+                        <div className={styles.refreshIcon} onClick={refreshPage}>
+                            <RefreshIcon />
+                        </div>
+                    }
+                />
+            </div>
+        );
+    };
+
+    const refreshComponentSandbox = () => {
+        return (
+            <div className={styles.refresh}>
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    children={`Last update: ${refreshTimeSandbox}`}
                     trigger="hover"
                     container={
                         <div className={styles.refreshIcon} onClick={refreshPage}>
@@ -1322,7 +1404,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <div className={styles.sandboxSection}>
                             <div className={styles.contentArea}>
                                 {selectSandboxComponents()}
-                                <div className={styles.content}>{refreshComponent()}</div>
+                                <div className={styles.content}>{refreshComponentSandbox()}</div>
                             </div>
                         </div>
                         <Sandbox />

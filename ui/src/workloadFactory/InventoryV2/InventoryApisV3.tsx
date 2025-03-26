@@ -1181,7 +1181,7 @@ const InventoryApisV3 = () => {
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
     useEffect(() => {
-        if (!refreshBlocked) {
+        if (!refreshBlocked && !isRefreshed) {
             let managedList: string[] = [];
             if (credId && regionId) {
                 resetPerComboValues();
@@ -1191,21 +1191,22 @@ const InventoryApisV3 = () => {
                 }, 10);
             }
         }
-    }, [credId, regionId, refreshBlocked]);
+    }, [credId, regionId, refreshBlocked, isRefreshed]);
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
-    useEffect(() => {
-        if (!refreshBlocked && isRefreshed) {
-            let managedList: string[] = [];
-            if (credId && regionId && isRefreshed) {
-                resetFullData();
-                setTimeout(() => {
-                    getManagedHostList(managedList, null, credId, regionId);
-                }, 10);
-            }
-            dispatch(setIsRefreshed(false));
-        }
-    }, [isRefreshed, refreshBlocked]);
+    // useEffect(() => {
+    //     if (!refreshBlocked && isRefreshed) {
+    //         // let managedList: string[] = [];
+    //         // if (credId && regionId && isRefreshed) {
+    //         //     resetFullData();
+    //         //     setTimeout(() => {
+    //         //         getManagedHostList(managedList, null, credId, regionId);
+    //         //     }, 10);
+    //         // }
+    //         resetFullData();
+    //         dispatch(setIsRefreshed(false));
+    //     }
+    // }, [isRefreshed, refreshBlocked]);
 
     useEffect(() => {
         if (headerSelectedCred && headerSelectedRegion) {

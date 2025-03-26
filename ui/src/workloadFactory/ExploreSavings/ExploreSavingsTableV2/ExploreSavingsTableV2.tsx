@@ -99,7 +99,7 @@ const ExploreSavingsTableV2 = () => {
             setEBSTableData([]);
             setFSXWTableData([]);
         }
-    }, [unManagedHostFormatedList]);
+    }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     const lastColDetails = () => {
         return {

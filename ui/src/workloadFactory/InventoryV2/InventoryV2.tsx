@@ -224,7 +224,13 @@ const InventoryV2 = () => {
                 })
             );
         }
-    }, [inventoryTableData, inProgressInstances, allmssqlHostAssessmentLoading]);
+    }, [
+        inventoryTableData,
+        inProgressInstances,
+        allmssqlHostAssessmentLoading,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     return (
         <div className={styles.inventory}>

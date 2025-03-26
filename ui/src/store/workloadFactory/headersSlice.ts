@@ -28,6 +28,7 @@ const initialHeaderState: HeaderTypeEntities = {
         statusError: null
     },
     refreshTime: null,
+    refreshTimeSandbox: null,
     dashboardRefresh: false,
     multiDataStatus: {}
 };
@@ -80,6 +81,9 @@ const headersSlice = createSlice({
         setRefreshTime: (state, action: PayloadAction<any>) => {
             state.refreshTime = action.payload;
         },
+        setRefreshTimeSandbox: (state, action: PayloadAction<any>) => {
+            state.refreshTimeSandbox = action.payload;
+        },
         setDashboardRefresh: (state, action: PayloadAction<any>) => {
             state.dashboardRefresh = action.payload;
         },
@@ -100,6 +104,7 @@ export const {
     addRegionsHeaderList,
     addStatus,
     setRefreshTime,
+    setRefreshTimeSandbox,
     setDashboardRefresh,
     setCredentialMapping,
     setRegionMapping,
