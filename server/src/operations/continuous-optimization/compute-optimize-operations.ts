@@ -409,21 +409,20 @@ async function handleComputeRemediation(
                 }
             }
 
-            // const checkRunningResponse = await checkRunningStatus(
-            //     accountId,
-            //     jobId,
-            //     instanceName,
-            //     region,
-            //     credentialsId,
-            //     activeNodeInstanceId,
-            //     formattedInstanceName
-            // );
+            const checkRunningResponse = await checkRunningStatus(
+                accountId,
+                jobId,
+                region,
+                credentialsId,
+                activeNodeInstanceId,
+                formattedInstanceName
+            );
 
-            // if (!checkRunningResponse.running) {
-            //     subJobErrorMessage = checkRunningResponse.error;
-            //     anySubJobFailed = true;
-            //     throw checkRunningResponse.error;
-            // }
+            if (!checkRunningResponse.running) {
+                subJobErrorMessage = checkRunningResponse.error;
+                anySubJobFailed = true;
+                throw checkRunningResponse.error;
+            }
 
             // update metadata after successful optimization
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
@@ -494,7 +493,6 @@ async function handleComputeRemediation(
 async function checkRunningStatus(
     accountId: string,
     parentJobId: string,
-    instanceName: string,
     region: string,
     credentialsId: string,
     activeNodeInstanceId: string,
@@ -504,7 +502,6 @@ async function checkRunningStatus(
         accountId,
         credentialsId,
         region,
-        instanceName,
         parentJobId,
         activeNodeInstanceId
     });
@@ -523,7 +520,7 @@ async function checkRunningStatus(
     const rawStatusResponse = await callSsmExecution(
         credentialsId,
         region,
-        [CHECK_RUNNING_STATUS_WITH_RESTART(instanceName)],
+        [CHECK_RUNNING_STATUS_WITH_RESTART('MSSQLSERVER')],
         activeNodeInstanceId,
         'Checking running status of the service',
         accountId,
@@ -533,28 +530,27 @@ async function checkRunningStatus(
 
     let statusResponse: { status: string; error?: string };
     try {
-        const cleanStatusResponse = rawStatusResponse.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
+        const cleanStatusResponse = rawStatusResponse.replace(/\r\n|\\r\\n/g, '');
         statusResponse = JSON.parse(cleanStatusResponse);
+
+        const jobDetails = {
+            status: statusResponse.status === 'Running' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: statusResponse.status !== 'Running' ? statusResponse.error : undefined
+        };
+
+        await updateJobDetails(accountId, checkRunningJobId, jobDetails);
+
+        return { running: statusResponse.status === 'Running', error: statusResponse.error || '' };
     } catch (error) {
         logger.error('Error parsing query response:', rawStatusResponse);
-        return { running: false, error: 'Error parsing SSM query response' };
-    }
-
-    if (statusResponse.status !== 'Running') {
         await updateJobDetails(accountId, checkRunningJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
-            error: statusResponse.error
+            error: 'Error parsing SSM query response'
         });
-        return { running: false, error: statusResponse.error };
+        return { running: false, error: 'Error parsing SSM query response' };
     }
-
-    await updateJobDetails(accountId, checkRunningJobId, {
-        status: JOBSTATUS.COMPLETED,
-        endTime: Date.now()
-    });
-
-    return { running: true, error: '' };
 }
 
 export default async function optimizeCompute(

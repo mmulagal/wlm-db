@@ -1161,28 +1161,28 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
     
 `;
 
-const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
+const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceNamePattern: string) => `
     Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     $result = @{}
     try {
-        $SQLService = Get-Service -Name "${serviceName}"
+        $SQLService = Get-Service | Where-Object { $_.Name -like '*${serviceNamePattern}*' } | Select-Object -First 1
         if ($SQLService.Status -eq 'Running') { 
-            $result = @{ status = $SQLService.Status }
+            $result = @{ status = $SQLService.Status.ToString() }
             return
         }
 
         $SQLService.WaitForStatus('Running', '00:00:20')
 
-        $SQLService = Get-Service -Name "${serviceName}"
+        $SQLService = Get-Service | Where-Object { $_.Name -like '*${serviceNamePattern}*' } | Select-Object -First 1
         if ($SQLService.Status -eq 'Running') { 
-            $result = @{ status = $SQLService.Status }
+            $result = @{ status = $SQLService.Status.ToString() }
             return
         }
 
         $SQLService.Start()
         
         $SQLService.WaitForStatus('Running', '00:00:20')
-        $result = @{ status = (Get-Service -Name "${serviceName}").Status }
+        $result = @{ status = (Get-Service | Where-Object { $_.Name -like '*${serviceNamePattern}*' } | Select-Object -First 1).Status.ToString() }
     } catch {
         $result = @{ status = 'failed'; error = $_.Exception.Message }
         Write-Information "Error occurred while checking service status: $_.Exception.Message"
