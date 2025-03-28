@@ -632,7 +632,7 @@ const HostTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Hosts"
                         singularTitle="Host"
-                        exportToCsvOptions={{ fileName: `hostTable-${Date.now()}.csv` }}
+                        exportToCsvOptions={{ fileName: `HostTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                         className={styles.topBarStyle}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                         actionsRight={
