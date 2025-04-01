@@ -3,13 +3,14 @@ import createError from 'http-errors';
 
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
-import { CloneAssesment, CloneDetail } from '../../utils/common-types';
 import {
-    getInstanceDetails,
-    getInstanceOntapDetails,
+    CloneAssesment,
+    CloneDetail,
     InstancesResponse,
+    VolumeDBMapEntry,
     VolumeRecord
-} from '../database-hosts-operations';
+} from '../../utils/common-types';
+import { getInstanceDetails, getInstanceOntapDetails } from '../database-hosts-operations';
 import { ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
@@ -292,25 +293,22 @@ async function runCloneAssessment(
     }
     const { volumeRecords, volumeDBMap } = volumeMapping;
 
-    const filteredVolumeRecords = volumeRecords?.filter(record => record.clone?.is_flexclone);
+    const filteredVolumeRecords = volumeRecords?.filter((record: VolumeRecord) => record.clone?.is_flexclone);
 
-    const volumeUUIDMap = new Map<string, any>();
-    const databaseNameToVolumeUUIDMap = new Map<string, string[]>();
-    const volumeUUIDToDatabaseNameMap = new Map<string, string>();
+    const volumeUUIDMap = new Map<string, any>(); // Map to store volume UUIDs
+    const databaseNameToVolumeUUIDMap = new Map<string, string[]>(); // Map to store database names
+    const volumeUUIDToDatabaseNameMap = new Map<string, string>(); // Map to store volume UUIDs to database names
 
-    // Create a lookup map for volume UUIDs
-    filteredVolumeRecords.forEach(record => {
+    filteredVolumeRecords.forEach((record: VolumeRecord) => {
         volumeUUIDMap.set(record.uuid, record);
     });
-    // Create a lookup map for database names
-    volumeDBMap?.forEach(entry => {
+
+    volumeDBMap?.forEach((entry: VolumeDBMapEntry) => {
         const { databaseName, ontapVolumeuuid } = entry;
         if (!databaseNameToVolumeUUIDMap.has(databaseName)) {
             databaseNameToVolumeUUIDMap.set(databaseName, []);
         }
         databaseNameToVolumeUUIDMap.get(databaseName)?.push(ontapVolumeuuid);
-
-        // databaseNameToVolumeUUIDMap.set(databaseName, ontapVolumeuuid);
         volumeUUIDToDatabaseNameMap.set(ontapVolumeuuid, databaseName);
     });
 
@@ -322,8 +320,7 @@ async function runCloneAssessment(
 
     const sandboxInfo: CloneDetail[] = [];
     let oldClones = 0;
-    // Set to keep track of sandbox names already processed by netapp_wf
-    const processedSandboxNames = new Set<string>();
+    const processedSandboxNames = new Set<string>(); // Set to keep track of sandbox names already processed by netapp_wf
 
     modifiedResponse?.forEach((item: sandboxType) => {
         const sources = getSourceDetails(item);
