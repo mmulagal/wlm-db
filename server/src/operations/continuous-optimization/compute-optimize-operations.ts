@@ -528,29 +528,43 @@ async function checkRunningStatus(
         COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
     );
 
-    let statusResponse: { status: string; error?: string };
+    let outStatus: { running: boolean; error?: string } = {
+        running: true
+    };
+    let jobDetails: { status: string; error?: string } = {
+        status: JOBSTATUS.COMPLETED,
+        error: ''
+    };
+    let statusResponse: { status: string; error?: string } = { status: '', error: '' };
+
     try {
-        const cleanStatusResponse = rawStatusResponse.replace(/\r\n|\\r\\n/g, '');
+        const cleanStatusResponse = sqlResponseParsing(rawStatusResponse);
         statusResponse = JSON.parse(cleanStatusResponse);
 
-        const jobDetails = {
+        jobDetails = {
             status: statusResponse.status === 'Running' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
-            endTime: Date.now(),
             error: statusResponse.status !== 'Running' ? statusResponse.error : undefined
         };
 
-        await updateJobDetails(accountId, checkRunningJobId, jobDetails);
-
-        return { running: statusResponse.status === 'Running', error: statusResponse.error || '' };
+        outStatus = { running: statusResponse.status === 'Running', error: statusResponse.error || '' };
     } catch (error) {
         logger.error('Error parsing query response:', rawStatusResponse);
-        await updateJobDetails(accountId, checkRunningJobId, {
+        jobDetails = {
             status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: 'Error parsing SSM query response'
-        });
-        return { running: false, error: 'Error parsing SSM query response' };
+            error: statusResponse.error
+        };
+
+        outStatus = {
+            running: false,
+            error: statusResponse.error
+        };
     }
+    await updateJobDetails(accountId, checkRunningJobId, {
+        ...jobDetails,
+        endTime: Date.now()
+    });
+
+    return outStatus;
 }
 
 export default async function optimizeCompute(
