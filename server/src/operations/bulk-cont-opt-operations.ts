@@ -79,7 +79,7 @@ async function bulkOptimization(
             : optimizationCategory === OPTIMIZATION_CATEGORIES.MAXDOP
             ? 'Optimize maxdop configuration'
             : optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP
-            ? 'Optimize AWS Backup configuration'
+            ? 'Optimize AWS FSx for ONTAP automatic backup configuration'
             : 'Optimize storage sizing';
 
     const parentJobId = await handleOptimizeJobCreation(

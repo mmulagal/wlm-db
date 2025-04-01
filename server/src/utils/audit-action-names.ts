@@ -38,8 +38,8 @@ const getActionName = (request: FastifyRequest) => {
 
     switch (true) {
         case request.url.includes('/optimize/storage-sizing'): {
-            if (body && body?.configurationName && body.configurationName.length > 0) {
-                param = storageSizingDescriptions[body.configurationName[0]] || 'storage sizing';
+            if (body && body?.configurationName) {
+                param = storageSizingDescriptions[body.configurationName] || 'storage sizing';
             }
             return `Optimize ${param} parameters as per the best practice for the selected database instance.`;
         }
