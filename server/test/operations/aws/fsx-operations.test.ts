@@ -17,8 +17,7 @@ import {
     tagFsxResource,
     isFsxwAwsBackupEnabled,
     updateVolumeSizeAndWaitForUpdate,
-    updateFsxBackup,
-    isBackupAvailableForVolumeUuid
+    updateFsxBackup
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
 import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
@@ -113,14 +112,5 @@ describe('Testcases for Amazon FSx resources operations', () => {
                 dailyAutomaticBackupStartTime: '10:00'
             })
         ).resolves.not.toThrow();
-    });
-    it('Check if FSX for Windows AWS backup available for am volume Id', async () => {
-        const response = await isBackupAvailableForVolumeUuid(
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            FSX_FILESYSTEM_ID,
-            'test'
-        );
-        expect(response).toEqual(true);
     });
 });

@@ -1,15 +1,53 @@
-const getMappedOntapDataVolume = `
-    response=$(findmnt -n -o SOURCE "$(sudo systemctl cat postgresql | grep Environment=PGDATA | awk -F= '/Environment=PGDATA=/ {print $3}')")
-    mountedVolume=""
-    # Check if response is not empty
-    if [[ -n "$response" ]]; then
-        # Split the response by ':' and get the second part
-        part=$(echo "$response" | cut -d':' -f2)
-        trimmed_part="\${part:1}"
-        mountedVolume=$(echo "$trimmed_part" | xargs)
-    else
-        echo "Mounted Volume Response is empty or null"
+const checkCommandStatus = `
+check_status() {
+    if [ $? -ne 0 ]; then
+    echo "$1"
+    exit 1;
     fi
+}
+`;
+
+const getMappedOntapDataVolume = (fsxnId: string, region: string) => `
+    ${checkCommandStatus}
+    filesystemid="${fsxnId}"
+    region="${region}"
+
+    dataDir=$(systemctl cat postgresql | grep Environment=PGDATA | awk -F= '/Environment=PGDATA=/ {print $3}')
+    check_status "Failed to get data directory"
+
+    mount_path=$(findmnt -n -o SOURCE $dataDir)
+    check_status "Failed to get mount path"
+
+    dnsName=$(echo "$mount_path" | cut -d':' -f1) 
+    check_status "Failed to extract DNS name"
+
+    junctionPath=$(echo "$mount_path" | cut -d':' -f2) 
+    check_status "Failed to extract junction path"
+
+    ipAddress=$(dig +short $dnsName)
+    check_status "Failed to resolve IP address"
+
+    svmEndpoint='svm/svms?fields=ip_interfaces'
+    ${ontapRestApi}
+    result=$(ontap_request 'GET' $svmEndpoint)
+    check_status "Failed to fetch SVM endpoint data"
+
+    svmResult=$(echo "$result" | jq --arg ip_address "$ipAddress" '
+    .records[] |
+    select(.ip_interfaces[] | select(.name == "nfs_smb_management_1" and .ip.address == $ip_address)) |
+     {name: .name, uuid: .uuid}
+    ')
+    check_status "Failed to get matching SVM with IP address"
+
+    svmName=$(echo "$svmResult" | jq -r '.name')
+    check_status "Failed to extract SVM name"
+
+    volEndpoint="storage/volumes?svm.name=$svmName&nas.path=$junctionPath"
+    response=$(ontap_request 'GET' $volEndpoint)
+    check_status "Failed to fetch volume endpoint data"
+
+    mountedVolume=$(echo "$response" | jq -r '.records[0].name')
+    check_status "Failed to extract mounted volume name"
 `;
 
 const getPgSqlStorageSavings = (fsxnId: string, region: string, endpoint: string) => `
@@ -18,7 +56,7 @@ const getPgSqlStorageSavings = (fsxnId: string, region: string, endpoint: string
     filesystemid="${fsxnId}"
     region="${region}"
  
-    ${getMappedOntapDataVolume}
+    ${getMappedOntapDataVolume(fsxnId, region)}
     endpoint="${endpoint}&name=$mountedVolume"
     ${ontapRestApi}
     result=$(ontap_request 'GET' $endpoint)
@@ -31,19 +69,13 @@ const getPgSqlProtection = (fsxnId: string, region: string) => `
     filesystemid="${fsxnId}"
     region="${region}"
  
-    ${getMappedOntapDataVolume}
+    ${checkCommandStatus}
+    ${getMappedOntapDataVolume(fsxnId, region)}
     endpoint="storage/volumes?fields=snapshot_count&name=$mountedVolume"
     ${ontapRestApi}
     result=$(ontap_request 'GET' $endpoint)
-    corrected_res=$(echo "$result" | sed 's/.records\\n$//')
-    echo "$corrected_res" | jq -c '.records[]' | while read -r record; do
-    uuid=$(echo "$record" | jq -r '.uuid')
-    name=$(echo "$record" | jq -r '.name')
-    snapshot_count=$(echo "$record" | jq -r '.snapshot_count')
-
-    jq -n --arg uuid "$uuid" --arg name "$name" --arg snapshot_count "$snapshot_count" \
-    '{uuid: $uuid, name: $name, snapshotCount: $snapshot_count}'
-    done
+    check_status "Failed to fetch protection data"
+    echo $result
 `;
 
 const ontapRestApi = `

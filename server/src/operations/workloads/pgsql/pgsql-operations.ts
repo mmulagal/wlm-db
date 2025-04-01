@@ -21,7 +21,7 @@ import { getPgSqlProtection, getPgSqlStorageSavings, getPgsqlInstanceData } from
 import getDatabaseInstanceTopology from '../../../utils/sql-utils';
 import { SSM_RUN_SHELL_SCRIPT_DOC } from './const';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../mssql/const';
-import { isBackupAvailableForVolumeUuid } from '../../aws/fsx-operations';
+import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 
 const logger = getLogger();
 
@@ -197,6 +197,9 @@ async function getPgSqlDatabaseInstancesSummary(
     const getDatabasesWithoutProtection = fieldsValues?.includes(
         DatabaseHostsQueryFields.DATABASES.toLocaleLowerCase()
     );
+    const getDatabasesWithProtection = fieldsValues?.includes(
+        DatabaseHostsQueryFields.DATABASES_WITH_PROTECTION.toLocaleLowerCase()
+    );
     const shouldQueryDatabaseTopology = fieldsValues?.includes(
         DatabaseHostsQueryFields.DATABASE_INSTANCE_TOPOLOGY.toLocaleLowerCase()
     );
@@ -244,13 +247,13 @@ async function getPgSqlDatabaseInstancesSummary(
                     ...(getDbCount
                         ? [getPgSqlDatabaseCount(accountId, credentialsId, region, activeNodeInstanceId)]
                         : [Promise.resolve()]),
-                    ...(getDatabasesWithoutProtection
+                    ...(getDatabasesWithoutProtection || getDatabasesWithProtection
                         ? [getPgSqlDatabasesList(accountId, credentialsId, region, activeNodeInstanceId)]
                         : [Promise.resolve()]),
                     ...(getPerformanceMetrics
                         ? [getPgSqlPerformaceMetrics(accountId, credentialsId, region, activeNodeInstanceId)]
                         : [Promise.resolve()]),
-                    ...(getProtectionStatus
+                    ...(getProtectionStatus || getDatabasesWithProtection
                         ? [
                               getPgSqlProtectionStatus(
                                   accountId,
@@ -296,6 +299,15 @@ async function getPgSqlDatabaseInstancesSummary(
         }
         if (getDatabasesWithoutProtection && databases) {
             databaseInstanceDetails.databases = databases || 0;
+        } else if (getDatabasesWithProtection && databases) {
+            if (protectionData) {
+                databaseInstanceDetails.databases = databases.map((db: any) => ({
+                    ...db,
+                    protection: protectionData
+                }));
+            } else {
+                databaseInstanceDetails.databases = databases;
+            }
         }
         if (getPerformanceMetrics && performanceData) {
             databaseInstanceDetails.performance = getPerformanceMetrics
@@ -496,8 +508,11 @@ async function getPgSqlProtectionStatus(
     );
     if (response) {
         const parsedResponse = sqlResponseParsing(response);
-        const { snapshotCount, uuid } = parsedResponse;
-        const fsxnBackup = await isBackupAvailableForVolumeUuid(credentialsId, region, fsxId, uuid);
+        const records = parsedResponse?.records[0];
+        const { snapshot_count: snapshotCount, uuid } = records;
+        const backupStatus = await isFsxnAwsBackupEnabled(credentialsId, region, fsxId, [uuid]);
+        const volumeUuidsInBackups = backupStatus?.volumeUuidsInBackups || [];
+        const fsxnBackup = volumeUuidsInBackups.includes(uuid);
         return {
             isAwsBackupEnabled: { fsxn: fsxnBackup },
             isFsxOntapSnapshotsEnabled: snapshotCount > 0
