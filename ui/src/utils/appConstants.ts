@@ -286,6 +286,7 @@ export const GENERAL = {
     PASSWORD_FSX_1: 'The password must be at least eight characters long.',
     PASSWORD_FSX_2: 'The password must contain at least one letter and one number.',
     PASSWORD_FSX_3: 'The password cannot contain the user name.',
+    PASSWORD_FSX_4: 'The password cannot contain the word "admin".',
     //Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',

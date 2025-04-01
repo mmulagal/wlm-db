@@ -18,7 +18,10 @@ const ComparisonChartStack = React.memo(
         tooltipHeading,
         tooltipText,
         loading = false,
-        loadingWithNoData = false
+        loadingWithNoData = false,
+        marginTop = '150px',
+        labelChange = false,
+        labelChangeText = ''
     }: {
         colors?: ChartColor[];
         data: number[][];
@@ -29,6 +32,9 @@ const ComparisonChartStack = React.memo(
         tooltipText?: any;
         loading?: boolean;
         loadingWithNoData?: boolean;
+        marginTop?: string;
+        labelChange?: boolean;
+        labelChangeText?: string;
     }) => {
         let max = 0;
         for (const stack of data) {
@@ -41,7 +47,7 @@ const ComparisonChartStack = React.memo(
         const compareArrayValues = compareDataAndCalculateDifference(data);
 
         return (
-            <div className={styles.base} style={{ height, marginTop: loadingWithNoData ? '150px' : '0' }}>
+            <div className={styles.base} style={{ height, marginTop: loadingWithNoData ? marginTop : '0' }}>
                 {data.map((stack, index) => {
                     const total = stack.reduce((acc, val) => acc + val, 0);
                     return (
@@ -184,16 +190,25 @@ const ComparisonChartStack = React.memo(
                                     )}
                                     {loadingWithNoData && index > 0 && (
                                         <div className={styles.xLabel}>
-                                            <div className={styles.xContainer}>
-                                                <div className={styles.xContainerInner}>
-                                                    <div className={styles.squareChart3} />
-                                                    <DsTypography variant="Semibold_14">EBS</DsTypography>
+                                            {labelChange && (
+                                                <div className={styles.xContainer}>
+                                                    <DsTypography variant="Semibold_14">{labelChangeText}</DsTypography>
                                                 </div>
-                                                <div className={styles.xContainerInner}>
-                                                    <div className={styles.squareChart2} />
-                                                    <DsTypography variant="Semibold_14">FSxW</DsTypography>
-                                                </div>
-                                            </div>
+                                            )}
+                                            {!labelChange && (
+                                                <>
+                                                    <div className={styles.xContainer}>
+                                                        <div className={styles.xContainerInner}>
+                                                            <div className={styles.squareChart3} />
+                                                            <DsTypography variant="Semibold_14">EBS</DsTypography>
+                                                        </div>
+                                                        <div className={styles.xContainerInner}>
+                                                            <div className={styles.squareChart2} />
+                                                            <DsTypography variant="Semibold_14">FSxW</DsTypography>
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                 </>

@@ -5,7 +5,7 @@ import {
 } from '../types/database-hosts.types';
 import {
     DiscoverMsSqlResponseBody,
-    DiscoverMsSqlQuery,
+    DiscoverQuery,
     DiscoverInstanceParams,
     DiscoverCredentialsRequestBody,
     DiscoverCredentialsResponse,
@@ -15,7 +15,8 @@ import {
     MultiInstanceManageResponseBody,
     MultiInstanceUnmanageResponseBody,
     UnmanageInstanceParams,
-    DatabaseInstanceQueryString
+    DatabaseInstanceQueryString,
+    DiscoverPgSqlResponseBody
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams, AccountIdParams } from '../types/generic.types';
 
@@ -27,7 +28,7 @@ const DiscoveryBaseRequest = {
 const DiscoverMsSqlSchema = {
     ...DiscoveryBaseRequest,
     params: CredentialsIdParams,
-    querystring: DiscoverMsSqlQuery,
+    querystring: DiscoverQuery,
     summary: 'Discover EC2 instances hosting Microsoft SQL Server.',
     description: `Discover AWS EC2 instances hosting Microsoft SQL Server.
         EC2 instances meeting the following constraints are
@@ -131,6 +132,25 @@ const MsSqlInstancesSchemaV2 = {
         200: DatabaseHostSummaryForMultiInstanceListResponse
     }
 };
+
+const DiscoverPgSqlSchema = {
+    ...DiscoveryBaseRequest,
+    params: CredentialsIdParams,
+    querystring: DiscoverQuery,
+    summary: 'Discover EC2 instances hosting PostgreSQL Server.',
+    description: `Discover AWS EC2 instances hosting PostgreSQL Server.
+        EC2 instances meeting the following constraints are
+        considered for discovery:
+        <ul>
+            <li> Instance is in running state.
+            <li> Machines running images of Amazon Linux 2023.
+            <li> Architecture is x86_64.
+        </ul>`,
+    response: {
+        200: DiscoverPgSqlResponseBody
+    }
+};
+
 export {
     DiscoverCredentialsSchema,
     DiscoverMsSqlSchema,
@@ -138,5 +158,6 @@ export {
     PrepareForManageSchema,
     MsSqlInstancesSchemaV2,
     UnManageMsSqlSchema,
-    ManageMsSqlSchemaV2
+    ManageMsSqlSchemaV2,
+    DiscoverPgSqlSchema
 };

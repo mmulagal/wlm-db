@@ -18,7 +18,8 @@ import {
     BulkOptimizeGeneralRequestBody,
     AvailableSnapshotPoliciesResponse,
     OptimizeResiliencyBody,
-    OptimizeGenericRequestBody
+    OptimizeGenericRequestBody,
+    BulkOptimizeComputeRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -103,8 +104,8 @@ const OptimizeSizingSchema = {
 
 const OptimizeComputeSchema = {
     ...resourceRequest,
-    summary: 'Optimize compute for a database instance',
-    description: 'Optimize compute as per the best practice for the selected database instance.',
+    summary: 'Optimize compute rightsizing for a database instance',
+    description: 'Optimize compute rightsizing as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeComputeRequestBody,
     tags: [RouteTags.ASSESSMENT],
@@ -212,9 +213,17 @@ const BulkOptimizeStorageTierSchema = {
 };
 
 const BulkOptimizeComputeSchema = {
-    ...BulkOptimizeGeneralSchema,
+    ...resourceRequest,
+    params: CredentialsIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: BulkOptimizeComputeRequestBody,
     summary: 'Optimize compute',
-    description: 'Optimize compute parameters as per the best practice for selected database instances.'
+    description: 'Optimize compute parameters as per the best practice for selected database instances.',
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
 };
 
 const BulkOptimizeMaxDopSchema = {
@@ -225,8 +234,8 @@ const BulkOptimizeMaxDopSchema = {
 
 const BulkOptimizeAwsBackupSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Enable AWS FSx for ONTAP automatic backup',
-    description: 'Enable AWS FSx for ONTAP automatic backup.'
+    summary: 'Enable scheduled AWS FSx for ONTAP backups',
+    description: 'Enable scheduled AWS FSx for ONTAP backups.'
 };
 
 export {

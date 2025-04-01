@@ -47,7 +47,9 @@ const ScheduledLocalSnapshotDalog = ({ type, data }: any) => {
         selectedSnapshotPolicy?.map((val: any, idx: number) => {
             const snapshotName = val?.name || '';
             const option = generateOptionType(snapshotName, snapshotName, '', false, '', val);
-            options.push(option);
+            if (option.label !== 'none') {
+                options.push(option);
+            }
         });
 
         return options;

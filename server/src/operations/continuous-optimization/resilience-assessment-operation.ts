@@ -1,7 +1,8 @@
 import createError from 'http-errors';
 import moment from 'moment';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import {
+    OntapVolumeType,
     ParameterDriftResponseType,
     ResilienceDriftAssessmentResponseType,
     SnapshotPolicyAssesmentDataType
@@ -23,7 +24,7 @@ import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
 import {
     DatabaseInstance,
-    databaseInstanceMetadata,
+    DatabaseInstanceMetadata,
     StorageAssessment,
     WorkloadInstance
 } from '../../utils/common-types';
@@ -38,6 +39,29 @@ import { isFsxnAwsBackupEnabled } from '../aws/fsx-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
+
+function filterDataLogVolumes(instanceVolumeMapping: MappedOnTapVolumeResponse) {
+    const volumeRecords =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeRecords)
+            .flat() || [];
+    const volumeDBMap =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeDBMap)
+            .flat() || {};
+    // Ignore tempdb volumes from resiliency assessment
+    const dataLogVolumeUuids = [
+        ...new Set(volumeDBMap.filter(volume => volume.databaseName !== 'tempdb').map(volume => volume.ontapVolumeuuid))
+    ];
+    const dataLogVolumeNames = [
+        ...new Set(
+            volumeRecords
+                .filter(volume => dataLogVolumeUuids.includes(volume.uuid as string))
+                .map(volume => volume.name as string)
+        )
+    ];
+    return { dataLogVolumeUuids, dataLogVolumeNames };
+}
 
 function getVolumesWithoutSnapshotPolicy(volumes: Array<{ Key?: string; Value?: string }> = []) {
     // if instance has volumes in violation list for snapshot-policy, collect snapshot copy data for additional checks.
@@ -159,14 +183,24 @@ async function getSnapshotPolicyDriftData(
     logger.info('Calculate snapshot policy drift data for:', { credentialsId, databaseInstanceId, databaseHostId });
     let errorMessage;
     try {
-        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-            accountId,
-            region,
-            credentialsId,
-            databaseHostId,
-            databaseInstanceId,
-            AssessmentCategories.STORAGE // Snapshot-policy is stored with storage assesment data
-        );
+        const [[persistedConfigurationData], [mappedVolumesData]] = await Promise.all([
+            listDatabaseInstanceConfigData(
+                accountId,
+                region,
+                credentialsId,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentCategories.STORAGE
+            ),
+            listDatabaseInstanceConfigData(
+                accountId,
+                region,
+                credentialsId,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentCategories.MAPPED_ONTAP_VOLUMES // Snapshot-policy is stored with storage assesment data
+            )
+        ]);
 
         if (isEmpty(persistedConfigurationData)) {
             errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
@@ -179,6 +213,13 @@ async function getSnapshotPolicyDriftData(
             return { errorMessage: errors.volumes };
         }
 
+        // Check if mapped volumes data is available and filter out only data and log volumes
+        let dataLogVolumeUuids: string[] = [];
+        if (!isEmpty(mappedVolumesData)) {
+            const { config_data: mappedVolumes } = mappedVolumesData;
+            ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumes as unknown as MappedOnTapVolumeResponse));
+        }
+
         const snapshotPolicyAssesmentData: SnapshotPolicyAssesmentDataType = {
             ...storageGoldenConfigData.resiliency.snapshotPolicy,
             timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
@@ -189,21 +230,25 @@ async function getSnapshotPolicyDriftData(
         };
         volumes.forEach(volume => {
             const volDetails = volume as Record<string, string>;
+
             const latestSnapshotTimestamp = new Date(
                 parseInt(volDetails?.[OptimizeStorageConfigs.MOST_RECENT_SNAPSHOT_TIMESTAMP] ?? 0, 10)
             );
             if (
-                isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
-                volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none' ||
+                (isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
+                    volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none') &&
                 latestSnapshotTimestamp <= new Date(moment().subtract(2, 'days').format())
             ) {
-                snapshotPolicyAssesmentData.violations.push(volDetails?.name);
+                const vol: OntapVolumeType = { ontapVolumeName: volDetails?.name, ontapVolumeUuid: volDetails?.uuid };
+                if (isEmpty(dataLogVolumeUuids) || dataLogVolumeUuids.includes(volDetails?.uuid)) {
+                    snapshotPolicyAssesmentData.violations.push(vol);
+                }
             }
         });
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { configsOptimized } =
-                ((instanceDetail as unknown as DatabaseInstance)?.metadata as databaseInstanceMetadata) ?? {};
+                ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
             if (configsOptimized?.STORAGE?.includes(OptimizeStorageConfigs.SNAPSHOT_POLICY)) {
                 snapshotPolicyAssesmentData.violations = [];
             }
@@ -272,14 +317,24 @@ async function getAwsBackupDriftData(
         }
 
         // Fetch the OnTap volumes from storage assessment
-        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-            accountId,
-            region,
-            credentialsId,
-            databaseHostId,
-            databaseInstanceId,
-            AssessmentCategories.STORAGE
-        );
+        const [[persistedConfigurationData], [mappedVolumesData]] = await Promise.all([
+            listDatabaseInstanceConfigData(
+                accountId,
+                region,
+                credentialsId,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentCategories.STORAGE
+            ),
+            listDatabaseInstanceConfigData(
+                accountId,
+                region,
+                credentialsId,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentCategories.MAPPED_ONTAP_VOLUMES // Snapshot-policy is stored with storage assesment data
+            )
+        ]);
 
         // Check that the persisted configuration data exists
         if (isEmpty(persistedConfigurationData)) {
@@ -301,12 +356,19 @@ async function getAwsBackupDriftData(
             ontapVolumeIds.push(volDetails?.uuid);
         });
 
+        // Check if mapped volumes data is available and filter out only data and log volumes
+        let dataLogVolumeUuids: string[] = [];
+        if (!isEmpty(mappedVolumesData)) {
+            const { config_data: mappedVolumes } = mappedVolumesData;
+            ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumes as unknown as MappedOnTapVolumeResponse));
+        }
+
         const { volumeUuidsInBackups } =
             (await isFsxnAwsBackupEnabled(
                 credentialsId,
                 region,
                 fileSystemId,
-                [...new Set(ontapVolumeIds)],
+                isEmpty(dataLogVolumeUuids) ? [...new Set(ontapVolumeIds)] : [...new Set(dataLogVolumeUuids)],
                 undefined
             )) || {};
 
@@ -365,12 +427,11 @@ async function initiateCrossRegionResiliencyAssessment(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    const volumeRecords =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeRecords)
-            .flat() || [];
-    instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
-    instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
+    const { dataLogVolumeUuids, dataLogVolumeNames } = filterDataLogVolumes(
+        instanceVolumeMapping as unknown as MappedOnTapVolumeResponse
+    );
+    instanceRecord.mappedVolumesUuids = dataLogVolumeUuids;
+    instanceRecord.mappedVolumeNames = dataLogVolumeNames;
 
     const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord)];
     const ssmComment = 'Get Cross Region Replication Assessment';
@@ -387,9 +448,17 @@ async function initiateCrossRegionResiliencyAssessment(
 
     const { crrDetails, errorMessage } = response ? sqlResponseParsing(response) : { crrDetails: [], errorMessage: '' };
 
-    const peerFileSystemIds = crrDetails
-        ?.filter((crrDetail: { peerClusterFsxId: string }) => crrDetail.peerClusterFsxId)
-        .map((crrDetail: { peerClusterFsxId: string }) => crrDetail.peerClusterFsxId);
+    const peerFileSystemIds = [
+        ...new Set(
+            compact(
+                crrDetails
+                    .map((crrDetail: { peerClusterFsxId: string | string[] }) => crrDetail.peerClusterFsxId)
+                    .flat()
+            ) as string[]
+        )
+    ];
+
+    logger.info('peerFileSystemIds:', peerFileSystemIds);
 
     // Check if PeerFileSystemIds are NOT deployed in the same region as source fsx
     // 1. No two fsx in any region can have same id.
@@ -408,18 +477,25 @@ async function initiateCrossRegionResiliencyAssessment(
                     );
                     const resourceArn = fsxInfo?.FileSystems?.[0]?.ResourceARN;
 
-                    crrDetails.forEach((crrDetail: { peerClusterFsxId: string; isCRREnabled: boolean }) => {
-                        if (crrDetail.peerClusterFsxId === peerFileSystemId) {
-                            crrDetail.isCRREnabled = !resourceArn?.includes(region);
-                        }
+                    crrDetails.forEach((crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
+                        crrDetail.isCRREnabled =
+                            crrDetail.isCRREnabled ||
+                            ((crrDetail.peerClusterFsxId === peerFileSystemId ||
+                                crrDetail.peerClusterFsxId?.includes(peerFileSystemId)) &&
+                                !resourceArn?.includes(region)) ||
+                            false;
                     });
                 } catch (error: any) {
                     if (error?.name && error.name === 'FileSystemNotFound') {
-                        crrDetails.forEach((crrDetail: { peerClusterFsxId: string; isCRREnabled: boolean }) => {
-                            if (crrDetail.peerClusterFsxId === peerFileSystemId) {
-                                crrDetail.isCRREnabled = true;
+                        crrDetails.forEach(
+                            (crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
+                                crrDetail.isCRREnabled =
+                                    crrDetail.isCRREnabled ||
+                                    crrDetail.peerClusterFsxId === peerFileSystemId ||
+                                    crrDetail.peerClusterFsxId?.includes(peerFileSystemId) ||
+                                    false;
                             }
-                        });
+                        );
                     }
                 }
             })
@@ -439,6 +515,7 @@ async function initiateCrossRegionResiliencyAssessment(
         }
     ]);
 }
+
 async function getCrrDriftData(
     accountId: string,
     credentialsId: string,

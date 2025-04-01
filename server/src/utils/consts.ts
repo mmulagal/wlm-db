@@ -545,6 +545,7 @@ const AWS_REGIONS = new Map<string, string>([
     ['ca-west-1', 'Canada (Calgary)'],
     ['ap-southeast-5', 'Asia Pacific (Malaysia)']
 ]);
+const AWS_REGION_KEYS = Array.from(AWS_REGIONS.keys());
 
 const IO2_AVAILABLE_REGIONS = [
     'us-east-2',
@@ -1411,7 +1412,7 @@ const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
 const ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT = '300';
-const ASSESSMENT_SSM_EXECUTION_TIMEOUT = '600';
+const ASSESSMENT_SSM_EXECUTION_TIMEOUT = '1800';
 
 const VALIDATION_NODE_INSTANCETYPE = 'm5.xlarge';
 
@@ -1499,7 +1500,8 @@ const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const PGSQL_VERSION = 'pgsql-version';
-const AL2023_AMI_NAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
+const AMAZON_LINUX_AMI_PATH = '/aws/service/ami-amazon-linux-latest';
+const AL2023_AMI_NAME = `${AMAZON_LINUX_AMI_PATH}/al2023-ami-kernel-6.1-x86_64`;
 
 const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -2051,5 +2053,7 @@ export {
     GERERIC_JOB_ERROR_MESSAGE,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
-    PGSQL_SYSTEM_DATABASES
+    PGSQL_SYSTEM_DATABASES,
+    AWS_REGION_KEYS,
+    AMAZON_LINUX_AMI_PATH
 };

@@ -2,7 +2,8 @@ import { faker } from '@faker-js/faker';
 import {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
-    manageSqlServerV2
+    manageSqlServerV2,
+    discoverPgSqlResources
 } from '../../src/operations/discover-operations';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import '../simulator/scopes/aws/ec2-scope';
@@ -79,6 +80,15 @@ describe('Discover operations', () => {
             'i-0e5af83448e1b83ef',
             params
         );
+        expect(response).toBeDefined();
+    });
+});
+
+describe('Discover operations: PGSQL', () => {
+    it('Discover EC2 instances hosting PostgreSQL Server', async () => {
+        const response = await discoverPgSqlResources(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 10);
+        const connectedResources = response.items.find(item => item.ssmState === 'connected');
+        expect(connectedResources?.pgsqlServerVersion).toEqual('psql (PostgreSQL) 16.5');
         expect(response).toBeDefined();
     });
 });

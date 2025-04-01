@@ -3,7 +3,10 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
 import { HttpErrorCodes } from '../utils/consts';
-import { BulkOptimizeGeneralPerHostRequestBodyType } from '../routes/types/continuous-optimization.types';
+import {
+    BulkOptimizeComputePerHostRequestBodyType,
+    BulkOptimizeGeneralPerHostRequestBodyType
+} from '../routes/types/continuous-optimization.types';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import {
     handleUpdateAwsBackup,
@@ -16,19 +19,22 @@ import { updateParentJobStatus } from './database/job-operations';
 import {
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_RESILIENCY_CONFIGS,
-    OPTIMIZE_SIZING_CONFIGS
+    OPTIMIZE_SIZING_CONFIGS,
+    OptimizeComputeJobNames,
+    OptimizeComputeParams
 } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
+import { handleOptimizeRssOptimization } from './continuous-optimization/rssConfig-optimize-operations';
 
 const logger = getLogger();
 
 async function formatJobMetadata(hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]) {
-    return hostsToOptimize.flatMap(({ type, databaseHosts }) =>
+    return hostsToOptimize.flatMap(({ configurationName, databaseHosts }) =>
         databaseHosts.map(({ id, sqlServerInstances, fsxFileSystemId, backupRetentionDays, backupStartTime }) => ({
             resourceId: id,
             sqlServerInstances,
-            optimizationType: type,
+            optimizationType: configurationName,
             fsxFileSystemId,
             backupRetentionDays,
             backupStartTime
@@ -73,7 +79,7 @@ async function bulkOptimization(
             : optimizationCategory === OPTIMIZATION_CATEGORIES.MAXDOP
             ? 'Optimize maxdop configuration'
             : optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP
-            ? 'Optimize AWS Backup configuration'
+            ? 'Optimize AWS FSx for ONTAP automatic backup configuration'
             : 'Optimize storage sizing';
 
     const parentJobId = await handleOptimizeJobCreation(
@@ -164,7 +170,7 @@ async function handleBulkOptimization(
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     try {
         await Promise.all(
-            hostsToOptimize.map(async ({ type: optimizationSubcategory, databaseHosts }) => {
+            hostsToOptimize.map(async ({ configurationName: optimizationSubcategory, databaseHosts }) => {
                 if (optimizationSubcategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
                     await handleUpdateAwsBackup(
                         accountId,
@@ -214,7 +220,7 @@ async function bulkComputeOptimization(
     accountId: string,
     credentialsId: string,
     region: string,
-    hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]
+    hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType[]
 ) {
     logger.info(`Bulk optimizing compute: ${accountId}, ${credentialsId}, ${region}, ${hostsToOptimize}`);
 
@@ -240,15 +246,19 @@ async function bulkComputeOptimization(
         jobMetadata
     );
 
-    handleBulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize, parentJobId);
-    return { jobId: parentJobId };
+    try {
+        handleBulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize, parentJobId);
+        return { jobId: parentJobId };
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, (error as Error).message);
+    }
 }
 
 async function handleBulkComputeOptimization(
     accountId: string,
     credentialsId: string,
     region: string,
-    hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[],
+    hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType[],
     masterOptimizeParentId: string
 ) {
     logger.info(
@@ -257,38 +267,73 @@ async function handleBulkComputeOptimization(
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     try {
         await Promise.all(
-            hostsToOptimize.map(async ({ databaseHosts }) => {
+            hostsToOptimize.map(async ({ databaseHosts, configurationName: optimizationCategory }) => {
                 await Promise.all(
-                    databaseHosts.map(async ({ id: databaseHostId, sqlServerInstances, instanceType }) => {
-                        if (isEmpty(sqlServerInstances)) {
-                            logger.error(`No instances given for resource ${databaseHostId}.`);
-                        }
-                        if (!instanceType) {
-                            logger.error(`instanceType cannot be empty, ${databaseHostId}.`);
-                        }
-                        try {
-                            await optimizeCompute(
+                    databaseHosts.map(
+                        async ({ id: databaseHostId, sqlServerInstances, instanceType, networkAdapters }) => {
+                            if (isEmpty(sqlServerInstances)) {
+                                logger.error(`No instances given for resource ${databaseHostId}.`);
+                            }
+                            const jobMetadata: JobMetadata = {
+                                hostsToOptimize: await formatJobMetadata(hostsToOptimize)
+                            };
+                            const optimizationName =
+                                OptimizeComputeJobNames[optimizationCategory as keyof typeof OptimizeComputeJobNames];
+                            const parentJobId = await handleOptimizeJobCreation(
                                 accountId,
                                 credentialsId,
                                 region,
-                                databaseHostId,
-                                sqlServerInstances[0], // Since compute remediation is at host level. It is okay to pick one instance.
-                                instanceType as string,
-                                masterOptimizeParentId
+                                accountId,
+                                JOBTYPE.OPTIMIZATION,
+                                `Optimize ${optimizationName}`,
+                                `Optimize ${optimizationName}`,
+                                masterOptimizeParentId,
+                                jobMetadata
                             );
-                        } catch (error: any) {
-                            logger.error(
-                                `Error occurred while optimizing compute for account ${accountId}, ${databaseHostId}. Error: ${error}`
-                            );
-                            masterOptimizeParentStatus = JOBSTATUS.FAILED;
+                            try {
+                                switch (optimizationCategory) {
+                                    case OptimizeComputeParams.RSS_CONFIG:
+                                        handleOptimizeRssOptimization(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            databaseHostId,
+                                            sqlServerInstances[0],
+                                            networkAdapters!,
+                                            parentJobId
+                                        );
+                                        break;
+                                    case OptimizeComputeParams.COMPUTE:
+                                    default:
+                                        if (!instanceType) {
+                                            logger.error(`instanceType cannot be empty, ${databaseHostId}.`);
+                                        }
+                                        await optimizeCompute(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            databaseHostId,
+                                            sqlServerInstances[0], // Since compute remediation is at host level. It is okay to pick one instance.
+                                            instanceType as string,
+                                            parentJobId
+                                        );
+                                }
+                                masterOptimizeParentStatus = JOBSTATUS.COMPLETED;
+                            } catch (error: any) {
+                                logger.error(
+                                    `Error occurred while optimizing compute for account ${accountId}, ${databaseHostId}. Error: ${error}`
+                                );
+                                masterOptimizeParentStatus = JOBSTATUS.FAILED;
+                            }
                         }
-                    })
+                    )
                 );
             })
         );
     } catch (error: any) {
         logger.error(`Error occurred while optimizing compute for account ${accountId}. Error: ${error}`);
         masterOptimizeParentStatus = JOBSTATUS.FAILED;
+        throw error;
     } finally {
         if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
             await updateParentJobStatus(accountId, masterOptimizeParentId);

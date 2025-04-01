@@ -47,6 +47,7 @@ import { useNavigate } from 'react-router-dom';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { useTable } from '../../../../common/Lib/Table/useTable';
+import { getFilterOptions } from '../../../../utils/utilityFunctions';
 
 const HostTable = () => {
     const dispatch = useDispatch();
@@ -350,7 +351,7 @@ const HostTable = () => {
             id: '1',
             Header: 'Engine type',
             accessor: 'hostType',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'hostType'),
             width: '228px',
             renderCell: (cellData: any) => {
                 return (
@@ -390,7 +391,7 @@ const HostTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'serverInstallationMode',
             width: '236px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'serverInstallationMode'),
             renderCell: (cellData: string, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
             }
@@ -421,7 +422,7 @@ const HostTable = () => {
             Header: 'SSM connectivity',
             accessor: 'ssmState',
             width: '200px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'ssmState'),
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.firstColText}>
@@ -483,7 +484,7 @@ const HostTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'credentialName'),
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -494,7 +495,7 @@ const HostTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'accountId'),
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -505,7 +506,7 @@ const HostTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'regionName'),
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -632,7 +633,7 @@ const HostTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Hosts"
                         singularTitle="Host"
-                        exportToCsvOptions={{ fileName: 'hostTable.csv' }}
+                        exportToCsvOptions={{ fileName: `HostTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                         className={styles.topBarStyle}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                         actionsRight={

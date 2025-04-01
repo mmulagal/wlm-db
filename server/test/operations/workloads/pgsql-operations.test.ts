@@ -170,20 +170,6 @@ describe('PgSql Database Operations', () => {
                 status: 'ONLINE',
                 collation: 'C.UTF-8',
                 type: 'System Database'
-            },
-            {
-                name: 'template1',
-                size: 7959011,
-                status: 'OFFLINE',
-                collation: 'C.UTF-8',
-                type: 'System Database'
-            },
-            {
-                name: 'template0',
-                size: 7725583,
-                status: 'OFFLINE',
-                collation: 'C.UTF-8',
-                type: 'System Database'
             }
         ]);
     });

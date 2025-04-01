@@ -1,6 +1,7 @@
 import config from 'config';
 import ms from 'ms';
 import createError from 'http-errors';
+import throat from 'throat';
 import {
     CommandInvocationStatus,
     GetCommandInvocationCommandInput,
@@ -17,13 +18,14 @@ import {
     getParametersByPath,
     getConnectionStatus,
     putParameter,
-    getParameter
+    getParameter,
+    describeInstanceInformation
 } from '../../lib/aws/ssm';
 import { decompressSSMResponse, generateHash, sleep } from '../../utils/utils';
 import { AWS_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
-import { SSMParamterObject } from '../../utils/common-types';
+import { SSMParamterObject, MultipleCommandSsmResponse } from '../../utils/common-types';
 import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
@@ -35,40 +37,38 @@ async function pollCommandStatusForAllInstances(
     region: string,
     commandId: string,
     instanceIds: string[],
-    pollInterval: number = ms(config.get<string>('ssm.poll-interval'))
+    pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
+    throttleSize: number = 5
 ) {
     logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollInterval });
-    const pollStatuses: {
-        commandId: string;
-        instanceId: string;
-        response?: GetCommandInvocationCommandOutput;
-        error?: string;
-    }[] = [];
+    const pollStatuses: MultipleCommandSsmResponse[] = [];
 
     await Promise.all(
-        instanceIds.map(async instanceId => {
-            const pollParams = {
-                CommandId: commandId,
-                InstanceId: instanceId
-            };
-            try {
-                const response = await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
-                logger.debug('SSM command Response:', response);
-                pollStatuses.push({
-                    commandId,
-                    instanceId,
-                    response
-                });
-            } catch (error) {
-                const errorMessage = `Error executing SSM command on instance ${instanceId}, commandId ${commandId} :  ${error}`;
-                logger.error(errorMessage);
-                pollStatuses.push({
-                    commandId,
-                    instanceId,
-                    error: errorMessage
-                }); // continue polling for other instances even if one fails as this is a generic function; caller function should decide to proceed or fail based on the response
-            }
-        })
+        instanceIds.map(
+            throat(throttleSize, async instanceId => {
+                const pollParams = {
+                    CommandId: commandId,
+                    InstanceId: instanceId
+                };
+                try {
+                    const response = await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
+                    logger.debug('SSM command Response:', response);
+                    pollStatuses.push({
+                        commandId,
+                        instanceId,
+                        response
+                    });
+                } catch (error) {
+                    const errorMessage = `Error executing SSM command on instance ${instanceId}, commandId ${commandId} :  ${error}`;
+                    logger.error(errorMessage);
+                    pollStatuses.push({
+                        commandId,
+                        instanceId,
+                        error: errorMessage
+                    }); // continue polling for other instances even if one fails as this is a generic function; caller function should decide to proceed or fail based on the response
+                }
+            })
+        )
     );
 
     return pollStatuses;
@@ -129,17 +129,27 @@ async function executeSSMDocumentMultipleInstances(
     region: string,
     params: SendCommandCommandInput,
     accountId?: string,
-    pollDuration?: number
+    pollDuration?: number,
+    throttleSize: number = 5,
+    createCache: boolean = true
 ) {
     logger.info('Execute SSM document on multiple instances', {
         credentialsId,
         region,
         params,
         accountId,
-        pollDuration
+        pollDuration,
+        throttleSize,
+        createCache
     });
     const { InstanceIds: instanceIds } = params;
     if (instanceIds && !isEmpty(instanceIds)) {
+        const cacheHashKey = generateHash(instanceIds.join('') + JSON.stringify(params));
+        if (createCache && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+            logger.info('Reading from cache', instanceIds.join(), cacheHashKey);
+            return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as MultipleCommandSsmResponse[];
+        }
+
         const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
         await sleep(1000);
         try {
@@ -149,9 +159,14 @@ async function executeSSMDocumentMultipleInstances(
                     region,
                     commandId,
                     instanceIds,
-                    pollDuration
+                    pollDuration,
+                    throttleSize
                 );
                 logger.debug('SSM command Response:', response);
+                if (createCache) {
+                    logger.info('Writing to cache', instanceIds.join(), cacheHashKey);
+                    writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, response);
+                }
                 return response;
             }
             throw new Error('SSM command Id not found');
@@ -238,21 +253,10 @@ async function callSsmExecution(
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
         const response = await executeSSMDocument(credentialsId, region, params, accountId);
-        if (response?.StandardErrorContent) {
-            const errorMessage = `SSM command ${response.CommandId}  execution  failed on node ${activeNodeInstanceId}  Error: ${response?.StandardErrorContent}`;
-            logger.error(errorMessage);
-            throw createError(errorMessage);
+        const { error, output = '' } = await extractSsmResponse({ response });
+        if (error) {
+            throw createError(error);
         }
-        if (
-            response.Status === CommandInvocationStatus.TIMED_OUT ||
-            response.Status === CommandInvocationStatus.CANCELLED
-        ) {
-            const errorMessage = `SSM command ${response.CommandId} execution  timed out on node ${activeNodeInstanceId}`;
-            logger.error(errorMessage);
-            throw createError(errorMessage);
-        }
-
-        const output = await decompressSSMResponse(response?.StandardOutputContent || '');
         if (cacheData) {
             logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
             writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
@@ -384,6 +388,64 @@ async function getEc2SqlParameters(credentialsId: string, region: string, ec2Ins
     return [];
 }
 
+async function getSSMConnectionStatusByInstanceIds(credentialsId: string, region: string, instanceIds: string[]) {
+    logger.info('Get SSM connection status by instance ids', { credentialsId, region, instanceIds });
+
+    if (isEmpty(instanceIds)) {
+        return new Map();
+    }
+
+    const params = {
+        Filters: [
+            {
+                Key: 'InstanceIds',
+                Values: instanceIds
+            }
+        ]
+    };
+
+    const results = await describeInstanceInformation(credentialsId, region, params);
+
+    return new Map(
+        results.map(({ InstanceId, PingStatus }) => [
+            InstanceId,
+            PingStatus === 'Online' ? 'connected' : 'notconnected'
+        ])
+    );
+}
+
+async function extractSsmResponse(ssmResponse: {
+    commandId?: string;
+    instanceId?: string;
+    response?: GetCommandInvocationCommandOutput;
+    error?: string;
+}) {
+    const { commandId, instanceId, response, error } = ssmResponse;
+    logger.info(`Extract SSM response from instance ${instanceId} for command with id: ${commandId}`, { response });
+
+    if (error) {
+        return { error };
+    }
+
+    if (response?.StandardErrorContent) {
+        const errorMessage = `SSM command ${commandId}  execution  failed on node ${instanceId}  Error: ${response?.StandardErrorContent}`;
+        logger.error(errorMessage);
+        return { error: response?.StandardErrorContent };
+    }
+
+    if (
+        response?.Status === CommandInvocationStatus.TIMED_OUT ||
+        response?.Status === CommandInvocationStatus.CANCELLED
+    ) {
+        const errorMessage = `SSM command ${commandId} execution  timed out on node ${instanceId}`;
+        logger.error(errorMessage);
+        return { error: errorMessage };
+    }
+
+    const output = await decompressSSMResponse(response?.StandardOutputContent || '');
+    return { output };
+}
+
 export {
     executeSSMDocument,
     getGenericFSxOntapRegionsList,
@@ -394,5 +456,7 @@ export {
     pollCommandStatusForAllInstances,
     callSsmExecution,
     getEc2SqlParameters,
-    executeSSMDocumentMultipleInstances
+    executeSSMDocumentMultipleInstances,
+    getSSMConnectionStatusByInstanceIds,
+    extractSsmResponse
 };

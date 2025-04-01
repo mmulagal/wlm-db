@@ -120,6 +120,9 @@ Parameters:
         AllowedValues:
             - 'ha'
             - 'standalone'
+    PreferredSubnetCidrblock:
+        Description: CIDR block for the preferred subnet.
+        Type: String
 Conditions:
     isGovRegion: !Or
         - !Equals
@@ -783,15 +786,19 @@ Resources:
                 -   IpProtocol: tcp
                     FromPort: 22
                     ToPort: 22
-                    CidrIp: 10.0.0.0/16  # Replace with Subnet CIDR
+                    CidrIp: !Ref 'PreferredSubnetCidrblock'
                 -   IpProtocol: tcp
                     FromPort: 2049
                     ToPort: 2049
-                    CidrIp: 10.0.0.0/16  # Replace with Subnet CIDR
+                    CidrIp: !Ref 'PreferredSubnetCidrblock'
                 -   IpProtocol: tcp
                     FromPort: 5432
                     ToPort: 5432
-                    CidrIp:  10.0.0.0/16 # Replace with Subnet CIDR
+                    CidrIp: !Ref 'PreferredSubnetCidrblock'
+                -   IpProtocol: tcp
+                    FromPort: 9999
+                    ToPort: 9999
+                    CidrIp: !Ref 'PreferredSubnetCidrblock'
 Outputs:
     SqlNodeIp1:
         Description: Private IP of PgSql Instance

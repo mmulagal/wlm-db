@@ -178,7 +178,7 @@ const MSSqlAccordions = () => {
                 {/* Infra settings accordions */}
                 {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <InstanceType />}
 
-                <FSxNSystem />
+                <FSxNSystem wizardType={WIZARD_TYPE.MSSQL} />
 
                 {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <SnapshotPolicy />}
                 <StorageCapacity />

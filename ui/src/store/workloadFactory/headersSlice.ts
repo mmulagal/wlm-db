@@ -66,6 +66,7 @@ const headersSlice = createSlice({
             // Will remove below lines once multi cred will be available
             state.headerSelectedCredSandbox = action.payload;
             state.headerSelectedMultiCred = [action.payload];
+            state.headerSelectedMultiCredIdsList = [];
             [action.payload]?.forEach((item: any) => {
                 state.headerSelectedMultiCredIdsList.push(item?.data?.credentialsId);
             });
@@ -75,12 +76,14 @@ const headersSlice = createSlice({
         },
         setHeaderSelectedMultiCred(state, action: PayloadAction<any>) {
             state.headerSelectedMultiCred = action.payload;
+            state.headerSelectedMultiCredIdsList = [];
             action.payload?.forEach((item: any) => {
                 state.headerSelectedMultiCredIdsList.push(item?.data?.credentialsId);
             });
         },
         setHeaderSelectedMultiRegion(state, action: PayloadAction<any>) {
             state.headerSelectedMultiRegion = action.payload;
+            state.headerSelectedMultiRegionIdsList = [];
             action.payload?.forEach((item: any) => {
                 state.headerSelectedMultiRegionIdsList.push(item?.data?.regionCode);
             });
@@ -90,6 +93,7 @@ const headersSlice = createSlice({
             // Will remove below lines once multi region will be available
             state.headerSelectedRegionSandbox = action.payload;
             state.headerSelectedMultiRegion = [action.payload];
+            state.headerSelectedMultiRegionIdsList = [];
             [action.payload]?.forEach((item: any) => {
                 state.headerSelectedMultiRegionIdsList.push(item?.data?.regionCode);
             });

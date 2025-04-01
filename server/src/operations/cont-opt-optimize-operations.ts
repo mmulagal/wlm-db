@@ -8,7 +8,7 @@ import {
     DatabaseInstance,
     WorkloadInstance,
     StorageAssessment,
-    databaseInstanceMetadata,
+    DatabaseInstanceMetadata,
     OptimizeMpioPolicyParams,
     LogDriveDetails,
     TempDbDriveDetails,
@@ -129,7 +129,7 @@ interface OptimizeStorageOperationParams {
     sqlAuthEnabled: boolean;
     svmName: string;
     optimizationTargets: OptimizeStorageRequestParamsType[];
-    instanceMetadata?: databaseInstanceMetadata;
+    instanceMetadata?: DatabaseInstanceMetadata;
 }
 
 async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
@@ -190,7 +190,7 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
                 instanceId,
                 configurationNames,
                 'STORAGE',
-                instanceMetadata || ({} as databaseInstanceMetadata)
+                instanceMetadata || ({} as DatabaseInstanceMetadata)
             );
         }
         await triggerAssessmentAfterOptimization(
@@ -364,7 +364,7 @@ async function activeSqlNodeDetails(
             : false;
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Unable to optimize instnace ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
+        const errorMessage = `Unable to optimize instance ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -590,7 +590,7 @@ async function modifySizingAttributes(
                 instanceId,
                 typesList,
                 'SIZING',
-                instanceMetadata as databaseInstanceMetadata
+                instanceMetadata as DatabaseInstanceMetadata
             );
         }
 
@@ -2537,7 +2537,7 @@ async function handleMaxDopRemediation(
 
             if (isDemoFlow) {
                 // update metadata in instances table to mark optimized configuration
-                const metadata: databaseInstanceMetadata = isDatabaseInstanceMetadata(instanceMetadata)
+                const metadata: DatabaseInstanceMetadata = isDatabaseInstanceMetadata(instanceMetadata)
                     ? instanceMetadata
                     : { configsOptimized: {} };
 
@@ -2787,7 +2787,7 @@ async function triggerAssessmentAfterOptimization(
     updateLongRunningAuditGroup(AuditStatus.SUCCESS);
 }
 
-function isDatabaseInstanceMetadata(value: any): value is databaseInstanceMetadata {
+function isDatabaseInstanceMetadata(value: any): value is DatabaseInstanceMetadata {
     return value && typeof value === 'object' && 'configsOptimized' in value;
 }
 

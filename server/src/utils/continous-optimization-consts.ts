@@ -11,7 +11,8 @@ enum AssessmentCategories {
     MSSQL_PATCH = 'mssql-patch',
     RESILIENCY = 'resiliency',
     AWS_BACKUP = 'aws-backup',
-    CRR = 'crr'
+    CRR = 'crr',
+    MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes'
 }
 
 enum AssessmentTriggeredBy {
@@ -84,7 +85,13 @@ enum OptimizeStorageTierParams {
 }
 
 enum OptimizeComputeParams {
-    COMPUTE = 'compute'
+    COMPUTE = 'compute',
+    RSS_CONFIG = 'rss-config'
+}
+
+enum OptimizeComputeJobNames {
+    'rss-config' = 'Network adapter configuration',
+    compute = 'Compute'
 }
 
 enum OPTIMIZE_SIZING_CONFIGS {
@@ -107,7 +114,8 @@ enum OPTIMIZATION_CATEGORIES {
     STORAGE_SIZING = 'storage-sizing',
     OPERATING_SYSTEM = 'operating-system',
     COMPUTE = 'compute',
-    MAXDOP = 'max-dop'
+    MAXDOP = 'max-dop',
+    RSS_CONFIG = 'rss-config'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -252,5 +260,6 @@ export {
     OptimizeMaxDopParams,
     ASSESSMENT_RESOURCE_TYPE,
     OPTIMIZE_RESILIENCY_CONFIGS,
-    VALID_MPIO_LB_POLICIES
+    VALID_MPIO_LB_POLICIES,
+    OptimizeComputeJobNames
 };

@@ -10,7 +10,7 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { useEffect, useRef, useState } from 'react';
-import { formatSize } from '../../../../utils/utilityFunctions';
+import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
 import { isAwsBackupEnabledText } from '../../InventoryUtilsV2';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
@@ -149,7 +149,7 @@ const DatabasesTable = () => {
             accessor: 'hostName',
             id: '2',
             width: '200px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(databaseTableRows, 'hostName'),
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -159,7 +159,7 @@ const DatabasesTable = () => {
             accessor: 'hostType',
             id: '3',
             width: '200px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(databaseTableRows, 'hostType'),
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -179,7 +179,7 @@ const DatabasesTable = () => {
             accessor: 'isProtected',
             id: '5',
             width: '200px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(databaseTableRows, 'isProtected'),
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
                 let protectedByList = [];
@@ -240,7 +240,7 @@ const DatabasesTable = () => {
             accessor: 'type',
             id: '6',
             width: '200px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(databaseTableRows, 'type'),
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -267,7 +267,7 @@ const DatabasesTable = () => {
             id: '8',
             width: '184px',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(databaseTableRows, 'credentialName'),
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -277,7 +277,7 @@ const DatabasesTable = () => {
             accessor: 'accountId',
             id: '9',
             width: '184px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(databaseTableRows, 'accountId'),
             isSortable: true,
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -289,7 +289,7 @@ const DatabasesTable = () => {
             id: '10',
             width: '184px',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(databaseTableRows, 'regionName'),
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -387,7 +387,7 @@ const DatabasesTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Databases"
                         singularTitle="Database"
-                        exportToCsvOptions={{ fileName: 'databaseTable.csv' }}
+                        exportToCsvOptions={{ fileName: `DatabaseTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     />
                     <Table

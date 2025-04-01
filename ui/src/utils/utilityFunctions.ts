@@ -10,6 +10,7 @@ import {
     CREATE_DATABASE_YAML,
     CREDENTIAL_PROD_LINK,
     CREDENTIAL_STAGE_LINK,
+    DBType,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DETECT_HOST_VAR,
@@ -192,9 +193,7 @@ export const categorizeStorageSize = (value: string): string => {
 };
 
 export const backupStartTime = (selectedAWSBackup: any) => {
-    return `${selectedAWSBackup?.hour < 10 ? `0${selectedAWSBackup?.hour}` : selectedAWSBackup?.hour}:${
-        selectedAWSBackup?.minute < 10 ? `0${selectedAWSBackup?.minute}` : selectedAWSBackup?.minute
-    }`;
+    return `${selectedAWSBackup?.hour}:${selectedAWSBackup?.minute}`;
 };
 
 // Helper function to convert "GiB" into bytes
@@ -316,12 +315,14 @@ export const fsxPassVal = (password: string) => {
         const isAtLeastEightChars = password.length >= 8;
         const hasAtLeastOneNumber = /[0-9]/.test(password);
         const hasAtLeastOneAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 1;
+        
+            if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName) && !password.includes('admin')) {
+                return '';
+            } else {
+                return GENERAL.PASSWORD_ERROR_CHECK;
+            }
 
-        if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName)) {
-            return '';
-        } else {
-            return GENERAL.PASSWORD_ERROR_CHECK;
-        }
+       
     }
 };
 
@@ -1578,7 +1579,7 @@ export const removeOldApisError = (data: any) => {
         if (
             data?.originalArgs &&
             (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialsId) ||
-                !headerSelectedMultiRegionIdsList(data?.originalArgs?.regionId))
+                !headerSelectedMultiRegionIdsList.includes(data?.originalArgs?.regionId))
         ) {
             return true;
         } else {

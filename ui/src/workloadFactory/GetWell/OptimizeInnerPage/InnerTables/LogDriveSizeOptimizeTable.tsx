@@ -127,6 +127,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
                                             ))}
                                             trigger="click"
                                             interactive={true}
+                                            isAppendedToBody={true}
                                             delayHide={200}
                                             container={
                                                 <Typography variant="Regular_14" className={styles.colorText}>

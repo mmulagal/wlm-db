@@ -777,6 +777,8 @@ Resources:
           Ref: EnableCloudWatchLogFeature
         SQLDeploymentMode:
           Ref: SQLDeploymentMode
+        PreferredSubnetCidrblock:
+          Ref: PrivateSubnet1Cidrblock
       NotificationARNs:
         Fn::If:
         - IncludeNotification

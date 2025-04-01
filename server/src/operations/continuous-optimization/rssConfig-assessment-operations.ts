@@ -11,7 +11,8 @@ import {
     ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
-import { sqlResponseParsing } from '../../utils/utils';
+import { isDemo, sqlResponseParsing } from '../../utils/utils';
+import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { GET_RSS_CONFIG_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
@@ -41,6 +42,14 @@ async function calculateRssConfigDrift(
         const { assessment: { rssConfig } = {} } = metadata as unknown as Metadata;
         if (!isEmpty(rssConfig)) {
             rssConfigAssessment = rssConfig as RssConfigAssesment;
+            if (isDemo()) {
+                rssConfigAssessment.rssAdapters = rssConfigAssessment?.rssAdapters?.filter(
+                    adapter => !(metadata as Metadata)?.isRssConfigOptimized?.includes(adapter.adapterName)
+                );
+                if (rssConfigAssessment?.rssAdapters?.length === 0) {
+                    rssConfigAssessment.rssConfigFinding = AssessmentStatus.OPTIMIZED;
+                }
+            }
         } else {
             const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
             const { activeNodeInstanceId } = await getActiveSqlNode(
@@ -105,7 +114,9 @@ async function managedHostsRssConfigAssessment(
     region: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    parentJobId?: string
+    parentJobId?: string,
+    databaseHostId?: string,
+    metadata?: Metadata
 ) {
     logger.info('Managed hosts rss config assessment', {
         accountId,
@@ -117,8 +128,8 @@ async function managedHostsRssConfigAssessment(
     });
 
     const { id: rssConfigAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server RSS Config assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server RSS Config assessment for ${resourceName}`,
+        name: `Microsoft SQL server network adapters configuration assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL server network adapters configuration assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -130,7 +141,13 @@ async function managedHostsRssConfigAssessment(
     let jobStatus;
     let errorMessage;
     try {
-        rssConfigAssessment = await runRssConfigAssessment(accountId, credentialsId, region, activeNodeInstanceId);
+        rssConfigAssessment = await runRssConfigAssessment(
+            accountId,
+            credentialsId,
+            region,
+            activeNodeInstanceId,
+            metadata
+        );
     } catch (error) {
         errorMessage = `Error while performing rss config assessment. ${error}`;
         logger.error(errorMessage);
@@ -142,6 +159,16 @@ async function managedHostsRssConfigAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+        if (errorMessage) {
+            await updateAsssementErrorInResourceMetadata(
+                accountId,
+                databaseHostId!,
+                credentialsId,
+                region,
+                errorMessage,
+                'rssConfig'
+            );
+        }
     }
 
     return rssConfigAssessment;
@@ -151,7 +178,8 @@ async function runRssConfigAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    metadata?: Metadata
 ) {
     logger.info('Running RSS Config assessment', { accountId, credentialsId, region, activeNodeInstanceId });
     const ssmCommand = GET_RSS_CONFIG_DETAILS();
@@ -160,7 +188,7 @@ async function runRssConfigAssessment(
         region,
         [ssmCommand],
         activeNodeInstanceId,
-        'Get RSS configuration details'
+        'Get network adapters configuration details'
     );
     const parsedResponse = sqlResponseParsing(response);
     const { adapters: rssConfigAdapters, vcpuCount, tcpOffloadState } = parsedResponse;
@@ -214,6 +242,9 @@ async function runRssConfigAssessment(
     }
 
     rssAdapters = rssAdapters.filter(adapter => !adaptersToRemove.includes(adapter.adapterName));
+    if (isDemo()) {
+        rssAdapters = rssAdapters.filter(adapter => !metadata?.isRssConfigOptimized?.includes(adapter.adapterName));
+    }
 
     if (rssAdapters.length > 0 || tcpOffloadState !== 'Disabled') {
         rssConfigOptimizedStatus = AssessmentStatus.NOT_OPTIMIZED;

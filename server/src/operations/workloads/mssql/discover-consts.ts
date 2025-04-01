@@ -424,7 +424,7 @@ const HOST_AND_SQL_INFO_PS1 = [
             $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';"  2> $null
             $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
             $responseObject['windowsAuthentication'] = $?
-  
+            $deploymentTypeCheck = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH" 2> $null
             $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance
             if ($? -eq $False) {
               $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
@@ -435,6 +435,7 @@ const HOST_AND_SQL_INFO_PS1 = [
               $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
               if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
                   $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" 2> $null
+                  $deploymentTypeCheck = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH"  2> $null
                   $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
                   $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
                   if ($? -eq $False) {
@@ -453,6 +454,21 @@ const HOST_AND_SQL_INFO_PS1 = [
             $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
             $responseObject['sqlServerName'] = $editionDBCountMachineInfoGuid[3]
             $responseObject['serverGuid'] = $editionDBCountMachineInfoGuid[4]
+
+            if($deploymentTypeCheck) {
+              $isHadrEnabled = $deploymentTypeCheck | ConvertFrom-Json | ForEach-Object { $_.IsHadrEnabled }
+              $isClustered = $deploymentTypeCheck | ConvertFrom-Json | ForEach-Object { $_.IsClustered }
+                if($isHadrEnabled -eq $True) {
+                  $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
+                }
+                elseif($isClustered -eq $True) {
+                  $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
+                }
+                else{
+                  $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
+                  $responseObject['sqlServerNodes'] = hostname
+                }
+            }
 
             $missingPermissions = @()
             if( -Not ([string]::IsNullOrEmpty($existingPermissions))) {

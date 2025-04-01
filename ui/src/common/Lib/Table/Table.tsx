@@ -351,6 +351,8 @@ export interface ColumnProps {
     Header: ReactNode | typeof React.Component;
     /** key of relevant property from data */
     accessor: string;
+    /** key of relevant property from data - custom accessor */
+    customAccessor?: string;
     /** Is column should be sortable */
     isSortable?: boolean;
     /** Is filterable? pass filter options or allow auto-creation of the options by passing 'auto'.  */

@@ -20,6 +20,7 @@ import { HttpErrorCodes, SUCCESS } from '../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
 import { callSsmExecution } from '../aws/ssm-operations';
+import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
@@ -226,6 +227,16 @@ async function managedHostOsPatchAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+        if (errorMessage) {
+            await updateAsssementErrorInResourceMetadata(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                errorMessage,
+                'hostOsPatch'
+            );
+        }
     }
     return hostOsPatchAssessment;
 }

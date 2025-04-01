@@ -27,14 +27,14 @@ import {
     setFsxNType,
     setFsxNExistingUserName
 } from '../../../../store/mssql/mssqlFormSlice';
-import { FORM_OPTIONS, FSXADMIN, FSX_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { FORM_OPTIONS, FSXADMIN, FSX_DEPLOYMENT_MODE, WIZARD_TYPE } from '../../../../utils/consts';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 
 import styles from './FSxNSystem.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
-const FSxNSystem = () => {
+const FSxNSystem = ({ wizardType }: any) => {
     const dispatch = useDispatch();
 
     const { fsxnData, fsxnLoading } = useAppSelector(state => state.mssql.getFsxnList);
@@ -82,14 +82,32 @@ const FSxNSystem = () => {
             let svmCheck = false;
             let expectedSvmCount = 0;
             if (throughputCapacity === 128 || throughputCapacity === 256) {
-                svmCheck = svmCount < 6 ? true : false;
-                expectedSvmCount = 6;
+                //Added this check for PGSQL HA
+                if (wizardType === WIZARD_TYPE.PGSQL && deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
+                    svmCheck = svmCount < 5 ? true : false;
+                    expectedSvmCount = 5;
+                } else {
+                    svmCheck = svmCount < 6 ? true : false;
+                    expectedSvmCount = 6;
+                }
             } else if (throughputCapacity === 512 || throughputCapacity === 1024) {
-                svmCheck = svmCount < 14 ? true : false;
-                expectedSvmCount = 14;
+                //Added this check for PGSQL HA
+                if (wizardType === WIZARD_TYPE.PGSQL && deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
+                    svmCheck = svmCount < 13 ? true : false;
+                    expectedSvmCount = 13;
+                } else {
+                    svmCheck = svmCount < 14 ? true : false;
+                    expectedSvmCount = 14;
+                }
             } else if (throughputCapacity === 2048 || throughputCapacity === 4096) {
-                svmCheck = svmCount < 24 ? true : false;
-                expectedSvmCount = 24;
+                //Added this check for PGSQL HA
+                if (wizardType === WIZARD_TYPE.PGSQL && deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
+                    svmCheck = svmCount < 23 ? true : false;
+                    expectedSvmCount = 23;
+                } else {
+                    svmCheck = svmCount < 24 ? true : false;
+                    expectedSvmCount = 24;
+                }
             } else {
                 svmCheck = true;
             }
@@ -328,6 +346,10 @@ const FSxNSystem = () => {
                                         <div className={styles.bulletContainer}>
                                             <Bullet />
                                             <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_3}</Typography>
+                                        </div>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_4}</Typography>
                                         </div>
                                     </Typography>
                                 }
