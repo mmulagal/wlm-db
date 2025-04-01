@@ -164,5 +164,24 @@ echo "host    all             all             $secondary_server_IP         trust
 # Wait for PostgreSQL to start in the primary and secondary servers
 sleep 5m
 #Start pgpool
-sudo pgpool
+sudo tee /etc/systemd/system/pgpool.service > /dev/null <<EOF
+[Unit]
+Description=Pgpool-II
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStartPre=/bin/mkdir -p /run/pgpool
+ExecStart=/usr/local/bin/pgpool -n -D -f /usr/local/etc/pgpool.conf
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd, enable and start the Pgpool-II service
+sudo systemctl daemon-reload
+sudo systemctl enable pgpool
+sudo systemctl start pgpool
 echo "pgpool.conf has been updated successfully."
