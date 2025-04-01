@@ -277,7 +277,7 @@ async function setSnapshotPolicyForVolumes(
             jobStatus = JOBSTATUS.FAILED;
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, ssmError);
         }
-        if (ssmResponse.length !== volumeUuids.length) {
+        if (!isDemo() && ssmResponse.length !== volumeUuids.length) {
             logger.error('Error setting snapshot policy for volumes. ONTAP job IDs:', ssmResponse, volumeUuids);
             jobError = `Failed to set snapshot policy for some volumes: ONTAP job IDs:', ${ssmResponse}`;
             jobStatus = JOBSTATUS.WARNING;
