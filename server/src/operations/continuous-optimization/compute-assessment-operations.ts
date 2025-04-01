@@ -248,9 +248,9 @@ async function managedHostsComputeAssessment(
         if (errorMessage) {
             await updateAsssementErrorInResourceMetadata(
                 accountId,
+                databaseHostId,
                 credentialsId,
                 region,
-                databaseHostId,
                 errorMessage,
                 'compute'
             );
