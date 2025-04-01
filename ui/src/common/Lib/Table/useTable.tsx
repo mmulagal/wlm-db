@@ -16,6 +16,7 @@ import _isArray from 'lodash/isArray';
 import _uniqBy from 'lodash/uniqBy';
 import _compact from 'lodash/compact';
 import _map from 'lodash/map';
+import sortBy from 'lodash/sortBy';
 import _isUndefined from 'lodash/isUndefined';
 import _pickBy from 'lodash/pickBy';
 import _size from 'lodash/size';
@@ -54,13 +55,11 @@ const filterFunc = (
         if (textFilter) {
             _forEach(columns, column => {
                 const accessor = column.accessor;
-                const customAccessor = column?.customAccessor; // Custom accessor
+
                 const accessorForTextFilter = column.accessorForTextFilter;
 
                 // Get value from `customAccessor` if available, otherwise use `accessor`
-                const value = accessorForTextFilter
-                    ? _get(row, accessorForTextFilter)
-                    : _get(row, customAccessor || accessor);
+                const value = accessorForTextFilter ? _get(row, accessorForTextFilter) : _get(row, accessor);
 
                 if (_isString(value) && value.toLowerCase().includes(lowerCaseTextFilter)) {
                     isTextFilterMatch = true;
@@ -334,31 +333,56 @@ function reducer(state: ReducerStateType, action: ActionType): ReducerStateType 
     return state;
 }
 
-export const getFilterOptions = (data: rowDataType[], column: ColumnProps) => {
+// export const getFilterOptions = (data: rowDataType[], column: ColumnProps) => {
+//     const { accessor, renderFilterPanelLabel } = column;
+//     return !data || data?.length === 0
+//         ? undefined
+//         : _orderBy(
+//               _uniqBy(
+//                   _compact(
+//                       _map(data, row => {
+//                           const value = _get(row, accessor, null);
+//                           if (!value) return null;
+//                           // renderFilterPanelLabel is a simpler version of renderCell, for filters
+//                           return {
+//                               value,
+//                               label: renderFilterPanelLabel ? renderFilterPanelLabel(value) : value
+//                           };
+//                       })
+//                   ),
+//                   'value'
+//               ),
+//               [
+//                   ({ value }: { value: string | object | null }) =>
+//                       typeof value === 'string' ? value.toLowerCase() : JSON.stringify(value)
+//               ],
+//               ['asc']
+//           );
+// };
+
+export const getFilterOptions = (data: any[], column: ColumnProps) => {
     const { accessor, renderFilterPanelLabel } = column;
-    return !data || data?.length === 0
-        ? undefined
-        : _orderBy(
-              _uniqBy(
-                  _compact(
-                      _map(data, row => {
-                          const value = _get(row, accessor, null);
-                          if (!value) return null;
-                          // renderFilterPanelLabel is a simpler version of renderCell, for filters
-                          return {
-                              value,
-                              label: renderFilterPanelLabel ? renderFilterPanelLabel(value) : value
-                          };
-                      })
+    return (
+        !data
+            ? []
+            : sortBy(
+                  _uniqBy(
+                      _compact(
+                          _map(data, row => {
+                              const value = _get(row, accessor, null);
+                              return { value, label: renderFilterPanelLabel ? renderFilterPanelLabel(value) : value };
+                          })
+                      ),
+                      'label'
                   ),
                   'value'
               ),
-              [
-                  ({ value }: { value: string | object | null }) =>
-                      typeof value === 'string' ? value.toLowerCase() : JSON.stringify(value)
-              ],
-              ['asc']
-          );
+        [
+            ({ value }: { value: string | object | null }) =>
+                typeof value === 'string' ? value.toLowerCase() : JSON.stringify(value)
+        ],
+        ['asc']
+    );
 };
 
 export type RowsStateType = {

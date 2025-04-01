@@ -353,6 +353,8 @@ export interface ColumnProps {
     accessor: string;
     /** key of relevant property from data - custom accessor */
     customAccessor?: string;
+    // Accessor for Export csv
+    csvAccessor?: string;
     /** Is column should be sortable */
     isSortable?: boolean;
     /** Is filterable? pass filter options or allow auto-creation of the options by passing 'auto'.  */
