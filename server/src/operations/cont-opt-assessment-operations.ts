@@ -6,12 +6,13 @@ import getLogger from '../utils/logger';
 import { isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
-import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
+import { getInstanceDetails } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import {
     DatabaseInstance,
     databaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
+    MappedOnTapVolumeResponse,
     Metadata,
     StorageAssessment,
     WorkloadInstance
@@ -34,6 +35,7 @@ import {
 } from '../lib/database/db';
 import { AssessmentCategories, AssessmentStatus, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import {
+    CloneDriftResponseType,
     ComputeDriftResponseType,
     DriftAssessmentResponseType,
     HostOsPatchDriftResponseType,
@@ -79,6 +81,10 @@ import {
     collectSnapshotCopyData
 } from './continuous-optimization/resilience-assessment-operation';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
+import {
+    calculateCloneDrift,
+    managedHostsCloneAssessment
+} from './continuous-optimization/clone-assessment-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -127,6 +133,7 @@ async function initiateComputeLicenseAssessmentCollection(
         let rssConfigAssessment;
         let maxDOPAssessment;
         let mssqlPatchAssessment;
+        let cloneAssessment;
 
         if (fields?.includes(AssessmentCategories.LICENSE)) {
             licenseAssessment = await managedHostsLicenseAssessment(
@@ -248,6 +255,34 @@ async function initiateComputeLicenseAssessmentCollection(
                 jobId
             );
         }
+        if (fields?.includes(AssessmentCategories.CLONE)) {
+            // This will run instance level clone assessment
+            cloneAssessment = await managedHostsCloneAssessment(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                resourceName,
+                databaseHostId,
+                databaseInstanceId as string,
+                jobId
+            );
+            if (!isEmpty(cloneAssessment)) {
+                await createDatabaseInstanceConfigData([
+                    {
+                        account_id: accountId,
+                        credentials_id: credentialsId,
+                        region,
+                        resource_id: databaseHostId,
+                        database_instance_id: databaseInstanceId as string,
+                        creation_time: new Date(Date.now()),
+                        config_data_type: AssessmentCategories.CLONE,
+                        config_data: cloneAssessment
+                    }
+                ]);
+            }
+        }
+
         if (
             !isEmpty(licenseAssessment) ||
             !isEmpty(computeAssessment) ||
@@ -440,6 +475,8 @@ async function driftAssessmentDataCollection(
     let shouldRunMAXDOPAssessment = false;
     let shouldRunMSSQLPatchAssessment = false;
     let shouldRunResilienceAssessment = false;
+    let shouldRunCloneAssessment = false;
+
     let fieldsValues: string | string[] = [];
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
@@ -452,6 +489,7 @@ async function driftAssessmentDataCollection(
         shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
         shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
         shouldRunResilienceAssessment = fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase());
+        shouldRunCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
     } else {
         fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
         shouldRunStorageAssessment = true;
@@ -462,6 +500,7 @@ async function driftAssessmentDataCollection(
         shouldRunMAXDOPAssessment = true;
         shouldRunMSSQLPatchAssessment = true;
         shouldRunResilienceAssessment = true;
+        shouldRunCloneAssessment = true;
     }
 
     if (shouldRunStorageAssessment || shouldRunResilienceAssessment) {
@@ -513,7 +552,8 @@ async function driftAssessmentDataCollection(
         shouldRunHostOsPatchAssessment ||
         shouldRunRssConfigAssessment ||
         shouldRunMAXDOPAssessment ||
-        shouldRunMSSQLPatchAssessment
+        shouldRunMSSQLPatchAssessment ||
+        shouldRunCloneAssessment
     ) {
         await initiateComputeLicenseAssessmentCollection(
             accountId,
@@ -859,6 +899,7 @@ async function fetchDriftAssessment(
     let shouldCalculateMaxDOPAssessment = false;
     let shouldCalculateMSSQLPatchAssessment = false;
     let shouldCalculateResilienceAssessment = false;
+    let shouldCalculateCloneAssessment = false;
 
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
@@ -880,6 +921,7 @@ async function fetchDriftAssessment(
         shouldCalculateResilienceAssessment = fieldsValues?.includes(
             AssessmentCategories.RESILIENCY.toLocaleLowerCase()
         );
+        shouldCalculateCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
     } else {
         shouldCalculateStorageAssessment = true;
         shouldCalculateComputeAssessment = true;
@@ -889,12 +931,14 @@ async function fetchDriftAssessment(
         shouldCalculateMaxDOPAssessment = true;
         shouldCalculateMSSQLPatchAssessment = true;
         shouldCalculateResilienceAssessment = true;
+        shouldCalculateCloneAssessment = true;
     }
     const driftAssessmentData: DriftAssessmentResponseType = {};
 
     const [
         storageAssessmentResponse,
         maxDOPResponse,
+        cloneResponse,
         {
             computeAssessmentResponse,
             licenseAssessmentResponse,
@@ -909,6 +953,9 @@ async function fetchDriftAssessment(
             : Promise.resolve({}),
         shouldCalculateMaxDOPAssessment
             ? calculateMaxDOPDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve({}),
+        shouldCalculateCloneAssessment
+            ? calculateCloneDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
             : Promise.resolve({}),
         shouldCalculateComputeAssessment ||
         shouldCalculateLicenseAssessment ||
@@ -1035,6 +1082,9 @@ async function fetchDriftAssessment(
         driftAssessmentData.resiliency = resilienceAssessmentResponse as ResilienceDriftAssessmentResponseType;
     }
 
+    if (!isEmpty(cloneResponse)) {
+        driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
+    }
     return driftAssessmentData;
 }
 

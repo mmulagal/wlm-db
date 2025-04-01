@@ -20,12 +20,12 @@ import { HttpErrorCodes } from '../../utils/consts';
 import {
     DatabaseInstance,
     databaseInstanceMetadata,
+    MappedOnTapVolumeResponse,
     StorageAssessment,
     WorkloadInstance
 } from '../../utils/common-types';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { getInstanceInfo } from '../database/database-operations';
-import { MappedOnTapVolumeResponse } from '../database-hosts-operations';
 import { describeFSx, describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../workloads/mssql/resiliency-scripts';
 import { GET_LATEST_SNAPSHOT_TIME } from '../workloads/mssql/continuous-optimization-scripts';

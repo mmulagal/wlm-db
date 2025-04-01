@@ -10,7 +10,8 @@ enum AssessmentCategories {
     MAXDOP = 'maxdop',
     MSSQL_PATCH = 'mssql-patch',
     RESILIENCY = 'resiliency',
-    CRR = 'crr'
+    CRR = 'crr',
+    CLONE = 'clone'
 }
 
 enum AssessmentTriggeredBy {
@@ -31,7 +32,8 @@ enum AwsWellArchitecturedPillars {
     RELIABILITY = 'Reliability',
     COST_OPTIMIZATION = 'Cost optimization',
     OPERATIONAL_EXCELLENCE = 'Operational excellence',
-    SECURITY = 'Security'
+    SECURITY = 'Security',
+    COST_EFFICIENCY = 'Cost efficiency'
 }
 
 const VOLUME = 'volume';

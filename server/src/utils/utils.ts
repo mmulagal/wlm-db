@@ -936,6 +936,19 @@ function parseMultipleCommandResponse(response: string) {
     return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
 }
 
+/**
+ * Calculates the number of days between two dates.
+ * @param startDate - The start date.
+ * @param endDate - The end date. Defaults to the current date if not provided.
+ * @returns The number of days between the two dates.
+ */
+function calculateDaysSince(startDate: string | Date, endDate: string | Date = new Date()): number {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const timeDifference = end.getTime() - start.getTime();
+    return Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -990,5 +1003,6 @@ export {
     isPgsql,
     isValidEmail,
     isRateLimited,
-    parseMultipleCommandResponse
+    parseMultipleCommandResponse,
+    calculateDaysSince
 };

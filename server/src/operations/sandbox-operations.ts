@@ -3395,5 +3395,7 @@ export {
     updateSandboxLifeCycle,
     splitSandbox,
     checkDatabaseIntegrity,
-    getSandboxSnapshots
+    getSandboxSnapshots,
+    getSourceDetails,
+    getProperty
 };

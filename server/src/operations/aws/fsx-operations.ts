@@ -29,7 +29,7 @@ import {
     DEFAULT_INSTANCE_NAME
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
-import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
+import { DatabaseInstance, ResourceDetails, VolumeRecord, VolumeSpaceRecord } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { convertToBytes, getFsxArn, isDemo, sleep } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
@@ -369,7 +369,7 @@ async function getOntapVolumesSnapshotCount(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    volumeRecords: Record<string, string | number>[],
+    volumeRecords: VolumeRecord[],
     volumeDBMap: any
 ) {
     logger.info('Fetching ontap snapshots count ', {
@@ -428,7 +428,8 @@ async function getMappedOntapVolumes(
     accountId?: string,
     executionTimeout?: string,
     svmOntapUuid?: string,
-    instanceOntapDetails?: Record<string, object>
+    instanceOntapDetails?: Record<string, object>,
+    fields?: string
 ) {
     const ssmComment = 'Get ontap volumes mapped to data drive of all databases in a server';
     logger.info(ssmComment, {
@@ -442,12 +443,15 @@ async function getMappedOntapVolumes(
         accountId,
         executionTimeout,
         svmOntapUuid,
-        instanceOntapDetails
+        instanceOntapDetails,
+        fields
     });
 
     try {
         // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
         const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
+
+        const additionalFields = fields ? `${fields}` : '';
 
         const command = getMappedOntapVolumesScript(
             fileSystemId,
@@ -455,7 +459,7 @@ async function getMappedOntapVolumes(
             psIsSystemDatabase,
             instanceNames,
             isSqlAuthEnabled,
-            '',
+            additionalFields,
             includeLogVolumes,
             svmOntapUuid,
             instanceOntapDetails
@@ -489,14 +493,9 @@ async function getMappedOntapVolumes(
                 const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
                 iName = originalInstanceName;
                 if (volumes && !isEmpty(volumes?.records)) {
-                    const volumeRecords = volumes.records.map((record: Record<string, string | number>) => ({
-                        name: record.name,
-                        uuid: record.uuid,
-                        snapshot_count: record.snapshot_count
-                    }));
-                    instancesResponse[iName] = { volumeRecords, volumeDBMap, lunNames };
+                    instancesResponse[iName] = { volumeRecords: volumes.records, volumeDBMap, lunNames };
                 } else {
-                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: {}, lunNames: [] };
+                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: [], lunNames: [] };
                 }
             } else {
                 logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);

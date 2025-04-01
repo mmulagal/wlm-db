@@ -85,12 +85,39 @@ interface MaxDOPAssesment {
     status: string;
 }
 
+interface CloneDetail {
+    sandboxName?: string;
+    databaseHostName: string;
+    databaseHostId: string;
+    databaseInstanceName: string;
+    sourceDatabaseHostName?: string;
+    sourceDatabaseInstanceName?: string;
+    sourceDatabaseName?: string;
+    cloneVolumeName?: string;
+    cloneVolumeUuid?: string;
+    cloneVolumeCreateTime?: string;
+    cloneParentVolumeName?: string;
+    cloneDatabaseName?: string;
+    tag?: string | null;
+    cloneAge: number;
+    clonedBy: string;
+    cloneSize?: number;
+    cloneName: string;
+}
+
+interface CloneAssesment {
+    status: string;
+    cloneDetails?: CloneDetail[];
+    oldClones?: number;
+}
+
 interface ResourceAssessmentData {
     license?: LicenseAssessment;
     compute?: ComputeAssessment;
     hostOsPatch?: HostOsPatchAssessmentObject[];
     rssConfig?: RssConfigAssesment;
     maxDOP?: MaxDOPAssesment;
+    clone?: CloneAssesment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
     lastAssessedDate?: string;
     errors?: {
@@ -500,6 +527,46 @@ const BulkOptimizeSnapshotPolicyParams = Type.Object({
 });
 type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
 
+interface SVM {
+    uuid: string;
+    _links: {
+        self: {
+            href: string;
+        };
+    };
+}
+
+interface ParentVolume {
+    name: string;
+}
+
+interface Clone {
+    is_flexclone?: boolean;
+    parent_volume?: ParentVolume;
+}
+
+interface VolumeRecord {
+    uuid: string;
+    create_time?: string;
+    name: string;
+    snapshot_count?: number;
+    clone?: Clone;
+    svm?: SVM;
+}
+interface VolumeDBMapEntry {
+    ontapVolumeuuid: string;
+    databaseName: string;
+}
+
+interface MappedOnTapVolumeResponse {
+    volumeRecords: VolumeRecord[];
+    volumeDBMap: VolumeDBMapEntry[];
+    lunNames: string[];
+}
+interface InstancesResponse {
+    [key: string]: MappedOnTapVolumeResponse;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -541,5 +608,11 @@ export {
     MaxDOPAssesment,
     PatchDetail,
     BulkOptimizeSnapshotPolicyParams,
-    BulkOptimizeSnapshotPolicyParamsType
+    BulkOptimizeSnapshotPolicyParamsType,
+    CloneAssesment,
+    CloneDetail,
+    VolumeRecord,
+    MappedOnTapVolumeResponse,
+    InstancesResponse,
+    VolumeDBMapEntry
 };
