@@ -16,7 +16,6 @@ import _isArray from 'lodash/isArray';
 import _uniqBy from 'lodash/uniqBy';
 import _compact from 'lodash/compact';
 import _map from 'lodash/map';
-import sortBy from 'lodash/sortBy';
 import _isUndefined from 'lodash/isUndefined';
 import _pickBy from 'lodash/pickBy';
 import _size from 'lodash/size';
@@ -333,56 +332,31 @@ function reducer(state: ReducerStateType, action: ActionType): ReducerStateType 
     return state;
 }
 
-// export const getFilterOptions = (data: rowDataType[], column: ColumnProps) => {
-//     const { accessor, renderFilterPanelLabel } = column;
-//     return !data || data?.length === 0
-//         ? undefined
-//         : _orderBy(
-//               _uniqBy(
-//                   _compact(
-//                       _map(data, row => {
-//                           const value = _get(row, accessor, null);
-//                           if (!value) return null;
-//                           // renderFilterPanelLabel is a simpler version of renderCell, for filters
-//                           return {
-//                               value,
-//                               label: renderFilterPanelLabel ? renderFilterPanelLabel(value) : value
-//                           };
-//                       })
-//                   ),
-//                   'value'
-//               ),
-//               [
-//                   ({ value }: { value: string | object | null }) =>
-//                       typeof value === 'string' ? value.toLowerCase() : JSON.stringify(value)
-//               ],
-//               ['asc']
-//           );
-// };
-
-export const getFilterOptions = (data: any[], column: ColumnProps) => {
+export const getFilterOptions = (data: rowDataType[], column: ColumnProps) => {
     const { accessor, renderFilterPanelLabel } = column;
-    return (
-        !data
-            ? []
-            : sortBy(
-                  _uniqBy(
-                      _compact(
-                          _map(data, row => {
-                              const value = _get(row, accessor, null);
-                              return { value, label: renderFilterPanelLabel ? renderFilterPanelLabel(value) : value };
-                          })
-                      ),
-                      'label'
+    return !data || data?.length === 0
+        ? undefined
+        : _orderBy(
+              _uniqBy(
+                  _compact(
+                      _map(data, row => {
+                          const value = _get(row, accessor, null);
+                          if (!value) return null;
+                          // renderFilterPanelLabel is a simpler version of renderCell, for filters
+                          return {
+                              value,
+                              label: renderFilterPanelLabel ? renderFilterPanelLabel(value) : value
+                          };
+                      })
                   ),
                   'value'
               ),
-        [
-            ({ value }: { value: string | object | null }) =>
-                typeof value === 'string' ? value.toLowerCase() : JSON.stringify(value)
-        ],
-        ['asc']
-    );
+              [
+                  ({ value }: { value: string | object | null }) =>
+                      typeof value === 'string' ? value.toLowerCase() : JSON.stringify(value)
+              ],
+              ['asc']
+          );
 };
 
 export type RowsStateType = {
