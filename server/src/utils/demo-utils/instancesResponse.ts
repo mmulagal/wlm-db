@@ -154,67 +154,11 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2022,
-                        sqlServerInstance: 'DEV-FinancialAccounts',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6k',
-                        isDefaultInstance: false,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQL-Managed-Host-STG',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
-                        sqlServerDeploymentType: 'FCI',
-                        storage: [
-                            {
-                                type: 'FSXN',
-                                id: fsxId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
-                    },
-                    {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'DEV-InventoryControl',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6l',
                         isDefaultInstance: false,
                         sqlServerState: 'Stopped',
                         sqlServerVersion: '16.0.4080.1'
-                    },
-                    {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2022,
-                        sqlServerInstance: 'DEV-OrderManagement',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6m',
-                        isDefaultInstance: false,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQL-Managed-Host-STG',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
-                        sqlServerDeploymentType: 'FCI',
-                        storage: [
-                            {
-                                type: 'FSXN',
-                                id: fsxId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -233,7 +177,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         sqlServerInstance: 'DEV-EmployeeDirectory',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
                         isDefaultInstance: false,
-                        sqlServerState: 'Stopped',
+                        sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1'
                     },
                     {
@@ -365,7 +309,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         sqlServerInstance: 'DEV-ProjectManagement',
                         serverGuid: 'f4b7c5d3-e1f6-4g2a-9b6n',
                         isDefaultInstance: false,
-                        sqlServerState: 'Stopped',
+                        sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1'
                     }
                 ]
