@@ -794,5 +794,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     CRR: 'Crr',
     ONTAP: 'ontap',
     OS: 'os',
-    SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups'
+    RSS_CONFIGURATION: 'Network adapter settings',
+    SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
+    LICENSE: 'License'
 };

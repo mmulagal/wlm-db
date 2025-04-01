@@ -126,7 +126,9 @@ const app = fastify({
     .register(fastifyMultipart, {
         limits: { fileSize: 500 * 1024 * 1024 }
     })
-    .register(cors)
+    .register(cors, {
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE'
+    })
     .register(compress)
     .register(sensible) // disable sensible error handler and use fastify native
     .register(helmet, {

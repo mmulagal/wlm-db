@@ -13,6 +13,7 @@ const initialState: GetWellSliceInterface = {
     selectedGwInstanceCredId: '',
     selectedGwInstanceRegionId: '',
     selectedDatabaseStorageType: '',
+    selectedRowFsxId: '',
     cardData: cardDataDefault,
     osConfigTableData: null,
     ontapConfigTableData: null,
@@ -25,9 +26,9 @@ const initialState: GetWellSliceInterface = {
     selectedSnapshotPolicy: null,
     selectedSnapshot: null,
     selectedAWSBackup: {
-        numberOfDays: 1,
-        hour: 1,
-        minute: 1
+        numberOfDays: 30,
+        hour: '01',
+        minute: '00'
     },
     credIdFromJM: '',
     regionFromJM: '',
@@ -37,7 +38,8 @@ const initialState: GetWellSliceInterface = {
     jobToInstanceMap: {},
     jobToInstanceMapForBulk: [],
     recommendedInstanceInBulk: {},
-    landingFromInnerPage: false
+    landingFromInnerPage: false,
+    isInnerPageOptimize: false
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -68,6 +70,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setGwResourceId: (state, action: PayloadAction<any>) => {
             state.selectedResourceId = action.payload;
+        },
+        setGwSelectedRowFsxId: (state, action: PayloadAction<any>) => {
+            state.selectedRowFsxId = action.payload;
         },
         setGwDatabaseInstance: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseInstance = action.payload;
@@ -111,6 +116,7 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseInstance = '';
             state.selectedDatabaseInstanceName = '';
             state.selectedDatabaseStorageType = '';
+            state.selectedRowFsxId = '';
             state.cardData = cardDataDefault;
             state.osConfigTableData = null;
             state.ontapConfigTableData = null;
@@ -170,6 +176,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
             state.landingFromInnerPage = action.payload;
+        },
+        setIsInnerPageOptimize: (state, action: PayloadAction<any>) => {
+            state.isInnerPageOptimize = action.payload;
         }
     }
 });
@@ -207,7 +216,9 @@ export const {
     setSelectedGwInstanceCredId,
     setSelectedGwInstanceRegionId,
     setGwPageLoadInstanceData,
-    setLandingFromInnerPage
+    setLandingFromInnerPage,
+    setGwSelectedRowFsxId,
+    setIsInnerPageOptimize
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

@@ -1054,6 +1054,38 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
     return result;
 };
 
+export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
+    if (!data || data.length < 2) {
+        return data;
+    }
+
+    const statusWeights: any = {
+        [INVENTORY_STATUS.CASE_SENSITIVE_UP]: 3000,
+        [INVENTORY_STATUS.RUNNING]: 3000,
+        [INVENTORY_STATUS.CASE_SENSITIVE_DOWN]: 2000,
+        [INVENTORY_STATUS.STOPPED]: 2000,
+        [INVENTORY_STATUS.UNKNOWN]: 1000,
+        '': 0
+    };
+
+    const isManagedWeights: any = {
+        [INVENTORY_STATUS.MANAGED]: 300,
+        [INVENTORY_STATUS.UNMANAGED]: 200,
+        [INVENTORY_STATUS.IN_PROGRESS]: 200,
+        [INVENTORY_STATUS.UNDETECTED]: 100,
+        '': 0
+    };
+
+    const result = data.slice().sort((a, b) => {
+        const weightA = statusWeights[a.status || ''] + isManagedWeights[a?.statusColText || ''];
+        const weightB = statusWeights[b.status || ''] + isManagedWeights[b?.statusColText || ''];
+
+        return weightB - weightA;
+    });
+
+    return result;
+};
+
 export const getMhUnmanagedInstances = (
     databaseHostsData: { [key: string]: InventoryTableData },
     runningInstanceList: Array<string>
@@ -1532,7 +1564,8 @@ export const updateSqlServerInstancesForUnmanaged = (
                         isManagedHost && statusObj?.[0]?.status ? statusObj?.[0]?.status : instRow?.statusColText,
                     fileSystemDeploymentMode:
                         instRow?.fileSystemDeploymentMode ||
-                        getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
+                        getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
+                    sqlServerDeploymentType: instRow?.sqlServerDeploymentType || perRow?.sqlServerDeploymentType
                 };
             } else {
                 const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
@@ -1640,12 +1673,29 @@ export const updateInstanceStatus = (
 ) => {
     let updatedState = store.getState();
     let { inventoryTableData }: any = updatedState?.inventoryV2;
-    const targettedHostIdVal = inventoryTableData?.[
+
+    let targettedHostIdVal = inventoryTableData?.[
         uniqueHostRow(hostData?.resourceId, hostData?.credentialId, hostData?.regionId)
     ]
         ? hostData?.resourceId
-        : hostData?.ec2InstanceId;
+        : inventoryTableData?.[uniqueHostRow(hostData?.ec2InstanceId, hostData?.credentialId, hostData?.regionId)]
+        ? hostData?.ec2InstanceId
+        : '';
+    if (!targettedHostIdVal) {
+        Object.keys(inventoryTableData).map((perObj: any) => {
+            let item = inventoryTableData[perObj];
+            if (
+                item?.ec2InstanceId === hostData?.ec2InstanceId &&
+                item?.credentialId === hostData?.credentialId &&
+                item?.regionId === hostData?.regionId
+            ) {
+                targettedHostIdVal = item?.resourceId || item?.ec2InstanceId;
+            }
+        });
+    }
+
     const targettedHostId = uniqueHostRow(targettedHostIdVal, hostData?.credentialId, hostData?.regionId);
+
     const updatedInventoryTableData = { ...inventoryTableData };
     if (action === 'unmanage') {
         updatedInventoryTableData[targettedHostId] = {
@@ -1722,23 +1772,38 @@ export const updateInstanceBulkStatus = (action: InstanceActions, response: any)
                 failedInstances.push(item);
             }
         });
-        const targettedHostIdVal = inventoryTableData?.[
+        let targettedHostIdVal = inventoryTableData?.[
             uniqueHostRow(hostData?.resourceId, hostData?.credentialsId, hostData?.region)
         ]
             ? hostData?.resourceId
-            : hostData?.ec2InstanceId;
+            : inventoryTableData?.[uniqueHostRow(hostData?.ec2InstanceId, hostData?.credentialsId, hostData?.region)]
+            ? hostData?.ec2InstanceId
+            : '';
+        if (!targettedHostIdVal) {
+            Object.keys(inventoryTableData).map((perObj: any) => {
+                let item = inventoryTableData[perObj];
+                if (
+                    item?.ec2InstanceId === hostData?.ec2InstanceId &&
+                    item?.credentialId === hostData?.credentialsId &&
+                    item?.regionId === hostData?.region
+                ) {
+                    targettedHostIdVal = item?.resourceId || item?.ec2InstanceId;
+                }
+            });
+        }
+
         const targettedHostId = uniqueHostRow(targettedHostIdVal, hostData?.credentialsId, hostData?.region);
 
         if (action === 'manage') {
             updatedInventoryTableData[targettedHostId] = {
                 ...inventoryTableData[targettedHostId],
                 managedInstance:
-                    inventoryTableData[targettedHostId].managedInstance + successFullInstances?.length || 0,
+                    inventoryTableData[targettedHostId]?.managedInstance + successFullInstances?.length || 0,
                 action: INVENTORY_ACTIONS.MANAGE,
                 actionDisable:
-                    inventoryTableData[targettedHostId].totalInstance ===
-                        inventoryTableData[targettedHostId].managedInstance + successFullInstances?.length || 0,
-                sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
+                    inventoryTableData[targettedHostId]?.totalInstance ===
+                        inventoryTableData[targettedHostId]?.managedInstance + successFullInstances?.length || 0,
+                sqlServerInstances: inventoryTableData[targettedHostId]?.sqlServerInstances.map((instanceItem: any) => {
                     const instanceInRes = successFullInstances.find(
                         (item: any) => item?.databaseInstanceName === instanceItem?.databaseInstanceName
                     );

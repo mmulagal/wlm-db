@@ -283,7 +283,7 @@ describe('Continuous optimization optimize operations', () => {
             OPTIMIZATION_CATEGORIES.STORAGE_SIZING,
             [
                 {
-                    type: OPTIMIZE_SIZING_CONFIGS.HEADROOM,
+                    configurationName: OPTIMIZE_SIZING_CONFIGS.HEADROOM,
                     databaseHosts: [
                         {
                             id: RESOURCE_ID,
@@ -306,7 +306,7 @@ describe('Continuous optimization optimize operations', () => {
             OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM,
             [
                 {
-                    type: OptimizeOperatingSystemParams.MPIO_SESSIONS,
+                    configurationName: OptimizeOperatingSystemParams.MPIO_SESSIONS,
                     databaseHosts: [
                         {
                             id: RESOURCE_ID,
@@ -329,7 +329,7 @@ describe('Continuous optimization optimize operations', () => {
             OPTIMIZATION_CATEGORIES.STORAGE_TIER,
             [
                 {
-                    type: OptimizeStorageTierParams.STORAGE_TIER,
+                    configurationName: OptimizeStorageTierParams.STORAGE_TIER,
                     databaseHosts: [
                         {
                             id: RESOURCE_ID,
@@ -347,7 +347,7 @@ describe('Continuous optimization optimize operations', () => {
     it('Bulk optimize compute parameters', async () => {
         const response = await bulkComputeOptimization(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, [
             {
-                type: OptimizeComputeParams.COMPUTE,
+                configurationName: OptimizeComputeParams.COMPUTE,
                 databaseHosts: [
                     {
                         id: RESOURCE_ID,

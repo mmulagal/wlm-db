@@ -7,13 +7,14 @@ import {
     setGwTimestamp,
     setInProgressHostData,
     setInProgressOptimizationData,
+    setIsInnerPageOptimize,
     setOntapConfigTableData,
     setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
+import { addAllMssqlHostAssessmentData, setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -24,7 +25,8 @@ import {
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
-    STATUS_CONST
+    STATUS_CONST,
+    WLF_TABS
 } from '../../utils/consts';
 import {
     AssessmentResponseInterface,
@@ -167,7 +169,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'TempBD drive size',
+            type: 'TempDB drive size',
             value: ''
         },
         recommendation: {
@@ -729,7 +731,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'Filesystem',
+            type: 'File system',
             value: '',
             smallFont: true
         },
@@ -2262,7 +2264,8 @@ export const handleOptimizeStorageJob = (
     dispatch: any,
     type?: any,
     operation?: string,
-    bulkRowData?: any
+    bulkRowData?: any,
+    isOptimizeInnerPage?: boolean
 ) => {
     const state = store.getState();
     let optimizingData = state.getWellOptimize.optimizingData || {};
@@ -2280,6 +2283,9 @@ export const handleOptimizeStorageJob = (
                         updateAssessmentWithCompletedJobs(dispatch, operation, type, jobId, rowData, bulkRowData);
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
+                        if (isOptimizeInnerPage) {
+                            dispatch(setIsInnerPageOptimize(true));
+                        }
                     } else if (status === JOB_MONITORING_STATUS.WARNING) {
                         updateAssessmentWithWarningJobs(
                             dispatch,
@@ -2292,6 +2298,9 @@ export const handleOptimizeStorageJob = (
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
+                        if (isOptimizeInnerPage) {
+                            dispatch(setIsInnerPageOptimize(true));
+                        }
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
                         updateAssessmentWithFailedJobs(
                             dispatch,

@@ -250,6 +250,7 @@ async function updateTemplateUrls(
             FsxCertificates: decodeURI(signedUrls.get('FsxCertificates')?.url || ''),
             ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
             PGSQLPackages: decodeURI(signedUrls.get('PGSQLPackages')?.url || ''),
+            PGPOOLPackage: decodeURI(signedUrls.get('PGPOOLPackage')?.url || ''),
             PgsqlCloudWatchConfig: PGSQL_CW_CONFIG || ''
         });
         const pgsqlTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'PGSQLTemplate');

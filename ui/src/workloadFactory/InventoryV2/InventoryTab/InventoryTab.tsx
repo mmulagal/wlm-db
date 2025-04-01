@@ -9,7 +9,9 @@ import { setSelectedInventoryTab } from '../../../store/workloadFactory/inventor
 const InventoryTab = () => {
     const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState(WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE);
-    const { selectedInventoryTab } = useAppSelector(state => state.inventoryV2);
+    const { selectedInventoryTab, instanceTableRows, hostTableRows, databaseTableRows } = useAppSelector(
+        state => state.inventoryV2
+    );
 
     useEffect(() => {
         setSelectedTab(selectedInventoryTab);
@@ -34,7 +36,7 @@ const InventoryTab = () => {
                     }
                     onClick={() => handleClick('Hosts')}
                 >
-                    Hosts
+                    Hosts ({hostTableRows.length})
                 </DsTypography>
             </div>
             <div
@@ -53,7 +55,7 @@ const InventoryTab = () => {
                     }
                     onClick={() => handleClick('Instances')}
                 >
-                    Instances
+                    Instances ({instanceTableRows.length})
                 </DsTypography>
             </div>
 
@@ -73,7 +75,7 @@ const InventoryTab = () => {
                     }
                     onClick={() => handleClick('Databases')}
                 >
-                    Databases
+                    Databases ({databaseTableRows.length})
                 </DsTypography>
             </div>
         </div>

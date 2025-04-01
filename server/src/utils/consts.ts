@@ -545,6 +545,7 @@ const AWS_REGIONS = new Map<string, string>([
     ['ca-west-1', 'Canada (Calgary)'],
     ['ap-southeast-5', 'Asia Pacific (Malaysia)']
 ]);
+const AWS_REGION_KEYS = Array.from(AWS_REGIONS.keys());
 
 const IO2_AVAILABLE_REGIONS = [
     'us-east-2',
@@ -1192,7 +1193,7 @@ const CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING: {
     SQLDeploymentMode: { name: 'sql_deployment_mode', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer }
 };
 
-const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
+const MSSQL_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     0: 'serverDetails',
     1: 'databaseInstancetopologyData',
     2: 'performance',
@@ -1201,8 +1202,15 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     5: 'resourceUtilization',
     6: 'databasesCount',
     7: 'nodeTopology',
-    8: 'storageSavingsFromOntap',
-    9: 'databases'
+    8: 'storageSavingsFromOntap'
+};
+
+const PGSQL_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
+    0: 'storage',
+    1: 'databaseInstancetopologyData',
+    2: 'databasesCount',
+    3: 'databases',
+    4: 'performance'
 };
 
 enum DATABASE_METRIC_TYPE {
@@ -1367,6 +1375,8 @@ const MSSQL_SYSTEM_DATABASES = [
     'msdb'
 ];
 
+const PGSQL_SYSTEM_DATABASES = ['postgres', 'template0', 'template1'];
+
 const MSSQL_DATABASE_TYPES = {
     SYSTEM: 'System Database',
     USER: 'User Database'
@@ -1401,7 +1411,7 @@ const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
 const ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT = '300';
-const ASSESSMENT_SSM_EXECUTION_TIMEOUT = '600';
+const ASSESSMENT_SSM_EXECUTION_TIMEOUT = '1800';
 
 const VALIDATION_NODE_INSTANCETYPE = 'm5.xlarge';
 
@@ -1489,7 +1499,8 @@ const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const PGSQL_VERSION = 'pgsql-version';
-const AL2023_AMI_NAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
+const AMAZON_LINUX_AMI_PATH = '/aws/service/ami-amazon-linux-latest';
+const AL2023_AMI_NAME = `${AMAZON_LINUX_AMI_PATH}/al2023-ami-kernel-6.1-x86_64`;
 
 const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -1582,6 +1593,10 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'PGSQLPackages',
         url: `${WLMDB}/pgsql/packages/pgvector.zip`
+    },
+    {
+        name: 'PGPOOLPackage',
+        url: `${WLMDB}/pgsql/packages/pgpool.zip`
     }
 ];
 
@@ -2018,7 +2033,8 @@ export {
     STD_ENGINE_EDITION,
     AWS_ERROR_CODES,
     CF_STACK_COUNT_QUOTACODE,
-    DATABASE_INSTANCE_INDEX_MAPPING,
+    MSSQL_DATABASE_INSTANCE_INDEX_MAPPING,
+    PGSQL_DATABASE_INSTANCE_INDEX_MAPPING,
     PGSQL_CW_CONFIG,
     SQL_CASE_INSENSITIVE,
     MAX_EMAIL_ATTACHMENT_SIZE,
@@ -2035,5 +2051,8 @@ export {
     PGSQL,
     GERERIC_JOB_ERROR_MESSAGE,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
-    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT
+    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+    PGSQL_SYSTEM_DATABASES,
+    AWS_REGION_KEYS,
+    AMAZON_LINUX_AMI_PATH
 };

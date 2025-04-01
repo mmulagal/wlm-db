@@ -63,9 +63,58 @@
     // }
 
     .mainSection {
-        padding: 40px 120px 40px 40px;
+        padding: 40px 40px 40px 40px;
         display: flex;
         gap: 112px;
+
+        .newValueSection {
+            display: flex;
+            gap: 40px;
+
+            .leftSide {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+
+                .topSection {
+                    display: flex;
+                    gap: 16px;
+
+                    .subContent {
+                        display: flex;
+                        flex-direction: column;
+                        width: 160px;
+
+                        .loaderText {
+                            display: flex;
+                            gap: 8px;
+                        }
+                    }
+                }
+            }
+
+            .textSection {
+                display: flex;
+                gap: 8px;
+                margin-top: -30px;
+                align-items: baseline;
+
+                .square {
+                    width: 12px;
+                    height: 12px;
+                }
+            }
+
+            .rightSide {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            [class*='_yLabel'] {
+                margin-top: 10px;
+            }
+        }
 
         .valueSection {
             display: flex;

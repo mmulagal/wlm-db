@@ -12,6 +12,7 @@ import PotentialSavings from './PotentialSavings/PotentialSavings';
 import Sandboxes from './Sandboxes/Sandboxes';
 import { getTotalManagedAggrStorageSavings } from '../DatabaseHomePage/DatabaseHomeUtils';
 import OptimizeByCategory from './OptimizeByCategory/OptimizeByCategory';
+import NewPotentialSavings from './PotentialSavings/NewPotentialSavings';
 
 const Dashboard = () => {
     const mssqlHostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlStorageSavings);
@@ -44,6 +45,8 @@ const Dashboard = () => {
 
             <div className={styles.firstSection}>
                 <PotentialSavings />
+                {/* To enable the new potential savings widget */}
+                {/* <NewPotentialSavings /> */}
                 <Sandboxes />
             </div>
 

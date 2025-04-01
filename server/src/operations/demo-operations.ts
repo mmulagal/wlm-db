@@ -24,7 +24,7 @@ import {
     updateResourceMetaData,
     upsertDatabaseInstance
 } from '../lib/database/db';
-import { Metadata, Sandbox, databaseInstanceMetadata } from '../utils/common-types';
+import { Metadata, Sandbox, DatabaseInstanceMetadata } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
@@ -51,7 +51,7 @@ import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
-import { ASSESMENT_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
+import { ASSESMENT_CONFIG_DATA, ASSESSMENT_CRR_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
 import { describeFSxVolumes } from '../lib/aws/fsx';
 
 const logger = getLogger();
@@ -292,6 +292,19 @@ async function createDeploymentMockDataInDB(
 
     await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
 
+    const instanceCRRConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: instanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.CRR,
+        config_data: ASSESSMENT_CRR_CONFIG_DATA
+    };
+
+    await createDatabaseInstanceConfigData([instanceCRRConfigDataRecord]);
+
     const jobData = await createJobMockData(
         accountId,
         resourceName,
@@ -393,7 +406,7 @@ async function updateUserDBIntoInstanceTable(
     accountId: string,
     instanceId: string,
     databaseName: string,
-    metaData: databaseInstanceMetadata
+    metaData: DatabaseInstanceMetadata
 ) {
     logger.info('updating user db into resource meta data', accountId, instanceId, databaseName);
 
@@ -428,7 +441,7 @@ async function updateOptimizedConfigNameInInstanceTable(
     instanceId: string,
     configNames: string[],
     configType: string,
-    metaData: databaseInstanceMetadata
+    metaData: DatabaseInstanceMetadata
 ) {
     logger.info(
         'updating optimized config name into instance meta data',
@@ -472,7 +485,7 @@ async function updateSandboxDBIntoInstanceData(
     accountId: string,
     instanceID: string,
     sandboxDetails: Sandbox,
-    instanceMetaData: databaseInstanceMetadata
+    instanceMetaData: DatabaseInstanceMetadata
 ) {
     logger.info('updating sandbox db into database instance  meta data', accountId, instanceID, sandboxDetails);
 

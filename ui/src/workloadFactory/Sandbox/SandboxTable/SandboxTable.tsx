@@ -577,7 +577,7 @@ const SandboxTable = () => {
 
     const lastColDetails = () => {
         return {
-            id: '8',
+            id: '9',
             Header: '',
             accessor: '',
             width: '56px',
@@ -713,7 +713,7 @@ const SandboxTable = () => {
         {
             Header: GENERAL.SB_STATUS,
             accessor: 'status',
-            id: '7',
+            id: '8',
             width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {

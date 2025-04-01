@@ -66,6 +66,8 @@ import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
 import OSPatchTable from './RenderTables/OSPatchTable';
 import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
 import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
+import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import { backupStartTime } from '../../../utils/utilityFunctions';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -125,7 +127,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'compute',
+                            configurationName: 'compute',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -162,6 +164,49 @@ const DashboardInnerPage = () => {
                     instanceType: selectedRecommendedInstance?.value
                 };
             }
+        } else if (type === GENERAL.RSS_CONFIGURATION) {
+            if (operation === 'bulk') {
+                apiCall = optimizeComputeConfigForBulk;
+
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'rss-config',
+                            databaseHosts: Object.values(
+                                //@ts-ignore
+                                rowData.reduce((acc, { databaseHostId, instanceId, networkAdapters }) => {
+                                    if (!acc[databaseHostId]) {
+                                        acc[databaseHostId] = {
+                                            id: databaseHostId,
+                                            sqlServerInstances: [],
+                                            networkAdapters: []
+                                        };
+                                    }
+                                    acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                    acc[databaseHostId].networkAdapters.push(...networkAdapters);
+                                    return acc;
+                                }, {})
+                            )
+                        }
+                    ]
+                };
+            } else {
+                apiCall = optimizeComputeConfigForBulk;
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'rss-config',
+                            databaseHosts: [
+                                {
+                                    id: rowData?.databaseHostId,
+                                    sqlServerInstances: [rowData?.instanceId],
+                                    networkAdapters: rowData?.networkAdapters
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
         } else if (
             type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
@@ -173,7 +218,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type:
+                            configurationName:
                                 type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                                     ? 'log-drive-size'
                                     : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
@@ -200,7 +245,7 @@ const DashboardInnerPage = () => {
             } else {
                 apiCall = optimizeStorageSizing;
                 payload = {
-                    type:
+                    configurationName:
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                             ? 'log-drive-size'
                             : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
@@ -215,7 +260,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'storage-tier',
+                            configurationName: 'storage-tier',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -236,7 +281,9 @@ const DashboardInnerPage = () => {
                 };
             } else {
                 apiCall = optimizeStorageTier;
-                payload = null;
+                payload = {
+                    configurationName: 'storage-tier'
+                };
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
             apiCall = optimizeResiliency;
@@ -244,13 +291,14 @@ const DashboardInnerPage = () => {
             const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
 
             payload = {
-                type: ['snapshot-policy'],
+                configurationName: ['snapshot-policy'],
                 params: [
                     {
                         snapshotPolicy: {
                             uuid: selectedSnapshot?.data?.uuid,
                             name: selectedSnapshot?.data?.name
-                        }
+                        },
+                        volumes: rowData?.violations
                     }
                 ]
             };
@@ -260,14 +308,18 @@ const DashboardInnerPage = () => {
             const selectedAWSBackup = state.getWellOptimize.selectedAWSBackup;
 
             payload = {
-                type: ['aws-backup'],
-                databaseHosts: [
+                hostsToOptimize: [
                     {
-                        id: rowData?.databaseHostId,
-                        sqlServerInstances: [rowData?.instanceId],
-                        fsxFileSystemId: rowData?.objectsInViolation?.[0],
-                        backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                        backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
+                        configurationName: ['aws-backup'],
+                        databaseHosts: [
+                            {
+                                id: rowData?.databaseHostId,
+                                sqlServerInstances: [rowData?.instanceId],
+                                fsxFileSystemId: rowData?.objectsInViolation?.[0],
+                                backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                                backupStartTime: backupStartTime(selectedAWSBackup)
+                            }
+                        ]
                     }
                 ]
             };
@@ -277,7 +329,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'max-dop',
+                            configurationName: 'max-dop',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -307,7 +359,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'max-dop',
+                            configurationName: 'max-dop',
                             databaseHosts: [
                                 {
                                     id: rowData?.databaseHostId,
@@ -514,7 +566,8 @@ const DashboardInnerPage = () => {
     const optimizeAction = (rowData: any) => {
         const updatedState = store.getState();
         const { inventoryTableData }: any = updatedState.inventoryV2;
-        const targettedHost = inventoryTableData[rowData?.databaseHostId];
+        const targettedHost =
+            inventoryTableData[uniqueHostRow(rowData?.databaseHostId, rowData?.credentialId, rowData?.regionId)];
         const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
             (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.data?.databaseInstanceName
         );

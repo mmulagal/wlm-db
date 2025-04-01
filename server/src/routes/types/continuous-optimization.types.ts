@@ -236,7 +236,7 @@ const StorageParameterErrorResponse = Type.Object({
 const SnapshotPolicyAssesmentData = Type.Object({
     timestamp: Type.Number(),
     tags: Type.Array(Type.String()),
-    violations: Type.Array(Type.String()),
+    violations: Type.Array(OntapVolume),
     severity: Type.String(),
     status: Type.String(),
     resourceType: Type.String(),
@@ -259,13 +259,15 @@ const StorageParameterDriftResponse = Type.Object({
 });
 
 const ResilienceDriftAssessmentResponse = Type.Object({
-    snapshotPolicy: Type.Optional(Type.Union([SnapshotPolicyAssesmentData, ErrorResponse]))
+    snapshotPolicy: Type.Optional(Type.Union([SnapshotPolicyAssesmentData, ErrorResponse])),
+    crr: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
+    awsBackup: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
 });
 type ResilienceDriftAssessmentResponseType = Static<typeof ResilienceDriftAssessmentResponse>;
 
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 const DriftAssessmentResponse = Type.Object({
-    storage: Type.Optional(StorageParameterDriftResponse),
+    storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
     license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
@@ -356,7 +358,7 @@ const BulkOptimizeSnapshotPolicyRequestBody = Type.Object({
 });
 
 const OptimizeResiliencyBody = Type.Object({
-    type: Type.Array(Type.Enum(OPTIMIZE_RESILIENCY_CONFIGS)),
+    configurationName: Type.Array(Type.Enum(OPTIMIZE_RESILIENCY_CONFIGS)),
     params: Type.Optional(Type.Array(Type.Union([BulkOptimizeSnapshotPolicyRequestBody])))
 });
 type OptimizeResiliencyBodyType = Static<typeof OptimizeResiliencyBody>;
@@ -375,20 +377,44 @@ const OptimizeComputeRequestBody = Type.Object({
 
 type OptimizeComputeRequestBodyType = Static<typeof OptimizeComputeRequestBody>;
 const OptimizeSizingRequestBody = Type.Object({
-    type: Type.Array(Type.Enum(OPTIMIZE_SIZING_CONFIGS))
+    configurationName: Type.Array(Type.Enum(OPTIMIZE_SIZING_CONFIGS))
 });
 
 type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 
-const OptimizePerHostRequestBody = Type.Object({
-    id: Type.String({ minLength: 1 }),
-    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
-    instanceType: Type.Optional(Type.String())
+const UpdateFSxNBackupRequestBody = Type.Object({
+    fsxFileSystemId: Type.Optional(Type.String()),
+    backupRetentionDays: Type.Optional(Type.Number({ minimum: 1, maximum: 90 })),
+    backupStartTime: Type.Optional(
+        Type.String({
+            description: '00:00 to 23:59 padded UTC timestamp',
+            pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+        })
+    )
 });
+
+const OptimizePerHostRequestBody = Type.Intersect([
+    Type.Object({
+        id: Type.String({ minLength: 1 }),
+        sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+        instanceType: Type.Optional(Type.String()),
+        networkAdapters: Type.Optional(Type.Array(Type.String()))
+    }),
+    UpdateFSxNBackupRequestBody
+]);
+
 type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;
 
 const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
+});
+
+const OptimizeGenericRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OPTIMIZE_SIZING_CONFIGS,
+        ...OptimizeStorageTierParams
+    }),
+    objectsToOptimize: Type.Optional(Type.Array(Type.String({ minLength: 1 })))
 });
 
 const DriftAssessmentResponsePerAccount = Type.Object({
@@ -398,12 +424,13 @@ const DriftAssessmentResponsePerAccount = Type.Object({
 });
 
 const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
-    type: Type.Enum({
+    configurationName: Type.Enum({
         ...OPTIMIZE_SIZING_CONFIGS,
         ...OptimizeOperatingSystemParams,
         ...OptimizeStorageTierParams,
         ...OptimizeComputeParams,
-        ...OptimizeMaxDopParams
+        ...OptimizeMaxDopParams,
+        ...OPTIMIZE_RESILIENCY_CONFIGS
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });
@@ -415,6 +442,27 @@ const BulkOptimizeGeneralRequestBody = Type.Object({
 });
 
 type BulkOptimizeGeneralRequestBodyType = Static<typeof BulkOptimizeGeneralRequestBody>;
+
+const BulkOptimizeSnapshotPolicyParams = Type.Object({
+    fsxId: Type.String(),
+    region: Type.String(),
+    volUuids: Type.String(),
+    apiBody: Type.String()
+});
+type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
+
+const BulkOptimizeComputePerHostRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OptimizeComputeParams
+    }),
+    databaseHosts: Type.Array(OptimizePerHostRequestBody)
+});
+type BulkOptimizeComputePerHostRequestBodyType = Static<typeof BulkOptimizeComputePerHostRequestBody>;
+
+const BulkOptimizeComputeRequestBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeComputePerHostRequestBody)
+});
+type BulkOptimizeComputeRequestBodyType = Static<typeof BulkOptimizeComputeRequestBody>;
 
 export {
     DriftAssessmentResponse,
@@ -460,5 +508,12 @@ export {
     GenericViolationResponseType,
     OptimizeResiliencyBodyType,
     OptimizeResiliencyBody,
+    BulkOptimizeSnapshotPolicyParams,
+    BulkOptimizeSnapshotPolicyParamsType,
+    BulkOptimizeComputePerHostRequestBodyType,
+    BulkOptimizeComputePerHostRequestBody,
+    BulkOptimizeComputeRequestBody,
+    BulkOptimizeComputeRequestBodyType,
+    OptimizeGenericRequestBody,
     CloneDriftResponseType
 };

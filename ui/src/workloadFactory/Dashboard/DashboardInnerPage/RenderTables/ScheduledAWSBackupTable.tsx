@@ -99,7 +99,7 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
             filterOptions: 'auto'
         },
         {
-            Header: 'Filesystem Name',
+            Header: 'File system',
             accessor: 'totalObjectsInViolation',
             id: '3',
             width: '320px',

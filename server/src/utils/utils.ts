@@ -574,7 +574,11 @@ function getArtifactsRegionBucketName(region: string) {
 function sqlResponseParsing(response: string) {
     try {
         // Some responses have \\r\\n in them, so repeating this step twice to remove all of them
-        const cleanResponse = response.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
+        const cleanResponse = response
+            .replaceAll('\r\n', '')
+            ?.replaceAll('\\r\\n', '')
+            ?.replaceAll('\n', '')
+            ?.replaceAll('\\n', '');
         const jsonResponse = JSON.parse(cleanResponse);
         return jsonResponse;
     } catch (error) {
@@ -817,9 +821,18 @@ function extractKbNumber(displayName: string): string | null {
     return match ? match[1] : null;
 }
 
-function extractVersionYear(sqlVersion: string) {
-    const match = sqlVersion.match(/Microsoft SQL Server (\d{4})/);
-    return match ? match[1] : 'Unknown';
+function extractVersionDetails(sqlVersion: string) {
+    const normalizedSqlVersion = sqlVersion.trim();
+
+    const match = normalizedSqlVersion.match(/Microsoft SQL Server (\d{4})/);
+
+    const dateMatch = normalizedSqlVersion.match(/(\w{3}\s+\d{1,2}\s+\d{4})/);
+    const releaseDate = dateMatch ? dateMatch[1] : 'Unknown';
+
+    return {
+        version: match ? match[1] : 'Unknown',
+        releaseDate
+    };
 }
 
 function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: string) {
@@ -864,6 +877,8 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
             'Creating network interfaces for the EC2 instance in standby subnet',
         'NetworkInterface1(AWS::EC2::NetworkInterface)':
             'Creating network interfaces for the EC2 instance in primary subnet',
+        'NetworkInterface3(AWS::EC2::NetworkInterface)':
+            'Creating network interface for PgPool instance in primary subnet',
         'ValidationNode2(AWS::EC2::Instance)':
             'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
         'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
@@ -889,7 +904,8 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
         'SqlNode1(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ${
             stackSqlDeploymentType === 'Standalone' ? 'standalone on an' : 'ha on primary'
         } EC2 instance`,
-        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`
+        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`,
+        'PgPoolNode(AWS::EC2::Instance)': 'Configuring PgPool instance'
     };
 
     if (dbEngineType === RESOURCESTYPE.PGSQL) {
@@ -934,6 +950,25 @@ function parseMultipleCommandResponse(response: string) {
     const jsonObjects = response.match(/(\{.*?\})(?=\{|\s*$)/g);
 
     return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
+}
+
+function divideArrayIntoChunks(array: any[], chunkSize: number) {
+    const chunksArray = array.reduce((resultArray: any[][], item, index) => {
+        const chunkIndex = Math.floor(index / chunkSize);
+
+        if (!resultArray[chunkIndex]) {
+            resultArray[chunkIndex] = []; // start a new chunk
+        }
+
+        resultArray[chunkIndex].push(item);
+
+        return resultArray;
+    }, []);
+    return chunksArray;
+}
+
+function isValidProp(propName: string) {
+    return propName && propName !== 'undefined' && propName !== 'null';
 }
 
 /**
@@ -998,11 +1033,13 @@ export {
     parsePgSqlInstanceInfo,
     getServerNameWithHostname,
     extractKbNumber,
-    extractVersionYear,
+    extractVersionDetails,
     isMssql,
     isPgsql,
     isValidEmail,
     isRateLimited,
     parseMultipleCommandResponse,
+    divideArrayIntoChunks,
+    isValidProp,
     calculateDaysSince
 };

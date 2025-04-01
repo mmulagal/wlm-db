@@ -10,6 +10,7 @@ import {
     setFsxCredentialStatusLoading,
     setInventoryChartData,
     setInventoryTableData,
+    setInventoryTablesRows,
     setIsDatabaseHostsLoading,
     setIsDiscoverHostLoading,
     setIsDiscoveredHostData,
@@ -55,7 +56,11 @@ import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/expl
 import store from '../../store/store';
 import { EBS_PROTECTED_OPTIONS, INSTANCE_API_FIELDS, SNAPSHOT_FREQUENCY } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
-import { setPotentialSavingsValues } from '../../store/workloadFactory/databaseHomeSlice';
+import {
+    addInitialData,
+    initialDBHomepageState,
+    setPotentialSavingsValues
+} from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
 
 const InventoryApisV3 = () => {
@@ -139,6 +144,8 @@ const InventoryApisV3 = () => {
     const runningManagedAssessmentRef: any = useRef(null);
     const potentialSavingsHostDataRef: any = useRef(null);
     const inventoryTableDataRef: any = useRef(null);
+    const headerSelectedMultiCredIdsListRef: any = useRef(null);
+    const headerSelectedMultiRegionIdsListRef: any = useRef(null);
 
     useEffect(() => {
         runningPerfInstanceListRef.current = runningPerfInstanceList;
@@ -176,6 +183,14 @@ const InventoryApisV3 = () => {
         potentialSavingsHostDataRef.current = potentialSavingsHostData;
     }, [potentialSavingsHostData]);
 
+    useEffect(() => {
+        headerSelectedMultiCredIdsListRef.current = headerSelectedMultiCredIdsList;
+    }, [headerSelectedMultiCredIdsList]);
+
+    useEffect(() => {
+        headerSelectedMultiRegionIdsListRef.current = headerSelectedMultiRegionIdsList;
+    }, [headerSelectedMultiRegionIdsList]);
+
     // This function is to get managed list and respective instance IDs. This will be used to map logic for resource id and instance.
     const getFsxCredentialStatusList = async (
         fsxIdsList: Array<string>,
@@ -183,8 +198,8 @@ const InventoryApisV3 = () => {
         runningRegionId: string
     ) => {
         if (
-            headerSelectedMultiCredIdsList.includes(runningCredId) &&
-            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
             try {
                 const result: any = await getFsxCredentialStatusListApi({
@@ -193,8 +208,8 @@ const InventoryApisV3 = () => {
                     fsxIds: fsxIdsList.join(',')
                 });
                 if (
-                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     dispatch(setFsxCredentialStatusLoading(false));
                     if (result && !result?.error) {
@@ -228,8 +243,8 @@ const InventoryApisV3 = () => {
         runningRegionId: string
     ) => {
         if (
-            headerSelectedMultiCredIdsList.includes(runningCredId) &&
-            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
             try {
                 const result: any = await getManagedHostListAPI({
@@ -238,8 +253,8 @@ const InventoryApisV3 = () => {
                     nextToken: managedHostCursor
                 });
                 if (
-                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     if (result && !result?.error) {
                         result?.data?.items?.map((perRow: any) => {
@@ -300,8 +315,8 @@ const InventoryApisV3 = () => {
         runningRegionId: string
     ) => {
         if (
-            headerSelectedMultiCredIdsList.includes(runningCredId) &&
-            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
             try {
                 const result: any = await getDatabaseHostsListApi({
@@ -310,8 +325,8 @@ const InventoryApisV3 = () => {
                     nextToken: nextToken
                 });
                 if (
-                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     dispatch(setResetManagedData(false));
                     if (result && !result?.error) {
@@ -347,8 +362,8 @@ const InventoryApisV3 = () => {
         runningRegionId: string
     ) => {
         if (
-            headerSelectedMultiCredIdsList.includes(runningCredId) &&
-            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
             try {
                 const result: any = await getPgSqlDatabaseHostsListApi({
@@ -357,8 +372,8 @@ const InventoryApisV3 = () => {
                     nextToken: nextToken
                 });
                 if (
-                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     dispatch(setResetManagedData(false));
                     if (result && !result?.error) {
@@ -399,8 +414,8 @@ const InventoryApisV3 = () => {
         runningRegionId: string
     ) => {
         if (
-            headerSelectedMultiCredIdsList.includes(runningCredId) &&
-            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
             try {
                 const result: any = await getDatabaseHostsFullDataApi({
@@ -410,8 +425,8 @@ const InventoryApisV3 = () => {
                     isDemoMode: isDemoMode
                 });
                 if (
-                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     dispatch(setResetManagedData(false));
                     if (result && !result?.error) {
@@ -452,8 +467,8 @@ const InventoryApisV3 = () => {
         runningRegionId: string
     ) => {
         if (
-            headerSelectedMultiCredIdsList.includes(runningCredId) &&
-            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
             try {
                 const result: any = await getPgSqlDatabaseHostsFullDataApi({
@@ -463,8 +478,8 @@ const InventoryApisV3 = () => {
                     isDemoMode: isDemoMode
                 });
                 if (
-                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     dispatch(setResetManagedData(false));
                     if (result && !result?.error) {
@@ -505,8 +520,8 @@ const InventoryApisV3 = () => {
         runningRegionId: string
     ) => {
         if (
-            headerSelectedMultiCredIdsList.includes(runningCredId) &&
-            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
             try {
                 const result: any = await getDiscoveryHostsListApi({
@@ -515,8 +530,8 @@ const InventoryApisV3 = () => {
                     nextToken: nextToken
                 });
                 if (
-                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     dispatch(setResetManagedData(false));
                     if (result && !result?.error) {
@@ -750,8 +765,8 @@ const InventoryApisV3 = () => {
         runningRegionId: string
     ) => {
         if (
-            headerSelectedMultiCredIdsList.includes(runningCredId) &&
-            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
         ) {
             try {
                 const result: any = await getAllMssqlHostAssessmentAPI({
@@ -760,8 +775,8 @@ const InventoryApisV3 = () => {
                     nextToken: nextToken
                 });
                 if (
-                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     if (result && !result?.error) {
                         assessmentData = [
@@ -874,8 +889,8 @@ const InventoryApisV3 = () => {
                 type: savingsCalculatorType === GENERAL.EBS ? 'ebs' : 'fsxw'
             });
             if (
-                headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
             ) {
                 if (result && !result?.error) {
                     instanceData[uniqueHostRow(selectedInstanceId, credId, regionId)] = {
@@ -918,8 +933,8 @@ const InventoryApisV3 = () => {
                 row?.isDetected
             ) {
                 if (
-                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     let isEbsProtected = null;
                     // For EBS first checking is it is protected or not.
@@ -1037,6 +1052,14 @@ const InventoryApisV3 = () => {
         dispatch(setUnmanagedExploreSavingsHost([]));
         dispatch(setPotentialSavingsValues(null));
         dispatch(addAllMssqlHostAssessmentData([]));
+        dispatch(
+            setInventoryTablesRows({
+                hosts: [],
+                instances: [],
+                databases: []
+            })
+        );
+        dispatch(addInitialData(initialDBHomepageState));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.

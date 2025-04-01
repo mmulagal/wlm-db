@@ -18,6 +18,7 @@ import { ComputeAssessment, Metadata } from '../../utils/common-types';
 import { getInstanceDetails } from '../database-hosts-operations';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
+import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 
 const logger = getLogger();
 
@@ -208,7 +209,8 @@ async function managedHostsComputeAssessment(
     awsAccountId: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    parentJobId: string
+    parentJobId: string,
+    databaseHostId: string
 ) {
     const { id: computeAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
         name: `Microsoft SQL server compute assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
@@ -243,6 +245,16 @@ async function managedHostsComputeAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+        if (errorMessage) {
+            await updateAsssementErrorInResourceMetadata(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                errorMessage,
+                'compute'
+            );
+        }
     }
     return computeAssessment;
 }

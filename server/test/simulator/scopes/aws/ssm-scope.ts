@@ -16,7 +16,8 @@ import {
     DescribeInstancePatchStatesCommand,
     DescribeInstancePatchesCommand,
     DescribeAvailablePatchesCommand,
-    ListCommandsCommand
+    ListCommandsCommand,
+    DescribeInstanceInformationCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import {
@@ -35,6 +36,7 @@ import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-
 import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
 import describeAvailablePatchesResponse from '../../responses/aws/ssm-describe-available-patches.json';
 import listCommandsCommandResponse from '../../responses/aws/list-commands-command.json';
+import getSsmInstanceInformationResponse from '../../responses/aws/ssm-instance-information.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
     restGetUtilForOntap,
@@ -96,7 +98,11 @@ import {
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
-import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
+import {
+    DATABASES_COUNT,
+    LIST_DATABASES,
+    PERFORMANCE_METRICS
+} from '../../../../src/operations/workloads/pgsql/queries';
 import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../../../../src/operations/workloads/mssql/resiliency-scripts';
 
@@ -561,6 +567,10 @@ const getInstalledSQLPatches = {
 
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
+const pgsqlDatabases = { commands: [LIST_DATABASES] };
+
+const pgsqlPerformanceMetrics = { commands: [PERFORMANCE_METRICS] };
+
 const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
@@ -807,9 +817,20 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('getVCPUAndMaxDOPDetails'))
     .on(SendCommandCommand, params => {
+        const commentString = /# Optimize Network Adapters/;
+        return commentString.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('optimizeNetworkAdapters'))
+    .on(SendCommandCommand, { Parameters: pgsqlDatabases })
+    .resolves(listSendCommandCommandResponse.getPgsqldatabasesCommand)
+    .on(SendCommandCommand, { Parameters: pgsqlPerformanceMetrics })
+    .resolves(listSendCommandCommandResponse.getPgsqlPerformanceMetricsCommand)
+    .on(SendCommandCommand, params => {
         return crrAssessmentDataRegex.test(params.Parameters.commands?.[0]);
     })
-    .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand);
+    .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand)
+    .on(SendCommandCommand, params => params.Comment === 'Discover PostgreSQL resources')
+    .resolves(getSampleCommandResponse('discoverPgsqlResources'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1088,9 +1109,33 @@ ssmMock
         )
     )
     .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-discoverPgsqlResources'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'discoverPgsqlResources',
+            JSON.stringify(getCommandInvocationResponse.discoverPgsqlServer)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getVCPUAndMaxDOPDetails'
     })
-    .resolves(getSampleCommandResponseWithOutput('getVCPUAndMaxDOPDetails', '{"vcpuCount":4,"maxDOP":"4"}\r\n'));
+    .resolves(getSampleCommandResponseWithOutput('getVCPUAndMaxDOPDetails', '{"vcpuCount":4,"maxDOP":"4"}\r\n'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeNetworkAdapters'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeNetworkAdapters',
+            JSON.stringify(getCommandInvocationResponse.optimizeNetworkAdaptersResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqldatabasesCommand' })
+    .resolves(getCommandInvocationResponse.getPgsqlDatabasesCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlPerformanceMetricsCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPgsqlPerformanceMetricsCommandResponse);
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
@@ -1120,3 +1165,4 @@ ssmMock.on(ListCommandsCommand).callsFake(async (command: ListCommandsCommand) =
     response.Commands = [];
     return response;
 });
+ssmMock.on(DescribeInstanceInformationCommand).resolves(getSsmInstanceInformationResponse);

@@ -1,5 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { HEADERS } from '../../utils/consts';
+import { AWS_REGION_KEYS, HEADERS } from '../../utils/consts';
 
 const GenericHeaders = Type.Object({
     [HEADERS.WORKSPACE_ID_HEADER]: Type.Optional(Type.String())
@@ -23,7 +23,7 @@ const AccountIdCredentialsIdParams = Type.Object({
 const CredentialsIdParams = Type.Object({
     accountId: Type.String({ description: 'Workload Factory account ID', minLength: 1 }),
     credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1, format: 'uuid' }),
-    region: Type.String({ description: 'AWS region hosting EC2 instances', minLength: 1 })
+    region: Type.String({ description: 'AWS region hosting EC2 instances', enum: AWS_REGION_KEYS })
 });
 
 const RegionDetails = Type.Object({

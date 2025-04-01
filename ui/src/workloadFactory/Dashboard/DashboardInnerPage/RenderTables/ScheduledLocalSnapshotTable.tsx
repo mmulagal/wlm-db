@@ -29,28 +29,27 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
+        let snapshotAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
-                        (item: any) => item.name === 'performance-tier'
-                    );
-                    const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
+                    const snapshotObj = instanceData?.assessments?.resiliency?.snapshotPolicy;
+                    const isStorageTierOptimized = isOptimized(snapshotObj?.status);
                     if (!isStorageTierOptimized) {
-                        storageTierAssessmentData.push({
+                        snapshotAssessmentData.push({
                             credentialId: hostData?.credentialId,
                             regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
-                            performanceTier: performanceTierObj?.current,
-                            totalObjectsAssessed: performanceTierObj?.totalObjectsAssessed,
-                            totalObjectsInViolation: performanceTierObj?.totalObjectsInViolation,
+                            performanceTier: snapshotObj?.current,
+                            totalObjectsAssessed: snapshotObj?.totalObjectsAssessed,
+                            totalObjectsInViolation: snapshotObj?.totalObjectsInViolation,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
-                            data: instanceData
+                            assessmentStatus: GETWELL_VALUES[snapshotObj?.status],
+                            data: instanceData,
+                            violations: snapshotObj?.violations
                         });
                     }
                 }
@@ -58,24 +57,21 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
         });
         return mapHostStatusToAssessmentData(
             inventoryTableData,
-            storageTierAssessmentData,
+            snapshotAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
-        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]?.length) {
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length) {
             return disableOptimizeCheckBoxForOptimizeCase(
                 tableData,
-                ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
                 selectedRowsForOptimize
             );
         } else {
-            return disableOptimizeCheckBoxForErrCase(
-                tableData,
-                ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
-            );
+            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
         }
     }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
 
@@ -136,14 +132,14 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
 
         if (
             rowsData.length > 0 &&
-            inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]?.length
+            inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length
         ) {
             checkBoxHandle(tableProps.selectionState, rowsData, disptach);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS, selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT, selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>

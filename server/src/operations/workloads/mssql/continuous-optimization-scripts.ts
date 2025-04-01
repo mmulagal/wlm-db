@@ -1,14 +1,11 @@
-import {
-    BulkOptimizeSnapshotPolicyParamsType,
-    OntapRequestParams,
-    OptimizeStorageParams,
-    WorkloadInstance
-} from '../../../utils/common-types';
+import { BulkOptimizeSnapshotPolicyParamsType } from '../../../routes/types/continuous-optimization.types';
+import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
     COMPUTE_OPTIMIZE_LOG_PATH,
     DISCOVER_OPERATION_LOG_PATH,
     RESILIENCY_OPTIMIZE_LOG_PATH,
+    RSS_OPTIMIZE_LOG_PATH,
     SIZING_OPERATIONS_LOG_PATH,
     STORAGE_ASSESSMENT_LOG_PATH
 } from './const';
@@ -105,18 +102,27 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             $responseObject = [ordered]@{}
             $responseObject['data'] = @()
             $responseObject['log'] = @()
-             $responseObject['tempDb'] = @()
+            $responseObject['tempDb'] = @()
+            $partitionmap = @{}
             $winvolumes = $sqlresponse | ConvertFrom-Json
             foreach ($winvolume in $winvolumes) {
                 # check in winvolume volume id is null or empty string
                 if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
-                    
-                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
-                    $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
+                    if( -not $partitionmap.Contains( $winvolume.volumeid ) ) {
+                        $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
+                        $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
+                        $partitionmap[$winvolume.volumeid] = @{"volume"= $vol
+                                                      "partition" = $partition
+                                         }
+                    } else {
+                        $vol = $partitionmap[$winvolume.volumeid]["volume"]
+                        $partition = $partitionmap[$winvolume.volumeid]["partition"]
+                
+                }
+                
                     if ($vol.bustype -eq 'iscsi') {
                         $object = @{
                         "name" = $winvolume.name
-                        "fileName" = $winvolume.filename
                         "lunSerialNumber" = $vol.serialnumber
                         "sizeInMb" = $winvolume.sizeInMb
                         "diskNumber" = $vol.number
@@ -140,14 +146,14 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
     
             $QueryFilter = ''
-            foreach ($vol in $responseObject.data) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
-            }
-            foreach ($vol in $responseObject.log) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
-            }
-            foreach ($vol in $responseObject.tempDb) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
+            $serialNumbers = @()
+            $serialNumbers += $responseObject.data | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers += $responseObject.log | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers += $responseObject.tempDb | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers = $serialNumbers | Select-Object -Unique
+
+            foreach ($serialNumber in $serialNumbers) {
+                $QueryFilter += $serialNumber + '|'
             }
             $QueryFilter = $QueryFilter.TrimEnd('|')
             $Params = @{
@@ -349,7 +355,6 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
                         $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
                     }
                     $driveObject | Add-Member -MemberType NoteProperty -Name "logDriveLetter" -Value $logDrive.logDriveLetter 
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "logDrivePath" -Value $logDrive.logDrivePath
                     $driveObject | Add-Member -MemberType NoteProperty -Name "logDriveTotalSizeMB" -Value $logDrive.logDriveTotalSizeMB
                     $allDriveDetails += $driveObject
                 }
@@ -379,7 +384,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     if($netappDataDrives -notcontains $defaultDataDriveDetails.dataDriveLetter) 
     {
         $driveDetailsErrors["instanceDataDrivesError"] = "Data drive is not a NetApp drive."
-        Write-Information "Data drive is not a NetApp drive. $defaultDataDriveDetails"
+        Write-Information "Data drive $defaultDataDriveDetails.dataDriveLetter is not a NetApp drive."
     }
     else {
     if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails )) {
@@ -390,7 +395,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
    if($netappDataDrives -notcontains $defaultLogDriveDetails.logDriveLetter) 
     {
         $driveDetailsErrors["instanceLogDrivesError"] = "Log drive is not a NetApp drive."
-        Write-Information "Log drive is not a NetApp drive. $defaultLogDriveDetails"
+        Write-Information "Log drive $defaultLogDriveDetails.logDriveLetter is not a NetApp drive."
     }
     else {
     $defaultLogDrive = 'shared-drive'
@@ -403,7 +408,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     if($netappDataDrives -notcontains $defaultTempDBDriveDetails.tempdbDriveLetter) 
     {
         $driveDetailsErrors["instanceTempDBDriveError"] = "TempDB drive is not a NetApp drive."
-        Write-Information "TempDB drive is not a NetApp drive. $defaultTempDBDriveDetails"
+        Write-Information "TempDB drive $defaultTempDBDriveDetails.tempdbDriveLetter is not a NetApp drive."
     }
     else {
     if(($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter) -and ($defaultTempDBDriveDetails -notcontains $defaultLogDriveDetails.logDriveLetter)) {
@@ -728,8 +733,47 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $DriftAssessmentData['layout']['default-log-files-location'] =  $defaultLogDrive;
         }
 
-        $DriftAssessmentData['layout']['user-database-layout'] = $($responseObject)
+        $SimplifiedDataDriveDetails = @()
+        foreach($drive in $responseObject.data) {
+            $Detail = $SimplifiedDataDriveDetails | Where-Object { $_.diskNumber -eq $drive.diskNumber }
+             $object = @{
+                    "name" = $drive.name
+                    "sizeInMb" = $drive.sizeInMb
+                }
+            if($null -eq $Detail) {
+                $drive.PSObject.Properties.Remove('name')
+                $drive.PSObject.Properties.Remove('sizeInMb')
+                $drive.databaseDetails = @($object)
+                $SimplifiedDataDriveDetails += $drive
+            }  else {
+                $Detail.databaseDetails += $object
+            }
+        }
 
+        $SimplifiedLogDriveDetails = @()
+        foreach($drive in $responseObject.log) {
+            $Detail = $SimplifiedLogDriveDetails | Where-Object { $_.diskNumber -eq $drive.diskNumber }
+            $object = @{
+                    "name" = $drive.name
+                    "sizeInMb" = $drive.sizeInMb
+                }
+            if($null -eq $Detail) {
+                $drive.PSObject.Properties.Remove('name')
+                $drive.PSObject.Properties.Remove('sizeInMb')
+                $drive.databaseDetails = @($object)
+                $SimplifiedLogDriveDetails += $drive
+            }  else {
+               
+                $Detail.databaseDetails += $object
+            }
+        }
+
+        $userDatabaseLayout = @{
+            "data" = $SimplifiedDataDriveDetails
+            "log" = $SimplifiedLogDriveDetails
+            "tempDb" = $responseObject.tempDb
+        }
+        $DriftAssessmentData['layout']['user-database-layout'] = $($userDatabaseLayout)
 
         $DriftAssessmentData['sizing'] = @{}
         if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"] ))) {
@@ -740,7 +784,18 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         }
 
         $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierDetails);
-        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($consolidatedDriveDetails));
+
+        $SimplifiedDriveDetails = @()
+        foreach($drive in $consolidatedDriveDetails) {
+            $Detail = $SimplifiedDriveDetails | Where-Object { $_.logAccessPath -eq $drive.logAccessPath -and $_.dataAccessPath -eq $drive.dataAccessPath }
+            if($null -eq $Detail) {
+                $SimplifiedDriveDetails += $drive
+            }  else {
+                $Detail.databaseName =  $Detail.databaseName + ',' + $drive.databaseName
+            }
+        }
+
+        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($SimplifiedDriveDetails));
         
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
@@ -815,7 +870,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $DriftAssessmentData['os']['ntfs-allocation-unit-size'] = $($ntfsUnitSize)
     } catch {$DriftAssessmentData['errors']['ntfs-allocation'] = $_.Exception.Message}
 
-    $response = $DriftAssessmentData | ConvertTo-Json -Depth 5
+    $response = $DriftAssessmentData | ConvertTo-Json -Depth 8 -Compress
 
     if([string]::IsNullOrEmpty($response)) {
         throw "Failed to compress the response because the response is either null or empty. $response"
@@ -1022,6 +1077,88 @@ const GET_RSS_CONFIG_DETAILS = () => `
 
     $jsonResult = $result | ConvertTo-Json -Compress
     Write-Output $jsonResult
+`;
+
+const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
+    # Optimize Network Adapters
+    Start-Transcript -Path ${RSS_OPTIMIZE_LOG_PATH} -Append | Out-Null
+
+    $response = @{}
+    $response['errors'] = @{}
+    $response['response'] = @{}
+
+    $networkAdapters = @(${networkAdapters.map(name => `'${name}'`).join(', ')})
+    $optimalRssProfile = 'NUMAStatic'
+
+    try {
+        # Disable global TCP Offload
+        Set-NetOffloadGlobalSetting -Chimney Disabled
+
+        # Optimize RSS settings for each network adapter
+        if($networkAdapters.Count -eq 0) {
+            Write-Information "No network adapters passed to optimize, checking for network adapters"
+            $networkAdapters = Get-NetAdapterRss | Select-Object -ExpandProperty Name
+        }
+
+        foreach($adapterName in $networkAdapters) {
+            try {
+                $currentRssSettings = Get-NetAdapterRss -Name $adapterName
+                $parameters = @{}
+                $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+                
+                $optimalRssReceiveQueues = $vcpus
+                $optimalBaseProcessorNumber = $currentRssSettings.BaseProcessorNumber
+                if($vcpus -ge 4) {
+                    $optimalBaseProcessorNumber = 2
+                } else {
+                    Write-Information "Number of vCPUs is less than 4. Not optimizing base processor number for adapter: $adapterName"
+                }
+                if($vcpus -gt 8) {
+                    $optimalRssReceiveQueues = 8
+                }
+                if ($currentRssSettings.Enabled -eq $false) {
+                    Write-Information "Enabling RSS on adapter: $adapterName"
+                    Enable-NetAdapterRss -Name $adapterName -NoRestart
+                }
+                if ($currentRssSettings.NumberOfReceiveQueues -ne $optimalRssReceiveQueues) {
+                    $parameters['NumberOfReceiveQueues'] = $optimalRssReceiveQueues
+                }
+                if ($currentRssSettings.BaseProcessorNumber -lt $optimalBaseProcessorNumber) {
+                    $parameters['BaseProcessorNumber'] = $optimalBaseProcessorNumber
+                }
+                if ($currentRssSettings.Profile -ne $optimalRssProfile) {
+                    $parameters['Profile'] = $optimalRssProfile
+                }
+                if ($parameters.Count -gt 0) {
+                    Write-Information "Setting RSS best practices values on adapter: $adapterName, $parameters"
+                    $parameters['Name'] = $adapterName
+                    Set-NetAdapterRss @parameters -NoRestart
+                }
+            } catch {
+                $errMsg = "Error occurred while optimizing network adapter: $adapterName $_.Exception.Message"
+                Write-Information $errMsg
+                $response['errors'][$adapterName] = $errMsg
+            }          
+        }
+    } catch {
+        $errMsg = "Error occurred while optimizing network adapters: $_.Exception.Message"
+        Write-Information $errMsg
+        $response['errors']['networkAdapters'] = $errMsg
+    }
+         
+    if($response.errors.Count -eq 0) {
+        $response['response'] = "SUCCESS"
+    } else {
+        $response['response'] = "FAILED"
+    }
+    
+    $response = $response | ConvertTo-Json
+    if([string]::IsNullOrEmpty($response)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
+    Stop-Transcript | Out-Null
+    return ($response)
+    
 `;
 
 const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
@@ -1350,6 +1487,7 @@ export {
     MOVE_ALL_CLUSTER_GROUPS,
     GET_CLUSTER_NODE_NAMES,
     GET_RSS_CONFIG_DETAILS,
+    OPTIMIZE_NETWORK_ADAPTERS,
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_SQL_PATCHES,

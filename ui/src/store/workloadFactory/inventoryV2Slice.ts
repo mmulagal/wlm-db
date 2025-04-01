@@ -71,7 +71,10 @@ const initialInventoryV2State: InventorySliceData = {
         instanceTable: initialInstanceTableColState,
         hostTable: initialHostsTableColState,
         databaseTable: initialDatabaseTableColState
-    }
+    },
+    hostTableRows: [],
+    instanceTableRows: [],
+    databaseTableRows: []
 };
 
 const inventoryV2Slice = createSlice({
@@ -213,6 +216,20 @@ const inventoryV2Slice = createSlice({
         setSelectedRowsForManage: (state, action: PayloadAction<any>) => {
             state.selectedRowsForManage = action.payload;
         },
+        setHostTableRows: (state, action: PayloadAction<any>) => {
+            state.hostTableRows = action.payload;
+        },
+        setInstanceTableRows: (state, action: PayloadAction<any>) => {
+            state.instanceTableRows = action.payload;
+        },
+        setDatabaseTableRows: (state, action: PayloadAction<any>) => {
+            state.databaseTableRows = action.payload;
+        },
+        setInventoryTablesRows: (state, action: PayloadAction<any>) => {
+            state.hostTableRows = action.payload?.hosts;
+            state.instanceTableRows = action.payload?.instances;
+            state.databaseTableRows = action.payload?.databases;
+        },
         resetPerComboData: (state, action: PayloadAction<any>) => {
             state.resetManagedData = true;
             state.isManagedHostListLoading = true;
@@ -284,7 +301,11 @@ export const {
     setPotentialSavingsHostData,
     resetPerComboData,
     setSelectedRowsForManage,
-    setTableManageColumnState
+    setTableManageColumnState,
+    setHostTableRows,
+    setInstanceTableRows,
+    setDatabaseTableRows,
+    setInventoryTablesRows
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

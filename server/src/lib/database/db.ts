@@ -10,7 +10,7 @@ import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
-import { databaseInstanceMetadata } from '../../utils/common-types';
+import { DatabaseInstanceMetadata } from '../../utils/common-types';
 import { TCO_FEATURE } from '../../utils/consts';
 
 const logger = getLogger();
@@ -78,7 +78,7 @@ interface DatabaseInstanceRecord {
     storageProtocol?: string;
     numberofUserDbsCreated?: number;
     sandboxCreated?: boolean;
-    metaData?: databaseInstanceMetadata;
+    metaData?: DatabaseInstanceMetadata;
     databaseType: string;
     storageType?: string;
 }

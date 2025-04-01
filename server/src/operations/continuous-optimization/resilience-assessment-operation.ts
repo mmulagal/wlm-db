@@ -1,7 +1,9 @@
 import createError from 'http-errors';
 import moment from 'moment';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import {
+    OntapVolumeType,
+    ParameterDriftResponseType,
     ResilienceDriftAssessmentResponseType,
     SnapshotPolicyAssesmentDataType
 } from '../../routes/types/continuous-optimization.types';
@@ -13,26 +15,54 @@ import {
 import {
     AssessmentCategories,
     AssessmentStatus,
-    OptimizeStorageConfigs
+    OptimizeStorageConfigs,
+    SEVERITY,
+    AwsWellArchitecturedPillars,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
 import {
     DatabaseInstance,
-    databaseInstanceMetadata,
-    MappedOnTapVolumeResponse,
+    DatabaseInstanceMetadata,
     StorageAssessment,
-    WorkloadInstance
+    WorkloadInstance,
+    MappedOnTapVolumeResponse
 } from '../../utils/common-types';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { getInstanceInfo } from '../database/database-operations';
+import { getInstanceDetails } from '../database-hosts-operations';
 import { describeFSx, describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../workloads/mssql/resiliency-scripts';
 import { GET_LATEST_SNAPSHOT_TIME } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
+import { isFsxnAwsBackupEnabled } from '../aws/fsx-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
+
+function filterDataLogVolumes(instanceVolumeMapping: MappedOnTapVolumeResponse) {
+    const volumeRecords =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeRecords)
+            .flat() || [];
+    const volumeDBMap =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeDBMap)
+            .flat() || {};
+    // Ignore tempdb volumes from resiliency assessment
+    const dataLogVolumeUuids = [
+        ...new Set(volumeDBMap.filter(volume => volume.databaseName !== 'tempdb').map(volume => volume.ontapVolumeuuid))
+    ];
+    const dataLogVolumeNames = [
+        ...new Set(
+            volumeRecords
+                .filter(volume => dataLogVolumeUuids.includes(volume.uuid as string))
+                .map(volume => volume.name as string)
+        )
+    ];
+    return { dataLogVolumeUuids, dataLogVolumeNames };
+}
 
 function getVolumesWithoutSnapshotPolicy(volumes: Array<{ Key?: string; Value?: string }> = []) {
     // if instance has volumes in violation list for snapshot-policy, collect snapshot copy data for additional checks.
@@ -126,11 +156,16 @@ async function getResilienceDriftAssessment(
 ) {
     logger.info('Getting resilience drift assessment for:', { credentialsId, databaseInstanceId, databaseHostId });
     try {
-        const snapshotPolicy =
-            (await getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)) ||
-            Promise.resolve({});
+        const [snapshotPolicy, crrData, awsBackup] = await Promise.all([
+            getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
+            getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
+            getAwsBackupDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+        ]);
+
         const assessmentData: ResilienceDriftAssessmentResponseType = {
-            snapshotPolicy
+            snapshotPolicy,
+            crr: crrData,
+            awsBackup: awsBackup as ParameterDriftResponseType
         };
         return assessmentData;
     } catch (error) {
@@ -147,25 +182,43 @@ async function getSnapshotPolicyDriftData(
     databaseInstanceId: string
 ) {
     logger.info('Calculate snapshot policy drift data for:', { credentialsId, databaseInstanceId, databaseHostId });
+    let errorMessage;
     try {
-        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-            accountId,
-            region,
-            credentialsId,
-            databaseHostId,
-            databaseInstanceId,
-            AssessmentCategories.STORAGE // Snapshot-policy is stored with storage assesment data
-        );
+        const [[persistedConfigurationData], [mappedVolumesData]] = await Promise.all([
+            listDatabaseInstanceConfigData(
+                accountId,
+                region,
+                credentialsId,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentCategories.STORAGE
+            ),
+            listDatabaseInstanceConfigData(
+                accountId,
+                region,
+                credentialsId,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentCategories.MAPPED_ONTAP_VOLUMES // Snapshot-policy is stored with storage assesment data
+            )
+        ]);
 
         if (isEmpty(persistedConfigurationData)) {
-            const errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
-            throw new Error(errorMessage);
+            errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
+            return { errorMessage };
         }
         const { config_data: configData } = persistedConfigurationData;
         const { volumes, errors } = configData as unknown as StorageAssessment;
 
         if (errors?.volumes) {
             return { errorMessage: errors.volumes };
+        }
+
+        // Check if mapped volumes data is available and filter out only data and log volumes
+        let dataLogVolumeUuids: string[] = [];
+        if (!isEmpty(mappedVolumesData)) {
+            const { config_data: mappedVolumes } = mappedVolumesData;
+            ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumes as unknown as MappedOnTapVolumeResponse));
         }
 
         const snapshotPolicyAssesmentData: SnapshotPolicyAssesmentDataType = {
@@ -178,21 +231,25 @@ async function getSnapshotPolicyDriftData(
         };
         volumes.forEach(volume => {
             const volDetails = volume as Record<string, string>;
+
             const latestSnapshotTimestamp = new Date(
                 parseInt(volDetails?.[OptimizeStorageConfigs.MOST_RECENT_SNAPSHOT_TIMESTAMP] ?? 0, 10)
             );
             if (
-                isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
-                volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none' ||
+                (isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
+                    volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none') &&
                 latestSnapshotTimestamp <= new Date(moment().subtract(2, 'days').format())
             ) {
-                snapshotPolicyAssesmentData.violations.push(volDetails?.name);
+                const vol: OntapVolumeType = { ontapVolumeName: volDetails?.name, ontapVolumeUuid: volDetails?.uuid };
+                if (isEmpty(dataLogVolumeUuids) || dataLogVolumeUuids.includes(volDetails?.uuid)) {
+                    snapshotPolicyAssesmentData.violations.push(vol);
+                }
             }
         });
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { configsOptimized } =
-                ((instanceDetail as unknown as DatabaseInstance)?.metadata as databaseInstanceMetadata) ?? {};
+                ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
             if (configsOptimized?.STORAGE?.includes(OptimizeStorageConfigs.SNAPSHOT_POLICY)) {
                 snapshotPolicyAssesmentData.violations = [];
             }
@@ -205,8 +262,136 @@ async function getSnapshotPolicyDriftData(
 
         return snapshotPolicyAssesmentData;
     } catch (error) {
-        logger.error('Error getting snapshot policy drift data', error);
-        throw error;
+        errorMessage = `Error getting snapshot policy drift data: ${error}`;
+        return { errorMessage };
+    }
+}
+
+async function getAwsBackupDriftData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Get AWS Backup assessment data', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    });
+    const awsBackupAssesmentData: ParameterDriftResponseType = {
+        ...storageGoldenConfigData.resiliency.awsBackup,
+        name: 'scheduled-fsx-for-ontap-backups',
+        status: AssessmentStatus.NOT_OPTIMIZED,
+        totalObjectsInViolation: 0,
+        recommended: 'aws-backup-enabled',
+        objectsInViolation: []
+    };
+
+    // Fetch the FSX ID for given instance
+    let newDatabaseInstanceDetails;
+    let instanceDetails;
+
+    try {
+        instanceDetails = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+
+        newDatabaseInstanceDetails = instanceDetails.newDatabaseInstanceDetails;
+
+        const { fsxn_ids: fileSystemId } = newDatabaseInstanceDetails || {};
+
+        const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
+        const isAwsBackupEnabled =
+            fsxnInfo?.FileSystems?.[0]?.OntapConfiguration?.AutomaticBackupRetentionDays !== undefined;
+        logger.debug('Is AWS Backup enabled:', isAwsBackupEnabled);
+        if (isAwsBackupEnabled) {
+            awsBackupAssesmentData.totalObjectsAssessed = 1;
+            awsBackupAssesmentData.status = AssessmentStatus.OPTIMIZED;
+            return awsBackupAssesmentData;
+        }
+
+        // Fetch the OnTap volumes from storage assessment
+        const [[persistedConfigurationData], [mappedVolumesData]] = await Promise.all([
+            listDatabaseInstanceConfigData(
+                accountId,
+                region,
+                credentialsId,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentCategories.STORAGE
+            ),
+            listDatabaseInstanceConfigData(
+                accountId,
+                region,
+                credentialsId,
+                databaseHostId,
+                databaseInstanceId,
+                AssessmentCategories.MAPPED_ONTAP_VOLUMES // Snapshot-policy is stored with storage assesment data
+            )
+        ]);
+
+        // Check that the persisted configuration data exists
+        if (isEmpty(persistedConfigurationData)) {
+            const errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
+            return { errorMessage };
+        }
+
+        // Extract configuration data from the persisted data
+        const { config_data: configData } = persistedConfigurationData;
+        const { volumes, errors } = configData as unknown as StorageAssessment;
+
+        // If there are errors related to volumes, return early
+        if (errors?.volumes) {
+            return { errorMessage: errors.volumes };
+        }
+        const ontapVolumeIds: string[] = [];
+        volumes.forEach(volume => {
+            const volDetails = volume as Record<string, string>;
+            ontapVolumeIds.push(volDetails?.uuid);
+        });
+
+        // Check if mapped volumes data is available and filter out only data and log volumes
+        let dataLogVolumeUuids: string[] = [];
+        if (!isEmpty(mappedVolumesData)) {
+            const { config_data: mappedVolumes } = mappedVolumesData;
+            ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumes as unknown as MappedOnTapVolumeResponse));
+        }
+
+        const { volumeUuidsInBackups } =
+            (await isFsxnAwsBackupEnabled(
+                credentialsId,
+                region,
+                fileSystemId,
+                isEmpty(dataLogVolumeUuids) ? [...new Set(ontapVolumeIds)] : [...new Set(dataLogVolumeUuids)],
+                undefined
+            )) || {};
+
+        logger.debug('Is on-demand backup enabled:', volumeUuidsInBackups);
+        awsBackupAssesmentData.totalObjectsAssessed = 1;
+        awsBackupAssesmentData.status = AssessmentStatus.NOT_OPTIMIZED;
+        awsBackupAssesmentData.totalObjectsInViolation = 1;
+        awsBackupAssesmentData.objectsInViolation = [fileSystemId];
+        if (volumeUuidsInBackups) {
+            const ontapVolumeSet = new Set(ontapVolumeIds);
+            const backupVolumeSet = new Set(volumeUuidsInBackups);
+
+            const allUuidsMatch = [...ontapVolumeSet].every(uuid => backupVolumeSet.has(uuid));
+            awsBackupAssesmentData.status = allUuidsMatch ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            awsBackupAssesmentData.totalObjectsInViolation = allUuidsMatch ? 0 : 1;
+            awsBackupAssesmentData.objectsInViolation = allUuidsMatch ? [] : [fileSystemId];
+        }
+        return awsBackupAssesmentData;
+    } catch (error) {
+        const errorMessage = `Error while assessing aws backup: ${error}.`;
+        logger.error(errorMessage);
+        return { errorMessage };
     }
 }
 
@@ -243,12 +428,11 @@ async function initiateCrossRegionResiliencyAssessment(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    const volumeRecords =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeRecords)
-            .flat() || [];
-    instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
-    instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
+    const { dataLogVolumeUuids, dataLogVolumeNames } = filterDataLogVolumes(
+        instanceVolumeMapping as unknown as MappedOnTapVolumeResponse
+    );
+    instanceRecord.mappedVolumesUuids = dataLogVolumeUuids;
+    instanceRecord.mappedVolumeNames = dataLogVolumeNames;
 
     const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord)];
     const ssmComment = 'Get Cross Region Replication Assessment';
@@ -265,9 +449,17 @@ async function initiateCrossRegionResiliencyAssessment(
 
     const { crrDetails, errorMessage } = response ? sqlResponseParsing(response) : { crrDetails: [], errorMessage: '' };
 
-    const peerFileSystemIds = crrDetails
-        ?.filter((crrDetail: { peerClusterFsxId: string }) => crrDetail.peerClusterFsxId)
-        .map((crrDetail: { peerClusterFsxId: string }) => crrDetail.peerClusterFsxId);
+    const peerFileSystemIds = [
+        ...new Set(
+            compact(
+                crrDetails
+                    .map((crrDetail: { peerClusterFsxId: string | string[] }) => crrDetail.peerClusterFsxId)
+                    .flat()
+            ) as string[]
+        )
+    ];
+
+    logger.info('peerFileSystemIds:', peerFileSystemIds);
 
     // Check if PeerFileSystemIds are NOT deployed in the same region as source fsx
     // 1. No two fsx in any region can have same id.
@@ -286,18 +478,25 @@ async function initiateCrossRegionResiliencyAssessment(
                     );
                     const resourceArn = fsxInfo?.FileSystems?.[0]?.ResourceARN;
 
-                    crrDetails.forEach((crrDetail: { peerClusterFsxId: string; isCRREnabled: boolean }) => {
-                        if (crrDetail.peerClusterFsxId === peerFileSystemId) {
-                            crrDetail.isCRREnabled = !resourceArn?.includes(region);
-                        }
+                    crrDetails.forEach((crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
+                        crrDetail.isCRREnabled =
+                            crrDetail.isCRREnabled ||
+                            ((crrDetail.peerClusterFsxId === peerFileSystemId ||
+                                crrDetail.peerClusterFsxId?.includes(peerFileSystemId)) &&
+                                !resourceArn?.includes(region)) ||
+                            false;
                     });
                 } catch (error: any) {
                     if (error?.name && error.name === 'FileSystemNotFound') {
-                        crrDetails.forEach((crrDetail: { peerClusterFsxId: string; isCRREnabled: boolean }) => {
-                            if (crrDetail.peerClusterFsxId === peerFileSystemId) {
-                                crrDetail.isCRREnabled = true;
+                        crrDetails.forEach(
+                            (crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
+                                crrDetail.isCRREnabled =
+                                    crrDetail.isCRREnabled ||
+                                    crrDetail.peerClusterFsxId === peerFileSystemId ||
+                                    crrDetail.peerClusterFsxId?.includes(peerFileSystemId) ||
+                                    false;
                             }
-                        });
+                        );
                     }
                 }
             })
@@ -318,6 +517,62 @@ async function initiateCrossRegionResiliencyAssessment(
     ]);
 }
 
+async function getCrrDriftData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Calculate crr drift data for:', {
+        accountId,
+        region,
+        credentialsId,
+        databaseInstanceId,
+        databaseHostId
+    });
+    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId,
+        AssessmentCategories.CRR
+    );
+    if (isEmpty(persistedConfigurationData)) {
+        const errorMessage =
+            'No CRR assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.';
+        return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
+    }
+
+    try {
+        const { crrDetails } = persistedConfigurationData.config_data as { crrDetails: any[] };
+        const allVolumesOptimized: boolean = crrDetails.every(
+            (detail: { isCRREnabled: boolean }) => detail.isCRREnabled
+        );
+
+        const response: ParameterDriftResponseType = {
+            name: 'crr',
+            status: allVolumesOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+            severity: SEVERITY.WARNING,
+            recommendation:
+                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.',
+            objectsInViolation: allVolumesOptimized
+                ? []
+                : crrDetails.filter(detail => !detail.isCRREnabled).map(detail => detail.volumeName),
+            totalObjectsAssessed: crrDetails.length,
+            totalObjectsInViolation: allVolumesOptimized ? 0 : crrDetails.filter(detail => !detail.isCRREnabled).length,
+            tags: [AwsWellArchitecturedPillars.RELIABILITY],
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            recommended: 'crr-enabled'
+        };
+
+        return response;
+    } catch (error) {
+        logger.error('Error fetching crr drift data:', error);
+        return { errorMessage: (error as Error).message } as ParameterDriftResponseType & { errorMessage: string };
+    }
+}
 export {
     getResilienceDriftAssessment,
     initiateCrossRegionResiliencyAssessment,

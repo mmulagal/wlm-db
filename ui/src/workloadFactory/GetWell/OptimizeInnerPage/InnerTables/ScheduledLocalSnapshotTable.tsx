@@ -16,7 +16,8 @@ const ScheduledLocalSnapshotOptimizeTable = ({ type, data, lastColDetails, handl
     const tableData = useMemo(() => {
         let id = 0;
         return data?.violations?.map((row: any) => ({
-            volumeName: row,
+            volumeName: row?.ontapVolumeName,
+            ontapVolumeUuid: row?.ontapVolumeUuid,
             id: String(id++)
         }));
     }, [data]);

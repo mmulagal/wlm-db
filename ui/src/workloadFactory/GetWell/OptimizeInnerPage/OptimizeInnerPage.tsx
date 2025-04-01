@@ -22,7 +22,7 @@ import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../.
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import {
     useLazyGetSubTaskListQuery,
-    useOptimizeAwsBackupMutation,
+    useOptimizeComputeConfigForBulkMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeResiliencyMutation,
     useOptimizeStorageConfigMutation,
@@ -36,7 +36,6 @@ import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
-import ScheduledFSxForONTAPBackupsTable from './InnerTables/ScheduledFSxForONTAPBackupsTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import { useRef, useState } from 'react';
 
@@ -63,7 +62,7 @@ const OptimizeInnerPage = () => {
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [optimizeResiliency] = useOptimizeResiliencyMutation();
-    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
+    const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const userNavigated = useRef(false);
@@ -72,7 +71,6 @@ const OptimizeInnerPage = () => {
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
-            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
             selectedOptimizeConfig?.type === GENERAL.CRR
         ) {
             return (
@@ -132,6 +130,7 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
         ) {
             return (
@@ -203,13 +202,48 @@ const OptimizeInnerPage = () => {
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
+        } else if (type === GENERAL.RSS_CONFIGURATION) {
+            apiCall = optimizeComputeConfigForBulk;
+            if (operation === 'bulk') {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'rss-config',
+                            databaseHosts: [
+                                {
+                                    id: selectedResourceId,
+                                    sqlServerInstances: [selectedDatabaseInstance],
+                                    networkAdapters: selectedRowsForOptimizeInnerPage.map(
+                                        (item: any) => item?.adapterName
+                                    )
+                                }
+                            ]
+                        }
+                    ]
+                };
+            } else {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'rss-config',
+                            databaseHosts: [
+                                {
+                                    id: selectedResourceId,
+                                    sqlServerInstances: [selectedDatabaseInstance],
+                                    networkAdapters: [singleRowData?.adapterName]
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
         } else if (
             type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
             type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
         ) {
             apiCall = optimizeStorageSizing;
             payload = {
-                type: [selectedOptimizeConfig?.data?.id]
+                configurationName: [selectedOptimizeConfig?.data?.id]
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) {
             apiCall = optimizeStorageSizing;
@@ -217,12 +251,12 @@ const OptimizeInnerPage = () => {
             if (operation === 'bulk') {
                 payload = {
                     configurationName: 'log-drive-size',
-                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.ontapVolumeName)
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.logAccessPath)
                 };
             } else {
                 payload = {
                     configurationName: 'log-drive-size',
-                    objectsToOptimize: [singleRowData?.ontapVolumeName]
+                    objectsToOptimize: [singleRowData?.logAccessPath]
                 };
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
@@ -244,53 +278,39 @@ const OptimizeInnerPage = () => {
             const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
             if (operation === 'bulk') {
                 payload = {
-                    type: ['snapshot-policy'],
+                    configurationName: ['snapshot-policy'],
                     params: [
                         {
                             snapshotPolicy: {
                                 uuid: selectedSnapshot?.data?.uuid,
                                 name: selectedSnapshot?.data?.name
-                            }
-                            // volumes: selectedRowsForOptimizeInnerPage.map(({ volumeName, id }: any) => ({
-                            //     ontapVolumeName: volumeName,
-                            //     ontapVolumeUuid: id
-                            // }))
+                            },
+                            volumes: selectedRowsForOptimizeInnerPage.map(({ volumeName, ontapVolumeUuid }: any) => ({
+                                ontapVolumeName: volumeName,
+                                ontapVolumeUuid: ontapVolumeUuid
+                            }))
                         }
                     ]
                 };
             } else {
                 payload = {
-                    type: ['snapshot-policy'],
+                    configurationName: ['snapshot-policy'],
                     params: [
                         {
                             snapshotPolicy: {
                                 uuid: selectedSnapshot?.data?.uuid,
                                 name: selectedSnapshot?.data?.name
-                            }
-                            // volumes: {
-                            //     ontapVolumeName: singleRowData?.volumeName,
-                            //     ontapVolumeUuid: singleRowData?.id
-                            // }
+                            },
+                            volumes: [
+                                {
+                                    ontapVolumeName: singleRowData?.volumeName,
+                                    ontapVolumeUuid: singleRowData?.ontapVolumeUuid
+                                }
+                            ]
                         }
                     ]
                 };
             }
-        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
-            apiCall = optimizeAwsBackup;
-            const state = store.getState();
-            const selectedAWSBackup = state.getWellOptimize.selectedAWSBackup;
-            payload = {
-                type: ['aws-backup'],
-                databaseHosts: [
-                    {
-                        //   id: rowData?.databaseHostId,
-                        //   sqlServerInstances: [rowData?.instanceId],
-                        fsxFileSystemId: '',
-                        backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                        backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
-                    }
-                ]
-            };
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -386,6 +406,7 @@ const OptimizeInnerPage = () => {
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
                         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        dispatch(setLandingFromInnerPage(true));
                     }
                 }, 1000);
 
@@ -402,7 +423,10 @@ const OptimizeInnerPage = () => {
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                type
+                type,
+                '',
+                {},
+                true
             );
         });
     };
@@ -464,8 +488,7 @@ const OptimizeInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
-            case 'Network adapter settings':
-            case 'Network adapters':
+            case GENERAL.RSS_CONFIGURATION:
                 return (
                     <RSSOptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -486,16 +509,6 @@ const OptimizeInnerPage = () => {
             case GENERAL.CRR:
                 return (
                     <CRROptimizeTable
-                        type={selectedOptimizeConfig?.type}
-                        data={selectedOptimizeConfig?.data}
-                        lastColDetails={lastColDetails}
-                        handleBulkAction={handleBulkAction}
-                    />
-                );
-
-            case GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                return (
-                    <ScheduledFSxForONTAPBackupsTable
                         type={selectedOptimizeConfig?.type}
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}

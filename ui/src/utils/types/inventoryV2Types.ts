@@ -52,6 +52,9 @@ export interface InventorySliceData {
         [key: string]: any;
     };
     selectedRowsForManage: Array<any>;
+    hostTableRows: Array<any>;
+    instanceTableRows: Array<any>;
+    databaseTableRows: Array<any>;
 }
 
 export interface InventoryTableData {
@@ -86,6 +89,7 @@ export interface InventoryTableData {
     credentialName?: string;
     regionName?: string;
     accountId?: string;
+    statusColText?: string;
 }
 
 export interface InventoryTableInstanceDatInterface {
@@ -138,6 +142,7 @@ export interface InventoryTableInstanceDatInterface {
         serverEdition?: string;
         serverVersion?: string;
     };
+    sqlServerDeploymentType?: string;
 }
 
 export interface StorageInterface {

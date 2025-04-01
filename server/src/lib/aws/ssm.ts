@@ -27,7 +27,9 @@ import {
     DescribeAvailablePatchesCommand,
     DescribeAvailablePatchesCommandInput,
     DescribeAvailablePatchesCommandOutput,
-    Patch
+    Patch,
+    DescribeInstanceInformationCommandInput,
+    paginateDescribeInstanceInformation
 } from '@aws-sdk/client-ssm';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -220,6 +222,26 @@ async function describeAvailablePatches(
     return allPatches;
 }
 
+async function describeInstanceInformation(
+    credentialsId: string,
+    region: string,
+    params: DescribeInstanceInformationCommandInput
+) {
+    logger.info('Describe Instance Information', { credentialsId, region, params });
+
+    const ssmClient = await getSSMClient(region, credentialsId);
+    const paginator = paginateDescribeInstanceInformation({ client: ssmClient }, params);
+    const instanceInformation = [];
+    for await (const page of paginator) {
+        if (page.InstanceInformationList?.length) {
+            instanceInformation.push(...page.InstanceInformationList);
+        }
+    }
+    logger.debug('describeInstanceInformation response', instanceInformation);
+
+    return instanceInformation;
+}
+
 export {
     getSSMClient,
     sendSSMCommand,
@@ -232,5 +254,6 @@ export {
     deleteParameters,
     describeInstancePatchStates,
     describeInstancePatches,
-    describeAvailablePatches
+    describeAvailablePatches,
+    describeInstanceInformation
 };

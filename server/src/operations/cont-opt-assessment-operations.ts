@@ -10,10 +10,11 @@ import { getInstanceDetails } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import {
     DatabaseInstance,
-    databaseInstanceMetadata,
+    DatabaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     MappedOnTapVolumeResponse,
     Metadata,
+    ResourceDetails,
     StorageAssessment,
     WorkloadInstance
 } from '../utils/common-types';
@@ -31,6 +32,7 @@ import {
     listAllManagedInstances,
     listDatabaseInstances,
     listResources,
+    updateInstanceMetadata,
     updateResourceMetaData
 } from '../lib/database/db';
 import { AssessmentCategories, AssessmentStatus, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
@@ -89,6 +91,73 @@ import {
 const isDemoFlow = isDemo();
 const logger = getLogger();
 
+async function updateAssessmentResultsInHostMetadata(
+    driftAssessmentData: DriftAssessmentResponseType,
+    resourceDetails: ResourceDetails
+) {
+    const {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        resource_id: databaseHostId,
+        metadata
+    } = resourceDetails as unknown as ResourceDetails;
+    (metadata as unknown as Metadata).assessmentResults = {
+        license: driftAssessmentData.license || undefined,
+        compute: driftAssessmentData.compute || undefined,
+        hostOsPatch: driftAssessmentData.hostOsPatch || undefined,
+        rssConfig: driftAssessmentData.rssConfig || undefined,
+        mssqlPatch: driftAssessmentData.mssqlPatch || undefined
+    };
+    try {
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+    } catch (error) {
+        logger.error('Error while updating assessment results in resource metadata', {
+            accountId,
+            databaseHostId,
+            error
+        });
+    }
+}
+async function updateAssesmentResultsInInstanceMetadata(
+    managedInstance: DatabaseInstancesIncludingResource,
+    updateInHost?: boolean
+) {
+    const {
+        account_id: accountId,
+        region,
+        credentials_id: credentialsId,
+        resource_id: databaseHostId,
+        database_instance_id: databaseInstanceId
+    } = managedInstance;
+    logger.info('Update assessment results in instance metadata', {
+        accountId,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId,
+        updateInHost
+    });
+    const [driftAssessmentData, instanceDetails, [resourceDetails]] = await Promise.all([
+        fetchDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
+        getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId),
+        updateInHost ? listResources(accountId, databaseHostId, credentialsId, region) : Promise.resolve({})
+    ]);
+    const { metadata } = instanceDetails as unknown as DatabaseInstance;
+
+    (metadata as unknown as DatabaseInstanceMetadata).assessmentResults = driftAssessmentData;
+    try {
+        await updateInstanceMetadata(accountId, databaseInstanceId, metadata);
+    } catch (error) {
+        logger.error('Error while updating assessment results in instance metadata', {
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            error
+        });
+    }
+    if (updateInHost) {
+        await updateAssessmentResultsInHostMetadata(driftAssessmentData, resourceDetails);
+    }
+}
 async function initiateComputeLicenseAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -142,7 +211,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                jobId,
+                databaseHostId
             );
         }
         if (fields?.includes(AssessmentCategories.COMPUTE)) {
@@ -153,7 +223,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 awsAccountId!,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                jobId,
+                databaseHostId
             );
             if (computeAssessment) {
                 // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
@@ -211,7 +282,9 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                jobId,
+                databaseHostId,
+                metadata as unknown as Metadata
             );
         }
         if (fields?.includes(AssessmentCategories.MAXDOP)) {
@@ -518,6 +591,31 @@ async function driftAssessmentDataCollection(
             databaseInstanceRecord.svmOntapUuid
         )) as MappedOnTapVolumeResponse[];
 
+        try {
+            await createDatabaseInstanceConfigData([
+                {
+                    account_id: accountId,
+                    credentials_id: credentialsId,
+                    region,
+                    resource_id: databaseHostId,
+                    database_instance_id: databaseInstanceRecord.id,
+                    creation_time: new Date(Date.now()),
+                    config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
+                    config_data: instanceVolumeMapping
+                }
+            ]);
+        } catch (error) {
+            const databaseInstanceId = databaseInstanceRecord.id;
+            logger.error('Error while persisting mapped ontap volumes data', {
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                error
+            });
+        }
+
         await initiateStorageAssessmentCollection(
             accountId,
             credentialsId,
@@ -790,6 +888,14 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     if (parentJobStatus !== JOBSTATUS.FAILED) {
                         await updateParentJobStatus(accountId, parentJobId);
                     }
+
+                    // Lets update assessment result in instance metadata
+                    // Host level assessments are run for all the instances in the account. So we will update the results from one of the instance
+                    await Promise.all(
+                        managedInstances.map(async (managedInstance, index) => {
+                            await updateAssesmentResultsInInstanceMetadata(managedInstance, index === 0);
+                        })
+                    );
                 }
             }
         })
@@ -890,6 +996,12 @@ async function fetchDriftAssessment(
         databaseInstanceId,
         fields
     });
+    try {
+        await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    } catch (error) {
+        logger.error('Error fetching instance details:', error);
+        throw error;
+    }
 
     let shouldCalculateStorageAssessment = false;
     let shouldCalculateComputeAssessment = false;
@@ -969,15 +1081,15 @@ async function fetchDriftAssessment(
             : Promise.resolve({})
     ]);
 
-    if (!isEmpty(storageAssessmentResponse)) {
+    if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
             const storageConfigsOptimized =
-                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
-            const osConfigsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.OS || [];
+                (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+            const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
             const sizingConfigsOptimized =
-                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+                (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
 
             if (storageConfigsOptimized.length > 0) {
                 const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
@@ -1269,6 +1381,8 @@ async function handleAssessment(
             // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
             await updateParentJobStatus(accountId, masterAssessmentJobId);
         }
+        // Lets update assessment result in instance metadata
+        await updateAssesmentResultsInInstanceMetadata(managedInstance, true);
     }
     if (initiatedBy === AssessmentTriggeredBy.USER) {
         const auditStatus = jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED;

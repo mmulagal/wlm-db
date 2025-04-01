@@ -14,7 +14,6 @@ import {
 } from '@netapp/design-system';
 import { useManageBulkMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
 import { GENERAL } from '../../../../utils/appConstants';
-import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
 import {
     checkForAnyAOAG,
     checkForAnySSD,
@@ -23,8 +22,7 @@ import {
     renderCellData,
     renderEstimatedCost,
     renderInstanceListText,
-    renderVpcText,
-    sortInventoryTableData
+    renderVpcText
 } from '../../InventoryUtilsV2';
 import store from '../../../../store/store';
 import {
@@ -49,18 +47,17 @@ import { useNavigate } from 'react-router-dom';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { useTable } from '../../../../common/Lib/Table/useTable';
+import { getFilterOptions } from '../../../../utils/utilityFunctions';
 
 const HostTable = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
-    const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const [tableData, setTableData] = useState<any>([]);
+    const hostTableRows = useAppSelector(state => state.inventoryV2.hostTableRows);
 
     const { setDialog, closeDialog } = useDialog();
 
     const [resetPage, setResetPage] = useState(false);
-    const [pageSize, setPageSize] = useState(25);
+    const [pageSize, setPageSize] = useState(50);
 
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
@@ -68,7 +65,6 @@ const HostTable = () => {
         state => state.inventoryV2
     );
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
-    const { isDemoMode } = useAppSelector(state => state.auth);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     const [loading, setLoading] = useState(false);
@@ -94,60 +90,6 @@ const HostTable = () => {
         isManagedHostListLoading,
         fsxCredentialStatusLoading
     ]);
-
-    useEffect(() => {
-        if (inventoryTableData) {
-            let result: any = [];
-            Object.keys(inventoryTableData).map((key: string) => {
-                if (removeSecNodeDiscoveredList.includes(key)) {
-                    return;
-                }
-                if (inventoryTableData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-                    return;
-                }
-                let instanceList: any = [];
-                let instanceNameList: any = [];
-                let vpcIdAndNameText = '';
-                const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
-                inventoryTableData[key]?.ec2Details?.map((row: any) => {
-                    if (row?.name) {
-                        instanceNameList.push(row?.name);
-                    }
-                    if (row?.name && row?.id) {
-                        instanceList.push(row?.name + ' | ID: ' + row?.id);
-                    } else if (row?.id) {
-                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
-                    }
-                });
-                if (inventoryTableData[key]?.vpcId && inventoryTableData[key]?.vpcName) {
-                    vpcIdAndNameText = inventoryTableData[key]?.vpcName + ' | ID: ' + inventoryTableData[key]?.vpcId;
-                } else if (inventoryTableData[key]?.vpcId) {
-                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + inventoryTableData[key]?.vpcId;
-                } else {
-                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + GENERAL.NOT_AVAILABLE;
-                }
-                const rowData = {
-                    ...inventoryTableData[key],
-                    sqlServerInstancesText:
-                        inventoryTableData[key]?.totalInstance !== 0
-                            ? inventoryTableData[key]?.managedInstance +
-                              ' out of ' +
-                              inventoryTableData[key]?.totalInstance
-                            : '',
-                    instanceListText: instanceList.join(','),
-                    instanceNameListText: instanceNameList.join(', '),
-                    vpcIdAndNameText: vpcIdAndNameText,
-                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-                    nameForSorting: inventoryTableData[key]?.name?.toLowerCase()
-                };
-                result.push(rowData);
-            });
-            // sort it based on action and whether it is disable or enable
-            setTableData(sortInventoryTableData(result));
-        } else {
-            setTableData([]);
-        }
-    }, [inventoryTableData]);
 
     const handleDialog = (rowData: any) => {
         setDialog(
@@ -188,6 +130,9 @@ const HostTable = () => {
         checkForAllFsxnManagedInstance: boolean,
         checkForAllStorageType: boolean
     ) => {
+        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+            return GENERAL.PGSQL_CTA_NA;
+        }
         //Condition if installation mode is AOAG than disable manage
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
             return GENERAL.AOAG_MANAGE_DISABLE;
@@ -293,42 +238,70 @@ const HostTable = () => {
     const findManageOption = (rowData: any) => {
         let disableOption = false;
         let disableMessage: any = '';
-        const checkForAllManaged = rowData?.sqlServerInstances?.every(
-            (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
-        );
-        const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
-            (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
-        );
-        const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
-            (item: any) =>
-                item?.statusColText === INVENTORY_STATUS.UNDETECTED || item?.statusColText === INVENTORY_STATUS.MANAGED
-        );
-        const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
-            (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
-        );
-        const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
-            return (
-                (item?.statusColText === INVENTORY_STATUS.MANAGED && item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
-                (item?.statusColText !== INVENTORY_STATUS.MANAGED && item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
-            );
-        });
-        const checkForAllStorageType = rowData?.sqlServerInstances?.every(
-            (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
-        );
-
-        disableMessage = manageDisableMsg(
-            rowData,
-            checkForAllManaged,
-            checkForAllUnDetectInstance,
-            checkForAllUnDetectOrManageInstance,
-            checkForAllUnManagedInstance,
-            checkForAllFsxnManagedInstance,
-            checkForAllStorageType
-        );
-        if (disableMessage) {
+        if (
+            rowData?.status === INVENTORY_STATUS.STOPPED ||
+            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
+            rowData?.status === INVENTORY_STATUS.OFFLINE
+        ) {
             disableOption = true;
+            disableMessage = GENERAL.HOST_DOWN;
+        } else {
+            const checkForAllManaged = rowData?.sqlServerInstances?.every(
+                (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
+            );
+            const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
+                (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
+            );
+            const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
+                (item: any) =>
+                    item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                    item?.statusColText === INVENTORY_STATUS.MANAGED
+            );
+            const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
+                (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
+            );
+            const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
+                return (
+                    (item?.statusColText === INVENTORY_STATUS.MANAGED &&
+                        item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
+                    (item?.statusColText !== INVENTORY_STATUS.MANAGED && item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
+                );
+            });
+            const checkForAllStorageType = rowData?.sqlServerInstances?.every(
+                (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
+            );
+
+            disableMessage = manageDisableMsg(
+                rowData,
+                checkForAllManaged,
+                checkForAllUnDetectInstance,
+                checkForAllUnDetectOrManageInstance,
+                checkForAllUnManagedInstance,
+                checkForAllFsxnManagedInstance,
+                checkForAllStorageType
+            );
+            if (disableMessage) {
+                disableOption = true;
+            }
         }
         return { disableOption, disableMessage };
+    };
+
+    const findDatabaseOption = (rowData: any) => {
+        let disableOptionDatabase = false;
+        let disableMessageDatabase: any = '';
+        if (
+            rowData?.status === INVENTORY_STATUS.STOPPED ||
+            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
+            rowData?.status === INVENTORY_STATUS.OFFLINE
+        ) {
+            disableOptionDatabase = true;
+            disableMessageDatabase = GENERAL.HOST_DOWN;
+        } else if (rowData?.managedInstance <= 0) {
+            disableOptionDatabase = true;
+            disableMessageDatabase = GENERAL.DATABASE_AVAILABLE_MSG;
+        }
+        return { disableOptionDatabase, disableMessageDatabase };
     };
 
     const DatabasesColDefs: ColumnProps[] = [
@@ -378,7 +351,7 @@ const HostTable = () => {
             id: '1',
             Header: 'Engine type',
             accessor: 'hostType',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'hostType'),
             width: '228px',
             renderCell: (cellData: any) => {
                 return (
@@ -418,7 +391,7 @@ const HostTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'serverInstallationMode',
             width: '236px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'serverInstallationMode'),
             renderCell: (cellData: string, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
             }
@@ -449,7 +422,7 @@ const HostTable = () => {
             Header: 'SSM connectivity',
             accessor: 'ssmState',
             width: '200px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'ssmState'),
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.firstColText}>
@@ -511,7 +484,7 @@ const HostTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'credentialName'),
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -522,7 +495,7 @@ const HostTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'accountId'),
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -533,7 +506,7 @@ const HostTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(hostTableRows, 'regionName'),
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -544,7 +517,7 @@ const HostTable = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: tableData,
+        rows: hostTableRows,
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -554,6 +527,7 @@ const HostTable = () => {
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 const { disableOption, disableMessage } = findManageOption(rowData);
+                const { disableOptionDatabase, disableMessageDatabase } = findDatabaseOption(rowData);
                 const menu = [
                     {
                         id: 'manage',
@@ -567,7 +541,9 @@ const HostTable = () => {
                     },
                     {
                         id: 'viewDatabases',
-                        displayName: 'View databases'
+                        displayName: 'View databases',
+                        disabled: disableOptionDatabase,
+                        infoText: disableMessageDatabase
                     }
                 ];
 
@@ -634,7 +610,7 @@ const HostTable = () => {
 
     useEffect(() => {
         if (resetPage) {
-            if ((tableData || []).length % pageSize === 1) {
+            if ((hostTableRows || []).length % pageSize === 1) {
                 tableProps.pagination?.gotoPage(0);
             }
         }
@@ -650,16 +626,16 @@ const HostTable = () => {
             <div className={styles.inventoryTable}>
                 <div
                     //  @ts-ignore
-                    className={styles.table}
+                    className={`${styles.table} ${styles.hostTable}`}
                 >
                     <TableTopBar
                         //@ts-ignore
                         tableProps={tableProps}
                         pluralTitle="Hosts"
                         singularTitle="Host"
-                        exportToCsvOptions={{ fileName: 'hostTable.csv' }}
+                        exportToCsvOptions={{ fileName: `HostTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                         className={styles.topBarStyle}
-                        subTitle="This table may display duplicate records for the same resource, as each resource can be linked to multiple sets of credentials."
+                        subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                         actionsRight={
                             <div className={styles.deployButton}>
                                 <DsButton
