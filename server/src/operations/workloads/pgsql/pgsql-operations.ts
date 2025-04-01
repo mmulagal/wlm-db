@@ -297,16 +297,14 @@ async function getPgSqlDatabaseInstancesSummary(
         if (getDbCount && instanceDbCount) {
             databaseInstanceDetails.databaseCount = instanceDbCount || 0;
         }
-        if (getDatabasesWithoutProtection && databases) {
-            databaseInstanceDetails.databases = databases || 0;
-        } else if (getDatabasesWithProtection && databases) {
-            if (protectionData) {
-                databaseInstanceDetails.databases = databases.map((db: any) => ({
-                    ...db,
-                    protection: protectionData
-                }));
-            } else {
-                databaseInstanceDetails.databases = databases;
+        if (databases) {
+            if (databases) {
+                databaseInstanceDetails.databases = getDatabasesWithProtection
+                    ? databases.map((db: any) => ({
+                          ...db,
+                          protection: protectionData?.find((pd: any) => pd.name === db.name) || null
+                      }))
+                    : databases;
             }
         }
         if (getPerformanceMetrics && performanceData) {
