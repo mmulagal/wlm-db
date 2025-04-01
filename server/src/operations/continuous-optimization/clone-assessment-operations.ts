@@ -297,7 +297,7 @@ async function runCloneAssessment(
 
     const volumeUUIDMap = new Map<string, any>(); // Map to store volume UUIDs
     const databaseNameToVolumeUUIDMap = new Map<string, string[]>(); // Map to store database names
-    const volumeUUIDToDatabaseNameMap = new Map<string, string>(); // Map to store volume UUIDs to database names
+    const volumeUUIDToDatabaseNameMap = new Map<string, string[]>(); // Map to store volume UUIDs to database names
 
     filteredVolumeRecords.forEach((record: VolumeRecord) => {
         volumeUUIDMap.set(record.uuid, record);
@@ -309,7 +309,11 @@ async function runCloneAssessment(
             databaseNameToVolumeUUIDMap.set(databaseName, []);
         }
         databaseNameToVolumeUUIDMap.get(databaseName)?.push(ontapVolumeuuid);
-        volumeUUIDToDatabaseNameMap.set(ontapVolumeuuid, databaseName);
+
+        if (!volumeUUIDToDatabaseNameMap.has(ontapVolumeuuid)) {
+            volumeUUIDToDatabaseNameMap.set(ontapVolumeuuid, []);
+        }
+        volumeUUIDToDatabaseNameMap.get(ontapVolumeuuid)?.push(databaseName);
     });
 
     // implementation with our wlmdb created sandbox
@@ -393,26 +397,28 @@ async function runCloneAssessment(
             oldClones += 1;
         }
 
-        const clonedDatabaseName = volumeUUIDToDatabaseNameMap.get(cloneVolumeUuid) || 'unknown';
+        const clonedDatabaseNames = volumeUUIDToDatabaseNameMap.get(cloneVolumeUuid);
 
-        // Check if the sandboxName is already processed by netapp_wf
-        if (!processedSandboxNames.has(clonedDatabaseName)) {
-            const databaseObject = {
-                sandboxName: clonedDatabaseName,
-                databaseHostName: resourceName,
-                databaseHostId: resourceId,
-                databaseInstanceName,
-                clonedBy: 'other',
-                cloneAge,
-                cloneVolumeName,
-                cloneVolumeUuid,
-                cloneVolumeCreateTime,
-                cloneParentVolumeName,
-                cloneName: cloneVolumeName
-            };
+        clonedDatabaseNames?.forEach(clonedDatabaseName => {
+            // Check if the sandboxName is already processed by netapp_wf
+            if (!processedSandboxNames.has(clonedDatabaseName)) {
+                const databaseObject = {
+                    sandboxName: clonedDatabaseName,
+                    databaseHostName: resourceName,
+                    databaseHostId: resourceId,
+                    databaseInstanceName,
+                    clonedBy: 'other',
+                    cloneAge,
+                    cloneVolumeName,
+                    cloneVolumeUuid,
+                    cloneVolumeCreateTime,
+                    cloneParentVolumeName,
+                    cloneName: cloneVolumeName
+                };
 
-            sandboxInfo.push(databaseObject);
-        }
+                sandboxInfo.push(databaseObject);
+            }
+        });
     });
 
     const isOptimized = oldClones === 0;
