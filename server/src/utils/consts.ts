@@ -1210,7 +1210,8 @@ const PGSQL_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     1: 'databaseInstancetopologyData',
     2: 'databasesCount',
     3: 'databases',
-    4: 'performance'
+    4: 'performance',
+    5: 'protection'
 };
 
 enum DATABASE_METRIC_TYPE {
