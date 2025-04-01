@@ -114,8 +114,8 @@ async function managedHostsRssConfigAssessment(
     region: string,
     activeNodeInstanceId: string,
     resourceName: string,
+    databaseHostId: string,
     parentJobId?: string,
-    databaseHostId?: string,
     metadata?: Metadata
 ) {
     logger.info('Managed hosts rss config assessment', {
@@ -162,7 +162,7 @@ async function managedHostsRssConfigAssessment(
         if (errorMessage) {
             await updateAsssementErrorInResourceMetadata(
                 accountId,
-                databaseHostId!,
+                databaseHostId,
                 credentialsId,
                 region,
                 errorMessage,
