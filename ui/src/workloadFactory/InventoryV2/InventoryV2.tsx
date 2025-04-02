@@ -198,6 +198,7 @@ const InventoryV2 = () => {
                                 accountId: perHost?.accountId,
                                 regionName: perHost?.regionName,
                                 sizeRange: categorizeStorageSize(formatSize(perDatabase?.size)),
+                                'Database size': formatSize(perDatabase?.size),
                                 resourceId: perHost?.resourceId,
                                 ec2InstanceId: perHost?.ec2InstanceId
                             };
@@ -228,6 +229,7 @@ const InventoryV2 = () => {
         inventoryTableData,
         inProgressInstances,
         allmssqlHostAssessmentLoading,
+        allmssqlHostAssessmentData,
         headerSelectedMultiCredIdsList,
         headerSelectedMultiRegionIdsList
     ]);

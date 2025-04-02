@@ -20,7 +20,7 @@ interface ExportToCsvProps {
 export const exportToCsv = ({ fileName, options = {} }: ExportToCsvProps, tableProps: TableProps) => {
     const { organizedRows, columns } = tableProps;
 
-    const selectedColumns = columns.map(column => column.accessor).filter(accessor => accessor);
+    const selectedColumns = columns.map(column => column.csvAccessor || column.accessor).filter(accessor => accessor);
 
     const keysMapping = columns.reduce<HashTable<string>>((acc, val) => {
         if (typeof val.Header === 'string' && val.accessor) {

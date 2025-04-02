@@ -7,15 +7,15 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import {
     getAvailablePatches,
-    getInstalledSQLPatchDetails,
-    getTheMSSqlversion
+    getInstalledSQLPatchDetails
 } from '../../../src/operations/aws/mssqlPatch-ssm-operations';
+import { getTheMSSqlversion } from '../../../src/operations/continuous-optimization/mssqlPatch-assessment-operations';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
 describe('MSSQL Patch SSM operations', () => {
     it('Get available patches', async () => {
-        const response = await getAvailablePatches(credentialsId, 'us-east-1', 'i-test-ec2-1');
+        const response = await getAvailablePatches(credentialsId, 'us-east-1', 'i-test-ec2-1', '2016');
         expect(response?.length).toBeGreaterThan(0);
     });
 
@@ -27,7 +27,7 @@ describe('MSSQL Patch SSM operations', () => {
 
     it('Get the MSSQL version', async () => {
         const instanceId = 'i-test-ec2-1';
-        const response = await getTheMSSqlversion(credentialsId, 'us-east-1', instanceId);
-        expect(response).toMatch(/20\d{2}/);
+        const { versionYear } = await getTheMSSqlversion(credentialsId, 'us-east-1', instanceId);
+        expect(versionYear).toMatch(/20\d{2}/);
     });
 });

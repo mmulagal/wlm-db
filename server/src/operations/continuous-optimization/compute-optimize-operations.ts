@@ -44,6 +44,7 @@ interface StorageDetails {
     fsxId: string;
 }
 const logger = getLogger();
+const COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT = '300';
 
 async function handleComputeRemediation(
     credentialsId: string,
@@ -114,7 +115,7 @@ async function handleComputeRemediation(
                     'Get cluster network IPs',
                     accountId,
                     undefined,
-                    '300'
+                    COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
                 );
                 if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
                     throw createError('Failed to get network interface details during compute optimization.');
@@ -228,9 +229,12 @@ async function handleComputeRemediation(
                             'Get all node names in the cluster',
                             accountId,
                             undefined,
-                            '300'
+                            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
                         );
-                        const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
+                        let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
+                        ownerNodes = ownerNodes?.split(',');
+                        const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
+                        clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
                         // pick one of the nodes in the cluster to transfer primary node ownership
                         let targetNodeName;
                         for (const nodeName of clusterNodes) {
@@ -260,7 +264,7 @@ async function handleComputeRemediation(
                         );
                         try {
                             // move all cluster groups to the selected node
-                            if (targetNodeName) {
+                            if (targetNodeName && ownerNode) {
                                 const nodesTransferred = await moveClusterGroupOwnership(
                                     credentialsId,
                                     region,
@@ -408,21 +412,20 @@ async function handleComputeRemediation(
                 }
             }
 
-            // const checkRunningResponse = await checkRunningStatus(
-            //     accountId,
-            //     jobId,
-            //     instanceName,
-            //     region,
-            //     credentialsId,
-            //     activeNodeInstanceId,
-            //     formattedInstanceName
-            // );
+            const checkRunningResponse = await checkRunningStatus(
+                accountId,
+                jobId,
+                region,
+                credentialsId,
+                activeNodeInstanceId,
+                formattedInstanceName
+            );
 
-            // if (!checkRunningResponse.running) {
-            //     subJobErrorMessage = checkRunningResponse.error;
-            //     anySubJobFailed = true;
-            //     throw checkRunningResponse.error;
-            // }
+            if (!checkRunningResponse.running) {
+                subJobErrorMessage = checkRunningResponse.error;
+                anySubJobFailed = true;
+                throw checkRunningResponse.error;
+            }
 
             // update metadata after successful optimization
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
@@ -493,7 +496,6 @@ async function handleComputeRemediation(
 async function checkRunningStatus(
     accountId: string,
     parentJobId: string,
-    instanceName: string,
     region: string,
     credentialsId: string,
     activeNodeInstanceId: string,
@@ -503,7 +505,6 @@ async function checkRunningStatus(
         accountId,
         credentialsId,
         region,
-        instanceName,
         parentJobId,
         activeNodeInstanceId
     });
@@ -522,38 +523,51 @@ async function checkRunningStatus(
     const rawStatusResponse = await callSsmExecution(
         credentialsId,
         region,
-        [CHECK_RUNNING_STATUS_WITH_RESTART(instanceName)],
+        [CHECK_RUNNING_STATUS_WITH_RESTART('MSSQLSERVER')],
         activeNodeInstanceId,
         'Checking running status of the service',
         accountId,
         undefined,
-        '300'
+        COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
     );
 
-    let statusResponse: { status: string; error?: string };
+    let outStatus: { running: boolean; error?: string } = {
+        running: true
+    };
+    let jobDetails: { status: string; error?: string } = {
+        status: JOBSTATUS.COMPLETED,
+        error: ''
+    };
+    let statusResponse: { status: string; error?: string } = { status: '', error: '' };
+
     try {
-        const cleanStatusResponse = rawStatusResponse.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
+        const cleanStatusResponse = sqlResponseParsing(rawStatusResponse);
         statusResponse = JSON.parse(cleanStatusResponse);
+
+        jobDetails = {
+            status: statusResponse.status === 'Running' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
+            error: statusResponse.status !== 'Running' ? statusResponse.error : undefined
+        };
+
+        outStatus = { running: statusResponse.status === 'Running', error: statusResponse.error || '' };
     } catch (error) {
         logger.error('Error parsing query response:', rawStatusResponse);
-        return { running: false, error: 'Error parsing SSM query response' };
-    }
-
-    if (statusResponse.status !== 'Running') {
-        await updateJobDetails(accountId, checkRunningJobId, {
+        jobDetails = {
             status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
             error: statusResponse.error
-        });
-        return { running: false, error: statusResponse.error };
-    }
+        };
 
+        outStatus = {
+            running: false,
+            error: statusResponse.error
+        };
+    }
     await updateJobDetails(accountId, checkRunningJobId, {
-        status: JOBSTATUS.COMPLETED,
+        ...jobDetails,
         endTime: Date.now()
     });
 
-    return { running: true, error: '' };
+    return outStatus;
 }
 
 export default async function optimizeCompute(
@@ -672,7 +686,7 @@ async function moveClusterGroupOwnership(
             'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.',
             undefined,
             undefined,
-            '300'
+            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
         ),
         3,
         5000
@@ -746,7 +760,7 @@ async function updateDnsSettings(
                 'Sets the DNS server addresses for all network adapters to the specified addresses.',
                 accountId,
                 undefined,
-                '300'
+                COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
             ),
             3,
             5000
@@ -826,7 +840,7 @@ async function handleIscsiSessions(
                 'Enable MPIO and configure ISCSI sessions',
                 accountId,
                 false,
-                '300'
+                COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
             ),
             3,
             5000
@@ -906,6 +920,93 @@ async function updateNodeInstanceType(
 
         logger.error(errorMessage);
         throw createError(500, errorMessage);
+    }
+}
+
+async function getClusterNodeInstanceIds(accountId: string, credentialsId: string, region: string, instanceId: string) {
+    const clusterNetworkIpDetails = await callSsmExecution(
+        credentialsId,
+        region,
+        CLUSTER_NETWORK_IP_INFO_PS1,
+        instanceId,
+        'Get cluster network IPs',
+        accountId,
+        undefined,
+        COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+    );
+    let clusterNodeInstanceIds: string[] = [];
+    if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
+        throw createError('Failed to get network interface details during compute optimization.');
+    } else if (clusterNetworkIpDetails) {
+        const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails);
+        // get all nodes in a cluster
+        const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
+        if (clusterNetworkIps.length > 1) {
+            const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNetworkIps);
+            clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
+        }
+    }
+    return clusterNodeInstanceIds;
+}
+
+async function transferClusterOwnershipToStandbyNode(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string
+) {
+    try {
+        const sqlNodeDetails = await callSsmExecution(
+            credentialsId,
+            region,
+            [GET_CLUSTER_NODE_NAMES()],
+            activeNodeInstanceId,
+            'Get all node names in the cluster',
+            accountId,
+            undefined,
+            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+        );
+        let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
+        ownerNodes = ownerNodes?.split(',');
+        const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
+        clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
+        // pick one of the nodes in the cluster to transfer primary node ownership
+        let targetNodeName;
+        for (const nodeName of clusterNodes) {
+            const resp = await callSsmExecution(
+                credentialsId,
+                region,
+                [CHECK_NODE_STATUS(nodeName)],
+                activeNodeInstanceId,
+                'Checks if a cluster node is Up and reachable, returning the status as a JSON object.',
+                accountId
+            );
+            const { status } = sqlResponseParsing(resp);
+            if (status === 'success') {
+                targetNodeName = nodeName;
+                break;
+            }
+        }
+
+        // move all cluster groups to the selected node
+        if (targetNodeName) {
+            const nodesTransferred = await moveClusterGroupOwnership(
+                credentialsId,
+                region,
+                targetNodeName,
+                activeNodeInstanceId
+            );
+            logger.info('Primary node ownership transferred to', {
+                targetNodeName,
+                nodesTransferred
+            });
+        } else {
+            throw createError(500, 'Failed to find a node to transfer primary node ownership');
+        }
+        return { targetNodeName, ownerNode };
+    } catch (error) {
+        logger.error(`Failed to transfer sql node ownership in the cluster, ${error}`);
+        throw error;
     }
 }
 
@@ -1113,4 +1214,11 @@ async function rollbackComputeOptimize(
     }
 }
 
-export { handleComputeRemediation, checkRunningStatus };
+export {
+    handleComputeRemediation,
+    checkRunningStatus,
+    getClusterNodeInstanceIds,
+    transferClusterOwnershipToStandbyNode,
+    moveClusterGroupOwnership,
+    handleRollbackClusterOwnership
+};

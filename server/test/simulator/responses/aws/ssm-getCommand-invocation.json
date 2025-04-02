@@ -890,7 +890,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"instanceName\":\"MSSQLSERVER\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-ProdPROD-MarketingCampaigns\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-ProdPROD-SupplierManagement\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-ProdPROD-ProductCatalog\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-STGDEV-FinancialAccounts\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-DEVDEV-SalesAnalytics\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-STGDEV-EmployeeDirectory\",\"instanceState\":\"Stopped\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-DEVDEV-ProjectManagement\",\"instanceState\":\"Stopped\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-STGDEV-InventoryControl\",\"instanceState\":\"Stopped\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-STGDEV-OrderManagement\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-STGDEV-CustomerDatabase\",\"instanceState\":\"Stopped\"},{\"instanceName\":\"MSSQL$SQLServer-PreProd-02PreProd-BusinessIntelligence\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-STGDEV-ComplianceManagement\",\"instanceState\":\"Stopped\"},{\"instanceName\":\"MSSQL$SQLServer-Prod-02Prod-HelpDesk\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQLServer-Dev-02Dev-VendorManagement\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQLServer-UAT-02UAT-QualityControl\",\"instanceState\":\"Running\"}]",
+        "StandardOutputContent": "[{\"instanceName\":\"MSSQLSERVER\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-ProdPROD-MarketingCampaigns\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-ProdPROD-SupplierManagement\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-ProdPROD-ProductCatalog\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-DEVDEV-SalesAnalytics\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQL-Managed-Host-DEVDEV-ProjectManagement\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQLServer-PreProd-02PreProd-BusinessIntelligence\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQLServer-Prod-02Prod-HelpDesk\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQLServer-Dev-02Dev-VendorManagement\",\"instanceState\":\"Running\"},{\"instanceName\":\"MSSQL$SQLServer-UAT-02UAT-QualityControl\",\"instanceState\":\"Running\"}]",
         "Status": "Success",
         "StatusDetails": "Success"
     },
@@ -2154,12 +2154,8 @@
                         "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
                         "name": "daily",
                         "cron": {
-                            "minutes": [
-                                10
-                            ],
-                            "hours": [
-                                0
-                            ]
+                            "minutes": [10],
+                            "hours": [0]
                         },
                         "_links": {
                             "self": {
@@ -2185,6 +2181,10 @@
             "438cc269-edeb-11ef-994b-3b81e03bea3e": "2025-03-10T10:17:03+00:00"
         }
     },
+    "optimizeNetworkAdaptersResponse": {
+        "errors": {},
+        "response":  "SUCCESS"
+    },
     "getCRRAssessmentCommandResponse": {
         "$metadata": {
             "httpStatusCode": 200,
@@ -2208,7 +2208,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"errors\":\"\",\"crrDetails\":[{\"volumeName\":\"wlmdb_sqldata_1735902620\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false},{\"volumeName\":\"wlmdb_sqllog_1735902620\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false},{\"volumeName\":\"wlmdb_sqllog_1735879485\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false},{\"volumeName\":\"wlmdb_sqldata_1735902620_clone_1735903124\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false},{\"volumeName\":\"wlmdb_sqllog_1735902620_clone_1735903124\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false},{\"volumeName\":\"wlmdb_sqldata_1733315870640_clone_1733987663_clone_1735813892\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false},{\"volumeName\":\"wlmdb_sqldata_1733316163306\",\"peerSVMName\":\"wlmdb_sqlsvm_1737955690776\",\"isCRREnabled\":true,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":true,\"destinationPath\":\"2b2ae63e-dc72-11ef-b430-bb0ad6a3b8df\",\"peerClusterName\":\"FsxId01d9727eb6a7d3e9a\",\"peerClusterAWSId\":\"fs-01d9727eb6a7d3e9a\",\"destinationVolumeName\":\"wlmdb_sqlsvm_1737955690776:wlmdb_sqldata_1733316163306_dp\"},{\"volumeName\":\"wlmdb_sqllog_1733315870640_clone_1733987663_clone_1735813892\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false},{\"volumeName\":\"wlmdb_sqllog_1733316163306\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false},{\"volumeName\":\"wlmdb_sqldata_1735902620_clone_1735908028\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false},{\"volumeName\":\"wlmdb_sqllog_1735902620_clone_1735908028\",\"isCRREnabled\":false,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":false}]}",
+        "StandardOutputContent": "{\"errors\":\"\",\"crrDetails\":[{\"volumeName\":\"wlmdb_sqldata_1728552629461\",\"peerSVMName\":\"wlmdb_sqlsvm_1737955690776\",\"isCRREnabled\":true,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":true,\"peerClusterName\":\"FsxId01d9727eb6a7d3e9a\",\"peerClusterAWSId\":\"fs-01d9727eb6a7d3e9a\",\"destinationVolumeName\":\"wlmdb_sqldata_1728552629461_dp\",\"destinationPath\":\"wlmdb_sqlsvm_1737955690776:wlmdb_sqldata_1728552629461_dp\"},{\"volumeName\":\"wlmdb_sqldata_1728552629461\",\"peerSVMName\":\"wlmdb_sqlsvm_1737955690776\",\"isCRREnabled\":true,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":true,\"peerClusterName\":\"FsxId01d9727eb6a7d3e9a\",\"peerClusterAWSId\":\"fs-01d9727eb6a7d3e9a\",\"destinationVolumeName\":\"wlmdb_sqldata_1728552629461_dp\",\"destinationPath\":\"wlmdb_sqlsvm_1737955690776:wlmdb_sqldata_1728552629461_dp\"},{\"volumeName\":\"wlmdb_sqldata_1728552629461\",\"peerSVMName\":\"wlmdb_sqlsvm_1737955690776\",\"isCRREnabled\":true,\"sourceSvmUuid\":\"6aec6a14-b23f-11ef-a881-1fbfd81226d0\",\"isSnapMirrored\":true,\"peerClusterName\":\"FsxId01d9727eb6a7d3e9a\",\"peerClusterAWSId\":\"fs-01d9727eb6a7d3e9a\",\"destinationVolumeName\":\"wlmdb_sqldata_1728552629461_dp\",\"destinationPath\":\"wlmdb_sqlsvm_1737955690776:wlmdb_sqltemp_1728552629461_dp\"}]}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -2245,7 +2245,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"name\":\"postgres\",\"size\":8106467,\"type\":\"user\",\"collation\":\"C.UTF-8\",\"status\":\"active\"},{\"name\":\"template1\",\"size\":7959011,\"type\":\"system\",\"collation\":\"C.UTF-8\",\"status\":\"inactive\"},{\"name\":\"template0\",\"size\":7725583,\"type\":\"system\",\"collation\":\"C.UTF-8\",\"status\":\"inactive\"}]",
+        "StandardOutputContent": "[{\"name\":\"postgres\",\"size\":8106467,\"type\":\"user\",\"collation\":\"C.UTF-8\",\"status\":\"active\"}]",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

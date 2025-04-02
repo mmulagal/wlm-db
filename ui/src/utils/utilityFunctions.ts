@@ -315,20 +315,13 @@ export const fsxPassVal = (password: string) => {
         const isAtLeastEightChars = password.length >= 8;
         const hasAtLeastOneNumber = /[0-9]/.test(password);
         const hasAtLeastOneAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 1;
-
-        if(state.postgreForm.selectedDatabaseType === DBType.POSTGRESQL) {
+        
             if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName) && !password.includes('admin')) {
                 return '';
             } else {
                 return GENERAL.PASSWORD_ERROR_CHECK;
             }
-        }else {
-            if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName)) {
-                return '';
-            } else {
-                return GENERAL.PASSWORD_ERROR_CHECK;
-            }
-        }
+
        
     }
 };

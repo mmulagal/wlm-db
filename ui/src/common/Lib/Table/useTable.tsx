@@ -54,13 +54,11 @@ const filterFunc = (
         if (textFilter) {
             _forEach(columns, column => {
                 const accessor = column.accessor;
-                const customAccessor = column?.customAccessor; // Custom accessor
+
                 const accessorForTextFilter = column.accessorForTextFilter;
 
                 // Get value from `customAccessor` if available, otherwise use `accessor`
-                const value = accessorForTextFilter
-                    ? _get(row, accessorForTextFilter)
-                    : _get(row, customAccessor || accessor);
+                const value = accessorForTextFilter ? _get(row, accessorForTextFilter) : _get(row, accessor);
 
                 if (_isString(value) && value.toLowerCase().includes(lowerCaseTextFilter)) {
                     isTextFilterMatch = true;

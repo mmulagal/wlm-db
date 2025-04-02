@@ -4,6 +4,7 @@ import {
     getPgSqlDatabasesList,
     getPgSqlInstanceInfo,
     getPgSqlPerformaceMetrics,
+    getPgSqlProtectionStatus,
     getPgSqlStorageSavingsVolumeData
 } from '../../../src/operations/workloads/pgsql/pgsql-operations';
 import { DatabaseInstance, PgSqlInstanceDetails } from '../../../src/utils/common-types';
@@ -12,6 +13,7 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import { parsePgSqlInstanceInfo } from '../../../src/utils/utils';
+import '../../simulator/scopes/aws/fsx-scope';
 
 describe('PgSql Database Operations', () => {
     const credentialsId = 'test-credentials-id';
@@ -168,20 +170,6 @@ describe('PgSql Database Operations', () => {
                 status: 'ONLINE',
                 collation: 'C.UTF-8',
                 type: 'System Database'
-            },
-            {
-                name: 'template1',
-                size: 7959011,
-                status: 'OFFLINE',
-                collation: 'C.UTF-8',
-                type: 'System Database'
-            },
-            {
-                name: 'template0',
-                size: 7725583,
-                status: 'OFFLINE',
-                collation: 'C.UTF-8',
-                type: 'System Database'
             }
         ]);
     });
@@ -204,6 +192,16 @@ describe('PgSql Database Operations', () => {
                 read: 0.001,
                 write: 0.545
             }
+        });
+    });
+    it('should return the protection status for a given PGSQL instance', async () => {
+        const result = await getPgSqlProtectionStatus(accountId, credentialsId, region, node1InstanceId, fsxNId);
+
+        expect(result).toEqual({
+            isAwsBackupEnabled: {
+                fsxn: true
+            },
+            isFsxOntapSnapshotsEnabled: true
         });
     });
 });

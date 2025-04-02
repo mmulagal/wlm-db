@@ -275,8 +275,9 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
+                databaseHostId,
                 jobId,
-                databaseHostId
+                metadata as unknown as Metadata
             );
         }
         if (fields?.includes(AssessmentCategories.MAXDOP)) {
@@ -335,7 +336,7 @@ async function initiateComputeLicenseAssessmentCollection(
                 mssqlPatch: mssqlPatchAssessment || undefined,
                 lastAssessedDate: new Date().getTime().toString()
             };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
         if (!isEmpty(hostOsPatchAssessment)) {
             updatePatchBaselineStatusForHost(accountId, databaseHostId, hostOsPatchAssessment);

@@ -20,6 +20,7 @@ import {
 import {
     checkBoxHandleManage,
     createDetectHostPayload,
+    getFilterOptions,
     getSelectedFromSelectionState,
     isSmbProtocol
 } from '../../../../utils/utilityFunctions';
@@ -419,6 +420,67 @@ const InstancesTable = () => {
         optimizeAction(rowData);
     };
 
+    const disableManageCheck = (rowData: any) => {
+        let errorMessage = '';
+        let isDisabled = false;
+        if (rowData?.statusColText !== INVENTORY_STATUS.UNMANAGED) {
+            isDisabled = true;
+            errorMessage = 'Only unmanaged instances can be managed';
+        } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
+            isDisabled = true;
+            errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
+        } else if (rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP) {
+            isDisabled = true;
+            errorMessage = GENERAL.FSXN_MANAGE_SUPPORTED;
+        } else if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
+            isDisabled = true;
+            errorMessage = GENERAL.HOST_DOWN;
+        } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+            isDisabled = true;
+            errorMessage = GENERAL.SSM_DOWN;
+        } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+            isDisabled = true;
+            errorMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+            isDisabled = true;
+            errorMessage = GENERAL.PGSQL_CTA_NA;
+        }
+        return { isDisabled, errorMessage };
+    };
+
+    const setStatusForFilter = (rowData?: any) => {
+        if (rowData?.status === INVENTORY_STATUS.RUNNING || rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) {
+            return INVENTORY_STATUS.ONLINE;
+        } else if (
+            rowData?.status === INVENTORY_STATUS.STOPPED ||
+            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+        ) {
+            return INVENTORY_STATUS.OFFLINE;
+        } else {
+            return rowData?.status;
+        }
+    };
+
+    const updatedTableData = useMemo(() => {
+        return instanceTableRows?.map((row: any) => {
+            const { isDisabled, errorMessage } = disableManageCheck(row);
+            return {
+                ...row,
+                statusAccessor: setStatusForFilter(row),
+                cellProps: {
+                    ...row.cellProps,
+                    isDisabled: isDisabled,
+                    selectionProps: {
+                        title: errorMessage,
+                        titleProps: {
+                            placement: 'bottom'
+                        }
+                    }
+                }
+            };
+        });
+    }, [instanceTableRows, selectedRowsForManage]);
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'Instance name',
@@ -470,7 +532,7 @@ const InstancesTable = () => {
             accessor: 'name',
             id: '2',
             width: '213px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'name'),
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <DsTypography variant="Regular_13" className={styles.colText}>
@@ -484,7 +546,7 @@ const InstancesTable = () => {
             accessor: 'hostType',
             id: '3',
             width: '213px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'hostType'),
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <DsTypography variant="Regular_13" className={styles.colText}>
@@ -498,7 +560,7 @@ const InstancesTable = () => {
             accessor: 'serverInstallationMode',
             id: '4',
             width: '213px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <DsTypography variant="Regular_13" className={styles.colText}>
@@ -513,7 +575,7 @@ const InstancesTable = () => {
             id: '5',
             isSortable: false,
             width: '213px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'statusColText'),
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
                     return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
@@ -539,7 +601,7 @@ const InstancesTable = () => {
             accessor: 'optimizationStatus',
             id: '6',
             width: '240px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
             renderCell: (cellData: string, rowData: any) => {
                 let disableMsg = '';
                 let disableMenu = () => {
@@ -646,7 +708,7 @@ const InstancesTable = () => {
             accessor: 'protectionText',
             id: '7',
             width: '200px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'protectionText'),
             renderCell: (cellData: string, rowData: any) => {
                 const loading = rowData?.loading || rowData?.subLoading;
                 return (
@@ -689,7 +751,7 @@ const InstancesTable = () => {
             accessor: 'performance.assessment',
             id: '8',
             width: '200px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'performance.assessment'),
             renderCell: (cellData: string, rowData: any) => {
                 const loading = rowData?.loading || rowData?.subLoading;
                 return (
@@ -714,7 +776,7 @@ const InstancesTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'credentialName'),
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -729,7 +791,7 @@ const InstancesTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'accountId'),
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -744,7 +806,7 @@ const InstancesTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(updatedTableData, 'regionName'),
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -755,67 +817,6 @@ const InstancesTable = () => {
             }
         }
     ];
-
-    const disableManageCheck = (rowData: any) => {
-        let errorMessage = '';
-        let isDisabled = false;
-        if (rowData?.statusColText !== INVENTORY_STATUS.UNMANAGED) {
-            isDisabled = true;
-            errorMessage = 'Only unmanaged instances can be managed';
-        } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
-            isDisabled = true;
-            errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
-        } else if (rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP) {
-            isDisabled = true;
-            errorMessage = GENERAL.FSXN_MANAGE_SUPPORTED;
-        } else if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
-            isDisabled = true;
-            errorMessage = GENERAL.HOST_DOWN;
-        } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
-            isDisabled = true;
-            errorMessage = GENERAL.SSM_DOWN;
-        } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
-            isDisabled = true;
-            errorMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
-        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
-            isDisabled = true;
-            errorMessage = GENERAL.PGSQL_CTA_NA;
-        }
-        return { isDisabled, errorMessage };
-    };
-
-    const setStatusForFilter = (rowData?: any) => {
-        if (rowData?.status === INVENTORY_STATUS.RUNNING || rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) {
-            return INVENTORY_STATUS.ONLINE;
-        } else if (
-            rowData?.status === INVENTORY_STATUS.STOPPED ||
-            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-        ) {
-            return INVENTORY_STATUS.OFFLINE;
-        } else {
-            return rowData?.status;
-        }
-    };
-
-    const updatedTableData = useMemo(() => {
-        return instanceTableRows?.map((row: any) => {
-            const { isDisabled, errorMessage } = disableManageCheck(row);
-            return {
-                ...row,
-                statusAccessor: setStatusForFilter(row),
-                cellProps: {
-                    ...row.cellProps,
-                    isDisabled: isDisabled,
-                    selectionProps: {
-                        title: errorMessage,
-                        titleProps: {
-                            placement: 'bottom'
-                        }
-                    }
-                }
-            };
-        });
-    }, [instanceTableRows, selectedRowsForManage]);
 
     const tableProps = useTable({
         isSorting: false,
@@ -1119,7 +1120,7 @@ const InstancesTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Instances"
                         singularTitle="Instance"
-                        exportToCsvOptions={{ fileName: `instanceTable-${Date.now()}.csv` }}
+                        exportToCsvOptions={{ fileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     />
                     {selectedRowsForManage.length > 0 && (

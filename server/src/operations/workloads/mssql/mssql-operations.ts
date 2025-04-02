@@ -180,7 +180,6 @@ async function getDataBasesSummary(
             false
         );
         const cleanDBSummanry = sqlResponseParsing(dbSummary);
-
         return { databases: cleanDBSummanry };
     } catch (error: any) {
         logger.error('Failed to get databases summary', error);

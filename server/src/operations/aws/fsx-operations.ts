@@ -289,7 +289,7 @@ async function isFsxnAwsBackupEnabled(
     region: string,
     fileSystemId: string,
     volumeUuids: string[],
-    volumeDBMap: any,
+    volumeDBMap?: any,
     activeNodeInstanceId?: string
 ) {
     logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled', {
@@ -308,6 +308,7 @@ async function isFsxnAwsBackupEnabled(
             fileSystemId,
             volumeUuids
         );
+        let volumeDBMapWithBackupFlag;
         const backups: Backup[] = [];
         if (!isEmpty(volumeIds)) {
             const volumeChunks = divideArrayIntoChunks(volumeIds, 20);
@@ -340,13 +341,15 @@ async function isFsxnAwsBackupEnabled(
                 }
             });
 
-            // This function maps the volumes in the volumeDBMap to their backup status,
-            // indicating whether they have backups or not. {master: true, model: true, msdb: true};
-            const volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
-                const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
-                acc[volume.databaseName] = fsxbackup;
-                return acc;
-            }, {});
+            if (volumeDBMap) {
+                // This function maps the volumes in the volumeDBMap to their backup status,
+                // indicating whether they have backups or not. {master: true, model: true, msdb: true};
+                volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
+                    const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
+                    acc[volume.databaseName] = fsxbackup;
+                    return acc;
+                }, {});
+            }
 
             logger.debug('fsx backups here', backups, uuidVolumeIdMap, volumeDBMapWithBackupFlag);
             return { volumeDBMapWithBackupFlag, volumeUuidsInBackups };
