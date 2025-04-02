@@ -95,14 +95,14 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
 
             {data?.values && data?.values?.length > 0 && (
                 <div className={styles.values}>
-                    <DsTypography variant="Semibold_14">Values</DsTypography>
+                    {/* <DsTypography variant="Semibold_14">Values</DsTypography> */}
                     <div className={styles.values}>
                         {data?.values.map((value, index) => (
                             <div
                                 key={index + Math.random()}
                                 style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
                             >
-                                <div className={styles.seperator} />
+                                {index !== 0 && <div className={styles.seperator} />}
 
                                 <DsTypography
                                     key={index}
