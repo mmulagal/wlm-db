@@ -376,7 +376,7 @@ async function initiateStorageAssessmentCollection(
     )?.UUID;
 
     if (isEmpty(instanceVolumeMapping)) {
-        const errorMessage = `Found no volumes for the instance ${instanceRecord.name}.`;
+        const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
