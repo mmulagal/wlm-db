@@ -581,6 +581,7 @@ const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
 const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
 const getVCPUAndMaxDopDetails = /#Get vCPU and MAXDOP Details/;
 const crrAssessmentDataRegex = /#Get CRR details/;
+const pgsqlProtectionRegex = /pgsql protection script/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -829,6 +830,10 @@ ssmMock
         return crrAssessmentDataRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand)
+    .on(SendCommandCommand, params => {
+        return pgsqlProtectionRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('pgsqlProtection'))
     .on(SendCommandCommand, params => params.Comment === 'Discover PostgreSQL resources')
     .resolves(getSampleCommandResponse('discoverPgsqlResources'));
 
@@ -1135,7 +1140,16 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlPerformanceMetricsCommand'
     })
-    .resolves(getCommandInvocationResponse.getPgsqlPerformanceMetricsCommandResponse);
+    .resolves(getCommandInvocationResponse.getPgsqlPerformanceMetricsCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-pgsqlProtection'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'pgsqlProtection',
+            '{ "records": [ { "uuid": "65ce42b0-093b-11f0-9005-d94de70408b8", "name": "wlmdb_pgsqldata_1742880617685", "snapshot_count": 1, "_links": { "self": { "href": "/api/storage/volumes/65ce42b0-093b-11f0-9005-d94de70408b8" } } } ], "num_records": 1, "_links": { "self": { "href": "/api/storage/volumes?fields=snapshot_count&name=wlmdb_pgsqldata_1742880617685" } } }'
+        )
+    );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

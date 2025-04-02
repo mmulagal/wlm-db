@@ -275,8 +275,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
-                jobId,
                 databaseHostId,
+                jobId,
                 metadata as unknown as Metadata
             );
         }

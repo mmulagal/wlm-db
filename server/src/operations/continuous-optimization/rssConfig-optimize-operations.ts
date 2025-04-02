@@ -324,8 +324,8 @@ async function handleOptimizeRssOptimization(
                 region,
                 activeNodeInstanceId,
                 resourceName!,
+                databaseHostId,
                 masterOptimizeJobParentId,
-                undefined,
                 metadata as unknown as Metadata
             );
         }
