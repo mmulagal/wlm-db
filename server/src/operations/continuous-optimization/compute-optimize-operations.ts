@@ -1039,14 +1039,23 @@ async function handleRollbackClusterOwnership(
             endTime: Date.now()
         });
     } catch (error) {
+        const errorMessage = `Error while rolling back compute cluster group ownership ${error}`;
+        logger.error(errorMessage);
         if (rollbackClusterOwnershipJobId) {
             await updateJobDetails(accountId, rollbackClusterOwnershipJobId, {
                 status: JOBSTATUS.FAILED,
-                endTime: Date.now()
+                endTime: Date.now(),
+                error: errorMessage
             });
         }
-        logger.error(`Error while rolling back compute cluster group ownership ${error}`);
-        throw createError(500, `Error while rolling back compute cluster group ownership ${error}`);
+        if (rollBackJobId) {
+            await updateJobDetails(accountId, rollBackJobId, {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now(),
+                error: errorMessage
+            });
+        }
+        throw Error(`Error while rolling back compute cluster group ownership ${error}`);
     }
 }
 

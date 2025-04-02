@@ -77,7 +77,8 @@ async function handleOptimizeRssOptimization(
     databaseHostId: string,
     databaseInstanceId: string,
     networkAdapters: string[],
-    parentJobId?: string | undefined
+    parentJobId?: string | undefined,
+    masterOptimizeJobParentId?: string | undefined
 ) {
     // create a parent job for network adapter optimization
     logger.info('optimizing RSS config for:', { databaseHostId, databaseInstanceId, credentialsId, region });
@@ -226,7 +227,7 @@ async function handleOptimizeRssOptimization(
                         error: errMsg
                     });
                     isAnySubjobFailed = true;
-                    throw error;
+                    throw new Error(errMsg);
                 }
             }
             // Optimizing network adapters of primary nodes
@@ -261,6 +262,11 @@ async function handleOptimizeRssOptimization(
                     resourceName!,
                     networkAdapters
                 );
+
+                await updateJobDetails(accountId, jobId, {
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now()
+                });
             } catch (error) {
                 isAnySubjobFailed = true;
                 await updateJobDetails(accountId, jobId, {
@@ -318,7 +324,7 @@ async function handleOptimizeRssOptimization(
                 region,
                 activeNodeInstanceId,
                 resourceName!,
-                parentJobId,
+                masterOptimizeJobParentId,
                 undefined,
                 metadata as unknown as Metadata
             );
@@ -347,6 +353,7 @@ async function handleOptimizeRssOptimization(
                 rollbackJobId
             );
         }
+        throw new Error(errorMessage);
     } finally {
         updateLongRunningAuditGroup(
             isAnySubjobFailed ? AuditStatus.FAILED : AuditStatus.SUCCESS,

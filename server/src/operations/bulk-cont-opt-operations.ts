@@ -15,7 +15,7 @@ import {
     optimizeSizing,
     optimizeStorageTier
 } from './cont-opt-optimize-operations';
-import { updateParentJobStatus } from './database/job-operations';
+import { updateJobDetails, updateParentJobStatus } from './database/job-operations';
 import {
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_RESILIENCY_CONFIGS,
@@ -247,9 +247,14 @@ async function bulkComputeOptimization(
     );
 
     try {
-        handleBulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize, parentJobId);
+        await handleBulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize, parentJobId);
         return { jobId: parentJobId };
     } catch (error) {
+        await updateJobDetails(accountId, parentJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: (error as Error).message
+        });
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, (error as Error).message);
     }
 }
@@ -259,10 +264,10 @@ async function handleBulkComputeOptimization(
     credentialsId: string,
     region: string,
     hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType[],
-    masterOptimizeParentId: string
+    masterOptimizeJobParentId: string
 ) {
     logger.info(
-        `Handle bulk optimizing compute: ${accountId}, ${credentialsId}, ${region}, ${hostsToOptimize}, ${masterOptimizeParentId}`
+        `Handle bulk optimizing compute: ${accountId}, ${credentialsId}, ${region}, ${hostsToOptimize}, ${masterOptimizeJobParentId}`
     );
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     try {
@@ -274,6 +279,12 @@ async function handleBulkComputeOptimization(
                             if (isEmpty(sqlServerInstances)) {
                                 logger.error(`No instances given for resource ${databaseHostId}.`);
                             }
+                            const [{ resource_name: resourceName }] = await listResources(
+                                accountId,
+                                databaseHostId,
+                                credentialsId,
+                                region
+                            );
                             const jobMetadata: JobMetadata = {
                                 hostsToOptimize: await formatJobMetadata(hostsToOptimize)
                             };
@@ -285,22 +296,23 @@ async function handleBulkComputeOptimization(
                                 region,
                                 accountId,
                                 JOBTYPE.OPTIMIZATION,
-                                `Optimize ${optimizationName}`,
-                                `Optimize ${optimizationName}`,
-                                masterOptimizeParentId,
+                                `Optimize ${optimizationName} for ${resourceName}`,
+                                `Optimize ${optimizationName} for ${resourceName}`,
+                                masterOptimizeJobParentId,
                                 jobMetadata
                             );
                             try {
                                 switch (optimizationCategory) {
                                     case OptimizeComputeParams.RSS_CONFIG:
-                                        handleOptimizeRssOptimization(
+                                        await handleOptimizeRssOptimization(
                                             accountId,
                                             credentialsId,
                                             region,
                                             databaseHostId,
                                             sqlServerInstances[0],
                                             networkAdapters!,
-                                            parentJobId
+                                            parentJobId,
+                                            masterOptimizeJobParentId
                                         );
                                         break;
                                     case OptimizeComputeParams.COMPUTE:
@@ -320,10 +332,10 @@ async function handleBulkComputeOptimization(
                                 }
                                 masterOptimizeParentStatus = JOBSTATUS.COMPLETED;
                             } catch (error: any) {
-                                logger.error(
-                                    `Error occurred while optimizing compute for account ${accountId}, ${databaseHostId}. Error: ${error}`
-                                );
+                                const errorMessage = `Error occurred while optimizing compute for account ${accountId}, ${databaseHostId}. Error: ${error}`;
+                                logger.error(errorMessage);
                                 masterOptimizeParentStatus = JOBSTATUS.FAILED;
+                                throw Error(errorMessage);
                             }
                         }
                     )
@@ -336,7 +348,7 @@ async function handleBulkComputeOptimization(
         throw error;
     } finally {
         if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
-            await updateParentJobStatus(accountId, masterOptimizeParentId);
+            await updateParentJobStatus(accountId, masterOptimizeJobParentId);
         }
     }
 }
