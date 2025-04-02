@@ -363,13 +363,15 @@ async function getAwsBackupDriftData(
             ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumes as unknown as MappedOnTapVolumeResponse));
         }
 
-        const { volumeUuidsInBackups } =
+        const { volumeUuidsInBackups, latestBackupsMap } =
             (await isFsxnAwsBackupEnabled(
                 credentialsId,
                 region,
                 fileSystemId,
                 isEmpty(dataLogVolumeUuids) ? [...new Set(ontapVolumeIds)] : [...new Set(dataLogVolumeUuids)],
-                undefined
+                undefined,
+                undefined,
+                true
             )) || {};
 
         logger.debug('Is on-demand backup enabled:', volumeUuidsInBackups);
@@ -377,14 +379,31 @@ async function getAwsBackupDriftData(
         awsBackupAssesmentData.status = AssessmentStatus.NOT_OPTIMIZED;
         awsBackupAssesmentData.totalObjectsInViolation = 1;
         awsBackupAssesmentData.objectsInViolation = [fileSystemId];
+
         if (volumeUuidsInBackups) {
             const ontapVolumeSet = new Set(ontapVolumeIds);
             const backupVolumeSet = new Set(volumeUuidsInBackups);
+            const twoDaysInMillis = 2 * 24 * 60 * 60 * 1000;
+            const now = Date.now();
 
-            const allUuidsMatch = [...ontapVolumeSet].every(uuid => backupVolumeSet.has(uuid));
-            awsBackupAssesmentData.status = allUuidsMatch ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            awsBackupAssesmentData.totalObjectsInViolation = allUuidsMatch ? 0 : 1;
-            awsBackupAssesmentData.objectsInViolation = allUuidsMatch ? [] : [fileSystemId];
+            const hasRecentBackup = [...ontapVolumeSet].every(uuid => {
+                if (!backupVolumeSet.has(uuid) || !latestBackupsMap) {
+                    return false;
+                }
+
+                const backup = latestBackupsMap[uuid];
+                if (!backup || !backup.CreationTime) {
+                    return false;
+                }
+                const backupTime = new Date(backup.CreationTime).getTime();
+                return now - backupTime <= twoDaysInMillis;
+            });
+
+            awsBackupAssesmentData.status = hasRecentBackup
+                ? AssessmentStatus.OPTIMIZED
+                : AssessmentStatus.NOT_OPTIMIZED;
+            awsBackupAssesmentData.totalObjectsInViolation = hasRecentBackup ? 0 : 1;
+            awsBackupAssesmentData.objectsInViolation = hasRecentBackup ? [] : [fileSystemId];
         }
         return awsBackupAssesmentData;
     } catch (error) {

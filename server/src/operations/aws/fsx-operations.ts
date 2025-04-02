@@ -290,7 +290,8 @@ async function isFsxnAwsBackupEnabled(
     fileSystemId: string,
     volumeUuids: string[],
     volumeDBMap?: any,
-    activeNodeInstanceId?: string
+    activeNodeInstanceId?: string,
+    wantLatestBackup = false
 ) {
     logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled', {
         credentialsId,
@@ -341,6 +342,22 @@ async function isFsxnAwsBackupEnabled(
                 }
             });
 
+            // Get the latest backup for each volume
+            const latestBackupsMap: { [volumeId: string]: Backup } = {};
+            if (wantLatestBackup) {
+                backups.forEach(backup => {
+                    const volumeId = backup.Volume?.VolumeId;
+                    if (volumeId) {
+                        if (
+                            !latestBackupsMap[volumeId] ||
+                            new Date(backup.CreationTime!) > new Date(latestBackupsMap[volumeId].CreationTime!)
+                        ) {
+                            latestBackupsMap[volumeId] = backup;
+                        }
+                    }
+                });
+            }
+
             if (volumeDBMap) {
                 // This function maps the volumes in the volumeDBMap to their backup status,
                 // indicating whether they have backups or not. {master: true, model: true, msdb: true};
@@ -352,9 +369,9 @@ async function isFsxnAwsBackupEnabled(
             }
 
             logger.debug('fsx backups here', backups, uuidVolumeIdMap, volumeDBMapWithBackupFlag);
-            return { volumeDBMapWithBackupFlag, volumeUuidsInBackups };
+            return { volumeDBMapWithBackupFlag, volumeUuidsInBackups, latestBackupsMap };
         }
-        return { volumeDBMapWithBackupFlag: {}, volumeUuidsInBackups: [] };
+        return { volumeDBMapWithBackupFlag: {}, volumeUuidsInBackups: [], latestBackupsMap: {} };
     }
 }
 
