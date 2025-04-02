@@ -426,7 +426,7 @@ async function initiateCrossRegionResiliencyAssessment(
     )?.UUID;
 
     if (isEmpty(instanceVolumeMapping)) {
-        const errorMessage = `No ONTAP volumes found for the instance ${instanceRecord.name}.`;
+        const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
