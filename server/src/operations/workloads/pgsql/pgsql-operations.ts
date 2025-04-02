@@ -302,7 +302,7 @@ async function getPgSqlDatabaseInstancesSummary(
                 databaseInstanceDetails.databases = getDatabasesWithProtection
                     ? databases.map((db: any) => ({
                           ...db,
-                          protection: protectionData?.find((pd: any) => pd.name === db.name) || null
+                          protection: protectionData
                       }))
                     : databases;
             }

@@ -1043,7 +1043,7 @@ const GET_CLUSTER_NODE_NAMES = () => `
     $currentNode = hostname
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
     $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
-    @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNode = $ownerNode;} | ConvertTo-Json
+    @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNodes = $ownerNode;} | ConvertTo-Json
     Write-Information "Cluster nodes: $clusterNodes with owner node: $ownerNode"
     Stop-Transcript | Out-Null
 
