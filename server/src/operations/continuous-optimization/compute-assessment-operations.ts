@@ -150,8 +150,7 @@ async function calculateComputeDrift(
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
 
-        let recommendationMessage =
-            'Your current instance is being analyzed for rightsizing. Please check back later for recommendations.';
+        let recommendationMessage = 'Analyzing instance for rightsizing. Check later for recommendations.';
         let findingValue = AssessmentStatus.ANALYZING;
         let objectsInViolation: string[] = [];
 
@@ -170,7 +169,7 @@ async function calculateComputeDrift(
                         : overProvisionedRecommendationMessage;
                 recommendationMessage += ` ${genericRecommendationMessage}`;
             } else {
-                recommendationMessage = 'Your current instance is optimized for your workload.';
+                recommendationMessage = 'Optimized instance for your workload.';
             }
 
             objectsInViolation = findingReasonCodes?.map(code => translateFindingReasonCode(code));
@@ -213,8 +212,8 @@ async function managedHostsComputeAssessment(
     databaseHostId: string
 ) {
     const { id: computeAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server compute assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server compute assessment for ${resourceName}`,
+        name: `Microsoft SQL Server compute assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL Server compute assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,

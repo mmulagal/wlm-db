@@ -1528,38 +1528,44 @@ async function getDatabaseDetails(
             );
 
         const response = Object.entries(databases).reduce((acc, [instName, dbs]) => {
-            acc[instName] = (dbs as DatabaseDetails[]).map(
-                (database: DatabaseDetails): UserDatabase => ({
-                    name: database.databaseName,
-                    size: database.databaseSize,
-                    status: database.databaseStatus,
-                    collation: database.collationName ?? '',
-                    type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
-                        ? MSSQL_DATABASE_TYPES.SYSTEM
-                        : MSSQL_DATABASE_TYPES.USER,
-                    ...(getProtection && {
-                        protection: {
-                            isAwsBackupEnabled: {
-                                fsxn: isDemoFlow
+            if (Array.isArray(dbs)) {
+                acc[instName] = (dbs as DatabaseDetails[]).map(
+                    (database: DatabaseDetails): UserDatabase => ({
+                        name: database.databaseName,
+                        size: database.databaseSize,
+                        status: database.databaseStatus,
+                        collation: database.collationName ?? '',
+                        type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
+                            ? MSSQL_DATABASE_TYPES.SYSTEM
+                            : MSSQL_DATABASE_TYPES.USER,
+                        ...(getProtection && {
+                            protection: {
+                                isAwsBackupEnabled: {
+                                    fsxn: isDemoFlow
+                                        ? true
+                                        : checkKey(awsBackup.volumeDBMapWithBackupFlag, database.databaseName),
+                                    fsxw: false,
+                                    ebs: false
+                                },
+                                isFsxOntapSnapshotsEnabled: isDemoFlow
                                     ? true
-                                    : checkKey(awsBackup.volumeDBMapWithBackupFlag, database.databaseName),
-                                fsxw: false,
-                                ebs: false
-                            },
-                            isFsxOntapSnapshotsEnabled: isDemoFlow
-                                ? true
-                                : checkKey(ontapBackup, database.databaseName),
-                            isSqlNativeEnabled: Boolean(
-                                backedupDatabases?.[instName] &&
-                                    backedupDatabases[instName]?.find(
-                                        (e: { backedupDatabases: string }) =>
-                                            e.backedupDatabases === database.databaseName
-                                    )
-                            )
-                        }
+                                    : checkKey(ontapBackup, database.databaseName),
+                                isSqlNativeEnabled: Boolean(
+                                    backedupDatabases?.[instName] &&
+                                        backedupDatabases[instName]?.find(
+                                            (e: { backedupDatabases: string }) =>
+                                                e.backedupDatabases === database.databaseName
+                                        )
+                                )
+                            }
+                        })
                     })
-                })
-            );
+                );
+            } else {
+                logger.error(
+                    `Error while fetching database details for instance ${instName} for account ${accountId} for credentials ${credentialsId} in region ${region}.`
+                );
+            }
             return acc;
         }, {} as Record<string, any[]>);
 

@@ -180,11 +180,6 @@ async function getDataBasesSummary(
             false
         );
         const cleanDBSummanry = sqlResponseParsing(dbSummary);
-        // Check if any object in cleanDBSummanry is not an array
-        const invalidValue = Object.values(cleanDBSummanry).find(value => !Array.isArray(value));
-        if (invalidValue) {
-            throw new Error(` ${JSON.stringify(invalidValue)}`);
-        }
         return { databases: cleanDBSummanry };
     } catch (error: any) {
         logger.error('Failed to get databases summary', error);

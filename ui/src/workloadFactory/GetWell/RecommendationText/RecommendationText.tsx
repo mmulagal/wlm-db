@@ -60,7 +60,7 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                     className={styles.desc}
                     style={{
                         //@ts-ignore
-                        whiteSpace: from === 'dashboard' && cardName === 'compute_right_sizing' ? '' : 'pre-wrap',
+                        whiteSpace: 'pre-wrap',
                         width: from === 'dashboard' ? 'unset' : '1400px'
                     }}
                 >
@@ -95,14 +95,14 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
 
             {data?.values && data?.values?.length > 0 && (
                 <div className={styles.values}>
-                    <DsTypography variant="Semibold_14">Values</DsTypography>
+                    {/* <DsTypography variant="Semibold_14">Values</DsTypography> */}
                     <div className={styles.values}>
                         {data?.values.map((value, index) => (
                             <div
                                 key={index + Math.random()}
                                 style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
                             >
-                                <div className={styles.seperator} />
+                                {index !== 0 && <div className={styles.seperator} />}
 
                                 <DsTypography
                                     key={index}

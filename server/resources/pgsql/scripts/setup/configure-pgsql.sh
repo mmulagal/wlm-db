@@ -129,7 +129,7 @@ else
 fi
 
 # pgvector installation
-dnf install -y make $pgsql_version-server-devel
+dnf install -y gcc make $pgsql_version-server-devel
 cd /home/ec2-user/cfn/pgvector
 make
 check_status "Failed to build pgvector"

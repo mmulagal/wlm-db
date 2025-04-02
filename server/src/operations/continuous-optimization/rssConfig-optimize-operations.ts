@@ -214,6 +214,11 @@ async function handleOptimizeRssOptimization(
                         region,
                         activeNodeInstanceId
                     ));
+
+                    if (!ownerNode) {
+                        throw new Error('Failed to transfer cluster ownership');
+                    }
+
                     await updateJobDetails(accountId, transferOwnershipJobId, {
                         status: JOBSTATUS.COMPLETED,
                         endTime: Date.now()

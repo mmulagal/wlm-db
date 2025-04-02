@@ -649,12 +649,13 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '144px',
-                    tagHeight: '241px',
+                    cardHeight: '184px',
+                    tagHeight: '281px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.file_system_headroom?.recommendation?.description,
-                        values: cardDataDefault?.file_system_headroom?.recommendation?.values
+                        values: cardDataDefault?.file_system_headroom?.recommendation?.values,
+                        valuesHeading: cardDataDefault?.file_system_headroom?.recommendation?.valuesHeading
                     }
                 });
                 break;
@@ -664,12 +665,13 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '168px',
-                    tagHeight: '265px',
+                    cardHeight: '208px',
+                    tagHeight: '305px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.transaction_log_drive_size?.recommendation?.description,
-                        values: cardDataDefault?.transaction_log_drive_size?.recommendation?.values
+                        values: cardDataDefault?.transaction_log_drive_size?.recommendation?.values,
+                        valuesHeading: cardDataDefault?.transaction_log_drive_size?.recommendation?.valuesHeading
                     }
                 });
                 break;
@@ -680,12 +682,13 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '192px',
-                    tagHeight: '289px',
+                    cardHeight: '232px',
+                    tagHeight: '329px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.tempdb_drive_size?.recommendation?.description,
-                        values: cardDataDefault?.tempdb_drive_size?.recommendation?.values
+                        values: cardDataDefault?.tempdb_drive_size?.recommendation?.values,
+                        valuesHeading: cardDataDefault?.tempdb_drive_size?.recommendation?.valuesHeading
                     }
                 });
                 break;

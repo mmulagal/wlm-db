@@ -38,7 +38,7 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
         },
 
         {
-            Header: 'Storage tier percentage',
+            Header: 'SSD storage tier',
             accessor: 'value',
             id: '3',
             width: '481px',
