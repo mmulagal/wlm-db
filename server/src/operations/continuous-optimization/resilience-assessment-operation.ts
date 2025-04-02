@@ -49,9 +49,13 @@ function filterDataLogVolumes(instanceVolumeMapping: MappedOnTapVolumeResponse) 
         Object.values(instanceVolumeMapping)
             ?.map(i => i?.volumeDBMap)
             .flat() || {};
+
     // Ignore tempdb volumes from resiliency assessment
+    const tempDBVolumeUuids = [
+        ...new Set(volumeDBMap.filter(volume => volume.databaseName === 'tempdb').map(volume => volume.ontapVolumeuuid))
+    ];
     const dataLogVolumeUuids = [
-        ...new Set(volumeDBMap.filter(volume => volume.databaseName !== 'tempdb').map(volume => volume.ontapVolumeuuid))
+        ...new Set(volumeRecords.filter(volume => !tempDBVolumeUuids.includes(volume.uuid)).map(volume => volume.uuid))
     ];
     const dataLogVolumeNames = [
         ...new Set(
@@ -457,8 +461,6 @@ async function initiateCrossRegionResiliencyAssessment(
             ) as string[]
         )
     ];
-
-    logger.info('peerFileSystemIds:', peerFileSystemIds);
 
     // Check if PeerFileSystemIds are NOT deployed in the same region as source fsx
     // 1. No two fsx in any region can have same id.
