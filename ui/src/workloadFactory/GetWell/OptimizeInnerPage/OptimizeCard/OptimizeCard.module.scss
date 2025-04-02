@@ -39,6 +39,29 @@
             display: flex;
             gap: 10px;
             align-items: center;
+
+            .tooltipContainer {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .rssConfig {
+                display: flex;
+                gap: 16px;
+                flex-direction: column;
+
+                .points {
+                    display: flex;
+                    gap: 16px;
+                    align-items: center;
+                    height: 24px;
+
+                    .bullet {
+                        margin-top: 5px;
+                    }
+                }
+            }
         }
     }
 }

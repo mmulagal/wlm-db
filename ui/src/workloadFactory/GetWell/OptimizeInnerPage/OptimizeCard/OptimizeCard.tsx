@@ -4,6 +4,7 @@ import styles from './OptimizeCard.module.scss';
 import Tag from '../../../../common/Tag/Tag';
 import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
 const OptimizeCard = () => {
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
@@ -44,21 +45,29 @@ const OptimizeCard = () => {
                     block_one: { type: 'Impacted drives', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                    recommendationText: {
+                        type: 'View recommendation',
+                        value: data?.recommendationText,
+                        valueHeading: data?.recommendation?.valuesHeading,
+                        values: data?.recommendation?.values
+                    }
                 };
             case 'Data files':
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation?.description }
                 };
             case 'Log files':
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                    recommendationText: {
+                        type: 'View recommendation',
+                        value: data?.recommendation?.description
+                    }
                 };
             case 'Thin provisioning':
             case 'Autosize':
@@ -116,7 +125,10 @@ const OptimizeCard = () => {
                     block_one: { type: 'Impacted network adapters', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                    recommendationText: {
+                        type: 'View recommendation',
+                        value: data?.recommendation?.descriptionRssConfig
+                    }
                 };
             case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
                 return {
@@ -142,6 +154,62 @@ const OptimizeCard = () => {
                 };
             default:
                 return null;
+        }
+    };
+
+    const displayRecommendations = () => {
+        if (selectedOptimizeConfig?.type === 'Log drive size') {
+            return (
+                <TooltipInfo>
+                    <div className={styles.tooltipContainer}>
+                        <DsTypography variant="Regular_14">{setCardData?.recommendationText?.value}</DsTypography>
+                        <DsTypography variant="Regular_14">
+                            {setCardData?.recommendationText?.valueHeading}
+                        </DsTypography>
+
+                        {setCardData?.recommendationText?.values.map((value: string, index: number) => (
+                            <div key={index}>
+                                <DsTypography variant="Regular_14">{value}</DsTypography>
+                            </div>
+                        ))}
+                    </div>
+                </TooltipInfo>
+            );
+        } else if (selectedOptimizeConfig?.type === 'Network adapter settings') {
+            return (
+                <TooltipInfo>
+                    <div
+                        className={styles.rssConfig}
+                        style={{
+                            //@ts-ignore
+                            whiteSpace: 'pre-wrap',
+                            width: 'unset'
+                        }}
+                    >
+                        <DsTypography variant="Regular_14">
+                            {setCardData?.recommendationText?.value?.first}
+                        </DsTypography>
+                        {setCardData?.recommendationText?.second && (
+                            <DsTypography variant="Regular_14">
+                                {setCardData?.recommendationText?.value?.second}
+                            </DsTypography>
+                        )}
+                        {setCardData?.recommendationText?.value?.points?.map((perPoint: any) => {
+                            return (
+                                <div className={styles.points}>
+                                    <div className={styles.bullet}>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">{perPoint}</DsTypography>
+                                </div>
+                            );
+                        })}
+                        <DsTypography variant="Regular_14">{setCardData?.recommendationText?.value?.last}</DsTypography>
+                    </div>
+                </TooltipInfo>
+            );
+        } else {
+            return <TooltipInfo>{setCardData?.recommendationText?.value}</TooltipInfo>;
         }
     };
 
@@ -175,7 +243,7 @@ const OptimizeCard = () => {
                     </div>
                 </div>
                 <div className={styles.rightSide}>
-                    <TooltipInfo>{setCardData?.recommendationText?.value}</TooltipInfo>
+                    {displayRecommendations()}
                     <DsTypography variant="Regular_14">{setCardData?.recommendationText?.type}</DsTypography>
                 </div>
             </div>
