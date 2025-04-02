@@ -1134,6 +1134,7 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
                     $parameters['Name'] = $adapterName
                     Set-NetAdapterRss @parameters -NoRestart
                 }
+                Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r", "/t 5") -Wait -NoNewWindow
             } catch {
                 $errMsg = "Error occurred while optimizing network adapter: $adapterName $_.Exception.Message"
                 Write-Information $errMsg
