@@ -116,8 +116,8 @@ async function managedHostsLicenseAssessment(
     });
 
     const { id: licenseAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server license assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server license assessment for ${resourceName}`,
+        name: `Microsoft SQL Server license assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL Server license assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,

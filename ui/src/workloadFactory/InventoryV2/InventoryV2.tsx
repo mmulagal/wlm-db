@@ -129,11 +129,14 @@ const InventoryV2 = () => {
                             optimizationStatus: optimizationStatus,
                             protectionText:
                                 protectionText === PROTECTION_TEXT_STATUS.YES
-                                    ? 'Protected'
+                                    ? GENERAL.PROTECTED
                                     : protectionText === PROTECTION_TEXT_STATUS.NO
-                                    ? 'Not Protected'
-                                    : GENERAL.NOT_AVAILABLE,
-
+                                    ? GENERAL.NOT_PROTECTED
+                                    : '',
+                            performance: {
+                                ...perRow.performance,
+                                assessment: perRow.performance?.assessment || ''
+                            },
                             allocatedCapacityText: perRow?.allocatedCapacity
                                 ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
                                 : '',
