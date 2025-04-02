@@ -247,14 +247,9 @@ async function bulkComputeOptimization(
     );
 
     try {
-        await handleBulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize, parentJobId);
+        handleBulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize, parentJobId);
         return { jobId: parentJobId };
     } catch (error) {
-        await updateJobDetails(accountId, parentJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: (error as Error).message
-        });
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, (error as Error).message);
     }
 }
@@ -345,6 +340,11 @@ async function handleBulkComputeOptimization(
     } catch (error: any) {
         logger.error(`Error occurred while optimizing compute for account ${accountId}. Error: ${error}`);
         masterOptimizeParentStatus = JOBSTATUS.FAILED;
+        await updateJobDetails(accountId, masterOptimizeParentStatus, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: (error as Error).message
+        });
         throw error;
     } finally {
         if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {

@@ -318,7 +318,7 @@ async function handleOptimizeRssOptimization(
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
             // Trigger assessment after optimize
-            await managedHostsRssConfigAssessment(
+            managedHostsRssConfigAssessment(
                 accountId,
                 credentialsId,
                 region,
