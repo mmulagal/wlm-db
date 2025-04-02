@@ -649,12 +649,13 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '144px',
-                    tagHeight: '241px',
+                    cardHeight: '184px',
+                    tagHeight: '281px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.file_system_headroom?.recommendation?.description,
-                        values: cardDataDefault?.file_system_headroom?.recommendation?.values
+                        values: cardDataDefault?.file_system_headroom?.recommendation?.values,
+                        valuesHeading: cardDataDefault?.file_system_headroom?.recommendation?.valuesHeading
                     }
                 });
                 break;
