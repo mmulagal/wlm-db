@@ -128,8 +128,8 @@ async function managedHostsRssConfigAssessment(
     });
 
     const { id: rssConfigAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server network adapters configuration assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server network adapters configuration assessment for ${resourceName}`,
+        name: `Microsoft SQL Server network adapters configuration assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL Server network adapters configuration assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
