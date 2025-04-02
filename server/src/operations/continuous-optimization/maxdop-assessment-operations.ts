@@ -132,8 +132,8 @@ async function managedHostsMaxDOPAssessment(
     });
 
     const { id: maxDopAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server MaxDOP assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server MaxDOP assessment for ${resourceName}`,
+        name: `Microsoft SQL Server MaxDOP assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL Server MaxDOP assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,

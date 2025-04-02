@@ -302,7 +302,7 @@ async function runOsPatchAssessment(
             patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
                 if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
                     throw createError(
-                        'Failed to run host OS patch baseline on the host/s database hosts in the cluster'
+                        'Failed to run operating system patch baseline on the database host in the cluster.'
                     );
                 }
                 return false;
