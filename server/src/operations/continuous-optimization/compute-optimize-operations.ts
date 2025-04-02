@@ -231,7 +231,10 @@ async function handleComputeRemediation(
                             undefined,
                             COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
                         );
-                        const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
+                        let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
+                        ownerNodes = ownerNodes?.split(',');
+                        const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
+                        clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
                         // pick one of the nodes in the cluster to transfer primary node ownership
                         let targetNodeName;
                         for (const nodeName of clusterNodes) {
@@ -261,7 +264,7 @@ async function handleComputeRemediation(
                         );
                         try {
                             // move all cluster groups to the selected node
-                            if (targetNodeName) {
+                            if (targetNodeName && ownerNode) {
                                 const nodesTransferred = await moveClusterGroupOwnership(
                                     credentialsId,
                                     region,
@@ -963,7 +966,10 @@ async function transferClusterOwnershipToStandbyNode(
             undefined,
             COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
         );
-        const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
+        let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
+        ownerNodes = ownerNodes?.split(',');
+        const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
+        clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
         // pick one of the nodes in the cluster to transfer primary node ownership
         let targetNodeName;
         for (const nodeName of clusterNodes) {
