@@ -1496,7 +1496,7 @@ const GetWell = () => {
                                                                     : 'var(--text-button-primary)'
                                                         }}
                                                     >
-                                                        View recommendation & optimization
+                                                        View recommendations & optimizations
                                                     </div>
                                                 </div>
                                             ]}
@@ -1561,7 +1561,7 @@ const GetWell = () => {
                                                                     : 'var(--text-button-primary)'
                                                         }}
                                                     >
-                                                        View recommendation & optimization
+                                                        View recommendations & optimizations
                                                     </div>
                                                 </div>
                                             ]}
