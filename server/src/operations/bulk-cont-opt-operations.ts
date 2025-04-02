@@ -265,6 +265,7 @@ async function handleBulkComputeOptimization(
         `Handle bulk optimizing compute: ${accountId}, ${credentialsId}, ${region}, ${hostsToOptimize}, ${masterOptimizeJobParentId}`
     );
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
     try {
         await Promise.all(
             hostsToOptimize.map(async ({ databaseHosts, configurationName: optimizationCategory }) => {
@@ -327,7 +328,7 @@ async function handleBulkComputeOptimization(
                                 }
                                 masterOptimizeParentStatus = JOBSTATUS.COMPLETED;
                             } catch (error: any) {
-                                const errorMessage = `Error occurred while optimizing compute for account ${accountId}, ${databaseHostId}. Error: ${error}`;
+                                errorMessage = `Error occurred while optimizing compute for account ${accountId}, ${databaseHostId}. Error: ${error}`;
                                 logger.error(errorMessage);
                                 masterOptimizeParentStatus = JOBSTATUS.FAILED;
                                 throw Error(errorMessage);
@@ -338,18 +339,16 @@ async function handleBulkComputeOptimization(
             })
         );
     } catch (error: any) {
-        logger.error(`Error occurred while optimizing compute for account ${accountId}. Error: ${error}`);
+        logger.error(error.message);
         masterOptimizeParentStatus = JOBSTATUS.FAILED;
-        await updateJobDetails(accountId, masterOptimizeParentStatus, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: (error as Error).message
-        });
+        errorMessage = error.message;
         throw error;
     } finally {
-        if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
-            await updateParentJobStatus(accountId, masterOptimizeJobParentId);
-        }
+        await updateJobDetails(accountId, masterOptimizeJobParentId, {
+            status: masterOptimizeParentStatus,
+            error: errorMessage,
+            endTime: Date.now()
+        });
     }
 }
 

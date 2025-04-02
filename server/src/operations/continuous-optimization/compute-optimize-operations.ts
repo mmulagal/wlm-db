@@ -232,7 +232,7 @@ async function handleComputeRemediation(
                             COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
                         );
                         let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
-                        ownerNodes = ownerNodes?.split(',');
+                        ownerNodes = Array.isArray(ownerNodes) ? ownerNodes : ownerNodes?.split(',');
                         const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
                         clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
                         // pick one of the nodes in the cluster to transfer primary node ownership
@@ -967,7 +967,7 @@ async function transferClusterOwnershipToStandbyNode(
             COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
         );
         let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
-        ownerNodes = ownerNodes?.split(',');
+        ownerNodes = Array.isArray(ownerNodes) ? ownerNodes : ownerNodes?.split(',');
         const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
         clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
         // pick one of the nodes in the cluster to transfer primary node ownership
