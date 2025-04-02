@@ -59,6 +59,7 @@ async function optimizeNetworkAdapters(
         }
         await waitForInstanceOk(credentialsId, region, instanceId);
         if (!isDemo()) {
+            // Wait for 30 seconds to allow FCI setup to come online after ec2 is online
             await sleep(30000);
         }
     } catch (error) {
