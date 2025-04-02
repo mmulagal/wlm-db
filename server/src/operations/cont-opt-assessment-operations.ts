@@ -336,7 +336,7 @@ async function initiateComputeLicenseAssessmentCollection(
                 mssqlPatch: mssqlPatchAssessment || undefined,
                 lastAssessedDate: new Date().getTime().toString()
             };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
         if (!isEmpty(hostOsPatchAssessment)) {
             updatePatchBaselineStatusForHost(accountId, databaseHostId, hostOsPatchAssessment);
