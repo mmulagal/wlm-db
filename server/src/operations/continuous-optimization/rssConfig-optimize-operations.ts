@@ -23,8 +23,9 @@ import {
     transferClusterOwnershipToStandbyNode
 } from './compute-optimize-operations';
 import { waitForInstanceOk } from '../../lib/aws/ec2';
-import { AuditStatus } from '../../utils/consts';
+import { AuditStatus, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import { onDemandTriggerDriftAssessmentDataCollection } from '../cont-opt-assessment-operations';
+import { resetCache } from '../../utils/cache';
 
 const logger = getLogger();
 async function optimizeNetworkAdapters(
@@ -328,6 +329,8 @@ async function handleOptimizeRssOptimization(
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
 
+            // clearning all the ssm command cache so that we will get the fresh data in assessment
+            resetCache(SSM_COMMAND_CACHE_TYPE);
             // Trigger assessment after optimize
             await onDemandTriggerDriftAssessmentDataCollection(
                 accountId,
