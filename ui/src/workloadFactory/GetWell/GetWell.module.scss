@@ -270,6 +270,20 @@
         }
     }
 
+    .storageConfig {
+        [class*='_storageCardComponent'] {
+            [class*='commonSection'] {
+                width: 210px;
+            }
+        }
+
+        [class*='_storageCardComponent'] {
+            [class*='_firstSection'] {
+                width: 233px;
+            }
+        }
+    }
+
     [class*='isExpanded'] {
         max-height: 2500px !important;
         overflow: hidden;

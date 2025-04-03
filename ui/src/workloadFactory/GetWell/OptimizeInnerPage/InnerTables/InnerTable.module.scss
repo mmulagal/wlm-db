@@ -94,3 +94,12 @@
         color: var(--text-primary);
     }
 }
+
+.log-drive-size-popover {
+    max-height: 400px !important;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+}
