@@ -1134,6 +1134,8 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
                     $parameters['Name'] = $adapterName
                     Set-NetAdapterRss @parameters -NoRestart
                 }
+                # wait for insyance to respond back to the SSM invocation before reboot
+                Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r", "/t 10") -Wait -NoNewWindow
             } catch {
                 $errMsg = "Error occurred while optimizing network adapter: $adapterName $_.Exception.Message"
                 Write-Information $errMsg

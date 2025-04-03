@@ -700,6 +700,12 @@ async function calculateStorageDrift(
             { name: 'log-drive-size', errorMessage }
         );
     } else {
+        if (errors && !isEmpty(errors['data-tempdb-drive-details'])) {
+            driftAssessmentData.sizing.push({
+                name: 'tempdb-drive-size',
+                errorMessage: errors['data-tempdb-drive-details']
+            });
+        }
         Object.entries(sizing).forEach(async ([key, value]) => {
             let goldenData = sizingConfigData.find(data => data.parameter === key);
 

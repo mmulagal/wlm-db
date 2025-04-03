@@ -1054,7 +1054,7 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'getClusterNodeNames',
-            '{    "currentNode":  "sqlnode1-44317", "ownerNode":  "sqlnode1-44317",    "clusterNodes":  [                         "sqlnode1-44317",                         "sqlnode2-44317"                     ]}'
+            '{    "currentNode":  "sqlnode1-44317", "ownerNodes":  "sqlnode1-44317",    "clusterNodes":  [                         "sqlnode1-44317",                         "sqlnode2-44317"                     ]}'
         )
     )
     .on(GetCommandInvocationCommand, {
