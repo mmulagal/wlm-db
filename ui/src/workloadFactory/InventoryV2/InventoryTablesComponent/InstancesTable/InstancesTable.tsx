@@ -88,6 +88,8 @@ const InstancesTable = () => {
     const { selectedRowsForManage } = useAppSelector(state => state.inventoryV2);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
+        useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
         useAppSelector(state => state.inventoryV2);
 
@@ -113,14 +115,18 @@ const InstancesTable = () => {
                 isDiscoverInProgress ||
                 fullHostDataLoading ||
                 isManagedHostListLoading ||
-                fsxCredentialStatusLoading
+                fsxCredentialStatusLoading ||
+                pgsqlDatabaseHostsLoading ||
+                pgsqlFullHostDataLoading
         );
     }, [
         databaseHostsLoading,
         isDiscoverInProgress,
         fullHostDataLoading,
         isManagedHostListLoading,
-        fsxCredentialStatusLoading
+        fsxCredentialStatusLoading,
+        pgsqlDatabaseHostsLoading,
+        pgsqlFullHostDataLoading
     ]);
 
     const getInitialFilter = () => {

@@ -12,11 +12,11 @@ import {
     MsSqlInstancesRequestQuery,
     PrepareResourceResponseBody,
     MultiInstanceManageMsSqlRequestBody,
-    MultiInstanceManageResponseBody,
     MultiInstanceUnmanageResponseBody,
     UnmanageInstanceParams,
     DatabaseInstanceQueryString,
-    DiscoverPgSqlResponseBody
+    DiscoverPgSqlResponseBody,
+    MultiHostManageResponseBody
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams, AccountIdParams } from '../types/generic.types';
 
@@ -92,7 +92,7 @@ const ManageMsSqlSchemaV2 = {
     summary: 'Manage SQL Server instances',
     description: 'Manage SQL Server instances',
     response: {
-        200: MultiInstanceManageResponseBody
+        200: MultiHostManageResponseBody
     }
 };
 

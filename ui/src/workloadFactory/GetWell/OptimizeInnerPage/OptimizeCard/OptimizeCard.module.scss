@@ -54,7 +54,7 @@
                 .points {
                     display: flex;
                     gap: 16px;
-                    align-items: center;
+                    align-items: unset;
                     height: 24px;
 
                     .bullet {

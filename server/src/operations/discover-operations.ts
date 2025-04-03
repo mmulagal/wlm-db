@@ -1883,7 +1883,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                             }
                         }
                     }
-                    manageResponse.push({ resourceId, items: itemsStatus, credentialsId, region, ec2InstanceId });
+                    manageResponse.push({ resourceId, instances: itemsStatus, credentialsId, region, ec2InstanceId });
                 } catch (error: any) {
                     const err = `Unable to manage instance '${item.ec2InstanceId}'. Reason: ${error.message}`;
                     manageResponse.push({
@@ -1891,7 +1891,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                         credentialsId: item.credentialsId,
                         region: item.region,
                         ec2InstanceId: item.ec2InstanceId,
-                        items: item.databaseInstanceNames.map(name => ({ databaseInstanceName: name }))
+                        instances: item.databaseInstanceNames.map(name => ({ databaseInstanceName: name }))
                     });
                 }
             })
@@ -1899,7 +1899,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
     );
     updateLongRunningAuditGroup(undefined, undefined, auditlogResponse);
 
-    return manageResponse;
+    return { hosts: manageResponse };
 }
 
 async function unmanageDatabaseInstance(

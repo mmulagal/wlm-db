@@ -177,7 +177,7 @@ const OptimizeCard = () => {
             );
         } else if (selectedOptimizeConfig?.type === 'Network adapter settings') {
             return (
-                <TooltipInfo>
+                <TooltipInfo trigger="click">
                     <div
                         className={styles.rssConfig}
                         style={{
@@ -194,13 +194,19 @@ const OptimizeCard = () => {
                                 {setCardData?.recommendationText?.value?.second}
                             </DsTypography>
                         )}
-                        {setCardData?.recommendationText?.value?.points?.map((perPoint: any) => {
+                        {setCardData?.recommendationText?.value?.points?.map((perPoint: any, index: number) => {
                             return (
-                                <div className={styles.points}>
+                                <div
+                                    className={styles.points}
+                                    style={{ marginTop: index === 1 || index === 2 ? '16px' : '0px' }}
+                                    key={index}
+                                >
                                     <div className={styles.bullet}>
                                         <Bullet />
                                     </div>
-                                    <DsTypography variant="Regular_14">{perPoint}</DsTypography>
+                                    <DsTypography variant="Regular_14" style={{ position: 'relative', top: '2px' }}>
+                                        {perPoint}
+                                    </DsTypography>
                                 </div>
                             );
                         })}

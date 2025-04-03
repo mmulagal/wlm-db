@@ -61,6 +61,8 @@ const HostTable = () => {
 
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
+        useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
@@ -81,14 +83,18 @@ const HostTable = () => {
                 isDiscoverInProgress ||
                 fullHostDataLoading ||
                 isManagedHostListLoading ||
-                fsxCredentialStatusLoading
+                fsxCredentialStatusLoading ||
+                pgsqlDatabaseHostsLoading ||
+                pgsqlFullHostDataLoading
         );
     }, [
         databaseHostsLoading,
         isDiscoverInProgress,
         fullHostDataLoading,
         isManagedHostListLoading,
-        fsxCredentialStatusLoading
+        fsxCredentialStatusLoading,
+        pgsqlDatabaseHostsLoading,
+        pgsqlFullHostDataLoading
     ]);
 
     const handleDialog = (rowData: any) => {

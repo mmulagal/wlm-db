@@ -1765,7 +1765,7 @@ export const updateInstanceBulkStatus = (action: InstanceActions, response: any)
     response?.map((hostData: any) => {
         let successFullInstances: any = [];
         let failedInstances = [];
-        hostData?.items.map((item: any) => {
+        hostData?.instances?.map((item: any) => {
             if (item.status === NOTIFICATION_TYPES.SUCCESS) {
                 successFullInstances.push(item);
             } else {
@@ -2457,8 +2457,8 @@ export const handleManageInstances = (
         if (res?.data) {
             let successFullInstances: any = [];
             let failedInstances: any = [];
-            res?.data?.map((resource: any) => {
-                resource?.items.map((item: any) => {
+            res?.data?.hosts?.map((resource: any) => {
+                resource?.instances.map((item: any) => {
                     if (item.status === NOTIFICATION_TYPES.SUCCESS) {
                         successFullInstances.push(item);
                     } else {
@@ -2474,12 +2474,12 @@ export const handleManageInstances = (
                     rowData,
                     instances,
                     successFullInstances,
-                    res?.data?.resourceId
+                    res?.data?.hosts?.[0]?.resourceId
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else {
                 // handle prepare API
-                let errorList = res?.data?.[0]?.hostErrorMessage?.split('\n');
+                let errorList = res?.data?.hosts?.[0]?.hostErrorMessage?.split('\n');
                 let prepareApiRequired = false;
                 let sourceNodePrepareRequired = false;
                 let partnerNodeEc2Id;
@@ -2548,7 +2548,7 @@ export const handleManageInstances = (
                     }
                 } else {
                     let otherErrorList: any = null;
-                    res?.data?.[0]?.items?.map((item: any) => {
+                    res?.data?.hosts?.[0]?.instances?.map((item: any) => {
                         otherErrorList = item?.errorMessage?.split('\n') || otherErrorList;
                     });
                     handleManageNotification(instances, [], otherErrorList[0], isDetected, dispatch, styles);
@@ -2626,8 +2626,8 @@ export const handleManageInstancesBulk = (
         if (res?.data) {
             let successFullInstances: any = [];
             let failedInstances: any = [];
-            res?.data?.map((resource: any) => {
-                resource?.items.map((item: any) => {
+            res?.data?.hosts?.map((resource: any) => {
+                resource?.instances.map((item: any) => {
                     if (item.status === NOTIFICATION_TYPES.SUCCESS) {
                         successFullInstances.push(item);
                     } else {
@@ -2639,10 +2639,10 @@ export const handleManageInstancesBulk = (
                 handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
             }
 
-            const updatedInventoryTableData = updateInstanceBulkStatus('manage', res?.data);
+            const updatedInventoryTableData = updateInstanceBulkStatus('manage', res?.data?.hosts);
             dispatch(setInventoryTableData(updatedInventoryTableData));
 
-            let triggeredPrepare = handleBulkPrepareCall(res?.data, dispatch, styles, prepareHostApi);
+            let triggeredPrepare = handleBulkPrepareCall(res?.data?.hosts, dispatch, styles, prepareHostApi);
             if (triggeredPrepare) {
                 const msgObj = GENERAL.PREPARE_BULK_INSTANCES_INFO;
                 installModuleNotification(styles, dispatch, msgObj);

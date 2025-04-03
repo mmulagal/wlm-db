@@ -121,7 +121,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
                                 {truncatedItems?.remaining.length > 0 && (
                                     <>
                                         <Popover
-                                            popoverClass={styles['popover']}
+                                            popoverClass={styles['log-drive-size-popover']}
                                             children={truncatedItems?.remaining.map((item: any) => (
                                                 <Typography variant="Regular_14">{item}</Typography>
                                             ))}

@@ -7,21 +7,28 @@ resource "aws_security_group" "workload_security_group" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # Replace with Subnet CIDR
+    cidr_blocks = [var.vpc_cidr]
   }
 
   ingress {
     from_port   = 2049
     to_port     = 2049
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # Replace with Subnet CIDR
+    cidr_blocks = [var.vpc_cidr]
   }
 
   ingress {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # Replace with Subnet CIDR
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  ingress {
+    from_port   = 9999
+    to_port     = 9999
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
   }
 
   egress {
