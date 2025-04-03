@@ -185,6 +185,8 @@ export interface DatabaseHostsEntities {
         ebsCost: number;
         fsxwCost: number;
         fsxnCost: number;
+        fsxnCostForEbsHost: number;
+        fsxnCostForFsxwHost: number;
         savings: number;
         savingsPercent: any;
         noSavings: boolean;

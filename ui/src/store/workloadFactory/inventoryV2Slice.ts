@@ -1,7 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
 import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
-import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
 import {
     initialDatabaseTableColState,
     initialHostsTableColState,
@@ -19,11 +18,13 @@ const initialInventoryV2State: InventorySliceData = {
         databaseHostsLoading: false, // To check if partial database-hosts api is running
         fullHostDataLoading: false // To check if full database-hosts api is running
     },
+    multiMssqlDatabaseHostsData: null,
     getPgSqlDatabaseHosts: {
         databaseHostsData: null,
         databaseHostsLoading: false,
         fullHostDataLoading: false
     },
+    multiPgSqlDatabaseHostsData: null,
     discoveredHosts: {
         discoveredHostData: null,
         discoverHostLoading: false
@@ -144,6 +145,12 @@ const inventoryV2Slice = createSlice({
         },
         addPgSqlDatabaseHostsData: (state, action: PayloadAction<any>) => {
             state.getPgSqlDatabaseHosts.databaseHostsData = action.payload;
+        },
+        addMultiMssqlDatabaseHostsDataV2: (state, action: PayloadAction<any>) => {
+            state.multiMssqlDatabaseHostsData = action.payload;
+        },
+        addMultiPgSqlDatabaseHostsData: (state, action: PayloadAction<any>) => {
+            state.multiPgSqlDatabaseHostsData = action.payload;
         },
         setIsDiscoveredHostData: (state, action: PayloadAction<any>) => {
             state.discoveredHosts.discoveredHostData = action.payload;
@@ -285,6 +292,8 @@ const inventoryV2Slice = createSlice({
             state.hostTableRows = [];
             state.instanceTableRows = [];
             state.databaseTableRows = [];
+            state.multiMssqlDatabaseHostsData = null;
+            state.multiPgSqlDatabaseHostsData = null;
         }
     }
 });
@@ -344,7 +353,9 @@ export const {
     setDashSandboxListLoading,
     setDashSandboxSavingsData,
     setDashSandboxSavingsLoading,
-    resetRefreshData
+    resetRefreshData,
+    addMultiMssqlDatabaseHostsDataV2,
+    addMultiPgSqlDatabaseHostsData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

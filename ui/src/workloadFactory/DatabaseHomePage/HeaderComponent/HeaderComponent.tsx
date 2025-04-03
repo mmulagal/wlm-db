@@ -482,7 +482,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     }
                 });
             }
-            
+
             let perfMssqlInstancesDataLoading = false;
             if (perfMssqlInstancesData) {
                 Object.keys(perfMssqlInstancesData)?.map((key: any) => {
@@ -497,7 +497,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     }
                 });
             }
-            
+
             let potentialSavingsHostDataLoading = false;
             if (potentialSavingsHostData) {
                 Object.keys(potentialSavingsHostData)?.map((key: any) => {
@@ -512,7 +512,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     }
                 });
             }
-            
+
             if (!isMssqlInstanceDataLoading && !perfMssqlInstancesDataLoading && !potentialSavingsHostDataLoading) {
                 let newStatus = { ...multiDataStatusRef.current };
                 newStatus[currentCredId + '_' + currentRegionId] = true;
@@ -875,7 +875,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 <div className={styles.secondSelect}>
                     <DsSelect
-                        isLoading={regionsLoading}
+                        isLoading={credentialLoading || regionsLoading}
                         title=""
                         className={styles.multiSelect}
                         formatLabel={() => labelForMultiSelectRegion()}
@@ -960,7 +960,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 <div className={styles.secondSelect}>
                     <SelectField
-                        isLoading={regionsLoading}
+                        isLoading={credentialLoading || regionsLoading}
                         isClearable={false}
                         value={
                             headerSelectedRegionSandbox

@@ -45,9 +45,9 @@ const Dashboard = () => {
             </div>
 
             <div className={styles.firstSection}>
-                <PotentialSavings />
+                {/* <PotentialSavings /> */}
                 {/* To enable the new potential savings widget */}
-                {/* <NewPotentialSavings /> */}
+                <NewPotentialSavings />
                 <Sandboxes />
             </div>
 

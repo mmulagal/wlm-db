@@ -24,6 +24,7 @@ const NewPotentialSavings = () => {
     const [esCount, setEsCount] = useState<{ ebs: number; fsxw: number }>({ ebs: 0, fsxw: 0 });
     const [loading, setLoading] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
@@ -36,16 +37,25 @@ const NewPotentialSavings = () => {
         if (unManagedHostFormatedList) {
             let ebsCount = 0;
             let fsxwCount = 0;
+            let uniqueResourceList: Array<String> = [];
             unManagedHostFormatedList?.map((perRow: any) => {
+                if (
+                    !headerSelectedMultiCredIdsList?.includes(perRow?.credentialId) ||
+                    !headerSelectedMultiRegionIdsList?.includes(perRow?.regionId) ||
+                    uniqueResourceList?.includes(perRow?.ec2InstanceId)
+                ) {
+                    return;
+                }
+                uniqueResourceList.push(perRow?.ec2InstanceId);
                 if (perRow?.storageType === GENERAL.EBS) {
-                    ebsCount += perRow?.sqlServerInstances?.length;
+                    ebsCount += 1;
                 } else if (perRow?.storageType === GENERAL.FSX_FOR_WINDOWS) {
-                    fsxwCount += perRow?.sqlServerInstances?.length;
+                    fsxwCount += 1;
                 }
             });
             setEsCount({ ebs: ebsCount, fsxw: fsxwCount });
         }
-    }, [unManagedHostFormatedList]);
+    }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     useEffect(() => {
         setLoading(isDiscoverInProgress || isManagedHostListLoading || potentialSavingsValues?.loading);
@@ -139,11 +149,11 @@ const NewPotentialSavings = () => {
                         </div>
 
                         {/* chart section */}
-                        <div className={styles.chartSection} style={{ width: '280px', marginLeft: '30px' }}>
+                        <div className={styles.chartSection} style={{ width: '280px', marginLeft: '20px' }}>
                             {hasPotentialValues() ? (
                                 <ComparisonChart
                                     data={[
-                                        potentialSavingsValues?.fsxnCost || 0,
+                                        potentialSavingsValues?.fsxnCostForFsxwHost || 0,
                                         potentialSavingsValues?.fsxwCost || 0
                                     ]}
                                     yTickFormatter={yValue => '$' + formatNumberWithCustomComma(Number(yValue), true)}
@@ -171,16 +181,19 @@ const NewPotentialSavings = () => {
                         {/* Text section */}
                         <div className={styles.textSection}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
-                            <DsTypography variant="Semibold_20">21</DsTypography>
+                            <DsTypography variant="Semibold_20">{esCount?.fsxw}</DsTypography>
                             <DsTypography variant="Regular_14">SQL Server hosts on FSx for Windows</DsTypography>
                         </div>
                     </div>
                     <div className={styles.rightSide}>
                         {/* chart section */}
-                        <div className={styles.chartSection} style={{ width: '280px' }}>
+                        <div className={styles.chartSection} style={{ width: '280px', marginLeft: '20px' }}>
                             {hasPotentialValues() ? (
                                 <ComparisonChart
-                                    data={[potentialSavingsValues?.fsxnCost || 0, potentialSavingsValues?.ebsCost || 0]}
+                                    data={[
+                                        potentialSavingsValues?.fsxnCostForEbsHost || 0,
+                                        potentialSavingsValues?.ebsCost || 0
+                                    ]}
                                     yTickFormatter={yValue => '$' + formatNumberWithCustomComma(Number(yValue), true)}
                                     height={277}
                                     colors={['chart-9', 'chart-3']}
@@ -206,8 +219,10 @@ const NewPotentialSavings = () => {
                         {/* Text section */}
                         <div className={styles.textSection}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
-                            <DsTypography variant="Semibold_20">21</DsTypography>
-                            <DsTypography variant="Regular_14">SQL Server hosts on FSx for Windows</DsTypography>
+                            <DsTypography variant="Semibold_20">{esCount?.ebs}</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                SQL Server hosts on Elastic Block Store (EBS)
+                            </DsTypography>
                         </div>
                     </div>
                 </div>

@@ -3,6 +3,8 @@ import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAllMssqlHostAssessmentData,
     addDatabaseHostsDataV2,
+    addMultiMssqlDatabaseHostsDataV2,
+    addMultiPgSqlDatabaseHostsData,
     addPgSqlDatabaseHostsData,
     resetPerComboData,
     resetRefreshData,
@@ -99,6 +101,9 @@ const InventoryApisV3 = () => {
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
     const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
+    const { multiMssqlDatabaseHostsData, multiPgSqlDatabaseHostsData } = useAppSelector(state => state.inventoryV2);
+    const dashSandboxSavingsData = useAppSelector(state => state.inventoryV2.dashSandboxSavings.data);
+    const dashSandboxListData = useAppSelector(state => state.inventoryV2.dashSandboxList.data);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.data?.regionCode || '');
@@ -867,7 +872,7 @@ const InventoryApisV3 = () => {
                                 : [])
                         ];
                         if (result?.data?.nextToken) {
-                            dispatch(setDashSandboxListData(sandboxListData));
+                            dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
                             getAllSandboxListData(
                                 sandboxListData,
                                 result?.data?.nextToken,
@@ -876,16 +881,16 @@ const InventoryApisV3 = () => {
                             );
                         } else {
                             dispatch(setDashSandboxListLoading(false));
-                            dispatch(setDashSandboxListData(sandboxListData));
+                            dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
                         }
                     } else {
                         dispatch(setDashSandboxListLoading(false));
-                        dispatch(setDashSandboxListData(sandboxListData));
+                        dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
                     }
                 }
             } catch (error) {
                 dispatch(setDashSandboxListLoading(false));
-                dispatch(setDashSandboxListData(sandboxListData));
+                dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
             }
         }
     };
@@ -916,15 +921,15 @@ const InventoryApisV3 = () => {
                         };
                         sandboxSavingsData = [...sandboxSavingsData, perSandboxAPI];
                         dispatch(setDashSandboxSavingsLoading(false));
-                        dispatch(setDashSandboxSavingsData(sandboxSavingsData));
+                        dispatch(setDashSandboxSavingsData([...dashSandboxSavingsData, ...sandboxSavingsData]));
                     } else {
                         dispatch(setDashSandboxSavingsLoading(false));
-                        dispatch(setDashSandboxSavingsData(sandboxSavingsData));
+                        dispatch(setDashSandboxSavingsData([...dashSandboxSavingsData, ...sandboxSavingsData]));
                     }
                 }
             } catch (error) {
                 dispatch(setDashSandboxSavingsLoading(false));
-                dispatch(setDashSandboxSavingsData(sandboxSavingsData));
+                dispatch(setDashSandboxSavingsData([...dashSandboxSavingsData, ...sandboxSavingsData]));
             }
         }
     };
@@ -1223,6 +1228,7 @@ const InventoryApisV3 = () => {
                 }
             });
             dispatch(addDatabaseHostsDataV2(databaseHostDataObj));
+            dispatch(addMultiMssqlDatabaseHostsDataV2({ ...multiMssqlDatabaseHostsData, ...databaseHostDataObj }));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullHostData, topologyHostData, fullHostDataLoading]);
@@ -1255,6 +1261,7 @@ const InventoryApisV3 = () => {
                 }
             });
             dispatch(addPgSqlDatabaseHostsData(databaseHostDataObj));
+            dispatch(addMultiPgSqlDatabaseHostsData({ ...multiPgSqlDatabaseHostsData, ...databaseHostDataObj }));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullPgsqlHostData, pgsqlTopologyHostData, pgsqlFullHostDataLoading]);

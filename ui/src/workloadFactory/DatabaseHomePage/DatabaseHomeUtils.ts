@@ -31,7 +31,20 @@ export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZ
     let totalInstances = 0;
     let managedInstances = 0;
     let isLoading = false;
+    const state = store.getState();
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    let uniqueResourceList: Array<string> = [];
+
     Object.keys(data).map((val: string) => {
+        let keyList = val.split('_');
+        if (
+            !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
+            !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
+            uniqueResourceList.includes(keyList?.[0])
+        ) {
+            return;
+        }
+        uniqueResourceList.push(keyList?.[0]);
         totahosts += 1;
         totalInstances += data[val]?.databaseInstanceDetails?.length || 0;
         data[val]?.databaseInstanceDetails?.map((per: any) => {
@@ -83,11 +96,28 @@ export const getPotentialSavingsValues = (data: any) => {
         ebsCost: 0,
         fsxwCost: 0,
         fsxnCost: 0,
+        fsxnCostForEbsHost: 0,
+        fsxnCostForFsxwHost: 0,
         savings: 0,
         savingsPercent: 0,
         noSavings: false
     };
+
+    const state = store.getState();
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    let uniqueResourceList: Array<string> = [];
+
     Object.keys(data).map((key: string) => {
+        let keyList = key.split('_');
+        if (
+            !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
+            !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
+            uniqueResourceList.includes(keyList?.[0])
+        ) {
+            return;
+        }
+        uniqueResourceList.push(keyList?.[0]);
+
         let val = data[key];
         if (val?.loading) {
             result.loading = true;
@@ -95,8 +125,10 @@ export const getPotentialSavingsValues = (data: any) => {
         if (val?.data) {
             result.fsxnCost += val?.data?.totalSummary?.recommended || 0;
             if (val?.storageType === GENERAL.EBS) {
+                result.fsxnCostForEbsHost += val?.data?.totalSummary?.recommended || 0;
                 result.ebsCost += val?.data?.totalSummary?.existing || 0;
             } else if (val?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                result.fsxnCostForFsxwHost += val?.data?.totalSummary?.recommended || 0;
                 result.fsxwCost += val?.data?.totalSummary?.existing || 0;
             }
         }
@@ -122,7 +154,22 @@ export const getManagedAggrProtection = (data: any) => {
     let fsxOntapSnapshotsDb = 0;
     let sqlServerBackupDb = 0;
 
+    const state = store.getState();
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    let uniqueResourceList: Array<string> = [];
+
     Object.keys(data).map((key: string) => {
+        let keyList = key.split('_');
+        if (
+            !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
+            !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
+            uniqueResourceList.includes(keyList?.[0])
+        ) {
+            return;
+        }
+
+        uniqueResourceList.push(keyList?.[0]);
+
         let protectedHostDb = 0;
         let unProtectedHostDb = 0;
         let perFsxOntapSnapshotsDb = 0;
@@ -185,8 +232,22 @@ export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) =>
     let totalConsume = 0;
     let storageSavings = 0;
     let storageList: (string | undefined)[] = [];
+    const state = store.getState();
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    let uniqueResourceList: Array<string> = [];
 
     Object.keys(data).map((key: string) => {
+        let keyList = key.split('_');
+        if (
+            !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
+            !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
+            uniqueResourceList.includes(keyList?.[0])
+        ) {
+            return;
+        }
+
+        uniqueResourceList.push(keyList?.[0]);
+
         data[key]?.databaseInstancesSummary?.map((val: any) => {
             let fsxVal = val?.databaseInstanceTopology?.fileSystemId || '';
             let storageType = val?.databaseInstanceTopology?.fileSystemType || '';
@@ -215,6 +276,12 @@ export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) =>
     });
 
     sandboxSavings?.map((val: any) => {
+        if (
+            !headerSelectedMultiCredIdsList.includes(val?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(val?.regionId)
+        ) {
+            return;
+        }
         totalConsume += (val?.consumedStorage || 0) + (val?.savedStorage || 0);
         storageSavings += val?.savedStorage || 0;
     });
@@ -258,8 +325,21 @@ export const getManageAggrCost = (data: any) => {
     let vpcList: (string | undefined)[] = [];
     let requireBillingPerm = false;
     let noDeploymentChk = true;
+    const state = store.getState();
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    let uniqueResourceList: Array<string> = [];
 
     Object.keys(data).map((key: string) => {
+        let keyList = key.split('_');
+        if (
+            !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
+            !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
+            uniqueResourceList.includes(keyList?.[0])
+        ) {
+            return;
+        }
+
+        uniqueResourceList.push(keyList?.[0]);
         const val = data[key];
 
         if (val?.estimatedUsageCost?.compute) {
