@@ -695,12 +695,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
-                        >
+                        <TooltipComponent title={''} placement="bottom" width="120px" height="30px">
                             <div>
                                 <DsButton data-testid="wlm-db-optimize-crr" variant="secondary" isDisabled={true}>
                                     Optimize
