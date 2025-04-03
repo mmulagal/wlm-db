@@ -229,7 +229,7 @@ async function getSnapshotPolicyDriftData(
             timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
             status: AssessmentStatus.NOT_OPTIMIZED,
             violations: [],
-            totalObjectsAssessed: volumes.length,
+            totalObjectsAssessed: dataLogVolumeUuids.length,
             totalObjectsInViolation: 0
         };
         volumes.forEach(volume => {
