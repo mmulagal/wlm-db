@@ -1113,6 +1113,15 @@ const DialogContent = ({
                                         The base processor number will be set to 2.
                                     </DsTypography>
                                 </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        The system will be rebooted after changes to these network adapter settings.
+                                    </DsTypography>
+                                </div>
                             </div>
                         </div>
 
