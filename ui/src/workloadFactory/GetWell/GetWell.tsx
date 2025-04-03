@@ -1431,7 +1431,7 @@ const GetWell = () => {
 
                             <div className={styles.accordionGroups}>
                                 {filteredCardData?.ontap_configuration && (
-                                    <div className={styles.combineComponent}>
+                                    <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
                                         <StorageCardComponent
                                             cardData={filteredCardData?.ontap_configuration}
                                             optimizePrintState={optimizePrintState}
@@ -1497,7 +1497,7 @@ const GetWell = () => {
                                 )}
 
                                 {filteredCardData?.os_configuration && (
-                                    <div className={styles.combineComponent}>
+                                    <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
                                         <StorageCardComponent
                                             cardData={filteredCardData?.os_configuration}
                                             optimizePrintState={optimizePrintState}
