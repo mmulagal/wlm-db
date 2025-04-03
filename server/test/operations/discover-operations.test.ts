@@ -45,21 +45,23 @@ describe('Discover operations', () => {
             }
         ]);
 
-        expect(resp).toEqual([
-            {
-                resourceId: '67e09d3a49604bf2',
-                items: [
-                    {
-                        databaseInstanceName: 'NO_SUCH_INSTANCE',
-                        status: 'failed',
-                        errorMessage: 'SQL Server instance not found.'
-                    }
-                ],
-                credentialsId: CREDENTIALS_ID,
-                region: 'us-east-1',
-                ec2InstanceId: 'i-1d9i5v18g5392mf1v'
-            }
-        ]);
+        expect(resp).toEqual({
+            hosts: [
+                {
+                    resourceId: '67e09d3a49604bf2',
+                    instances: [
+                        {
+                            databaseInstanceName: 'NO_SUCH_INSTANCE',
+                            status: 'failed',
+                            errorMessage: 'SQL Server instance not found.'
+                        }
+                    ],
+                    credentialsId: CREDENTIALS_ID,
+                    region: 'us-east-1',
+                    ec2InstanceId: 'i-1d9i5v18g5392mf1v'
+                }
+            ]
+        });
     });
 
     it('Store discovered resource credentials', async () => {

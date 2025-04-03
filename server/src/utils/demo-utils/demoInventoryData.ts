@@ -514,8 +514,8 @@ const ASSESMENT_CONFIG_DATA = {
     volumes: [
         {
             name: 'wlmdb_sqldata_1728552629461',
-            autosize: 'off',
-            'autosize-mode': 'off',
+            autosize: 'on',
+            'autosize-mode': 'grow',
             'thin-provision': false,
             'tiering-policy': 'auto',
             'space-guarantee': 'volume',
@@ -528,8 +528,8 @@ const ASSESMENT_CONFIG_DATA = {
         },
         {
             name: 'wlmdb_sqltemp_1728552629461',
-            autosize: 'off',
-            'autosize-mode': 'off',
+            autosize: 'on',
+            'autosize-mode': 'grow',
             'thin-provision': false,
             'tiering-policy': 'auto',
             'space-guarantee': 'volume',
@@ -542,8 +542,8 @@ const ASSESMENT_CONFIG_DATA = {
         },
         {
             name: 'wlmdb_sqldata_1728574994',
-            autosize: 'off',
-            'autosize-mode': 'off',
+            autosize: 'on',
+            'autosize-mode': 'grow',
             'thin-provision': true,
             'tiering-policy': 'auto',
             'space-guarantee': 'volume',
