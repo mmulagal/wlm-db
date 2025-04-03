@@ -330,33 +330,24 @@ async function isFsxnAwsBackupEnabled(
                 )
             );
 
-            // Update the volumeDBMap to mark the volumes that have backups.
-            const volumeUuidsInBackups: string[] = [];
-            backups?.forEach(backup => {
-                const volumeId = backup.Volume?.VolumeId;
-                if (volumeId && uuidVolumeIdMap[volumeId]) {
-                    const volumeUuid = uuidVolumeIdMap[volumeId];
-                    if (!volumeUuidsInBackups.includes(volumeUuid)) {
-                        volumeUuidsInBackups.push(volumeUuid);
-                    }
-                }
-            });
-
             // Get the latest backup for each volume
-            const latestBackupsMap: { [volumeId: string]: Backup } = {};
+            const volUuidLastBackupMap: { [volumeUuid: string]: Backup } = {};
             if (wantLatestBackup) {
                 backups.forEach(backup => {
                     const volumeId = backup.Volume?.VolumeId;
-                    if (volumeId) {
+                    const volumeUuid = volumeId && uuidVolumeIdMap[volumeId];
+                    if (volumeUuid) {
                         if (
-                            !latestBackupsMap[volumeId] ||
-                            new Date(backup.CreationTime!) > new Date(latestBackupsMap[volumeId].CreationTime!)
+                            !volUuidLastBackupMap[volumeUuid] ||
+                            new Date(backup.CreationTime!) > new Date(volUuidLastBackupMap[volumeUuid].CreationTime!)
                         ) {
-                            latestBackupsMap[volumeId] = backup;
+                            volUuidLastBackupMap[volumeUuid] = backup;
                         }
                     }
                 });
             }
+            // Update the volumeDBMap to mark the volumes that have backups
+            const volumeUuidsInBackups = Object.keys(volUuidLastBackupMap);
 
             if (volumeDBMap) {
                 // This function maps the volumes in the volumeDBMap to their backup status,
@@ -369,9 +360,9 @@ async function isFsxnAwsBackupEnabled(
             }
 
             logger.debug('fsx backups here', backups, uuidVolumeIdMap, volumeDBMapWithBackupFlag);
-            return { volumeDBMapWithBackupFlag, volumeUuidsInBackups, latestBackupsMap };
+            return { volumeDBMapWithBackupFlag, volumeUuidsInBackups, volUuidLastBackupMap };
         }
-        return { volumeDBMapWithBackupFlag: {}, volumeUuidsInBackups: [], latestBackupsMap: {} };
+        return { volumeDBMapWithBackupFlag: {}, volumeUuidsInBackups: [], volUuidLastBackupMap: {} };
     }
 }
 

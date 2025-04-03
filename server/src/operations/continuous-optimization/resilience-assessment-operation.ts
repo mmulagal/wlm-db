@@ -363,7 +363,7 @@ async function getAwsBackupDriftData(
             ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumes as unknown as MappedOnTapVolumeResponse));
         }
 
-        const { volumeUuidsInBackups, latestBackupsMap } =
+        const { volumeUuidsInBackups, volUuidLastBackupMap } =
             (await isFsxnAwsBackupEnabled(
                 credentialsId,
                 region,
@@ -387,11 +387,11 @@ async function getAwsBackupDriftData(
             const now = Date.now();
 
             const hasRecentBackup = [...ontapVolumeSet].every(uuid => {
-                if (!backupVolumeSet.has(uuid) || !latestBackupsMap) {
+                if (!backupVolumeSet.has(uuid) || !volUuidLastBackupMap) {
                     return false;
                 }
 
-                const backup = latestBackupsMap[uuid];
+                const backup = volUuidLastBackupMap[uuid];
                 if (!backup || !backup.CreationTime) {
                     return false;
                 }
