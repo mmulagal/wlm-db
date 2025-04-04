@@ -357,7 +357,7 @@ async function handleOptimizeRssOptimization(
                 'Rollback cluster ownership transfer to primary node',
                 'Rollback cluster ownership transfer to primary node'
             );
-            handleRollbackClusterOwnership(
+            await handleRollbackClusterOwnership(
                 accountId,
                 credentialsId,
                 region,
@@ -366,6 +366,10 @@ async function handleOptimizeRssOptimization(
                 activeNodeInstanceId,
                 rollbackJobId
             );
+            await updateJobDetails(accountId, rollbackJobId, {
+                status: JOBSTATUS.COMPLETED,
+                endTime: Date.now()
+            });
         }
         throw new Error(errorMessage);
     } finally {

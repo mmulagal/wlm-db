@@ -1121,22 +1121,18 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
                     Enable-NetAdapterRss -Name $adapterName -NoRestart
                 }
                 if ($currentRssSettings.NumberOfReceiveQueues -ne $optimalRssReceiveQueues) {
-                    Write-Information "Optimizing RSS receive queues on adapter: $adapterName to $optimalRssReceiveQueues"
                     $parameters['NumberOfReceiveQueues'] = $optimalRssReceiveQueues
                 }
                 if ($currentRssSettings.BaseProcessorNumber -lt $optimalBaseProcessorNumber) {
-                    Write-Information "Optimizing RSS base processor number on adapter: $adapterName to $optimalBaseProcessorNumber"
                     $parameters['BaseProcessorNumber'] = $optimalBaseProcessorNumber
                 }
                 if ($currentRssSettings.Profile -ne $optimalRssProfile) {
-                    Write-Information "Optimizing RSS profile on adapter: $adapterName to $optimalRssProfile"
                     $parameters['Profile'] = $optimalRssProfile
                 }
                 
                 if ($parameters.Count -gt 0) {
                     Write-Information "Setting RSS best practices values on adapter: $adapterName, $parameters"
                     $parameters['Name'] = $adapterName
-                    Write-Information "Setting RSS best practices values on adapter: $adapterName, $parameters"
                     Set-NetAdapterRss @parameters -NoRestart
                 }
                 # wait for insyance to respond back to the SSM invocation before reboot
