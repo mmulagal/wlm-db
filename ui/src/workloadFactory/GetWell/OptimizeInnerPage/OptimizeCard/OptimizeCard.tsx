@@ -194,22 +194,24 @@ const OptimizeCard = () => {
                                 {setCardData?.recommendationText?.value?.second}
                             </DsTypography>
                         )}
-                        {setCardData?.recommendationText?.value?.points?.map((perPoint: any, index: number) => {
-                            return (
-                                <div
-                                    className={styles.points}
-                                    style={{ marginTop: index === 1 || index === 2 ? '16px' : '0px' }}
-                                    key={index}
-                                >
-                                    <div className={styles.bullet}>
-                                        <Bullet />
+                        <div className={styles.bulletContainer}>
+                            {setCardData?.recommendationText?.value?.points?.map((perPoint: any, index: number) => {
+                                return (
+                                    <div
+                                        className={styles.points}
+                                        style={{ marginTop: index === 3 ? '-16px' : '' }}
+                                        key={index}
+                                    >
+                                        <div className={styles.bullet}>
+                                            <Bullet />
+                                        </div>
+                                        <DsTypography variant="Regular_14" style={{ position: 'relative', top: '5px' }}>
+                                            {perPoint}
+                                        </DsTypography>
                                     </div>
-                                    <DsTypography variant="Regular_14" style={{ position: 'relative', top: '2px' }}>
-                                        {perPoint}
-                                    </DsTypography>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                         <DsTypography variant="Regular_14">{setCardData?.recommendationText?.value?.last}</DsTypography>
                     </div>
                 </TooltipInfo>
