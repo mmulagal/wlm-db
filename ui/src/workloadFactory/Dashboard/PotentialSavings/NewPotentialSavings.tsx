@@ -65,6 +65,13 @@ const NewPotentialSavings = () => {
         return potentialSavingsValues?.fsxnCost || potentialSavingsValues?.fsxwCost || potentialSavingsValues?.ebsCost;
     };
 
+    const checkForPotentialSavings = (val1: number | any, val2: number | any) => {
+        if (val1 !== 0 && val2 !== 0) {
+            return true;
+        }
+        return false;
+    };
+
     return (
         <div className={styles.potentialSavings}>
             <div className={styles.headSection}>
@@ -150,7 +157,11 @@ const NewPotentialSavings = () => {
 
                         {/* chart section */}
                         <div className={styles.chartSection} style={{ width: '280px', marginLeft: '20px' }}>
-                            {hasPotentialValues() ? (
+                            {hasPotentialValues() &&
+                            checkForPotentialSavings(
+                                potentialSavingsValues?.fsxnCostForFsxwHost,
+                                potentialSavingsValues?.fsxwCost
+                            ) ? (
                                 <ComparisonChart
                                     data={[
                                         potentialSavingsValues?.fsxnCostForFsxwHost || 0,
@@ -188,7 +199,11 @@ const NewPotentialSavings = () => {
                     <div className={styles.rightSide}>
                         {/* chart section */}
                         <div className={styles.chartSection} style={{ width: '280px', marginLeft: '20px' }}>
-                            {hasPotentialValues() ? (
+                            {hasPotentialValues() &&
+                            checkForPotentialSavings(
+                                potentialSavingsValues?.fsxnCostForEbsHost,
+                                potentialSavingsValues?.ebsCost
+                            ) ? (
                                 <ComparisonChart
                                     data={[
                                         potentialSavingsValues?.fsxnCostForEbsHost || 0,
