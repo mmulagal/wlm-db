@@ -177,7 +177,7 @@ const OptimizeCard = () => {
             );
         } else if (selectedOptimizeConfig?.type === 'Network adapter settings') {
             return (
-                <TooltipInfo trigger="click">
+                <TooltipInfo>
                     <div
                         className={styles.rssConfig}
                         style={{
