@@ -332,7 +332,7 @@ async function isFsxnAwsBackupEnabled(
             // Update the volumeDBMap to mark the volumes that have backups.
             // And the Backup is latest by 2 days
             const volumeUuidsInBackups: string[] = [];
-            const twoDaysInMs = ms('2d');
+            const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
             const now = new Date();
 
             backups?.forEach(backup => {
