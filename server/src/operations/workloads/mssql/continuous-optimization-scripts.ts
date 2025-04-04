@@ -1129,6 +1129,7 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
                 if ($currentRssSettings.Profile -ne $optimalRssProfile) {
                     $parameters['Profile'] = $optimalRssProfile
                 }
+                
                 if ($parameters.Count -gt 0) {
                     Write-Information "Setting RSS best practices values on adapter: $adapterName, $parameters"
                     $parameters['Name'] = $adapterName
