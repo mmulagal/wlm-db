@@ -44,12 +44,22 @@
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
+
+                [class*='TooltipInfo-module_tooltip-base'] {
+                    max-width: 400px !important;
+                }
             }
 
             .rssConfig {
                 display: flex;
                 gap: 16px;
                 flex-direction: column;
+
+                .bulletContainer {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 32px;
+                }
 
                 .points {
                     display: flex;
