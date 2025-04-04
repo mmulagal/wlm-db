@@ -13,10 +13,11 @@ import { getManagedInstanceOptimizationSummary } from '../../DatabaseHomePage/Da
 const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) => {
     const windowSize = useResize();
     const { allmssqlHostAssessmentLoading, allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
 
     const instanceOptimizationSummary = useMemo(() => {
         return getManagedInstanceOptimizationSummary(allmssqlHostAssessmentData);
-    }, [allmssqlHostAssessmentData]);
+    }, [allmssqlHostAssessmentData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     const ChartComponent = useMemo(() => {
         return () => (

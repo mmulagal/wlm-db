@@ -26,11 +26,22 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
         let awsBackupAssessmentData: any = [];
-        allmssqlHostAssessmentData.map((hostData: any) => {
+        let uniqueResourceList: Array<string> = [];
+        allmssqlHostAssessmentData?.map((hostData: any) => {
+            if (
+                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                uniqueResourceList.includes(hostData?.databaseHostId)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(hostData?.databaseHostId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const awsBackupObj = instanceData?.assessments?.resiliency?.awsBackup;
@@ -60,7 +71,13 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
             awsBackupAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+    }, [
+        allmssqlHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {

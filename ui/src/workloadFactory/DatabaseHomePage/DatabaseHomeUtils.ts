@@ -461,7 +461,21 @@ export const isOptimized = (status?: string) => {
 export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
     let totalInstances = 0;
     let optimizedInstances = 0;
-    assessmentData.map((databaseHost: any) => {
+
+    const state = store.getState();
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    let uniqueResourceList: Array<string> = [];
+
+    assessmentData?.map((databaseHost: any) => {
+        if (
+            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
+            uniqueResourceList.includes(databaseHost?.databaseHostId)
+        ) {
+            return;
+        }
+        uniqueResourceList.push(databaseHost?.databaseHostId);
+
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error) {
                 totalInstances++;
@@ -525,7 +539,21 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
         resiliency: 0,
         total: 0
     };
+
+    const state = store.getState();
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    let uniqueResourceList: Array<string> = [];
+
     assessmentData.map((databaseHost: any) => {
+        if (
+            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
+            uniqueResourceList.includes(databaseHost?.databaseHostId)
+        ) {
+            return;
+        }
+        uniqueResourceList.push(databaseHost?.databaseHostId);
+
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error) {
                 assessmentGroupedByCategory.total++;
@@ -611,7 +639,21 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         total: 0,
         severityObj: {}
     };
+
+    const state = store.getState();
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    let uniqueResourceList: Array<string> = [];
+
     assessmentData.map((databaseHost: any) => {
+        if (
+            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
+            uniqueResourceList.includes(databaseHost?.databaseHostId)
+        ) {
+            return;
+        }
+        uniqueResourceList.push(databaseHost?.databaseHostId);
+
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error) {
                 getAssessmentGroupedByConfigurations.total++;
@@ -764,8 +806,19 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
 
     const state = store.getState();
     const { inventoryTableData, getDatabaseHosts } = state.inventoryV2;
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    let uniqueResourceList: Array<string> = [];
 
     assessmentData.map((databaseHost: any) => {
+        if (
+            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
+            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
+            uniqueResourceList.includes(databaseHost?.databaseHostId)
+        ) {
+            return;
+        }
+        uniqueResourceList.push(databaseHost?.databaseHostId);
+
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error) {
                 let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instance?.assessments, {});

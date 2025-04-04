@@ -807,7 +807,7 @@ const InventoryApisV3 = () => {
                 ) {
                     if (result && !result?.error) {
                         assessmentData = [
-                            ...assessmentData,
+                            // ...assessmentData,
                             ...(Array.isArray(result?.data?.assessmentsPerAccount)
                                 ? result.data.assessmentsPerAccount.map((assessment: any) => ({
                                       ...assessment,
@@ -1400,8 +1400,8 @@ const InventoryApisV3 = () => {
     useEffect(() => {
         if (!refreshBlocked) {
             // Below is required for multi cred and region - as it was creating duplicate so fixed now but will change for multi cred
-            // dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentDataS, ...allmssqlHostAssessmentData]));
-            dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentData]));
+            dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentDataS, ...allmssqlHostAssessmentData]));
+            // dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentData]));
         }
     }, [allmssqlHostAssessmentData]);
 };

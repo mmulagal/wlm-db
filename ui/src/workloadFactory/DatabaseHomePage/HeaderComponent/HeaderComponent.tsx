@@ -94,13 +94,7 @@ import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
 import {
-    addAllMssqlHostAssessmentData,
     resetRefreshData,
-    setDashSandboxListData,
-    setDashSandboxSavingsData,
-    setFsxCredentialStatus,
-    setInventoryTableData,
-    setInventoryTablesRows,
     setIsRefreshed,
     setSelectedHeaderTab
 } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -1450,14 +1444,19 @@ const HeaderComponent = ({ tab }: Tab) => {
             {/* Will enable this once multi cred and region is ready
              */}
 
-            {pendingQueriesCounter > 0 && (
-                <FetchingDataNotification
-                    pendingQueriesCounter={pendingQueriesCounter}
-                    completedTask={currentIndex}
-                    regions={currentRegion}
-                    credentials={currentCred}
-                />
-            )}
+            {pendingQueriesCounter > 0 &&
+                (selectedHeaderTab === WLF_TABS.INVENTORY ||
+                    selectedHeaderTab === WLF_TABS.DASHBOARD ||
+                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
+                    <FetchingDataNotification
+                        pendingQueriesCounter={pendingQueriesCounter}
+                        completedTask={currentIndex}
+                        regions={currentRegion}
+                        credentials={currentCred}
+                    />
+                )}
         </div>
     ) : (
         <Marketing />

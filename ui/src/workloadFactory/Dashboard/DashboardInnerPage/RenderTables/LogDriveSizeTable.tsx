@@ -27,11 +27,22 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
+        let uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
+            if (
+                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                uniqueResourceList.includes(hostData?.databaseHostId)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(hostData?.databaseHostId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const logDriveSizeObj = instanceData?.assessments?.storage?.sizing?.find(
@@ -64,7 +75,13 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
             storageTierAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+    }, [
+        allmssqlHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {

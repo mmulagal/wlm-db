@@ -280,8 +280,6 @@ const inventoryV2Slice = createSlice({
             state.managedAssessmentHostIdsList = [];
             state.perfMssqlInstancesData = {};
             state.managedAssessmentHostData = {};
-            state.allmssqlHostAssessmentData = [];
-            state.potentialSavingsHostData = {};
         },
         resetRefreshData: (state, action: PayloadAction<any>) => {
             state.inventoryTableData = null;
@@ -294,6 +292,7 @@ const inventoryV2Slice = createSlice({
             state.databaseTableRows = [];
             state.multiMssqlDatabaseHostsData = null;
             state.multiPgSqlDatabaseHostsData = null;
+            state.potentialSavingsHostData = {};
         }
     }
 });
