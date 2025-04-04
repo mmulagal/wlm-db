@@ -232,7 +232,7 @@ async function handleComputeRemediation(
                             COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
                         );
                         let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
-                        ownerNodes = ownerNodes?.split(',');
+                        ownerNodes = Array.isArray(ownerNodes) ? ownerNodes : ownerNodes?.split(',');
                         const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
                         clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
                         // pick one of the nodes in the cluster to transfer primary node ownership
@@ -412,20 +412,20 @@ async function handleComputeRemediation(
                 }
             }
 
-            const checkRunningResponse = await checkRunningStatus(
-                accountId,
-                jobId,
-                region,
-                credentialsId,
-                activeNodeInstanceId,
-                formattedInstanceName
-            );
+            // const checkRunningResponse = await checkRunningStatus(
+            //     accountId,
+            //     jobId,
+            //     region,
+            //     credentialsId,
+            //     activeNodeInstanceId,
+            //     formattedInstanceName
+            // );
 
-            if (!checkRunningResponse.running) {
-                subJobErrorMessage = checkRunningResponse.error;
-                anySubJobFailed = true;
-                throw checkRunningResponse.error;
-            }
+            // if (!checkRunningResponse.running) {
+            //     subJobErrorMessage = checkRunningResponse.error;
+            //     anySubJobFailed = true;
+            //     throw checkRunningResponse.error;
+            // }
 
             // update metadata after successful optimization
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
@@ -967,7 +967,7 @@ async function transferClusterOwnershipToStandbyNode(
             COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
         );
         let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
-        ownerNodes = ownerNodes?.split(',');
+        ownerNodes = Array.isArray(ownerNodes) ? ownerNodes : ownerNodes?.split(',');
         const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
         clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
         // pick one of the nodes in the cluster to transfer primary node ownership
@@ -1045,14 +1045,23 @@ async function handleRollbackClusterOwnership(
             endTime: Date.now()
         });
     } catch (error) {
+        const errorMessage = `Error while rolling back compute cluster group ownership ${error}`;
+        logger.error(errorMessage);
         if (rollbackClusterOwnershipJobId) {
             await updateJobDetails(accountId, rollbackClusterOwnershipJobId, {
                 status: JOBSTATUS.FAILED,
-                endTime: Date.now()
+                endTime: Date.now(),
+                error: errorMessage
             });
         }
-        logger.error(`Error while rolling back compute cluster group ownership ${error}`);
-        throw createError(500, `Error while rolling back compute cluster group ownership ${error}`);
+        if (rollBackJobId) {
+            await updateJobDetails(accountId, rollBackJobId, {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now(),
+                error: errorMessage
+            });
+        }
+        throw Error(`Error while rolling back compute cluster group ownership ${error}`);
     }
 }
 

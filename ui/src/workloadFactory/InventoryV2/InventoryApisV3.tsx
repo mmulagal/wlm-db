@@ -1294,7 +1294,9 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         if (!refreshBlocked) {
-            dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentDataS, ...allmssqlHostAssessmentData]));
+            // Below is required for multi cred and region - as it was creating duplicate so fixed now but will change for multi cred
+            // dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentDataS, ...allmssqlHostAssessmentData]));
+            dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentData]));
         }
     }, [allmssqlHostAssessmentData]);
 };

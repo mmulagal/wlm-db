@@ -68,11 +68,7 @@ const OptimizeInnerPage = () => {
     const userNavigated = useRef(false);
 
     const buttonComponent = (rowData: any) => {
-        if (
-            selectedOptimizeConfig?.type === 'Data files' ||
-            selectedOptimizeConfig?.type === 'Log files' ||
-            selectedOptimizeConfig?.type === GENERAL.CRR
-        ) {
+        if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
             return (
                 <Popover
                     isAppendedToBody={true}
@@ -86,6 +82,13 @@ const OptimizeInnerPage = () => {
                         </DsButton>
                     }
                 />
+            );
+        }
+        if (selectedOptimizeConfig?.type === GENERAL.CRR) {
+            return (
+                <DsButton isThin variant="secondary" isDisabled={true}>
+                    Optimize
+                </DsButton>
             );
         } else if (
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&

@@ -60,7 +60,7 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                     className={styles.desc}
                     style={{
                         //@ts-ignore
-                        whiteSpace: from === 'dashboard' && cardName === 'compute_right_sizing' ? '' : 'pre-wrap',
+                        whiteSpace: 'pre-wrap',
                         width: from === 'dashboard' ? 'unset' : '1400px'
                     }}
                 >

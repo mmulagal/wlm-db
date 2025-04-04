@@ -105,43 +105,27 @@ const GetWell = () => {
     const handleSelect = (filters: any, filterLabel: any) => {
         let updatedFilters = [...optimizeFilterTags];
 
-        if (defaultFilterOptions[filterLabel] && defaultFilterOptions[filterLabel]?.length > filters?.length) {
-            const idArray = filters.map((item: any) => item.id);
+        const selectedIds = new Set(filters.map((filter: any) => filter.id));
 
-            const findRemovedElement = defaultFilterOptions[filterLabel].filter((item: any) => !idArray.includes(item));
+        updatedFilters = updatedFilters.filter(
+            (filter: any) => !(filter.type === filterLabel && !selectedIds.has(filter.id))
+        );
 
-            const typeToRemove = filterLabel;
-            const idsToRemove = findRemovedElement;
-
-            const filteredArray = updatedFilters.filter(
-                (item: any) => !(idsToRemove.includes(item.id) && item.type === typeToRemove)
+        filters.forEach((filter: any) => {
+            const existingFilterIndex = updatedFilters.findIndex(
+                (selectedFilter: any) => selectedFilter.value === filter.value && selectedFilter.type === filterLabel
             );
 
-            const reArrange = groupByType(filteredArray);
-            dispatch(setOptimizeFilterTags(filteredArray));
-            dispatch(setDefaultFilterOptions(reArrange));
-        } else {
-            filters.forEach((filter: any) => {
-                const isSelected = optimizeFilterTags.some(
-                    (selectedFilter: any) => selectedFilter.value === filter.value
-                );
+            if (existingFilterIndex === -1) {
+                updatedFilters.push({ ...filter, type: filterLabel });
+            }
+        });
 
-                if (isSelected) {
-                    // Remove the filter if it is already selected
-                    updatedFilters = updatedFilters.filter(selectedFilter => selectedFilter.label !== filter.label);
-                } else {
-                    // Add the filter if it is not selected
-                    updatedFilters.push({ ...filter, type: filterLabel });
-                }
-            });
+        const uniqueArray = getUniqueEntries([updatedFilters]);
+        const reArrange = groupByType(uniqueArray);
 
-            const uniqueArray = getUniqueEntries([optimizeFilterTags, updatedFilters]);
-
-            const reArrange = groupByType(uniqueArray);
-
-            dispatch(setOptimizeFilterTags(uniqueArray));
-            dispatch(setDefaultFilterOptions(reArrange));
-        }
+        dispatch(setOptimizeFilterTags(uniqueArray));
+        dispatch(setDefaultFilterOptions(reArrange));
     };
 
     const handleCancelFilter = (option: any) => {
@@ -1447,7 +1431,7 @@ const GetWell = () => {
 
                             <div className={styles.accordionGroups}>
                                 {filteredCardData?.ontap_configuration && (
-                                    <div className={styles.combineComponent}>
+                                    <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
                                         <StorageCardComponent
                                             cardData={filteredCardData?.ontap_configuration}
                                             optimizePrintState={optimizePrintState}
@@ -1496,7 +1480,7 @@ const GetWell = () => {
                                                                     : 'var(--text-button-primary)'
                                                         }}
                                                     >
-                                                        View recommendation & optimization
+                                                        View recommendations & optimizations
                                                     </div>
                                                 </div>
                                             ]}
@@ -1513,7 +1497,7 @@ const GetWell = () => {
                                 )}
 
                                 {filteredCardData?.os_configuration && (
-                                    <div className={styles.combineComponent}>
+                                    <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
                                         <StorageCardComponent
                                             cardData={filteredCardData?.os_configuration}
                                             optimizePrintState={optimizePrintState}
@@ -1561,7 +1545,7 @@ const GetWell = () => {
                                                                     : 'var(--text-button-primary)'
                                                         }}
                                                     >
-                                                        View recommendation & optimization
+                                                        View recommendations & optimizations
                                                     </div>
                                                 </div>
                                             ]}

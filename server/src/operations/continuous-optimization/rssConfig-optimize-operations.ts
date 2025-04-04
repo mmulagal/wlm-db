@@ -4,8 +4,12 @@ import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import getLogger from '../../utils/logger';
 import { Metadata, RssConfigAssesment } from '../../utils/common-types';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
-import { OPTIMIZATION_CATEGORIES } from '../../utils/continous-optimization-consts';
-import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
+import {
+    AssessmentCategories,
+    AssessmentTriggeredBy,
+    OPTIMIZATION_CATEGORIES
+} from '../../utils/continous-optimization-consts';
+import { getServerNameWithHostname, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../../utils/utils';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { OPTIMIZE_NETWORK_ADAPTERS } from '../workloads/mssql/continuous-optimization-scripts';
@@ -18,10 +22,9 @@ import {
     moveClusterGroupOwnership,
     transferClusterOwnershipToStandbyNode
 } from './compute-optimize-operations';
-import { startInstance, stopInstance, waitForInstanceOk } from '../../lib/aws/ec2';
+import { waitForInstanceOk } from '../../lib/aws/ec2';
 import { AuditStatus } from '../../utils/consts';
-import { managedHostsRssConfigAssessment } from './rssConfig-assessment-operations';
-import { waitForInstanceToBeStopped } from '../aws/ec2-operations';
+import { onDemandTriggerDriftAssessmentDataCollection } from '../cont-opt-assessment-operations';
 
 const logger = getLogger();
 async function optimizeNetworkAdapters(
@@ -58,12 +61,11 @@ async function optimizeNetworkAdapters(
             logger.error(msg, ssmError);
             throw new Error(msg);
         }
-        await stopInstance(credentialsId, region, instanceId);
-        if (!isDemo()) {
-            await waitForInstanceToBeStopped(credentialsId, region, instanceId);
-        }
-        await startInstance(credentialsId, region, instanceId);
         await waitForInstanceOk(credentialsId, region, instanceId);
+        if (!isDemo()) {
+            // Wait for 30 seconds to allow FCI setup to come online after ec2 is online
+            await sleep(30000);
+        }
     } catch (error) {
         errMsg = (error as Error).message;
         throw new Error(errMsg);
@@ -77,7 +79,8 @@ async function handleOptimizeRssOptimization(
     databaseHostId: string,
     databaseInstanceId: string,
     networkAdapters: string[],
-    parentJobId?: string | undefined
+    parentJobId?: string | undefined,
+    masterOptimizeJobParentId?: string | undefined
 ) {
     // create a parent job for network adapter optimization
     logger.info('optimizing RSS config for:', { databaseHostId, databaseInstanceId, credentialsId, region });
@@ -169,16 +172,18 @@ async function handleOptimizeRssOptimization(
                 try {
                     // Currently, assessment runs on active node only. So network adapters from standby node aren't available to UI
                     // Hence, we are optimizing all network adapters no the standby node instances
-                    nonPrimaryNodeInstanceIds.forEach(async instanceId => {
-                        await optimizeNetworkAdapters(
-                            accountId,
-                            credentialsId,
-                            region,
-                            databaseHostId,
-                            instanceId,
-                            resourceName!
-                        );
-                    });
+                    await Promise.all(
+                        nonPrimaryNodeInstanceIds.map(async instanceId => {
+                            await optimizeNetworkAdapters(
+                                accountId,
+                                credentialsId,
+                                region,
+                                databaseHostId,
+                                instanceId,
+                                resourceName!
+                            );
+                        })
+                    );
                     await updateJobDetails(accountId, jobId, {
                         status: JOBSTATUS.COMPLETED,
                         endTime: Date.now()
@@ -231,7 +236,7 @@ async function handleOptimizeRssOptimization(
                         error: errMsg
                     });
                     isAnySubjobFailed = true;
-                    throw error;
+                    throw new Error(errMsg);
                 }
             }
             // Optimizing network adapters of primary nodes
@@ -256,6 +261,7 @@ async function handleOptimizeRssOptimization(
                 parentJobId,
                 jobMetadata
             );
+
             try {
                 await optimizeNetworkAdapters(
                     accountId,
@@ -266,6 +272,11 @@ async function handleOptimizeRssOptimization(
                     resourceName!,
                     networkAdapters
                 );
+
+                await updateJobDetails(accountId, jobId, {
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now()
+                });
             } catch (error) {
                 isAnySubjobFailed = true;
                 await updateJobDetails(accountId, jobId, {
@@ -316,16 +327,17 @@ async function handleOptimizeRssOptimization(
                 resourceMeta.isRssConfigOptimized = optimizedAdapters;
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
+
             // Trigger assessment after optimize
-            await managedHostsRssConfigAssessment(
+            await onDemandTriggerDriftAssessmentDataCollection(
                 accountId,
                 credentialsId,
                 region,
-                activeNodeInstanceId,
-                resourceName!,
                 databaseHostId,
-                parentJobId,
-                metadata as unknown as Metadata
+                databaseInstanceId,
+                AssessmentTriggeredBy.SYSTEM,
+                AssessmentCategories.RSS_CONFIG,
+                masterOptimizeJobParentId
             );
         }
     } catch (error) {
@@ -352,6 +364,7 @@ async function handleOptimizeRssOptimization(
                 rollbackJobId
             );
         }
+        throw new Error(errorMessage);
     } finally {
         updateLongRunningAuditGroup(
             isAnySubjobFailed ? AuditStatus.FAILED : AuditStatus.SUCCESS,

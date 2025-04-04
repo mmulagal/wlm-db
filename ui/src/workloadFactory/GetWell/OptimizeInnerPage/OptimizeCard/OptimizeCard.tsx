@@ -194,16 +194,24 @@ const OptimizeCard = () => {
                                 {setCardData?.recommendationText?.value?.second}
                             </DsTypography>
                         )}
-                        {setCardData?.recommendationText?.value?.points?.map((perPoint: any) => {
-                            return (
-                                <div className={styles.points}>
-                                    <div className={styles.bullet}>
-                                        <Bullet />
+                        <div className={styles.bulletContainer}>
+                            {setCardData?.recommendationText?.value?.points?.map((perPoint: any, index: number) => {
+                                return (
+                                    <div
+                                        className={styles.points}
+                                        style={{ marginTop: index === 3 ? '-16px' : '' }}
+                                        key={index}
+                                    >
+                                        <div className={styles.bullet}>
+                                            <Bullet />
+                                        </div>
+                                        <DsTypography variant="Regular_14" style={{ position: 'relative', top: '5px' }}>
+                                            {perPoint}
+                                        </DsTypography>
                                     </div>
-                                    <DsTypography variant="Regular_14">{perPoint}</DsTypography>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                         <DsTypography variant="Regular_14">{setCardData?.recommendationText?.value?.last}</DsTypography>
                     </div>
                 </TooltipInfo>
