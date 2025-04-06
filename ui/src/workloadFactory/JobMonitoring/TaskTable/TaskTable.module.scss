@@ -101,3 +101,23 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .taskTable {
+        .firstItem {
+            width: 48.86%;
+        }
+
+        .thirdItem {
+            width: 15.35%;
+        }
+
+        .fourthItem {
+            width: 16.02%;
+        }
+
+        .fifthItem {
+            width: 19.77%;
+        }
+    }
+}

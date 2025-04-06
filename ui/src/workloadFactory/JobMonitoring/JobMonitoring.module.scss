@@ -69,6 +69,11 @@
         max-width: 1612px;
     }
 
+    .chartSection {
+        width: 49.8%;
+        max-width: 790px;
+    }
+
     .overtimeJobs {
         width: 49.8%;
         max-width: 790px;
@@ -120,6 +125,27 @@
 
             [class*='lineChart'] {
                 width: 470px;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .jobMonitoring {
+        .chartContainer {
+            max-width: unset;
+        }
+
+        .chartSection {
+            max-width: unset;
+        }
+
+        .overtimeJobs {
+            max-width: unset;
+        }
+        .tableSection {
+            [class*='table'] {
+                max-width: unset;
             }
         }
     }
