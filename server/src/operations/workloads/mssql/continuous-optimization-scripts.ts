@@ -1287,13 +1287,14 @@ const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
     
     $snapshotPoliciesUri = '/storage/snapshot-policies'
     $snapshotPoliciesQueryFields = 'fields=svm,scope,copies'
+    $snapshotPoliciesQueryFilter = 'enabled=true'
     
     $snapshotScheduleUri = '/cluster/schedules'
     $snapshotScheduleQueryFields = 'fields=uuid,interval,cron'
     ${ontapRestRequest}
     try {
         Write-Information "Fetching ONTAP snapshot policies for FSx ID: $FSxID FSX region: $FSxRegion"
-        $response['response']['snapshotPolicies'] = Invoke-ONTAPRequest -ApiEndpoint $snapshotPoliciesUri -ApiQueryFields $snapshotPoliciesQueryFields
+        $response['response']['snapshotPolicies'] = Invoke-ONTAPRequest -ApiEndpoint $snapshotPoliciesUri -ApiQueryFields $snapshotPoliciesQueryFields -ApiQueryFilter $snapshotPoliciesQueryFilter
     } catch {
         Write-Information "Error occurred while fetching ONTAP snapshot policies. Error: $_.Exception.Message"
         $response['errors']['snapshotPolicies'] = $_.Exception.Message
