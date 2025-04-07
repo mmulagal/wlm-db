@@ -13,7 +13,7 @@ import { mockClient } from 'aws-sdk-client-mock';
 import fsxFileSystemsResponse from '../../responses/aws/list-fsx-filesystems.json';
 import fsxVolumesResponse from '../../responses/aws/list-fsx-volumes.json';
 import fsxSVMResponse from '../../responses/aws/list-fsx-svms.json';
-import fsxnBackupResponse from '../../responses/aws/list-fsxn-backups.json';
+import fsxnBackupResponse from '../../responses/aws/list-fsxn-backups';
 import fsxwBackupResponse from '../../responses/aws/list-fsxw-backups.json';
 import fsxResourceTagsResponse from '../../responses/aws/list-fsx-resource-tags.json';
 import fsxUpdateFileSystemResponse from '../../responses/aws/fsx-update-filesystem.json';

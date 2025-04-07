@@ -4,11 +4,11 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { faker } from '@faker-js/faker';
-import { ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
+import { DescribeBackupsCommandOutput, ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
 import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.json';
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import fsxSvms from '../../simulator/responses/aws/list-fsx-svms.json';
-import fsxnBackups from '../../simulator/responses/aws/list-fsxn-backups.json';
+import fsxnBackupResponse from '../../simulator/responses/aws/list-fsxn-backups';
 import fsxwBackups from '../../simulator/responses/aws/list-fsxw-backups.json';
 import fsxResourceTagsResponse from '../../simulator/responses/aws/list-fsx-resource-tags.json';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
@@ -58,7 +58,15 @@ describe('Testcases for Amazon FSx resources', () => {
                 }
             ]
         });
-        expect(response).toEqual(fsxnBackups);
+
+        function ignoreCreationTime(backups: DescribeBackupsCommandOutput) {
+            return backups.Backups?.map(backup => {
+                const { CreationTime, ...rest } = backup;
+                return rest;
+            });
+        }
+
+        expect(ignoreCreationTime(response)).toEqual(ignoreCreationTime(fsxnBackupResponse));
     });
 
     it('List FSx windows Backups', async () => {
