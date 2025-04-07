@@ -186,23 +186,29 @@ const AdditionalCloneParameterDriftResponse = Type.Optional(
         cloneInInstances: Type.Optional(
             Type.Array(
                 Type.Object({
-                    sandboxName: Type.Optional(Type.String()),
                     databaseHostName: Type.String(),
                     databaseHostId: Type.String(),
                     databaseInstanceName: Type.String(),
                     sourceDatabaseHostName: Type.Optional(Type.String()),
                     sourceDatabaseInstanceName: Type.Optional(Type.String()),
                     sourceDatabaseName: Type.Optional(Type.String()),
-                    cloneVolumeName: Type.Optional(Type.String()),
-                    cloneVolumeUuid: Type.Optional(Type.String()),
-                    cloneVolumeCreateTime: Type.Optional(Type.String()),
-                    cloneParentVolumeName: Type.Optional(Type.String()),
                     cloneDatabaseName: Type.Optional(Type.String()),
-                    cloneName: Type.Optional(Type.String()),
                     cloneSize: Type.Optional(Type.String()),
                     cloneAge: Type.Optional(Type.Number()),
                     clonedBy: Type.Optional(Type.String()),
-                    tags: Type.Optional(Type.String())
+                    tags: Type.Optional(Type.String()),
+                    clonedVolumeDetails: Type.Optional(
+                        Type.Array(
+                            Type.Object({
+                                cloneVolumeUuid: Type.Optional(Type.String()),
+                                cloneVolumeName: Type.Optional(Type.String()),
+                                cloneVolumeCreateTime: Type.Optional(Type.String()),
+                                sourceVolumeName: Type.Optional(Type.String()),
+                                cloneDatabaseName: Type.Optional(Type.String()),
+                                cloneVolumeType: Type.Optional(Type.String())
+                            })
+                        )
+                    )
                 })
             )
         ),
