@@ -1011,7 +1011,7 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
-            
+
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
                 return <ScheduledAWSBackupDialog type={type} />;
             case ASSESSMENT_CONFIG_NAMES.MAXDOP:
@@ -1091,7 +1091,8 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        The number of receive queues will be set to 8 if the number of vCPUs is greater than 8, or to the number of vCPUs if it is 8 or fewer.
+                                        The number of receive queues will be set to 8 if the number of vCPUs is greater
+                                        than 8, or to the number of vCPUs if it is 8 or fewer.
                                     </DsTypography>
                                 </div>
 
@@ -1109,7 +1110,16 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        The base processor number will be set to 2. 
+                                        The base processor number will be set to 2.
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        The system will be rebooted after changes to these network adapter settings.
                                     </DsTypography>
                                 </div>
                             </div>
@@ -1117,21 +1127,39 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                {GENERAL.NOTE}
+                                {selectedDatabaseStorageType === 'FCI'
+                                    ? GENERAL.NOTE
+                                    : GETWELL_DIALOG_CONTENT.DOWNTIME_WARNING}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
                                     </div>
-                                    <DsTypography variant="Regular_14">{GENERAL.NOTE_PONT_ONE}</DsTypography>
+                                    {selectedDatabaseStorageType === 'FCI' ? (
+                                        <DsTypography variant="Regular_14">
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_FCI[0]}
+                                        </DsTypography>
+                                    ) : (
+                                        <DsTypography variant="Regular_14">
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_STANDALONE[0]}
+                                        </DsTypography>
+                                    )}
                                 </div>
 
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
                                     </div>
-                                    <DsTypography variant="Regular_14">{GENERAL.NOTE_PONT_TWO}</DsTypography>
+                                    {selectedDatabaseStorageType === 'FCI' ? (
+                                        <DsTypography variant="Regular_14">
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_FCI[1]}
+                                        </DsTypography>
+                                    ) : (
+                                        <DsTypography variant="Regular_14">
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_STANDALONE[1]}
+                                        </DsTypography>
+                                    )}
                                 </div>
                             </div>
                         </div>

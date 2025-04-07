@@ -282,8 +282,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
-                jobId,
                 databaseHostId,
+                jobId,
                 metadata as unknown as Metadata
             );
         }
@@ -371,7 +371,7 @@ async function initiateComputeLicenseAssessmentCollection(
                 mssqlPatch: mssqlPatchAssessment || undefined,
                 lastAssessedDate: new Date().getTime().toString()
             };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
         if (!isEmpty(hostOsPatchAssessment)) {
             updatePatchBaselineStatusForHost(accountId, databaseHostId, hostOsPatchAssessment);
@@ -411,7 +411,7 @@ async function initiateStorageAssessmentCollection(
     )?.UUID;
 
     if (isEmpty(instanceVolumeMapping)) {
-        const errorMessage = `No ONTAP volumes found for the instance ${instanceRecord.name}.`;
+        const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -577,6 +577,16 @@ async function driftAssessmentDataCollection(
     }
 
     if (shouldRunStorageAssessment || shouldRunResilienceAssessment) {
+        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            databaseInstanceRecord.fsxFileSystem
+        );
+
+        databaseInstanceRecord.svmOntapUuid = svms.find(svm =>
+            isDemoFlow ? svm : svm?.StorageVirtualMachineId === databaseInstanceRecord.svmId
+        )?.UUID;
+
         const instanceVolumeMapping = (await getMappedOntapVolumes(
             credentialsId,
             region,
@@ -831,7 +841,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     );
 
                     if (assessmentErrors.length === managedInstances.length) {
-                        const errorMessage = `No managed instance is up and running in account ${accountId}.`;
+                        const errorMessage = `No managed instances are online and running in account ${accountId}.`;
                         logger.info(errorMessage);
                         await updateJobDetails(accountId, parentJobId, {
                             status: JOBSTATUS.WARNING,
@@ -1145,7 +1155,7 @@ async function fetchDriftAssessment(
             const computeConfigsOptimized = (metadata as unknown as Metadata).isComputeOptimized;
             if (computeConfigsOptimized) {
                 computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
-                computeAssessmentResponse.recommendation = 'Your current instance is optimized for your workload.';
+                computeAssessmentResponse.recommendation = 'Optimized instance for your workload.';
                 driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
             }
         }

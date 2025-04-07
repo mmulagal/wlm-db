@@ -453,6 +453,7 @@ interface StorageAssessment {
         'tempdb-files-location': string;
         'default-log-files-location': string;
         'default-data-files-location': string;
+        'data-tempdb-drive-details': string;
     };
 }
 

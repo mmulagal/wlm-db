@@ -128,7 +128,7 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             Header: 'Base processor',
             accessor: 'baseProcessorNumberStatus',
             id: '7',
-            width: '174px',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return (

@@ -231,7 +231,10 @@ async function handleComputeRemediation(
                             undefined,
                             COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
                         );
-                        const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
+                        let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
+                        ownerNodes = Array.isArray(ownerNodes) ? ownerNodes : ownerNodes?.split(',');
+                        const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
+                        clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
                         // pick one of the nodes in the cluster to transfer primary node ownership
                         let targetNodeName;
                         for (const nodeName of clusterNodes) {
@@ -261,7 +264,7 @@ async function handleComputeRemediation(
                         );
                         try {
                             // move all cluster groups to the selected node
-                            if (targetNodeName) {
+                            if (targetNodeName && ownerNode) {
                                 const nodesTransferred = await moveClusterGroupOwnership(
                                     credentialsId,
                                     region,
@@ -412,7 +415,6 @@ async function handleComputeRemediation(
             // const checkRunningResponse = await checkRunningStatus(
             //     accountId,
             //     jobId,
-            //     instanceName,
             //     region,
             //     credentialsId,
             //     activeNodeInstanceId,
@@ -494,7 +496,6 @@ async function handleComputeRemediation(
 async function checkRunningStatus(
     accountId: string,
     parentJobId: string,
-    instanceName: string,
     region: string,
     credentialsId: string,
     activeNodeInstanceId: string,
@@ -504,7 +505,6 @@ async function checkRunningStatus(
         accountId,
         credentialsId,
         region,
-        instanceName,
         parentJobId,
         activeNodeInstanceId
     });
@@ -523,7 +523,7 @@ async function checkRunningStatus(
     const rawStatusResponse = await callSsmExecution(
         credentialsId,
         region,
-        [CHECK_RUNNING_STATUS_WITH_RESTART(instanceName)],
+        [CHECK_RUNNING_STATUS_WITH_RESTART('MSSQLSERVER')],
         activeNodeInstanceId,
         'Checking running status of the service',
         accountId,
@@ -531,30 +531,43 @@ async function checkRunningStatus(
         COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
     );
 
-    let statusResponse: { status: string; error?: string };
+    let outStatus: { running: boolean; error?: string } = {
+        running: true
+    };
+    let jobDetails: { status: string; error?: string } = {
+        status: JOBSTATUS.COMPLETED,
+        error: ''
+    };
+    let statusResponse: { status: string; error?: string } = { status: '', error: '' };
+
     try {
-        const cleanStatusResponse = rawStatusResponse.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
+        const cleanStatusResponse = sqlResponseParsing(rawStatusResponse);
         statusResponse = JSON.parse(cleanStatusResponse);
+
+        jobDetails = {
+            status: statusResponse.status === 'Running' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
+            error: statusResponse.status !== 'Running' ? statusResponse.error : undefined
+        };
+
+        outStatus = { running: statusResponse.status === 'Running', error: statusResponse.error || '' };
     } catch (error) {
         logger.error('Error parsing query response:', rawStatusResponse);
-        return { running: false, error: 'Error parsing SSM query response' };
-    }
-
-    if (statusResponse.status !== 'Running') {
-        await updateJobDetails(accountId, checkRunningJobId, {
+        jobDetails = {
             status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
             error: statusResponse.error
-        });
-        return { running: false, error: statusResponse.error };
-    }
+        };
 
+        outStatus = {
+            running: false,
+            error: statusResponse.error
+        };
+    }
     await updateJobDetails(accountId, checkRunningJobId, {
-        status: JOBSTATUS.COMPLETED,
+        ...jobDetails,
         endTime: Date.now()
     });
 
-    return { running: true, error: '' };
+    return outStatus;
 }
 
 export default async function optimizeCompute(
@@ -953,7 +966,10 @@ async function transferClusterOwnershipToStandbyNode(
             undefined,
             COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
         );
-        const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
+        let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
+        ownerNodes = Array.isArray(ownerNodes) ? ownerNodes : ownerNodes?.split(',');
+        const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
+        clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
         // pick one of the nodes in the cluster to transfer primary node ownership
         let targetNodeName;
         for (const nodeName of clusterNodes) {
@@ -1029,14 +1045,23 @@ async function handleRollbackClusterOwnership(
             endTime: Date.now()
         });
     } catch (error) {
+        const errorMessage = `Error while rolling back compute cluster group ownership ${error}`;
+        logger.error(errorMessage);
         if (rollbackClusterOwnershipJobId) {
             await updateJobDetails(accountId, rollbackClusterOwnershipJobId, {
                 status: JOBSTATUS.FAILED,
-                endTime: Date.now()
+                endTime: Date.now(),
+                error: errorMessage
             });
         }
-        logger.error(`Error while rolling back compute cluster group ownership ${error}`);
-        throw createError(500, `Error while rolling back compute cluster group ownership ${error}`);
+        if (rollBackJobId) {
+            await updateJobDetails(accountId, rollBackJobId, {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now(),
+                error: errorMessage
+            });
+        }
+        throw Error(`Error while rolling back compute cluster group ownership ${error}`);
     }
 }
 

@@ -55,7 +55,7 @@ async function getFileSystemCredentialsStatus(accountId: string, fsxId: string) 
 async function getFileSystemsCredentialsStatus(accountId: string, fsxids: string) {
     logger.info('Getting file systems Credentials Status', { accountId, fsxids });
 
-    const fsxIds = fsxids.split(',');
+    const fsxIds = [...new Set(fsxids.split(','))];
 
     const fileSystems = await Promise.all(
         fsxIds.map(throat(10, (fsxId: string) => getFileSystemCredentialsStatus(accountId, fsxId)))

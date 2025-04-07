@@ -1043,7 +1043,7 @@ const GET_CLUSTER_NODE_NAMES = () => `
     $currentNode = hostname
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
     $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
-    @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNode = $ownerNode;} | ConvertTo-Json
+    @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNodes = $ownerNode;} | ConvertTo-Json
     Write-Information "Cluster nodes: $clusterNodes with owner node: $ownerNode"
     Stop-Transcript | Out-Null
 
@@ -1129,17 +1129,20 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
                 if ($currentRssSettings.Profile -ne $optimalRssProfile) {
                     $parameters['Profile'] = $optimalRssProfile
                 }
+                
                 if ($parameters.Count -gt 0) {
                     Write-Information "Setting RSS best practices values on adapter: $adapterName, $parameters"
                     $parameters['Name'] = $adapterName
                     Set-NetAdapterRss @parameters -NoRestart
                 }
+                # wait for insyance to respond back to the SSM invocation before reboot
             } catch {
                 $errMsg = "Error occurred while optimizing network adapter: $adapterName $_.Exception.Message"
                 Write-Information $errMsg
                 $response['errors'][$adapterName] = $errMsg
             }          
         }
+        Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r", "/t 10") -Wait -NoNewWindow
     } catch {
         $errMsg = "Error occurred while optimizing network adapters: $_.Exception.Message"
         Write-Information $errMsg
@@ -1161,28 +1164,36 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
     
 `;
 
-const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
+const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceNamePattern: string) => `
     Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     $result = @{}
     try {
-        $SQLService = Get-Service -Name "${serviceName}"
+        $SQLService = Get-Service | Where-Object { $_.Name -like "*${serviceNamePattern}*" } | Select-Object -First 1
+        if ($null -eq $SQLService) {
+            throw [System.Exception] "Service not found"
+        }
+
         if ($SQLService.Status -eq 'Running') { 
-            $result = @{ status = $SQLService.Status }
+            $result = @{ status = 'Running' }
             return
         }
 
         $SQLService.WaitForStatus('Running', '00:00:20')
 
-        $SQLService = Get-Service -Name "${serviceName}"
+        $SQLService = Get-Service | Where-Object { $_.Name -like "*${serviceNamePattern}*" } | Select-Object -First 1
+        if ($null -eq $SQLService) {
+            throw [System.Exception] "Service not found"
+        }
+
         if ($SQLService.Status -eq 'Running') { 
-            $result = @{ status = $SQLService.Status }
+            $result = @{ status = 'Running' }
             return
         }
 
         $SQLService.Start()
         
         $SQLService.WaitForStatus('Running', '00:00:20')
-        $result = @{ status = (Get-Service -Name "${serviceName}").Status }
+        $result = @{ status = (Get-Service | Where-Object { $_.Name -like "*${serviceNamePattern}*" } | Select-Object -First 1).Status.ToString() }
     } catch {
         $result = @{ status = 'failed'; error = $_.Exception.Message }
         Write-Information "Error occurred while checking service status: $_.Exception.Message"
@@ -1276,6 +1287,7 @@ const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
     $FSxRegion = '${region}'
     
     $snapshotPoliciesUri = '/storage/snapshot-policies'
+    $snapshotPoliciesQueryFilter = "enabled=true"
     $snapshotPoliciesQueryFields = 'fields=svm,scope,copies'
     
     $snapshotScheduleUri = '/cluster/schedules'
@@ -1283,7 +1295,7 @@ const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
     ${ontapRestRequest}
     try {
         Write-Information "Fetching ONTAP snapshot policies for FSx ID: $FSxID FSX region: $FSxRegion"
-        $response['response']['snapshotPolicies'] = Invoke-ONTAPRequest -ApiEndpoint $snapshotPoliciesUri -ApiQueryFields $snapshotPoliciesQueryFields
+        $response['response']['snapshotPolicies'] = Invoke-ONTAPRequest -ApiEndpoint $snapshotPoliciesUri -ApiQueryFields $snapshotPoliciesQueryFields -ApiQueryFilter $snapshotPoliciesQueryFilter
     } catch {
         Write-Information "Error occurred while fetching ONTAP snapshot policies. Error: $_.Exception.Message"
         $response['errors']['snapshotPolicies'] = $_.Exception.Message

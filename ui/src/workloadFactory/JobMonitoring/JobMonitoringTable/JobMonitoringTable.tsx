@@ -419,9 +419,14 @@ const JobMonitoringTable = React.memo(() => {
             renderCell: (cellData: any) => {
                 let jobName = cellData ? cellData.split(';href')[0] : '';
                 return (
-                    <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
-                        {jobName}
-                    </div>
+                    <CopyToClipboardCommon
+                        value={jobName}
+                        iconProvided={
+                            <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
+                                {jobName}
+                            </div>
+                        }
+                    />
                 );
             }
         },

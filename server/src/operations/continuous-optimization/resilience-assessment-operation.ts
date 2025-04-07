@@ -50,9 +50,13 @@ function filterDataLogVolumes(instanceVolumeMapping: MappedOnTapVolumeResponse) 
         Object.values(instanceVolumeMapping)
             ?.map(i => i?.volumeDBMap)
             .flat() || {};
+
     // Ignore tempdb volumes from resiliency assessment
+    const tempDBVolumeUuids = [
+        ...new Set(volumeDBMap.filter(volume => volume.databaseName === 'tempdb').map(volume => volume.ontapVolumeuuid))
+    ];
     const dataLogVolumeUuids = [
-        ...new Set(volumeDBMap.filter(volume => volume.databaseName !== 'tempdb').map(volume => volume.ontapVolumeuuid))
+        ...new Set(volumeRecords.filter(volume => !tempDBVolumeUuids.includes(volume.uuid)).map(volume => volume.uuid))
     ];
     const dataLogVolumeNames = [
         ...new Set(
@@ -226,7 +230,7 @@ async function getSnapshotPolicyDriftData(
             timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
             status: AssessmentStatus.NOT_OPTIMIZED,
             violations: [],
-            totalObjectsAssessed: volumes.length,
+            totalObjectsAssessed: dataLogVolumeUuids.length,
             totalObjectsInViolation: 0
         };
         volumes.forEach(volume => {
@@ -378,10 +382,10 @@ async function getAwsBackupDriftData(
         awsBackupAssesmentData.status = AssessmentStatus.NOT_OPTIMIZED;
         awsBackupAssesmentData.totalObjectsInViolation = 1;
         awsBackupAssesmentData.objectsInViolation = [fileSystemId];
+
         if (volumeUuidsInBackups) {
             const ontapVolumeSet = new Set(ontapVolumeIds);
             const backupVolumeSet = new Set(volumeUuidsInBackups);
-
             const allUuidsMatch = [...ontapVolumeSet].every(uuid => backupVolumeSet.has(uuid));
             awsBackupAssesmentData.status = allUuidsMatch ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
             awsBackupAssesmentData.totalObjectsInViolation = allUuidsMatch ? 0 : 1;
@@ -423,7 +427,7 @@ async function initiateCrossRegionResiliencyAssessment(
     )?.UUID;
 
     if (isEmpty(instanceVolumeMapping)) {
-        const errorMessage = `No ONTAP volumes found for the instance ${instanceRecord.name}.`;
+        const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -458,8 +462,6 @@ async function initiateCrossRegionResiliencyAssessment(
             ) as string[]
         )
     ];
-
-    logger.info('peerFileSystemIds:', peerFileSystemIds);
 
     // Check if PeerFileSystemIds are NOT deployed in the same region as source fsx
     // 1. No two fsx in any region can have same id.

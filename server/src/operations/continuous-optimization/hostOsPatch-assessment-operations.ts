@@ -230,9 +230,9 @@ async function managedHostOsPatchAssessment(
         if (errorMessage) {
             await updateAsssementErrorInResourceMetadata(
                 accountId,
+                databaseHostId,
                 credentialsId,
                 region,
-                databaseHostId,
                 errorMessage,
                 'hostOsPatch'
             );
@@ -302,7 +302,7 @@ async function runOsPatchAssessment(
             patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
                 if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
                     throw createError(
-                        'Failed to run host OS patch baseline on the host/s database hosts in the cluster'
+                        'Failed to run operating system patch baseline on the database host in the cluster.'
                     );
                 }
                 return false;
@@ -347,7 +347,7 @@ async function updatePatchBaselineStatusForHost(
     const resources = (await listResources(accountId, databaseHostId)) || [];
 
     if (!isEmpty(resources) && !isEmpty(hostOsPatchAssessment)) {
-        resources.forEach(async ({ metadata }) => {
+        resources.forEach(async ({ credentials_id: credentialsId, metadata }) => {
             const metaObj = metadata as unknown as Metadata;
             const existingAssessmentData = metaObj.assessment;
             metaObj.assessment = {
@@ -355,7 +355,7 @@ async function updatePatchBaselineStatusForHost(
                 hostOsPatch: hostOsPatchAssessment,
                 lastAssessedDate: new Date().getTime().toString()
             };
-            updateResourceMetaData(accountId, undefined, databaseHostId, metaObj);
+            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metaObj);
         });
     }
 }

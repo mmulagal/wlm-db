@@ -159,8 +159,8 @@ async function managedHostMSSQLPatchAssessment(
     });
 
     const { id: patchAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server patch assessment for ${resourceName}`,
-        description: `Microsoft SQL server patch assessment for ${resourceName}`,
+        name: `Microsoft SQL Server patch assessment for ${resourceName}`,
+        description: `Microsoft SQL Server patch assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -196,9 +196,9 @@ async function managedHostMSSQLPatchAssessment(
         if (errorMessage) {
             await updateAsssementErrorInResourceMetadata(
                 accountId,
+                databaseHostId,
                 credentialsId,
                 region,
-                databaseHostId,
                 errorMessage,
                 'mssqlPatch'
             );

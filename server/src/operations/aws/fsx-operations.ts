@@ -295,7 +295,7 @@ async function isFsxnAwsBackupEnabled(
     region: string,
     fileSystemId: string,
     volumeUuids: string[],
-    volumeDBMap: any,
+    volumeDBMap?: any,
     activeNodeInstanceId?: string
 ) {
     logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled', {
@@ -314,6 +314,7 @@ async function isFsxnAwsBackupEnabled(
             fileSystemId,
             volumeUuids
         );
+        let volumeDBMapWithBackupFlag;
         const backups: Backup[] = [];
         if (!isEmpty(volumeIds)) {
             const volumeChunks = divideArrayIntoChunks(volumeIds, 20);
@@ -335,24 +336,37 @@ async function isFsxnAwsBackupEnabled(
             );
 
             // Update the volumeDBMap to mark the volumes that have backups.
+            // And the Backup is latest by 2 days
             const volumeUuidsInBackups: string[] = [];
+            // const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+            const twoDaysInMs = 15 * 60 * 1000;
+            const now = new Date();
+
             backups?.forEach(backup => {
                 const volumeId = backup.Volume?.VolumeId;
-                if (volumeId && uuidVolumeIdMap[volumeId]) {
-                    const volumeUuid = uuidVolumeIdMap[volumeId];
-                    if (!volumeUuidsInBackups.includes(volumeUuid)) {
-                        volumeUuidsInBackups.push(volumeUuid);
+                const volumeUuid = volumeId && uuidVolumeIdMap[volumeId];
+                if (volumeUuid && uuidVolumeIdMap[volumeId]) {
+                    if (backup.CreationTime) {
+                        const backupTime = new Date(backup.CreationTime);
+                        if (
+                            now.getTime() - backupTime.getTime() < twoDaysInMs &&
+                            !volumeUuidsInBackups.includes(volumeUuid)
+                        ) {
+                            volumeUuidsInBackups.push(volumeUuid);
+                        }
                     }
                 }
             });
 
-            // This function maps the volumes in the volumeDBMap to their backup status,
-            // indicating whether they have backups or not. {master: true, model: true, msdb: true};
-            const volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
-                const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
-                acc[volume.databaseName] = fsxbackup;
-                return acc;
-            }, {});
+            if (volumeDBMap) {
+                // This function maps the volumes in the volumeDBMap to their backup status,
+                // indicating whether they have backups or not. {master: true, model: true, msdb: true};
+                volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
+                    const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
+                    acc[volume.databaseName] = fsxbackup;
+                    return acc;
+                }, {});
+            }
 
             logger.debug('fsx backups here', backups, uuidVolumeIdMap, volumeDBMapWithBackupFlag);
             return { volumeDBMapWithBackupFlag, volumeUuidsInBackups };

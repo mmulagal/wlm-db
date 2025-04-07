@@ -246,6 +246,22 @@ configure_replication() {
     return 0
 }
 
+configure_pgpool() {
+    local deployment_name=$1
+    local sql_service_account_password=$2
+    local fsx_data_volume_name=$3
+
+    echo "Configuring Pgpool with stack_name=${deployment_name}, sql_service_account_password=${sql_service_account_password}, fsx_data_volume_name=${fsx_data_volume_name}"
+
+    if ! sudo /home/ec2-user/cfn/scripts/setup/configure-pgpool.sh -a ${deployment_name} -b ${sql_service_account_password} -c ${fsx_data_volume_name}; then
+        echo "Error configuring Pgpool"
+        return 1
+    fi
+
+    echo "Pgpool configured successfully"
+    return 0
+}
+
 # Function to rename host
 rename_host() {
     local sql_server_name=$1
@@ -296,8 +312,16 @@ main() {
     
     download_file "{{{ ScriptSetup }}}" "/home/ec2-user/cfn/scripts/setup.zip"
     
-    download_file "{{{ FsxCertificates }}}" "/home/ec2-user/cfn/fsx_certs.zip"
-    
+    if [ "${node_name}" != "PgPoolNode" ]; then
+        echo "Condition met: ${node_name} is either standalone or HA"
+        download_file "{{{ FsxCertificates }}}" "/home/ec2-user/cfn/fsx_certs.zip"
+    fi
+
+    if [ "${node_name}" = "PgPoolNode" ]; then
+        echo "Condition met: ${node_name} is PgPoolNode"
+        download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/packages/pgpool.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250403%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250403T051851Z&X-Amz-Expires=604800&X-Amz-Signature=802c2dfcfb2f635d62e0646eb9a09c235e57c263e0acae939edea934df1ced9a&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject" "/home/ec2-user/cfn/pgpool.zip"
+    fi
+
     download_file "{{{ PGSQLPackages }}}" "/home/ec2-user/cfn/pgvector.zip"
 
     unzip_archive "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn"
@@ -305,11 +329,18 @@ main() {
     verify_signature "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/signig_files/common.zip.sig" "/home/ec2-user/cfn/signig_files/common.zip.pub" "${node_name}" "${deployment_name}"
     verify_signature "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/signig_files/setup.zip.sig" "/home/ec2-user/cfn/signig_files/setup.zip.pub" "${node_name}" "${deployment_name}"
     
-    unzip_archive "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/scripts"
-    unzip_archive "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/scripts"
-    unzip_archive "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn"
-    unzip_archive "/home/ec2-user/cfn/pgvector.zip" "/home/ec2-user/cfn"
-
+    if [ "${node_name}" != "PgPoolNode" ]; then
+        echo "Condition met: ${node_name} is either standalone or HA unzipping the required files"
+        unzip_archive "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/scripts"
+        unzip_archive "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/scripts"
+        unzip_archive "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn"
+        unzip_archive "/home/ec2-user/cfn/pgvector.zip" "/home/ec2-user/cfn"
+    elif [ "${node_name}" = "PgPoolNode" ]; then
+        echo "Condition met: ${node_name} is PgPoolNode unzipping the required files"
+        unzip_archive "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/scripts"
+        unzip_archive "/home/ec2-user/cfn/pgpool.zip" "/home/ec2-user/cfn"
+    fi
+   
     if [ "${is_ha}" = "true" ] && [ "${node_name}" = "PGSQL-Node-1" ]; then
         echo "HA Configuration is enabled and this is the primary node"
         configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}" "${fsx_aggr_name}" "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${fsx_svm_uuid}" "${deployment_name}"
@@ -325,6 +356,9 @@ main() {
         
         configure_replication "${node_name}" "${deployment_name}" "${sql_service_account_password}" "${fsx_data_volume_name}" "${fsx_log_volume_name}"
         rename_host "${sql_server_name}-replica"
+    elif [ "${is_ha}" = "true" ] && [ "${node_name}" = "PgPoolNode" ]; then
+        echo "HA Configuration is enabled and this is the pgpool node"
+        configure_pgpool "${deployment_name}" "${sql_service_account_password}" "${fsx_data_volume_name}"
     else
         echo "Standalone configuration"
         configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}" "${fsx_aggr_name}" "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${fsx_svm_uuid}" "${deployment_name}"

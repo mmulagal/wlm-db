@@ -127,11 +127,14 @@ const InventoryV2 = () => {
                             optimizationStatus: optimizationStatus,
                             protectionText:
                                 protectionText === PROTECTION_TEXT_STATUS.YES
-                                    ? 'Protected'
+                                    ? GENERAL.PROTECTED
                                     : protectionText === PROTECTION_TEXT_STATUS.NO
-                                    ? 'Not Protected'
-                                    : GENERAL.NOT_AVAILABLE,
-
+                                    ? GENERAL.NOT_PROTECTED
+                                    : '',
+                            performance: {
+                                ...perRow.performance,
+                                assessment: perRow.performance?.assessment || ''
+                            },
                             allocatedCapacityText: perRow?.allocatedCapacity
                                 ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
                                 : '',
@@ -196,6 +199,7 @@ const InventoryV2 = () => {
                                 accountId: perHost?.accountId,
                                 regionName: perHost?.regionName,
                                 sizeRange: categorizeStorageSize(formatSize(perDatabase?.size)),
+                                'Database size': formatSize(perDatabase?.size),
                                 resourceId: perHost?.resourceId,
                                 ec2InstanceId: perHost?.ec2InstanceId
                             };
@@ -222,7 +226,7 @@ const InventoryV2 = () => {
                 })
             );
         }
-    }, [inventoryTableData, inProgressInstances, allmssqlHostAssessmentLoading]);
+    }, [inventoryTableData, inProgressInstances, allmssqlHostAssessmentLoading, allmssqlHostAssessmentData]);
 
     return (
         <div className={styles.inventory}>

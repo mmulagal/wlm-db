@@ -114,8 +114,8 @@ async function managedHostsRssConfigAssessment(
     region: string,
     activeNodeInstanceId: string,
     resourceName: string,
+    databaseHostId: string,
     parentJobId?: string,
-    databaseHostId?: string,
     metadata?: Metadata
 ) {
     logger.info('Managed hosts rss config assessment', {
@@ -128,8 +128,8 @@ async function managedHostsRssConfigAssessment(
     });
 
     const { id: rssConfigAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server network adapters configuration assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server network adapters configuration assessment for ${resourceName}`,
+        name: `Microsoft SQL Server network adapters configuration assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL Server network adapters configuration assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -162,7 +162,7 @@ async function managedHostsRssConfigAssessment(
         if (errorMessage) {
             await updateAsssementErrorInResourceMetadata(
                 accountId,
-                databaseHostId!,
+                databaseHostId,
                 credentialsId,
                 region,
                 errorMessage,

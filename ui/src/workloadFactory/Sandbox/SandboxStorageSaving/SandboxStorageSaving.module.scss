@@ -131,3 +131,12 @@
         width: 651px;
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .sandboxStorageSaving {
+        max-width: unset;
+        .largeContainer {
+            max-width: unset;
+        }
+    }
+}

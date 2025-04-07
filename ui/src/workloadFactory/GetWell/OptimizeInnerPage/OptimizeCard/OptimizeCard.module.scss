@@ -39,6 +39,45 @@
             display: flex;
             gap: 10px;
             align-items: center;
+
+            [class*='TooltipInfo-module_tooltip-base'] {
+                max-width: 400px !important;
+            }
+
+            .tooltipContainer {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .rssConfig {
+                display: flex;
+                gap: 16px;
+                flex-direction: column;
+
+                .bulletContainer {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 32px;
+                }
+
+                .points {
+                    display: flex;
+                    gap: 16px;
+                    align-items: unset;
+                    height: 24px;
+
+                    .bullet {
+                        margin-top: 5px;
+                    }
+                }
+            }
         }
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .optimizeCard {
+        width: 73.22%;
     }
 }

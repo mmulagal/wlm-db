@@ -95,3 +95,19 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .sandboxType {
+        max-width: unset;
+
+        .mainSection {
+            .valueSection {
+                max-width: unset !important;
+
+                .progressStyle {
+                    max-width: unset !important;
+                }
+            }
+        }
+    }
+}

@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import { ButtonBase } from '../ButtonBase/ButtonBase';
 import useClickOutside from '../../hooks/useClickOutside';
 import { Button, Checkbox, Popover } from '@netapp/design-system';
+import { GENERAL } from '../../../utils/appConstants';
 
 export interface FilterPanelProps {
     column: ColumnProps;
@@ -43,7 +44,7 @@ export const FilterPanel = ({
                                     })
                                 }
                             >
-                                {label}
+                                {label === '' ? GENERAL.NOT_AVAILABLE : label}
                             </Checkbox>
                         );
                     })}

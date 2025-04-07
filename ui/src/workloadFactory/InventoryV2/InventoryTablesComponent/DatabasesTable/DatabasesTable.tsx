@@ -1,5 +1,4 @@
 import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
-import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -8,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import { setSelectedFilterValue, setTableManageColumnState } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
-import { Table } from '../../../../common/Lib/Table/Table';
+import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useEffect, useRef, useState } from 'react';
 import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
 import { isAwsBackupEnabledText } from '../../InventoryUtilsV2';
@@ -26,10 +25,17 @@ const DatabasesTable = () => {
     const { databaseHostsLoading: pgsqldatabaseHostsLoading, fullHostDataLoading: pgsqlfullHostDataLoading } =
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const dispatch = useDispatch();
+    const [loading, setLoading] = useState(false);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        setLoading(
+            databaseHostsLoading || fullHostDataLoading || pgsqldatabaseHostsLoading || pgsqlfullHostDataLoading
+        );
+    }, [databaseHostsLoading, fullHostDataLoading, pgsqldatabaseHostsLoading, pgsqlfullHostDataLoading]);
 
     const getInitialFilter = () => {
         if (
@@ -248,6 +254,7 @@ const DatabasesTable = () => {
         {
             Header: 'Database size',
             accessor: 'sizeRange',
+            csvAccessor: 'Database size',
             id: '7',
             width: '200px',
             filterOptions: [
@@ -303,8 +310,7 @@ const DatabasesTable = () => {
         selectionType: 'none',
         isHorizontalScroll: true,
         isManagedColumns: true,
-        isLazyLoading:
-            databaseHostsLoading || fullHostDataLoading || pgsqldatabaseHostsLoading || pgsqlfullHostDataLoading,
+        isLazyLoading: loading,
         //@ts-ignore
         initialFilterState: getInitialFilter(),
         initialColumnState: tableManageColumnState.databaseTable,

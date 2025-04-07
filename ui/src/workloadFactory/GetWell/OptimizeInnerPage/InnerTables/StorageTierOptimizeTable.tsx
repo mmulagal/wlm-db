@@ -9,11 +9,13 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import useResize from '../../../../common/hooks/useResize';
 
 const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const windowSize = useResize();
 
     const tableData = useMemo(() => {
         let id = 0;
@@ -31,17 +33,17 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '481px',
+            width: windowSize.width >= 1920 ? 'auto' : '481px',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
 
         {
-            Header: 'Storage tier percentage',
+            Header: 'SSD storage tier',
             accessor: 'value',
             id: '3',
-            width: '481px',
+            width: windowSize.width >= 1920 ? 'auto' : '481px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;

@@ -175,7 +175,6 @@ const MultiInstanceManageMsSqlRequestBody = Type.Object({
 });
 
 type MultiInstanceManageMsSqlRequestBodyType = Static<typeof BulkManageMsSqlRequestBody>;
-
 const MultiInstanceManageResponseBody = Type.Array(
     Type.Object({
         resourceId: Type.Optional(Type.String({ description: 'Workload Factory resource ID.' })),
@@ -185,7 +184,7 @@ const MultiInstanceManageResponseBody = Type.Array(
         hostErrorMessage: Type.Optional(
             Type.String({ description: 'Error details, if any, of a failed host management.' })
         ),
-        items: Type.Array(
+        instances: Type.Array(
             Type.Object({
                 databaseInstanceName: Type.String({ description: 'SQL Server database instance name.' }),
                 databaseInstanceGuid: Type.Optional(Type.String({ description: 'SQL Server database instance GUID.' })),
@@ -197,6 +196,8 @@ const MultiInstanceManageResponseBody = Type.Array(
         )
     })
 );
+
+const MultiHostManageResponseBody = Type.Object({ hosts: MultiInstanceManageResponseBody });
 
 type MultiInstanceManageResponseBodyType = Static<typeof MultiInstanceManageResponseBody>;
 
@@ -350,5 +351,6 @@ export {
     DiscoverPgSqlResponseBody,
     DiscoverPgSqlResponseBodyType,
     DiscoverPgSqlResponseType,
-    pgsqlNodeDetailsType
+    pgsqlNodeDetailsType,
+    MultiHostManageResponseBody
 };

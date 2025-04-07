@@ -18,7 +18,7 @@ import {
     WorkloadInstance,
     MappedOnTapVolumeResponse
 } from '../../utils/common-types';
-import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
+import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
 import {
     GET_CLUSTER_SNAPSHOT_POLICIES,
@@ -41,6 +41,7 @@ import {
     OptimizeStorageConfigs
 } from '../../utils/continous-optimization-consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../demo-operations';
+import { resetCache } from '../../utils/cache';
 
 const logger = getLogger();
 
@@ -281,7 +282,7 @@ async function setSnapshotPolicyForVolumes(
             jobStatus = JOBSTATUS.FAILED;
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, ssmError);
         }
-        if (ssmResponse.length !== volumeUuids.length) {
+        if (!isDemo() && ssmResponse.length !== volumeUuids.length) {
             logger.error('Error setting snapshot policy for volumes. ONTAP job IDs:', ssmResponse, volumeUuids);
             jobError = `Failed to set snapshot policy for some volumes: ONTAP job IDs:', ${ssmResponse}`;
             jobStatus = JOBSTATUS.WARNING;
@@ -389,6 +390,8 @@ async function handleResiliecyOptimize(
             volumes
         );
 
+        // clearning all the ssm command cache so that we will get the fresh data in assessment
+        resetCache(SSM_COMMAND_CACHE_TYPE);
         // trigger assesment to update the assessment config data
         onDemandTriggerDriftAssessmentDataCollection(
             accountId,
