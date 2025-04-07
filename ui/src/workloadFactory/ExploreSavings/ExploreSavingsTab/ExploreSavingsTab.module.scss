@@ -49,3 +49,10 @@
         color: var(--text-button-primary);
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .exploreSavingsTab {
+        width: 87.3%;
+        max-width: unset;
+    }
+}

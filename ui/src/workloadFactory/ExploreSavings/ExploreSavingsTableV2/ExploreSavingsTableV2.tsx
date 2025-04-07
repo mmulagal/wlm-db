@@ -10,10 +10,11 @@ import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
 import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
+import useResize from '../../../common/hooks/useResize';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
-
+    const windowSize = useResize();
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -93,7 +94,7 @@ const ExploreSavingsTableV2 = () => {
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '247px',
+            width: windowSize.width >= 1920 ? '15.37%' : '247px',
             renderCell: (cellData: any, rowData: any) => {
                 return !rowData?.isDetected ? (
                     <Popover
@@ -137,7 +138,7 @@ const ExploreSavingsTableV2 = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '228px',
+            width: windowSize.width >= 1920 ? '14.18%' : '228px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.name;
                 return (
@@ -151,7 +152,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'serverInstallationMode',
             id: '2',
-            width: '228px',
+            width: windowSize.width >= 1920 ? '14.18%' : '228px',
             filterOptions: getFilterOptions(
                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData,
                 'serverInstallationMode'
@@ -177,7 +178,7 @@ const ExploreSavingsTableV2 = () => {
             Header: 'SQL server instances',
             accessor: 'totalInstance',
             id: '4',
-            width: '216px',
+            width: windowSize.width >= 1920 ? '13.44%' : '216px',
             filterOptions: getFilterOptions(
                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData,
                 'totalInstance'
@@ -203,7 +204,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_INSTANCE,
             accessor: 'instanceListText',
             id: '5',
-            width: '243px',
+            width: windowSize.width >= 1920 ? '15.12%' : '243px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
@@ -214,7 +215,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
             accessor: 'allocatedCapacityText',
             id: '6',
-            width: '202px',
+            width: windowSize.width >= 1920 ? '12.57%' : '202px',
             isSortable: true,
             accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
@@ -225,7 +226,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'azType',
             id: '7',
-            width: '243px',
+            width: windowSize.width >= 1920 ? '15.12%' : '243px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
