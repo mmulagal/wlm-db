@@ -311,3 +311,32 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .getWell {
+        .header {
+            width: 87.3%;
+            max-width: unset;
+
+            div:nth-child(2) {
+                margin-right: calc(2% + 20px);
+            }
+        }
+        .sectionTwo {
+            width: 87.3%;
+            max-width: unset;
+
+            [class*='storageCardComponent'] {
+                [class*='commonSection'] {
+                    width: 15.43%;
+                }
+                [class*='thirdSection'] {
+                    width: 13.93% !important;
+                }
+                [class*='fourthSection'] {
+                    width: 10.57%;
+                }
+            }
+        }
+    }
+}
