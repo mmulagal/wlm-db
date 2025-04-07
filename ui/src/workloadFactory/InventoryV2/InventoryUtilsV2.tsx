@@ -420,7 +420,10 @@ export const getFsxIdsFromdiscover = (data: Array<DiscoverHostInterface>) => {
         instances?.sqlServerInstances?.map((inst: SQLServerInstancesDiscovered) => {
             inst?.storage?.map((storageObj: DiscoveredStorageObj) => {
                 if (storageObj.type === DETECT_HOST_VAR.FSXN) {
-                    fsxIds.push(storageObj.id || '');
+                    let fsxId = storageObj?.id || '';
+                    if (!fsxIds.includes(fsxId)) {
+                        fsxIds.push(fsxId);
+                    }
                 }
             });
         });
