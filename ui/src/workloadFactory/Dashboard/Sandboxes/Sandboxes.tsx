@@ -10,15 +10,23 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 const Sandboxes = () => {
     const dispatch = useDispatch();
     const { isNA } = useAppSelector(state => state.sandbox);
-    const { loading, data: aggregatedSandboxList } = useAppSelector(state => state.inventoryV2.dashSandboxList);
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const { loading: dataLoading, data: aggregatedSandboxList } = useAppSelector(
+        state => state.inventoryV2.dashSandboxList
+    );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
+        state => state.headers
+    );
 
     const [data, setData] = useState<any>([]);
+
+    const loading = useMemo(() => {
+        return dataLoading || multiDataLoading;
+    }, [dataLoading, multiDataLoading]);
 
     useEffect(() => {
         let filteredList: Array<any> = [];

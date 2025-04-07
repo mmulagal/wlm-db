@@ -43,6 +43,7 @@ import {
     setHeaderSelectedMultiRegion,
     setHeaderSelectedRegion,
     setHeaderSelectedRegionSandbox,
+    setMultiDataLoading,
     setMultiDataStatus,
     setRefreshTime,
     setRefreshTimeSandbox,
@@ -142,7 +143,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         headerSelectedRegion,
         headerSelectedCredSandbox,
         headerSelectedRegionSandbox,
-        multiDataStatus
+        multiDataStatus,
+        multiDataLoading
     } = useAppSelector(state => state.headers);
     const {
         isManagedHostListLoading,
@@ -715,6 +717,14 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
         }
     };
+
+    useEffect(() => {
+        if (pendingQueriesCounter > 0 && !multiDataLoading) {
+            dispatch(setMultiDataLoading(true));
+        } else if (pendingQueriesCounter === 0 && multiDataLoading) {
+            dispatch(setMultiDataLoading(false));
+        }
+    }, [pendingQueriesCounter]);
 
     useEffect(() => {
         queueProcess();

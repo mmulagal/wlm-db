@@ -60,13 +60,12 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                     </TooltipInfo>
                 </div>
 
-                {hostsLoading ? (
-                    <FlashingDotsLoader />
-                ) : (
+                <div className={styles.rightTopValue}>
                     <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
                         ${formatNumberWithCustomComma(hostData?.totalCost)}
                     </Typography>
-                )}
+                    {hostsLoading && <FlashingDotsLoader />}
+                </div>
             </div>
 
             <div className={styles.mainSection}>
@@ -156,24 +155,32 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                         value={'$' + formatNumberWithCustomComma(hostData?.storageCost)}
                         color="var(--chart-9)"
                         text={'Storage'}
+                        loadingInFirstRow={hostsLoading}
+                        isSmall={true}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
                         value={'$' + formatNumberWithCustomComma(hostData?.computeCost)}
                         color="var(--chart-1)"
                         text={'Compute'}
+                        loadingInFirstRow={hostsLoading}
+                        isSmall={true}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
                         value={'$' + formatNumberWithCustomComma(hostData?.connectivityCost)}
                         color="var(--chart-3)"
                         text={'Connectivity'}
+                        loadingInFirstRow={hostsLoading}
+                        isSmall={true}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
                         value={'$' + formatNumberWithCustomComma(hostData?.otherCost)}
                         color="var(--chart-4)"
                         text={'Other'}
+                        loadingInFirstRow={hostsLoading}
+                        isSmall={true}
                     />
                 </div>
             </div>

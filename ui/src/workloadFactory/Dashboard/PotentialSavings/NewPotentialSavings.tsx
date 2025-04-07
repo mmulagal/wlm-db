@@ -24,7 +24,9 @@ const NewPotentialSavings = () => {
     const [esCount, setEsCount] = useState<{ ebs: number; fsxw: number }>({ ebs: 0, fsxw: 0 });
     const [loading, setLoading] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
+        state => state.headers
+    );
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
@@ -58,8 +60,10 @@ const NewPotentialSavings = () => {
     }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     useEffect(() => {
-        setLoading(isDiscoverInProgress || isManagedHostListLoading || potentialSavingsValues?.loading);
-    }, [isDiscoverInProgress, isManagedHostListLoading, potentialSavingsValues]);
+        setLoading(
+            isDiscoverInProgress || isManagedHostListLoading || potentialSavingsValues?.loading || multiDataLoading
+        );
+    }, [isDiscoverInProgress, isManagedHostListLoading, potentialSavingsValues, multiDataLoading]);
 
     const hasPotentialValues = () => {
         return potentialSavingsValues?.fsxnCost || potentialSavingsValues?.fsxwCost || potentialSavingsValues?.ebsCost;
@@ -171,6 +175,7 @@ const NewPotentialSavings = () => {
                                     height={200}
                                     colors={['chart-9', 'chart-2']}
                                     categories={['FSx for ONTAP', 'FSx for Windows']}
+                                    loading={loading}
                                 />
                             ) : (
                                 <ComparisonChartStack
@@ -213,6 +218,7 @@ const NewPotentialSavings = () => {
                                     height={277}
                                     colors={['chart-9', 'chart-3']}
                                     categories={['FSx for ONTAP', 'EBS']}
+                                    loading={loading}
                                 />
                             ) : (
                                 <ComparisonChartStack

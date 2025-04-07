@@ -18,6 +18,7 @@ const InstanceDistribution = () => {
     );
     const mssqlHostData = useAppSelector(state => state.databaseHome.aggregatedHostsCount);
     const pgsqlHostData = useAppSelector(state => state.databaseHome.aggregatedPgSqlHostsCount);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
@@ -31,7 +32,9 @@ const InstanceDistribution = () => {
                 </DsTypography>
 
                 <div className={styles.rightSection}>
-                    {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading) && <FlashingDotsLoader />}
+                    {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
+                        <FlashingDotsLoader />
+                    )}
                     <DsButton
                         variant="secondary"
                         data-testid="wlm-db-manage-instances"
@@ -55,10 +58,9 @@ const InstanceDistribution = () => {
                                 variant="Regular_32"
                                 style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}
                             >
-                                {mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading ? (
+                                {(mssqlHostData?.totalInstances || 0) + (pgsqlHostData?.totalInstances || 0)}
+                                {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
                                     <DsFlashingDotsLoader />
-                                ) : (
-                                    (mssqlHostData?.totalInstances || 0) + (pgsqlHostData?.totalInstances || 0)
                                 )}
                             </DsTypography>
                             <DsTypography variant="Regular_14">Total instances</DsTypography>
@@ -68,11 +70,10 @@ const InstanceDistribution = () => {
                     <SeparatorComponent variant="vertical" height="56px" />
 
                     <div className={styles.valueSection}>
-                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                            {mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading ? (
-                                <FlashingDotsLoader />
-                            ) : (
-                                (mssqlHostData?.managedInstances || 0) + (pgsqlHostData?.managedInstances || 0)
+                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}>
+                            {(mssqlHostData?.managedInstances || 0) + (pgsqlHostData?.managedInstances || 0)}
+                            {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && (
+                                <DsFlashingDotsLoader />
                             )}
                         </DsTypography>
 
@@ -93,6 +94,7 @@ const InstanceDistribution = () => {
                         afterOutOf={mssqlHostData?.totalInstances || 0}
                         bottomText="Managed instances:"
                         width="440px"
+                        loading={mssqlDatabaseHostsLoading || multiDataLoading}
                     />
                     <BarComponent
                         color="var(--chart-9)"
@@ -105,6 +107,7 @@ const InstanceDistribution = () => {
                         afterOutOf={pgsqlHostData?.totalInstances || 0}
                         bottomText="Managed instances:"
                         width="440px"
+                        loading={pgsqlDatabaseHostsLoading || multiDataLoading}
                     />
                 </div>
             </div>

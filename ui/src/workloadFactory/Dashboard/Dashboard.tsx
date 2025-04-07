@@ -22,6 +22,7 @@ const Dashboard = () => {
     const mssqlHostDataLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
     const pgsqlHostDataLoading = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts.fullHostDataLoading);
     const savingsDataLoading = useAppSelector(state => state.inventoryV2.dashSandboxSavings.loading);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const hostStorageSavingsData = useMemo(() => {
         return getTotalManagedAggrStorageSavings(mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData);
@@ -57,14 +58,16 @@ const Dashboard = () => {
                     <div className={styles.commonContainer}>
                         <StorageSavings
                             hostData={hostStorageSavingsData}
-                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading || savingsDataLoading}
+                            hostsLoading={
+                                mssqlHostDataLoading || pgsqlHostDataLoading || savingsDataLoading || multiDataLoading
+                            }
                         />
                     </div>
 
                     <div className={styles.commonContainer}>
                         <EstimatedCost
                             hostData={hostCostData}
-                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading}
+                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading || multiDataLoading}
                         />
                     </div>
                 </div>

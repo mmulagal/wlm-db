@@ -30,7 +30,8 @@ const initialHeaderState: HeaderTypeEntities = {
     refreshTime: null,
     refreshTimeSandbox: null,
     dashboardRefresh: false,
-    multiDataStatus: {}
+    multiDataStatus: {},
+    multiDataLoading: false
 };
 
 const headersSlice = createSlice({
@@ -93,6 +94,9 @@ const headersSlice = createSlice({
         setSingleComboCredAndRegion: (state, action: PayloadAction<any>) => {
             state.headerSelectedCred = action.payload?.cred;
             state.headerSelectedRegion = action.payload?.region;
+        },
+        setMultiDataLoading: (state, action: PayloadAction<any>) => {
+            state.multiDataLoading = action.payload;
         }
     }
 });
@@ -113,7 +117,8 @@ export const {
     setCredentialMapping,
     setRegionMapping,
     setMultiDataStatus,
-    setSingleComboCredAndRegion
+    setSingleComboCredAndRegion,
+    setMultiDataLoading
 } = headersSlice.actions;
 
 export default headersSlice;

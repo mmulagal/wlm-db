@@ -29,7 +29,9 @@ const ExploreSavingsTableV2 = () => {
     // const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
+        state => state.headers
+    );
 
     // const getInitialFilter = () => {
     //     if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
@@ -295,7 +297,7 @@ const ExploreSavingsTableV2 = () => {
         columns: ExploreSavingsColDefs,
         rows: selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData || [],
         pageSize: 50,
-        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || multiDataLoading
     });
 
     return (

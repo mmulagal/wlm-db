@@ -96,13 +96,12 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                     </TooltipInfo>
                 </div>
 
-                {hostsLoading ? (
-                    <FlashingDotsLoader />
-                ) : (
+                <div className={styles.rightTopValue}>
                     <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
                         {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
                     </Typography>
-                )}
+                    {hostsLoading && <FlashingDotsLoader />}
+                </div>
             </div>
 
             <div className={styles.mainSection}>
@@ -115,12 +114,16 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                         value={hostData?.storageConsumes || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-9)"
                         text={'Consumed storage'}
+                        loadingInFirstRow={hostsLoading}
+                        isSmall={true}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
                         value={hostData?.storageSavings || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-4)"
                         text={'Storage Savings'}
+                        loadingInFirstRow={hostsLoading}
+                        isSmall={true}
                     />
                 </div>
             </div>

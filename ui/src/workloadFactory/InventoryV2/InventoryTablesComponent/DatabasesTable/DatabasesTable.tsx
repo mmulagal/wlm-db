@@ -24,6 +24,7 @@ const DatabasesTable = () => {
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqldatabaseHostsLoading, fullHostDataLoading: pgsqlfullHostDataLoading } =
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
 
@@ -33,9 +34,19 @@ const DatabasesTable = () => {
 
     useEffect(() => {
         setLoading(
-            databaseHostsLoading || fullHostDataLoading || pgsqldatabaseHostsLoading || pgsqlfullHostDataLoading
+            databaseHostsLoading ||
+                fullHostDataLoading ||
+                pgsqldatabaseHostsLoading ||
+                pgsqlfullHostDataLoading ||
+                multiDataLoading
         );
-    }, [databaseHostsLoading, fullHostDataLoading, pgsqldatabaseHostsLoading, pgsqlfullHostDataLoading]);
+    }, [
+        databaseHostsLoading,
+        fullHostDataLoading,
+        pgsqldatabaseHostsLoading,
+        pgsqlfullHostDataLoading,
+        multiDataLoading
+    ]);
 
     const getInitialFilter = () => {
         if (

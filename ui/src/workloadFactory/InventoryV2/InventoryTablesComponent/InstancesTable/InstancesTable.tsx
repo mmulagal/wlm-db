@@ -92,6 +92,7 @@ const InstancesTable = () => {
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
         useAppSelector(state => state.inventoryV2);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
@@ -117,7 +118,8 @@ const InstancesTable = () => {
                 isManagedHostListLoading ||
                 fsxCredentialStatusLoading ||
                 pgsqlDatabaseHostsLoading ||
-                pgsqlFullHostDataLoading
+                pgsqlFullHostDataLoading ||
+                multiDataLoading
         );
     }, [
         databaseHostsLoading,
@@ -126,7 +128,8 @@ const InstancesTable = () => {
         isManagedHostListLoading,
         fsxCredentialStatusLoading,
         pgsqlDatabaseHostsLoading,
-        pgsqlFullHostDataLoading
+        pgsqlFullHostDataLoading,
+        multiDataLoading
     ]);
 
     const getInitialFilter = () => {
