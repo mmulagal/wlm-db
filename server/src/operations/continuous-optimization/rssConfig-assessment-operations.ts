@@ -75,7 +75,14 @@ async function calculateRssConfigDrift(
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
 
-        const { rssConfigFinding, rssAdapters, recommendedAdapterSettings, tcpOffloadState } = rssConfigAssessment;
+        const {
+            rssConfigFinding,
+            rssAdapters,
+            recommendedAdapterSettings,
+            tcpOffloadState,
+            totalObjectsInViolation,
+            totalObjectsAssessed
+        } = rssConfigAssessment;
         const recommendationMessage =
             rssConfigFinding === AssessmentStatus.NOT_OPTIMIZED
                 ? 'To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.'
@@ -91,7 +98,9 @@ async function calculateRssConfigDrift(
             rssAdapters,
             recommendedAdapterSettings,
             tcpOffloadState,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_ADAPTER
+            resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_ADAPTER,
+            totalObjectsInViolation,
+            totalObjectsAssessed
         };
     } catch (error: any) {
         errorMessage = `Error while calculating rss config drift. ${error.message}`;
@@ -262,7 +271,9 @@ async function runRssConfigAssessment(
         rssConfigFinding: rssConfigOptimizedStatus,
         rssAdapters,
         recommendedAdapterSettings,
-        tcpOffloadState
+        tcpOffloadState,
+        totalObjectsInViolation: rssAdapters?.length,
+        totalObjectsAssessed: rssConfigAdapters?.length
     };
 }
 
