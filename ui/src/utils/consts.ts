@@ -758,7 +758,8 @@ export const GETWELL_CONFIG: any = {
     maxdop: 'maxdop',
     'snapshot-policy': 'scheduled_local_snapshot',
     'aws-backup-policy': 'scheduled_FSx_for_ONTAP_backups',
-    crr: 'crr'
+    crr: 'crr',
+    clone: 'clone_management'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
@@ -796,5 +797,6 @@ export const ASSESSMENT_CONFIG_NAMES = {
     OS: 'os',
     RSS_CONFIGURATION: 'Network adapter settings',
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
+    CLONE_MANAGEMENT: 'Clone Management',
     LICENSE: 'License'
 };

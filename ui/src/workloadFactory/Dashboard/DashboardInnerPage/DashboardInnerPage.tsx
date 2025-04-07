@@ -66,6 +66,7 @@ import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
 import OSPatchTable from './RenderTables/OSPatchTable';
 import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
 import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
+import CloneManagementTable from './RenderTables/CloneManagementTable';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { backupStartTime } from '../../../utils/utilityFunctions';
 
@@ -222,8 +223,8 @@ const DashboardInnerPage = () => {
                                 type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                                     ? 'log-drive-size'
                                     : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                                    ? 'headroom'
-                                    : 'tempdb-drive-size',
+                                        ? 'headroom'
+                                        : 'tempdb-drive-size',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -249,8 +250,8 @@ const DashboardInnerPage = () => {
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                             ? 'log-drive-size'
                             : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                            ? 'headroom'
-                            : 'tempdb-drive-size'
+                                ? 'headroom'
+                                : 'tempdb-drive-size'
                 };
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
@@ -318,6 +319,25 @@ const DashboardInnerPage = () => {
                                 fsxFileSystemId: rowData?.objectsInViolation?.[0],
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
                                 backupStartTime: backupStartTime(selectedAWSBackup)
+                            }
+                        ]
+                    }
+                ]
+            };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+            apiCall = optimizeAwsBackup;
+            const state = store.getState();
+            const selectedClone = state.getWellOptimize.selectedClone;
+
+            payload = {
+                hostsToOptimize: [
+                    {
+                        configurationName: ['clone'],
+                        databaseHosts: [
+                            {
+                                id: rowData?.databaseHostId,
+                                sqlServerInstances: [rowData?.instanceId],
+                                fsxFileSystemId: rowData?.objectsInViolation?.[0]
                             }
                         ]
                     }
@@ -877,6 +897,21 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.clone_management?.recommendation?.description
+                    }
+                });
+                break;
         }
     }, [selectedConfig, selectedConfigSummary]);
 
@@ -978,6 +1013,9 @@ const DashboardInnerPage = () => {
                 );
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
                 return <ScheduledAWSBackupTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+                return <CloneManagementTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
         }
     };
 

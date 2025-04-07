@@ -1215,6 +1215,24 @@
                                 "totalObjectsInViolation": 1,
                                 "resourceType": "Filesystem"
                             }
+                        },
+                        "cloning": {
+                            "clone": {
+                                "name": "clone-management",
+                                "status": "not-optimized",
+                                "recommended": "To have the clone enabled",
+                                "severity": "warning",
+                                "recommendation": "Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.",
+                                "tags": [
+                                    "Cost Efficiency"
+                                ],
+                                "objectsInViolation": [
+                                    "fs-01d9727eb6a7d3e9a"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
+                                "resourceType": "Database"
+                            }
                         }
                     }
                 },
@@ -2463,6 +2481,24 @@
                                 "totalObjectsInViolation": 1,
                                 "resourceType": "Filesystem"
                             }
+                        },
+                        "cloning": {
+                            "clone": {
+                                "name": "clone-management",
+                                "status": "not-optimized",
+                                "recommended": "To have the clone enabled",
+                                "severity": "warning",
+                                "recommendation": "Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.",
+                                "tags": [
+                                    "Cost Efficiency"
+                                ],
+                                "objectsInViolation": [
+                                    "fs-01d9727eb6a7d3e9a"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
+                                "resourceType": "Database"
+                            }
                         }
                     }
                 },
@@ -3710,6 +3746,24 @@
                                 "totalObjectsAssessed": 1,
                                 "totalObjectsInViolation": 1,
                                 "resourceType": "Filesystem"
+                            }
+                        },
+                        "cloning": {
+                            "clone": {
+                                "name": "clone-management",
+                                "status": "not-optimized",
+                                "recommended": "To have the clone enabled",
+                                "severity": "warning",
+                                "recommendation": "Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.",
+                                "tags": [
+                                    "Cost Efficiency"
+                                ],
+                                "objectsInViolation": [
+                                    "fs-01d9727eb6a7d3e9a"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
+                                "resourceType": "Database"
                             }
                         }
                     }
@@ -4969,6 +5023,24 @@
                                 "totalObjectsInViolation": 1,
                                 "resourceType": "Filesystem"
                             }
+                        },
+                        "cloning": {
+                            "clone": {
+                                "name": "clone-management",
+                                "status": "not-optimized",
+                                "recommended": "To have the clone enabled",
+                                "severity": "warning",
+                                "recommendation": "Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.",
+                                "tags": [
+                                    "Cost Efficiency"
+                                ],
+                                "objectsInViolation": [
+                                    "fs-01d9727eb6a7d3e9a"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
+                                "resourceType": "Database"
+                            }
                         }
                     }
                 },
@@ -6217,6 +6289,24 @@
                                 "totalObjectsInViolation": 1,
                                 "resourceType": "Filesystem"
                             }
+                        },
+                        "cloning": {
+                            "clone": {
+                                "name": "clone-management",
+                                "status": "not-optimized",
+                                "recommended": "To have the clone enabled",
+                                "severity": "warning",
+                                "recommendation": "Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.",
+                                "tags": [
+                                    "Cost Efficiency"
+                                ],
+                                "objectsInViolation": [
+                                    "fs-01d9727eb6a7d3e9a"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
+                                "resourceType": "Database"
+                            }
                         }
                     }
                 },
@@ -7464,6 +7554,24 @@
                                 "totalObjectsAssessed": 1,
                                 "totalObjectsInViolation": 1,
                                 "resourceType": "Filesystem"
+                            }
+                        },
+                        "cloning": {
+                            "clone": {
+                                "name": "clone-management",
+                                "status": "not-optimized",
+                                "recommended": "To have the clone enabled",
+                                "severity": "warning",
+                                "recommendation": "Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.",
+                                "tags": [
+                                    "Cost Efficiency"
+                                ],
+                                "objectsInViolation": [
+                                    "fs-01d9727eb6a7d3e9a"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
+                                "resourceType": "Database"
                             }
                         }
                     }

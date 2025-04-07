@@ -1,5 +1,5 @@
 // ToDo - Write utils dunction for dashboard page here
-import { get } from 'lodash';
+import { clone, get } from 'lodash';
 import store from '../../store/store';
 import { setManagedHostInstanceLoading } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
@@ -344,23 +344,23 @@ export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) =>
         storageCostPercent: formatFractionalNumber(
             ((parseInt(mssqlCostObj.storageCost) + parseInt(pgsqlCostObj.storageCost)) /
                 (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
+            100
         ),
         computeCostPercent: formatFractionalNumber(
             ((parseInt(mssqlCostObj.computeCost) + parseInt(pgsqlCostObj.computeCost)) /
                 (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
+            100
         ),
         connectivityCostPercent: formatFractionalNumber(
             (parseInt(mssqlCostObj.connectivityCost) +
                 parseInt(pgsqlCostObj.connectivityCost) /
-                    (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
+                (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
+            100
         ),
         otherCostPercent: formatFractionalNumber(
             ((parseInt(mssqlCostObj.otherCost) + parseInt(pgsqlCostObj.otherCost)) /
                 (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
+            100
         ),
         requireBillingPerm:
             mssqlCostObj.requireBillingPerm ||
@@ -442,6 +442,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
         compute: 0,
         application: 0,
         resiliency: 0,
+        cloning: 0,
         total: 0
     };
     assessmentData.map((databaseHost: any) => {
@@ -482,6 +483,10 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     instanceAssessmentData?.resiliency?.awsBackup?.status
                 );
 
+
+                const isCloneOptimized = isOptimized(
+                    instanceAssessmentData?.cloning?.clone?.status
+                );
                 const isCRROptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
 
                 if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
@@ -500,6 +505,10 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 }
                 if (isScheduledLoclaSnapshotOptimized && isCRROptimized && isScheduledAWSBackUpOptimized) {
                     assessmentGroupedByCategory.resiliency++;
+                }
+
+                if (isCloneOptimized) {
+                    assessmentGroupedByCategory.cloning++;
                 }
             }
         });
@@ -526,6 +535,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         maxdopPatch: 0,
         scheduledLocalSnapshot: 0,
         scheduledawsBackup: 0,
+        clone: 0,
         crr: 0,
         total: 0,
         severityObj: {}
@@ -597,6 +607,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isScheduledawsBackupOptimized = isOptimized(
                     instanceAssessmentData?.resiliency?.awsBackup?.status
                 );
+
+                const isCloneOptimized = isOptimized(
+                    instanceAssessmentData?.cloning?.clone?.status
+                );
                 const isCrrOptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
@@ -666,6 +680,12 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.severityObj.scheduledawsBackup =
                     GETWELL_VALUES[instanceAssessmentData?.resiliency?.awsBackup?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.scheduledawsBackup;
+
+
+                getAssessmentGroupedByConfigurations.cloneManagement += isCloneOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.cloneManagement =
+                    GETWELL_VALUES[instanceAssessmentData?.cloning?.clone?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.cloneManagement;
 
                 getAssessmentGroupedByConfigurations.crr += isCrrOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.crr =
