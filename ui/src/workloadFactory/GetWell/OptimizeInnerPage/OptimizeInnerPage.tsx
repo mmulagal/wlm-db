@@ -218,7 +218,9 @@ const OptimizeInnerPage = () => {
                                     sqlServerInstances: [selectedDatabaseInstance],
                                     networkAdapters: selectedRowsForOptimizeInnerPage.map(
                                         (item: any) => item?.adapterName
-                                    )
+                                    ),
+                                    credentialsId: selectedGwInstanceCredId,
+                                    region: selectedGwInstanceRegionId
                                 }
                             ]
                         }

@@ -118,8 +118,6 @@ const DashboardInnerPage = () => {
             selectedGwInstanceCredId,
             selectedGwInstanceRegionId
         } = state.getWellOptimize;
-        let credIdBulk = rowData?.[0]?.credentialId;
-        let reiginIdBulk = rowData?.[0]?.regionId;
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
             if (operation === 'bulk') {
                 apiCall = optimizeComputeConfigForBulk;
@@ -133,22 +131,39 @@ const DashboardInnerPage = () => {
                                     (
                                         acc: Record<
                                             string,
-                                            { id: string; sqlServerInstances: string[]; instanceType: string }
+                                            {
+                                                id: string;
+                                                sqlServerInstances: string[];
+                                                instanceType: string;
+                                                credentialsId: string;
+                                                region: string;
+                                            }
                                         >,
                                         {
                                             databaseHostId,
                                             instanceId,
-                                            hostName
-                                        }: { databaseHostId: string; instanceId: string; hostName: string }
+                                            hostName,
+                                            credentialId,
+                                            regionId
+                                        }: {
+                                            databaseHostId: string;
+                                            instanceId: string;
+                                            hostName: string;
+                                            credentialId: string;
+                                            regionId: string;
+                                        }
                                     ) => {
-                                        if (!acc[databaseHostId]) {
-                                            acc[databaseHostId] = {
+                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        if (!acc[uniqueRow]) {
+                                            acc[uniqueRow] = {
                                                 id: databaseHostId,
                                                 sqlServerInstances: [],
+                                                credentialsId: credentialId,
+                                                region: regionId,
                                                 instanceType: recommendedInstanceInBulk?.[hostName]?.value || ''
                                             };
                                         }
-                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
                                         return acc;
                                     },
                                     {}
@@ -174,18 +189,24 @@ const DashboardInnerPage = () => {
                             configurationName: 'rss-config',
                             databaseHosts: Object.values(
                                 //@ts-ignore
-                                rowData.reduce((acc, { databaseHostId, instanceId, networkAdapters }) => {
-                                    if (!acc[databaseHostId]) {
-                                        acc[databaseHostId] = {
-                                            id: databaseHostId,
-                                            sqlServerInstances: [],
-                                            networkAdapters: []
-                                        };
-                                    }
-                                    acc[databaseHostId].sqlServerInstances.push(instanceId);
-                                    acc[databaseHostId].networkAdapters.push(...networkAdapters);
-                                    return acc;
-                                }, {})
+                                rowData.reduce(
+                                    (acc, { databaseHostId, instanceId, credentialId, regionId, networkAdapters }) => {
+                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        if (!acc[uniqueRow]) {
+                                            acc[uniqueRow] = {
+                                                id: databaseHostId,
+                                                sqlServerInstances: [],
+                                                networkAdapters: [],
+                                                credentialsId: credentialId,
+                                                region: regionId
+                                            };
+                                        }
+                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
+                                        acc[uniqueRow].networkAdapters.push(...networkAdapters);
+                                        return acc;
+                                    },
+                                    {}
+                                )
                             )
                         }
                     ]
@@ -200,7 +221,9 @@ const DashboardInnerPage = () => {
                                 {
                                     id: rowData?.databaseHostId,
                                     sqlServerInstances: [rowData?.instanceId],
-                                    networkAdapters: rowData?.networkAdapters
+                                    networkAdapters: rowData?.networkAdapters,
+                                    credentialsId: rowData?.credentialId,
+                                    region: rowData?.regionId
                                 }
                             ]
                         }
@@ -227,13 +250,37 @@ const DashboardInnerPage = () => {
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
-                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
-                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
-                                    ) => {
-                                        if (!acc[databaseHostId]) {
-                                            acc[databaseHostId] = { id: databaseHostId, sqlServerInstances: [] };
+                                        acc: Record<
+                                            string,
+                                            {
+                                                id: string;
+                                                credentialsId: string;
+                                                region: string;
+                                                sqlServerInstances: string[];
+                                            }
+                                        >,
+                                        {
+                                            databaseHostId,
+                                            instanceId,
+                                            credentialId,
+                                            regionId
+                                        }: {
+                                            databaseHostId: string;
+                                            instanceId: string;
+                                            credentialId: string;
+                                            regionId: string;
                                         }
-                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                    ) => {
+                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        if (!acc[uniqueRow]) {
+                                            acc[uniqueRow] = {
+                                                id: databaseHostId,
+                                                credentialsId: credentialId,
+                                                region: regionId,
+                                                sqlServerInstances: []
+                                            };
+                                        }
+                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
                                         return acc;
                                     },
                                     {}
@@ -264,11 +311,35 @@ const DashboardInnerPage = () => {
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
-                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
-                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
+                                        acc: Record<
+                                            string,
+                                            {
+                                                id: string;
+                                                credentialsId: string;
+                                                region: string;
+                                                sqlServerInstances: string[];
+                                            }
+                                        >,
+                                        {
+                                            databaseHostId,
+                                            instanceId,
+                                            credentialId,
+                                            regionId
+                                        }: {
+                                            databaseHostId: string;
+                                            instanceId: string;
+                                            credentialId: string;
+                                            regionId: string;
+                                        }
                                     ) => {
-                                        if (!acc[databaseHostId]) {
-                                            acc[databaseHostId] = { id: databaseHostId, sqlServerInstances: [] };
+                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        if (!acc[uniqueRow]) {
+                                            acc[uniqueRow] = {
+                                                id: databaseHostId,
+                                                credentialsId: credentialId,
+                                                region: regionId,
+                                                sqlServerInstances: []
+                                            };
                                         }
                                         acc[databaseHostId].sqlServerInstances.push(instanceId);
                                         return acc;
@@ -317,7 +388,9 @@ const DashboardInnerPage = () => {
                                 sqlServerInstances: [rowData?.instanceId],
                                 fsxFileSystemId: rowData?.objectsInViolation?.[0],
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                                backupStartTime: backupStartTime(selectedAWSBackup)
+                                backupStartTime: backupStartTime(selectedAWSBackup),
+                                credentialsId: rowData?.credentialId,
+                                region: rowData?.regionId
                             }
                         ]
                     }
@@ -333,20 +406,37 @@ const DashboardInnerPage = () => {
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
-                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
+                                        acc: Record<
+                                            string,
+                                            {
+                                                id: string;
+                                                credentialsId: string;
+                                                region: string;
+                                                sqlServerInstances: string[];
+                                            }
+                                        >,
                                         {
                                             databaseHostId,
                                             instanceId,
-                                            hostName
-                                        }: { databaseHostId: string; instanceId: string; hostName: string }
+                                            credentialId,
+                                            regionId
+                                        }: {
+                                            databaseHostId: string;
+                                            instanceId: string;
+                                            credentialId: string;
+                                            regionId: string;
+                                        }
                                     ) => {
-                                        if (!acc[databaseHostId]) {
-                                            acc[databaseHostId] = {
+                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        if (!acc[uniqueRow]) {
+                                            acc[uniqueRow] = {
                                                 id: databaseHostId,
-                                                sqlServerInstances: []
+                                                sqlServerInstances: [],
+                                                credentialsId: credentialId,
+                                                region: regionId
                                             };
                                         }
-                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
                                         return acc;
                                     },
                                     {}
@@ -459,8 +549,6 @@ const DashboardInnerPage = () => {
         let apiData = {};
         if (operation === 'bulk') {
             apiData = {
-                credentialId: landingFrom === WLF_TABS.INVENTORY ? credIdBulk : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? reiginIdBulk : regionFromJM,
                 payload: payload
             };
         } else {
@@ -554,7 +642,9 @@ const DashboardInnerPage = () => {
                         id: type,
                         name: name,
                         hostId: host.id,
-                        instanceId: instanceId
+                        instanceId: instanceId,
+                        credentialId: host?.credentialsId,
+                        regionId: host?.region
                     });
                 });
             });
