@@ -428,7 +428,7 @@
             .contentArea {
                 display: flex;
                 justify-content: space-between;
-                width: calc(83.33% - 4px);
+                width: calc(87.33% - 4px);
 
                 align-items: center;
                 [class*='Select-module_base'] {
@@ -569,6 +569,22 @@
         .jobMonitoringSection {
             .contentArea {
                 width: 1124px !important;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .headerComponent {
+        .sandboxSection {
+            .contentArea {
+                max-width: unset !important;
+            }
+        }
+        .exploreSavingSection {
+            .contentArea {
+                width: 87.3% !important;
+                max-width: unset !important;
             }
         }
     }

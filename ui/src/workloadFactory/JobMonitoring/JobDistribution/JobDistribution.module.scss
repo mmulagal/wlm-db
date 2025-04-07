@@ -124,3 +124,18 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .jobDistribution {
+        .rightSection {
+            width: 100%;
+            .jobSeparator {
+                width: 90.5% !important;
+            }
+
+            .rowData {
+                width: 90.5% !important;
+            }
+        }
+    }
+}

@@ -48,10 +48,12 @@ import { formatDateWithTime, getFilterOptions, getTimeDifferenceInDays } from '.
 import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedSandboxHeaderValue } from '../../../store/workloadFactory/createSandboxSlice';
+import useResize from '../../../common/hooks/useResize';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const windowSize = useResize();
     const { aggregatedSandboxList, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
         state => state.sandbox
     );
@@ -580,7 +582,7 @@ const SandboxTable = () => {
             id: '9',
             Header: '',
             accessor: '',
-            width: '56px',
+            width: windowSize.width >= 1920 ? '3.48%' : '56px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.jobMenuPopover}>
@@ -654,34 +656,34 @@ const SandboxTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '200px'
+            width: windowSize.width >= 1920 ? '12.44%' : '200px'
         },
         {
             Header: GENERAL.SANDBOX_DB_INSTANCE_NAME,
             accessor: 'instanceName',
             id: '2',
-            width: '220px',
+            width: windowSize.width >= 1920 ? '13.69%' : '220px',
             filterOptions: 'auto'
         },
         {
             Header: GENERAL.SANDBOX_SOURCE_DB_NAME,
             accessor: 'source',
             id: '3',
-            width: '220px',
+            width: windowSize.width >= 1920 ? '13.69%' : '220px',
             isSortable: true
         },
         {
             Header: GENERAL.SANDBOX_SOURCE_DB_INSTANCE_NAME,
             accessor: 'sourceInstanceName',
             id: '4',
-            width: '276px',
+            width: windowSize.width >= 1920 ? '17.17%' : '276px',
             filterOptions: 'auto'
         },
         {
             Header: GENERAL.SANDBOX_LAST_UPDATED,
             accessor: 'actualUpdated',
             id: '5',
-            width: '200px',
+            width: windowSize.width >= 1920 ? '12.44%' : '200px',
             isSortable: true,
             renderCell: (cellData: any) => {
                 return <DsTypography variant="Regular_14">{formatDateWithTime(cellData)}</DsTypography>;
@@ -691,7 +693,7 @@ const SandboxTable = () => {
             Header: GENERAL.AGE,
             accessor: 'ageByRange',
             id: '6',
-            width: '128px',
+            width: windowSize.width >= 1920 ? '7.96%' : '128px',
             isSortable: false,
             filterOptions: [
                 { label: GENERAL.ONE_THIRTY_DAYS, value: GENERAL.ONE_THIRTY_DAYS },
@@ -707,14 +709,14 @@ const SandboxTable = () => {
             Header: GENERAL.SANDBOX_TAG,
             accessor: 'tag',
             id: '7',
-            width: '128px',
+            width: windowSize.width >= 1920 ? '7.96%' : '128px',
             filterOptions: 'auto'
         },
         {
             Header: GENERAL.SB_STATUS,
             accessor: 'status',
             id: '8',
-            width: '180px',
+            width: windowSize.width >= 1920 ? '11.20%' : '180px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
                 return (

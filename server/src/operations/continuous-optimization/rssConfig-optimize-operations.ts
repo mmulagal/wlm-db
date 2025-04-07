@@ -4,7 +4,11 @@ import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import getLogger from '../../utils/logger';
 import { Metadata, RssConfigAssesment } from '../../utils/common-types';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
-import { OPTIMIZATION_CATEGORIES } from '../../utils/continous-optimization-consts';
+import {
+    AssessmentCategories,
+    AssessmentTriggeredBy,
+    OPTIMIZATION_CATEGORIES
+} from '../../utils/continous-optimization-consts';
 import { getServerNameWithHostname, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../../utils/utils';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
@@ -19,8 +23,9 @@ import {
     transferClusterOwnershipToStandbyNode
 } from './compute-optimize-operations';
 import { waitForInstanceOk } from '../../lib/aws/ec2';
-import { AuditStatus } from '../../utils/consts';
-import { managedHostsRssConfigAssessment } from './rssConfig-assessment-operations';
+import { AuditStatus, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
+import { onDemandTriggerDriftAssessmentDataCollection } from '../cont-opt-assessment-operations';
+import { resetCache } from '../../utils/cache';
 
 const logger = getLogger();
 async function optimizeNetworkAdapters(
@@ -323,16 +328,19 @@ async function handleOptimizeRssOptimization(
                 resourceMeta.isRssConfigOptimized = optimizedAdapters;
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
+
+            // clearning all the ssm command cache so that we will get the fresh data in assessment
+            resetCache(SSM_COMMAND_CACHE_TYPE);
             // Trigger assessment after optimize
-            await managedHostsRssConfigAssessment(
+            await onDemandTriggerDriftAssessmentDataCollection(
                 accountId,
                 credentialsId,
                 region,
-                activeNodeInstanceId,
-                resourceName!,
                 databaseHostId,
-                masterOptimizeJobParentId,
-                metadata as unknown as Metadata
+                databaseInstanceId,
+                AssessmentTriggeredBy.SYSTEM,
+                AssessmentCategories.RSS_CONFIG,
+                masterOptimizeJobParentId
             );
         }
     } catch (error) {
@@ -349,7 +357,7 @@ async function handleOptimizeRssOptimization(
                 'Rollback cluster ownership transfer to primary node',
                 'Rollback cluster ownership transfer to primary node'
             );
-            handleRollbackClusterOwnership(
+            await handleRollbackClusterOwnership(
                 accountId,
                 credentialsId,
                 region,
@@ -358,6 +366,10 @@ async function handleOptimizeRssOptimization(
                 activeNodeInstanceId,
                 rollbackJobId
             );
+            await updateJobDetails(accountId, rollbackJobId, {
+                status: JOBSTATUS.COMPLETED,
+                endTime: Date.now()
+            });
         }
         throw new Error(errorMessage);
     } finally {
