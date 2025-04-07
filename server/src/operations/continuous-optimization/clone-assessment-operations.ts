@@ -79,7 +79,6 @@ async function calculateCloneDrift(
                 credentialsId,
                 region
             );
-            logger.info(instanceOntapDetails);
 
             const {
                 database_instance_name: instanceName,
@@ -122,7 +121,7 @@ async function calculateCloneDrift(
         }
 
         const { cloneDetails, status, oldClones } = cloneAssessment as CloneAssesment;
-        logger.info(cloneDetails);
+        logger.debug('Clone assessment result', cloneDetails);
         const recommendationMessage =
             status === AssessmentStatus.NOT_OPTIMIZED
                 ? 'Old and divergent clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
@@ -136,7 +135,7 @@ async function calculateCloneDrift(
             recommendation: recommendationMessage,
             tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
             resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE, // Database check it
-            cloneInInstances: cloneDetails,
+            cloneDetails,
             impactedDatabases: `${oldClones} out of ${cloneDetails?.length} clones are old and divergent`
         };
         return CloneResponse;
@@ -191,7 +190,6 @@ async function managedHostsCloneAssessment(
         );
 
         const instanceOntapDetails = await getInstanceOntapDetails(newDatabaseInstanceDetails, credentialsId, region);
-        logger.info(instanceOntapDetails);
 
         const {
             database_instance_name: instanceName,
@@ -283,8 +281,8 @@ async function runCloneAssessment(
     const [instanceVolumeMapping, response] = await Promise.all([getInstanceVolumeMapping, callSsmExecutionResponse]);
 
     const volumeMapping = instanceVolumeMapping[databaseInstanceName];
-    logger.info('Instance Volume Mapping', volumeMapping);
-    logger.info('Response', response);
+    logger.debug('Instance Volume Mapping', volumeMapping);
+    logger.debug('Sandbox Response', response);
 
     if (isEmpty(volumeMapping)) {
         const errorMessage = `No ONTAP volumes found for the instance ${databaseInstanceName}.`;
@@ -320,25 +318,26 @@ async function runCloneAssessment(
     const parsedResponse = sqlResponseParsing(response);
     const { cloneResponse } = parsedResponse;
 
-    const modifiedResponse = JSON.parse(cloneResponse);
+    const sandboxListSSMResponse = JSON.parse(cloneResponse);
 
     const sandboxInfo: CloneDetail[] = [];
     let oldClones = 0;
     const processedSandboxNames = new Set<string>(); // Set to keep track of sandbox names already processed by netapp_wf
 
-    modifiedResponse?.forEach((item: sandboxType) => {
+    sandboxListSSMResponse?.forEach((item: sandboxType) => {
         const sources = getSourceDetails(item);
         const { database_name: sandboxName } = item;
         processedSandboxNames.add(sandboxName);
 
-        const databaseObject = {
+        const [sourceDatabaseHostName, sourceDatabaseInstanceName, sourceDatabaseName] = sources;
+        const databaseObject: CloneDetail = {
             cloneDatabaseName: sandboxName,
             databaseHostName: resourceName,
             databaseHostId: resourceId,
             databaseInstanceName,
-            sourceDatabaseHostName: sources[0],
-            sourceDatabaseInstanceName: sources[1],
-            sourceDatabaseName: sources[2],
+            sourceDatabaseHostName,
+            sourceDatabaseInstanceName,
+            sourceDatabaseName,
             tag: getProperty(item, 'tag'),
             clonedVolumeDetails: []
         };
@@ -386,25 +385,25 @@ async function runCloneAssessment(
                     }
                 }
 
-                const modifiedObj = {
-                    ...databaseObject,
-                    clonedVolumeDetails: [
-                        ...(databaseObject.clonedVolumeDetails || []), // Preserve existing clonedVolumeDetails if present
-                        { ...clonedVolumeInfo } // Add the new clonedVolumeDetails object
-                    ],
-                    ...(cloneAge !== undefined && { cloneAge }),
-                    clonedBy: 'netapp_wf'
-                };
-
-                sandboxInfo.push(modifiedObj);
+                databaseObject.clonedVolumeDetails?.push(clonedVolumeInfo);
+                if (cloneAge !== undefined) {
+                    databaseObject.cloneAge = cloneAge;
+                }
+            });
+            sandboxInfo.push({
+                ...databaseObject,
+                clonedBy: 'netapp_wf'
             });
         }
     });
 
     filteredVolumeRecords.forEach((record: VolumeRecord) => {
-        const { uuid: cloneVolumeUuid, create_time: cloneVolumeCreateTime, name: cloneVolumeName, clone } = record;
-
-        const cloneParentVolumeName = clone?.parent_volume?.name ?? '';
+        const {
+            uuid: cloneVolumeUuid,
+            create_time: cloneVolumeCreateTime,
+            name: cloneVolumeName,
+            clone: { parent_volume: { name: cloneParentVolumeName = '' } = {} } = {}
+        } = record;
 
         // Calculate the number of days since the volume was created
         const createdDate = cloneVolumeCreateTime ? new Date(cloneVolumeCreateTime) : new Date();

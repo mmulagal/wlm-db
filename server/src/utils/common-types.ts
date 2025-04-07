@@ -95,7 +95,7 @@ interface CloneDetail {
     cloneDatabaseName?: string;
     tag?: string | null;
     cloneAge?: number;
-    clonedBy: string;
+    clonedBy?: string;
     cloneSize?: number;
     clonedVolumeDetails?: ClonedVolumeDetail[];
 }

@@ -1153,7 +1153,8 @@ ssmMock
             'pgsqlProtection',
             '{ "records": [ { "uuid": "65ce42b0-093b-11f0-9005-d94de70408b8", "name": "wlmdb_pgsqldata_1742880617685", "snapshot_count": 1, "_links": { "self": { "href": "/api/storage/volumes/65ce42b0-093b-11f0-9005-d94de70408b8" } } } ], "num_records": 1, "_links": { "self": { "href": "/api/storage/volumes?fields=snapshot_count&name=wlmdb_pgsqldata_1742880617685" } } }'
         )
-    ).on(GetCommandInvocationCommand, {
+    )
+    .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSandboxDetails'
     })
     .resolves(

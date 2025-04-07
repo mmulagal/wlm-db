@@ -183,7 +183,7 @@ const AdditionalRssConfigParameterDriftResponse = Type.Optional(
 
 const AdditionalCloneParameterDriftResponse = Type.Optional(
     Type.Object({
-        cloneInInstances: Type.Optional(
+        cloneDetails: Type.Optional(
             Type.Array(
                 Type.Object({
                     databaseHostName: Type.String(),

@@ -460,7 +460,7 @@ async function getMappedOntapVolumes(
     executionTimeout?: string,
     svmOntapUuid?: string,
     instanceOntapDetails?: Record<string, object>,
-    fields?: string
+    fields: string = ''
 ) {
     const ssmComment = 'Get ontap volumes mapped to data drive of all databases in a server';
     logger.info(ssmComment, {
@@ -482,15 +482,13 @@ async function getMappedOntapVolumes(
         // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
         const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
 
-        const additionalFields = fields ? `${fields}` : '';
-
         const command = getMappedOntapVolumesScript(
             fileSystemId,
             region,
             psIsSystemDatabase,
             instanceNames,
             isSqlAuthEnabled,
-            additionalFields,
+            fields,
             includeLogVolumes,
             svmOntapUuid,
             instanceOntapDetails
