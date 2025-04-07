@@ -86,23 +86,27 @@ interface MaxDOPAssesment {
 }
 
 interface CloneDetail {
-    sandboxName?: string;
     databaseHostName: string;
     databaseHostId: string;
     databaseInstanceName: string;
     sourceDatabaseHostName?: string;
     sourceDatabaseInstanceName?: string;
     sourceDatabaseName?: string;
-    cloneVolumeName?: string;
-    cloneVolumeUuid?: string;
-    cloneVolumeCreateTime?: string;
-    cloneParentVolumeName?: string;
     cloneDatabaseName?: string;
     tag?: string | null;
-    cloneAge: number;
+    cloneAge?: number;
     clonedBy: string;
     cloneSize?: number;
-    cloneName: string;
+    clonedVolumeDetails?: ClonedVolumeDetail[];
+}
+
+interface ClonedVolumeDetail {
+    cloneVolumeUuid?: string;
+    cloneVolumeName?: string;
+    sourceVolumeName?: string;
+    cloneVolumeCreateTime?: string;
+    cloneDatabaseName?: string;
+    cloneVolumeType?: string;
 }
 
 interface CloneAssesment {

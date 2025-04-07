@@ -22,7 +22,7 @@ import {
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { GET_SANDBOX_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
-import { calculateDaysSince, sqlResponseParsing } from '../../utils/utils';
+import { calculateDaysSince, determineVolumeType, sqlResponseParsing } from '../../utils/utils';
 import {
     createDatabaseInstanceConfigData,
     listDatabaseInstanceConfigData
@@ -331,6 +331,18 @@ async function runCloneAssessment(
         const { database_name: sandboxName } = item;
         processedSandboxNames.add(sandboxName);
 
+        const databaseObject = {
+            cloneDatabaseName: sandboxName,
+            databaseHostName: resourceName,
+            databaseHostId: resourceId,
+            databaseInstanceName,
+            sourceDatabaseHostName: sources[0],
+            sourceDatabaseInstanceName: sources[1],
+            sourceDatabaseName: sources[2],
+            tag: getProperty(item, 'tag'),
+            clonedVolumeDetails: []
+        };
+
         const volumeUUIDs = databaseNameToVolumeUUIDMap.get(sandboxName);
         if (!volumeUUIDs) {
             logger.error(`No volume found for database name: ${sandboxName}`);
@@ -351,36 +363,40 @@ async function runCloneAssessment(
                         parent_volume: { name: cloneParentVolumeName }
                     }
                 } = volumeDetails;
-                const clonedVolumeDetails = {
+
+                const cloneVolumeType = determineVolumeType(cloneVolumeName);
+
+                const clonedVolumeInfo = {
+                    sourceVolumeName: cloneParentVolumeName,
                     cloneVolumeName,
                     cloneVolumeUuid,
                     cloneVolumeCreateTime,
-                    cloneParentVolumeName,
                     cloneDatabaseName: sandboxName,
-                    isFlexClone,
-                    cloneName: cloneVolumeName
+                    cloneVolumeType,
+                    isFlexClone
                 };
 
-                // Calculate the number of days since the volume was created
-                const cloneAge = calculateDaysSince(cloneVolumeCreateTime);
-                if (cloneAge > 60) {
-                    oldClones += 1;
+                let cloneAge: number | undefined;
+
+                // Calculate the number of days since the data volume was created only if the volume type is 'data'
+                if (cloneVolumeType === 'data') {
+                    cloneAge = calculateDaysSince(cloneVolumeCreateTime);
+                    if (cloneAge > 60) {
+                        oldClones += 1;
+                    }
                 }
 
-                const databaseObject = {
-                    sandboxName,
-                    databaseHostName: resourceName,
-                    databaseHostId: resourceId,
-                    databaseInstanceName,
-                    sourceDatabaseHostName: sources[0],
-                    sourceDatabaseInstanceName: sources[1],
-                    sourceDatabaseName: sources[2],
-                    tag: getProperty(item, 'tag'),
-                    ...clonedVolumeDetails,
-                    cloneAge,
+                const modifiedObj = {
+                    ...databaseObject,
+                    clonedVolumeDetails: [
+                        ...(databaseObject.clonedVolumeDetails || []), // Preserve existing clonedVolumeDetails if present
+                        { ...clonedVolumeInfo } // Add the new clonedVolumeDetails object
+                    ],
+                    ...(cloneAge !== undefined && { cloneAge }),
                     clonedBy: 'netapp_wf'
                 };
-                sandboxInfo.push(databaseObject);
+
+                sandboxInfo.push(modifiedObj);
             });
         }
     });
@@ -397,23 +413,30 @@ async function runCloneAssessment(
             oldClones += 1;
         }
 
+        const clonedVolumeInfo = {
+            sourceVolumeName: cloneParentVolumeName,
+            cloneVolumeName,
+            cloneVolumeUuid,
+            cloneVolumeCreateTime
+        };
+
         const clonedDatabaseNames = volumeUUIDToDatabaseNameMap.get(cloneVolumeUuid);
 
         clonedDatabaseNames?.forEach(clonedDatabaseName => {
             // Check if the sandboxName is already processed by netapp_wf
             if (!processedSandboxNames.has(clonedDatabaseName)) {
                 const databaseObject = {
-                    sandboxName: clonedDatabaseName,
+                    cloneDatabaseName: clonedDatabaseName,
                     databaseHostName: resourceName,
                     databaseHostId: resourceId,
                     databaseInstanceName,
                     clonedBy: 'other',
                     cloneAge,
-                    cloneVolumeName,
-                    cloneVolumeUuid,
-                    cloneVolumeCreateTime,
-                    cloneParentVolumeName,
-                    cloneName: cloneVolumeName
+                    clonedVolumeDetails: [
+                        {
+                            ...clonedVolumeInfo
+                        }
+                    ]
                 };
 
                 sandboxInfo.push(databaseObject);

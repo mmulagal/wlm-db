@@ -984,6 +984,16 @@ function calculateDaysSince(startDate: string | Date, endDate: string | Date = n
     return Math.floor(timeDifference / (1000 * 60 * 60 * 24));
 }
 
+function determineVolumeType(cloneVolumeName: string): 'log' | 'data' | 'unknown' {
+    if (cloneVolumeName.includes('sqllog')) {
+        return 'log';
+    }
+    if (cloneVolumeName.includes('sqldata')) {
+        return 'data';
+    }
+    return 'unknown'; // Default case if neither 'sqllog' nor 'sqldata' is found
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1041,5 +1051,6 @@ export {
     parseMultipleCommandResponse,
     divideArrayIntoChunks,
     isValidProp,
-    calculateDaysSince
+    calculateDaysSince,
+    determineVolumeType
 };
