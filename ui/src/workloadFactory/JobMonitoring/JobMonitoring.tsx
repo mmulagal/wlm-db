@@ -33,7 +33,7 @@ const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownV
     return (
         <div className={styles.jobMonitoring}>
             <div className={styles.chartContainer}>
-                <div style={{ width: '49.8%', maxWidth: '790px' }}>
+                <div className={styles.chartSection}>
                     <JobDistribution />
                 </div>
 

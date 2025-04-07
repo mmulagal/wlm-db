@@ -7,11 +7,11 @@
     "dependencies": {
         "@netapp/design-system": "1.5.38",
         "@netapp/icons": "^1.0.8",
-        "@reduxjs/toolkit": "2.6.0",
+        "@reduxjs/toolkit": "2.6.1",
         "@svgr/plugin-jsx": "^8.1.0",
         "@emotion/css": "^11.11.2",
         "@svgr/rollup": "^8.1.0",
-        "@vitejs/plugin-react-swc": "^3.8.0",               
+        "@vitejs/plugin-react-swc": "^3.8.0",
         "classnames": "^2.5.1",
         "dom-to-image": "^2.6.0",
         "fflate": "^0.8.2",

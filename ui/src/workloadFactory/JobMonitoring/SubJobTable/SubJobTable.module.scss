@@ -98,3 +98,11 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .subJobTable {
+        .table {
+            width: 100% !important;
+        }
+    }
+}

@@ -13,7 +13,7 @@ import {
     BulkOptimizeSnapshotPolicyParamsType
 } from '../../routes/types/continuous-optimization.types';
 import { DatabaseInstanceMetadata, Metadata, WorkloadInstance } from '../../utils/common-types';
-import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
+import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
 import {
     GET_CLUSTER_SNAPSHOT_POLICIES,
@@ -37,6 +37,7 @@ import {
     OptimizeStorageConfigs
 } from '../../utils/continous-optimization-consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../demo-operations';
+import { resetCache } from '../../utils/cache';
 
 const logger = getLogger();
 
@@ -385,6 +386,8 @@ async function handleResiliecyOptimize(
             volumes
         );
 
+        // clearning all the ssm command cache so that we will get the fresh data in assessment
+        resetCache(SSM_COMMAND_CACHE_TYPE);
         // trigger assesment to update the assessment config data
         onDemandTriggerDriftAssessmentDataCollection(
             accountId,

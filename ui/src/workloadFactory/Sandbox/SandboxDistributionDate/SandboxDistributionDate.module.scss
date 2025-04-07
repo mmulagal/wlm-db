@@ -63,3 +63,13 @@
         min-width: 456px;
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .sandboxDate {
+        max-width: unset;
+
+        .mainSection {
+            justify-content: space-around;
+        }
+    }
+}

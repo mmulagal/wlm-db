@@ -28,10 +28,12 @@ import { addNotification, NOTIFICATION_TYPES } from '../../../store/notification
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 
 import { useOnPremData } from './useOnPremData';
+import useResize from '../../../common/hooks/useResize';
 
 const ExploreSavingsOnPremiseTable = () => {
     const dispatch = useDispatch();
     const { fetchOnPremData, error } = useOnPremData();
+    const windowSize = useResize();
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const { onPremiseData, onPremiseDataLoading } = useAppSelector(state => state.exploreSavings);
@@ -221,7 +223,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '225px',
+            width: windowSize.width >= 1920 ? '14.001%' : '225px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div
@@ -247,7 +249,7 @@ const ExploreSavingsOnPremiseTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '245px',
+            width: windowSize.width >= 1920 ? '15.24%' : '245px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.resourceName;
                 return (
@@ -261,7 +263,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'deploymentModel',
             id: '2',
-            width: '245px',
+            width: windowSize.width >= 1920 ? '15.24%' : '245px',
             filterOptions: getFilterOptions(tableData, 'deploymentModel'),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -272,7 +274,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: 'SQL server instances',
             accessor: 'instanceNameList',
             id: '4',
-            width: '345px',
+            width: windowSize.width >= 1920 ? '21.46%' : '345px',
             isSortable: true,
             renderCell: (cellData: string, rowData: any) => {
                 const truncatedItems = getTruncatedItems(cellData);
@@ -319,7 +321,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: 'On-premises nodes',
             accessor: 'onPremisesNodes',
             id: '5',
-            width: '347px',
+            width: windowSize.width >= 1920 ? '21.59%' : '347px',
             isSortable: true,
             accessorForTextFilter: 'onPremNode',
             renderCell: (cellData: any, rowData: any) => {
@@ -367,7 +369,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: 'Data collection time',
             accessor: 'creationTime',
             id: '6',
-            width: '200px',
+            width: windowSize.width >= 1920 ? '12.44%' : '200px',
             renderCell: (cellData: string) => {
                 return <div>{cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE}</div>;
             }
