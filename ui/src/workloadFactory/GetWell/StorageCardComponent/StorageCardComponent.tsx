@@ -778,7 +778,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             }
             handleOptimizeStorageJob(
                 res,
-                { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
+                {
+                    id: cardData?.id,
+                    name: type,
+                    hostId: selectedResourceId,
+                    instanceId: selectedDatabaseInstance,
+                    credentialId: selectedGwInstanceCredId,
+                    regionId: selectedGwInstanceRegionId
+                },
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,

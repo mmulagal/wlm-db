@@ -190,7 +190,31 @@ const DashboardInnerPage = () => {
                             databaseHosts: Object.values(
                                 //@ts-ignore
                                 rowData.reduce(
-                                    (acc, { databaseHostId, instanceId, credentialId, regionId, networkAdapters }) => {
+                                    (
+                                        acc: Record<
+                                            string,
+                                            {
+                                                id: string;
+                                                sqlServerInstances: string[];
+                                                credentialsId: string;
+                                                region: string;
+                                                networkAdapters: string[];
+                                            }
+                                        >,
+                                        {
+                                            databaseHostId,
+                                            instanceId,
+                                            credentialId,
+                                            regionId,
+                                            networkAdapters
+                                        }: {
+                                            databaseHostId: string;
+                                            instanceId: string;
+                                            credentialId: string;
+                                            regionId: string;
+                                            networkAdapters: any;
+                                        }
+                                    ) => {
                                         let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
                                         if (!acc[uniqueRow]) {
                                             acc[uniqueRow] = {
@@ -341,7 +365,7 @@ const DashboardInnerPage = () => {
                                                 sqlServerInstances: []
                                             };
                                         }
-                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
                                         return acc;
                                     },
                                     {}
@@ -620,7 +644,9 @@ const DashboardInnerPage = () => {
                         id: nameToIdConfigMapping(type),
                         name: type,
                         hostId: selectedResourceId,
-                        instanceId: selectedDatabaseInstance
+                        instanceId: selectedDatabaseInstance,
+                        credentialId: selectedGwInstanceCredId,
+                        regionId: selectedGwInstanceRegionId
                     },
                     failedMsgData,
                     getJobDetailApi,

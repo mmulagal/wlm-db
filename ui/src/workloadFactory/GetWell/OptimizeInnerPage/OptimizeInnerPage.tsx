@@ -423,7 +423,9 @@ const OptimizeInnerPage = () => {
                     id: selectedOptimizeConfig?.data?.id,
                     name: type,
                     hostId: selectedResourceId,
-                    instanceId: selectedDatabaseInstance
+                    instanceId: selectedDatabaseInstance,
+                    credentialId: selectedGwInstanceCredId,
+                    regionId: selectedGwInstanceRegionId
                 },
                 failedMsgData,
                 getJobDetailApi,

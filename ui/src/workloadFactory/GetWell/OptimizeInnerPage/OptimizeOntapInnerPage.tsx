@@ -255,7 +255,9 @@ const OptimizeOntapInnerPage = () => {
                 {
                     ...rowData,
                     hostId: selectedResourceId || selectedOptimizeConfig?.hostId,
-                    instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId
+                    instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
+                    credentialId: selectedGwInstanceCredId,
+                    regionId: selectedGwInstanceRegionId
                 },
                 failedMsgData,
                 getJobDetailApi,
