@@ -4,11 +4,10 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { faker } from '@faker-js/faker';
-import { DescribeBackupsCommandOutput, ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
+import { ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
 import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.json';
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import fsxSvms from '../../simulator/responses/aws/list-fsx-svms.json';
-import fsxnBackupResponse from '../../simulator/responses/aws/list-fsxn-backups';
 import fsxwBackups from '../../simulator/responses/aws/list-fsxw-backups.json';
 import fsxResourceTagsResponse from '../../simulator/responses/aws/list-fsx-resource-tags.json';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
@@ -23,6 +22,7 @@ import {
     updateFileSystem
 } from '../../../src/lib/aws/fsx';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
+import { fsxnBackupWithModifiedCreationTime } from '../../simulator/scopes/aws/fsx-scope';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 const VOLUME_ID = 'fsvol-06184c131ec936380';
@@ -58,15 +58,7 @@ describe('Testcases for Amazon FSx resources', () => {
                 }
             ]
         });
-
-        function ignoreCreationTime(backups: DescribeBackupsCommandOutput) {
-            return backups.Backups?.map(backup => {
-                const { CreationTime, ...rest } = backup;
-                return rest;
-            });
-        }
-
-        expect(ignoreCreationTime(response)).toEqual(ignoreCreationTime(fsxnBackupResponse));
+        expect(response).toEqual(fsxnBackupWithModifiedCreationTime);
     });
 
     it('List FSx windows Backups', async () => {
