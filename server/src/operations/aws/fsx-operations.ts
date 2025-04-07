@@ -342,7 +342,9 @@ async function isFsxnAwsBackupEnabled(
                 if (volumeUuid && uuidVolumeIdMap[volumeId]) {
                     if (backup.CreationTime) {
                         const backupTime = new Date(backup.CreationTime);
-                        if (
+                        if (isDemo() && !volumeUuidsInBackups.includes(volumeUuid)) {
+                            volumeUuidsInBackups.push(volumeUuid);
+                        } else if (
                             now.getTime() - backupTime.getTime() < twoDaysInMs &&
                             !volumeUuidsInBackups.includes(volumeUuid)
                         ) {
