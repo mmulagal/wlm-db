@@ -70,11 +70,12 @@
         .newValueSection {
             display: flex;
             gap: 20px;
+            flex-direction: column;
 
             .leftSide {
                 display: flex;
                 flex-direction: column;
-                gap: 20px;
+                gap: 28px;
 
                 .topSection {
                     display: flex;
@@ -83,7 +84,7 @@
                     .subContent {
                         display: flex;
                         flex-direction: column;
-                        width: 160px;
+                        width: max-content;
 
                         .loaderText {
                             display: flex;
@@ -126,7 +127,7 @@
             .subContent {
                 display: flex;
                 flex-direction: column;
-                width: 160px;
+                width: max-content;
 
                 .loaderText {
                     display: flex;
@@ -137,6 +138,11 @@
 
         .chartSection {
             max-height: 306px;
+        }
+
+        .chartContainer {
+            display: flex;
+            gap: 56px;
         }
     }
 }
