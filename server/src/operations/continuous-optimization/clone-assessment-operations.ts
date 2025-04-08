@@ -133,7 +133,7 @@ async function calculateCloneDrift(
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
             tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
-            resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE, // Database check it
+            resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
             cloneDetails,
             cloneDriftMessage: `${oldClones} out of ${cloneDetails?.length} clones are old and divergent`
         };
