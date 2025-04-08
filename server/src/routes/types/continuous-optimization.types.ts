@@ -193,7 +193,7 @@ const AdditionalCloneParameterDriftResponse = Type.Optional(
                     sourceDatabaseInstanceName: Type.Optional(Type.String()),
                     sourceDatabaseName: Type.Optional(Type.String()),
                     cloneDatabaseName: Type.Optional(Type.String()),
-                    cloneSize: Type.Optional(Type.String()),
+                    cloneSize: Type.Optional(Type.Number()),
                     cloneAge: Type.Optional(Type.Number()),
                     clonedBy: Type.Optional(Type.String()),
                     tags: Type.Optional(Type.String()),
