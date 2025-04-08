@@ -178,7 +178,7 @@ const NewPotentialSavings = () => {
                     <div className={styles.chartContainer}>
                         <div className={styles.rightSide}>
                             {/* chart section */}
-                            <div className={styles.chartSection} style={{ width: '280px', marginLeft: '20px' }}>
+                            <div className={styles.newChartSection}>
                                 {hasPotentialValues() &&
                                 checkForPotentialSavings(
                                     potentialSavingsValues?.fsxnCostForEbsHost,
@@ -226,7 +226,7 @@ const NewPotentialSavings = () => {
                             </div>
                         </div>
                         <div className={styles.rightSide}>
-                            <div className={styles.chartSection} style={{ width: '280px', marginLeft: '20px' }}>
+                            <div className={styles.newChartSection}>
                                 {hasPotentialValues() &&
                                 checkForPotentialSavings(
                                     potentialSavingsValues?.fsxnCostForFsxwHost,
