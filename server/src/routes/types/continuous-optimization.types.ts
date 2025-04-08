@@ -212,7 +212,7 @@ const AdditionalCloneParameterDriftResponse = Type.Optional(
                 })
             )
         ),
-        impactedDatabases: Type.Optional(Type.String())
+        cloneDriftMessage: Type.Optional(Type.String())
     })
 );
 

@@ -33,11 +33,10 @@ import { getMappedOntapVolumes } from '../aws/fsx-operations';
 
 const logger = getLogger();
 
-interface SandboxObject {
+interface Sandbox {
+    database_name: string;
     sandbox_properties: { name: string; value: string }[];
 }
-
-type sandboxType = SandboxObject & { database_name: string };
 
 async function calculateCloneDrift(
     accountId: string,
@@ -127,7 +126,7 @@ async function calculateCloneDrift(
                 ? 'Old and divergent clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
                 : 'All clones are proper and up-to-date with the source.';
 
-        const CloneResponse = {
+        return {
             name: 'Clone Management',
             status: status as AssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
@@ -136,9 +135,8 @@ async function calculateCloneDrift(
             tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
             resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE, // Database check it
             cloneDetails,
-            impactedDatabases: `${oldClones} out of ${cloneDetails?.length} clones are old and divergent`
+            cloneDriftMessage: `${oldClones} out of ${cloneDetails?.length} clones are old and divergent`
         };
-        return CloneResponse;
     } catch (error: any) {
         errorMessage = `Error while calculating clone drift. ${error.message}`;
         logger.error({ errorMessage, error });
@@ -168,8 +166,8 @@ async function managedHostsCloneAssessment(
     });
 
     const { id: cloneAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server Clone assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server Clone assessment for ${resourceName}`,
+        name: `Microsoft SQL Server Clone assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL Server Clone assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -324,7 +322,7 @@ async function runCloneAssessment(
     let oldClones = 0;
     const processedSandboxNames = new Set<string>(); // Set to keep track of sandbox names already processed by netapp_wf
 
-    sandboxListSSMResponse?.forEach((item: sandboxType) => {
+    sandboxListSSMResponse?.forEach((item: Sandbox) => {
         const sources = getSourceDetails(item);
         const { database_name: sandboxName } = item;
         processedSandboxNames.add(sandboxName);
