@@ -10,11 +10,43 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { useEffect, useState, useMemo } from 'react';
 
 const Sandboxes = () => {
     const dispatch = useDispatch();
-    const loading = useAppSelector(state => state.sandbox.getSandboxList.sandboxListLoading);
-    const { isNA, aggregatedSandboxList } = useAppSelector(state => state.sandbox);
+    const { isNA } = useAppSelector(state => state.sandbox);
+    const { loading: dataLoading, data: aggregatedSandboxList } = useAppSelector(
+        state => state.inventoryV2.dashSandboxList
+    );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
+        state => state.headers
+    );
+
+    const [data, setData] = useState<any>([]);
+
+    const loading = useMemo(() => {
+        return dataLoading || multiDataLoading;
+    }, [dataLoading, multiDataLoading]);
+
+    useEffect(() => {
+        let filteredList: Array<any> = [];
+        let uniqueResourceList: Array<String> = [];
+        if (aggregatedSandboxList?.length > 0) {
+            aggregatedSandboxList?.map((item: any) => {
+                let uniqueRow = item?.databaseHostId + '_' + item?.databaseInstanceId + '_' + item?.sandboxName;
+                if (
+                    !headerSelectedMultiCredIdsList?.includes(item?.credentialId) ||
+                    !headerSelectedMultiRegionIdsList?.includes(item?.regionId) ||
+                    uniqueResourceList?.includes(uniqueRow)
+                ) {
+                    return;
+                }
+                uniqueResourceList.push(uniqueRow);
+                filteredList.push(item);
+            });
+            setData(filteredList);
+        }
+    }, [aggregatedSandboxList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     const redirectToSandbox = (range: string) => {
         dispatch(
@@ -37,7 +69,7 @@ const Sandboxes = () => {
             </div>
 
             <div className={styles.mainSection}>
-                <SandboxChart />
+                <SandboxChart aggregatedSandboxList={data} loading={loading} />
                 <div className={styles.rightSide}>
                     <DsTypography variant="Semibold_14" style={{ marginBottom: '16px' }}>
                         Sandboxes distribution by age
@@ -61,7 +93,7 @@ const Sandboxes = () => {
                             {!isNA && (
                                 <>
                                     <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAgeValue(aggregatedSandboxList)['0-30']
+                                        getSandboxDistributionByAgeValue(data)['0-30']
                                     }`}</DsTypography>
                                 </>
                             )}
@@ -104,7 +136,7 @@ const Sandboxes = () => {
                             {!isNA && (
                                 <>
                                     <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAgeValue(aggregatedSandboxList)['31-60']
+                                        getSandboxDistributionByAgeValue(data)['31-60']
                                     }`}</DsTypography>
                                 </>
                             )}
@@ -147,7 +179,7 @@ const Sandboxes = () => {
                             {!isNA && (
                                 <>
                                     <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAgeValue(aggregatedSandboxList)['61+']
+                                        getSandboxDistributionByAgeValue(data)['61+']
                                     }`}</DsTypography>
                                 </>
                             )}

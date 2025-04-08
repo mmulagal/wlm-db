@@ -92,6 +92,7 @@ const InstancesTable = () => {
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
         useAppSelector(state => state.inventoryV2);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
@@ -117,7 +118,8 @@ const InstancesTable = () => {
                 isManagedHostListLoading ||
                 fsxCredentialStatusLoading ||
                 pgsqlDatabaseHostsLoading ||
-                pgsqlFullHostDataLoading
+                pgsqlFullHostDataLoading ||
+                multiDataLoading
         );
     }, [
         databaseHostsLoading,
@@ -126,7 +128,8 @@ const InstancesTable = () => {
         isManagedHostListLoading,
         fsxCredentialStatusLoading,
         pgsqlDatabaseHostsLoading,
-        pgsqlFullHostDataLoading
+        pgsqlFullHostDataLoading,
+        multiDataLoading
     ]);
 
     const getInitialFilter = () => {
@@ -324,7 +327,7 @@ const InstancesTable = () => {
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         }
         // if fsx register is false and only db cred is added than call instance API
-        dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]]));
+        // dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]]));
         if (!isFsxRegister) {
             dispatch(setDetectedInstanceId(rowData?.ec2InstanceId));
         }

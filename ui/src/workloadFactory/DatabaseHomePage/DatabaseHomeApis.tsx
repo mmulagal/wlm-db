@@ -20,12 +20,13 @@ import { WIZARD_TYPE } from '../../utils/consts';
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
-    const databaseHostsDataV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsData);
-    const { databaseHostsData: pgsqlHostData } = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
-    const { sandboxSavings } = useAppSelector(state => state.sandbox.getSandboxSavings);
+    const databaseHostsDataV2 = useAppSelector(state => state.inventoryV2.multiMssqlDatabaseHostsData);
+    const pgsqlHostData = useAppSelector(state => state.inventoryV2.multiPgSqlDatabaseHostsData);
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
+    const dashSandboxSavingsData = useAppSelector(state => state.inventoryV2.dashSandboxSavings.data);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
 
     // To have database hosts data in dashboard - V2
     useEffect(() => {
@@ -39,11 +40,11 @@ const DatabaseHomeApis = () => {
         const aggrProtection = getManagedAggrProtection(databaseHostsDataV2);
         dispatch(addAggregatedProtectionDbCount(aggrProtection));
 
-        const aggrStorage = getManagedAggrStorageSavings(databaseHostsDataV2, sandboxSavings);
+        const aggrStorage = getManagedAggrStorageSavings(databaseHostsDataV2, dashSandboxSavingsData);
         dispatch(addAggregatedStorageSavings(aggrStorage));
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHostsDataV2, sandboxSavings]);
+    }, [databaseHostsDataV2, dashSandboxSavingsData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     // To have pgsql database hosts data in dashboard
     useEffect(() => {
@@ -58,7 +59,7 @@ const DatabaseHomeApis = () => {
         dispatch(addAggregatedPgsqlStorageSavings(aggrStorage));
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pgsqlHostData]);
+    }, [pgsqlHostData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     // To have pgsql and mssql database hosts estimated cost in dashboard
     useEffect(() => {
@@ -75,7 +76,7 @@ const DatabaseHomeApis = () => {
         dispatch(addAggregatedCosts(aggrCost));
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pgsqlHostData, databaseHostsDataV2]);
+    }, [pgsqlHostData, databaseHostsDataV2, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     // To have database hosts count data in dashboard - V2
     useEffect(() => {
@@ -88,7 +89,7 @@ const DatabaseHomeApis = () => {
         const hostStatusCount = getManagedHostCount(databaseHostsDataV2, dispatch);
         dispatch(addAggregateHostsCountData(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHostsDataV2, inventoryTableData]);
+    }, [databaseHostsDataV2, inventoryTableData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     // To have pgsql database hosts count data in dashboard
     useEffect(() => {
@@ -101,7 +102,7 @@ const DatabaseHomeApis = () => {
         const hostStatusCount = getManagedHostCount(pgsqlHostData, dispatch, WIZARD_TYPE.PGSQL);
         dispatch(addAggregatePgSqlHostsCountData(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pgsqlHostData, inventoryTableData]);
+    }, [pgsqlHostData, inventoryTableData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     useEffect(() => {
         if (refreshBlocked) {
@@ -115,7 +116,7 @@ const DatabaseHomeApis = () => {
         // This is to show data on dashboard potential card UI.
         const potentialSavingsValues = getPotentialSavingsValues(potentialSavingsHostData);
         dispatch(setPotentialSavingsValues(potentialSavingsValues));
-    }, [potentialSavingsHostData]);
+    }, [potentialSavingsHostData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     return <></>;
 };

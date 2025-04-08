@@ -1,7 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
 import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
-import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
 import {
     initialDatabaseTableColState,
     initialHostsTableColState,
@@ -19,11 +18,13 @@ const initialInventoryV2State: InventorySliceData = {
         databaseHostsLoading: false, // To check if partial database-hosts api is running
         fullHostDataLoading: false // To check if full database-hosts api is running
     },
+    multiMssqlDatabaseHostsData: null,
     getPgSqlDatabaseHosts: {
         databaseHostsData: null,
         databaseHostsLoading: false,
         fullHostDataLoading: false
     },
+    multiPgSqlDatabaseHostsData: null,
     discoveredHosts: {
         discoveredHostData: null,
         discoverHostLoading: false
@@ -74,7 +75,17 @@ const initialInventoryV2State: InventorySliceData = {
     },
     hostTableRows: [],
     instanceTableRows: [],
-    databaseTableRows: []
+    databaseTableRows: [],
+    dashSandboxList: {
+        data: [],
+        loading: false,
+        error: ''
+    },
+    dashSandboxSavings: {
+        data: [],
+        loading: false,
+        error: ''
+    }
 };
 
 const inventoryV2Slice = createSlice({
@@ -134,6 +145,12 @@ const inventoryV2Slice = createSlice({
         },
         addPgSqlDatabaseHostsData: (state, action: PayloadAction<any>) => {
             state.getPgSqlDatabaseHosts.databaseHostsData = action.payload;
+        },
+        addMultiMssqlDatabaseHostsDataV2: (state, action: PayloadAction<any>) => {
+            state.multiMssqlDatabaseHostsData = action.payload;
+        },
+        addMultiPgSqlDatabaseHostsData: (state, action: PayloadAction<any>) => {
+            state.multiPgSqlDatabaseHostsData = action.payload;
         },
         setIsDiscoveredHostData: (state, action: PayloadAction<any>) => {
             state.discoveredHosts.discoveredHostData = action.payload;
@@ -230,6 +247,18 @@ const inventoryV2Slice = createSlice({
             state.instanceTableRows = action.payload?.instances;
             state.databaseTableRows = action.payload?.databases;
         },
+        setDashSandboxListData: (state, action: PayloadAction<any>) => {
+            state.dashSandboxList.data = action.payload;
+        },
+        setDashSandboxListLoading: (state, action: PayloadAction<any>) => {
+            state.dashSandboxList.loading = action.payload;
+        },
+        setDashSandboxSavingsData: (state, action: PayloadAction<any>) => {
+            state.dashSandboxSavings.data = action.payload;
+        },
+        setDashSandboxSavingsLoading: (state, action: PayloadAction<any>) => {
+            state.dashSandboxSavings.loading = action.payload;
+        },
         resetPerComboData: (state, action: PayloadAction<any>) => {
             state.resetManagedData = true;
             state.isManagedHostListLoading = true;
@@ -242,6 +271,8 @@ const inventoryV2Slice = createSlice({
             state.getPgSqlDatabaseHosts.databaseHostsData = null;
             state.discoveredHosts.discoveredHostData = null;
             state.discoveredHosts.discoverHostLoading = true;
+            state.dashSandboxList.loading = true;
+            state.dashSandboxSavings.loading = true;
             state.mssqlInstancesData = null;
             state.inventoryChartData = null;
             state.removeSecNodeDiscoveredList = [];
@@ -249,7 +280,18 @@ const inventoryV2Slice = createSlice({
             state.managedAssessmentHostIdsList = [];
             state.perfMssqlInstancesData = {};
             state.managedAssessmentHostData = {};
+        },
+        resetRefreshData: (state, action: PayloadAction<any>) => {
+            state.inventoryTableData = null;
+            state.fsxCredentialStatusObj = {};
             state.allmssqlHostAssessmentData = [];
+            state.dashSandboxList.data = [];
+            state.dashSandboxSavings.data = [];
+            state.hostTableRows = [];
+            state.instanceTableRows = [];
+            state.databaseTableRows = [];
+            state.multiMssqlDatabaseHostsData = null;
+            state.multiPgSqlDatabaseHostsData = null;
             state.potentialSavingsHostData = {};
         }
     }
@@ -305,7 +347,14 @@ export const {
     setHostTableRows,
     setInstanceTableRows,
     setDatabaseTableRows,
-    setInventoryTablesRows
+    setInventoryTablesRows,
+    setDashSandboxListData,
+    setDashSandboxListLoading,
+    setDashSandboxSavingsData,
+    setDashSandboxSavingsLoading,
+    resetRefreshData,
+    addMultiMssqlDatabaseHostsDataV2,
+    addMultiPgSqlDatabaseHostsData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

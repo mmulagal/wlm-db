@@ -522,6 +522,9 @@ export const headersApi = createApi({
             getHeadersRegions: builder.query({
                 query: ({ credentialId }) => ({ url: `v1/credentials/${credentialId}/fsx/regions` })
             }),
+            getHeadersRegionsWithoutCred: builder.query({
+                query: () => ({ url: `v1/fsx/regions` })
+            }),
             getStatus: builder.query({
                 query: () => `v1/status`
             })
@@ -998,8 +1001,8 @@ export const getWellApi = createApi({
                 })
             }),
             optimizeStorageSizingForBulk: builder.mutation({
-                query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/storage-sizing`,
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/storage-sizing`,
                     method: 'POST',
                     body: payload
                 })
@@ -1033,22 +1036,22 @@ export const getWellApi = createApi({
                 })
             }),
             optimizeStorageTierForBulk: builder.mutation({
-                query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/storage-tier`,
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/storage-tier`,
                     method: 'POST',
                     body: payload
                 })
             }),
             optimizeComputeConfigForBulk: builder.mutation({
-                query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/compute`,
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/compute`,
                     method: 'POST',
                     body: payload
                 })
             }),
             optimizeMaxdopConfigForBulk: builder.mutation({
-                query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/max-dop`,
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/max-dop`,
                     method: 'POST',
                     body: payload
                 })
@@ -1066,8 +1069,8 @@ export const getWellApi = createApi({
                 })
             }),
             optimizeAwsBackup: builder.mutation({
-                query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/resiliency/aws-backup`,
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/resiliency/aws-backup`,
                     method: 'POST',
                     body: payload
                 })
@@ -1138,7 +1141,12 @@ export const {
 
 export const { useSendMsgMutation } = chatbotApi;
 
-export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } = headersApi;
+export const {
+    useGetHeadersCredentialsQuery,
+    useGetHeadersRegionsQuery,
+    useGetHeadersRegionsWithoutCredQuery,
+    useGetStatusQuery
+} = headersApi;
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
@@ -1167,6 +1175,7 @@ export const {
 
 export const {
     useGetSandboxListQuery,
+    useLazyGetSandboxListQuery,
     useGetSandboxSavingsQuery,
     useLazyGetSandboxSavingsQuery,
     useCreateSandboxMutation,

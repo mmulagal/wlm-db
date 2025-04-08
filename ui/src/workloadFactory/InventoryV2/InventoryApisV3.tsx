@@ -3,9 +3,16 @@ import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAllMssqlHostAssessmentData,
     addDatabaseHostsDataV2,
+    addMultiMssqlDatabaseHostsDataV2,
+    addMultiPgSqlDatabaseHostsData,
     addPgSqlDatabaseHostsData,
     resetPerComboData,
+    resetRefreshData,
     setAllMssqlHostAssessmentLoading,
+    setDashSandboxListData,
+    setDashSandboxListLoading,
+    setDashSandboxSavingsData,
+    setDashSandboxSavingsLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
     setInventoryChartData,
@@ -36,7 +43,9 @@ import {
     useLazyGetFsxCredentialStatusQuery,
     useLazyGetManagedHostDataQuery,
     useLazyGetPgsqlDatabaseHostsFullDataV2Query,
-    useLazyGetPgSqlDatabaseHostsListQuery
+    useLazyGetPgSqlDatabaseHostsListQuery,
+    useLazyGetSandboxListQuery,
+    useLazyGetSandboxSavingsQuery
 } from '../../utils/apiService';
 import {
     addInstanceIdToGetPerf,
@@ -92,9 +101,12 @@ const InventoryApisV3 = () => {
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
     const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
+    const { multiMssqlDatabaseHostsData, multiPgSqlDatabaseHostsData } = useAppSelector(state => state.inventoryV2);
+    const dashSandboxSavingsData = useAppSelector(state => state.inventoryV2.dashSandboxSavings.data);
+    const dashSandboxListData = useAppSelector(state => state.inventoryV2.dashSandboxList.data);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
-    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
+    const [regionId, setRegionId] = useState(headerSelectedRegion?.data?.regionCode || '');
     const [partnerInstanceList, setPartnerInstanceList] = useState<any>([]);
 
     // getManagedHostList function values update
@@ -133,6 +145,10 @@ const InventoryApisV3 = () => {
     // Get all managed hosts assessment data
     const [getAllMssqlHostAssessmentAPI] = useLazyGetAllMssqlHostsAssessmentDataQuery();
     const [allmssqlHostAssessmentData, setAllmssqlHostAssessmentData] = useState<any>([]);
+
+    // Get all sandbox API data
+    const [getSandboxListApi] = useLazyGetSandboxListQuery();
+    const [getSandboxSavingsApi] = useLazyGetSandboxSavingsQuery();
 
     const fsxCredentialStatusObjRef: any = useRef(null);
     const mssqlInstancesDataRef: any = useRef(null);
@@ -293,17 +309,24 @@ const InventoryApisV3 = () => {
             let topologyHostData: any = {};
             let pgsqlTopologyHostData: any = {};
             let assessmentData: any = [];
+            let sandboxListData: any = [];
+            let sandboxSavingsData: any = [];
             getDatabaseHostsList(topologyHostData, null, credId, regionId);
             getPgSqlDatabaseHostsList(pgsqlTopologyHostData, null, credId, regionId);
             getDatabaseHostsFullData(fullHostData, null, credId, regionId);
             getPgsqlDatabaseHostsFullData(fullPgsqlHostData, null, credId, regionId);
             getAllMssqlHostAssessmentData(assessmentData, null, credId, regionId);
+            // sandbox APIs
+            getAllSandboxListData(sandboxListData, null, credId, regionId);
+            getAllSandboxSavingsData(sandboxSavingsData, credId, regionId);
         } else {
             dispatch(setIsDatabaseHostsLoading(false));
             dispatch(setIsPgSqlDatabaseHostsLoading(false));
             dispatch(setIsFullHostDataLoading(false));
             dispatch(setIsFullPgSqlHostDataLoading(false));
             dispatch(setAllMssqlHostAssessmentLoading(false));
+            dispatch(setDashSandboxListLoading(false));
+            dispatch(setDashSandboxSavingsLoading(false));
         }
     };
 
@@ -589,7 +612,7 @@ const InventoryApisV3 = () => {
         try {
             const result: any = await getMssqlInstanceDataApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                regionId: headerSelectedRegion?.data?.regionCode,
                 instances: instanceId,
                 fields: fields.join(','),
                 nextToken: nextToken
@@ -648,6 +671,7 @@ const InventoryApisV3 = () => {
                 let mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
                     isManagedHost: isManagedHost,
+                    loading: false,
                     data: null,
                     error: result?.error?.data?.message,
                     fields: fields
@@ -658,6 +682,7 @@ const InventoryApisV3 = () => {
             let mssqlInstancesDataErr: any = {};
             mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
                 isManagedHost: isManagedHost,
+                loading: false,
                 data: null,
                 error: error,
                 fields: fields
@@ -704,7 +729,7 @@ const InventoryApisV3 = () => {
         try {
             const result: any = await getMssqlInstanceDataApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                regionId: headerSelectedRegion?.data?.regionCode,
                 instances: instanceId,
                 fields: fields.join(','),
                 nextToken: nextToken
@@ -740,6 +765,7 @@ const InventoryApisV3 = () => {
                 let mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
                     isManagedHost: isManagedHost,
+                    loading: false,
                     data: null,
                     error: result?.error?.data?.message,
                     fields: fields
@@ -750,6 +776,7 @@ const InventoryApisV3 = () => {
             let mssqlInstancesDataErr: any = {};
             mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
                 isManagedHost: isManagedHost,
+                loading: false,
                 data: null,
                 error: error,
                 fields: fields
@@ -780,7 +807,7 @@ const InventoryApisV3 = () => {
                 ) {
                     if (result && !result?.error) {
                         assessmentData = [
-                            ...assessmentData,
+                            // ...assessmentData,
                             ...(Array.isArray(result?.data?.assessmentsPerAccount)
                                 ? result.data.assessmentsPerAccount.map((assessment: any) => ({
                                       ...assessment,
@@ -809,6 +836,100 @@ const InventoryApisV3 = () => {
             } catch (error) {
                 dispatch(setAllMssqlHostAssessmentLoading(false));
                 setAllmssqlHostAssessmentData(assessmentData);
+            }
+        }
+    };
+
+    const getAllSandboxListData = async (
+        sandboxListData: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getSandboxListApi({
+                    credentialId: credId,
+                    region: regionId,
+                    nextToken: nextToken
+                });
+                if (
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+                ) {
+                    if (result && !result?.error) {
+                        sandboxListData = [
+                            ...sandboxListData,
+                            ...(Array.isArray(result?.data?.items)
+                                ? result.data.items.map((sandbox: any) => ({
+                                      ...sandbox,
+                                      credentialId: credId,
+                                      regionId: regionId
+                                  }))
+                                : [])
+                        ];
+                        if (result?.data?.nextToken) {
+                            dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
+                            getAllSandboxListData(
+                                sandboxListData,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setDashSandboxListLoading(false));
+                            dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
+                        }
+                    } else {
+                        dispatch(setDashSandboxListLoading(false));
+                        dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
+                    }
+                }
+            } catch (error) {
+                dispatch(setDashSandboxListLoading(false));
+                dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
+            }
+        }
+    };
+
+    const getAllSandboxSavingsData = async (
+        sandboxSavingsData: any,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getSandboxSavingsApi({
+                    credentialId: credId,
+                    region: regionId
+                });
+                if (
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+                ) {
+                    if (result && !result?.error) {
+                        let perSandboxAPI = {
+                            ...result?.data,
+                            credentialId: credId,
+                            regionId: regionId
+                        };
+                        sandboxSavingsData = [...sandboxSavingsData, perSandboxAPI];
+                        dispatch(setDashSandboxSavingsLoading(false));
+                        dispatch(setDashSandboxSavingsData([...dashSandboxSavingsData, ...sandboxSavingsData]));
+                    } else {
+                        dispatch(setDashSandboxSavingsLoading(false));
+                        dispatch(setDashSandboxSavingsData([...dashSandboxSavingsData, ...sandboxSavingsData]));
+                    }
+                }
+            } catch (error) {
+                dispatch(setDashSandboxSavingsLoading(false));
+                dispatch(setDashSandboxSavingsData([...dashSandboxSavingsData, ...sandboxSavingsData]));
             }
         }
     };
@@ -883,7 +1004,7 @@ const InventoryApisV3 = () => {
         try {
             const result: any = await getStorageSavingsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                regionId: headerSelectedRegion?.data?.regionCode,
                 instanceId: selectedInstanceId,
                 payload: payload,
                 type: savingsCalculatorType === GENERAL.EBS ? 'ebs' : 'fsxw'
@@ -1044,56 +1165,38 @@ const InventoryApisV3 = () => {
 
     const resetFullData = () => {
         resetPerComboValues();
-        // inventory table reset
-        dispatch(setInventoryTableData(null));
-        // FSX cred object reset
-        dispatch(setFsxCredentialStatus({}));
+        dispatch(resetRefreshData(null));
         // Explore savings data
         dispatch(setUnmanagedExploreSavingsHost([]));
         dispatch(setPotentialSavingsValues(null));
-        dispatch(addAllMssqlHostAssessmentData([]));
-        dispatch(
-            setInventoryTablesRows({
-                hosts: [],
-                instances: [],
-                databases: []
-            })
-        );
         dispatch(addInitialData(initialDBHomepageState));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
     useEffect(() => {
-        if (!refreshBlocked) {
+        if (!refreshBlocked && !isRefreshed) {
             let managedList: string[] = [];
             if (credId && regionId) {
-                // resetPerComboValues();
-                resetFullData(); // For now will reset all data on change of cred and region.
+                resetPerComboValues();
+                // resetFullData(); // For now will reset all data on change of cred and region.
                 setTimeout(() => {
                     getManagedHostList(managedList, null, credId, regionId);
                 }, 10);
             }
         }
-    }, [credId, regionId, refreshBlocked]);
+    }, [credId, regionId, refreshBlocked, isRefreshed]);
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
     useEffect(() => {
         if (!refreshBlocked && isRefreshed) {
-            let managedList: string[] = [];
-            if (credId && regionId && isRefreshed) {
-                resetFullData();
-                setTimeout(() => {
-                    getManagedHostList(managedList, null, credId, regionId);
-                }, 10);
-            }
-            dispatch(setIsRefreshed(false));
+            resetFullData();
         }
     }, [isRefreshed, refreshBlocked]);
 
     useEffect(() => {
         if (headerSelectedCred && headerSelectedRegion) {
             setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
+            setRegionId(headerSelectedRegion?.data?.regionCode);
         }
     }, [headerSelectedCred, headerSelectedRegion]);
 
@@ -1125,6 +1228,7 @@ const InventoryApisV3 = () => {
                 }
             });
             dispatch(addDatabaseHostsDataV2(databaseHostDataObj));
+            dispatch(addMultiMssqlDatabaseHostsDataV2({ ...multiMssqlDatabaseHostsData, ...databaseHostDataObj }));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullHostData, topologyHostData, fullHostDataLoading]);
@@ -1157,6 +1261,7 @@ const InventoryApisV3 = () => {
                 }
             });
             dispatch(addPgSqlDatabaseHostsData(databaseHostDataObj));
+            dispatch(addMultiPgSqlDatabaseHostsData({ ...multiPgSqlDatabaseHostsData, ...databaseHostDataObj }));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullPgsqlHostData, pgsqlTopologyHostData, pgsqlFullHostDataLoading]);
@@ -1295,8 +1400,8 @@ const InventoryApisV3 = () => {
     useEffect(() => {
         if (!refreshBlocked) {
             // Below is required for multi cred and region - as it was creating duplicate so fixed now but will change for multi cred
-            // dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentDataS, ...allmssqlHostAssessmentData]));
-            dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentData]));
+            dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentDataS, ...allmssqlHostAssessmentData]));
+            // dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentData]));
         }
     }, [allmssqlHostAssessmentData]);
 };

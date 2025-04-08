@@ -10,7 +10,7 @@ router.get(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, DatabaseHostsV2);
-        }, 2000);
+        }, 100);
     }
 );
 
@@ -19,7 +19,7 @@ router.get(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, PgSqlDatabaseHosts);
-        }, 4000);
+        }, 100);
     }
 );
 
@@ -28,7 +28,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/inst
         generateResponse(res, 200, MssqlInstancesV2);
 
         // generateResponse(res, 400, {'error': 'error'});
-    }, 15000);
+    }, 100);
 });
 
 router.post(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/manage`, async (req: {}, res: any) => {
@@ -45,7 +45,7 @@ router.post(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/man
                 }
             ]
         });
-    }, 3000);
+    }, 100);
 });
 
 router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
@@ -101,7 +101,7 @@ router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
                 }
             ]
         });
-    }, 3000);
+    }, 100);
 });
 
 export default router;

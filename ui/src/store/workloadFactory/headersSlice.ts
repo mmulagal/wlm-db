@@ -28,48 +28,18 @@ const initialHeaderState: HeaderTypeEntities = {
         statusError: null
     },
     refreshTime: null,
+    refreshTimeSandbox: null,
     dashboardRefresh: false,
-    multiSelectData: {},
-    multiSelectStatus: {}
+    multiDataStatus: {},
+    multiDataLoading: false
 };
 
 const headersSlice = createSlice({
     name: 'headers',
     initialState: initialHeaderState,
     reducers: {
-        setMultiSelectData(state, action: PayloadAction<any>) {
-            const { cred, region, apiName, response, status, isSuccess, error } = action.payload;
-            const key = `${cred}/${region}`;
-            if (!state.multiSelectData[key]) {
-                state.multiSelectData[key] = {};
-            }
-
-            // Store API response and update completion status in a single object
-            state.multiSelectData[key][apiName] = { response, status, isSuccess, error };
-        },
-        setMultiSelectStatus(state, action: PayloadAction<any>) {
-            const { cred, region, status } = action.payload;
-            const key = `${cred}/${region}`;
-            if (!state.multiSelectStatus[key]) {
-                state.multiSelectStatus[key] = {};
-            }
-
-            // Store API response and update completion status in a single object
-            state.multiSelectStatus[key] = status;
-        },
-        resetMultiSelectData(state) {
-            state.multiSelectStatus = {};
-            state.multiSelectData = {};
-        },
         setHeaderSelectedCred(state, action: PayloadAction<any>) {
             state.headerSelectedCred = action.payload;
-            // Will remove below lines once multi cred will be available
-            state.headerSelectedCredSandbox = action.payload;
-            state.headerSelectedMultiCred = [action.payload];
-            state.headerSelectedMultiCredIdsList = [];
-            [action.payload]?.forEach((item: any) => {
-                state.headerSelectedMultiCredIdsList.push(item?.data?.credentialsId);
-            });
         },
         setHeaderSelectedCredSandbox(state, action: PayloadAction<any>) {
             state.headerSelectedCredSandbox = action.payload;
@@ -90,13 +60,6 @@ const headersSlice = createSlice({
         },
         setHeaderSelectedRegion(state, action: PayloadAction<any>) {
             state.headerSelectedRegion = action.payload;
-            // Will remove below lines once multi region will be available
-            state.headerSelectedRegionSandbox = action.payload;
-            state.headerSelectedMultiRegion = [action.payload];
-            state.headerSelectedMultiRegionIdsList = [];
-            [action.payload]?.forEach((item: any) => {
-                state.headerSelectedMultiRegionIdsList.push(item?.data?.regionCode);
-            });
         },
         setHeaderSelectedRegionSandbox(state, action: PayloadAction<any>) {
             state.headerSelectedRegionSandbox = action.payload;
@@ -119,16 +82,26 @@ const headersSlice = createSlice({
         setRefreshTime: (state, action: PayloadAction<any>) => {
             state.refreshTime = action.payload;
         },
+        setRefreshTimeSandbox: (state, action: PayloadAction<any>) => {
+            state.refreshTimeSandbox = action.payload;
+        },
         setDashboardRefresh: (state, action: PayloadAction<any>) => {
             state.dashboardRefresh = action.payload;
+        },
+        setMultiDataStatus: (state, action: PayloadAction<any>) => {
+            state.multiDataStatus = action.payload;
+        },
+        setSingleComboCredAndRegion: (state, action: PayloadAction<any>) => {
+            state.headerSelectedCred = action.payload?.cred;
+            state.headerSelectedRegion = action.payload?.region;
+        },
+        setMultiDataLoading: (state, action: PayloadAction<any>) => {
+            state.multiDataLoading = action.payload;
         }
     }
 });
 
 export const {
-    resetMultiSelectData,
-    setMultiSelectData,
-    setMultiSelectStatus,
     setHeaderSelectedCred,
     setHeaderSelectedCredSandbox,
     setHeaderSelectedMultiCred,
@@ -139,9 +112,13 @@ export const {
     addRegionsHeaderList,
     addStatus,
     setRefreshTime,
+    setRefreshTimeSandbox,
     setDashboardRefresh,
     setCredentialMapping,
-    setRegionMapping
+    setRegionMapping,
+    setMultiDataStatus,
+    setSingleComboCredAndRegion,
+    setMultiDataLoading
 } = headersSlice.actions;
 
 export default headersSlice;

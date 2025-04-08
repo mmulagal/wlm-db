@@ -7,9 +7,11 @@ import SandboxDistributionType from './SandboxDistributionType/SandboxDistributi
 import SandboxTable from './SandboxTable/SandboxTable';
 import { useAppSelector } from '../../store/storeHooks';
 import { Spinner } from '@netapp/design-system';
+import SandboxApis from './SandboxApis';
 
 const Sandbox = () => {
     const { showBanner, connectionInfoLoading, splitEstimateLoading } = useAppSelector(state => state?.sandbox);
+    SandboxApis();
 
     return (
         <div className={styles.sandbox}>

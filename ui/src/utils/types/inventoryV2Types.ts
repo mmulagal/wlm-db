@@ -15,11 +15,13 @@ export interface InventorySliceData {
         databaseHostsLoading: boolean;
         fullHostDataLoading: boolean;
     };
+    multiMssqlDatabaseHostsData: any;
     getPgSqlDatabaseHosts: {
         databaseHostsData: any;
         databaseHostsLoading: boolean;
         fullHostDataLoading: boolean;
     };
+    multiPgSqlDatabaseHostsData: any;
     discoveredHosts: {
         discoveredHostData: any;
         discoverHostLoading: boolean;
@@ -55,6 +57,16 @@ export interface InventorySliceData {
     hostTableRows: Array<any>;
     instanceTableRows: Array<any>;
     databaseTableRows: Array<any>;
+    dashSandboxList: {
+        data: Array<any>;
+        loading: boolean;
+        error: string;
+    };
+    dashSandboxSavings: {
+        data: Array<any>;
+        loading: boolean;
+        error: string;
+    };
 }
 
 export interface InventoryTableData {
