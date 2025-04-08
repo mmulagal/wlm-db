@@ -7,9 +7,9 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { WLF_TABS } from '../../../utils/consts';
 import ComparisonChartStack from '../../../ui-components/Charts/ComparionChartStack';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
-import useResize from '../../../common/hooks/useResize';
 import { ReactComponent as PotentialSavingsImage } from '../../../assets/potential_savings.svg';
 import { ReactComponent as PotentialSavingsDarkModeImage } from '../../../assets/potential_savings_darkMode.svg';
+import { ReactComponent as PotentialSavingsSwitch } from '../../../assets/potentialSavingsSwitch.svg';
 import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
@@ -27,13 +27,13 @@ const NewPotentialSavings = () => {
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
         state => state.headers
     );
+    const noData = false;
+    const noDataWithCount = false;
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
         handleURL(value, isWorkloadFactory);
     };
-
-    const windowSize = useResize();
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
@@ -99,181 +99,233 @@ const NewPotentialSavings = () => {
                 </div>
             </div>
 
-            {/* New Design */}
-            {/* <div className={styles.mainSection}>
-                <div className={styles.topSection}>
-                    <div className={styles.subContent1}>
-                        <div className={styles.loaderText}>
-                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                {esCount?.ebs}
-                            </DsTypography>
-                            {loading && <DsFlashingDotsLoader />}
+            {/* noData case */}
+            {(noData || noDataWithCount) && (
+                <div className={styles.mainSection}>
+                    <div className={styles.noDataSection}>
+                        <div className={styles.leftSide}>
+                            {noData && (
+                                <div className={styles.topSection}>
+                                    <div className={styles.subContent}>
+                                        <div className={styles.loaderText}>
+                                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                                {'--'}
+                                            </DsTypography>
+                                            {loading && <DsFlashingDotsLoader />}
+                                        </div>
+
+                                        <DsTypography variant="Regular_14">EBS & FSx for Windows hosts</DsTypography>
+                                    </div>
+
+                                    <SeparatorComponent variant="vertical" height="56px" />
+
+                                    <div className={styles.subContent}>
+                                        <div className={styles.loaderText}>
+                                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                                {'--'}
+                                            </DsTypography>
+                                            {loading && <DsFlashingDotsLoader />}
+                                        </div>
+                                        <DsTypography variant="Regular_14">Savings percentage</DsTypography>
+                                    </div>
+
+                                    <SeparatorComponent variant="vertical" height="56px" />
+
+                                    <div className={styles.subContent}>
+                                        <div className={styles.loaderText}>
+                                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                                {'--'}
+                                            </DsTypography>
+                                            {loading && <DsFlashingDotsLoader />}
+                                        </div>
+
+                                        <DsTypography variant="Regular_14">Potential savings</DsTypography>
+                                    </div>
+                                </div>
+                            )}
+                            {noDataWithCount && (
+                                <div className={styles.noDataBanner}>
+                                    <div className={styles.section}>
+                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                            24
+                                        </DsTypography>
+                                        <DsTypography variant="Regular_14">
+                                            SQL server hosts on Elastic Block Store (EBS)
+                                        </DsTypography>
+                                    </div>
+
+                                    <SeparatorComponent variant="vertical" height="54px" />
+
+                                    <div className={styles.section}>
+                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                            12
+                                        </DsTypography>
+                                        <DsTypography variant="Regular_14">
+                                            SQL server hosts on FSx for Windows
+                                        </DsTypography>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-
-                        <DsTypography variant="Regular_14">Elastic Block Store (EBS) instances</DsTypography>
-                    </div>
-
-                    <SeparatorComponent variant="vertical" height="54px" />
-
-                    <div className={styles.subContent2}>
-                        <div className={styles.loaderText}>
-                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                {esCount?.fsxw}
-                            </DsTypography>
-                            {loading && <DsFlashingDotsLoader />}
+                        <div className={styles.imageContainer}>
+                            {isDarkTheme ? <PotentialSavingsDarkModeImage /> : <PotentialSavingsImage />}
                         </div>
-
-                        <DsTypography variant="Regular_14">FSx for windows file server instances</DsTypography>
                     </div>
                 </div>
-                {noData && (isDarkTheme ? <PotentialSavingsDarkModeImage /> : <PotentialSavingsImage />)}
-            </div> */}
+            )}
 
-            {/* Old section */}
+            {/* Proper data case */}
+            {!noData && !noDataWithCount && (
+                <div className={styles.mainSection}>
+                    <div className={styles.newValueSection}>
+                        <div className={styles.leftSide}>
+                            <div className={styles.topSection}>
+                                <div className={styles.subContent}>
+                                    <div className={styles.loaderText}>
+                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                            {esCount?.ebs + esCount?.fsxw}
+                                        </DsTypography>
+                                        {loading && <DsFlashingDotsLoader />}
+                                    </div>
 
-            <div className={styles.mainSection}>
-                <div className={styles.newValueSection}>
-                    <div className={styles.leftSide}>
-                        <div className={styles.topSection}>
-                            <div className={styles.subContent}>
-                                <div className={styles.loaderText}>
-                                    <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                        {esCount?.ebs + esCount?.fsxw}
-                                    </DsTypography>
-                                    {loading && <DsFlashingDotsLoader />}
+                                    <DsTypography variant="Regular_14">EBS & FSx for Windows hosts</DsTypography>
                                 </div>
 
-                                <DsTypography variant="Regular_14">EBS & FSx for Windows hosts</DsTypography>
-                            </div>
+                                <SeparatorComponent variant="vertical" height="56px" />
 
-                            <SeparatorComponent variant="vertical" height="56px" />
-
-                            <div className={styles.subContent}>
-                                <div className={styles.loaderText}>
-                                    <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                        {formatNumberWithCustomComma(potentialSavingsValues?.savingsPercent || 0)}%
-                                    </DsTypography>
-                                    {loading && <DsFlashingDotsLoader />}
-                                </div>
-                                <DsTypography variant="Regular_14">Savings percentage</DsTypography>
-                            </div>
-
-                            <SeparatorComponent variant="vertical" height="56px" />
-
-                            <div className={styles.subContent}>
-                                <div className={styles.loaderText}>
-                                    <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                        ${formatNumberWithCustomComma(potentialSavingsValues?.savings || 0)}
-                                    </DsTypography>
-                                    {loading && <DsFlashingDotsLoader />}
+                                <div className={styles.subContent}>
+                                    <div className={styles.loaderText}>
+                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                            {formatNumberWithCustomComma(potentialSavingsValues?.savingsPercent || 0)}%
+                                        </DsTypography>
+                                        {loading && <DsFlashingDotsLoader />}
+                                    </div>
+                                    <DsTypography variant="Regular_14">Savings percentage</DsTypography>
                                 </div>
 
-                                <DsTypography variant="Regular_14">Potential savings</DsTypography>
+                                <SeparatorComponent variant="vertical" height="56px" />
+
+                                <div className={styles.subContent}>
+                                    <div className={styles.loaderText}>
+                                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                            ${formatNumberWithCustomComma(potentialSavingsValues?.savings || 0)}
+                                        </DsTypography>
+                                        {loading && <DsFlashingDotsLoader />}
+                                    </div>
+
+                                    <DsTypography variant="Regular_14">Potential savings</DsTypography>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* chart section */}
-                    </div>
-
-                    <div className={styles.chartContainer}>
-                        <div className={styles.rightSide}>
                             {/* chart section */}
-                            <div className={styles.newChartSection}>
-                                {hasPotentialValues() &&
-                                checkForPotentialSavings(
-                                    potentialSavingsValues?.fsxnCostForEbsHost,
-                                    potentialSavingsValues?.ebsCost
-                                ) ? (
-                                    <ComparisonChart
-                                        data={[
-                                            potentialSavingsValues?.fsxnCostForEbsHost || 0,
-                                            potentialSavingsValues?.ebsCost || 0
-                                        ]}
-                                        yTickFormatter={yValue =>
-                                            '$' + formatNumberWithCustomComma(Number(yValue), true)
-                                        }
-                                        height={200}
-                                        colors={['chart-9', 'chart-3']}
-                                        categories={['FSx for ONTAP', 'EBS']}
-                                        loading={loading}
-                                    />
-                                ) : (
-                                    <ComparisonChartStack
-                                        // chart draws top to bottom, so the order of the data is reversed
-                                        data={[[1], [1]]}
-                                        yTickFormatter={yValue =>
-                                            '$' + formatNumberWithCustomComma(Number(yValue), true)
-                                        }
-                                        height={120}
-                                        colors={['chart-2', 'chart-3', 'chart-2']}
-                                        categories={['FSx for ONTAP', '', '']}
-                                        loadingWithNoData={true}
-                                        loading={loading}
-                                        marginTop="155px"
-                                        labelChange={true}
-                                        labelChangeText="EBS"
-                                    />
-                                )}
-                            </div>
-
-                            {/* Text section */}
-                            <div className={styles.textSection}>
-                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
-                                <DsTypography variant="Semibold_20">{esCount?.ebs}</DsTypography>
-                                <DsTypography variant="Regular_14">
-                                    SQL Server hosts on Elastic Block Store (EBS)
-                                </DsTypography>
-                            </div>
                         </div>
-                        <div className={styles.rightSide}>
-                            <div className={styles.newChartSection}>
-                                {hasPotentialValues() &&
-                                checkForPotentialSavings(
-                                    potentialSavingsValues?.fsxnCostForFsxwHost,
-                                    potentialSavingsValues?.fsxwCost
-                                ) ? (
-                                    <ComparisonChart
-                                        data={[
-                                            potentialSavingsValues?.fsxnCostForFsxwHost || 0,
-                                            potentialSavingsValues?.fsxwCost || 0
-                                        ]}
-                                        yTickFormatter={yValue =>
-                                            '$' + formatNumberWithCustomComma(Number(yValue), true)
-                                        }
-                                        height={200}
-                                        colors={['chart-9', 'chart-2']}
-                                        categories={['FSx for ONTAP', 'FSx for Windows']}
-                                        loading={loading}
-                                    />
-                                ) : (
-                                    <ComparisonChartStack
-                                        // chart draws top to bottom, so the order of the data is reversed
-                                        data={[[1], [1]]}
-                                        yTickFormatter={yValue =>
-                                            '$' + formatNumberWithCustomComma(Number(yValue), true)
-                                        }
-                                        height={120}
-                                        colors={['chart-2', 'chart-3', 'chart-2']}
-                                        categories={['FSx for ONTAP', '', '']}
-                                        loadingWithNoData={true}
-                                        loading={loading}
-                                        marginTop="80px"
-                                        labelChange={true}
-                                        labelChangeText="FSx for Windows"
-                                    />
-                                )}
-                            </div>
 
-                            {/* Text section */}
-                            <div className={styles.textSection}>
-                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
-                                <DsTypography variant="Semibold_20">{esCount?.fsxw}</DsTypography>
-                                <DsTypography variant="Regular_14">SQL Server hosts on FSx for Windows</DsTypography>
+                        <div className={styles.chartContainer}>
+                            <div className={styles.rightSide}>
+                                {/* chart section */}
+                                <div className={styles.newChartSection}>
+                                    {hasPotentialValues() &&
+                                    checkForPotentialSavings(
+                                        potentialSavingsValues?.fsxnCostForEbsHost,
+                                        potentialSavingsValues?.ebsCost
+                                    ) ? (
+                                        <ComparisonChart
+                                            data={[
+                                                potentialSavingsValues?.fsxnCostForEbsHost || 0,
+                                                potentialSavingsValues?.ebsCost || 0
+                                            ]}
+                                            yTickFormatter={yValue =>
+                                                '$' + formatNumberWithCustomComma(Number(yValue), true)
+                                            }
+                                            height={259}
+                                            colors={['chart-9', 'chart-3']}
+                                            categories={['FSx for ONTAP', 'EBS']}
+                                            loading={loading}
+                                        />
+                                    ) : (
+                                        <ComparisonChartStack
+                                            // chart draws top to bottom, so the order of the data is reversed
+                                            data={[[1], [1]]}
+                                            yTickFormatter={yValue =>
+                                                '$' + formatNumberWithCustomComma(Number(yValue), true)
+                                            }
+                                            height={120}
+                                            colors={['chart-2', 'chart-3', 'chart-2']}
+                                            categories={['FSx for ONTAP', '', '']}
+                                            loadingWithNoData={true}
+                                            loading={loading}
+                                            marginTop="155px"
+                                            labelChange={true}
+                                            labelChangeText="EBS"
+                                        />
+                                    )}
+                                </div>
+
+                                <SeparatorComponent variant="horizontal" />
+
+                                {/* Text section */}
+                                <div className={styles.textSection}>
+                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
+                                    <DsTypography variant="Semibold_20">{esCount?.ebs}</DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        SQL Server hosts on Elastic Block Store (EBS)
+                                    </DsTypography>
+                                </div>
+                            </div>
+                            <div className={styles.rightSide}>
+                                <div className={styles.newChartSection}>
+                                    {hasPotentialValues() &&
+                                    checkForPotentialSavings(
+                                        potentialSavingsValues?.fsxnCostForFsxwHost,
+                                        potentialSavingsValues?.fsxwCost
+                                    ) ? (
+                                        <ComparisonChart
+                                            data={[
+                                                potentialSavingsValues?.fsxnCostForFsxwHost || 0,
+                                                potentialSavingsValues?.fsxwCost || 0
+                                            ]}
+                                            yTickFormatter={yValue =>
+                                                '$' + formatNumberWithCustomComma(Number(yValue), true)
+                                            }
+                                            height={259}
+                                            colors={['chart-9', 'chart-2']}
+                                            categories={['FSx for ONTAP', 'FSx for Windows']}
+                                            loading={loading}
+                                        />
+                                    ) : (
+                                        <ComparisonChartStack
+                                            // chart draws top to bottom, so the order of the data is reversed
+                                            data={[[1], [1]]}
+                                            yTickFormatter={yValue =>
+                                                '$' + formatNumberWithCustomComma(Number(yValue), true)
+                                            }
+                                            height={120}
+                                            colors={['chart-2', 'chart-3', 'chart-2']}
+                                            categories={['FSx for ONTAP', '', '']}
+                                            loadingWithNoData={true}
+                                            loading={loading}
+                                            marginTop="80px"
+                                            labelChange={true}
+                                            labelChangeText="FSx for Windows"
+                                        />
+                                    )}
+                                </div>
+
+                                <SeparatorComponent variant="horizontal" />
+
+                                {/* Text section */}
+                                <div className={styles.textSection}>
+                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
+                                    <DsTypography variant="Semibold_20">{esCount?.fsxw}</DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        SQL Server hosts on FSx for Windows
+                                    </DsTypography>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
