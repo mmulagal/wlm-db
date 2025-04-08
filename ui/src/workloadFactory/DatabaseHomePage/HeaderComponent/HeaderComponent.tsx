@@ -115,6 +115,7 @@ import OptimizeOntapInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeOnta
 import Marketing from '../../../Marketing/Marketing';
 import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
 import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSlice';
+import { method } from 'lodash';
 
 type Tab = {
     tab: string;
@@ -863,6 +864,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                         dropDown={{
                             isCloseOnClickOutside: true
                         }}
+                        searchMethod={{
+                            method: 'smart'
+                        }}
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
@@ -890,6 +894,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 ? headerSelectedMultiRegion.map((region: any) => region?.data?.regionCode)
                                 : []
                         }
+                        searchMethod={{
+                            method: 'smart'
+                        }}
                         selectionType="multi"
                         isWithActions={true}
                         placeholder="No regions selected"
