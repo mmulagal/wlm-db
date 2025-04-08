@@ -470,6 +470,12 @@ const BulkOptimizeComputeRequestBody = Type.Object({
 });
 type BulkOptimizeComputeRequestBodyType = Static<typeof BulkOptimizeComputeRequestBody>;
 
+const OptimizeCloneBody = Type.Object({
+    configurationName: Type.Array(Type.Enum(OPTIMIZE_RESILIENCY_CONFIGS)),
+    params: Type.Optional(Type.Array(Type.Union([BulkOptimizeSnapshotPolicyRequestBody])))
+});
+type OptimizeCloneBodyType = Static<typeof OptimizeCloneBody>;
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -521,5 +527,7 @@ export {
     BulkOptimizeComputeRequestBody,
     BulkOptimizeComputeRequestBodyType,
     OptimizeGenericRequestBody,
-    CloneDriftResponseType
+    CloneDriftResponseType,
+    OptimizeCloneBodyType,
+    OptimizeCloneBody
 };

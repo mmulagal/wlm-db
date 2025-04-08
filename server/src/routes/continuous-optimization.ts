@@ -29,7 +29,8 @@ import {
     AvailableSnapshotPolicies,
     BulkOptimizeMaxDopSchema,
     OptimizeResilienceSchema,
-    BulkOptimizeAwsBackupSchema
+    BulkOptimizeAwsBackupSchema,
+    OptimizeCloneSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -369,6 +370,25 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     region,
                     OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP,
                     hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/clone`,
+            { schema: OptimizeCloneSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    body
+                } = castRequest(request);
+                const response = await handleResiliecyOptimize(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    body as OptimizeResiliencyBodyType
                 );
                 return reply.send(response);
             }

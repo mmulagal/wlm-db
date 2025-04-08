@@ -19,7 +19,8 @@ import {
     AvailableSnapshotPoliciesResponse,
     OptimizeResiliencyBody,
     OptimizeGenericRequestBody,
-    BulkOptimizeComputeRequestBody
+    BulkOptimizeComputeRequestBody,
+    OptimizeCloneBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -238,6 +239,20 @@ const BulkOptimizeAwsBackupSchema = {
     description: 'Enable scheduled AWS FSx for ONTAP backups.'
 };
 
+const OptimizeCloneSchema = {
+    ...resourceRequest,
+    summary: 'Optimize clone parameters for database instances',
+    description: 'Optimize clone parameters for database instances',
+    params: DatabaseHostInstanceSummaryParams,
+    body: OptimizeCloneBody,
+    tags: [RouteTags.ASSESSMENT],
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -255,5 +270,6 @@ export {
     BulkOptimizeStorageTierSchema,
     BulkOptimizeComputeSchema,
     BulkOptimizeMaxDopSchema,
-    BulkOptimizeAwsBackupSchema
+    BulkOptimizeAwsBackupSchema,
+    OptimizeCloneSchema
 };
