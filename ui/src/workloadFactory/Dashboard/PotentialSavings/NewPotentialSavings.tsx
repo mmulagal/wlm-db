@@ -304,7 +304,7 @@ const NewPotentialSavings = () => {
                                             categories={['FSx for ONTAP', '', '']}
                                             loadingWithNoData={true}
                                             loading={loading}
-                                            marginTop="80px"
+                                            marginTop="155px"
                                             labelChange={true}
                                             labelChangeText="FSx for Windows"
                                         />
