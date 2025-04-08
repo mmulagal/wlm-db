@@ -77,6 +77,8 @@ interface RssConfigAssesment {
     };
     rssAdapters?: RssAdapter[];
     tcpOffloadState: string;
+    totalObjectsAssessed?: number;
+    totalObjectsInViolation?: number;
 }
 
 interface MaxDOPAssesment {
