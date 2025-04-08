@@ -67,6 +67,7 @@ export interface InventorySliceData {
         loading: boolean;
         error: string;
     };
+    createResourceApiLoading: boolean;
 }
 
 export interface InventoryTableData {

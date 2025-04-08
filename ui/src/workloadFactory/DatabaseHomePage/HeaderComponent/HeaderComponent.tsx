@@ -153,7 +153,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         fsxCredentialStatusLoading,
         mssqlInstancesData,
         perfMssqlInstancesData,
-        potentialSavingsHostData
+        potentialSavingsHostData,
+        createResourceApiLoading
     } = useAppSelector(state => state.inventoryV2);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
@@ -344,39 +345,12 @@ const HeaderComponent = ({ tab }: Tab) => {
                 const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
 
                 if (checkValueSavedForRegion(options, regionValue)) {
-                    if (isDemoMode) {
-                        createDemoResourcesApi({
-                            credentialsId: headerSelectedMultiCred?.[0]?.data?.credentialsId,
-                            regionId: regionValue?.data?.regionCode
-                        }).then(() => {
-                            dispatch(setHeaderSelectedMultiRegion([regionValue]));
-                        });
-                    } else {
-                        dispatch(setHeaderSelectedMultiRegion([regionValue]));
-                    }
-                } else {
-                    if (isDemoMode) {
-                        createDemoResourcesApi({
-                            credentialsId: headerSelectedMultiCred?.[0]?.data?.credentialsId,
-                            regionId: defaultOption?.data?.regionCode
-                        }).then(() => {
-                            dispatch(setHeaderSelectedMultiRegion([defaultOption]));
-                        });
-                    } else {
-                        dispatch(setHeaderSelectedMultiRegion([defaultOption]));
-                    }
-                }
-            } else {
-                if (isDemoMode) {
-                    createDemoResourcesApi({
-                        credentialsId: headerSelectedMultiCred?.[0]?.data?.credentialsId,
-                        regionId: defaultOption?.data?.regionCode
-                    }).then(() => {
-                        dispatch(setHeaderSelectedMultiRegion([defaultOption]));
-                    });
+                    dispatch(setHeaderSelectedMultiRegion([regionValue]));
                 } else {
                     dispatch(setHeaderSelectedMultiRegion([defaultOption]));
                 }
+            } else {
+                dispatch(setHeaderSelectedMultiRegion([defaultOption]));
             }
         }
         return options;
@@ -436,22 +410,40 @@ const HeaderComponent = ({ tab }: Tab) => {
         return options;
     }, [regionsData]);
 
-    // useEffect(() => {
-    //     const credValue = headerSelectedCred?.data?.name + ' | Account: ' + headerSelectedCred?.data?.providerAccountId;
-    //     const option = generateOptionType(credValue, credValue, '', false, '', headerSelectedCred?.data);
-    //     dispatch(setSelectedCredentials(option));
-    // }, [headerSelectedCred]);
+    useEffect(() => {
+        if (headerSelectedMultiCred?.length > 0) {
+            const credValue =
+                headerSelectedMultiCred?.[0]?.data?.name +
+                ' | Account: ' +
+                headerSelectedMultiCred?.[0]?.data?.providerAccountId;
+            const option = generateOptionType(credValue, credValue, '', false, '', headerSelectedMultiCred?.[0]?.data);
+            dispatch(setSelectedCredentials(option));
+        }
+    }, [headerSelectedMultiCred]);
 
-    // useEffect(() => {
-    //     const regionValue = headerSelectedRegion?.data?.regionCode + ' | ' + headerSelectedRegion?.data?.regionName;
-    //     const option = generateOptionType(regionValue, regionValue, '', false, '', headerSelectedRegion?.data);
-    //     dispatch(setSelectedRegionData(option));
-    // }, [headerSelectedRegion]);
+    useEffect(() => {
+        if (headerSelectedMultiRegion?.length > 0) {
+            const regionValue =
+                headerSelectedMultiRegion?.[0]?.data?.regionCode +
+                ' | ' +
+                headerSelectedMultiRegion?.[0]?.data?.regionName;
+            const option = generateOptionType(
+                regionValue,
+                regionValue,
+                '',
+                false,
+                '',
+                headerSelectedMultiRegion?.[0]?.data
+            );
+            dispatch(setSelectedRegionData(option));
+        }
+    }, [headerSelectedMultiRegion]);
 
     useEffect(() => {
         if (
             headerSelectedCred &&
             headerSelectedRegion &&
+            !createResourceApiLoading &&
             !isManagedHostListLoading &&
             !databaseHostsLoading &&
             !fullHostDataLoading &&
@@ -514,10 +506,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                 let newStatus = { ...multiDataStatusRef.current };
                 newStatus[currentCredId + '_' + currentRegionId] = true;
                 dispatch(setMultiDataStatus(newStatus));
-                // console.log('combo completed for ', currentCredId , currentRegionId)
             }
         }
     }, [
+        createResourceApiLoading,
         isManagedHostListLoading,
         databaseHostsLoading,
         fullHostDataLoading,
@@ -635,10 +627,6 @@ const HeaderComponent = ({ tab }: Tab) => {
                         setCurrentIndex(0);
                     }
                 }
-
-                // console.log('queue', newQueue);
-                // console.log('currentIndex', currentIndex);
-                // console.log('multiDataStatus', newMultiDataStatus);
             }
         }
     };

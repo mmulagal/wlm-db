@@ -29,6 +29,7 @@ const NewPotentialSavings = () => {
     );
     const noData = false;
     const noDataWithCount = false;
+    const [noSavings, setNoSavings] = useState(false);
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
@@ -63,6 +64,7 @@ const NewPotentialSavings = () => {
         setLoading(
             isDiscoverInProgress || isManagedHostListLoading || potentialSavingsValues?.loading || multiDataLoading
         );
+        setNoSavings(potentialSavingsValues?.noSavings);
     }, [isDiscoverInProgress, isManagedHostListLoading, potentialSavingsValues, multiDataLoading]);
 
     const hasPotentialValues = () => {
@@ -100,11 +102,11 @@ const NewPotentialSavings = () => {
             </div>
 
             {/* noData case */}
-            {(noData || noDataWithCount) && (
+            {(noData || noDataWithCount || noSavings) && (
                 <div className={styles.mainSection}>
                     <div className={styles.noDataSection}>
                         <div className={styles.leftSide}>
-                            {noData && (
+                            {(noData || noSavings) && (
                                 <div className={styles.topSection}>
                                     <div className={styles.subContent}>
                                         <div className={styles.loaderText}>
@@ -168,14 +170,20 @@ const NewPotentialSavings = () => {
                             )}
                         </div>
                         <div className={styles.imageContainer}>
-                            {isDarkTheme ? <PotentialSavingsDarkModeImage /> : <PotentialSavingsImage />}
+                            {isDarkTheme ? (
+                                <PotentialSavingsDarkModeImage />
+                            ) : noSavings ? (
+                                <PotentialSavingsSwitch />
+                            ) : (
+                                <PotentialSavingsImage />
+                            )}
                         </div>
                     </div>
                 </div>
             )}
 
             {/* Proper data case */}
-            {!noData && !noDataWithCount && (
+            {!noData && !noDataWithCount && !noSavings && (
                 <div className={styles.mainSection}>
                     <div className={styles.newValueSection}>
                         <div className={styles.leftSide}>

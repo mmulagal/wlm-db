@@ -142,12 +142,26 @@ const InstancesTable = () => {
             );
             return {
                 textFilter: '',
-                count: 1,
+                count: 3,
                 columns: {
                     '2': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.hostName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '9': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.credentialName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '11': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.regionName]: true
                         },
                         valuesArray: [true]
                     }
@@ -1038,7 +1052,9 @@ const InstancesTable = () => {
                                                     flag: true,
                                                     value: {
                                                         hostName: rowData?.name,
-                                                        instanceName: rowData?.databaseInstanceName
+                                                        instanceName: rowData?.databaseInstanceName,
+                                                        credentialName: rowData?.credentialName,
+                                                        regionName: rowData?.regionName
                                                     },
                                                     filterType: 'multi'
                                                 })

@@ -139,7 +139,7 @@ export const getPotentialSavingsValues = (data: any) => {
     result.savingsPercent =
         100 * ((result.ebsCost + result.fsxwCost - result.fsxnCost) / (result.ebsCost + result.fsxwCost || 1));
 
-    if (result.fsxnCost >= result.ebsCost + result.fsxwCost) {
+    if (result.fsxnCost !== 0 && result.fsxnCost >= result.ebsCost + result.fsxwCost) {
         result.noSavings = true;
         result.savingsPercent = 0;
         result.savings = 0;

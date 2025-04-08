@@ -9,9 +9,10 @@ import {
     resetPerComboData,
     resetRefreshData,
     setAllMssqlHostAssessmentLoading,
-    setDashSandboxListData,
+    setCreateResourceApiLoading,
+    setDashSandboxList,
     setDashSandboxListLoading,
-    setDashSandboxSavingsData,
+    setDashSandboxSavings,
     setDashSandboxSavingsLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
@@ -34,6 +35,7 @@ import {
     setUnManagedPerfInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
+    useCreateDemoResourcesMutation,
     useGetMssqlInstanceDataV2Mutation,
     useGetStorageSavingsMutation,
     useLazyDiscoverHostsQuery,
@@ -150,6 +152,9 @@ const InventoryApisV3 = () => {
     const [getSandboxListApi] = useLazyGetSandboxListQuery();
     const [getSandboxSavingsApi] = useLazyGetSandboxSavingsQuery();
 
+    // create resource API call
+    const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
+
     const fsxCredentialStatusObjRef: any = useRef(null);
     const mssqlInstancesDataRef: any = useRef(null);
     const perfMssqlInstancesDataRef: any = useRef(null);
@@ -248,6 +253,32 @@ const InventoryApisV3 = () => {
                     }
                 }
             } catch (error) {}
+        }
+    };
+
+    const callResourceAPIIfDemo = async (
+        managedList: string[],
+        managedHostCursor: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (isDemoMode) {
+            try {
+                const result: any = await createDemoResourcesApi({
+                    credentialsId: runningCredId,
+                    regionId: runningRegionId
+                });
+                if (result) {
+                    getManagedHostList(managedList, managedHostCursor, runningCredId, runningRegionId);
+                    dispatch(setCreateResourceApiLoading(false));
+                }
+            } catch (error) {
+                getManagedHostList(managedList, managedHostCursor, runningCredId, runningRegionId);
+                dispatch(setCreateResourceApiLoading(false));
+            }
+        } else {
+            dispatch(setCreateResourceApiLoading(false));
+            getManagedHostList(managedList, managedHostCursor, runningCredId, runningRegionId);
         }
     };
 
@@ -872,7 +903,12 @@ const InventoryApisV3 = () => {
                                 : [])
                         ];
                         if (result?.data?.nextToken) {
-                            dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
+                            dispatch(
+                                setDashSandboxList({
+                                    data: [...dashSandboxListData, ...sandboxListData],
+                                    loading: true
+                                })
+                            );
                             getAllSandboxListData(
                                 sandboxListData,
                                 result?.data?.nextToken,
@@ -880,17 +916,29 @@ const InventoryApisV3 = () => {
                                 runningRegionId
                             );
                         } else {
-                            dispatch(setDashSandboxListLoading(false));
-                            dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
+                            dispatch(
+                                setDashSandboxList({
+                                    data: [...dashSandboxListData, ...sandboxListData],
+                                    loading: false
+                                })
+                            );
                         }
                     } else {
-                        dispatch(setDashSandboxListLoading(false));
-                        dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
+                        dispatch(
+                            setDashSandboxList({
+                                data: [...dashSandboxListData, ...sandboxListData],
+                                loading: false
+                            })
+                        );
                     }
                 }
             } catch (error) {
-                dispatch(setDashSandboxListLoading(false));
-                dispatch(setDashSandboxListData([...dashSandboxListData, ...sandboxListData]));
+                dispatch(
+                    setDashSandboxList({
+                        data: [...dashSandboxListData, ...sandboxListData],
+                        loading: false
+                    })
+                );
             }
         }
     };
@@ -920,16 +968,28 @@ const InventoryApisV3 = () => {
                             regionId: regionId
                         };
                         sandboxSavingsData = [...sandboxSavingsData, perSandboxAPI];
-                        dispatch(setDashSandboxSavingsLoading(false));
-                        dispatch(setDashSandboxSavingsData([...dashSandboxSavingsData, ...sandboxSavingsData]));
+                        dispatch(
+                            setDashSandboxSavings({
+                                data: [...dashSandboxSavingsData, ...sandboxSavingsData],
+                                loading: false
+                            })
+                        );
                     } else {
-                        dispatch(setDashSandboxSavingsLoading(false));
-                        dispatch(setDashSandboxSavingsData([...dashSandboxSavingsData, ...sandboxSavingsData]));
+                        dispatch(
+                            setDashSandboxSavings({
+                                data: [...dashSandboxSavingsData, ...sandboxSavingsData],
+                                loading: false
+                            })
+                        );
                     }
                 }
             } catch (error) {
-                dispatch(setDashSandboxSavingsLoading(false));
-                dispatch(setDashSandboxSavingsData([...dashSandboxSavingsData, ...sandboxSavingsData]));
+                dispatch(
+                    setDashSandboxSavings({
+                        data: [...dashSandboxSavingsData, ...sandboxSavingsData],
+                        loading: false
+                    })
+                );
             }
         }
     };
@@ -1048,6 +1108,9 @@ const InventoryApisV3 = () => {
         let instanceData: any = {};
         // This will loop all unamanged EBS/FSXW rows
         exploreSavingsRows?.map((row: any) => {
+            if (row?.credentialId !== runningCredId || row?.regionId !== runningRegionId) {
+                return;
+            }
             if (
                 row?.storageType &&
                 !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)] &&
@@ -1180,7 +1243,7 @@ const InventoryApisV3 = () => {
                 resetPerComboValues();
                 // resetFullData(); // For now will reset all data on change of cred and region.
                 setTimeout(() => {
-                    getManagedHostList(managedList, null, credId, regionId);
+                    callResourceAPIIfDemo(managedList, null, credId, regionId);
                 }, 10);
             }
         }

@@ -85,7 +85,8 @@ const initialInventoryV2State: InventorySliceData = {
         data: [],
         loading: false,
         error: ''
-    }
+    },
+    createResourceApiLoading: false
 };
 
 const inventoryV2Slice = createSlice({
@@ -253,13 +254,25 @@ const inventoryV2Slice = createSlice({
         setDashSandboxListLoading: (state, action: PayloadAction<any>) => {
             state.dashSandboxList.loading = action.payload;
         },
+        setDashSandboxList: (state, action: PayloadAction<any>) => {
+            state.dashSandboxList.data = action.payload.data;
+            state.dashSandboxList.loading = action.payload.loading;
+        },
         setDashSandboxSavingsData: (state, action: PayloadAction<any>) => {
             state.dashSandboxSavings.data = action.payload;
         },
         setDashSandboxSavingsLoading: (state, action: PayloadAction<any>) => {
             state.dashSandboxSavings.loading = action.payload;
         },
+        setDashSandboxSavings: (state, action: PayloadAction<any>) => {
+            state.dashSandboxSavings.data = action.payload.data;
+            state.dashSandboxSavings.loading = action.payload.loading;
+        },
+        setCreateResourceApiLoading: (state, action: PayloadAction<any>) => {
+            state.createResourceApiLoading = action.payload;
+        },
         resetPerComboData: (state, action: PayloadAction<any>) => {
+            state.createResourceApiLoading = true;
             state.resetManagedData = true;
             state.isManagedHostListLoading = true;
             state.getDatabaseHosts.databaseHostsLoading = true;
@@ -354,7 +367,10 @@ export const {
     setDashSandboxSavingsLoading,
     resetRefreshData,
     addMultiMssqlDatabaseHostsDataV2,
-    addMultiPgSqlDatabaseHostsData
+    addMultiPgSqlDatabaseHostsData,
+    setDashSandboxList,
+    setDashSandboxSavings,
+    setCreateResourceApiLoading
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

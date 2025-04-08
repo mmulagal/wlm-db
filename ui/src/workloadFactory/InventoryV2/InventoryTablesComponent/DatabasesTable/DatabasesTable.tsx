@@ -62,12 +62,26 @@ const DatabasesTable = () => {
             );
             return {
                 textFilter: '',
-                count: 1,
+                count: 3,
                 columns: {
                     '2': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.hostName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '8': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.credentialName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '10': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.regionName]: true
                         },
                         valuesArray: [true]
                     }
@@ -86,7 +100,7 @@ const DatabasesTable = () => {
             );
             return {
                 textFilter: '',
-                count: 2,
+                count: 4,
                 columns: {
                     '2': {
                         activeCount: 1,
@@ -99,6 +113,20 @@ const DatabasesTable = () => {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.instanceName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '8': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.credentialName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '10': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.regionName]: true
                         },
                         valuesArray: [true]
                     }

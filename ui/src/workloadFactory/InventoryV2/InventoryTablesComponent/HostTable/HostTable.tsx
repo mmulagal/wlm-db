@@ -582,7 +582,9 @@ const HostTable = () => {
                                             setSelectedFilterValue({
                                                 flag: true,
                                                 value: {
-                                                    hostName: rowData?.name
+                                                    hostName: rowData?.name,
+                                                    credentialName: rowData?.credentialName,
+                                                    regionName: rowData?.regionName
                                                 },
                                                 filterType: 'single'
                                             })
@@ -594,7 +596,9 @@ const HostTable = () => {
                                             setSelectedFilterValue({
                                                 flag: true,
                                                 value: {
-                                                    hostName: rowData?.name
+                                                    hostName: rowData?.name,
+                                                    credentialName: rowData?.credentialName,
+                                                    regionName: rowData?.regionName
                                                 },
                                                 filterType: 'single'
                                             })
