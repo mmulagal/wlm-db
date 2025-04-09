@@ -16,6 +16,14 @@
         border-bottom: 1px solid var(--border);
     }
 
+    .linkMessage {
+        [class*='Button-module_link'] {
+            svg {
+                display: none !important;
+            }
+        }
+    }
+
     .table {
         display: flex;
         padding: 40px 56px 40px 0;
