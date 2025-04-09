@@ -286,9 +286,9 @@ const HeaderComponent = ({ tab }: Tab) => {
             options.push(option);
         });
         if (options.length > 0 && !headerSelectedCredSandbox) {
-            if (localStorage.getItem('selectedCred')) {
+            if (localStorage.getItem('selectedSandboxCred')) {
                 //@ts-ignore
-                const value = JSON.parse(localStorage.getItem('selectedCred'));
+                const value = JSON.parse(localStorage.getItem('selectedSandboxCred'));
 
                 if (checkValueSavedForCred(options, value)) {
                     dispatch(setHeaderSelectedCredSandbox(value));
@@ -367,9 +367,9 @@ const HeaderComponent = ({ tab }: Tab) => {
         });
         if (options.length > 0 && !headerSelectedRegionSandbox) {
             const defaultOption: any = options[0];
-            if (localStorage.getItem('selectedRegion')) {
+            if (localStorage.getItem('selectedSandboxRegion')) {
                 //@ts-ignore
-                const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
+                const regionValue = JSON.parse(localStorage.getItem('selectedSandboxRegion'));
 
                 if (checkValueSavedForRegion(options, regionValue)) {
                     if (isDemoMode) {
@@ -418,6 +418,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                 headerSelectedMultiCred?.[0]?.data?.providerAccountId;
             const option = generateOptionType(credValue, credValue, '', false, '', headerSelectedMultiCred?.[0]?.data);
             dispatch(setSelectedCredentials(option));
+
+            if (localStorage.getItem('selectedCred')) {
+                localStorage.removeItem('selectedCred');
+            }
+            localStorage.setItem('selectedCred', JSON.stringify(option));
         }
     }, [headerSelectedMultiCred]);
 
@@ -436,6 +441,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                 headerSelectedMultiRegion?.[0]?.data
             );
             dispatch(setSelectedRegionData(option));
+
+            if (localStorage.getItem('selectedRegion')) {
+                localStorage.removeItem('selectedRegion');
+            }
+            localStorage.setItem('selectedRegion', JSON.stringify(option));
         }
     }, [headerSelectedMultiRegion]);
 
@@ -571,8 +581,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                 setPendingQueriesCounter(total);
                 let queueLength = queue?.length;
                 let newQueue: any = [...queue];
+                let newQueueForLoop: any = [...newQueue];
                 let newMultiDataStatus: any = { ...multiDataStatusRef.current };
-                newQueue?.forEach((item: any, index: number) => {
+                // using diff queue variable for loop as we update newQueue in the loop
+                newQueueForLoop?.forEach((item: any, index: number) => {
                     let isPresent = false;
                     for (let cred of headerSelectedMultiCred) {
                         for (let region of headerSelectedMultiRegion) {
@@ -588,7 +600,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         // If any combo is removed and added back again than not calling apis again
                         // const key = `${newQueue[index]?.cred?.data?.credentialsId}_${newQueue[index]?.region?.data?.regionCode}`;
                         // delete newMultiDataStatus[key];
-                        newQueue.splice(index, 1);
+                        newQueue.splice(0, 1);
                     }
                 });
                 for (let cred of headerSelectedMultiCred) {
@@ -925,10 +937,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                             headerSelectedCredSandbox ? [headerSelectedCredSandbox] : [generateSandboxAWSAccounts[0]]
                         }
                         onChange={(selectedOptions: any): void => {
-                            if (localStorage.getItem('selectedCred')) {
-                                localStorage.removeItem('selectedCred');
+                            if (localStorage.getItem('selectedSandboxCred')) {
+                                localStorage.removeItem('selectedSandboxCred');
                             }
-                            localStorage.setItem('selectedCred', JSON.stringify(selectedOptions));
+                            localStorage.setItem('selectedSandboxCred', JSON.stringify(selectedOptions));
                             dispatch(updateRefreshBlocked(false));
                             dispatch(setHeaderSelectedCredSandbox(selectedOptions));
                         }}
@@ -968,10 +980,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                         }
                         onChange={(selectedOptions: any): void => {
                             function updateRegion() {
-                                if (localStorage.getItem('selectedRegion')) {
-                                    localStorage.removeItem('selectedRegion');
+                                if (localStorage.getItem('selectedSandboxRegion')) {
+                                    localStorage.removeItem('selectedSandboxRegion');
                                 }
-                                localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
+                                localStorage.setItem('selectedSandboxRegion', JSON.stringify(selectedOptions));
                                 dispatch(updateRefreshBlocked(false));
                                 dispatch(setHeaderSelectedRegionSandbox(selectedOptions));
                             }
