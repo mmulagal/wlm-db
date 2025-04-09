@@ -28,6 +28,8 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    ASSESSMENT_PERFORMED: 'Last assessment was performed at : ',
+    ASSESS_NOW: 'Assess now',
     MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',
     POSTGRESQL_TYPE: 'PostgreSQL',
     USER_DATABASE: 'User Database',
