@@ -306,6 +306,19 @@ const inventoryV2Slice = createSlice({
             state.multiMssqlDatabaseHostsData = null;
             state.multiPgSqlDatabaseHostsData = null;
             state.potentialSavingsHostData = {};
+        },
+        resetInventoryLoading: (state, action: PayloadAction<any>) => {
+            state.createResourceApiLoading = false;
+            state.resetManagedData = false;
+            state.isManagedHostListLoading = false;
+            state.getDatabaseHosts.databaseHostsLoading = false;
+            state.getPgSqlDatabaseHosts.databaseHostsLoading = false;
+            state.getDatabaseHosts.fullHostDataLoading = false;
+            state.getPgSqlDatabaseHosts.fullHostDataLoading = false;
+            state.allmssqlHostAssessmentLoading = false;
+            state.discoveredHosts.discoverHostLoading = false;
+            state.dashSandboxList.loading = false;
+            state.dashSandboxSavings.loading = false;
         }
     }
 });
@@ -370,7 +383,8 @@ export const {
     addMultiPgSqlDatabaseHostsData,
     setDashSandboxList,
     setDashSandboxSavings,
-    setCreateResourceApiLoading
+    setCreateResourceApiLoading,
+    resetInventoryLoading
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
