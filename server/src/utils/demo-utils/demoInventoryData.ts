@@ -597,4 +597,9 @@ const ASSESSMENT_CRR_CONFIG_DATA = {
     ]
 };
 
-export { inventoryDemoData, ASSESMENT_CONFIG_DATA, ASSESSMENT_CRR_CONFIG_DATA };
+const ASSESSMENT_AWS_BACKUP_DATA = {
+    filesystemId: 'fs-07a22f282fd4f5a20',
+    isAWSBackupEnabled: true
+};
+
+export { inventoryDemoData, ASSESMENT_CONFIG_DATA, ASSESSMENT_CRR_CONFIG_DATA, ASSESSMENT_AWS_BACKUP_DATA };
