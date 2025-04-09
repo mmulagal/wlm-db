@@ -835,7 +835,11 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('pgsqlProtection'))
     .on(SendCommandCommand, params => params.Comment === 'Discover PostgreSQL resources')
-    .resolves(getSampleCommandResponse('discoverPgsqlResources'));
+    .resolves(getSampleCommandResponse('discoverPgsqlResources'))
+    .on(SendCommandCommand, params => {
+        return /#Get sandbox Details/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getSandboxDetails'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1148,6 +1152,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'pgsqlProtection',
             '{ "records": [ { "uuid": "65ce42b0-093b-11f0-9005-d94de70408b8", "name": "wlmdb_pgsqldata_1742880617685", "snapshot_count": 1, "_links": { "self": { "href": "/api/storage/volumes/65ce42b0-093b-11f0-9005-d94de70408b8" } } } ], "num_records": 1, "_links": { "self": { "href": "/api/storage/volumes?fields=snapshot_count&name=wlmdb_pgsqldata_1742880617685" } } }'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSandboxDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getSandboxDetails',
+            '{"cloneResponse":"[{\\"database_name\\":\\"sandbox_1743487277979\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"account-aHP3esT5\\"},{\\"name\\":\\"cloned_by\\",\\"value\\":\\"netapp_wf\\"},{\\"name\\":\\"createdAt\\",\\"value\\":1743487614964},{\\"name\\":\\"source\\",\\"value\\":\\"stvyar9|MSSQLSERVER|apr1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743487614964}]},{\\"database_name\\":\\"sandbox_ap90\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"acco…ar9|MSSQLSERVER|test1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743486922070}]},{\\"database_name\\":\\"sandbox_test234\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"account-aHP3esT5\\"},{\\"name\\":\\"cloned_by\\",\\"value\\":\\"netapp_wf\\"},{\\"name\\":\\"createdAt\\",\\"value\\":1743487698523},{\\"name\\":\\"source\\",\\"value\\":\\"stvyar9|MSSQLSERVER|test1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743487698523}]}]"}'
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

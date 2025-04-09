@@ -87,12 +87,43 @@ interface MaxDOPAssesment {
     status: string;
 }
 
+interface CloneDetail {
+    databaseHostName: string;
+    databaseHostId: string;
+    databaseInstanceName: string;
+    sourceDatabaseHostName?: string;
+    sourceDatabaseInstanceName?: string;
+    sourceDatabaseName?: string;
+    cloneDatabaseName?: string;
+    tag?: string | null;
+    cloneAge?: number;
+    clonedBy?: string;
+    cloneSize?: number;
+    clonedVolumeDetails?: ClonedVolumeDetail[];
+}
+
+interface ClonedVolumeDetail {
+    cloneVolumeUuid?: string;
+    cloneVolumeName?: string;
+    sourceVolumeName?: string;
+    cloneVolumeCreateTime?: string;
+    cloneDatabaseName?: string;
+    cloneVolumeType?: string;
+}
+
+interface CloneAssesment {
+    status: string;
+    cloneDetails?: CloneDetail[];
+    oldClones?: number;
+}
+
 interface ResourceAssessmentData {
     license?: LicenseAssessment;
     compute?: ComputeAssessment;
     hostOsPatch?: HostOsPatchAssessmentObject[];
     rssConfig?: RssConfigAssesment;
     maxDOP?: MaxDOPAssesment;
+    clone?: CloneAssesment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
     lastAssessedDate?: string;
     errors?: {
@@ -520,6 +551,46 @@ type MultipleCommandSsmResponse = {
     error?: string;
 };
 
+interface SVM {
+    uuid: string;
+    _links: {
+        self: {
+            href: string;
+        };
+    };
+}
+
+interface ParentVolume {
+    name: string;
+}
+
+interface Clone {
+    is_flexclone?: boolean;
+    parent_volume?: ParentVolume;
+}
+
+interface VolumeRecord {
+    uuid: string;
+    create_time?: string;
+    name: string;
+    snapshot_count?: number;
+    clone?: Clone;
+    svm?: SVM;
+}
+interface VolumeDBMapEntry {
+    ontapVolumeuuid: string;
+    databaseName: string;
+}
+
+interface MappedOnTapVolumeResponse {
+    volumeRecords: VolumeRecord[];
+    volumeDBMap: VolumeDBMapEntry[];
+    lunNames: string[];
+}
+interface InstancesResponse {
+    [key: string]: MappedOnTapVolumeResponse;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -561,5 +632,11 @@ export {
     MaxDOPAssesment,
     PatchDetail,
     AwsFsxNBackupConfig,
-    MultipleCommandSsmResponse
+    MultipleCommandSsmResponse,
+    CloneAssesment,
+    CloneDetail,
+    VolumeRecord,
+    MappedOnTapVolumeResponse,
+    InstancesResponse,
+    VolumeDBMapEntry
 };

@@ -1463,6 +1463,33 @@ const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: 
     Write-Output $jsonResult
 `;
 
+const GET_SANDBOX_DETAILS = (instanceName: string, sqlAuthEnabled: boolean, query: string) => `
+    #Get sandbox Details
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $sqlInstanceName = "${instanceName}"
+    $query = "${query}"
+
+    ${slqcmdExecutionTemplate}
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
+    
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+    }
+    
+    $cloneResponse = Call-SqlCmd -SqlCredential $sqlCredential -Query $query -InstanceName "$ServerInstanceName"
+
+    $result = [PSCustomObject]@{
+        cloneResponse = $cloneResponse
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
@@ -1481,5 +1508,6 @@ export {
     SET_VOLUME_SNAPSHOT_POLICY,
     SET_MAXDOP,
     JSON_CHECK,
-    GET_LATEST_SNAPSHOT_TIME
+    GET_LATEST_SNAPSHOT_TIME,
+    GET_SANDBOX_DETAILS
 };

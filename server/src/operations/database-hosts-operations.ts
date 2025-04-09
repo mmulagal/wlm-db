@@ -76,7 +76,14 @@ import {
     getMappedOntapVolumes,
     getStorageDataFromOntap
 } from './aws/fsx-operations';
-import { DatabaseInstance, InstanceDetails, Metadata, ResourceDetails, UserDatabase } from '../utils/common-types';
+import {
+    DatabaseInstance,
+    InstanceDetails,
+    MappedOnTapVolumeResponse,
+    Metadata,
+    ResourceDetails,
+    UserDatabase
+} from '../utils/common-types';
 import { getBillByResourceIds, getCostAllocationTags } from './aws/cost-explorer-operations';
 import {
     getCostAllocationTagEC2Resource,
@@ -101,12 +108,6 @@ const DATABASE_HOSTS_INDEX_MAPPING_V2: { [index: number]: string } = {
     1: 'billing/pricing',
     2: 'instanceSummary'
 };
-
-interface MappedOnTapVolumeResponse {
-    volumeRecords: Record<string, string | number>[];
-    volumeDBMap: any;
-    lunNames: string[];
-}
 
 type EstimationEc2Type = {
     resourceType: string;
@@ -1346,23 +1347,7 @@ async function getProtectionDetails(
 
     const instanceOntapDetails = (
         await Promise.all(
-            (instanceDetails || []).map(async instance => {
-                const [fsxId] = instance?.fsxn_ids?.split(',') || [];
-                const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
-                    credentialsId,
-                    region,
-                    fsxId
-                );
-                const instanceLevelSvm = svms.find(
-                    svm => svm?.StorageVirtualMachineId === (instance.fsx_svm_id as Record<string, string>)[fsxId]
-                );
-                return {
-                    [instance.database_instance_name]: {
-                        fsxId,
-                        svmUuid: instanceLevelSvm?.UUID
-                    }
-                };
-            })
+            (instanceDetails || []).map(instance => getInstanceOntapDetails(instance, credentialsId, region))
         )
     ).reduce((acc, curr) => ({ ...acc, ...curr }), {});
 
@@ -1399,6 +1384,24 @@ async function getProtectionDetails(
     ]);
 
     return { awsBackup, ontapBackup };
+}
+
+async function getInstanceOntapDetails(
+    instance: DatabaseInstance,
+    credentialsId: string,
+    region: string
+): Promise<Record<string, { fsxId: string; svmUuid: string | undefined }>> {
+    const [fsxId] = instance?.fsxn_ids?.split(',') || [];
+    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, fsxId);
+    const instanceLevelSvm = svms.find(
+        svm => svm?.StorageVirtualMachineId === (instance.fsx_svm_id as Record<string, string>)[fsxId]
+    );
+    return {
+        [instance.database_instance_name]: {
+            fsxId,
+            svmUuid: instanceLevelSvm?.UUID
+        }
+    };
 }
 
 async function getInstanceDetails(
@@ -1996,6 +1999,6 @@ export {
     getDatabaseHostInstanceSummary,
     getDatabasesV2,
     getInstanceDetails,
-    MappedOnTapVolumeResponse,
-    getAllClusterNodeDetails
+    getAllClusterNodeDetails,
+    getInstanceOntapDetails
 };
