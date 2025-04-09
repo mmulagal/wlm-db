@@ -747,8 +747,8 @@ async function handleOnpremTcoDataAnalysis(accountId: string, jobId: string, dat
             windowsConfig: { windowsSystemName }
         } = data;
         ({ id: analyzeJobId } = await registerJob(accountId, 'ON_PREM', DEFAULT_AWS_REGION, {
-            name: 'Analyze OnPremises TCO data',
-            description: 'Analyze OnPremises TCO data',
+            name: 'Analyze on-premises SQL Server configuration and performance data',
+            description: 'Analyze on-premises SQL Server configuration and performance data',
             resourceName: windowsSystemName,
             startTime: Date.now(),
             endTime: Date.now(),
@@ -837,8 +837,8 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
 
         // in OnPremises analysis, credentials ID is irrelevant, so using a dummy UUID
         const { id: jobId } = await registerJob(accountId, ONPREM_TCO_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
-            name: 'Upload OnPremises TCO data',
-            description: 'OnPremises TCO data upload',
+            name: 'Upload on-premises data collector results in Workload Factory',
+            description: 'Upload on-premises data collector results in Workload Factory',
             resourceName: data?.windowsConfig?.windowsSystemName,
             startTime: Date.now(),
             endTime: Date.now(),
