@@ -728,6 +728,9 @@ const InventoryApisV3 = () => {
         let noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList?.map((ec2InstanceId: any) => {
+                if (!headerSelectedCred?.data?.credentialsId || !headerSelectedRegion?.data?.regionCode) {
+                    return;
+                }
                 if (runningInstanceListRef.current.includes(ec2InstanceId)) {
                     return;
                 }
@@ -1190,7 +1193,7 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         // if partner instance ID
-        if (partnerInstanceList) {
+        if (partnerInstanceList?.length > 0) {
             callInstanceApi(partnerInstanceList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
         }
     }, [partnerInstanceList]);

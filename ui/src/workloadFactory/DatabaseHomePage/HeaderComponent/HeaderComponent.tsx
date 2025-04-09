@@ -116,6 +116,7 @@ import Marketing from '../../../Marketing/Marketing';
 import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
 import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSlice';
 import { method } from 'lodash';
+import store from '../../../store/store';
 
 type Tab = {
     tab: string;
@@ -467,15 +468,23 @@ const HeaderComponent = ({ tab }: Tab) => {
         ) {
             let currentCredId = headerSelectedCred?.data?.credentialsId;
             let currentRegionId = headerSelectedRegion?.data?.regionCode;
+
+            const state = store.getState();
+            const {
+                mssqlInstancesData: mssqlInstancesData1,
+                perfMssqlInstancesData: perfMssqlInstancesData1,
+                potentialSavingsHostData: potentialSavingsHostData1
+            } = state.inventoryV2;
+
             let isMssqlInstanceDataLoading = false;
-            if (mssqlInstancesData) {
-                Object.keys(mssqlInstancesData)?.map((key: any) => {
+            if (mssqlInstancesData1) {
+                Object.keys(mssqlInstancesData1)?.map((key: any) => {
                     let keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
                         keyList[2] === currentRegionId &&
-                        mssqlInstancesData?.[key]?.loading
+                        mssqlInstancesData1?.[key]?.loading
                     ) {
                         isMssqlInstanceDataLoading = true;
                     }
@@ -483,14 +492,14 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
 
             let perfMssqlInstancesDataLoading = false;
-            if (perfMssqlInstancesData) {
-                Object.keys(perfMssqlInstancesData)?.map((key: any) => {
+            if (perfMssqlInstancesData1) {
+                Object.keys(perfMssqlInstancesData1)?.map((key: any) => {
                     let keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
                         keyList[2] === currentRegionId &&
-                        perfMssqlInstancesData?.[key]?.loading
+                        perfMssqlInstancesData1?.[key]?.loading
                     ) {
                         perfMssqlInstancesDataLoading = true;
                     }
@@ -498,14 +507,14 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
 
             let potentialSavingsHostDataLoading = false;
-            if (potentialSavingsHostData) {
-                Object.keys(potentialSavingsHostData)?.map((key: any) => {
+            if (potentialSavingsHostData1) {
+                Object.keys(potentialSavingsHostData1)?.map((key: any) => {
                     let keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
                         keyList[2] === currentRegionId &&
-                        potentialSavingsHostData?.[key]?.loading
+                        potentialSavingsHostData1?.[key]?.loading
                     ) {
                         potentialSavingsHostDataLoading = true;
                     }
@@ -600,7 +609,12 @@ const HeaderComponent = ({ tab }: Tab) => {
                         // If any combo is removed and added back again than not calling apis again
                         // const key = `${newQueue[index]?.cred?.data?.credentialsId}_${newQueue[index]?.region?.data?.regionCode}`;
                         // delete newMultiDataStatus[key];
-                        newQueue.splice(0, 1);
+                        let index = newQueue?.findIndex(
+                            (perItem: any) =>
+                                item.cred?.data?.credentialsId === perItem.cred?.data?.credentialsId &&
+                                item.region?.data?.regionCode === perItem.region?.data?.regionCode
+                        );
+                        newQueue.splice(index, 1);
                     }
                 });
                 for (let cred of headerSelectedMultiCred) {
