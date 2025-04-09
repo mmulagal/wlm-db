@@ -684,7 +684,6 @@ async function triggerAssessment(
 ) {
     logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
 
-    let jobStatus: string = JOBSTATUS.COMPLETED;
     let errorMessage = '';
     const {
         account_id: accountId,
@@ -776,12 +775,7 @@ async function triggerAssessment(
     } catch (error: any) {
         logger.error(error);
         errorMessage = error.message || 'Internal Server Error';
-        jobStatus = JOBSTATUS.FAILED;
-        await updateJobDetails(accountId, parentJobId, {
-            error: errorMessage,
-            status: jobStatus,
-            endTime: Date.now()
-        });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 }
 
@@ -1379,17 +1373,11 @@ async function handleAssessment(
         await triggerAssessment(managedInstance, masterAssessmentJobId, fields, true);
     } catch (error) {
         jobStatus = JOBSTATUS.FAILED;
-        await updateJobDetails(accountId, masterAssessmentJobId, {
-            status: jobStatus,
-            endTime: Date.now()
-        });
         logger.error(`Error while fetching database instance details ${accountId}, ${error}`);
     } finally {
         jobStatus = jobStatus || JOBSTATUS.COMPLETED;
-        if (jobStatus !== JOBSTATUS.FAILED) {
-            // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
-            await updateParentJobStatus(accountId, masterAssessmentJobId);
-        }
+        // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
+        await updateParentJobStatus(accountId, masterAssessmentJobId);
         // Lets update assessment result in instance metadata
         await updateAssesmentResultsInInstanceMetadata(managedInstance, true);
     }
