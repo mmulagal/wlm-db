@@ -471,20 +471,20 @@ const HeaderComponent = ({ tab }: Tab) => {
 
             const state = store.getState();
             const {
-                mssqlInstancesData: mssqlInstancesData1,
-                perfMssqlInstancesData: perfMssqlInstancesData1,
-                potentialSavingsHostData: potentialSavingsHostData1
+                mssqlInstancesData: mssqlInstancesDataLatest,
+                perfMssqlInstancesData: perfMssqlInstancesDataLatest,
+                potentialSavingsHostData: potentialSavingsHostDataLatest
             } = state.inventoryV2;
 
             let isMssqlInstanceDataLoading = false;
-            if (mssqlInstancesData1) {
-                Object.keys(mssqlInstancesData1)?.map((key: any) => {
+            if (mssqlInstancesDataLatest) {
+                Object.keys(mssqlInstancesDataLatest)?.map((key: any) => {
                     let keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
                         keyList[2] === currentRegionId &&
-                        mssqlInstancesData1?.[key]?.loading
+                        mssqlInstancesDataLatest?.[key]?.loading
                     ) {
                         isMssqlInstanceDataLoading = true;
                     }
@@ -492,14 +492,14 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
 
             let perfMssqlInstancesDataLoading = false;
-            if (perfMssqlInstancesData1) {
-                Object.keys(perfMssqlInstancesData1)?.map((key: any) => {
+            if (perfMssqlInstancesDataLatest) {
+                Object.keys(perfMssqlInstancesDataLatest)?.map((key: any) => {
                     let keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
                         keyList[2] === currentRegionId &&
-                        perfMssqlInstancesData1?.[key]?.loading
+                        perfMssqlInstancesDataLatest?.[key]?.loading
                     ) {
                         perfMssqlInstancesDataLoading = true;
                     }
@@ -507,14 +507,14 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
 
             let potentialSavingsHostDataLoading = false;
-            if (potentialSavingsHostData1) {
-                Object.keys(potentialSavingsHostData1)?.map((key: any) => {
+            if (potentialSavingsHostDataLatest) {
+                Object.keys(potentialSavingsHostDataLatest)?.map((key: any) => {
                     let keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
                         keyList[2] === currentRegionId &&
-                        potentialSavingsHostData1?.[key]?.loading
+                        potentialSavingsHostDataLatest?.[key]?.loading
                     ) {
                         potentialSavingsHostDataLoading = true;
                     }
