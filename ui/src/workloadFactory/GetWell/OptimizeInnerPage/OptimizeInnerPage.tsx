@@ -36,6 +36,7 @@ import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
+import CloneManagementTable from './InnerTables/CloneManagementTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import { useRef, useState } from 'react';
 
@@ -513,6 +514,16 @@ const OptimizeInnerPage = () => {
             case GENERAL.CRR:
                 return (
                     <CRROptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+
+            case GENERAL.CLONE_MANAGEMENT:
+                return (
+                    <CloneManagementTable
                         type={selectedOptimizeConfig?.type}
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}

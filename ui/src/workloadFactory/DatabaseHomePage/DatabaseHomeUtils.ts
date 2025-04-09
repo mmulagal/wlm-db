@@ -442,7 +442,6 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
         compute: 0,
         application: 0,
         resiliency: 0,
-        cloning: 0,
         total: 0
     };
     assessmentData.map((databaseHost: any) => {
@@ -482,7 +481,6 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 const isScheduledAWSBackUpOptimized = isOptimized(
                     instanceAssessmentData?.resiliency?.awsBackup?.status
                 );
-
 
                 const isCloneOptimized = isOptimized(
                     instanceAssessmentData?.cloning?.clone?.status

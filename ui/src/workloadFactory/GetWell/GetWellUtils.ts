@@ -776,7 +776,7 @@ export const cardDataDefault: GwCardDataInterface = {
             description:
                 'Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
         },
-        tags: ['Reliability']
+        tags: ['Cost Efficiency']
     }
 };
 

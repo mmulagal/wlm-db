@@ -760,7 +760,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         )}
                         beforeOutOf={configData.cloneManagement}
                         afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
+                        bottomText="Optimized databases:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
@@ -777,22 +777,22 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin={true}
-                            onClick={() => {
-                                handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
-                            }}
-                            data-testid="wlm-db-optimize-maxdop"
-                            isDisabled={
-                                allmssqlHostAssessmentLoading ||
-                                configData?.total === 0 ||
-                                configData?.cloneManagement === configData?.total ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
-                            }
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
                         >
-                            Optimize
-                        </DsButton>
+                            <div>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-clone-management"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
                     </div>
                 </div>
             </div>

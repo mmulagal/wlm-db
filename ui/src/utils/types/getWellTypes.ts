@@ -18,7 +18,6 @@ export interface GetWellSliceInterface {
         compute?: CountBreakDown;
         application?: CountBreakDown;
         resiliency?: CountBreakDown;
-        cloning?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;

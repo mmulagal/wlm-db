@@ -2267,7 +2267,7 @@ const GetWell = () => {
                                             onExpandChange={isExpanded => {
                                                 handleAccordionExpanded('20', isExpanded);
                                             }}
-                                            onClick={() => setClickedAccordionId('17')}
+                                            onClick={() => setClickedAccordionId('20')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.clone_management?.tags?.map(
