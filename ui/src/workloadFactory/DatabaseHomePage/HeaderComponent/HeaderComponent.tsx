@@ -189,7 +189,6 @@ const HeaderComponent = ({ tab }: Tab) => {
     HeaderComponentApi();
     InventoryApisV3();
     DatabaseHomeApis();
-    // JobMonitoringApi();
     SavingsCalculatorApi();
     SavingsCalculatorManualApi();
 
