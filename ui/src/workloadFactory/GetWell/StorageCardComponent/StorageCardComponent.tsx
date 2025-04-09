@@ -815,7 +815,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Log files' ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
-            type === GENERAL.CRR
+            type === GENERAL.CRR ||
+            type === GENERAL.CLONE_MANAGEMENT
         ) {
             handleNavigateToOptimizePage(type);
         } else {

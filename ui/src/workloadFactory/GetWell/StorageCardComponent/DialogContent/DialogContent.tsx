@@ -19,6 +19,7 @@ import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
 import ScheduledAWSBackupDialog from './ScheduledAWSBackupDialog';
+import CloneManagementDialog from './CloneManagementDialog';
 
 type DialogType = {
     type: string;
@@ -1014,6 +1015,11 @@ const DialogContent = ({
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
                 return <ScheduledAWSBackupDialog type={type} />;
+
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+                return <CloneManagementDialog type={type} />;
+
+
             case ASSESSMENT_CONFIG_NAMES.MAXDOP:
                 return (
                     <div className={styles['storage-tier-block']}>
