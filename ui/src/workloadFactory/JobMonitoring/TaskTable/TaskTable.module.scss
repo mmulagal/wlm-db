@@ -9,6 +9,12 @@
         .linkSection {
             background-color: var(--hover-background) !important;
         }
+
+        [class*='Button-module_link'] {
+            svg {
+                display: none !important;
+            }
+        }
     }
 
     .firstItem {
