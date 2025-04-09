@@ -2512,7 +2512,11 @@ export const handleOptimizeStorageJob = (
 export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
     const state = store.getState();
     const updatedAsessmentData = state.inventoryV2.allmssqlHostAssessmentData?.map((hostData: any) => {
-        if (hostData?.databaseHostId === rowData?.hostId) {
+        if (
+            hostData?.databaseHostId === rowData?.hostId &&
+            hostData?.credentialId === rowData?.credentialId &&
+            hostData?.regionId === rowData?.regionId
+        ) {
             const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
                 if (instance?.databaseInstanceId === rowData?.instanceId) {
                     const storageSizingMap: any = {

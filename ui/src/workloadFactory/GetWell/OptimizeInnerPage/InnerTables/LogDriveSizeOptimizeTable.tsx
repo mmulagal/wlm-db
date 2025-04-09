@@ -161,7 +161,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             Header: 'Log drive size percentage',
             accessor: 'sizePercentToDataDrive',
             id: '4',
-            width: '302px',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;

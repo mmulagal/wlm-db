@@ -40,7 +40,7 @@ import {
     SAVINGS_CALC_MODE,
     SNAPSHOT_FREQUENCY
 } from '../../../utils/consts';
-import { addInstanceIdToGetPerf } from '../../InventoryV2/InventoryUtilsV2';
+import { addInstanceIdToGetPerf, uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { checkIfEbsProtected } from './savingsUtil';
 import { isEqual } from 'lodash';
 
@@ -111,7 +111,11 @@ const SavingsCalculatorApi = () => {
     }, [savingsCalculatorFrom]);
 
     useEffect(() => {
-        const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
+        const selectedRow = unManagedHostFormatedList.filter(
+            (item: any) =>
+                uniqueHostRow(item?.id, item?.credentialId, item?.regionId) ===
+                uniqueHostRow(selectedInstanceId, selectedExCredId, selectedExRegionId)
+        );
         if (selectedRow && selectedRow?.length > 0) {
             if (
                 selectedRow[0]?.serverInstallationMode === GENERAL.AOAG &&
@@ -347,6 +351,10 @@ const SavingsCalculatorApi = () => {
             } else if (isProtectionData === EBS_PROTECTED_OPTIONS.UNKNOWN) {
                 dispatch(setSnapshotLoading(false));
                 dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
+            } else {
+                // ToDo: once instance api logic is added than can be removed
+                dispatch(setSnapshotLoading(false));
+                dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
             }
         }
     }, [selectedHostDetails]);
@@ -360,9 +368,12 @@ const SavingsCalculatorApi = () => {
                     dispatch(setDisableState(false));
                     triggerRefreshApi();
                 } else {
-                    dispatch(setSnapshotLoading(true));
-                    // This is similar to expand row in inventory. It will call instance API to get protection data.
-                    addInstanceIdToGetPerf(selectedHostDetails, dispatch);
+                    // dispatch(setSnapshotLoading(true));
+                    // // This is similar to expand row in inventory. It will call instance API to get protection data.
+                    // addInstanceIdToGetPerf(selectedHostDetails, dispatch);
+                    // ToDo: once instance api logic is added than can be updated
+                    dispatch(setDisableState(false));
+                    triggerRefreshApi();
                 }
             }
         } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
@@ -384,10 +395,10 @@ const SavingsCalculatorApi = () => {
             if (!isDemoMode && selectedPartnerInstanceId) {
                 dispatch(setSelectedPartnerHostDetails(null));
                 dispatch(setGetPartnerHostDetailsLoading(true));
-                getMssqlDataForPartnerNode();
+                // getMssqlDataForPartnerNode();
             }
             dispatch(setSelectedHostDetails(null));
-            getMssqlData();
+            // getMssqlData();
             triggerRefreshApi();
         }
         dispatch(setSavingsCalculatorRefresh(false));
@@ -398,7 +409,7 @@ const SavingsCalculatorApi = () => {
         const state = store.getState();
         const mssqlInstancesDataV2 = state.inventoryV2.mssqlInstancesData;
         let mssqlInstancesDataLoad: any = {};
-        mssqlInstancesDataLoad[selectedInstanceId] = {
+        mssqlInstancesDataLoad[uniqueHostRow(selectedInstanceId, selectedExCredId, selectedExRegionId)] = {
             loading: true,
             data: null,
             error: null
@@ -430,7 +441,7 @@ const SavingsCalculatorApi = () => {
                 dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataRes }));
             } else {
                 let mssqlInstancesDataErr: any = {};
-                mssqlInstancesDataErr[selectedInstanceId] = {
+                mssqlInstancesDataErr[uniqueHostRow(selectedInstanceId, selectedExCredId, selectedExRegionId)] = {
                     loading: false,
                     data: null,
                     error: result?.error?.data?.message,
@@ -440,7 +451,7 @@ const SavingsCalculatorApi = () => {
             }
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
-            mssqlInstancesDataErr[selectedInstanceId] = {
+            mssqlInstancesDataErr[uniqueHostRow(selectedInstanceId, selectedExCredId, selectedExRegionId)] = {
                 loading: false,
                 data: null,
                 error: error,

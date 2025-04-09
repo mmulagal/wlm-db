@@ -69,7 +69,9 @@ describe('calculateRssConfigDrift', () => {
                 recommendedBaseProcessorNumber: 2,
                 recommendedReceiveQueues: 4
             },
-            tcpOffloadState: 'Disabled'
+            tcpOffloadState: 'Disabled',
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 1
         });
     });
 

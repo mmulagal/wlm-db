@@ -49,7 +49,7 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
@@ -58,16 +58,16 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/storage-sizing`,
+    `${BASE_URL}/v1/mssql/database-hosts/optimize/storage-sizing`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 100);
     }
 );
 
@@ -76,7 +76,7 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
@@ -85,16 +85,16 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/compute`,
+    `${BASE_URL}/v1/mssql/database-hosts/optimize/compute`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
@@ -103,7 +103,7 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
@@ -112,34 +112,34 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/storage-tier`,
+    `${BASE_URL}/v1/mssql/database-hosts/optimize/storage-tier`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/max-dop`,
+    `${BASE_URL}/v1/mssql/database-hosts/optimize/max-dop`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/resiliency/aws-backup`,
+    `${BASE_URL}/v1/mssql/database-hosts/optimize/resiliency/aws-backup`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 

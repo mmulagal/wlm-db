@@ -30,7 +30,7 @@ const ScheduledLocalSnapshotOptimizeTable = ({ type, data, lastColDetails, handl
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '1036px',
+            width: 'auto',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }

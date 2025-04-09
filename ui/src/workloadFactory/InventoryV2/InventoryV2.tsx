@@ -33,7 +33,8 @@ const InventoryV2 = () => {
         if (inventoryTableData) {
             let hostTableRows: any = [];
             let instanceTableRows: any = [];
-            let id: number = 0;
+            let hostUniqueId: number = 0;
+            let instanceUniqueId: number = 0;
             let databaseTableRows: any = [];
             Object.keys(inventoryTableData).map((key: string) => {
                 if (removeSecNodeDiscoveredList.includes(key)) {
@@ -71,6 +72,7 @@ const InventoryV2 = () => {
                 }
                 const rowData = {
                     ...inventoryTableData[key],
+                    id: String(hostUniqueId++),
                     sqlServerInstancesText:
                         inventoryTableData[key]?.totalInstance !== 0
                             ? inventoryTableData[key]?.managedInstance +
@@ -116,7 +118,7 @@ const InventoryV2 = () => {
                         }
                         let perRowData = {
                             ...perRow,
-                            id: String(id++),
+                            id: String(instanceUniqueId++),
                             hostRow: perHost,
                             name: perHost?.name,
                             hostType: perHost?.hostType,
@@ -226,7 +228,14 @@ const InventoryV2 = () => {
                 })
             );
         }
-    }, [inventoryTableData, inProgressInstances, allmssqlHostAssessmentLoading, allmssqlHostAssessmentData]);
+    }, [
+        inventoryTableData,
+        inProgressInstances,
+        allmssqlHostAssessmentLoading,
+        allmssqlHostAssessmentData,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     return (
         <div className={styles.inventory}>

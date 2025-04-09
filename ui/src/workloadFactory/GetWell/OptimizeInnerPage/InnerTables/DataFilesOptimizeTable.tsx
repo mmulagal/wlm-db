@@ -23,7 +23,7 @@ const DataFilesOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '1106px',
+            width: 'auto',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }

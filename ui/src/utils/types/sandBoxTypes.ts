@@ -114,6 +114,7 @@ export interface SandboxEntities {
     rollbackSnapshotList: any;
     isRollbackSelected: boolean;
     selectedRollbackSnapshot: any;
+    isRefreshedSandbox: boolean;
 }
 
 export type SandboxActions = 'delete' | 'refresh' | 'rebaseline' | 'split' | 'integrityCheck';
