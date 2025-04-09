@@ -777,7 +777,6 @@ async function triggerAssessment(
         logger.error(error);
         errorMessage = error.message || 'Internal Server Error';
         jobStatus = JOBSTATUS.FAILED;
-    } finally {
         await updateJobDetails(accountId, parentJobId, {
             error: errorMessage,
             status: jobStatus,
