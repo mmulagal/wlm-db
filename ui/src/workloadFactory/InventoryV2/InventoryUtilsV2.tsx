@@ -139,7 +139,7 @@ export const formatManagedRows = (
         actionDisable: totalInstanceCount === managedInstanceCount,
         isManagedHost: true,
         loading: managedRow?.loading,
-        fullManagedInstanceLoading: managedRow?.loading,
+        fullManagedInstanceLoading: managedRow?.loading, // This loading is specific to database-hosts api if loaded fully for a host or not
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
         totalCost: getTotalCost(managedRow?.estimatedUsageCost || {}),
