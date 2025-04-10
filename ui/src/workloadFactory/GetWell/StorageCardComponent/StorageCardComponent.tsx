@@ -688,8 +688,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         databaseHosts: [
                             {
                                 id: selectedResourceId,
-                                sqlServerInstances: [selectedDatabaseInstance],
-
+                                sqlServerInstances: [selectedDatabaseInstance]
                             }
                         ]
                     }
@@ -951,7 +950,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 cardData?.block_one?.value !== 'ONTAP' &&
                 cardData?.block_one?.value !== 'Operating system' &&
                 (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
-                    cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
+                cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
                         <TooltipComponent
                             title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
@@ -967,8 +966,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         </TooltipComponent>
                     </div>
                 ) : optimizingInstanceData &&
-                    cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
-                    cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
+                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
+                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
                     <TooltipComponent
                         title={GENERAL.OPTIMIZATION_IN_PROGRESS}
                         placement="bottom"
