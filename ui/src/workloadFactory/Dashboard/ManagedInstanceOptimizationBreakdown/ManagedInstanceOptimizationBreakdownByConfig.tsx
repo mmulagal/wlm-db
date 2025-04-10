@@ -60,7 +60,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
@@ -102,7 +102,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading ||
@@ -145,7 +145,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
@@ -187,7 +187,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
@@ -229,7 +229,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0
@@ -271,7 +271,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0
@@ -309,7 +309,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0
@@ -388,7 +388,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.['Operating system']?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OS]?.length > 0}
                     />
@@ -425,7 +425,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.COMPUTE_RIGHTSIZING]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={loading || inProgressOptimizationData['compute-rightsizing']?.length > 0}
                     />
@@ -466,7 +466,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.OPERATING_SYSTEM_PATCH]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading ||
@@ -509,7 +509,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.RSS_CONFIGURATION]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length > 0
@@ -552,7 +552,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.LICENSE_SQL_SERVER]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LICENSE]?.length > 0}
                     />
@@ -592,7 +592,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.MICROSOFT_SQL_PATCH]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading ||
@@ -635,7 +635,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.MAXDOP_PATCH]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0}
                     />
@@ -678,7 +678,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length ||
                                 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading ||
@@ -721,7 +721,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CRR]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0}
                     />
@@ -753,7 +753,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
                                 ?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             loading ||
@@ -785,28 +785,22 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 </div>
 
-
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.CLONE_MANAGEMENT}
-                        percentage={Math.round(
-                            ((configData.clone_management || 0) / (configData.total || 1)) * 100
-                        )}
+                        percentage={Math.round(((configData.clone_management || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.cloneManagement}
                         afterOutOf={configData.total}
                         bottomText="Optimized databases:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length ||
-                                0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
-                        loading={
-                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
-                        }
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
