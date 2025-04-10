@@ -6,7 +6,7 @@ describe('Process email request operations', () => {
     const accountId = ACCOUNT_ID;
     const fileBuffer = Buffer.from('some file content');
     const fileName = 'test.pdf';
-    const fields = { userEmail: 'test@example.com', storageType: 'ebs' };
+    const fields = { userEmail: 'test@example.com', storageType: 'ebs', instanceName: 'sql01' };
     const emailType = EMAIL_TYPES.SAVINGS_CALCULATIONS;
 
     beforeAll(() => {
@@ -81,7 +81,8 @@ describe('Send savings calculation email operations', () => {
             Buffer.from('some file content'),
             'test.pdf',
             'example@email.com',
-            'ebs'
+            'ebs',
+            'sql01'
         );
         expect(response).toEqual({ message: 'Email sent successfully' });
     });

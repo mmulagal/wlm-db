@@ -17,6 +17,9 @@ const EmailRequestBody = Type.Object({
     storageType: Type.String({
         description: 'Type of storage to calculate savings for',
         enum: ['ebs', 'fsxw', 'onprem']
+    }),
+    instanceName: Type.String({
+        description: 'Name of the instance'
     })
 });
 
