@@ -843,10 +843,12 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (headerSelectedMultiCred && headerSelectedMultiCred.length === 1) {
             const credValue = headerSelectedMultiCred[0]?.value;
             return credValue;
-        } else if (headerSelectedMultiCred && headerSelectedMultiCred.length > 1) {
+        } else if (headerSelectedMultiCred && headerSelectedMultiCred?.length === credentialData?.length) {
+            return GENERAL.ALL_CRED_SELECTED;
+        } else if (headerSelectedMultiCred && headerSelectedMultiCred.length >= 1) {
             return `${headerSelectedMultiCred.length} credentials selected`;
         } else {
-            return 'No credentials selected';
+            return GENERAL.NO_CRED_SELECTED;
         }
     };
 
@@ -854,10 +856,12 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (headerSelectedMultiRegion && headerSelectedMultiRegion.length === 1) {
             const regionValue = headerSelectedMultiRegion[0]?.value;
             return regionValue;
-        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion.length > 1) {
+        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion?.length === regionsData?.regions?.length) {
+            return GENERAL.ALL_REGIONS_SELECTED;
+        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion.length >= 1) {
             return `${headerSelectedMultiRegion.length} regions selected`;
         } else {
-            return 'No regions selected';
+            return GENERAL.NO_REGIONS_SELECTED;
         }
     };
 
