@@ -352,6 +352,7 @@ async function isFsxnAwsBackupEnabled(
                             now.getTime() - backupTime.getTime() < twoDaysInMs &&
                             !volumeUuidsInBackups.includes(volumeUuid)
                         ) {
+                            logger.debug('Found valid backups', volumeUuid, backup.BackupId, backupTime);
                             volumeUuidsInBackups.push(volumeUuid);
                         }
                     }
