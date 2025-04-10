@@ -733,7 +733,10 @@ const InstancesTable = () => {
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'protectionText'),
             renderCell: (cellData: string, rowData: any) => {
-                const loading = rowData?.loading || rowData?.subLoading;
+                let loading = rowData?.loading || rowData?.subLoading;
+                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    loading = true;
+                }
                 return (
                     <>
                         {cellData && (
@@ -776,7 +779,10 @@ const InstancesTable = () => {
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'performance.assessment'),
             renderCell: (cellData: string, rowData: any) => {
-                const loading = rowData?.loading || rowData?.subLoading;
+                let loading = rowData?.loading || rowData?.subLoading;
+                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    loading = true;
+                }
                 return (
                     <>
                         {cellData && (
