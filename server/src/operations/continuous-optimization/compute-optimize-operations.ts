@@ -224,6 +224,7 @@ async function handleComputeRemediation(
                             activeNodeInstanceId
                         ));
                         oldClusterOwnerNode = ownerNode;
+                        shouldRollbackClusterOwnership = true;
                         await updateJobDetails(accountId, transferOwnershipJobId, {
                             description: `Transfer cluster node ownership from primary node ${ownerNode} to another node ${targetNodeName} in the cluster`,
                             status: JOBSTATUS.COMPLETED,
@@ -486,9 +487,7 @@ async function checkRunningStatus(
     let statusResponse: { status: string; error?: string } = { status: '', error: '' };
 
     try {
-        const cleanStatusResponse = sqlResponseParsing(rawStatusResponse);
-        statusResponse = JSON.parse(cleanStatusResponse);
-
+        statusResponse = sqlResponseParsing(rawStatusResponse);
         jobDetails = {
             status: statusResponse.status === 'Running' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
             error: statusResponse.status !== 'Running' ? statusResponse.error : undefined
