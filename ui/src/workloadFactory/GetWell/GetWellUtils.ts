@@ -1124,8 +1124,6 @@ export const formatCRRCardConfig = (
     return cardsData;
 };
 
-
-
 export const formatCloneCardConfig = (
     data: AssessmentResponseInterface,
     optimizingData: { [key: string]: string },
@@ -1179,10 +1177,6 @@ export const formatCloneCardConfig = (
     };
     return cardsData;
 };
-
-
-
-
 
 export const formatOsPatchCardConfig = (
     data: AssessmentResponseInterface,
@@ -1363,7 +1357,7 @@ export const formatRssConfigCardConfig = (
                     rssEnabledStatus: GENERAL.FINDINGS.OPTIMIZED,
                     baseProcessorNumberStatus:
                         adapter?.baseProcessorNumber !==
-                            item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
+                        item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
                             ? GENERAL.FINDINGS.NOT_OPTIMIZED
                             : GENERAL.FINDINGS.OPTIMIZED,
                     receiveQueuesStatus:
@@ -1744,8 +1738,6 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 notOptimizedCloning++;
             }
         }
-
-
     });
 
     let storageCount = {
@@ -1770,8 +1762,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         notOptimized: notOptimizedApplication,
         percent: optimizedApplication
             ? formatNumberWithCustomComma(
-                (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
-            )
+                  (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
+              )
             : 0
     };
 
@@ -1801,7 +1793,12 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         cloning: cloningCount,
         total: {
             // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
-            total: storageCount?.total + computeCount?.total + applicationCount?.total + resiliencyCount?.total + cloningCount?.total,
+            total:
+                storageCount?.total +
+                computeCount?.total +
+                applicationCount?.total +
+                resiliencyCount?.total +
+                cloningCount?.total,
             optimized:
                 storageCount?.optimized +
                 computeCount?.optimized +
@@ -1816,23 +1813,23 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 cloningCount?.notOptimized,
             percent:
                 storageCount?.optimized ||
-                    computeCount?.optimized ||
-                    applicationCount?.optimized ||
-                    resiliencyCount?.optimized ||
-                    cloningCount?.optimized
+                computeCount?.optimized ||
+                applicationCount?.optimized ||
+                resiliencyCount?.optimized ||
+                cloningCount?.optimized
                     ? formatNumberWithCustomComma(
-                        ((storageCount?.optimized +
-                            computeCount?.optimized +
-                            applicationCount?.optimized +
-                            resiliencyCount?.optimized +
-                            cloningCount?.optimized || 0) /
-                            (storageCount?.total +
-                                computeCount?.total +
-                                applicationCount?.total +
-                                resiliencyCount?.total +
-                                cloningCount?.total || 1)) *
-                        100
-                    )
+                          ((storageCount?.optimized +
+                              computeCount?.optimized +
+                              applicationCount?.optimized +
+                              resiliencyCount?.optimized +
+                              cloningCount?.optimized || 0) /
+                              (storageCount?.total +
+                                  computeCount?.total +
+                                  applicationCount?.total +
+                                  resiliencyCount?.total +
+                                  cloningCount?.total || 1)) *
+                              100
+                      )
                     : 0
         }
     };
@@ -1886,8 +1883,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 value:
                     ontapNotOptimizedConfig !== 0
                         ? formatNumberWithCustomComma(
-                            (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
-                        ) + '%'
+                              (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
+                          ) + '%'
                         : '0%'
             },
             block_four: {
@@ -1931,8 +1928,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 value:
                     osNotOptimizedConfig !== 0
                         ? formatNumberWithCustomComma(
-                            (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
-                        ) + '%'
+                              (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
+                          ) + '%'
                         : '0%'
             },
             block_four: {
@@ -2074,7 +2071,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
         scheduled_FSx_for_ONTAP_backups: { category: 'Resiliency', subCategory: 'Protection' },
         crr: { category: 'Resiliency', subCategory: 'Protection' },
-        clone_management: { category: 'Cloning', subCategory: 'Cloning_sub' },
+        clone_management: { category: 'Cloning', subCategory: 'Cloning_sub' }
     };
 
     Object.keys(cardData).map((key: any) => {
@@ -2741,16 +2738,16 @@ export const nameToIdConfigMapping = (name: string) => {
     return name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
         ? 'log-drive-size'
         : name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-            ? 'headroom'
-            : name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
-                ? 'tempdb-drive-size'
-                : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
-                    ? 'performance-tier'
-                    : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
-                        ? 'compute-rightsizing'
-                        : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
-                            ? 'max-dop'
-                            : '';
+        ? 'headroom'
+        : name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ? 'tempdb-drive-size'
+        : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
+        ? 'performance-tier'
+        : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
+        ? 'compute-rightsizing'
+        : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
+        ? 'max-dop'
+        : '';
 };
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {
