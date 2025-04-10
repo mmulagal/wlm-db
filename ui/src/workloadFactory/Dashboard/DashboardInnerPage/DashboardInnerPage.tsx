@@ -270,8 +270,8 @@ const DashboardInnerPage = () => {
                                 type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                                     ? 'log-drive-size'
                                     : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                                        ? 'headroom'
-                                        : 'tempdb-drive-size',
+                                    ? 'headroom'
+                                    : 'tempdb-drive-size',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -321,8 +321,8 @@ const DashboardInnerPage = () => {
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                             ? 'log-drive-size'
                             : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                                ? 'headroom'
-                                : 'tempdb-drive-size'
+                            ? 'headroom'
+                            : 'tempdb-drive-size'
                 };
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
