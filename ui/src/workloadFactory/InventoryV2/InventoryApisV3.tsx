@@ -18,7 +18,6 @@ import {
     setFsxCredentialStatusLoading,
     setInventoryChartData,
     setInventoryTableData,
-    setInventoryTablesRows,
     setIsDatabaseHostsLoading,
     setIsDiscoverHostLoading,
     setIsDiscoveredHostData,
@@ -26,7 +25,6 @@ import {
     setIsFullPgSqlHostDataLoading,
     setIsManagedHostListLoading,
     setIsPgSqlDatabaseHostsLoading,
-    setIsRefreshed,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
     setPotentialSavingsHostData,
@@ -1007,7 +1005,10 @@ const InventoryApisV3 = () => {
         let noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList?.map((ec2InstanceId: any) => {
-                if (runningPerfInstanceListRef.current.includes(uniqueHostRow(ec2InstanceId, credId, regionId))) {
+                if (!headerSelectedCred?.data?.credentialsId || !headerSelectedRegion?.data?.regionCode) {
+                    return;
+                }
+                if (runningPerfInstanceListRef.current.includes(ec2InstanceId)) {
                     return;
                 }
                 mssqlInstancesDataLoad[uniqueHostRow(ec2InstanceId, credId, regionId)] = {
@@ -1378,6 +1379,7 @@ const InventoryApisV3 = () => {
             );
             if (unmanagedHostList && unmanagedHostList?.length > 0) {
                 callInstanceApi(unmanagedHostList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
+                callUnmanagedPerfInstanceApi(unmanagedHostList, false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
             }
 
             // To Avoid overriding
@@ -1404,6 +1406,7 @@ const InventoryApisV3 = () => {
             );
             if (unmanagedInstanceList && unmanagedInstanceList?.length > 0) {
                 callInstanceApi(unmanagedInstanceList, true, INSTANCE_API_FIELDS.MIXED_STATUS_FIELDS);
+                callUnmanagedPerfInstanceApi(unmanagedInstanceList, true, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
             }
 
             // To Avoid overriding

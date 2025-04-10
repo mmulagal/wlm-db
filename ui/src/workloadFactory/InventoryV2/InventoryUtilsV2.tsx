@@ -139,6 +139,7 @@ export const formatManagedRows = (
         actionDisable: totalInstanceCount === managedInstanceCount,
         isManagedHost: true,
         loading: managedRow?.loading,
+        fullManagedInstanceLoading: managedRow?.loading,
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
         totalCost: getTotalCost(managedRow?.estimatedUsageCost || {}),
@@ -1094,7 +1095,15 @@ export const getMhUnmanagedInstances = (
     runningInstanceList: Array<string>
 ) => {
     let instanceList: Array<string> = [];
+    let updatedState = store.getState();
+    let { headerSelectedCred, headerSelectedRegion }: any = updatedState?.headers;
     Object.keys(databaseHostsData).map((key: string) => {
+        if (
+            databaseHostsData[key]?.credentialId !== headerSelectedCred?.data?.credentialsId ||
+            databaseHostsData[key]?.regionId !== headerSelectedRegion?.data?.regionCode
+        ) {
+            return;
+        }
         if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId || '')) {
             return;
         }
@@ -1110,7 +1119,15 @@ export const getUnmanagedHostInstances = (
     runningInstanceList: Array<string>
 ) => {
     let instanceList: Array<string> = [];
+    let updatedState = store.getState();
+    let { headerSelectedCred, headerSelectedRegion }: any = updatedState?.headers;
     Object.keys(databaseHostsData).map((key: string) => {
+        if (
+            databaseHostsData[key]?.credentialId !== headerSelectedCred?.data?.credentialsId ||
+            databaseHostsData[key]?.regionId !== headerSelectedRegion?.data?.regionCode
+        ) {
+            return;
+        }
         if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId || '')) {
             return;
         }
@@ -1492,7 +1509,13 @@ export const updateSqlServerInstancesForBothNodes = (
                     (perRow?.storage?.fsxw?.size || 0) +
                     (perRow?.storage?.ebs?.size || 0);
             }
-            const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow, partnerData?.id);
+            const perfData = getPerfUnmanagedData(
+                existingInstanceRow?.ec2InstanceId || '',
+                existingInstanceRow?.credentialId || '',
+                existingInstanceRow?.regionId || '',
+                instRow,
+                partnerData?.id
+            );
             return {
                 ...instRow,
                 loading: perfData?.loading,
@@ -1549,7 +1572,12 @@ export const updateSqlServerInstancesForUnmanaged = (
                     : (perRow?.storage?.fsxn?.size || 0) +
                       (perRow?.storage?.fsxw?.size || 0) +
                       (perRow?.storage?.ebs?.size || 0);
-                const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
+                const perfData = getPerfUnmanagedData(
+                    existingInstanceRow?.ec2InstanceId || '',
+                    existingInstanceRow?.credentialId || '',
+                    existingInstanceRow?.regionId || '',
+                    instRow
+                );
                 return {
                     ...instRow,
                     databaseCount: perRow?.databaseCount,
@@ -1571,7 +1599,12 @@ export const updateSqlServerInstancesForUnmanaged = (
                     sqlServerDeploymentType: instRow?.sqlServerDeploymentType || perRow?.sqlServerDeploymentType
                 };
             } else {
-                const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
+                const perfData = getPerfUnmanagedData(
+                    existingInstanceRow?.ec2InstanceId || '',
+                    existingInstanceRow?.credentialId || '',
+                    existingInstanceRow?.regionId || '',
+                    instRow
+                );
                 return {
                     ...instRow,
                     loading: false,
@@ -1584,12 +1617,20 @@ export const updateSqlServerInstancesForUnmanaged = (
     return instanceRows;
 };
 
-export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId?: string) => {
+export const getPerfUnmanagedData = (
+    instanceId: string,
+    credentialId: string,
+    regionId: string,
+    instRow: any,
+    partnerId?: string
+) => {
     const updatedState = store.getState();
     const perfMssqlInstancesData = updatedState.inventoryV2.perfMssqlInstancesData;
-    if (perfMssqlInstancesData?.[instanceId] && partnerId && perfMssqlInstancesData?.[partnerId]) {
-        let perfData1 = perfMssqlInstancesData?.[instanceId];
-        let perfData2 = perfMssqlInstancesData?.[partnerId];
+    let uniqueInstanceId = uniqueHostRow(instanceId, credentialId, regionId);
+    let uniquePartnerId = uniqueHostRow(partnerId || '', credentialId, regionId);
+    if (perfMssqlInstancesData?.[uniqueInstanceId] && partnerId && perfMssqlInstancesData?.[uniquePartnerId]) {
+        let perfData1 = perfMssqlInstancesData?.[uniqueInstanceId];
+        let perfData2 = perfMssqlInstancesData?.[uniquePartnerId];
         const perRow1 = perfData1?.data?.databaseInstancesSummary?.find(
             (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
         );
@@ -1615,8 +1656,8 @@ export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId
                 performance: null
             };
         }
-    } else if (perfMssqlInstancesData?.[instanceId]) {
-        let perfData = perfMssqlInstancesData?.[instanceId];
+    } else if (perfMssqlInstancesData?.[uniqueInstanceId]) {
+        let perfData = perfMssqlInstancesData?.[uniqueInstanceId];
         if (perfData?.loading) {
             return {
                 loading: true,
