@@ -348,12 +348,11 @@ async function isFsxnAwsBackupEnabled(
                 if (volumeUuid && uuidVolumeIdMap[volumeId]) {
                     if (backup.CreationTime) {
                         const backupTime = new Date(backup.CreationTime);
-                        if (
-                            now.getTime() - backupTime.getTime() < twoDaysInMs &&
-                            !volumeUuidsInBackups.includes(volumeUuid)
-                        ) {
-                            logger.debug('Found valid backups', volumeUuid, backup.BackupId, backupTime);
+                        const isLatest = now.getTime() - backupTime.getTime() < twoDaysInMs;
+                        if (isLatest && !volumeUuidsInBackups.includes(volumeUuid)) {
                             volumeUuidsInBackups.push(volumeUuid);
+                        } else if (!isLatest) {
+                            logger.debug('Found old backup', volumeUuid, backup.BackupId, backupTime);
                         }
                     }
                 }
