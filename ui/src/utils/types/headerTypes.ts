@@ -29,6 +29,7 @@ export interface HeaderTypeEntities {
     };
     refreshTime: string | null;
     refreshTimeSandbox: string | null;
+    refreshTimeJobMonitor: string | null;
     dashboardRefresh: boolean;
     multiDataStatus: any;
     multiDataLoading: boolean;

@@ -22,7 +22,6 @@ const JobMonitoringApi = () => {
     const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
-    const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
     const [lastToken, setLastToken] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
@@ -45,7 +44,7 @@ const JobMonitoringApi = () => {
                 setLastToken(null);
             }
         }, 0);
-    }, [fromTime, refreshTime]);
+    }, [fromTime]);
 
     const { data: jmJobsList, isFetching: jmJobsListLoading } = useGetJobsListQuery(
         {

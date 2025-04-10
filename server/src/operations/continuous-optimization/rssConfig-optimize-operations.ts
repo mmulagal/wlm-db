@@ -139,7 +139,7 @@ async function handleOptimizeRssOptimization(
                 if (!connectionStatus) {
                     throw Error('SSM connection is not available for the selected instance');
                 }
-                const clusterNodeInstanceIds = await getClusterNodeInstanceIds(
+                const { clusterNodeInstanceIds } = await getClusterNodeInstanceIds(
                     accountId,
                     credentialsId,
                     region,
