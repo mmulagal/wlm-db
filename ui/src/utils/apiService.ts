@@ -215,9 +215,11 @@ export const awsApi = createApi({
                     databaseVersion,
                     filterAmis
                 }) => ({
-                    url: `v1/credentials/${credentialId}/regions/${region}/amis?osType=${osType}&${filterAmis ? `osVersion=${osVersion}&` : ''
-                        }databaseType=${databaseType}&${filterAmis ? `databaseEdition=${databaseEdition}&` : ''}${filterAmis ? `databaseVersion=${databaseVersion}` : ''
-                        }`
+                    url: `v1/credentials/${credentialId}/regions/${region}/amis?osType=${osType}&${
+                        filterAmis ? `osVersion=${osVersion}&` : ''
+                    }databaseType=${databaseType}&${filterAmis ? `databaseEdition=${databaseEdition}&` : ''}${
+                        filterAmis ? `databaseVersion=${databaseVersion}` : ''
+                    }`
                 })
             }),
             getCustomAmiList: builder.query({
@@ -427,8 +429,9 @@ export const workloadFactoryResourceApiV2 = createApi({
             }),
             getDatabaseListV2: builder.query({
                 query: ({ credentialId, region, id, sqlInstanceId, fields = false }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}/databases${fields ? '?fields=protection' : ''
-                        }`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}/databases${
+                        fields ? '?fields=protection' : ''
+                    }`
                 })
             })
         };
@@ -552,8 +555,9 @@ export const createUserDbApi = createApi({
         return {
             getDriveInfoV2: builder.query({
                 query: ({ credentialId, region, id, instanceId, forSandbox }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/drive-information${forSandbox ? '?forSandbox=true' : ''
-                        }`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${instanceId}/drive-information${
+                        forSandbox ? '?forSandbox=true' : ''
+                    }`
                 })
             }),
             createUserDB: builder.mutation({
