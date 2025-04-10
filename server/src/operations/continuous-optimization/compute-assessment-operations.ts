@@ -54,7 +54,7 @@ async function runComputeAssessment(
                 }
             }
         );
-        const {
+        let {
             instanceRecommendations: [
                 {
                     currentInstanceType = '',
@@ -80,6 +80,10 @@ async function runComputeAssessment(
                     platformDifferences
                 }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
             );
+
+        if (filteredRecommendationOptions.length !== 0) {
+            finding = 'NOT_OPTIMIZED';
+        }
 
         return {
             currentInstanceType,
@@ -178,7 +182,8 @@ async function calculateComputeDrift(
         return {
             name: 'compute-rightsizing',
             status: findingValue,
-            recommended: AssessmentStatus.OPTIMIZED,
+            recommended:
+                recommendationOptions.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
             objectsInViolation,
