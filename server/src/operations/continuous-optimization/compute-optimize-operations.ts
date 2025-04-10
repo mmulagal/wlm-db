@@ -225,6 +225,7 @@ async function handleComputeRemediation(
                         ));
                         oldClusterOwnerNode = ownerNode;
                         await updateJobDetails(accountId, transferOwnershipJobId, {
+                            description: `Transfer cluster node ownership from primary node ${ownerNode} to another node ${targetNodeName} in the cluster`,
                             status: JOBSTATUS.COMPLETED,
                             endTime: Date.now()
                         });
