@@ -1112,11 +1112,15 @@ async function handleRollbackInstanceTypeChange(
                 oldInstanceType,
                 storageDetails.fsxId,
                 storageDetails.svmId,
-                rollbackComputeOptimizeJobId,
+                rollBackInstanceTypeJobId,
                 formattedInstanceName,
                 oldDnsAddresses
             );
         }
+        await updateJobDetails(accountId, rollBackInstanceTypeJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
     } catch (error) {
         await updateJobDetails(accountId, rollBackInstanceTypeJobId, {
             status: JOBSTATUS.FAILED,
@@ -1150,6 +1154,7 @@ async function rollbackComputeOptimize(
         formattedInstanceName
     });
 
+    let errorMessage = '';
     const rollbackComputeOptimizeJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -1206,19 +1211,15 @@ async function rollbackComputeOptimize(
             );
         }
     } catch (error) {
-        const errorMessage = `Failed to rollback compute optimization ${error}`;
+        errorMessage = `Failed to rollback compute optimization ${error}`;
         logger.error(errorMessage);
         rollBackJobStatus = JOBSTATUS.FAILED;
-        await updateJobDetails(accountId, rollbackComputeOptimizeJobId, {
-            status: rollBackJobStatus,
-            endTime: Date.now(),
-            error: errorMessage
-        });
     } finally {
         rollBackJobStatus = rollBackJobStatus || JOBSTATUS.COMPLETED;
         await updateJobDetails(accountId, rollbackComputeOptimizeJobId, {
             status: rollBackJobStatus,
-            endTime: Date.now()
+            endTime: Date.now(),
+            error: !isEmpty(errorMessage) ? errorMessage : undefined
         });
     }
 }
