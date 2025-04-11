@@ -1108,7 +1108,7 @@
                         },
                         "clone": {
                             "name": "Clone Management",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "All clones are proper and up-to-date with the source.",
@@ -2279,7 +2279,7 @@
                         },
                         "clone": {
                             "name": "Clone Management",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "All clones are proper and up-to-date with the source.",
@@ -3450,7 +3450,7 @@
                         },
                         "clone": {
                             "name": "Clone Management",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "All clones are proper and up-to-date with the source.",
@@ -4631,7 +4631,7 @@
                         },
                         "clone": {
                             "name": "Clone Management",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "All clones are proper and up-to-date with the source.",
@@ -5802,7 +5802,7 @@
                         },
                         "clone": {
                             "name": "Clone Management",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "All clones are proper and up-to-date with the source.",
@@ -6973,7 +6973,7 @@
                         },
                         "clone": {
                             "name": "Clone Management",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "All clones are proper and up-to-date with the source.",
