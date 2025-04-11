@@ -1129,9 +1129,9 @@ export const formatCloneCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.cloning?.clone;
+    let item: any = data?.clone;
     let categoryVal = 'cloning';
-    let itemName = 'clone';
+    let itemName = item?.name || 'clone';
     let status = item?.status || '';
     let severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
@@ -1161,18 +1161,13 @@ export const formatCloneCardConfig = (
             },
             block_six: {
                 ...(cardDataDefault?.[itemName]?.block_six || {}),
-                value: item?.current || 0,
-                count: {
-                    totalObjectsAssessed: item?.totalObjectsAssessed,
-                    totalObjectsInViolation: item?.totalObjectsInViolation
-                }
+                value: item?.current || 0
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
             category: categoryVal,
-            recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
-            objectsInViolation: item?.objectsInViolation
+            recommendationText: item?.recommendation
         }
     };
     return cardsData;
@@ -1731,7 +1726,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             } else {
                 notOptimizedResiliency++;
             }
-        } else if (nestedObject?.category === 'clone') {
+        } else if (nestedObject?.category === 'clon') {
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
                 optimizedCloning++;
             } else {

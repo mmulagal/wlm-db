@@ -33,7 +33,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const cloneObj = instanceData?.assessments?.clone?.clone;
+                    const cloneObj = instanceData?.assessments?.clone;
                     const isStorageTierOptimized = isOptimized(cloneObj?.status);
                     if (!isStorageTierOptimized) {
                         cloneAssessmentData.push({
@@ -105,12 +105,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                 return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
             }
         },
-        lastColDetails(
-            ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
-            {},
-            inProgressOptimizationData,
-            inProgressHostData
-        )
+        lastColDetails(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT, {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({
@@ -130,10 +125,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
 
         disptach(setSelectedRowsForOptimize(rowsData));
 
-        if (
-            rowsData.length > 0 &&
-            inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length
-        ) {
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData, disptach);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
@@ -146,8 +138,8 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Not-optimized instances`}
-                singularTitle={'Not-optimized instance'}
+                pluralTitle={`Not-optimized databases`}
+                singularTitle={'Not-optimized database'}
             />
             <Table
                 //@ts-ignore

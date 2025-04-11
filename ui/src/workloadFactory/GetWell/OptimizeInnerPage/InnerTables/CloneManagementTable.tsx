@@ -19,13 +19,9 @@ const CloneManagementTable = ({ type, data, lastColDetails, handleBulkAction }: 
         let id = 0;
         return data?.violationDetails?.map((row: any) => ({
             databaseName: row?.databaseName,
-            sandboxName: row?.sandboxName,
-            sourceDatabase: row?.sourceDatabase,
-            sourceVolume: row?.sourceVolume,
-            cloneAge: row?.cloneAge,
-            size: row?.size,
+            clonesOlderThan60Days: row?.clonesOlderThan60Days,
             id: String(id++),
-            cellProps: { ...row.cellProps, isDisabled: true },
+            cellProps: { ...row.cellProps, isDisabled: true }
         }));
     }, [data]);
 
@@ -37,78 +33,26 @@ const CloneManagementTable = ({ type, data, lastColDetails, handleBulkAction }: 
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '180px',
+            width: 'auto',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
 
         {
-            Header: 'Sandbox name',
-            accessor: 'sandboxName',
+            Header: 'Clones Older Than 60 Days',
+            accessor: 'clonesOlderThan60Days',
             id: '2',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '180px',
+            width: 'auto',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
 
-        {
-            Header: 'Source database',
-            accessor: 'sourceDatabase',
-            id: '3',
-            isSortable: false,
-            filterOptions: 'auto',
-            isSticky: true,
-            width: '180px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
-        },
-
-        {
-            Header: 'Source volume',
-            accessor: 'SourceVolume',
-            id: '4',
-            isSortable: false,
-            filterOptions: 'auto',
-            isSticky: true,
-            width: '180px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
-        },
-
-        {
-            Header: 'Clone age',
-            accessor: 'cloneAge',
-            id: '5',
-            isSortable: false,
-            filterOptions: 'auto',
-            isSticky: true,
-            width: '180px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
-        },
-
-        {
-            Header: 'Size',
-            accessor: 'size',
-            id: '6',
-            isSortable: false,
-            filterOptions: 'auto',
-            isSticky: true,
-            width: '180px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
-        },
-
-        lastColDetails(type, {}, '182px')
+        lastColDetails(type, {}, '230px')
     ];
 
     const tableProps = useTable({
@@ -138,8 +82,8 @@ const CloneManagementTable = ({ type, data, lastColDetails, handleBulkAction }: 
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Clones created with WFL`}
-                singularTitle={'Clone created with WFL'}
+                pluralTitle={`Imapcted Databases`}
+                singularTitle={'Imapcted Database'}
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />

@@ -177,8 +177,11 @@ const OptimizeByCategory = () => {
                             <Cloning />
                         </div>
                         <div className={styles.section2}>
-                            <div>
-                                <ComingSoon2 />
+                            <div className={styles.valueArea}>
+                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                    {Math.round(((categoryData.cloning || 0) / (categoryData.total || 1)) * 100)}%
+                                </DsTypography>
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Semibold_14">Cloning</DsTypography>
                         </div>

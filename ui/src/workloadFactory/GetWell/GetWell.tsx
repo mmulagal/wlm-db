@@ -280,7 +280,7 @@ const GetWell = () => {
             {
                 id: 6,
                 label: 'Cloning',
-                value: 'clone management',
+                value: 'Cloning',
                 category: GENERAL.CLONING
             }
         ];
@@ -724,21 +724,26 @@ const GetWell = () => {
                                                         },
                                                         {
                                                             id: 1,
+                                                            label: 'Cost efficiency',
+                                                            value: 'Cost efficiency'
+                                                        },
+                                                        {
+                                                            id: 2,
                                                             label: 'Performance efficiency',
                                                             value: 'Performance efficiency'
                                                         },
                                                         {
-                                                            id: 2,
+                                                            id: 3,
                                                             label: 'Operational excellence',
                                                             value: 'Operational excellence'
                                                         },
                                                         {
-                                                            id: 3,
+                                                            id: 4,
                                                             label: 'Reliability',
                                                             value: 'Reliability'
                                                         },
                                                         {
-                                                            id: 4,
+                                                            id: 5,
                                                             label: 'Security',
                                                             value: 'Security'
                                                         }

@@ -789,7 +789,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.CLONE_MANAGEMENT}
-                        percentage={Math.round(((configData.clone_management || 0) / (configData.total || 1)) * 100)}
+                        percentage={Math.round(((configData.cloneManagement || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.cloneManagement}
                         afterOutOf={configData.total}
                         bottomText="Optimized databases:"
@@ -800,28 +800,30 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0}
+                        loading={
+                            loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
+                            }}
+                            data-testid="wlm-db-optimize-maxdop"
+                            isDisabled={
+                                loading ||
+                                configData?.total === 0 ||
+                                configData?.cloneManagement === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-clone-management"
-                                    variant="secondary"
-                                    isDisabled={true}
-                                >
-                                    Optimize
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
+                            Optimize
+                        </DsButton>
                     </div>
                 </div>
             </div>

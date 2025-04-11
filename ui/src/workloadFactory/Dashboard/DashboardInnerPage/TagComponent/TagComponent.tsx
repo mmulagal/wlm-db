@@ -39,7 +39,7 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-                setTagData(['Cost Efficiency']);
+                setTagData(['Cost efficiency']);
                 break;
 
             case GENERAL.OPERATING_SYSTEM_PATCH:

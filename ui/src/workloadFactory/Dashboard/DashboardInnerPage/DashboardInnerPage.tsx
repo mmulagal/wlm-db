@@ -421,26 +421,28 @@ const DashboardInnerPage = () => {
                     }
                 ]
             };
-        } else if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
-            apiCall = optimizeAwsBackup;
-            const state = store.getState();
-            const selectedClone = state.getWellOptimize.selectedClone;
+        }
+        // else if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+        //     apiCall = optimizeAwsBackup;
+        //     const state = store.getState();
+        //     const selectedClone = state.getWellOptimize.selectedClone;
 
-            payload = {
-                hostsToOptimize: [
-                    {
-                        configurationName: ['clone'],
-                        databaseHosts: [
-                            {
-                                id: rowData?.databaseHostId,
-                                sqlServerInstances: [rowData?.instanceId],
-                                fsxFileSystemId: rowData?.objectsInViolation?.[0]
-                            }
-                        ]
-                    }
-                ]
-            };
-        } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+        //     payload = {
+        //         hostsToOptimize: [
+        //             {
+        //                 configurationName: ['clone'],
+        //                 databaseHosts: [
+        //                     {
+        //                         id: rowData?.databaseHostId,
+        //                         sqlServerInstances: [rowData?.instanceId],
+        //                         fsxFileSystemId: rowData?.objectsInViolation?.[0]
+        //                     }
+        //                 ]
+        //             }
+        //         ]
+        //     };
+        // }
+        else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
             apiCall = optimizeMaxdopConfigForBulk;
             if (operation === 'bulk') {
                 payload = {

@@ -57,10 +57,12 @@ const OptimizationBreakdown = () => {
                         isComingSoon={false}
                     />
                     <OptimizeComponent
-                        value={<ComingSoon />}
+                        // value={<ComingSoon />}
+                        value={optimizationBreakDown?.cloning?.percent || 0}
+                        data={optimizationBreakDown?.cloning}
                         text={'Cloning'}
                         image={<Cloning />}
-                        isComingSoon={true}
+                        isComingSoon={false}
                     />
                 </div>
             </div>

@@ -759,7 +759,8 @@ export const GETWELL_CONFIG: any = {
     'snapshot-policy': 'scheduled_local_snapshot',
     'aws-backup-policy': 'scheduled_FSx_for_ONTAP_backups',
     crr: 'crr',
-    clone: 'clone_management'
+    clone: 'clone_management',
+    'Clone Management': 'clone_management'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];

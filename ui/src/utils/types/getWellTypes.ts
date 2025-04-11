@@ -18,6 +18,7 @@ export interface GetWellSliceInterface {
         compute?: CountBreakDown;
         application?: CountBreakDown;
         resiliency?: CountBreakDown;
+        cloning?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
@@ -74,9 +75,7 @@ export interface AssessmentResponseInterface {
         awsBackup?: PerConfigInterface;
         crr?: PerConfigInterface;
     };
-    cloning?: {
-        clone?: PerConfigInterface;
-    }
+    clone?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {
