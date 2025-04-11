@@ -271,10 +271,9 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
     logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP');
 
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+    const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
     try {
         const fsxRegionResponse = await getParametersByPath();
-
-        const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
             if (regionCode && !restrictedRegions.includes(regionCode)) {
@@ -287,9 +286,11 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
 
         return { regions: fsxRegionsList };
     } catch (error: any) {
-        logger.error('Get generic FSX ONTAP Region list has failed with error:', error);
+        logger.error('Failed to retrieve the generic FSX ONTAP Region list. Error details:', {
+            message: error.message
+        });
         AWS_REGIONS.forEach((regionName, regionCode) => {
-            if (regionCode && !regionName.includes('Gov') && !regionName.includes('China')) {
+            if (regionCode && !restrictedRegions.includes(regionCode)) {
                 fsxRegionsList.push({
                     regionCode,
                     regionName
@@ -302,6 +303,9 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
 
 async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
+
+    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+    const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
     try {
         const input: DescribeRegionsCommandInput = {
@@ -318,9 +322,6 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
             describeRegions(input, credentialsId)
         ]);
 
-        const fsxRegionsList: Array<FSxAvailableRegionType> = [];
-        const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
-
         const { Regions: enabledRegionsInAccount } = ec2RegionResponse;
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
             if (regionCode && !restrictedRegions.includes(regionCode)) {
@@ -335,11 +336,18 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
 
         return { regions: fsxRegionsList };
     } catch (error: any) {
-        logger.error('Get FSX ONTAP Region list has failed with error:', error);
-        if (error?.$metadata?.httpStatusCode && error.message) {
-            throw createError(error?.$metadata?.httpStatusCode, `Error fetching fsx region ${error.message}`);
-        }
-        throw new Error(`Error fetching fsx region: ${error}`);
+        logger.error('Failed to retrieve the generic FSX ONTAP Region list. Error details:', {
+            message: error.message
+        });
+        AWS_REGIONS.forEach((regionName, regionCode) => {
+            if (regionCode && !restrictedRegions.includes(regionCode)) {
+                fsxRegionsList.push({
+                    regionCode,
+                    regionName
+                });
+            }
+        });
+        return { regions: fsxRegionsList };
     }
 }
 
