@@ -801,10 +801,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     GETWELL_VALUES[instanceAssessmentData?.resiliency?.awsBackup?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.scheduledawsBackup;
 
-                getAssessmentGroupedByConfigurations.cloneManagement += isCloneOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.severityObj.cloneManagement =
+                getAssessmentGroupedByConfigurations.clone += isCloneOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.clone =
                     GETWELL_VALUES[instanceAssessmentData?.clone?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.cloneManagement;
+                    getAssessmentGroupedByConfigurations?.severityObj?.clone;
 
                 getAssessmentGroupedByConfigurations.crr += isCrrOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.crr =
