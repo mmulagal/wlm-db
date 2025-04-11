@@ -26,9 +26,21 @@ const OperatingSystemTable = () => {
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+
     const tableData = useMemo(() => {
         let OSAssessmentData: any = [];
-        allmssqlHostAssessmentData.map((hostData: any) => {
+        let uniqueResourceList: Array<string> = [];
+        allmssqlHostAssessmentData?.map((hostData: any) => {
+            if (
+                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                uniqueResourceList.includes(hostData?.databaseHostId)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(hostData?.databaseHostId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const notOptimized = instanceData?.assessments?.storage?.configuration?.os
@@ -61,7 +73,13 @@ const OperatingSystemTable = () => {
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
         return disableOfflineRows(tableRows);
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+    }, [
+        allmssqlHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     const lastColDetails = () => {
         return {

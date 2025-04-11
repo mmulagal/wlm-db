@@ -92,6 +92,7 @@ const InstancesTable = () => {
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
         useAppSelector(state => state.inventoryV2);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
@@ -117,7 +118,8 @@ const InstancesTable = () => {
                 isManagedHostListLoading ||
                 fsxCredentialStatusLoading ||
                 pgsqlDatabaseHostsLoading ||
-                pgsqlFullHostDataLoading
+                pgsqlFullHostDataLoading ||
+                multiDataLoading
         );
     }, [
         databaseHostsLoading,
@@ -126,7 +128,8 @@ const InstancesTable = () => {
         isManagedHostListLoading,
         fsxCredentialStatusLoading,
         pgsqlDatabaseHostsLoading,
-        pgsqlFullHostDataLoading
+        pgsqlFullHostDataLoading,
+        multiDataLoading
     ]);
 
     const getInitialFilter = () => {
@@ -139,12 +142,26 @@ const InstancesTable = () => {
             );
             return {
                 textFilter: '',
-                count: 1,
+                count: 3,
                 columns: {
                     '2': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.hostName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '9': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.credentialName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '11': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.regionName]: true
                         },
                         valuesArray: [true]
                     }
@@ -324,7 +341,7 @@ const InstancesTable = () => {
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         }
         // if fsx register is false and only db cred is added than call instance API
-        dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]]));
+        // dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]]));
         if (!isFsxRegister) {
             dispatch(setDetectedInstanceId(rowData?.ec2InstanceId));
         }
@@ -716,7 +733,10 @@ const InstancesTable = () => {
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'protectionText'),
             renderCell: (cellData: string, rowData: any) => {
-                const loading = rowData?.loading || rowData?.subLoading;
+                let loading = rowData?.loading || rowData?.subLoading;
+                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    loading = true;
+                }
                 return (
                     <>
                         {cellData && (
@@ -759,7 +779,10 @@ const InstancesTable = () => {
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'performance.assessment'),
             renderCell: (cellData: string, rowData: any) => {
-                const loading = rowData?.loading || rowData?.subLoading;
+                let loading = rowData?.loading || rowData?.subLoading;
+                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    loading = true;
+                }
                 return (
                     <>
                         {cellData && (
@@ -1035,7 +1058,9 @@ const InstancesTable = () => {
                                                     flag: true,
                                                     value: {
                                                         hostName: rowData?.name,
-                                                        instanceName: rowData?.databaseInstanceName
+                                                        instanceName: rowData?.databaseInstanceName,
+                                                        credentialName: rowData?.credentialName,
+                                                        regionName: rowData?.regionName
                                                     },
                                                     filterType: 'multi'
                                                 })

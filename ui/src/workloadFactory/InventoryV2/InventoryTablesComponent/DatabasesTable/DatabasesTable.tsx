@@ -24,6 +24,7 @@ const DatabasesTable = () => {
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqldatabaseHostsLoading, fullHostDataLoading: pgsqlfullHostDataLoading } =
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
 
@@ -33,9 +34,19 @@ const DatabasesTable = () => {
 
     useEffect(() => {
         setLoading(
-            databaseHostsLoading || fullHostDataLoading || pgsqldatabaseHostsLoading || pgsqlfullHostDataLoading
+            databaseHostsLoading ||
+                fullHostDataLoading ||
+                pgsqldatabaseHostsLoading ||
+                pgsqlfullHostDataLoading ||
+                multiDataLoading
         );
-    }, [databaseHostsLoading, fullHostDataLoading, pgsqldatabaseHostsLoading, pgsqlfullHostDataLoading]);
+    }, [
+        databaseHostsLoading,
+        fullHostDataLoading,
+        pgsqldatabaseHostsLoading,
+        pgsqlfullHostDataLoading,
+        multiDataLoading
+    ]);
 
     const getInitialFilter = () => {
         if (
@@ -51,12 +62,26 @@ const DatabasesTable = () => {
             );
             return {
                 textFilter: '',
-                count: 1,
+                count: 3,
                 columns: {
                     '2': {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.hostName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '8': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.credentialName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '10': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.regionName]: true
                         },
                         valuesArray: [true]
                     }
@@ -75,7 +100,7 @@ const DatabasesTable = () => {
             );
             return {
                 textFilter: '',
-                count: 2,
+                count: 4,
                 columns: {
                     '2': {
                         activeCount: 1,
@@ -88,6 +113,20 @@ const DatabasesTable = () => {
                         activeCount: 1,
                         values: {
                             [selectedFilterValue?.value?.instanceName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '8': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.credentialName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '10': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.regionName]: true
                         },
                         valuesArray: [true]
                     }

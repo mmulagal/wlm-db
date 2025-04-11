@@ -124,14 +124,14 @@ router.post(`${BASE_URL}/v1/pricing`, async (req: {}, res: any) => {
     const retData = pricingData;
     setTimeout(() => {
         generateResponse(res, 200, retData);
-    }, 5000);
+    }, 50);
 });
 
 // Get collation list for MSSQL
 router.get(`${BASE_URL}/v1/mssql/collations`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, collationList);
-    }, 2000);
+    }, 20);
 });
 
 export default router;

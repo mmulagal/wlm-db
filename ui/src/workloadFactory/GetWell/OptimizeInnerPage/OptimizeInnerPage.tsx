@@ -218,7 +218,9 @@ const OptimizeInnerPage = () => {
                                     sqlServerInstances: [selectedDatabaseInstance],
                                     networkAdapters: selectedRowsForOptimizeInnerPage.map(
                                         (item: any) => item?.adapterName
-                                    )
+                                    ),
+                                    credentialsId: selectedGwInstanceCredId,
+                                    region: selectedGwInstanceRegionId
                                 }
                             ]
                         }
@@ -421,7 +423,9 @@ const OptimizeInnerPage = () => {
                     id: selectedOptimizeConfig?.data?.id,
                     name: type,
                     hostId: selectedResourceId,
-                    instanceId: selectedDatabaseInstance
+                    instanceId: selectedDatabaseInstance,
+                    credentialId: selectedGwInstanceCredId,
+                    regionId: selectedGwInstanceRegionId
                 },
                 failedMsgData,
                 getJobDetailApi,

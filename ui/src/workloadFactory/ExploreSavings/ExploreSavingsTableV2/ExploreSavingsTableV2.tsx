@@ -8,7 +8,13 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHost } from '../ExploreSavingsUtils';
 import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
-import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../InventoryV2/InventoryUtilsV2';
+import {
+    renderAllocatedCapacity,
+    renderCellData,
+    renderInstanceListText,
+    renderUnmanagedAZ,
+    uniqueHostRow
+} from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
 import useResize from '../../../common/hooks/useResize';
 
@@ -23,6 +29,9 @@ const ExploreSavingsTableV2 = () => {
     // const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
+        state => state.headers
+    );
 
     // const getInitialFilter = () => {
     //     if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
@@ -50,6 +59,12 @@ const ExploreSavingsTableV2 = () => {
         if (unManagedHostFormatedList) {
             let result: any = [];
             unManagedHostFormatedList?.map((perRow: any) => {
+                if (
+                    !headerSelectedMultiCredIdsList.includes(perRow?.credentialId) ||
+                    !headerSelectedMultiRegionIdsList.includes(perRow?.regionId)
+                ) {
+                    return;
+                }
                 let instanceList: any = [];
                 let instanceNameList: any = [];
                 perRow?.ec2Details?.map((row: any) => {
@@ -64,6 +79,7 @@ const ExploreSavingsTableV2 = () => {
                 });
                 const rowData = {
                     ...perRow,
+                    id: uniqueHostRow(perRow?.id, perRow?.credentialId, perRow?.regionId),
                     instanceListText: instanceList.join(','),
                     instanceNameListText: instanceNameList.join(', '),
                     nameForSorting: perRow?.name?.toLowerCase()
@@ -86,11 +102,11 @@ const ExploreSavingsTableV2 = () => {
             setEBSTableData([]);
             setFSXWTableData([]);
         }
-    }, [unManagedHostFormatedList]);
+    }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     const lastColDetails = () => {
         return {
-            id: '9',
+            id: '11',
             Header: '',
             accessor: '',
             isSticky: true,
@@ -235,6 +251,39 @@ const ExploreSavingsTableV2 = () => {
                 return renderUnmanagedAZ(cellData, rowData, styles);
             }
         },
+        {
+            id: '8',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            isSortable: true,
+            filterOptions: 'auto',
+            width: '254px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
+            }
+        },
+        {
+            id: '9',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            isSortable: true,
+            filterOptions: 'auto',
+            width: '254px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
+            }
+        },
+        {
+            id: '10',
+            Header: 'Region',
+            accessor: 'regionName',
+            isSortable: true,
+            filterOptions: 'auto',
+            width: '254px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
+            }
+        },
         lastColDetails()
     ];
 
@@ -248,7 +297,7 @@ const ExploreSavingsTableV2 = () => {
         columns: ExploreSavingsColDefs,
         rows: selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData || [],
         pageSize: 50,
-        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || multiDataLoading
     });
 
     return (

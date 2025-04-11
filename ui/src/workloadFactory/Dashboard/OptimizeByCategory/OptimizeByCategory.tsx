@@ -28,6 +28,11 @@ const OptimizeByCategory = () => {
     const categoryData = useMemo(() => {
         return getAssessmentGroupedByCategory(allmssqlHostAssessmentData);
     }, [allmssqlHostAssessmentData]);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
+
+    const loading = useMemo(() => {
+        return allmssqlHostAssessmentLoading || multiDataLoading;
+    }, [allmssqlHostAssessmentLoading, multiDataLoading]);
 
     const redirectToGetWellPage = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
@@ -87,12 +92,12 @@ const OptimizeByCategory = () => {
                 </DsTypography>
 
                 <div className={styles.rightSection}>
-                    {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                    {loading && <DsFlashingDotsLoader />}
                     <DsButton
                         variant="secondary"
                         isThin={true}
                         onClick={() => handleClick()}
-                        isDisabled={allmssqlHostAssessmentLoading}
+                        isDisabled={loading}
                         data-testid="wlm-db-optimize-instances-by-category"
                     >
                         Optimize
@@ -111,7 +116,7 @@ const OptimizeByCategory = () => {
                                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                     {Math.round(((categoryData.storage || 0) / (categoryData.total || 1)) * 100)}%
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
 
                             <DsTypography variant="Semibold_14">Storage</DsTypography>
@@ -127,7 +132,7 @@ const OptimizeByCategory = () => {
                                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                     {Math.round(((categoryData.compute || 0) / (categoryData.total || 1)) * 100)}%
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Semibold_14">Compute</DsTypography>
                         </div>
@@ -142,7 +147,7 @@ const OptimizeByCategory = () => {
                                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                     {Math.round(((categoryData.application || 0) / (categoryData.total || 1)) * 100)}%
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Semibold_14">{GENERAL.APPLICATION}</DsTypography>
                         </div>
@@ -161,7 +166,7 @@ const OptimizeByCategory = () => {
                                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                     {Math.round(((categoryData.resiliency || 0) / (categoryData.total || 1)) * 100)}%
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Semibold_14">{GENERAL.RESILIENCY}</DsTypography>
                         </div>

@@ -3,6 +3,7 @@ import React from 'react';
 import styles from './ComparisonChart.module.scss';
 import { Span } from '../Typography';
 import classNames from 'classnames';
+import { DsFlashingDotsLoader } from '@netapp/design-system';
 
 const ComparisonChart = React.memo(
     ({
@@ -10,12 +11,14 @@ const ComparisonChart = React.memo(
         data,
         categories,
         height = 200,
+        loading = false,
         yTickFormatter
     }: {
         colors?: ChartColor[];
         data: number[];
         categories: XCategories;
         height?: number;
+        loading?: boolean;
         yTickFormatter?: YTickFormatter;
     }) => {
         let max = 0;
@@ -48,6 +51,7 @@ const ComparisonChart = React.memo(
                                 {hasData && (
                                     <div className={styles.yLabel} style={{ top: `${100 - percentage}%` }}>
                                         <Span bold>{yTickFormatter ? yTickFormatter(datum, index, data) : datum}</Span>
+                                        {loading && <DsFlashingDotsLoader />}
                                     </div>
                                 )}
                                 <div className={styles.datum} style={{ height: `${percentage}%`, backgroundColor }} />

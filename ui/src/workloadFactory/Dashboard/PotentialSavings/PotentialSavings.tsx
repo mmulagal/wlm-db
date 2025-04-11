@@ -23,6 +23,7 @@ const PotentialSavings = () => {
     const [esCount, setEsCount] = useState<{ ebs: number; fsxw: number }>({ ebs: 0, fsxw: 0 });
     const [loading, setLoading] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
@@ -35,7 +36,16 @@ const PotentialSavings = () => {
         if (unManagedHostFormatedList) {
             let ebsCount = 0;
             let fsxwCount = 0;
+            let uniqueResourceList: Array<String> = [];
             unManagedHostFormatedList?.map((perRow: any) => {
+                if (
+                    !headerSelectedMultiCredIdsList?.includes(perRow?.credentialId) ||
+                    !headerSelectedMultiRegionIdsList?.includes(perRow?.regionId) ||
+                    uniqueResourceList?.includes(perRow?.ec2InstanceId)
+                ) {
+                    return;
+                }
+                uniqueResourceList.push(perRow?.ec2InstanceId);
                 if (perRow?.storageType === GENERAL.EBS) {
                     ebsCount += perRow?.sqlServerInstances?.length;
                 } else if (perRow?.storageType === GENERAL.FSX_FOR_WINDOWS) {
@@ -44,7 +54,7 @@ const PotentialSavings = () => {
             });
             setEsCount({ ebs: ebsCount, fsxw: fsxwCount });
         }
-    }, [unManagedHostFormatedList]);
+    }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     useEffect(() => {
         setLoading(isDiscoverInProgress || isManagedHostListLoading || potentialSavingsValues?.loading);

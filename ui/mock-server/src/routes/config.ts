@@ -21,19 +21,19 @@ router.get(`${BASE_URL}/v1/configs`, async (req: {}, res: any) => {
     ];
     setTimeout(() => {
         generateResponse(res, 200, retData);
-    }, 3000);
+    }, 30);
 });
 
 router.get(`${BASE_URL}/v1/configs/:configid`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, loadconfig);
-    }, 3000);
+    }, 30);
 });
 
 router.post(`${BASE_URL}/v1/configs`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, {'success': 'ok'});
-    }, 3000);
+    }, 30);
 });
 
 router.delete(`${BASE_URL}/v1/configs/:configid`, async (req: {}, res: any) => {

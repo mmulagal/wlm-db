@@ -26,6 +26,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         dispatch(setSelectedConfig(type));
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };
+    const { multiDataLoading } = useAppSelector(state => state.headers);
+
+    const loading = useMemo(() => {
+        return allmssqlHostAssessmentLoading || multiDataLoading;
+    }, [allmssqlHostAssessmentLoading, multiDataLoading]);
 
     const configData = useMemo(() => {
         return getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
@@ -38,7 +43,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     Managed instances optimization breakdown by configurations
                 </DsTypography>
 
-                {allmssqlHostAssessmentLoading && <FlashingDotsLoader />}
+                {loading && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>
@@ -57,7 +62,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0}
+                        loading={
+                            loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -71,7 +78,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-storage-tier"
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.storageTier === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
@@ -97,7 +104,10 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0}
+                        loading={
+                            loading ||
+                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -111,7 +121,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.fileSystemHeadroom === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
@@ -137,7 +147,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0}
+                        loading={
+                            loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -151,7 +163,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-log-drive-size"
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.logDriveSize === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
@@ -177,7 +189,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0}
+                        loading={
+                            loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -191,7 +205,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.tempdbDriveSize === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
@@ -217,7 +231,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0}
+                        loading={
+                            loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -257,7 +273,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0}
+                        loading={
+                            loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -293,7 +311,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0}
+                        loading={
+                            loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -331,6 +351,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.['ONTAP']?.length || 0) / (configData.total || 1)) * 100
                         )}
+                        loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.ONTAP]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -344,7 +365,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize('ONTAP');
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.ontapConfiguration === configData?.total
                             }
@@ -369,6 +390,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
+                        loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OS]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -382,9 +404,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize('Operating system');
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
-                                configData?.total === 0 ||
-                                configData?.operatingSystem === configData?.total
+                                loading || configData?.total === 0 || configData?.operatingSystem === configData?.total
                             }
                         >
                             Optimize
@@ -407,7 +427,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['compute-rightsizing']?.length > 0}
+                        loading={loading || inProgressOptimizationData['compute-rightsizing']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -421,7 +441,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.computeRightsizing === configData?.total
                             }
@@ -448,6 +468,10 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
+                        loading={
+                            loading ||
+                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -487,6 +511,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
+                        loading={
+                            loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -500,7 +527,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-maxdop"
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData.rssConfiguration === configData?.total ||
                                 inProgressOptimizationData[GENERAL.RSS_CONFIGURATION]?.length > 0
@@ -527,6 +554,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
+                        loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LICENSE]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -566,6 +594,10 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
+                        loading={
+                            loading ||
+                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]?.length > 0
+                        }
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -605,6 +637,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
+                        loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -618,7 +651,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-maxdop"
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.maxdopPatch === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
@@ -648,6 +681,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 100
                         )}
                         loading={
+                            loading ||
                             inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
                         }
                     />
@@ -663,7 +697,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-maxdop"
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.scheduledLocalSnapshot === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
@@ -689,7 +723,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0}
+                        loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -722,6 +756,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 100
                         )}
                         loading={
+                            loading ||
                             inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
                                 ?.length > 0
                         }
@@ -738,7 +773,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-maxdop"
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.scheduledawsBackup === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]

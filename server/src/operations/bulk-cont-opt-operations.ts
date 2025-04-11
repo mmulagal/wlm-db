@@ -1,6 +1,7 @@
 import { isEmpty } from 'bullmq';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import throat from 'throat';
 import getLogger from '../utils/logger';
 import { HttpErrorCodes } from '../utils/consts';
 import {
@@ -44,28 +45,42 @@ async function formatJobMetadata(hostsToOptimize: BulkOptimizeGeneralPerHostRequ
 }
 async function bulkOptimization(
     accountId: string,
-    credentialsId: string,
-    region: string,
     optimizationCategory: string,
     hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]
 ) {
-    logger.info(
-        `Bulk optimization: ${accountId}, ${credentialsId}, ${region}, ${optimizationCategory}, ${hostsToOptimize}`
-    );
+    logger.info(`Bulk optimization: ${accountId},  ${optimizationCategory}, ${hostsToOptimize}`);
+
+    // validate the account id, credentials id, region is valid details in the DB
+    for (const host of hostsToOptimize) {
+        const validationResults = await Promise.all(
+            host.databaseHosts.map(async ({ credentialsId, region }) => {
+                if (!credentialsId || !region) {
+                    const errorMessage =
+                        'Invalid input: credentialsId and region must be provided in all databaseHosts entries.';
+                    logger.error(errorMessage);
+                    throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+                }
+
+                const isValid = await validateRequestDetails(accountId, credentialsId, region);
+
+                if (!isValid) {
+                    logger.error(
+                        `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`
+                    );
+                }
+
+                return isValid;
+            })
+        );
+
+        // Filter databaseHosts based on validation results
+        host.databaseHosts = host.databaseHosts.filter((_, index) => validationResults[index]);
+    }
 
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    }
-
-    // validate the account id, credentials id, region is valid details in the DB
-    const isValid = await validateRequestDetails(accountId, credentialsId, region);
-
-    if (!isValid) {
-        const errorMessage = `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 
     const jobMetadata: JobMetadata = {
@@ -85,8 +100,8 @@ async function bulkOptimization(
 
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
-        credentialsId,
-        region,
+        '',
+        '',
         accountId,
         JOBTYPE.OPTIMIZATION,
         jobDescription,
@@ -95,7 +110,7 @@ async function bulkOptimization(
         jobMetadata
     );
 
-    handleBulkOptimization(accountId, credentialsId, region, optimizationCategory, hostsToOptimize, parentJobId);
+    handleBulkOptimization(accountId, optimizationCategory, hostsToOptimize, parentJobId);
     return { jobId: parentJobId };
 }
 
@@ -195,51 +210,51 @@ async function handleOptimization(
 
 async function handleBulkOptimization(
     accountId: string,
-    credentialsId: string,
-    region: string,
     optimizationCategory: string,
     hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[],
     masterOptimizeParentId: string
 ) {
     logger.info(
-        `Handle bulk optimizing : ${accountId}, ${credentialsId}, ${region}, ${optimizationCategory}, ${hostsToOptimize}, ${masterOptimizeParentId}`
+        `Handle bulk optimizing : ${accountId}, ${optimizationCategory}, ${hostsToOptimize}, ${masterOptimizeParentId}`
     );
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     try {
         await Promise.all(
-            hostsToOptimize.map(async ({ configurationName: optimizationSubcategory, databaseHosts }) => {
-                if (optimizationSubcategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
-                    await handleUpdateAwsBackup(
-                        accountId,
-                        credentialsId,
-                        region,
-                        databaseHosts,
-                        masterOptimizeParentId
-                    );
-                } else {
-                    await Promise.all(
-                        databaseHosts.map(async ({ id: databaseHostId, sqlServerInstances }) => {
-                            if (isEmpty(sqlServerInstances)) {
-                                logger.error(`No instances given for resource ${databaseHostId}.`);
+            hostsToOptimize.map(async ({ configurationName: optimizationSubcategory, databaseHosts }) =>
+                Promise.all(
+                    databaseHosts.map(
+                        throat(3, async ({ id: databaseHostId, sqlServerInstances, credentialsId, region }) => {
+                            if (optimizationSubcategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
+                                await handleUpdateAwsBackup(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    databaseHosts,
+                                    masterOptimizeParentId
+                                );
+                            } else {
+                                if (isEmpty(sqlServerInstances)) {
+                                    logger.error(`No instances given for resource ${databaseHostId}.`);
+                                }
+                                await Promise.all(
+                                    sqlServerInstances.map(async instance => {
+                                        await handleOptimization(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            optimizationCategory,
+                                            optimizationSubcategory,
+                                            databaseHostId,
+                                            instance,
+                                            masterOptimizeParentId
+                                        );
+                                    })
+                                );
                             }
-                            await Promise.all(
-                                sqlServerInstances.map(async instance => {
-                                    await handleOptimization(
-                                        accountId,
-                                        credentialsId,
-                                        region,
-                                        optimizationCategory,
-                                        optimizationSubcategory,
-                                        databaseHostId,
-                                        instance,
-                                        masterOptimizeParentId
-                                    );
-                                })
-                            );
                         })
-                    );
-                }
-            })
+                    )
+                )
+            )
         );
     } catch (error: any) {
         logger.error(
@@ -255,11 +270,9 @@ async function handleBulkOptimization(
 
 async function bulkComputeOptimization(
     accountId: string,
-    credentialsId: string,
-    region: string,
     hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType[]
 ) {
-    logger.info(`Bulk optimizing compute: ${accountId}, ${credentialsId}, ${region}, ${hostsToOptimize}`);
+    logger.info(`Bulk optimizing compute: ${accountId}, ${hostsToOptimize}`);
 
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
@@ -273,8 +286,8 @@ async function bulkComputeOptimization(
 
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
-        credentialsId,
-        region,
+        '',
+        '',
         accountId,
         JOBTYPE.OPTIMIZATION,
         'Optimize compute',
@@ -284,7 +297,7 @@ async function bulkComputeOptimization(
     );
 
     try {
-        handleBulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize, parentJobId);
+        handleBulkComputeOptimization(accountId, hostsToOptimize, parentJobId);
         return { jobId: parentJobId };
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, (error as Error).message);
@@ -293,14 +306,10 @@ async function bulkComputeOptimization(
 
 async function handleBulkComputeOptimization(
     accountId: string,
-    credentialsId: string,
-    region: string,
     hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType[],
     masterOptimizeJobParentId: string
 ) {
-    logger.info(
-        `Handle bulk optimizing compute: ${accountId}, ${credentialsId}, ${region}, ${hostsToOptimize}, ${masterOptimizeJobParentId}`
-    );
+    logger.info(`Handle bulk optimizing compute: ${accountId},  ${hostsToOptimize}, ${masterOptimizeJobParentId}`);
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
     try {
@@ -308,7 +317,14 @@ async function handleBulkComputeOptimization(
             hostsToOptimize.map(async ({ databaseHosts, configurationName: optimizationCategory }) => {
                 await Promise.all(
                     databaseHosts.map(
-                        async ({ id: databaseHostId, sqlServerInstances, instanceType, networkAdapters }) => {
+                        async ({
+                            id: databaseHostId,
+                            sqlServerInstances,
+                            instanceType,
+                            networkAdapters,
+                            region,
+                            credentialsId
+                        }) => {
                             if (isEmpty(sqlServerInstances)) {
                                 logger.error(`No instances given for resource ${databaseHostId}.`);
                             }

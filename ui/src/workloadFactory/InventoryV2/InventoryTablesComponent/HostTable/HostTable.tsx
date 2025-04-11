@@ -68,6 +68,7 @@ const HostTable = () => {
     );
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const [loading, setLoading] = useState(false);
 
@@ -85,7 +86,8 @@ const HostTable = () => {
                 isManagedHostListLoading ||
                 fsxCredentialStatusLoading ||
                 pgsqlDatabaseHostsLoading ||
-                pgsqlFullHostDataLoading
+                pgsqlFullHostDataLoading ||
+                multiDataLoading
         );
     }, [
         databaseHostsLoading,
@@ -94,7 +96,8 @@ const HostTable = () => {
         isManagedHostListLoading,
         fsxCredentialStatusLoading,
         pgsqlDatabaseHostsLoading,
-        pgsqlFullHostDataLoading
+        pgsqlFullHostDataLoading,
+        multiDataLoading
     ]);
 
     const handleDialog = (rowData: any) => {
@@ -579,7 +582,9 @@ const HostTable = () => {
                                             setSelectedFilterValue({
                                                 flag: true,
                                                 value: {
-                                                    hostName: rowData?.name
+                                                    hostName: rowData?.name,
+                                                    credentialName: rowData?.credentialName,
+                                                    regionName: rowData?.regionName
                                                 },
                                                 filterType: 'single'
                                             })
@@ -591,7 +596,9 @@ const HostTable = () => {
                                             setSelectedFilterValue({
                                                 flag: true,
                                                 value: {
-                                                    hostName: rowData?.name
+                                                    hostName: rowData?.name,
+                                                    credentialName: rowData?.credentialName,
+                                                    regionName: rowData?.regionName
                                                 },
                                                 filterType: 'single'
                                             })

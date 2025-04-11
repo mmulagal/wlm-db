@@ -78,7 +78,7 @@ export const getSandboxDistributionByAge = (sandBoxList: SandboxListEntities) =>
         '31-60': 0,
         '61+': 0
     };
-    sandBoxList.map(item => {
+    sandBoxList?.map(item => {
         const age = getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt));
         if (age <= 30) {
             distribution['0-30']++;

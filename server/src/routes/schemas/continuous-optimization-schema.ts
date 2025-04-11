@@ -1,6 +1,6 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
-import { CredentialsIdParams } from '../types/generic.types';
+import { AccountIdParams, CredentialsIdParams } from '../types/generic.types';
 import {
     DatabaseHostInstanceSummaryParams,
     DatabaseHostOptionalInstanceSummaryParams,
@@ -185,7 +185,7 @@ const OptimizeResilienceSchema = {
 
 const BulkOptimizeGeneralSchema = {
     ...resourceRequest,
-    params: CredentialsIdParams,
+    params: AccountIdParams,
     tags: [RouteTags.ASSESSMENT],
     body: BulkOptimizeGeneralRequestBody,
     response: {
@@ -215,7 +215,7 @@ const BulkOptimizeStorageTierSchema = {
 
 const BulkOptimizeComputeSchema = {
     ...resourceRequest,
-    params: CredentialsIdParams,
+    params: AccountIdParams,
     tags: [RouteTags.ASSESSMENT],
     body: BulkOptimizeComputeRequestBody,
     summary: 'Optimize compute',

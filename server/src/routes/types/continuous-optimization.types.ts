@@ -193,7 +193,7 @@ const AdditionalCloneParameterDriftResponse = Type.Optional(
                     sourceDatabaseInstanceName: Type.Optional(Type.String()),
                     sourceDatabaseName: Type.Optional(Type.String()),
                     cloneDatabaseName: Type.Optional(Type.String()),
-                    cloneSize: Type.Optional(Type.String()),
+                    cloneSize: Type.Optional(Type.Number()),
                     cloneAge: Type.Optional(Type.Number()),
                     clonedBy: Type.Optional(Type.String()),
                     tags: Type.Optional(Type.String()),
@@ -403,6 +403,8 @@ const OptimizePerHostRequestBody = Type.Intersect([
     Type.Object({
         id: Type.String({ minLength: 1 }),
         sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+        credentialsId: Type.String(),
+        region: Type.String(),
         instanceType: Type.Optional(Type.String()),
         networkAdapters: Type.Optional(Type.Array(Type.String()))
     }),

@@ -647,7 +647,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         databaseHosts: [
                             {
                                 id: selectedResourceId,
-                                sqlServerInstances: [selectedDatabaseInstance]
+                                sqlServerInstances: [selectedDatabaseInstance],
+                                credentialsId: selectedGwInstanceCredId,
+                                region: selectedGwInstanceRegionId
                             }
                         ]
                     }
@@ -667,7 +669,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 sqlServerInstances: [selectedDatabaseInstance],
                                 fsxFileSystemId: selectedRowFsxId,
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                                backupStartTime: backupStartTime(selectedAWSBackup)
+                                backupStartTime: backupStartTime(selectedAWSBackup),
+                                credentialsId: selectedGwInstanceCredId,
+                                region: selectedGwInstanceRegionId
                             }
                         ]
                     }
@@ -774,7 +778,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             }
             handleOptimizeStorageJob(
                 res,
-                { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
+                {
+                    id: cardData?.id,
+                    name: type,
+                    hostId: selectedResourceId,
+                    instanceId: selectedDatabaseInstance,
+                    credentialId: selectedGwInstanceCredId,
+                    regionId: selectedGwInstanceRegionId
+                },
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
