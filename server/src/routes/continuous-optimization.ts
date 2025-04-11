@@ -40,7 +40,11 @@ import {
 } from '../operations/cont-opt-optimize-operations';
 import optimizeCompute from '../operations/continuous-optimization/compute-optimize-operations';
 import castRequest from './utils';
-import { bulkCloneOptimization, bulkComputeOptimization, bulkOptimization } from '../operations/bulk-cont-opt-operations';
+import {
+    bulkCloneOptimization,
+    bulkComputeOptimization,
+    bulkOptimization
+} from '../operations/bulk-cont-opt-operations';
 import {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize
