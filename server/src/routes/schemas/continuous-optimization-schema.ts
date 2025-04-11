@@ -20,7 +20,7 @@ import {
     OptimizeResiliencyBody,
     OptimizeGenericRequestBody,
     BulkOptimizeComputeRequestBody,
-    OptimizeCloneBody
+    BulkOptimizeCloneBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -239,12 +239,12 @@ const BulkOptimizeAwsBackupSchema = {
     description: 'Enable scheduled AWS FSx for ONTAP backups.'
 };
 
-const OptimizeCloneSchema = {
+const BulkOptimizeCloneSchema = {
     ...resourceRequest,
     summary: 'Optimize clone parameters for database instances',
     description: 'Optimize clone parameters for database instances',
     params: DatabaseHostInstanceSummaryParams,
-    body: OptimizeCloneBody,
+    body: BulkOptimizeCloneBody,
     tags: [RouteTags.ASSESSMENT],
     response: {
         200: Type.Object({
@@ -271,5 +271,5 @@ export {
     BulkOptimizeComputeSchema,
     BulkOptimizeMaxDopSchema,
     BulkOptimizeAwsBackupSchema,
-    OptimizeCloneSchema
+    BulkOptimizeCloneSchema
 };

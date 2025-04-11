@@ -30,7 +30,7 @@ import {
     BulkOptimizeMaxDopSchema,
     OptimizeResilienceSchema,
     BulkOptimizeAwsBackupSchema,
-    OptimizeCloneSchema
+    BulkOptimizeCloneSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -49,7 +49,10 @@ import {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize
 } from '../operations/continuous-optimization/resilience-optimize-operations';
-import { OptimizeCloneBodyType, OptimizeResiliencyBodyType } from './types/continuous-optimization.types';
+import {
+    BulkOptimizeCloneInHostRequestBodyType,
+    OptimizeResiliencyBodyType
+} from './types/continuous-optimization.types';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/mssql';
@@ -366,20 +369,16 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/clone`,
-            { schema: OptimizeCloneSchema },
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/clone`,
+            { schema: BulkOptimizeCloneSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
-                    body
+                    params: { accountId },
+                    body: { hostsToOptimize }
                 } = castRequest(request);
                 const response = await bulkCloneOptimization(
                     accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    body as OptimizeCloneBodyType
+                    hostsToOptimize as BulkOptimizeCloneInHostRequestBodyType[]
                 );
                 return reply.send(response);
             }

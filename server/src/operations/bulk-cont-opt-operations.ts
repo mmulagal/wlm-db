@@ -114,13 +114,8 @@ async function bulkOptimization(
     return { jobId: parentJobId };
 }
 
-async function bulkCloneOptimization(
-    accountId: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[]
-) {
-    logger.info(`Bulk clone optimization: ${accountId}, ${databaseHostId}, ${databaseInstanceId}, ${hostsToOptimize}`);
+async function bulkCloneOptimization(accountId: string, hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[]) {
+    logger.info(`Bulk clone optimization: ${accountId}, ${hostsToOptimize}`);
 
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
@@ -128,9 +123,10 @@ async function bulkCloneOptimization(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    const jobMetadata: JobMetadata = {
-        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
-    };
+    // do this at last
+    // const jobMetadata: JobMetadata = {
+    //     hostsToOptimize: await formatJobMetadata(hostsToOptimize)
+    // };
 
     const jobDescription = 'Optimize clones';
 
@@ -141,12 +137,10 @@ async function bulkCloneOptimization(
         accountId,
         JOBTYPE.OPTIMIZATION,
         jobDescription,
-        jobDescription,
-        undefined,
-        jobMetadata
+        jobDescription
     );
 
-    handleBulkOptimization(accountId, '', '', optimizationCategory, hostsToOptimize, parentJobId);
+    handleBulkOptimization(accountId, '', '', hostsToOptimize, parentJobId);
     return { jobId: parentJobId };
 }
 

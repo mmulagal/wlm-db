@@ -111,6 +111,10 @@ enum OptimizeMaxDopParams {
     MAX_DOP = 'max-dop'
 }
 
+enum OptimizeCloneParams {
+    CLONE = 'clone'
+}
+
 enum OPTIMIZATION_CATEGORIES {
     STORAGE_TIER = 'storage-tier',
     STORAGE_SIZING = 'storage-sizing',
@@ -263,5 +267,6 @@ export {
     ASSESSMENT_RESOURCE_TYPE,
     OPTIMIZE_RESILIENCY_CONFIGS,
     VALID_MPIO_LB_POLICIES,
-    OptimizeComputeJobNames
+    OptimizeComputeJobNames,
+    OptimizeCloneParams
 };

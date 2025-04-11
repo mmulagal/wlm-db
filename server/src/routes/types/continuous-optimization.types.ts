@@ -4,6 +4,7 @@ import {
     AwsWellArchitecturedPillars,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
+    OptimizeCloneParams,
     OptimizeComputeParams,
     OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
@@ -490,14 +491,17 @@ const OptimizeClonesPerHostRequestBody = Type.Object({
 });
 
 const BulkOptimizeCloneInHostRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OptimizeCloneParams
+    }),
     databaseHosts: Type.Array(OptimizeClonesPerHostRequestBody)
 });
 type BulkOptimizeCloneInHostRequestBodyType = Static<typeof BulkOptimizeCloneInHostRequestBody>;
 
-const OptimizeCloneBody = Type.Object({
+const BulkOptimizeCloneBody = Type.Object({
     hostsToOptimize: Type.Array(BulkOptimizeCloneInHostRequestBody)
 });
-type OptimizeCloneBodyType = Static<typeof OptimizeCloneBody>;
+type BulkOptimizeCloneBodyType = Static<typeof BulkOptimizeCloneBody>;
 
 export {
     DriftAssessmentResponse,
@@ -551,7 +555,7 @@ export {
     BulkOptimizeComputeRequestBodyType,
     OptimizeGenericRequestBody,
     CloneDriftResponseType,
-    OptimizeCloneBodyType,
+    BulkOptimizeCloneBodyType,
     BulkOptimizeCloneInHostRequestBodyType,
-    OptimizeCloneBody
+    BulkOptimizeCloneBody
 };
