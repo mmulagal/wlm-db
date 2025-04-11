@@ -82,42 +82,53 @@ async function getFSXDetails(credentialsId: string, region: string, fileSystems:
                         describeFSxVolumes(credentialsId, region, fileSystemIds),
                         getNetworkInterfacesList(credentialsId, region, enetInterfaces)
                     ]);
-                const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups ?? []).flat());
-
-                const volumesList: FSxFileSystemType['volumes'] = fsxVolumes?.map(
-                    ({ VolumeId: volumeId, VolumeType: volumeType, OntapConfiguration: volumeOntapConfiguration }) => ({
-                        volumeId,
-                        volumeType,
-                        securityStyle: volumeOntapConfiguration?.SecurityStyle,
-                        sizeInMegabytes: volumeOntapConfiguration?.SizeInMegabytes,
-                        storageEfficiencyEnabled: volumeOntapConfiguration?.StorageEfficiencyEnabled,
-                        storageVirtualMachineId: volumeOntapConfiguration?.StorageVirtualMachineId,
-                        ontapVolumeType: volumeOntapConfiguration?.OntapVolumeType
-                    })
-                );
-
-                const svmList: FSxFileSystemType['storageVirtualMachines'] = fsxSVMs?.map(
-                    ({
-                        StorageVirtualMachineId: storageVirtualMachineId,
-                        Name: storageVirtualMachineName,
-                        ResourceARN: resourceARN,
-                        Subtype: subtype,
-                        Lifecycle: lifeCycle,
-                        CreationTime: creationTime,
-                        UUID: uuid
-                    }) => ({
-                        storageVirtualMachineId,
-                        storageVirtualMachineName,
-                        resourceARN,
-                        lifeCycle,
-                        subtype,
-                        creationTime,
-                        uuid
-                    })
-                );
 
                 fileSystemChunk.forEach(fileSys => {
-                    // Get the FSx filesystem name, if available.
+                    const sgs = new Set(
+                        networkInterfacesList
+                            .filter(enet => fileSys.NetworkInterfaceIds.includes(enet.id))
+                            .map(enet => enet.securityGroups ?? [])
+                            .flat()
+                    );
+                    const volumesList: FSxFileSystemType['volumes'] = fsxVolumes
+                        ?.filter(volume => volume.FileSystemId === fileSys.FileSystemId)
+                        .map(
+                            ({
+                                VolumeId: volumeId,
+                                VolumeType: volumeType,
+                                OntapConfiguration: volumeOntapConfiguration
+                            }) => ({
+                                volumeId,
+                                volumeType,
+                                securityStyle: volumeOntapConfiguration?.SecurityStyle,
+                                sizeInMegabytes: volumeOntapConfiguration?.SizeInMegabytes,
+                                storageEfficiencyEnabled: volumeOntapConfiguration?.StorageEfficiencyEnabled,
+                                storageVirtualMachineId: volumeOntapConfiguration?.StorageVirtualMachineId,
+                                ontapVolumeType: volumeOntapConfiguration?.OntapVolumeType
+                            })
+                        );
+
+                    const svmList: FSxFileSystemType['storageVirtualMachines'] = fsxSVMs
+                        ?.filter(svm => svm.FileSystemId === fileSys.FileSystemId)
+                        .map(
+                            ({
+                                StorageVirtualMachineId: storageVirtualMachineId,
+                                Name: storageVirtualMachineName,
+                                ResourceARN: resourceARN,
+                                Subtype: subtype,
+                                Lifecycle: lifeCycle,
+                                CreationTime: creationTime,
+                                UUID: uuid
+                            }) => ({
+                                storageVirtualMachineId,
+                                storageVirtualMachineName,
+                                resourceARN,
+                                lifeCycle,
+                                subtype,
+                                creationTime,
+                                uuid
+                            })
+                        );
                     const { Tags: tags } = fileSys;
                     const tag = tags?.find((t: { Key: string }) => t.Key === AWS_RESOURCE_NAME_TAG);
                     const { OntapConfiguration: ontapConfig } = fileSys;
