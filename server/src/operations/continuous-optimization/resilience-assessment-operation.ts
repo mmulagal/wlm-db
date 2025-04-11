@@ -386,6 +386,8 @@ async function getAwsBackupDriftData(
         if (volumeUuidsInBackups) {
             const ontapVolumeSet = new Set(ontapVolumeIds);
             const backupVolumeSet = new Set(volumeUuidsInBackups);
+            logger.debug('uuids of ontapVolumes:', ontapVolumeSet);
+            logger.debug('uuids of valid backupVolumes:', backupVolumeSet);
             const allUuidsMatch = [...ontapVolumeSet].every(uuid => backupVolumeSet.has(uuid));
             awsBackupAssesmentData.status = allUuidsMatch ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
             awsBackupAssesmentData.totalObjectsInViolation = allUuidsMatch ? 0 : 1;
