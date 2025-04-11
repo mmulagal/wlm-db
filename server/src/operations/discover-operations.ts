@@ -112,10 +112,8 @@ import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
 import { copyScriptsToHost } from './resource-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
-import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
-import { AssessmentCategories } from '../utils/continous-optimization-consts';
-import { ASSESMENT_CONFIG_DATA, ASSESSMENT_CRR_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
 import { discoverPgsqlHosts } from './workloads/pgsql/pgsql-discover-scripts';
+import { createAssessmentData } from './demo-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -1838,30 +1836,13 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                     databaseType: DatabaseTypes.MS_SQL_SERVER
                                 });
                                 if (isDemoFlow) {
-                                    const instanceConfigDataRecord = {
-                                        account_id: accountId,
-                                        credentials_id: credentialsId,
+                                    await createAssessmentData(
+                                        accountId,
+                                        credentialsId,
                                         region,
-                                        resource_id: resourceId,
-                                        database_instance_id: serverGuid!,
-                                        creation_time: new Date(Date.now()),
-                                        config_data_type: AssessmentCategories.STORAGE,
-                                        config_data: ASSESMENT_CONFIG_DATA
-                                    };
-                                    await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
-
-                                    const instanceCRRConfigDataRecord = {
-                                        account_id: accountId,
-                                        credentials_id: credentialsId,
-                                        region,
-                                        resource_id: resourceId,
-                                        database_instance_id: serverGuid!,
-                                        creation_time: new Date(Date.now()),
-                                        config_data_type: AssessmentCategories.CRR,
-                                        config_data: ASSESSMENT_CRR_CONFIG_DATA
-                                    };
-
-                                    await createDatabaseInstanceConfigData([instanceCRRConfigDataRecord]);
+                                        resourceId,
+                                        serverGuid!
+                                    );
                                 }
 
                                 let errorMessage = '';
