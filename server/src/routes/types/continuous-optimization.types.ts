@@ -470,9 +470,30 @@ const BulkOptimizeComputeRequestBody = Type.Object({
 });
 type BulkOptimizeComputeRequestBodyType = Static<typeof BulkOptimizeComputeRequestBody>;
 
+const CloneDetail = Type.Object({
+    cloneDatabaseName: Type.String(),
+    clonedBy: Type.String()
+});
+
+const OptimizeClonesPerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    region: Type.String(),
+    credentialsId: Type.String(),
+    sqlServerInstances: Type.Array(
+        Type.Object({
+            instanceId: Type.String(),
+            clones: Type.Array(CloneDetail)
+        })
+    )
+});
+
+const BulkOptimizeCloneInHostRequestBody = Type.Object({
+    databaseHosts: Type.Array(OptimizeClonesPerHostRequestBody)
+});
+type BulkOptimizeCloneInHostRequestBodyType = Static<typeof BulkOptimizeCloneInHostRequestBody>;
+
 const OptimizeCloneBody = Type.Object({
-    configurationName: Type.Array(Type.Enum(OPTIMIZE_RESILIENCY_CONFIGS)),
-    params: Type.Optional(Type.Array(Type.Union([BulkOptimizeSnapshotPolicyRequestBody])))
+    hostsToOptimize: Type.Array(BulkOptimizeCloneInHostRequestBody)
 });
 type OptimizeCloneBodyType = Static<typeof OptimizeCloneBody>;
 
@@ -529,5 +550,6 @@ export {
     OptimizeGenericRequestBody,
     CloneDriftResponseType,
     OptimizeCloneBodyType,
+    BulkOptimizeCloneInHostRequestBodyType,
     OptimizeCloneBody
 };

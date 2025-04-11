@@ -4,6 +4,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
 import { HttpErrorCodes } from '../utils/consts';
 import {
+    BulkOptimizeCloneInHostRequestBodyType,
     BulkOptimizeComputePerHostRequestBodyType,
     BulkOptimizeGeneralPerHostRequestBodyType
 } from '../routes/types/continuous-optimization.types';
@@ -95,6 +96,42 @@ async function bulkOptimization(
     );
 
     handleBulkOptimization(accountId, credentialsId, region, optimizationCategory, hostsToOptimize, parentJobId);
+    return { jobId: parentJobId };
+}
+
+async function bulkCloneOptimization(
+    accountId: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[]
+) {
+    logger.info(`Bulk clone optimization: ${accountId}, ${databaseHostId}, ${databaseInstanceId}, ${hostsToOptimize}`);
+
+    if (isEmpty(hostsToOptimize)) {
+        const errorMessage = 'databaseHosts cannot be empty.';
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
+    };
+
+    const jobDescription = 'Optimize clones';
+
+    const parentJobId = await handleOptimizeJobCreation(
+        accountId,
+        '',
+        '',
+        accountId,
+        JOBTYPE.OPTIMIZATION,
+        jobDescription,
+        jobDescription,
+        undefined,
+        jobMetadata
+    );
+
+    handleBulkOptimization(accountId, '', '', optimizationCategory, hostsToOptimize, parentJobId);
     return { jobId: parentJobId };
 }
 
@@ -364,4 +401,4 @@ async function validateRequestDetails(accountId: string, credentialsId: string, 
     return true;
 }
 
-export { bulkOptimization, bulkComputeOptimization };
+export { bulkOptimization, bulkComputeOptimization, bulkCloneOptimization };

@@ -40,12 +40,12 @@ import {
 } from '../operations/cont-opt-optimize-operations';
 import optimizeCompute from '../operations/continuous-optimization/compute-optimize-operations';
 import castRequest from './utils';
-import { bulkComputeOptimization, bulkOptimization } from '../operations/bulk-cont-opt-operations';
+import { bulkCloneOptimization, bulkComputeOptimization, bulkOptimization } from '../operations/bulk-cont-opt-operations';
 import {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize
 } from '../operations/continuous-optimization/resilience-optimize-operations';
-import { OptimizeResiliencyBodyType } from './types/continuous-optimization.types';
+import { OptimizeCloneBodyType, OptimizeResiliencyBodyType } from './types/continuous-optimization.types';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -382,13 +382,13 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
                     body
                 } = castRequest(request);
-                const response = await handleResiliecyOptimize(
+                const response = await bulkCloneOptimization(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    body as OptimizeResiliencyBodyType
+                    body as OptimizeCloneBodyType
                 );
                 return reply.send(response);
             }
