@@ -26,11 +26,22 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
         let cloneAssessmentData: any = [];
+        let uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
+            if (
+                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                uniqueResourceList.includes(hostData?.databaseHostId)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(hostData?.databaseHostId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const cloneObj = instanceData?.assessments?.clone;
@@ -60,7 +71,13 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             cloneAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+    }, [
+        allmssqlHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
@@ -96,7 +113,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             filterOptions: 'auto'
         },
         {
-            Header: 'Impacted volumes',
+            Header: 'Impacted database',
             accessor: 'totalObjectsInViolation',
             id: '3',
             width: '320px',
@@ -138,8 +155,8 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Not-optimized databases`}
-                singularTitle={'Not-optimized database'}
+                pluralTitle={`Not-optimized instances`}
+                singularTitle={'Not-optimized instance'}
             />
             <Table
                 //@ts-ignore

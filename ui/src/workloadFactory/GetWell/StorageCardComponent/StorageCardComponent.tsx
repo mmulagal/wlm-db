@@ -677,26 +677,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     }
                 ]
             };
-        }
-        // else if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
-        //     apiCall = optimizeAwsBackup;
-        //     const state = store.getState();
-        //     const { selectedClone } = state.getWellOptimize;
-        //     payload = {
-        //         hostsToOptimize: [
-        //             {
-        //                 configurationName: ['clone'],
-        //                 databaseHosts: [
-        //                     {
-        //                         id: selectedResourceId,
-        //                         sqlServerInstances: [selectedDatabaseInstance]
-        //                     }
-        //                 ]
-        //             }
-        //         ]
-        //     };
-        // }
-        else {
+        } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
             payload = {
