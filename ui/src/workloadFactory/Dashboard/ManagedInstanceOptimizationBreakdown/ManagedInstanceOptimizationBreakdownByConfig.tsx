@@ -525,7 +525,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(GENERAL.RSS_CONFIGURATION);
                             }}
-                            data-testid="wlm-db-optimize-maxdop"
+                            data-testid="wlm-db-optimize-rss-configuration"
                             isDisabled={
                                 loading ||
                                 configData?.total === 0 ||
@@ -695,7 +695,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
                             }}
-                            data-testid="wlm-db-optimize-maxdop"
+                            data-testid="wlm-db-optimize-snapshot"
                             isDisabled={
                                 loading ||
                                 configData?.total === 0 ||
@@ -771,7 +771,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
                             }}
-                            data-testid="wlm-db-optimize-maxdop"
+                            data-testid="wlm-db-optimize-awsbackup"
                             isDisabled={
                                 loading ||
                                 configData?.total === 0 ||
@@ -789,8 +789,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.CLONE_MANAGEMENT}
-                        percentage={Math.round(((configData.cloneManagement || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.cloneManagement}
+                        percentage={Math.round(((configData.clone || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.clone}
                         afterOutOf={configData.total}
                         bottomText="Optimized databases:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
@@ -814,11 +814,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
                             }}
-                            data-testid="wlm-db-optimize-maxdop"
+                            data-testid="wlm-db-optimize-clone"
                             isDisabled={
                                 loading ||
                                 configData?.total === 0 ||
-                                configData?.cloneManagement === configData?.total ||
+                                configData?.clone === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
                             }
                         >

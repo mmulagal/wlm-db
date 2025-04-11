@@ -528,7 +528,7 @@ const GetWell = () => {
                                                         }(${
                                                             defaultFilterOptions['all-catagories']?.length > 0
                                                                 ? defaultFilterOptions['all-catagories']?.length
-                                                                : 4
+                                                                : 5
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -813,9 +813,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['all-catagories']?.length ||
-                                                defaultFilterOptions['all-catagories']?.length === 4
-                                                    ? 'All(4)'
-                                                    : `${defaultFilterOptions['all-catagories']?.length}/4`}
+                                                defaultFilterOptions['all-catagories']?.length === 5
+                                                    ? 'All(5)'
+                                                    : `${defaultFilterOptions['all-catagories']?.length}/5`}
                                             </DsTypography>
                                         </div>
 

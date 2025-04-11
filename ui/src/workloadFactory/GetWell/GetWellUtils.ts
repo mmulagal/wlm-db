@@ -1161,7 +1161,11 @@ export const formatCloneCardConfig = (
             },
             block_six: {
                 ...(cardDataDefault?.[itemName]?.block_six || {}),
-                value: item?.current || 0
+                value: item?.current || 0,
+                count: {
+                    totalObjectsAssessed: item?.totalObjectsAssessed,
+                    totalObjectsInViolation: item?.totalObjectsInViolation
+                }
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
