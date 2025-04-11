@@ -1726,7 +1726,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             } else {
                 notOptimizedResiliency++;
             }
-        } else if (nestedObject?.category === 'clon') {
+        } else if (nestedObject?.category === 'cloning') {
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
                 optimizedCloning++;
             } else {
