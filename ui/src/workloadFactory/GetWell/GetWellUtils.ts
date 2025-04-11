@@ -1305,8 +1305,8 @@ export const formatRssConfigCardConfig = (
                 ...(cardDataDefault?.[itemName]?.block_six || {}),
                 value: findingReasons,
                 count: {
-                    totalObjectsAssessed: totalAdapters,
-                    totalObjectsInViolation: nonOptimizedAdapters
+                    totalObjectsAssessed: item?.totalObjectsAssessed,
+                    totalObjectsInViolation: item?.totalObjectsInViolation
                 }
             },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,

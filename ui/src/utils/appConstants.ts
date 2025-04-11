@@ -28,6 +28,10 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    ALL_CRED_SELECTED: 'All credentials selected',
+    NO_CRED_SELECTED: 'No credentials selected',
+    ALL_REGIONS_SELECTED: 'All regions selected',
+    NO_REGIONS_SELECTED: 'No regions selected',
     ASSESSMENT_PERFORMED: 'Last assessment was performed at : ',
     ASSESS_NOW: 'Assess now',
     MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',

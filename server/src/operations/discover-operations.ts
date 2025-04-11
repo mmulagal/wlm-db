@@ -895,12 +895,15 @@ async function fetchUnmanagedHostsInformationV2(
                     let ebsVolumeIds: string[] | undefined = [];
                     let fsxwId: string | undefined;
                     let fsxnId: string | undefined;
-                    storage?.forEach(({ type, id }) => {
+                    let fsxSvmId: string | undefined;
+                    storage?.forEach(({ type, id, svmId }) => {
                         // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
                         // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
                         ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
                         fsxwId = type === STORAGE_TYPE.FSXW ? id : fsxwId;
-                        fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
+                        if (type === STORAGE_TYPE.FSXN) {
+                            ({ id: fsxnId, svmId: fsxSvmId } = { id, svmId });
+                        }
                     });
 
                     resourceDetails.ebsVolumeIds = resourceDetails.ebsVolumeIds?.concat(ebsVolumeIds);
@@ -915,6 +918,7 @@ async function fetchUnmanagedHostsInformationV2(
                         credentials_id: credentialsId,
                         metadata: { userDatabase: [] },
                         fsxn_ids: fsxnId || '',
+                        fsx_svm_id: fsxSvmId || '',
                         fsxwId: fsxwId || '',
                         ebsVolumeIds,
                         database_deployment_type: sqlServerInstance.sqlServerDeploymentType,
