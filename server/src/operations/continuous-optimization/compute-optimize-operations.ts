@@ -1,7 +1,7 @@
 import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
 import { cloneDeep, compact, isEmpty } from 'lodash-es';
-import { DatabaseInstance, Metadata } from '../../utils/common-types';
+import { DatabaseInstance, Metadata, NodeDetails } from '../../utils/common-types';
 import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import {
@@ -107,193 +107,139 @@ async function handleComputeRemediation(
                 if (!connectionStatus) {
                     throw createError(500, 'SSM connection is not available for the selected instance');
                 }
-                const clusterNetworkIpDetails = await callSsmExecution(
+
+                const { clusterNodeDetails, clusterNodeInstanceIds } = await getClusterNodeInstanceIds(
+                    accountId,
                     credentialsId,
                     region,
-                    CLUSTER_NETWORK_IP_INFO_PS1,
-                    node2InstanceId,
-                    'Get cluster network IPs',
-                    accountId,
-                    undefined,
-                    COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+                    node2InstanceId
                 );
-                if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
-                    throw createError('Failed to get network interface details during compute optimization.');
-                } else if (clusterNetworkIpDetails) {
-                    const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } =
-                        JSON.parse(clusterNetworkIpDetails);
-                    // get all nodes in a cluster
-                    const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
-                    if (clusterNetworkIps.length > 1) {
-                        const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
-                            credentialsId,
-                            region,
-                            clusterNetworkIps
-                        );
-                        const clusterNodeInstanceIds = compact(
-                            clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId)
-                        );
 
-                        instanceIdsList.push(...clusterNodeInstanceIds);
-                        await updateLongRunningAuditGroup(undefined, undefined, formattedInstanceName);
+                if (clusterNodeInstanceIds.length > 1) {
+                    instanceIdsList.push(...clusterNodeInstanceIds);
+                    await updateLongRunningAuditGroup(undefined, undefined, formattedInstanceName);
 
-                        // run elastic IP address; spot instance and autoscaling instance check for all nodes in the cluster; throws error if any node has does not meets the criteria
-                        const preReqJobId = await handleOptimizeJobCreation(
-                            accountId,
-                            credentialsId,
-                            region,
-                            formattedInstanceName,
-                            JOBTYPE.OPTIMIZATION,
-                            'Prerequisite check for compute optimization of secondary nodes.',
-                            'Prerequisite check for compute optimization of secondary nodes.',
-                            jobId
-                        );
-                        try {
-                            await instanceTypeChangePreReqs(credentialsId, region, accountId, clusterNodeInstanceIds);
-                            await updateJobDetails(accountId, preReqJobId, {
-                                status: JOBSTATUS.COMPLETED,
-                                endTime: Date.now()
-                            });
-                        } catch (error) {
-                            subJobErrorMessage = `Failed to meet pre-requisites for compute optimization in SQL nodes, ${error}`;
-                            await updateJobDetails(accountId, preReqJobId, {
-                                status: JOBSTATUS.FAILED,
-                                endTime: Date.now(),
-                                error: subJobErrorMessage
-                            });
-                            anySubJobFailed = true;
-                            throw error;
-                        }
+                    // run elastic IP address; spot instance and autoscaling instance check for all nodes in the cluster; throws error if any node has does not meets the criteria
+                    const preReqJobId = await handleOptimizeJobCreation(
+                        accountId,
+                        credentialsId,
+                        region,
+                        formattedInstanceName,
+                        JOBTYPE.OPTIMIZATION,
+                        'Prerequisite check for compute optimization of secondary nodes.',
+                        'Prerequisite check for compute optimization of secondary nodes.',
+                        jobId
+                    );
+                    try {
+                        await instanceTypeChangePreReqs(credentialsId, region, accountId, clusterNodeInstanceIds);
+                        await updateJobDetails(accountId, preReqJobId, {
+                            status: JOBSTATUS.COMPLETED,
+                            endTime: Date.now()
+                        });
+                    } catch (error) {
+                        subJobErrorMessage = `Failed to meet pre-requisites for compute optimization in SQL nodes, ${error}`;
+                        await updateJobDetails(accountId, preReqJobId, {
+                            status: JOBSTATUS.FAILED,
+                            endTime: Date.now(),
+                            error: subJobErrorMessage
+                        });
+                        anySubJobFailed = true;
+                        throw error;
+                    }
 
-                        const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
-                            nodeId => nodeId !== activeNodeInstanceId
-                        );
+                    const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
+                        nodeId => nodeId !== activeNodeInstanceId
+                    );
 
-                        const changeInstanceTypeJobId = await handleOptimizeJobCreation(
-                            accountId,
-                            credentialsId,
-                            region,
-                            formattedInstanceName,
-                            JOBTYPE.OPTIMIZATION,
-                            'Modify instance type for secondary nodes in the cluster',
-                            `Modify instance type of SQL nodes ${nonPrimaryNodeInstanceIds.join(
-                                ','
-                            )} to ${instanceType}. To modify, instance will be stopped, modified and restarted.`,
-                            jobId
-                        );
+                    const changeInstanceTypeJobId = await handleOptimizeJobCreation(
+                        accountId,
+                        credentialsId,
+                        region,
+                        formattedInstanceName,
+                        JOBTYPE.OPTIMIZATION,
+                        'Modify instance type for secondary nodes in the cluster',
+                        `Modify instance type of SQL nodes ${nonPrimaryNodeInstanceIds.join(
+                            ','
+                        )} to ${instanceType}. To modify, instance will be stopped, modified and restarted.`,
+                        jobId
+                    );
 
-                        try {
-                            // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
-                            for (const nodeId of nonPrimaryNodeInstanceIds) {
-                                const { ec2InstanceType: oldInstanceType = '' } =
-                                    clusterNodeDetails.find(node => node.ec2InstanceId === nodeId) || {};
-                                const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    nodeId,
-                                    instanceType,
-                                    fsxId,
-                                    svmId,
-                                    changeInstanceTypeJobId,
-                                    formattedInstanceName
-                                );
-                                modifiedInstancesNodeDetails.push({
-                                    ec2InstanceId,
-                                    oldDnsAddresses,
-                                    oldInstanceType,
-                                    isPrimaryNode: false
-                                });
-                            }
-                            logger.info('Instance type updated for all secondary nodes in the cluster');
-
-                            await updateJobDetails(accountId, changeInstanceTypeJobId, {
-                                status: JOBSTATUS.COMPLETED,
-                                endTime: Date.now()
-                            });
-                        } catch (error) {
-                            subJobErrorMessage = `Failed to update instance type for secondary nodes in the cluster, ${error}`;
-                            await updateJobDetails(accountId, changeInstanceTypeJobId, {
-                                status: JOBSTATUS.FAILED,
-                                endTime: Date.now(),
-                                error: subJobErrorMessage
-                            });
-                            anySubJobFailed = true;
-                            throw error;
-                        }
-                        const sqlNodeDetails = await callSsmExecution(
-                            credentialsId,
-                            region,
-                            [GET_CLUSTER_NODE_NAMES()],
-                            activeNodeInstanceId,
-                            'Get all node names in the cluster',
-                            accountId,
-                            undefined,
-                            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
-                        );
-                        let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
-                        ownerNodes = Array.isArray(ownerNodes) ? ownerNodes : ownerNodes?.split(',');
-                        const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
-                        clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
-                        // pick one of the nodes in the cluster to transfer primary node ownership
-                        let targetNodeName;
-                        for (const nodeName of clusterNodes) {
-                            const resp = await callSsmExecution(
+                    try {
+                        // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
+                        for (const nodeId of nonPrimaryNodeInstanceIds) {
+                            const { ec2InstanceType: oldInstanceType = '' } =
+                                clusterNodeDetails.find(node => node.ec2InstanceId === nodeId) || {};
+                            const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
+                                accountId,
                                 credentialsId,
                                 region,
-                                [CHECK_NODE_STATUS(nodeName)],
-                                activeNodeInstanceId,
-                                'Checks if a cluster node is Up and reachable, returning the status as a JSON object.',
-                                accountId
+                                nodeId,
+                                instanceType,
+                                fsxId,
+                                svmId,
+                                changeInstanceTypeJobId,
+                                formattedInstanceName
                             );
-                            const { status } = sqlResponseParsing(resp);
-                            if (status === 'success') {
-                                targetNodeName = nodeName;
-                                break;
-                            }
+                            modifiedInstancesNodeDetails.push({
+                                ec2InstanceId,
+                                oldDnsAddresses,
+                                oldInstanceType,
+                                isPrimaryNode: false
+                            });
                         }
-                        const transferOwnershipJobId = await handleOptimizeJobCreation(
+                        logger.info('Instance type updated for all secondary nodes in the cluster');
+
+                        await updateJobDetails(accountId, changeInstanceTypeJobId, {
+                            status: JOBSTATUS.COMPLETED,
+                            endTime: Date.now()
+                        });
+                    } catch (error) {
+                        subJobErrorMessage = `Failed to update instance type for secondary nodes in the cluster, ${error}`;
+                        await updateJobDetails(accountId, changeInstanceTypeJobId, {
+                            status: JOBSTATUS.FAILED,
+                            endTime: Date.now(),
+                            error: subJobErrorMessage
+                        });
+                        anySubJobFailed = true;
+                        throw error;
+                    }
+                    let ownerNode;
+                    let targetNodeName;
+                    const transferOwnershipJobId = await handleOptimizeJobCreation(
+                        accountId,
+                        credentialsId,
+                        region,
+                        formattedInstanceName,
+                        JOBTYPE.OPTIMIZATION,
+                        'Transfer cluster node ownership from primary to another node in the cluster',
+                        'Transfer cluster node ownership from primary node in the cluster to a healthy node in the cluster.',
+                        jobId
+                    );
+
+                    try {
+                        ({ targetNodeName, ownerNode } = await transferClusterOwnershipToStandbyNode(
                             accountId,
                             credentialsId,
                             region,
-                            formattedInstanceName,
-                            JOBTYPE.OPTIMIZATION,
-                            'Transfer cluster node ownership from primary to another node in the cluster',
-                            `Transfer cluster node ownership from ${ownerNode} to ${targetNodeName} in the cluster. Cluster node ownership transfers to a healthy node in the cluster.`,
-                            jobId
-                        );
-                        try {
-                            // move all cluster groups to the selected node
-                            if (targetNodeName && ownerNode) {
-                                const nodesTransferred = await moveClusterGroupOwnership(
-                                    credentialsId,
-                                    region,
-                                    targetNodeName,
-                                    activeNodeInstanceId
-                                );
-                                logger.info('Primary node ownership transferred to', {
-                                    targetNodeName,
-                                    nodesTransferred
-                                });
-                            } else {
-                                throw createError(500, 'Failed to find a node to transfer primary node ownership');
-                            }
-                            await updateJobDetails(accountId, transferOwnershipJobId, {
-                                status: JOBSTATUS.COMPLETED,
-                                endTime: Date.now()
-                            });
-                            shouldRollbackClusterOwnership = true;
-                            oldClusterOwnerNode = ownerNode;
-                        } catch (error) {
-                            subJobErrorMessage = `Failed to transfer sql node ownership in the cluster, ${error}`;
-                            await updateJobDetails(accountId, changeInstanceTypeJobId, {
-                                status: JOBSTATUS.FAILED,
-                                endTime: Date.now(),
-                                error: subJobErrorMessage
-                            });
-                            anySubJobFailed = true;
-                            throw error;
-                        }
+                            activeNodeInstanceId
+                        ));
+                        oldClusterOwnerNode = ownerNode;
+                        shouldRollbackClusterOwnership = true;
+                        await updateJobDetails(accountId, transferOwnershipJobId, {
+                            description: `Transfer cluster node ownership from primary node ${ownerNode} to another node ${targetNodeName} in the cluster`,
+                            status: JOBSTATUS.COMPLETED,
+                            endTime: Date.now()
+                        });
+                    } catch (error) {
+                        const errMsg = `Failed to transfer primary node: ${ownerNode} ownership to another node in the cluster: ${targetNodeName}, ${error}`;
+                        logger.error(errMsg);
+                        await updateJobDetails(accountId, transferOwnershipJobId, {
+                            status: JOBSTATUS.FAILED,
+                            endTime: Date.now(),
+                            error: errMsg
+                        });
+                        anySubJobFailed = true;
+                        throw error;
                     }
                 }
             } else {
@@ -541,9 +487,7 @@ async function checkRunningStatus(
     let statusResponse: { status: string; error?: string } = { status: '', error: '' };
 
     try {
-        const cleanStatusResponse = sqlResponseParsing(rawStatusResponse);
-        statusResponse = JSON.parse(cleanStatusResponse);
-
+        statusResponse = sqlResponseParsing(rawStatusResponse);
         jobDetails = {
             status: statusResponse.status === 'Running' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
             error: statusResponse.status !== 'Running' ? statusResponse.error : undefined
@@ -935,6 +879,7 @@ async function getClusterNodeInstanceIds(accountId: string, credentialsId: strin
         COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
     );
     let clusterNodeInstanceIds: string[] = [];
+    let clusterNodeDetails: NodeDetails[] = [];
     if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
         throw createError('Failed to get network interface details during compute optimization.');
     } else if (clusterNetworkIpDetails) {
@@ -942,11 +887,11 @@ async function getClusterNodeInstanceIds(accountId: string, credentialsId: strin
         // get all nodes in a cluster
         const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
         if (clusterNetworkIps.length > 1) {
-            const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNetworkIps);
+            clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNetworkIps);
             clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
         }
     }
-    return clusterNodeInstanceIds;
+    return { clusterNodeDetails, clusterNodeInstanceIds };
 }
 
 async function transferClusterOwnershipToStandbyNode(
@@ -1005,8 +950,9 @@ async function transferClusterOwnershipToStandbyNode(
         }
         return { targetNodeName, ownerNode };
     } catch (error) {
-        logger.error(`Failed to transfer sql node ownership in the cluster, ${error}`);
-        throw error;
+        const errorMessage = `Failed to transfer sql node ownership in the cluster, ${error}`;
+        logger.error(errorMessage);
+        throw Error(errorMessage);
     }
 }
 
@@ -1112,11 +1058,15 @@ async function handleRollbackInstanceTypeChange(
                 oldInstanceType,
                 storageDetails.fsxId,
                 storageDetails.svmId,
-                rollbackComputeOptimizeJobId,
+                rollBackInstanceTypeJobId,
                 formattedInstanceName,
                 oldDnsAddresses
             );
         }
+        await updateJobDetails(accountId, rollBackInstanceTypeJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
     } catch (error) {
         await updateJobDetails(accountId, rollBackInstanceTypeJobId, {
             status: JOBSTATUS.FAILED,
@@ -1150,6 +1100,7 @@ async function rollbackComputeOptimize(
         formattedInstanceName
     });
 
+    let errorMessage = '';
     const rollbackComputeOptimizeJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -1206,19 +1157,15 @@ async function rollbackComputeOptimize(
             );
         }
     } catch (error) {
-        const errorMessage = `Failed to rollback compute optimization ${error}`;
+        errorMessage = `Failed to rollback compute optimization ${error}`;
         logger.error(errorMessage);
         rollBackJobStatus = JOBSTATUS.FAILED;
-        await updateJobDetails(accountId, rollbackComputeOptimizeJobId, {
-            status: rollBackJobStatus,
-            endTime: Date.now(),
-            error: errorMessage
-        });
     } finally {
         rollBackJobStatus = rollBackJobStatus || JOBSTATUS.COMPLETED;
         await updateJobDetails(accountId, rollbackComputeOptimizeJobId, {
             status: rollBackJobStatus,
-            endTime: Date.now()
+            endTime: Date.now(),
+            error: !isEmpty(errorMessage) ? errorMessage : undefined
         });
     }
 }
