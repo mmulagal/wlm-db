@@ -11,7 +11,11 @@ import {
     VolumeRecord
 } from '../../utils/common-types';
 import { getInstanceDetails, getInstanceOntapDetails } from '../database-hosts-operations';
-import { ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
+import {
+    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+    GENERIC_ASSESSMENT_ERROR_MESSAGE,
+    HttpErrorCodes
+} from '../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
@@ -23,10 +27,7 @@ import { registerJob, updateJobDetails } from '../database/job-operations';
 import { GET_SANDBOX_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { calculateDaysSince, determineVolumeType, sqlResponseParsing } from '../../utils/utils';
-import {
-    createDatabaseInstanceConfigData,
-    listDatabaseInstanceConfigData
-} from '../../lib/database/database-instance-config';
+import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 import { GET_SANDBOXES } from '../workloads/mssql/queries';
 import { getProperty, getSourceDetails } from '../sandbox-operations';
 import { getMappedOntapVolumes } from '../aws/fsx-operations';
@@ -60,64 +61,13 @@ async function calculateCloneDrift(
         logger.debug('Persisted Clone configuration data from DB', persistedConfigurationData);
         const clones = persistedConfigurationData?.config_data as unknown as CloneAssesment;
 
-        let cloneAssessment;
-
-        if (!isEmpty(clones)) {
-            cloneAssessment = clones as CloneAssesment;
-        } else {
-            const { activeNodeInstanceId, newDatabaseInstanceDetails } = await getInstanceDetails(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId
-            );
-
-            const instanceOntapDetails = await getInstanceOntapDetails(
-                newDatabaseInstanceDetails,
-                credentialsId,
-                region
-            );
-
-            const {
-                database_instance_name: instanceName,
-                sqlAuthEnabled,
-                database_instance_id: instanceId,
-                resource: { resource_id: resourceId, resource_name: resourceName }
-            } = newDatabaseInstanceDetails;
-
-            if (!activeNodeInstanceId) {
-                logger.error('Active node instance id not found');
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Active node instance id not found');
-            }
-
-            cloneAssessment = await runCloneAssessment(
-                accountId,
-                credentialsId,
-                region,
-                activeNodeInstanceId,
-                instanceName,
-                instanceId,
-                resourceId,
-                resourceName as string,
-                instanceOntapDetails,
-                sqlAuthEnabled
-            );
-            logger.debug('Clone assessment result while calculating', cloneAssessment);
-
-            await createDatabaseInstanceConfigData([
-                {
-                    account_id: accountId,
-                    credentials_id: credentialsId,
-                    region,
-                    resource_id: databaseHostId,
-                    database_instance_id: databaseInstanceId,
-                    creation_time: new Date(Date.now()),
-                    config_data_type: AssessmentCategories.CLONE,
-                    config_data: cloneAssessment
-                }
-            ]);
+        if (isEmpty(clones)) {
+            errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CLONE);
+            logger.error(errorMessage);
+            return { errorMessage };
         }
+
+        const cloneAssessment = clones as CloneAssesment;
 
         const { cloneDetails, status, oldClones } = cloneAssessment as CloneAssesment;
         logger.debug('Clone assessment result', cloneDetails);

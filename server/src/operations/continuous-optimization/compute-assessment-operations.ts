@@ -10,15 +10,16 @@ import { translateFindingReasonCode } from '../aws/compute-optimizer-operations'
 import { getEc2Arn } from '../../utils/utils';
 import {
     ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
 } from '../../utils/continous-optimization-consts';
 import { ComputeAssessment, Metadata } from '../../utils/common-types';
-import { getInstanceDetails } from '../database-hosts-operations';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
 import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -115,40 +116,19 @@ async function calculateComputeDrift(
     }
 
     try {
-        let finding;
-        let findingReasonCodes;
-        let currentInstanceType;
-        let recommendationOptions;
-        const { assessment: { compute } = {} } = metadata as unknown as Metadata;
+        const { assessment: { compute, errors } = {} } = metadata as unknown as Metadata;
 
-        if (!isEmpty(compute)) {
-            ({ finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
-                compute as ComputeAssessment);
-        } else {
-            const { activeNodeInstanceId, cloudProviderAccountId, resourceName } = await getInstanceDetails(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId
-            );
-            ({ finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
-                (await runComputeAssessment(
-                    cloudProviderAccountId!,
-                    accountId,
-                    credentialsId,
-                    region,
-                    activeNodeInstanceId,
-                    resourceName!
-                )) || {});
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            (metadata as unknown as Metadata).assessment = {
-                ...existingAssessmentData,
-                compute: { finding, findingReasonCodes, currentInstanceType, recommendationOptions },
-                lastAssessedDate: new Date().getTime().toString()
-            };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        if (isEmpty(compute)) {
+            errorMessage = errors?.compute
+                ? errors?.compute
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HOST_OS_PATCH);
+
+            logger.error({ errorMessage });
+            return { errorMessage };
         }
+
+        const { finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
+            compute as ComputeAssessment;
 
         let recommendationMessage = 'Analyzing instance for rightsizing. Check later for recommendations.';
         let findingValue = AssessmentStatus.ANALYZING;

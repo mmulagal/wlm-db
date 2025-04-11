@@ -13,7 +13,8 @@ enum AssessmentCategories {
     AWS_BACKUP = 'aws-backup',
     CRR = 'crr',
     MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes',
-    CLONE = 'clone'
+    CLONE = 'clone',
+    SNAPSHOT_POLICY = 'snapshot-policy'
 }
 
 enum AssessmentTriggeredBy {

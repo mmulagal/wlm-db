@@ -6,6 +6,7 @@ import getLogger from '../../utils/logger';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
 import {
     ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
@@ -15,8 +16,7 @@ import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPa
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/common-types';
 import { extractKbNumber, extractVersionDetails, sqlResponseParsing } from '../../utils/utils';
-import { HttpErrorCodes } from '../../utils/consts';
-import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { GET_INSTALLED_MSSQL_VERSION } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
@@ -53,43 +53,18 @@ async function calculateMSSQLPatchDrift(
     }
     try {
         const metadataObject = metadata as unknown as Metadata;
-        const { assessment: { mssqlPatch } = {} } = metadataObject;
+        const { assessment: { mssqlPatch, errors } = {} } = metadataObject;
         logger.info('MSSQL patch assessment from metadata', mssqlPatch);
 
-        if (!isEmpty(mssqlPatch)) {
-            patchAssessment = mssqlPatch as MSSQLPatchAssessmentObject[];
-        } else {
-            const { node1InstanceId, node2InstanceId } = metadataObject;
-            const { activeNodeInstanceId } = await getActiveSqlNode(
-                credentialsId,
-                region,
-                node1InstanceId,
-                node2InstanceId
-            );
-
-            if (!activeNodeInstanceId) {
-                logger.error('Active node instance id not found');
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Active node instance id not found');
-            }
-
-            patchAssessment = await runMSSQLPatchAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                node1InstanceId,
-                !!node2InstanceId, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
-                activeNodeInstanceId
-            );
-            logger.info('Patch assessment result while calculating', patchAssessment);
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            (metadata as unknown as Metadata).assessment = {
-                ...existingAssessmentData,
-                mssqlPatch: patchAssessment,
-                lastAssessedDate: new Date().getTime().toString()
-            };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        if (isEmpty(mssqlPatch)) {
+            errorMessage = errors?.mssqlPatch
+                ? errors?.mssqlPatch
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HOST_OS_PATCH);
+            logger.error({ errorMessage });
+            return { errorMessage };
         }
+
+        patchAssessment = mssqlPatch as MSSQLPatchAssessmentObject[];
 
         // Find unique missing patches by KbNumber with Critical and Important patch counts
         const { uniqueMissingPatches, criticalPatchesCount, importantPatchesCount } =
