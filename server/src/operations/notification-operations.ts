@@ -86,10 +86,40 @@ async function sendSavingsCalculationEmail(
         onprem: 'On-premises'
     };
     const desc = storageDesc[storageType];
-    const emailSubject = `Your TCO Calculation Report is Ready for the instance: ${instanceName}`;
-    const emailBody = `Attached, you will find the detailed report of your Total Cost of Ownership (TCO) analysis.
-    The report provides a comprehensive comparison of potential cost savings for your existing Microsoft SQL Server environment using ${desc} as storage, in comparison to using Amazon FSx for ONTAP as storage. It includes detailed calculations, cost estimations, and recommendations to help you make an informed decision about the most cost-effective storage solution for your organization.`;
-    fileName = fileName.replace('.pdf', `_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}.pdf`); // // fileName_dd-mm-yyyy.pdf
+    const emailSubject = `Savings Calculator Report is Ready for the instance: ${instanceName}`;
+    const emailBody = `
+        <!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                <p>Hi there,</p>
+                <p>
+                    Here's the savings calculator report that provides a comparison of your current Microsoft SQL Server environment using ${desc} storage and the potential savings you could achieve by switching to Amazon FSx for NetApp ONTAP.
+                </p>
+                <br />
+                <p>Key highlights from the report include:</p>
+                <ul>
+                    <li>In-depth cost calculations that break down the expenses associated with each storage option.</li>
+                    <li>Estimated savings you could realize by migrating to Amazon FSx for NetApp ONTAP.</li>
+                    <li>Practical recommendations to guide you towards the most economical and efficient storage solution for your needs.</li>
+                </ul>
+                <p>
+                    Our goal is to help you make the best decision for your organization's financial and
+                    operational success. Please take a moment to review the findings and see how they can
+                    positively impact your bottom line.
+                </p>
+            </body>
+        </html>
+    `;
+    fileName = fileName.replace('.pdf', `_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}.pdf`); // fileName_dd-mm-yyyy.pdf
 
     await sendEmail(config.get<string>('notification.sender-email'), [userEmail], emailSubject, emailBody, [
         {
