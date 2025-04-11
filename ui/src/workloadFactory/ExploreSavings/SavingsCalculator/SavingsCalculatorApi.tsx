@@ -351,10 +351,6 @@ const SavingsCalculatorApi = () => {
             } else if (isProtectionData === EBS_PROTECTED_OPTIONS.UNKNOWN) {
                 dispatch(setSnapshotLoading(false));
                 dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
-            } else {
-                // ToDo: once instance api logic is added than can be removed
-                dispatch(setSnapshotLoading(false));
-                dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
             }
         }
     }, [selectedHostDetails]);
@@ -368,12 +364,9 @@ const SavingsCalculatorApi = () => {
                     dispatch(setDisableState(false));
                     triggerRefreshApi();
                 } else {
-                    // dispatch(setSnapshotLoading(true));
-                    // // This is similar to expand row in inventory. It will call instance API to get protection data.
-                    // addInstanceIdToGetPerf(selectedHostDetails, dispatch);
-                    // ToDo: once instance api logic is added than can be updated
-                    dispatch(setDisableState(false));
-                    triggerRefreshApi();
+                    dispatch(setSnapshotLoading(true));
+                    // This is similar to expand row in inventory. It will call instance API to get protection data.
+                    addInstanceIdToGetPerf(selectedHostDetails, dispatch);
                 }
             }
         } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {

@@ -26,18 +26,17 @@ import {
     createOperatingSystemMpioSessionsOptimizeJobMockData,
     createStorageTierJobMockData,
     createEnableMpioJobMockData,
-    createDeploymentMockDataInDBForPgSql
+    createDeploymentMockDataInDBForPgSql,
+    createAssessmentData
 } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
 import { listConfig, upsertDatabaseInstance } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { createJobs, listJobs } from '../../lib/database/job';
-import { ASSESMENT_CONFIG_DATA, ASSESSMENT_CRR_CONFIG_DATA, inventoryDemoData } from './demoInventoryData';
+import { inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
 import { instanceDemoData } from './instancesResponse';
-import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
-import { AssessmentCategories } from '../continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -411,31 +410,7 @@ async function createDatabaseInstances(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    const instanceConfigDataRecord = {
-        account_id: accountId,
-        credentials_id: credentialsId,
-        region,
-        resource_id: resourceId,
-        database_instance_id: databaseInstanceId,
-        creation_time: new Date(Date.now()),
-        config_data_type: AssessmentCategories.STORAGE,
-        config_data: ASSESMENT_CONFIG_DATA
-    };
-
-    await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
-
-    const instanceCRRConfigDataRecord = {
-        account_id: accountId,
-        credentials_id: credentialsId,
-        region,
-        resource_id: resourceId,
-        database_instance_id: databaseInstanceId,
-        creation_time: new Date(Date.now()),
-        config_data_type: AssessmentCategories.CRR,
-        config_data: ASSESSMENT_CRR_CONFIG_DATA
-    };
-
-    await createDatabaseInstanceConfigData([instanceCRRConfigDataRecord]);
+    await createAssessmentData(accountId, credentialsId, region, resourceId, databaseInstanceId);
 
     return databaseInstanceId;
 }

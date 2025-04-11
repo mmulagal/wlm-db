@@ -1099,16 +1099,24 @@ export const getMhUnmanagedInstances = (
     let { headerSelectedCred, headerSelectedRegion }: any = updatedState?.headers;
     Object.keys(databaseHostsData).map((key: string) => {
         if (
-            databaseHostsData[key]?.credentialId !== headerSelectedCred?.data?.credentialsId ||
-            databaseHostsData[key]?.regionId !== headerSelectedRegion?.data?.regionCode
+            runningInstanceList.includes(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            )
         ) {
             return;
         }
-        if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId || '')) {
-            return;
-        }
         if (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) {
-            instanceList.push(databaseHostsData[key]?.ec2InstanceId || '');
+            instanceList.push(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            );
         }
     });
     return instanceList;
@@ -1119,23 +1127,29 @@ export const getUnmanagedHostInstances = (
     runningInstanceList: Array<string>
 ) => {
     let instanceList: Array<string> = [];
-    let updatedState = store.getState();
-    let { headerSelectedCred, headerSelectedRegion }: any = updatedState?.headers;
     Object.keys(databaseHostsData).map((key: string) => {
         if (
-            databaseHostsData[key]?.credentialId !== headerSelectedCred?.data?.credentialsId ||
-            databaseHostsData[key]?.regionId !== headerSelectedRegion?.data?.regionCode
+            runningInstanceList.includes(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            )
         ) {
-            return;
-        }
-        if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId || '')) {
             return;
         }
         if (
             (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) ||
             (databaseHostsData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && databaseHostsData[key]?.isDetected)
         ) {
-            instanceList.push(databaseHostsData[key]?.ec2InstanceId || '');
+            instanceList.push(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            );
         }
     });
     return instanceList;
@@ -2186,17 +2200,21 @@ export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
     // First check if this is already opened or closed. If this data is already available or not.
     const state = store.getState();
     const unManagedPerfInstanceIdsList = state.inventoryV2.unManagedPerfInstanceIdsList;
-    if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
+    if (
+        !unManagedPerfInstanceIdsList.includes(
+            uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId)
+        )
+    ) {
         // If this has unmanaged rows or not ?
         let unmanagedRows = rowData?.sqlServerInstances?.filter(
             (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
         );
         if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
             let instanceList = [];
-            instanceList.push(rowData?.ec2InstanceId);
+            instanceList.push(uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId));
             const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
             if (partnerData && partnerData?.length > 0) {
-                instanceList.push(partnerData?.[0]?.id);
+                instanceList.push(uniqueHostRow(partnerData?.[0]?.id, rowData?.credentialId, rowData?.regionId));
             }
             dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
         }

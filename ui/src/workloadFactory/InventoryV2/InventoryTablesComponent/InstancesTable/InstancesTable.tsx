@@ -318,15 +318,10 @@ const InstancesTable = () => {
                 prepareHostApi,
                 true
             );
-            // const manageStartMsg = (
-            //     <div className={styles.notification}>
-            //         {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
-            //         <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
-            //         {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
-            //     </div>
-            // );
-            // dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
+            dispatch(
+                setDetectedInstanceId(uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId))
+            );
         } else {
             const updatedInventoryTableData = updateInstanceStatus('detect', rowData, rowData);
             dispatch(setInventoryTableData(updatedInventoryTableData));
@@ -339,11 +334,9 @@ const InstancesTable = () => {
             );
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: detectedSuccessMsg }));
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
-        }
-        // if fsx register is false and only db cred is added than call instance API
-        // dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]]));
-        if (!isFsxRegister) {
-            dispatch(setDetectedInstanceId(rowData?.ec2InstanceId));
+            dispatch(
+                setDetectedInstanceId(uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId))
+            );
         }
     };
 

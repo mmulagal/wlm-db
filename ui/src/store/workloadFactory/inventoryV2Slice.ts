@@ -286,12 +286,9 @@ const inventoryV2Slice = createSlice({
             state.discoveredHosts.discoverHostLoading = true;
             state.dashSandboxList.loading = true;
             state.dashSandboxSavings.loading = true;
-            state.mssqlInstancesData = null;
             state.inventoryChartData = null;
             state.removeSecNodeDiscoveredList = [];
-            state.unManagedPerfInstanceIdsList = [];
             state.managedAssessmentHostIdsList = [];
-            state.perfMssqlInstancesData = {};
             state.managedAssessmentHostData = {};
         },
         resetRefreshData: (state, action: PayloadAction<any>) => {
@@ -306,6 +303,10 @@ const inventoryV2Slice = createSlice({
             state.multiMssqlDatabaseHostsData = null;
             state.multiPgSqlDatabaseHostsData = null;
             state.potentialSavingsHostData = {};
+
+            state.mssqlInstancesData = null;
+            state.perfMssqlInstancesData = {};
+            state.unManagedPerfInstanceIdsList = [];
         },
         resetInventoryLoading: (state, action: PayloadAction<any>) => {
             state.createResourceApiLoading = false;
