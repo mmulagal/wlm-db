@@ -22,7 +22,7 @@ import {
     describeInstanceInformation
 } from '../../lib/aws/ssm';
 import { decompressSSMResponse, generateHash, sleep } from '../../utils/utils';
-import { AWS_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
+import { AWS_REGIONS, RESTRICTED_FSX_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParamterObject, MultipleCommandSsmResponse } from '../../utils/common-types';
@@ -271,12 +271,12 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
     logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP');
 
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
-    const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
+
     try {
         const fsxRegionResponse = await getParametersByPath();
 
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
-            if (regionCode && !restrictedRegions.includes(regionCode)) {
+            if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
                 fsxRegionsList.push({
                     regionCode,
                     regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
@@ -290,7 +290,7 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
             message: error.message
         });
         AWS_REGIONS.forEach((regionName, regionCode) => {
-            if (regionCode && !restrictedRegions.includes(regionCode)) {
+            if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
                 fsxRegionsList.push({
                     regionCode,
                     regionName
@@ -305,7 +305,6 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
-    const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
     try {
         const input: DescribeRegionsCommandInput = {
@@ -324,7 +323,7 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
 
         const { Regions: enabledRegionsInAccount } = ec2RegionResponse;
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
-            if (regionCode && !restrictedRegions.includes(regionCode)) {
+            if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
                 if (enabledRegionsInAccount?.some(enabledRegion => enabledRegion?.RegionName === regionCode)) {
                     fsxRegionsList.push({
                         regionCode,
@@ -340,7 +339,7 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
             message: error.message
         });
         AWS_REGIONS.forEach((regionName, regionCode) => {
-            if (regionCode && !restrictedRegions.includes(regionCode)) {
+            if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
                 fsxRegionsList.push({
                     regionCode,
                     regionName
