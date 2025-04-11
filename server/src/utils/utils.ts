@@ -971,6 +971,29 @@ function isValidProp(propName: string) {
     return propName && propName !== 'undefined' && propName !== 'null';
 }
 
+/**
+ * Calculates the number of days between two dates.
+ * @param startDate - The start date.
+ * @param endDate - The end date. Defaults to the current date if not provided.
+ * @returns The number of days between the two dates.
+ */
+function calculateDaysSince(startDate: string | Date, endDate: string | Date = new Date()): number {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const timeDifference = end.getTime() - start.getTime();
+    return Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+}
+
+function determineVolumeType(cloneVolumeName: string): 'log' | 'data' | 'unknown' {
+    if (cloneVolumeName.includes('sqllog')) {
+        return 'log';
+    }
+    if (cloneVolumeName.includes('sqldata')) {
+        return 'data';
+    }
+    return 'unknown'; // Default case if neither 'sqllog' nor 'sqldata' is found
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1027,5 +1050,7 @@ export {
     isRateLimited,
     parseMultipleCommandResponse,
     divideArrayIntoChunks,
-    isValidProp
+    isValidProp,
+    calculateDaysSince,
+    determineVolumeType
 };

@@ -46,6 +46,7 @@ import {
     setMultiDataLoading,
     setMultiDataStatus,
     setRefreshTime,
+    setRefreshTimeJobMonitor,
     setRefreshTimeSandbox,
     setSingleComboCredAndRegion
 } from '../../../store/workloadFactory/headersSlice';
@@ -95,6 +96,7 @@ import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
 import {
+    resetInventoryLoading,
     resetRefreshData,
     setIsRefreshed,
     setSelectedHeaderTab
@@ -116,6 +118,7 @@ import Marketing from '../../../Marketing/Marketing';
 import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
 import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSlice';
 import { method } from 'lodash';
+import store from '../../../store/store';
 
 type Tab = {
     tab: string;
@@ -186,7 +189,6 @@ const HeaderComponent = ({ tab }: Tab) => {
     HeaderComponentApi();
     InventoryApisV3();
     DatabaseHomeApis();
-    JobMonitoringApi();
     SavingsCalculatorApi();
     SavingsCalculatorManualApi();
 
@@ -286,9 +288,9 @@ const HeaderComponent = ({ tab }: Tab) => {
             options.push(option);
         });
         if (options.length > 0 && !headerSelectedCredSandbox) {
-            if (localStorage.getItem('selectedCred')) {
+            if (localStorage.getItem('selectedSandboxCred')) {
                 //@ts-ignore
-                const value = JSON.parse(localStorage.getItem('selectedCred'));
+                const value = JSON.parse(localStorage.getItem('selectedSandboxCred'));
 
                 if (checkValueSavedForCred(options, value)) {
                     dispatch(setHeaderSelectedCredSandbox(value));
@@ -367,9 +369,9 @@ const HeaderComponent = ({ tab }: Tab) => {
         });
         if (options.length > 0 && !headerSelectedRegionSandbox) {
             const defaultOption: any = options[0];
-            if (localStorage.getItem('selectedRegion')) {
+            if (localStorage.getItem('selectedSandboxRegion')) {
                 //@ts-ignore
-                const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
+                const regionValue = JSON.parse(localStorage.getItem('selectedSandboxRegion'));
 
                 if (checkValueSavedForRegion(options, regionValue)) {
                     if (isDemoMode) {
@@ -418,6 +420,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                 headerSelectedMultiCred?.[0]?.data?.providerAccountId;
             const option = generateOptionType(credValue, credValue, '', false, '', headerSelectedMultiCred?.[0]?.data);
             dispatch(setSelectedCredentials(option));
+
+            if (localStorage.getItem('selectedCred')) {
+                localStorage.removeItem('selectedCred');
+            }
+            localStorage.setItem('selectedCred', JSON.stringify(option));
         }
     }, [headerSelectedMultiCred]);
 
@@ -436,6 +443,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                 headerSelectedMultiRegion?.[0]?.data
             );
             dispatch(setSelectedRegionData(option));
+
+            if (localStorage.getItem('selectedRegion')) {
+                localStorage.removeItem('selectedRegion');
+            }
+            localStorage.setItem('selectedRegion', JSON.stringify(option));
         }
     }, [headerSelectedMultiRegion]);
 
@@ -457,15 +469,23 @@ const HeaderComponent = ({ tab }: Tab) => {
         ) {
             let currentCredId = headerSelectedCred?.data?.credentialsId;
             let currentRegionId = headerSelectedRegion?.data?.regionCode;
+
+            const state = store.getState();
+            const {
+                mssqlInstancesData: mssqlInstancesDataLatest,
+                perfMssqlInstancesData: perfMssqlInstancesDataLatest,
+                potentialSavingsHostData: potentialSavingsHostDataLatest
+            } = state.inventoryV2;
+
             let isMssqlInstanceDataLoading = false;
-            if (mssqlInstancesData) {
-                Object.keys(mssqlInstancesData)?.map((key: any) => {
+            if (mssqlInstancesDataLatest) {
+                Object.keys(mssqlInstancesDataLatest)?.map((key: any) => {
                     let keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
                         keyList[2] === currentRegionId &&
-                        mssqlInstancesData?.[key]?.loading
+                        mssqlInstancesDataLatest?.[key]?.loading
                     ) {
                         isMssqlInstanceDataLoading = true;
                     }
@@ -473,14 +493,14 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
 
             let perfMssqlInstancesDataLoading = false;
-            if (perfMssqlInstancesData) {
-                Object.keys(perfMssqlInstancesData)?.map((key: any) => {
+            if (perfMssqlInstancesDataLatest) {
+                Object.keys(perfMssqlInstancesDataLatest)?.map((key: any) => {
                     let keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
                         keyList[2] === currentRegionId &&
-                        perfMssqlInstancesData?.[key]?.loading
+                        perfMssqlInstancesDataLatest?.[key]?.loading
                     ) {
                         perfMssqlInstancesDataLoading = true;
                     }
@@ -488,14 +508,14 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
 
             let potentialSavingsHostDataLoading = false;
-            if (potentialSavingsHostData) {
-                Object.keys(potentialSavingsHostData)?.map((key: any) => {
+            if (potentialSavingsHostDataLatest) {
+                Object.keys(potentialSavingsHostDataLatest)?.map((key: any) => {
                     let keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
                         keyList[2] === currentRegionId &&
-                        potentialSavingsHostData?.[key]?.loading
+                        potentialSavingsHostDataLatest?.[key]?.loading
                     ) {
                         potentialSavingsHostDataLoading = true;
                     }
@@ -571,8 +591,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                 setPendingQueriesCounter(total);
                 let queueLength = queue?.length;
                 let newQueue: any = [...queue];
+                let newQueueForLoop: any = [...newQueue];
                 let newMultiDataStatus: any = { ...multiDataStatusRef.current };
-                newQueue?.forEach((item: any, index: number) => {
+                // using diff queue variable for loop as we update newQueue in the loop
+                newQueueForLoop?.forEach((item: any, index: number) => {
                     let isPresent = false;
                     for (let cred of headerSelectedMultiCred) {
                         for (let region of headerSelectedMultiRegion) {
@@ -588,6 +610,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                         // If any combo is removed and added back again than not calling apis again
                         // const key = `${newQueue[index]?.cred?.data?.credentialsId}_${newQueue[index]?.region?.data?.regionCode}`;
                         // delete newMultiDataStatus[key];
+                        let index = newQueue?.findIndex(
+                            (perItem: any) =>
+                                item.cred?.data?.credentialsId === perItem.cred?.data?.credentialsId &&
+                                item.region?.data?.regionCode === perItem.region?.data?.regionCode
+                        );
                         newQueue.splice(index, 1);
                     }
                 });
@@ -628,6 +655,17 @@ const HeaderComponent = ({ tab }: Tab) => {
                     }
                 }
             }
+        } else {
+            setQueue([]);
+            setCurrentIndex(0);
+            setPendingQueriesCounter(0);
+            dispatch(resetInventoryLoading(null));
+            dispatch(
+                setSingleComboCredAndRegion({
+                    cred: null,
+                    region: null
+                })
+            );
         }
     };
 
@@ -746,15 +784,15 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(inventoryApi.util.resetApiState());
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
+            fetchOnPremData(true);
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
             dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(workloadFactoryResourceApiV2.util.resetApiState());
             dispatch(setIsResourceRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
-            dispatch(setRefreshTime(getCurrentDateTime()));
+            dispatch(setRefreshTimeJobMonitor(getCurrentDateTime()));
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
-            dispatch(setIsRefreshed(true));
         } else if (
             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
@@ -765,7 +803,6 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(setRefreshTimeSandbox(getCurrentDateTime()));
             dispatch(setIsRefreshedSandbox(true));
         }
-        fetchOnPremData(true);
     };
 
     const refreshComponent = () => {
@@ -806,10 +843,12 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (headerSelectedMultiCred && headerSelectedMultiCred.length === 1) {
             const credValue = headerSelectedMultiCred[0]?.value;
             return credValue;
-        } else if (headerSelectedMultiCred && headerSelectedMultiCred.length > 1) {
+        } else if (headerSelectedMultiCred && headerSelectedMultiCred?.length === credentialData?.length) {
+            return GENERAL.ALL_CRED_SELECTED;
+        } else if (headerSelectedMultiCred && headerSelectedMultiCred.length >= 1) {
             return `${headerSelectedMultiCred.length} credentials selected`;
         } else {
-            return 'No credentials selected';
+            return GENERAL.NO_CRED_SELECTED;
         }
     };
 
@@ -817,10 +856,12 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (headerSelectedMultiRegion && headerSelectedMultiRegion.length === 1) {
             const regionValue = headerSelectedMultiRegion[0]?.value;
             return regionValue;
-        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion.length > 1) {
+        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion?.length === regionsData?.regions?.length) {
+            return GENERAL.ALL_REGIONS_SELECTED;
+        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion.length >= 1) {
             return `${headerSelectedMultiRegion.length} regions selected`;
         } else {
-            return 'No regions selected';
+            return GENERAL.NO_REGIONS_SELECTED;
         }
     };
 
@@ -925,10 +966,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                             headerSelectedCredSandbox ? [headerSelectedCredSandbox] : [generateSandboxAWSAccounts[0]]
                         }
                         onChange={(selectedOptions: any): void => {
-                            if (localStorage.getItem('selectedCred')) {
-                                localStorage.removeItem('selectedCred');
+                            if (localStorage.getItem('selectedSandboxCred')) {
+                                localStorage.removeItem('selectedSandboxCred');
                             }
-                            localStorage.setItem('selectedCred', JSON.stringify(selectedOptions));
+                            localStorage.setItem('selectedSandboxCred', JSON.stringify(selectedOptions));
                             dispatch(updateRefreshBlocked(false));
                             dispatch(setHeaderSelectedCredSandbox(selectedOptions));
                         }}
@@ -968,10 +1009,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                         }
                         onChange={(selectedOptions: any): void => {
                             function updateRegion() {
-                                if (localStorage.getItem('selectedRegion')) {
-                                    localStorage.removeItem('selectedRegion');
+                                if (localStorage.getItem('selectedSandboxRegion')) {
+                                    localStorage.removeItem('selectedSandboxRegion');
                                 }
-                                localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
+                                localStorage.setItem('selectedSandboxRegion', JSON.stringify(selectedOptions));
                                 dispatch(updateRefreshBlocked(false));
                                 dispatch(setHeaderSelectedRegionSandbox(selectedOptions));
                             }

@@ -64,6 +64,7 @@ import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
 import downloadPdf from '../../common/pdfGenerator';
 import { useLazyGetSubTaskListQuery, useTriggerInstanceAssessmentMutation } from '../../utils/apiService';
+import AssessmentContainer from './AssessmentContainer/AssessmentContainer';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -373,13 +374,7 @@ const GetWell = () => {
                         >
                             Optimize instance
                         </DsTypography>
-                        {localStorage.getItem('adhocAssessment') === 'true' && (
-                            <div className={styles.triggerAssessment}>
-                                <DsButton onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress}>
-                                    Trigger Assessment
-                                </DsButton>
-                            </div>
-                        )}
+
                         {!optimizePrintState &&
                             (loading || triggerAssessmentInProgress ? (
                                 <div className={styles.refreshIconDisable} id={'assessment-refresh'}>
@@ -426,6 +421,10 @@ const GetWell = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Assessment Section here */}
+                <AssessmentContainer onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress} />
+
                 <div className={styles.getWellSecondLevel}>
                     <TotalOptimizationScore />
                     <OptimizationBreakdown />

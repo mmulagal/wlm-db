@@ -29,6 +29,7 @@ const initialHeaderState: HeaderTypeEntities = {
     },
     refreshTime: null,
     refreshTimeSandbox: null,
+    refreshTimeJobMonitor: null,
     dashboardRefresh: false,
     multiDataStatus: {},
     multiDataLoading: false
@@ -85,6 +86,9 @@ const headersSlice = createSlice({
         setRefreshTimeSandbox: (state, action: PayloadAction<any>) => {
             state.refreshTimeSandbox = action.payload;
         },
+        setRefreshTimeJobMonitor: (state, action: PayloadAction<any>) => {
+            state.refreshTimeJobMonitor = action.payload;
+        },
         setDashboardRefresh: (state, action: PayloadAction<any>) => {
             state.dashboardRefresh = action.payload;
         },
@@ -113,6 +117,7 @@ export const {
     addStatus,
     setRefreshTime,
     setRefreshTimeSandbox,
+    setRefreshTimeJobMonitor,
     setDashboardRefresh,
     setCredentialMapping,
     setRegionMapping,

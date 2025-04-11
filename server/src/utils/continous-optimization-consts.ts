@@ -12,7 +12,8 @@ enum AssessmentCategories {
     RESILIENCY = 'resiliency',
     AWS_BACKUP = 'aws-backup',
     CRR = 'crr',
-    MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes'
+    MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes',
+    CLONE = 'clone'
 }
 
 enum AssessmentTriggeredBy {
@@ -33,7 +34,8 @@ enum AwsWellArchitecturedPillars {
     RELIABILITY = 'Reliability',
     COST_OPTIMIZATION = 'Cost optimization',
     OPERATIONAL_EXCELLENCE = 'Operational excellence',
-    SECURITY = 'Security'
+    SECURITY = 'Security',
+    COST_EFFICIENCY = 'Cost efficiency'
 }
 
 const VOLUME = 'volume';

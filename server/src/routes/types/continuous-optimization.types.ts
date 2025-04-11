@@ -181,6 +181,41 @@ const AdditionalRssConfigParameterDriftResponse = Type.Optional(
     })
 );
 
+const AdditionalCloneParameterDriftResponse = Type.Optional(
+    Type.Object({
+        cloneDetails: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    databaseHostName: Type.String(),
+                    databaseHostId: Type.String(),
+                    databaseInstanceName: Type.String(),
+                    sourceDatabaseHostName: Type.Optional(Type.String()),
+                    sourceDatabaseInstanceName: Type.Optional(Type.String()),
+                    sourceDatabaseName: Type.Optional(Type.String()),
+                    cloneDatabaseName: Type.Optional(Type.String()),
+                    cloneSize: Type.Optional(Type.Number()),
+                    cloneAge: Type.Optional(Type.Number()),
+                    clonedBy: Type.Optional(Type.String()),
+                    tags: Type.Optional(Type.String()),
+                    clonedVolumeDetails: Type.Optional(
+                        Type.Array(
+                            Type.Object({
+                                cloneVolumeUuid: Type.Optional(Type.String()),
+                                cloneVolumeName: Type.Optional(Type.String()),
+                                cloneVolumeCreateTime: Type.Optional(Type.String()),
+                                sourceVolumeName: Type.Optional(Type.String()),
+                                cloneDatabaseName: Type.Optional(Type.String()),
+                                cloneVolumeType: Type.Optional(Type.String())
+                            })
+                        )
+                    )
+                })
+            )
+        ),
+        cloneDriftMessage: Type.Optional(Type.String())
+    })
+);
+
 const ComputeDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalComputeParameterDriftResponse]);
 type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
 
@@ -195,6 +230,9 @@ type RssConfigDriftResponseType = Static<typeof RssConfigDriftResponse>;
 
 const MSSQLPatchDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalMSSQLPatchParameterDriftResponse]);
 type MSSQLPatchDriftResponseType = Static<typeof MSSQLPatchDriftResponse>;
+
+const CloneDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalCloneParameterDriftResponse]);
+type CloneDriftResponseType = Static<typeof CloneDriftResponse>;
 
 const StorageParameterErrorResponse = Type.Object({
     name: Type.String(),
@@ -242,7 +280,8 @@ const DriftAssessmentResponse = Type.Object({
     rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
     maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
     mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse])),
-    resiliency: Type.Optional(Type.Union([ResilienceDriftAssessmentResponse, ErrorResponse]))
+    resiliency: Type.Optional(Type.Union([ResilienceDriftAssessmentResponse, ErrorResponse])),
+    clone: Type.Optional(Type.Union([CloneDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -364,6 +403,8 @@ const OptimizePerHostRequestBody = Type.Intersect([
     Type.Object({
         id: Type.String({ minLength: 1 }),
         sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+        credentialsId: Type.String(),
+        region: Type.String(),
         instanceType: Type.Optional(Type.String()),
         networkAdapters: Type.Optional(Type.Array(Type.String()))
     }),
@@ -481,5 +522,6 @@ export {
     BulkOptimizeComputePerHostRequestBody,
     BulkOptimizeComputeRequestBody,
     BulkOptimizeComputeRequestBodyType,
-    OptimizeGenericRequestBody
+    OptimizeGenericRequestBody,
+    CloneDriftResponseType
 };

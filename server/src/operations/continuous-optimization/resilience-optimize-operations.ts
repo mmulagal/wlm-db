@@ -12,7 +12,12 @@ import {
     SnapshotScheduleType,
     BulkOptimizeSnapshotPolicyParamsType
 } from '../../routes/types/continuous-optimization.types';
-import { DatabaseInstanceMetadata, Metadata, WorkloadInstance } from '../../utils/common-types';
+import {
+    DatabaseInstanceMetadata,
+    Metadata,
+    WorkloadInstance,
+    MappedOnTapVolumeResponse
+} from '../../utils/common-types';
 import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
 import {
@@ -22,7 +27,6 @@ import {
 import { callSsmExecution } from '../aws/ssm-operations';
 import { isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
-import { MappedOnTapVolumeResponse } from '../database-hosts-operations';
 import { getMappedOntapVolumes } from '../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { updateJobDetails } from '../database/job-operations';
