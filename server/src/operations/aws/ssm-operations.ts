@@ -270,10 +270,10 @@ async function callSsmExecution(
 async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP');
 
+    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
     try {
         const fsxRegionResponse = await getParametersByPath();
 
-        const fsxRegionsList: Array<FSxAvailableRegionType> = [];
         const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
@@ -288,10 +288,15 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
         return { regions: fsxRegionsList };
     } catch (error: any) {
         logger.error('Get generic FSX ONTAP Region list has failed with error:', error);
-        if (error?.$metadata?.httpStatusCode && error.message) {
-            throw createError(error?.$metadata?.httpStatusCode, `Error fetching generic fsx region ${error.message}`);
-        }
-        throw new Error(`Error fetching generic fsx region: ${error}`);
+        AWS_REGIONS.forEach((regionName, regionCode) => {
+            if (regionCode && !regionName.includes('Gov') && !regionName.includes('China')) {
+                fsxRegionsList.push({
+                    regionCode,
+                    regionName
+                });
+            }
+        });
+        return { regions: fsxRegionsList };
     }
 }
 
