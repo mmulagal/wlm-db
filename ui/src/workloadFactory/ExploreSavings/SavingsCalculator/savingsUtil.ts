@@ -2041,12 +2041,6 @@ export const checkIfEbsProtected = (selectedHostDetailsD?: any, perfMssqlInstanc
             return EBS_PROTECTED_OPTIONS.UNPROTECTED;
         } else if (
             !selectedHostDetails?.loading &&
-            perfMssqlInstancesData?.[selectedHostDetails?.id] &&
-            !perfMssqlInstancesData?.[selectedHostDetails?.id]?.loading
-        ) {
-            return EBS_PROTECTED_OPTIONS.UNKNOWN;
-        } else if (
-            !selectedHostDetails?.loading &&
             perfMssqlInstancesData?.[
                 uniqueHostRow(selectedHostDetails?.id, selectedHostDetails?.credentialId, selectedHostDetails?.regionId)
             ] &&
