@@ -12,6 +12,12 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/asse
     }, 20);
 });
 
+router.post(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, { jobId: '1234' });
+    }, 20);
+});
+
 router.get(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/assessment`,
     async (req: {}, res: any) => {

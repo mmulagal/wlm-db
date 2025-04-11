@@ -7,7 +7,8 @@ import {
     Popover,
     DsButton,
     useDialog,
-    TooltipInfo
+    TooltipInfo,
+    Button
 } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
@@ -24,6 +25,7 @@ import { ReactComponent as Union } from '../../assets/Union.svg';
 import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { useDispatch } from 'react-redux';
+import {clearNotifications} from '../../store/notificationSlice';
 
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -149,7 +151,21 @@ const GetWell = () => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
-                        message: 'Assessment triggered successfully'
+                        message: (
+                            <div>
+                                {`Assessment process initiated. Track progress in `}
+                                 <Button
+                                     Component="button"
+                                     variant="text"
+                                     onClick={() => {
+                                          dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                          dispatch(clearNotifications());;
+                                     }}
+                                >
+                                        {GENERAL.JOB_MONITORING}.
+                                </Button>
+                            </div>
+                        )
                     })
                 );
                 const jobInterval = setInterval(() => {
@@ -175,6 +191,7 @@ const GetWell = () => {
                                     message: 'Assessment failed'
                                 })
                             );
+                            refreshGetWellPage();
                             clearInterval(jobInterval);
                         }
                     });
