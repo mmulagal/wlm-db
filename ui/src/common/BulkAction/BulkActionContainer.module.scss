@@ -8,4 +8,10 @@
     display: flex;
     gap: 24px;
     align-items: center;
+
+    .bulkButtonContainer {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
 }
