@@ -810,7 +810,7 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
         volumeUuids
     });
 
-    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, fsxId);
+    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, [fsxId]);
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};

@@ -139,6 +139,25 @@
     }
 }
 
+.downMenuIcon {
+    font-weight: 600;
+    color: var(--blue-70);
+    font-size: 22px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 16px;
+
+    &:hover {
+        cursor: pointer;
+    }
+
+    .menuPointer {
+        height: 40px;
+    }
+}
+
 .menuPointerDisabled {
     font-weight: 600;
     font-size: 22px;
@@ -156,10 +175,6 @@
 
 .popover {
     z-index: 9999999;
-
-    svg {
-        display: none;
-    }
 }
 
 .subMenuContainer {

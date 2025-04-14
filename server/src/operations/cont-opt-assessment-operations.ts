@@ -569,11 +569,9 @@ async function driftAssessmentDataCollection(
     }
 
     if (shouldRunStorageAssessment || shouldRunResilienceAssessment) {
-        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
-            credentialsId,
-            region,
+        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
             databaseInstanceRecord.fsxFileSystem
-        );
+        ]);
 
         databaseInstanceRecord.svmOntapUuid = svms.find(svm =>
             isDemoFlow ? svm : svm?.StorageVirtualMachineId === databaseInstanceRecord.svmId

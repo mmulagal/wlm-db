@@ -25,7 +25,14 @@ beforeAll(async () => {
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI'
+            sqlDeploymentType: 'FCI',
+            assessment: {
+                "rssConfig": {
+                    "rssAdapters": [],
+                    "tcpOffloadState": "Disabled",
+                    "rssConfigFinding": "optimized"
+                }
+            }
         }
     });
 
@@ -75,7 +82,7 @@ describe('calculateRssConfigDrift', () => {
         });
     });
 
-    it.skip('run RSS config assessment drift data', async () => {
+    it('run RSS config assessment drift data', async () => {
         const rssConfigAssessmentResponse = await calculateRssConfigDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,

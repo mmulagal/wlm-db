@@ -31,7 +31,15 @@ beforeAll(async () => {
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI'
+            sqlDeploymentType: 'FCI',
+            assessment: {
+                "compute": {
+                    "finding": "OPTIMIZED",
+                    "findingReasonCodes": [],
+                    "currentInstanceType": "r7i.xlarge",
+                    "recommendationOptions": []
+                },
+            }
         }
     });
 
@@ -50,7 +58,7 @@ beforeAll(async () => {
     });
 });
 describe('Compute assessment operations', () => {
-    it.skip('Should calculate compute drift', async () => {
+    it('Should calculate compute drift', async () => {
         const response = await calculateComputeDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
