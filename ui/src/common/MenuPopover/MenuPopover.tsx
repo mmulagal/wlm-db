@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Popover as DesignPopover } from '@netapp/design-system';
 import CustomContentInfo from '../CustomContentInfo/CustomContentInfo';
 import { ReactComponent as ArrowRight } from '@netapp/icons/ic_arrow_right.svg';
+import { ReactComponent as MenuIcon } from '../../assets/menu-icon2.svg';
 import styles from './MenuPopover.module.scss';
 
 export type MenuItemType = {
@@ -21,12 +22,13 @@ type MenuPopoverType = {
     menuItems: MenuItemType[];
     toggleMenu: (toggleType: string, menuId: string) => void;
     isDisabled?: boolean;
-    CustomMenu?: JSX.Element;
+    CustomMenu?: any;
     disabledText?: string | boolean | any;
-    prefferedLocation?: any;
+    preferredLocation?: any;
     isSubmenu?: boolean;
     isBlackLayout?: boolean;
     customColor?: string;
+    menuType?: string;
 };
 
 function MenuPopover({
@@ -36,10 +38,11 @@ function MenuPopover({
     isDisabled = false,
     CustomMenu,
     disabledText,
-    prefferedLocation,
+    preferredLocation = 'left',
     isSubmenu,
     isBlackLayout = false,
-    customColor
+    customColor,
+    menuType = 'default'
 }: MenuPopoverType) {
     const refMenuContent = useRef<HTMLDivElement>(null);
     const refParent = useRef<HTMLDivElement>(null);
@@ -56,7 +59,7 @@ function MenuPopover({
         }
     };
 
-    const renderMenuItem = (item: MenuItemType, index: number): JSX.Element => {
+    const renderMenuItem = (item: MenuItemType, index: number): any => {
         if (!item.subMenu) {
             const menuItem = (
                 <li
@@ -132,12 +135,42 @@ function MenuPopover({
         }
     };
 
+    //Function to display the Menu icon for popover
+    const menuIconDisplay = () => {
+        if (menuType === 'default') {
+            return (
+                <div
+                    onClick={() => {
+                        toggleMenu(isMenuOpen ? 'close' : 'open', '');
+                    }}
+                    ref={refParent}
+                    className={isMenuOpen ? `${styles.menuIcon} ${styles.selected}` : styles.menuIcon}
+                    style={{ color: customColor }}
+                >
+                    <span className={styles.menuPointer}>...</span>
+                </div>
+            );
+        } else if (menuType === 'downIcon') {
+            return (
+                <div
+                    onClick={() => {
+                        toggleMenu(isMenuOpen ? 'close' : 'open', '');
+                    }}
+                    className={styles.downMenuIcon}
+                    ref={refParent}
+                >
+                    <MenuIcon />
+                </div>
+            );
+        }
+    };
+
     return (
         <>
             <DesignPopover
                 containerClass={styles.popover}
                 popoverClass={styles.subMenuContainer}
-                placement="left"
+                placement={preferredLocation}
                 isAppendedToBody={true}
                 trigger="click"
                 onVisibleChange={handleVisibleChange}
@@ -209,22 +242,7 @@ function MenuPopover({
                                 }
                             />
                         ) : (
-                            <div>
-                                {!isSubmenu && (
-                                    <div
-                                        onClick={() => {
-                                            toggleMenu(isMenuOpen ? 'close' : 'open', '');
-                                        }}
-                                        ref={refParent}
-                                        className={
-                                            isMenuOpen ? `${styles.menuIcon} ${styles.selected}` : styles.menuIcon
-                                        }
-                                        style={{ color: customColor }}
-                                    >
-                                        <span className={styles.menuPointer}>...</span>
-                                    </div>
-                                )}
-                            </div>
+                            <div>{!isSubmenu && menuIconDisplay()}</div>
                         )}
                     </>
                 }

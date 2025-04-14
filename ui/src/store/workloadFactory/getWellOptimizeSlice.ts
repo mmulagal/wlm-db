@@ -19,6 +19,7 @@ const initialState: GetWellSliceInterface = {
     ontapConfigTableData: null,
     optimizationBreakDown: null,
     gwRefreshPage: false,
+    gwRefreshTimestamp: '',
     gwTimestamp: '',
     optimizingData: {},
     optimizingInstanceData: false,
@@ -39,7 +40,8 @@ const initialState: GetWellSliceInterface = {
     jobToInstanceMapForBulk: [],
     recommendedInstanceInBulk: {},
     landingFromInnerPage: false,
-    isInnerPageOptimize: false
+    isInnerPageOptimize: false,
+    gwAdhocError: ''
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -55,7 +57,6 @@ const getWellOptimizeSlice = createSlice({
         setSelectedAWSBackup: (state, action: PayloadAction<any>) => {
             state.selectedAWSBackup = action.payload;
         },
-
         setOptimizePageLoading: (state, action: PayloadAction<any>) => {
             state.optimizePageLoading = action.payload;
         },
@@ -106,6 +107,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setGwTimestamp: (state, action: PayloadAction<any>) => {
             state.gwTimestamp = action.payload;
+        },
+        setGwRefreshTimestamp: (state, action: PayloadAction<any>) => {
+            state.gwRefreshTimestamp = action.payload;
         },
         resetGwData: (state, action: PayloadAction<any>) => {
             state.optimizePageLoading = false;
@@ -179,6 +183,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setIsInnerPageOptimize: (state, action: PayloadAction<any>) => {
             state.isInnerPageOptimize = action.payload;
+        },
+        setGwAdhocError: (state, action: PayloadAction<any>) => {
+            state.gwAdhocError = action.payload;
         }
     }
 });
@@ -205,6 +212,7 @@ export const {
     setOptimizationBreakDown,
     setGwRefreshPage,
     setGwTimestamp,
+    setGwRefreshTimestamp,
     resetGwData,
     setOptimizingData,
     setOptimizingInstanceData,
@@ -218,7 +226,8 @@ export const {
     setGwPageLoadInstanceData,
     setLandingFromInnerPage,
     setGwSelectedRowFsxId,
-    setIsInnerPageOptimize
+    setIsInnerPageOptimize,
+    setGwAdhocError
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

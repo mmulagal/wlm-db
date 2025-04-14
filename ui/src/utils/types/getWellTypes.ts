@@ -18,10 +18,12 @@ export interface GetWellSliceInterface {
         compute?: CountBreakDown;
         application?: CountBreakDown;
         resiliency?: CountBreakDown;
+        cloning?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
     gwTimestamp: string;
+    gwRefreshTimestamp: string;
     optimizingData: any;
     optimizingInstanceData: boolean;
     selectedRecommendedInstance: any;
@@ -38,6 +40,7 @@ export interface GetWellSliceInterface {
     recommendedInstanceInBulk?: any;
     landingFromInnerPage?: boolean;
     isInnerPageOptimize?: boolean;
+    gwAdhocError?: string;
 }
 
 interface CountBreakDown {
@@ -73,6 +76,7 @@ export interface AssessmentResponseInterface {
         awsBackup?: PerConfigInterface;
         crr?: PerConfigInterface;
     };
+    clone?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {

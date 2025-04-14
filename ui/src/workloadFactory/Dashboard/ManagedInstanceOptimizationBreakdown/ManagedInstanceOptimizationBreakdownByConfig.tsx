@@ -1,4 +1,4 @@
-import { DsButton, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { DsButton, DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
 import styles from './ManagedInstanceOptimizationBreakdownByConfig.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
@@ -14,19 +14,29 @@ import { GENERAL } from '../../../utils/appConstants';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
+import { ReactComponent as Edit } from '../../../assets/ic_edit.svg';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const dispatch = useDispatch();
     const windowSize = useResize();
+
+    const { multiDataLoading } = useAppSelector(state => state.headers);
+
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(setSelectedConfig(type));
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };
-    const { multiDataLoading } = useAppSelector(state => state.headers);
+
+    const handleEdit = (type: string) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setSelectedConfig(type));
+        setOptimizeInnerpageSummary(type, configData, dispatch);
+    };
 
     const loading = useMemo(() => {
         return allmssqlHostAssessmentLoading || multiDataLoading;
@@ -86,6 +96,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        {/* <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        /> */}
                     </div>
                 </div>
 
@@ -525,7 +548,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(GENERAL.RSS_CONFIGURATION);
                             }}
-                            data-testid="wlm-db-optimize-maxdop"
+                            data-testid="wlm-db-optimize-rss-configuration"
                             isDisabled={
                                 loading ||
                                 configData?.total === 0 ||
@@ -695,7 +718,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
                             }}
-                            data-testid="wlm-db-optimize-maxdop"
+                            data-testid="wlm-db-optimize-snapshot"
                             isDisabled={
                                 loading ||
                                 configData?.total === 0 ||
@@ -771,13 +794,55 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
                             }}
-                            data-testid="wlm-db-optimize-maxdop"
+                            data-testid="wlm-db-optimize-awsbackup"
                             isDisabled={
                                 loading ||
                                 configData?.total === 0 ||
                                 configData?.scheduledawsBackup === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
                                     ?.length > 0
+                            }
+                        >
+                            Optimize
+                        </DsButton>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.CLONE_MANAGEMENT}
+                        percentage={Math.round(((configData.clone || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.clone}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized databases:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={
+                            loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
+                        }
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
+                            }}
+                            data-testid="wlm-db-optimize-clone"
+                            isDisabled={
+                                loading ||
+                                configData?.total === 0 ||
+                                configData?.clone === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
                             }
                         >
                             Optimize

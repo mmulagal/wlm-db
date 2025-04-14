@@ -1,6 +1,7 @@
-import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
 import styles from './BarComponent.module.scss';
 import ProgressBar from '../../../common/ProgressBar/ProgressBar';
+import { ReactComponent as Warning } from '../../../assets/warning.svg';
 
 type BarComponentType = {
     color: string;
@@ -14,6 +15,8 @@ type BarComponentType = {
     from?: string;
     optimizePercentage?: number | any;
     loading?: boolean;
+    textMessage?: string;
+    tooltipMessage?: string;
 };
 
 const BarComponent = ({
@@ -27,7 +30,9 @@ const BarComponent = ({
     progressBarHeight,
     from,
     optimizePercentage,
-    loading
+    loading,
+    textMessage,
+    tooltipMessage
 }: BarComponentType) => {
     const handleProgressBar = () => {
         if (percentage === 100) {
@@ -140,9 +145,20 @@ const BarComponent = ({
                     </div>
 
                     <div className={styles.optimizeText}>
-                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                            {percentage + '%'}
-                        </DsTypography>
+                        {!textMessage && (
+                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                {percentage + '%'}
+                            </DsTypography>
+                        )}
+
+                        {textMessage && (
+                            <DsTypography
+                                variant="Regular_24"
+                                style={{ lineHeight: 'unset', color: 'var(--text-disabled)' }}
+                            >
+                                {textMessage}
+                            </DsTypography>
+                        )}
                     </div>
                 </div>
 
@@ -154,12 +170,24 @@ const BarComponent = ({
                     </div>
                 </div>
 
-                <div className={styles.bottomTextSection}>
-                    <DsTypography variant="Regular_14">{bottomText}</DsTypography>
-                    <DsTypography variant="Semibold_14">
-                        {beforeOutOf} out of {afterOutOf}
-                    </DsTypography>
-                </div>
+                {!textMessage && (
+                    <div className={styles.bottomTextSection}>
+                        {tooltipMessage && <TooltipInfo>{tooltipMessage}</TooltipInfo>}
+                        <DsTypography variant="Regular_14">{bottomText}</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {beforeOutOf} out of {afterOutOf}
+                        </DsTypography>
+                    </div>
+                )}
+
+                {textMessage && (
+                    <div className={styles.bottomTextSection}>
+                        <Warning />
+                        <DsTypography variant="Regular_14">
+                            This configuration is {textMessage === 'Dismissed' ? 'dismissed' : 'postponed'}.
+                        </DsTypography>
+                    </div>
+                )}
             </div>
         </div>
     );

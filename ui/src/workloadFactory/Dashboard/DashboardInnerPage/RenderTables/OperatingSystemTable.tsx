@@ -18,7 +18,7 @@ import {
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import { useDispatch } from 'react-redux';
 import { setGwPageLoadInstanceData } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import FirstColumnComponent from './FirstColumnCoponent';
+import FirstColumnComponent from './FirstColumnComponent';
 
 const OperatingSystemTable = () => {
     const dispatch = useDispatch();

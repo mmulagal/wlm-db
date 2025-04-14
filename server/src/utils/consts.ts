@@ -1718,6 +1718,8 @@ enum CLONE_ACTION {
     REFRESH = 'refresh'
 }
 
+const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -2061,5 +2063,6 @@ export {
     PGSQL_SYSTEM_DATABASES,
     AWS_REGION_KEYS,
     AMAZON_LINUX_AMI_PATH,
+    RESTRICTED_FSX_REGIONS,
     CLONE_ACTION
 };

@@ -1014,6 +1014,7 @@ const DialogContent = ({
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
                 return <ScheduledAWSBackupDialog type={type} />;
+
             case ASSESSMENT_CONFIG_NAMES.MAXDOP:
                 return (
                     <div className={styles['storage-tier-block']}>

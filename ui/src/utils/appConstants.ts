@@ -1266,6 +1266,8 @@ export const GENERAL = {
     SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
     CRR: 'Cross-Region Replication (CRR)',
+    CLONING: 'Cloning',
+    CLONE_MANAGEMENT: "Clone management",
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
 };
