@@ -15,6 +15,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/asse
 router.post(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, { jobId: '1234' });
+        // generateResponse(res, 404, { message: 'No data found' });
     }, 20);
 });
 

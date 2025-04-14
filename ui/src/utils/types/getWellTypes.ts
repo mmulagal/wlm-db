@@ -39,6 +39,7 @@ export interface GetWellSliceInterface {
     recommendedInstanceInBulk?: any;
     landingFromInnerPage?: boolean;
     isInnerPageOptimize?: boolean;
+    gwAdhocError?: string;
 }
 
 interface CountBreakDown {

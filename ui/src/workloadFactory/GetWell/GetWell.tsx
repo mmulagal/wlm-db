@@ -55,6 +55,7 @@ import { useState, useEffect, useMemo } from 'react';
 import GetWellApi from './GetWellApi';
 import {
     resetGwData,
+    setGwAdhocError,
     setGwRefreshPage,
     setIsInnerPageOptimize
 } from '../../store/workloadFactory/getWellOptimizeSlice';
@@ -103,6 +104,7 @@ const GetWell = () => {
 
     useEffect(() => {
         handleFilterClearAll();
+        dispatch(setGwAdhocError(''));
     }, []);
 
     const handleSelect = (filters: any, filterLabel: any) => {
@@ -146,7 +148,7 @@ const GetWell = () => {
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance
         }).then((res: any) => {
-            const { jobId } = res?.data;
+            const jobId = res?.data?.jobId;
             if (jobId) {
                 dispatch(
                     addNotification({
@@ -192,6 +194,7 @@ const GetWell = () => {
                                 })
                             );
                             refreshGetWellPage();
+                            dispatch(setGwAdhocError(jobRes?.data?.error));
                             clearInterval(jobInterval);
                         }
                     });
@@ -203,6 +206,8 @@ const GetWell = () => {
                         message: 'Error in triggering assessment'
                     })
                 );
+                setTriggerAssessmentInProgress(false);
+                dispatch(setGwAdhocError(res?.error?.data?.message));
             }
         });
     };
