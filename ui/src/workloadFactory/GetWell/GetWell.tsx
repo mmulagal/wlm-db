@@ -25,7 +25,7 @@ import { ReactComponent as Union } from '../../assets/Union.svg';
 import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { useDispatch } from 'react-redux';
-import {clearNotifications} from '../../store/notificationSlice';
+import { clearNotifications } from '../../store/notificationSlice';
 
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -81,7 +81,7 @@ const GetWell = () => {
         osConfigTableData,
         selectedHostname,
         selectedDatabaseInstanceName,
-        gwTimestamp,
+        gwRefreshTimestamp,
         isAssessmentAvailable,
         selectedResourceId,
         selectedDatabaseInstance,
@@ -154,15 +154,15 @@ const GetWell = () => {
                         message: (
                             <div>
                                 {`Assessment process initiated. Track progress in `}
-                                 <Button
-                                     Component="button"
-                                     variant="text"
-                                     onClick={() => {
-                                          dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                          dispatch(clearNotifications());;
-                                     }}
+                                <Button
+                                    Component="button"
+                                    variant="text"
+                                    onClick={() => {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                        dispatch(clearNotifications());
+                                    }}
                                 >
-                                        {GENERAL.JOB_MONITORING}.
+                                    {GENERAL.JOB_MONITORING}.
                                 </Button>
                             </div>
                         )
@@ -394,7 +394,7 @@ const GetWell = () => {
                             ) : (
                                 <Popover
                                     popoverClass={styles['copy-popover']}
-                                    children={`Last update: ${gwTimestamp || GENERAL.NOT_AVAILABLE}`}
+                                    children={`Last update: ${gwRefreshTimestamp || GENERAL.NOT_AVAILABLE}`}
                                     trigger="hover"
                                     container={
                                         <div

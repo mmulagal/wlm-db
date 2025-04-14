@@ -22,6 +22,7 @@ export interface GetWellSliceInterface {
     } | null;
     gwRefreshPage: boolean;
     gwTimestamp: string;
+    gwRefreshTimestamp: string;
     optimizingData: any;
     optimizingInstanceData: boolean;
     selectedRecommendedInstance: any;
