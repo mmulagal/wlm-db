@@ -154,7 +154,7 @@ const BarComponent = ({
                         {textMessage && (
                             <DsTypography
                                 variant="Regular_24"
-                                style={{ lineHeight: 'unset', color: 'var(--text-disabled' }}
+                                style={{ lineHeight: 'unset', color: 'var(--text-disabled)' }}
                             >
                                 {textMessage}
                             </DsTypography>
