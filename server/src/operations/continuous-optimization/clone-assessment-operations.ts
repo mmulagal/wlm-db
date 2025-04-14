@@ -135,6 +135,8 @@ async function calculateCloneDrift(
             tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
             resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
             cloneDetails,
+            totalObjectsAssessed: cloneDetails?.length,
+            totalObjectsInViolation: oldClones,
             cloneDriftMessage: `${oldClones} out of ${cloneDetails?.length} clones are old and divergent`
         };
     } catch (error: any) {
