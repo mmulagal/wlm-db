@@ -33,12 +33,12 @@ beforeAll(async () => {
             node2InstanceId: 'i-0880a21327284f67c',
             sqlDeploymentType: 'FCI',
             assessment: {
-                "compute": {
-                    "finding": "OPTIMIZED",
-                    "findingReasonCodes": [],
-                    "currentInstanceType": "r7i.xlarge",
-                    "recommendationOptions": []
-                },
+                compute: {
+                    finding: 'OPTIMIZED',
+                    findingReasonCodes: [],
+                    currentInstanceType: 'r7i.xlarge',
+                    recommendationOptions: []
+                }
             }
         }
     });

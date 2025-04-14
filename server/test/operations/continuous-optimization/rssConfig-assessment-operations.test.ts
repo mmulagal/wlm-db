@@ -27,10 +27,10 @@ beforeAll(async () => {
             node2InstanceId: 'i-0880a21327284f67c',
             sqlDeploymentType: 'FCI',
             assessment: {
-                "rssConfig": {
-                    "rssAdapters": [],
-                    "tcpOffloadState": "Disabled",
-                    "rssConfigFinding": "optimized"
+                rssConfig: {
+                    rssAdapters: [],
+                    tcpOffloadState: 'Disabled',
+                    rssConfigFinding: 'optimized'
                 }
             }
         }
