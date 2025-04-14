@@ -1,10 +1,14 @@
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
+import moment from 'moment';
 import { getJobs, registerJob } from '../database/job-operations';
 import { getTimeDifferenceInMinutes } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { AssessmentStatus } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
+import { listResources } from '../../lib/database/db';
+import { Metadata } from '../../utils/common-types';
+import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 
 const logger = getLogger();
 
@@ -83,4 +87,25 @@ async function handleOptimizeJobCreation(
     return id;
 }
 
-export { getMatchingAssessmentStatus, handleOptimizeJobCreation, JobMetadata };
+async function getLastAssessedTime(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    const [[{ creation_time: latestInstanceLevelAssessedTime } = {}], [{ metadata = {} } = {}]] = await Promise.all([
+        listDatabaseInstanceConfigData(accountId, region, credentialsId, databaseHostId, databaseInstanceId),
+        listResources(accountId, databaseHostId, credentialsId, region)
+    ]);
+
+    const { assessment: { lastAssessedDate: latestHostLevelAssessedTime } = {} } = metadata as unknown as Metadata;
+    const latestAssessmentTimestamp = Math.max(
+        latestInstanceLevelAssessedTime ? latestInstanceLevelAssessedTime.getTime() : 0,
+        latestHostLevelAssessedTime ? Number(latestHostLevelAssessedTime) : 0
+    );
+
+    return moment(Number(latestAssessmentTimestamp)).unix() * 1000;
+}
+
+export { getMatchingAssessmentStatus, handleOptimizeJobCreation, JobMetadata, getLastAssessedTime };
