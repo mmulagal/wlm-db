@@ -7,11 +7,14 @@ import { HttpErrorCodes } from '../utils/consts';
 import {
     BulkOptimizeCloneInHostRequestBodyType,
     BulkOptimizeComputePerHostRequestBodyType,
-    BulkOptimizeGeneralPerHostRequestBodyType
+    BulkOptimizeGeneralPerHostRequestBodyType,
+    OptimizeClonesPerHostRequestBodyType,
+    OptimizePerHostRequestBodyType
 } from '../routes/types/continuous-optimization.types';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import {
     handleUpdateAwsBackup,
+    optimizeClone,
     optimizeMaxDop,
     optimizeOperatingSystemSettings,
     optimizeSizing,
@@ -31,18 +34,22 @@ import { handleOptimizeRssOptimization } from './continuous-optimization/rssConf
 
 const logger = getLogger();
 
-async function formatJobMetadata(hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]) {
+async function formatJobMetadata<T extends { configurationName: string; databaseHosts: any[] }>(hostsToOptimize: T[]) {
     return hostsToOptimize.flatMap(({ configurationName, databaseHosts }) =>
-        databaseHosts.map(({ id, sqlServerInstances, fsxFileSystemId, backupRetentionDays, backupStartTime }) => ({
-            resourceId: id,
-            sqlServerInstances,
-            optimizationType: configurationName,
-            fsxFileSystemId,
-            backupRetentionDays,
-            backupStartTime
-        }))
+        databaseHosts.map(
+            ({ id, sqlServerInstances, fsxFileSystemId, backupRetentionDays, backupStartTime, clones }) => ({
+                resourceId: id,
+                sqlServerInstances,
+                optimizationType: configurationName,
+                fsxFileSystemId: fsxFileSystemId || null,
+                backupRetentionDays: backupRetentionDays || null,
+                backupStartTime: backupStartTime || null,
+                clones: clones || null
+            })
+        )
     );
 }
+
 async function bulkOptimization(
     accountId: string,
     optimizationCategory: string,
@@ -50,37 +57,18 @@ async function bulkOptimization(
 ) {
     logger.info(`Bulk optimization: ${accountId},  ${optimizationCategory}, ${hostsToOptimize}`);
 
-    // validate the account id, credentials id, region is valid details in the DB
-    for (const host of hostsToOptimize) {
-        const validationResults = await Promise.all(
-            host.databaseHosts.map(async ({ credentialsId, region }) => {
-                if (!credentialsId || !region) {
-                    const errorMessage =
-                        'Invalid input: credentialsId and region must be provided in all databaseHosts entries.';
-                    logger.error(errorMessage);
-                    throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
-                }
-
-                const isValid = await validateRequestDetails(accountId, credentialsId, region);
-
-                if (!isValid) {
-                    logger.error(
-                        `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`
-                    );
-                }
-
-                return isValid;
-            })
-        );
-
-        // Filter databaseHosts based on validation results
-        host.databaseHosts = host.databaseHosts.filter((_, index) => validationResults[index]);
-    }
-
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    // Validate the account id, credentials id, region is valid details in the DB and filter databaseHosts for each host
+    for (const host of hostsToOptimize) {
+        host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizePerHostRequestBodyType>(
+            accountId,
+            host.databaseHosts
+        );
     }
 
     const jobMetadata: JobMetadata = {
@@ -123,10 +111,17 @@ async function bulkCloneOptimization(accountId: string, hostsToOptimize: BulkOpt
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    // do this at last
-    // const jobMetadata: JobMetadata = {
-    //     hostsToOptimize: await formatJobMetadata(hostsToOptimize)
-    // };
+    // Validate the account id, credentials id, region is valid details in the DB and filter databaseHosts for each host
+    for (const host of hostsToOptimize) {
+        host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeClonesPerHostRequestBodyType>(
+            accountId,
+            host.databaseHosts
+        );
+    }
+
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
+    };
 
     const jobDescription = 'Optimize clones';
 
@@ -137,11 +132,70 @@ async function bulkCloneOptimization(accountId: string, hostsToOptimize: BulkOpt
         accountId,
         JOBTYPE.OPTIMIZATION,
         jobDescription,
-        jobDescription
+        jobDescription,
+        undefined,
+        jobMetadata
     );
 
-    handleBulkOptimization(accountId, '', '', hostsToOptimize, parentJobId);
+    handleBulkCloneOptimization(accountId, hostsToOptimize, parentJobId);
     return { jobId: parentJobId };
+}
+
+async function handleBulkCloneOptimization(
+    accountId: string,
+    hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[],
+    parentJobId: string
+) {
+    logger.info(`Handle bulk optimizing clone: ${accountId}, ${hostsToOptimize}, ${parentJobId}`);
+
+    let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+
+    const flattenedInstances = extractInstancesToOptimize(hostsToOptimize);
+    // Process all instances and their clones concurrently
+    await Promise.all(
+        flattenedInstances.map(async instance => {
+            if (isEmpty(instance.clones)) {
+                logger.warn(
+                    `No clones found for instance ${instance.instanceId} in databaseHost ${instance.databaseHostId}.`
+                );
+                return;
+            }
+
+            try {
+                await Promise.all(
+                    instance.clones?.map(async clone => {
+                        try {
+                            await optimizeClone(
+                                accountId,
+                                instance.credentialsId,
+                                instance.region,
+                                instance.databaseHostId,
+                                instance.instanceId,
+                                clone,
+                                parentJobId
+                            );
+                            logger.info(
+                                `Successfully optimized clone ${clone.cloneDatabaseName} for instance ${instance.instanceId} in databaseHost ${instance.databaseHostId}.`
+                            );
+                        } catch (error: any) {
+                            logger.error(
+                                `Error occurred while optimizing clone ${clone.cloneDatabaseName} for host ${instance.databaseHostId}, instance ${instance.instanceId}. Error: ${error}`
+                            );
+                        }
+                    })
+                );
+            } catch (error) {
+                logger.error(
+                    `Error occurred while optimizing operating system configuration for account ${accountId}. Error: ${error}`
+                );
+                masterOptimizeParentStatus = JOBSTATUS.FAILED;
+            } finally {
+                if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
+                    await updateParentJobStatus(accountId, parentJobId);
+                }
+            }
+        })
+    );
 }
 
 async function handleOptimization(
@@ -397,6 +451,50 @@ async function handleBulkComputeOptimization(
             endTime: Date.now()
         });
     }
+}
+
+// Flattens hostsToOptimize to extract SQL Server instances and their metadata.
+function extractInstancesToOptimize(hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[]) {
+    return hostsToOptimize.flatMap(host =>
+        host.databaseHosts.flatMap(databaseHost =>
+            databaseHost.sqlServerInstances.map(sqlServerInstance => ({
+                instanceId: sqlServerInstance.instanceId,
+                clones: sqlServerInstance.clones,
+                region: databaseHost.region,
+                credentialsId: databaseHost.credentialsId,
+                databaseHostId: databaseHost.id
+            }))
+        )
+    );
+}
+
+async function validateAndFilterDatabaseHosts<T extends { credentialsId: string; region: string }>(
+    accountId: string,
+    databaseHosts: T[]
+): Promise<T[]> {
+    const validationResults = await Promise.all(
+        databaseHosts.map(async ({ credentialsId, region }) => {
+            if (!credentialsId || !region) {
+                const errorMessage =
+                    'Invalid input: credentialsId and region must be provided in all databaseHosts entries.';
+                logger.error(errorMessage);
+                throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+            }
+
+            const isValid = await validateRequestDetails(accountId, credentialsId, region);
+
+            if (!isValid) {
+                logger.error(
+                    `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`
+                );
+            }
+
+            return isValid;
+        })
+    );
+
+    // Filter databaseHosts based on validation results
+    return databaseHosts.filter((_, index) => validationResults[index]);
 }
 
 async function validateRequestDetails(accountId: string, credentialsId: string, region: string) {

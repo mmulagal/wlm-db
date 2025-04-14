@@ -240,10 +240,9 @@ const BulkOptimizeAwsBackupSchema = {
 };
 
 const BulkOptimizeCloneSchema = {
-    ...resourceRequest,
+    ...BulkOptimizeGeneralSchema,
     summary: 'Optimize clone parameters for database instances',
     description: 'Optimize clone parameters for database instances',
-    params: DatabaseHostInstanceSummaryParams,
     body: BulkOptimizeCloneBody,
     tags: [RouteTags.ASSESSMENT],
     response: {

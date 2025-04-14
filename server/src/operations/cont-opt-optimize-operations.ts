@@ -15,7 +15,8 @@ import {
     OptimizeMpioIscsiSessionsParams,
     StorageTierParams,
     MaxDOPAssesment,
-    AwsFsxNBackupConfig
+    AwsFsxNBackupConfig,
+    CloneAssesment
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -63,6 +64,7 @@ import {
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import {
+    CloneDetailType,
     OptimizePerHostRequestBodyType,
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
@@ -2787,6 +2789,89 @@ async function triggerAssessmentAfterOptimization(
     updateLongRunningAuditGroup(AuditStatus.SUCCESS);
 }
 
+async function optimizeClone(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    clone: CloneDetailType,
+    parentJobId: string
+) {
+    logger.info('Optimizing clone', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        clone,
+        parentJobId
+    });
+
+    let childCloneJobId = '';
+    try {
+        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+            accountId,
+            region,
+            credentialsId,
+            databaseHostId,
+            databaseInstanceId,
+            AssessmentCategories.CLONE
+        );
+        const {
+            config_data: configData,
+            database_instances: { database_instance_name: instanceName = '' } = {},
+            resource: { resource_name: sqlServerName = '' } = {}
+        } = persistedConfigurationData || {};
+        const clones = configData as unknown as CloneAssesment;
+        logger.debug(`Clones data ${JSON.stringify(clones)}`);
+
+        // check whether required for clones
+        if (!instanceName || !sqlServerName) {
+            logger.error('Instance name or sql server name is missing');
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or sql server name is missing');
+        }
+
+        const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, clone.cloneDatabaseName);
+
+        const jobMetadata: JobMetadata = {
+            hostsToOptimize: [
+                {
+                    optimizationType: 'clone',
+                    resourceId: databaseHostId,
+                    sqlServerInstances: [databaseInstanceId]
+                }
+            ]
+        };
+        childCloneJobId = await handleOptimizeJobCreation(
+            accountId,
+            credentialsId,
+            region,
+            serverNameWithHostName,
+            JOBTYPE.OPTIMIZATION,
+            `Optimize clone for ${serverNameWithHostName}`,
+            `Optimize clone for ${serverNameWithHostName}`,
+            parentJobId,
+            jobMetadata
+        );
+
+        // Yet To Implement
+        // await handleCloneRemediation();
+    } catch (err) {
+        const errorMessage = `Error while optimizing clone ${clone.cloneDatabaseName} ${err}`;
+        logger.error(errorMessage);
+        await updateJobDetails(accountId, childCloneJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+    return { jobId: childCloneJobId };
+}
+
 function isDatabaseInstanceMetadata(value: any): value is DatabaseInstanceMetadata {
     return value && typeof value === 'object' && 'configsOptimized' in value;
 }
@@ -2798,5 +2883,6 @@ export {
     optimizeStorageTier,
     activeSqlNodeDetails,
     optimizeMaxDop,
-    handleUpdateAwsBackup
+    handleUpdateAwsBackup,
+    optimizeClone
 };

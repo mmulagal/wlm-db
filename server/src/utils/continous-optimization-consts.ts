@@ -121,7 +121,8 @@ enum OPTIMIZATION_CATEGORIES {
     OPERATING_SYSTEM = 'operating-system',
     COMPUTE = 'compute',
     MAXDOP = 'max-dop',
-    RSS_CONFIG = 'rss-config'
+    RSS_CONFIG = 'rss-config',
+    CLONE = 'clone'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';

@@ -1713,6 +1713,11 @@ const PRICING_LICENSE_KEYS = {
 
 const GERERIC_JOB_ERROR_MESSAGE = 'Examine the subjobs for comprehensive error messages.';
 
+enum CLONE_ACTION {
+    DELETE = 'delete',
+    REFRESH = 'refresh'
+}
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -2055,5 +2060,6 @@ export {
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
     PGSQL_SYSTEM_DATABASES,
     AWS_REGION_KEYS,
-    AMAZON_LINUX_AMI_PATH
+    AMAZON_LINUX_AMI_PATH,
+    CLONE_ACTION
 };

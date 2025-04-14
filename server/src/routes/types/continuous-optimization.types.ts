@@ -11,6 +11,7 @@ import {
     OptimizeStorageConfigs,
     OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
+import { CLONE_ACTION } from '../../utils/consts';
 
 const SizingViolationResponse = Type.Object({
     databases: Type.Optional(Type.Array(Type.String())),
@@ -475,7 +476,8 @@ type BulkOptimizeComputeRequestBodyType = Static<typeof BulkOptimizeComputeReque
 
 const CloneDetail = Type.Object({
     cloneDatabaseName: Type.String(),
-    clonedBy: Type.String()
+    clonedBy: Type.String(),
+    action: Type.String({ enum: [CLONE_ACTION.REFRESH, CLONE_ACTION.DELETE] })
 });
 
 const OptimizeClonesPerHostRequestBody = Type.Object({
@@ -489,6 +491,9 @@ const OptimizeClonesPerHostRequestBody = Type.Object({
         })
     )
 });
+
+type OptimizeClonesPerHostRequestBodyType = Static<typeof OptimizeClonesPerHostRequestBody>;
+type CloneDetailType = Static<typeof CloneDetail>;
 
 const BulkOptimizeCloneInHostRequestBody = Type.Object({
     configurationName: Type.Enum({
@@ -557,5 +562,7 @@ export {
     CloneDriftResponseType,
     BulkOptimizeCloneBodyType,
     BulkOptimizeCloneInHostRequestBodyType,
-    BulkOptimizeCloneBody
+    BulkOptimizeCloneBody,
+    OptimizeClonesPerHostRequestBodyType,
+    CloneDetailType
 };
