@@ -286,18 +286,11 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
 
         return { regions: fsxRegionsList };
     } catch (error: any) {
-        logger.error('Failed to retrieve the generic FSX ONTAP Region list. Error details:', {
-            message: error.message
-        });
-        AWS_REGIONS.forEach((regionName, regionCode) => {
-            if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
-                fsxRegionsList.push({
-                    regionCode,
-                    regionName
-                });
-            }
-        });
-        return { regions: fsxRegionsList };
+        logger.error('Get generic FSX ONTAP Region list has failed with error:', error);
+        if (error?.$metadata?.httpStatusCode && error.message) {
+            throw createError(error?.$metadata?.httpStatusCode, `Error fetching generic fsx region ${error.message}`);
+        }
+        throw new Error(`Error fetching generic fsx region: ${error}`);
     }
 }
 
@@ -317,7 +310,7 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
             ]
         };
         const [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
-            getParametersByPath(credentialsId),
+            getParametersByPath(),
             describeRegions(input, credentialsId)
         ]);
 
@@ -335,18 +328,11 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
 
         return { regions: fsxRegionsList };
     } catch (error: any) {
-        logger.error('Failed to retrieve the generic FSX ONTAP Region list. Error details:', {
-            message: error.message
-        });
-        AWS_REGIONS.forEach((regionName, regionCode) => {
-            if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
-                fsxRegionsList.push({
-                    regionCode,
-                    regionName
-                });
-            }
-        });
-        return { regions: fsxRegionsList };
+        logger.error('Get FSX ONTAP Region list has failed with error:', error);
+        if (error?.$metadata?.httpStatusCode && error.message) {
+            throw createError(error?.$metadata?.httpStatusCode, `Error fetching fsx region ${error.message}`);
+        }
+        throw new Error(`Error fetching fsx region: ${error}`);
     }
 }
 

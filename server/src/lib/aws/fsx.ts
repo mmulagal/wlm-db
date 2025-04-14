@@ -73,9 +73,9 @@ async function describeFSx(
     return response;
 }
 
-async function describeFSxVolumes(credentialsId: string, region: string, fsxFsId: string) {
+async function describeFSxVolumes(credentialsId: string, region: string, fsxFsId: string[]) {
     logger.info('Describe FSx volumes:', { credentialsId, region, fsxFsId });
-    const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
+    const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: fsxFsId }] };
 
     const client = await getFSxClient(credentialsId, region);
     const volumes = [];
@@ -87,12 +87,12 @@ async function describeFSxVolumes(credentialsId: string, region: string, fsxFsId
     return { Volumes: volumes };
 }
 
-async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId?: string) {
+async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId?: string[]) {
     logger.info('Describe FSx storage virtual machines:', { credentialsId, region, fsxFsId });
 
     let input: DescribeStorageVirtualMachinesCommandInput = {};
     if (typeof fsxFsId !== 'undefined') {
-        input = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
+        input = { Filters: [{ Name: 'file-system-id', Values: fsxFsId }] };
     }
     const client = await getFSxClient(credentialsId, region);
     const paginator = paginateDescribeStorageVirtualMachines({ client }, input);

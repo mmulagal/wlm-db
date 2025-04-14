@@ -1392,7 +1392,9 @@ async function getInstanceOntapDetails(
     region: string
 ): Promise<Record<string, { fsxId: string; svmUuid: string | undefined }>> {
     const [fsxId] = instance?.fsxn_ids?.split(',') || [];
-    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, fsxId);
+    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
+        fsxId
+    ]);
     const instanceLevelSvm = svms.find(
         svm => svm?.StorageVirtualMachineId === (instance.fsx_svm_id as Record<string, string>)[fsxId]
     );
