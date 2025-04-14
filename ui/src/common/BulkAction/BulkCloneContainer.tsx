@@ -14,9 +14,11 @@ const BulkCloneContainer = ({ action1, action2, onClick }: BulkActionContainerPr
             <DsButton type="text" onClick={() => onClick(action1)}>
                 {action1}
             </DsButton>
-            <DsButton type="text" style={{ marginLeft: '24px' }} onClick={() => onClick(action2)}>
-                {action2}
-            </DsButton>
+            {action2 && (
+                <DsButton type="text" style={{ marginLeft: '24px' }} onClick={() => onClick(action2)}>
+                    {action2}
+                </DsButton>
+            )}
         </div>
     );
 };
