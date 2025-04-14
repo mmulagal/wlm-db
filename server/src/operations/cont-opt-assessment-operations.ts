@@ -80,7 +80,8 @@ import {
 import {
     getResilienceDriftAssessment,
     initiateCrossRegionResiliencyAssessment,
-    collectSnapshotCopyData
+    collectSnapshotCopyData,
+    initiateAWSBackupAssessment
 } from './continuous-optimization/resilience-assessment-operation';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import {
@@ -401,16 +402,6 @@ async function initiateStorageAssessmentCollection(
         instanceRecord
     });
 
-    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
-        credentialsId,
-        region,
-        instanceRecord.fsxFileSystem
-    );
-
-    instanceRecord.svmOntapUuid = svms.find(svm =>
-        isDemoFlow ? svm : svm?.StorageVirtualMachineId === instanceRecord.svmId
-    )?.UUID;
-
     if (isEmpty(instanceVolumeMapping)) {
         const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
         logger.error(errorMessage);
@@ -643,15 +634,26 @@ async function driftAssessmentDataCollection(
         );
 
         if (shouldRunResilienceAssessment) {
-            await initiateCrossRegionResiliencyAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                jobId,
-                databaseInstanceRecord,
-                instanceVolumeMapping
-            );
+            await Promise.all([
+                initiateCrossRegionResiliencyAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    jobId,
+                    databaseInstanceRecord,
+                    instanceVolumeMapping
+                ),
+                initiateAWSBackupAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    jobId,
+                    databaseInstanceRecord,
+                    instanceVolumeMapping
+                )
+            ]);
         }
     }
 
@@ -685,7 +687,6 @@ async function triggerAssessment(
 ) {
     logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
 
-    let jobStatus: string = JOBSTATUS.COMPLETED;
     let errorMessage = '';
     const {
         account_id: accountId,
@@ -777,13 +778,7 @@ async function triggerAssessment(
     } catch (error: any) {
         logger.error(error);
         errorMessage = error.message || 'Internal Server Error';
-        jobStatus = JOBSTATUS.FAILED;
-    } finally {
-        await updateJobDetails(accountId, parentJobId, {
-            error: errorMessage,
-            status: jobStatus,
-            endTime: Date.now()
-        });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 }
 
@@ -1381,17 +1376,11 @@ async function handleAssessment(
         await triggerAssessment(managedInstance, masterAssessmentJobId, fields, true);
     } catch (error) {
         jobStatus = JOBSTATUS.FAILED;
-        await updateJobDetails(accountId, masterAssessmentJobId, {
-            status: jobStatus,
-            endTime: Date.now()
-        });
         logger.error(`Error while fetching database instance details ${accountId}, ${error}`);
     } finally {
         jobStatus = jobStatus || JOBSTATUS.COMPLETED;
-        if (jobStatus !== JOBSTATUS.FAILED) {
-            // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
-            await updateParentJobStatus(accountId, masterAssessmentJobId);
-        }
+        // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
+        await updateParentJobStatus(accountId, masterAssessmentJobId);
         // Lets update assessment result in instance metadata
         await updateAssesmentResultsInInstanceMetadata(managedInstance, true);
     }

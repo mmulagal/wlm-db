@@ -1289,6 +1289,7 @@ const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
     $snapshotPoliciesUri = '/storage/snapshot-policies'
     $snapshotPoliciesQueryFilter = "enabled=true"
     $snapshotPoliciesQueryFields = 'fields=svm,scope,copies'
+    $snapshotPoliciesQueryFilter = 'enabled=true'
     
     $snapshotScheduleUri = '/cluster/schedules'
     $snapshotScheduleQueryFields = 'fields=uuid,interval,cron'

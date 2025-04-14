@@ -403,6 +403,8 @@ const OptimizePerHostRequestBody = Type.Intersect([
     Type.Object({
         id: Type.String({ minLength: 1 }),
         sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+        credentialsId: Type.String(),
+        region: Type.String(),
         instanceType: Type.Optional(Type.String()),
         networkAdapters: Type.Optional(Type.Array(Type.String()))
     }),

@@ -124,6 +124,7 @@ const InventoryV2 = () => {
                             hostType: perHost?.hostType,
                             serverInstallationMode: getDiscoveredHostDeploymentV2(perRow),
                             loading: inventoryTableData?.[key]?.loading,
+                            fullManagedInstanceLoading: inventoryTableData?.[key]?.fullManagedInstanceLoading,
                             subLoading: perRow?.loading,
                             optimizationStatusLoading: optimizationStatusLoading,
                             optimizationStatus: optimizationStatus,

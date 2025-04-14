@@ -93,6 +93,7 @@ export interface InventoryTableData {
     allocatedCapacity?: number;
     isManagedHost?: boolean;
     loading?: boolean;
+    fullManagedInstanceLoading?: boolean;
     isDetected?: boolean;
     storageType?: string;
     sqlServerInstances?: Array<InventoryTableInstanceDatInterface>;

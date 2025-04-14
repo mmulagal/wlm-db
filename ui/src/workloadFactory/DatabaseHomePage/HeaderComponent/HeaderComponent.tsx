@@ -46,6 +46,7 @@ import {
     setMultiDataLoading,
     setMultiDataStatus,
     setRefreshTime,
+    setRefreshTimeJobMonitor,
     setRefreshTimeSandbox,
     setSingleComboCredAndRegion
 } from '../../../store/workloadFactory/headersSlice';
@@ -95,6 +96,7 @@ import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
 import {
+    resetInventoryLoading,
     resetRefreshData,
     setIsRefreshed,
     setSelectedHeaderTab
@@ -187,7 +189,6 @@ const HeaderComponent = ({ tab }: Tab) => {
     HeaderComponentApi();
     InventoryApisV3();
     DatabaseHomeApis();
-    JobMonitoringApi();
     SavingsCalculatorApi();
     SavingsCalculatorManualApi();
 
@@ -654,6 +655,17 @@ const HeaderComponent = ({ tab }: Tab) => {
                     }
                 }
             }
+        } else {
+            setQueue([]);
+            setCurrentIndex(0);
+            setPendingQueriesCounter(0);
+            dispatch(resetInventoryLoading(null));
+            dispatch(
+                setSingleComboCredAndRegion({
+                    cred: null,
+                    region: null
+                })
+            );
         }
     };
 
@@ -772,15 +784,15 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(inventoryApi.util.resetApiState());
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
+            fetchOnPremData(true);
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
             dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(workloadFactoryResourceApiV2.util.resetApiState());
             dispatch(setIsResourceRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
-            dispatch(setRefreshTime(getCurrentDateTime()));
+            dispatch(setRefreshTimeJobMonitor(getCurrentDateTime()));
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
-            dispatch(setIsRefreshed(true));
         } else if (
             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
@@ -791,7 +803,6 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(setRefreshTimeSandbox(getCurrentDateTime()));
             dispatch(setIsRefreshedSandbox(true));
         }
-        fetchOnPremData(true);
     };
 
     const refreshComponent = () => {
@@ -832,10 +843,12 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (headerSelectedMultiCred && headerSelectedMultiCred.length === 1) {
             const credValue = headerSelectedMultiCred[0]?.value;
             return credValue;
-        } else if (headerSelectedMultiCred && headerSelectedMultiCred.length > 1) {
+        } else if (headerSelectedMultiCred && headerSelectedMultiCred?.length === credentialData?.length) {
+            return GENERAL.ALL_CRED_SELECTED;
+        } else if (headerSelectedMultiCred && headerSelectedMultiCred.length >= 1) {
             return `${headerSelectedMultiCred.length} credentials selected`;
         } else {
-            return 'No credentials selected';
+            return GENERAL.NO_CRED_SELECTED;
         }
     };
 
@@ -843,10 +856,12 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (headerSelectedMultiRegion && headerSelectedMultiRegion.length === 1) {
             const regionValue = headerSelectedMultiRegion[0]?.value;
             return regionValue;
-        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion.length > 1) {
+        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion?.length === regionsData?.regions?.length) {
+            return GENERAL.ALL_REGIONS_SELECTED;
+        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion.length >= 1) {
             return `${headerSelectedMultiRegion.length} regions selected`;
         } else {
-            return 'No regions selected';
+            return GENERAL.NO_REGIONS_SELECTED;
         }
     };
 
