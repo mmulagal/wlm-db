@@ -57,7 +57,6 @@ const OptimizationBreakdown = () => {
                         isComingSoon={false}
                     />
                     <OptimizeComponent
-                        // value={<ComingSoon />}
                         value={optimizationBreakDown?.cloning?.percent || 0}
                         data={optimizationBreakDown?.cloning}
                         text={'Cloning'}

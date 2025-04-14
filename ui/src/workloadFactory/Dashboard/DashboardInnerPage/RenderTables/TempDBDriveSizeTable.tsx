@@ -10,7 +10,7 @@ import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHom
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
-import FirstColumnComponent from './FirstColumnCoponent';
+import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,

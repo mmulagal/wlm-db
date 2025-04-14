@@ -30,7 +30,6 @@ export interface GetWellSliceInterface {
     selectedSnapshotPolicy: any;
     selectedSnapshot: any;
     selectedAWSBackup: any;
-    selectedClone: any;
     credIdFromJM: string;
     regionFromJM: string;
     landingFrom: string;

@@ -13,7 +13,7 @@ import {
     setSelectedRowsForDismiss,
     setSelectedRowsForOptimize
 } from '../../../../store/workloadFactory/databaseHomeSlice';
-import FirstColumnComponent from '../RenderTables/FirstColumnCoponent';
+import FirstColumnComponent from '../RenderTables/FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
