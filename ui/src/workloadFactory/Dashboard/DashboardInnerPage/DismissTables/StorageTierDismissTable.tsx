@@ -178,7 +178,7 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
                                 {
                                     id: 'activate',
                                     children: 'Activate',
-                                    isDisabled: false,
+                                    isDisabled: rowData?.configState === 'Active',
                                     onClick: () => {
                                         handleSingleAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, rowData, 'activate');
                                     }
@@ -186,7 +186,7 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
                                 {
                                     id: 'postponeFor30Days',
                                     children: 'Postpone for 30 days',
-                                    isDisabled: false,
+                                    isDisabled: rowData?.configState.includes('Postponed'),
                                     onClick: () => {
                                         handleSingleAction(
                                             ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
@@ -198,7 +198,7 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
                                 {
                                     id: 'dismiss',
                                     children: 'Dismiss',
-                                    isDisabled: false,
+                                    isDisabled: rowData?.configState === 'Dismissed',
                                     onClick: () => {
                                         handleSingleAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, rowData, 'dismiss');
                                     }
