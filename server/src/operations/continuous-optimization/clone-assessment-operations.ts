@@ -121,6 +121,7 @@ async function calculateCloneDrift(
 
         const { cloneDetails, status, oldClones } = cloneAssessment as CloneAssesment;
         logger.debug('Clone assessment result', cloneDetails);
+
         const recommendationMessage =
             status === AssessmentStatus.NOT_OPTIMIZED
                 ? 'Old and divergent clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
