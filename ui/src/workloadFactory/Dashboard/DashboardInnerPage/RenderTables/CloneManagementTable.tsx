@@ -15,6 +15,7 @@ import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -45,8 +46,8 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const cloneObj = instanceData?.assessments?.clone;
-                    const isStorageTierOptimized = isOptimized(cloneObj?.status);
-                    if (!isStorageTierOptimized) {
+                    const isCloneOptimized = isOptimized(cloneObj?.status);
+                    if (!isCloneOptimized) {
                         cloneAssessmentData.push({
                             credentialId: hostData?.credentialId,
                             regionId: hostData?.regionId,
@@ -100,7 +101,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '376px',
+            width: '310px',
             renderCell: (cellData: any, rowData: any) => {
                 return <FirstColumnComponent rowData={rowData} />;
             }
@@ -133,7 +134,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
         columns: TableColDefs,
         rows: updatedTableData || [],
         pageSize: 50,
-        selectionType: 'none',
+        selectionType: 'multiple',
         defaultSelectedRows: []
     });
 
@@ -158,6 +159,9 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
+            {selectedRowsForOptimize.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

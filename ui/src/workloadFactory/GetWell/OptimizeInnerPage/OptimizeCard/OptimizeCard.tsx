@@ -157,7 +157,10 @@ const OptimizeCard = () => {
                     block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                    recommendationText: {
+                        type: 'View recommendation',
+                        value: data?.recommendation?.description
+                    }
                 };
             default:
                 return null;

@@ -1108,12 +1108,14 @@
                         },
                         "clone": {
                             "name": "Clone Management",
-                            "status": "optimized",
+                            "status": "not-optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
+                            "totalObjectsAssessed": 2,
+                            "totalObjectsInViolation": 1,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -2285,6 +2287,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
+                            "totalObjectsAssessed": 2,
+                            "totalObjectsInViolation": 1,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -3456,6 +3460,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
+                            "totalObjectsAssessed": 2,
+                            "totalObjectsInViolation": 1,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -4637,6 +4643,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
+                            "totalObjectsAssessed": 2,
+                            "totalObjectsInViolation": 1,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -5808,6 +5816,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
+                            "totalObjectsAssessed": 2,
+                            "totalObjectsInViolation": 1,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -6973,12 +6983,14 @@
                         },
                         "clone": {
                             "name": "Clone Management",
-                            "status": "optimized",
+                            "status": "not-optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
+                            "totalObjectsAssessed": 2,
+                            "totalObjectsInViolation": 1,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",

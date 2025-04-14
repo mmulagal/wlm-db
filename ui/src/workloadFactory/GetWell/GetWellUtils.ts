@@ -2079,7 +2079,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
         scheduled_FSx_for_ONTAP_backups: { category: 'Resiliency', subCategory: 'Protection' },
         crr: { category: 'Resiliency', subCategory: 'Protection' },
-        clone_management: { category: 'Cloning', subCategory: 'Cloning_sub' }
+        clone_management: { category: 'Cloning', subCategory: 'Cloning' }
     };
 
     Object.keys(cardData).map((key: any) => {

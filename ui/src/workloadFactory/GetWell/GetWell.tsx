@@ -727,13 +727,13 @@ const GetWell = () => {
                                                     formatLabel={() =>
                                                         `Tags: ${
                                                             !defaultFilterOptions['tags']?.length ||
-                                                            defaultFilterOptions['tags'].length === 5
+                                                            defaultFilterOptions['tags'].length === 6
                                                                 ? 'All'
                                                                 : ''
                                                         }(${
                                                             defaultFilterOptions['tags']?.length > 0
                                                                 ? defaultFilterOptions['tags']?.length
-                                                                : 5
+                                                                : 6
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -948,9 +948,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['tags']?.length ||
-                                                defaultFilterOptions['tags']?.length === 5
-                                                    ? 'All(5)'
-                                                    : `${defaultFilterOptions['tags']?.length}/5`}
+                                                defaultFilterOptions['tags']?.length === 6
+                                                    ? 'All(6)'
+                                                    : `${defaultFilterOptions['tags']?.length}/6`}
                                             </DsTypography>
                                         </div>
                                     </div>

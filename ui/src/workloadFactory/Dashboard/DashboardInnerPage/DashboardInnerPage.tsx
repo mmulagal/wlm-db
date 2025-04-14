@@ -66,9 +66,9 @@ import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
 import OSPatchTable from './RenderTables/OSPatchTable';
 import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
 import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
-import CloneManagementTable from './RenderTables/CloneManagementTable';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { backupStartTime } from '../../../utils/utilityFunctions';
+import CloneManagementTable from './RenderTables/CloneManagementTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -703,37 +703,41 @@ const DashboardInnerPage = () => {
     };
 
     const handleDialog = (type: string, rowData: any, operation?: string) => {
-        setDialog(
-            <DialogComponent
-                header={`${type} optimization`}
-                content={
-                    <DialogContent
-                        type={type}
-                        recommendationOptions={rowData?.recommendationOptions}
-                        missingPermissions={rowData?.missingPermissions}
-                        recommendedSizeInGib={rowData?.recommendedSizeInGib}
-                        bulkRecommendationOptions={rowData}
-                        operation={operation}
-                    />
-                }
-                primaryButton={GENERAL.CONTINUE}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    callOptimizeApi(type, rowData, operation);
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
-                hidePrimaryButton={
-                    (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
-                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-                        type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
-                    rowData?.missingPermissions &&
-                    rowData?.missingPermissions.length > 0
-                }
-            />
-        );
+        if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+            // ToDo - To open clone management optimize inner page
+        } else {
+            setDialog(
+                <DialogComponent
+                    header={`${type} optimization`}
+                    content={
+                        <DialogContent
+                            type={type}
+                            recommendationOptions={rowData?.recommendationOptions}
+                            missingPermissions={rowData?.missingPermissions}
+                            recommendedSizeInGib={rowData?.recommendedSizeInGib}
+                            bulkRecommendationOptions={rowData}
+                            operation={operation}
+                        />
+                    }
+                    primaryButton={GENERAL.CONTINUE}
+                    secondaryButton={GENERAL.CANCEL}
+                    callback={() => {
+                        callOptimizeApi(type, rowData, operation);
+                    }}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                    customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
+                    hidePrimaryButton={
+                        (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+                            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
+                        rowData?.missingPermissions &&
+                        rowData?.missingPermissions.length > 0
+                    }
+                />
+            );
+        }
     };
 
     useEffect(() => {
