@@ -1484,7 +1484,7 @@ const GET_SANDBOX_DETAILS = (instanceName: string, sqlAuthEnabled: boolean, quer
     $cloneResponse = Call-SqlCmd -SqlCredential $sqlCredential -Query $query -InstanceName "$ServerInstanceName"
     
     # Check if $cloneResponse is Null, empty, or whitespace
-    if ([string]::IsNullOrEmpty($cloneResponse) -or $cloneResponse -eq "Null") {
+    if ([string]::IsNullOrEmpty($cloneResponse) -or $cloneResponse -ieq "Null") {
         Write-Information "No sandboxes found for the given query."
         $result = [PSCustomObject]@{
             cloneResponse = @() # Return an empty array to indicate no sandboxes
