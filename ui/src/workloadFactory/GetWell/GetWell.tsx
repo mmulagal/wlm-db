@@ -299,6 +299,12 @@ const GetWell = () => {
                 label: 'Protection',
                 value: 'Protection',
                 category: GENERAL.RESILIENCY
+            },
+            {
+                id: 6,
+                label: 'Cloning',
+                value: 'Cloning',
+                category: GENERAL.CLONING
             }
         ];
         const filteredOptions = selectedCategories.length
@@ -544,7 +550,7 @@ const GetWell = () => {
                                                         }(${
                                                             defaultFilterOptions['all-catagories']?.length > 0
                                                                 ? defaultFilterOptions['all-catagories']?.length
-                                                                : 4
+                                                                : 5
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -568,6 +574,11 @@ const GetWell = () => {
                                                             id: 3,
                                                             label: GENERAL.RESILIENCY,
                                                             value: 'Resiliency'
+                                                        },
+                                                        {
+                                                            id: 4,
+                                                            label: GENERAL.CLONING,
+                                                            value: 'Cloning'
                                                         }
                                                     ]}
                                                     selectionType="multi"
@@ -716,13 +727,13 @@ const GetWell = () => {
                                                     formatLabel={() =>
                                                         `Tags: ${
                                                             !defaultFilterOptions['tags']?.length ||
-                                                            defaultFilterOptions['tags'].length === 5
+                                                            defaultFilterOptions['tags'].length === 6
                                                                 ? 'All'
                                                                 : ''
                                                         }(${
                                                             defaultFilterOptions['tags']?.length > 0
                                                                 ? defaultFilterOptions['tags']?.length
-                                                                : 5
+                                                                : 6
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -734,21 +745,26 @@ const GetWell = () => {
                                                         },
                                                         {
                                                             id: 1,
+                                                            label: 'Cost efficiency',
+                                                            value: 'Cost efficiency'
+                                                        },
+                                                        {
+                                                            id: 2,
                                                             label: 'Performance efficiency',
                                                             value: 'Performance efficiency'
                                                         },
                                                         {
-                                                            id: 2,
+                                                            id: 3,
                                                             label: 'Operational excellence',
                                                             value: 'Operational excellence'
                                                         },
                                                         {
-                                                            id: 3,
+                                                            id: 4,
                                                             label: 'Reliability',
                                                             value: 'Reliability'
                                                         },
                                                         {
-                                                            id: 4,
+                                                            id: 5,
                                                             label: 'Security',
                                                             value: 'Security'
                                                         }
@@ -819,9 +835,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['all-catagories']?.length ||
-                                                defaultFilterOptions['all-catagories']?.length === 4
-                                                    ? 'All(4)'
-                                                    : `${defaultFilterOptions['all-catagories']?.length}/4`}
+                                                defaultFilterOptions['all-catagories']?.length === 5
+                                                    ? 'All(5)'
+                                                    : `${defaultFilterOptions['all-catagories']?.length}/5`}
                                             </DsTypography>
                                         </div>
 
@@ -932,9 +948,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['tags']?.length ||
-                                                defaultFilterOptions['tags']?.length === 5
-                                                    ? 'All(5)'
-                                                    : `${defaultFilterOptions['tags']?.length}/5`}
+                                                defaultFilterOptions['tags']?.length === 6
+                                                    ? 'All(6)'
+                                                    : `${defaultFilterOptions['tags']?.length}/6`}
                                             </DsTypography>
                                         </div>
                                     </div>
@@ -2244,6 +2260,87 @@ const GetWell = () => {
                                                         filteredCardData?.scheduled_FSx_for_ONTAP_backups
                                                             ?.recommendation
                                                     }
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Section seven */}
+                    {filteredCardData?.clone_management && (
+                        <div className={styles.sectionClass}>
+                            <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <DsTypography
+                                    style={{
+                                        padding: '0 0 8px'
+                                    }}
+                                    variant="Semibold_16"
+                                >
+                                    {GENERAL.CLONING}
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.accordionGroups}>
+                                {filteredCardData?.clone_management && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.clone_management}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.CLONE_MANAGEMENT}
+                                        />
+                                        <DsAccordion
+                                            id="20"
+                                            variant="Default"
+                                            isDisabled={loading || !cardData?.clone_management?.block_two?.value}
+                                            isExpanded={isAccordionExpanded('20', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('20', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('20')}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.clone_management?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.clone_management?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading || !cardData?.clone_management?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.clone_management?.recommendation}
                                                 />
                                             }
                                         />

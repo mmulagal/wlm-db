@@ -57,7 +57,6 @@ const getWellOptimizeSlice = createSlice({
         setSelectedAWSBackup: (state, action: PayloadAction<any>) => {
             state.selectedAWSBackup = action.payload;
         },
-
         setOptimizePageLoading: (state, action: PayloadAction<any>) => {
             state.optimizePageLoading = action.payload;
         },

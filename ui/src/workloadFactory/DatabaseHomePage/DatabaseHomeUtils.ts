@@ -486,6 +486,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 const isLicenseOptimized = isOptimized(instanceAssessmentData?.license?.status);
                 const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
                 const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
+                const isCloneOptimized = isOptimized(instanceAssessmentData?.clone?.status);
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
                     isOptimized(item?.status)
                 );
@@ -516,7 +517,8 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                     isStorageSizingOptimized &&
                     isStorageConfigOptimized &&
                     isMicrosoftSqlPatchOptimized &&
-                    isMaxdopPatchOptimized
+                    isMaxdopPatchOptimized &&
+                    isCloneOptimized
                 ) {
                     optimizedInstances += 1;
                 }
@@ -537,6 +539,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
         compute: 0,
         application: 0,
         resiliency: 0,
+        cloning: 0,
         total: 0
     };
 
@@ -591,6 +594,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     instanceAssessmentData?.resiliency?.awsBackup?.status
                 );
 
+                const isCloneOptimized = isOptimized(instanceAssessmentData?.clone?.status);
                 const isCRROptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
 
                 if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
@@ -609,6 +613,10 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 }
                 if (isScheduledLoclaSnapshotOptimized && isCRROptimized && isScheduledAWSBackUpOptimized) {
                     assessmentGroupedByCategory.resiliency++;
+                }
+
+                if (isCloneOptimized) {
+                    assessmentGroupedByCategory.cloning++;
                 }
             }
         });
@@ -635,6 +643,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         maxdopPatch: 0,
         scheduledLocalSnapshot: 0,
         scheduledawsBackup: 0,
+        clone: 0,
         crr: 0,
         total: 0,
         severityObj: {}
@@ -720,6 +729,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isScheduledawsBackupOptimized = isOptimized(
                     instanceAssessmentData?.resiliency?.awsBackup?.status
                 );
+
+                const isCloneOptimized = isOptimized(instanceAssessmentData?.clone?.status);
                 const isCrrOptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
@@ -789,6 +800,11 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.severityObj.scheduledawsBackup =
                     GETWELL_VALUES[instanceAssessmentData?.resiliency?.awsBackup?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.scheduledawsBackup;
+
+                getAssessmentGroupedByConfigurations.clone += isCloneOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.clone =
+                    GETWELL_VALUES[instanceAssessmentData?.clone?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.clone;
 
                 getAssessmentGroupedByConfigurations.crr += isCrrOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.crr =
