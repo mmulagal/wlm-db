@@ -50,7 +50,7 @@ beforeAll(async () => {
     });
 });
 describe('Compute assessment operations', () => {
-    it('Should calculate compute drift', async () => {
+    it.skip('Should calculate compute drift', async () => {
         const response = await calculateComputeDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,

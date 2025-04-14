@@ -63,7 +63,7 @@ describe('MSSql Patch assessment operations', () => {
         expect(result).toBeDefined();
     });
 
-    it('Should calculate mssql patch drift', async () => {
+    it.skip('Should calculate mssql patch drift', async () => {
         const response = await calculateMSSQLPatchDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,

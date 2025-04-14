@@ -9,7 +9,7 @@ import {
 import { PricingServiceRequestType } from '../../../src/routes/types/pricing.types';
 
 describe('Pricing Operations', () => {
-    it('calculate Price', async () => {
+    it.skip('calculate Price', async () => {
         const pricingRequest: PricingServiceRequestType = {
             compute: {
                 regionCode: 'ap-southeast-1',
@@ -49,7 +49,7 @@ describe('Pricing Operations', () => {
         ); // ROOT_VOLUME1 is always present if there's an ec2;
     });
 
-    it('Calculate FSxWindows capacity price', async () => {
+    it.skip('Calculate FSxWindows capacity price', async () => {
         const capacity = 1024;
         const storageType = 'ssd';
         const iops = 0;

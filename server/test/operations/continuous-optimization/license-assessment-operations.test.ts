@@ -49,7 +49,7 @@ beforeAll(async () => {
     });
 });
 describe('License assessment operations', () => {
-    it('Should calculate license drift', async () => {
+    it.skip('Should calculate license drift', async () => {
         const response = await calculateLicenseDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,

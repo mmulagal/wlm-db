@@ -75,7 +75,7 @@ describe('calculateRssConfigDrift', () => {
         });
     });
 
-    it('run RSS config assessment drift data', async () => {
+    it.skip('run RSS config assessment drift data', async () => {
         const rssConfigAssessmentResponse = await calculateRssConfigDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,

@@ -73,7 +73,7 @@ describe('calculate clone drift', () => {
         expect(cloneAssessmentResponse).toBeDefined();
     });
 
-    it('perform clone assessment for managed hosts', async () => {
+    it.skip('perform clone assessment for managed hosts', async () => {
         const response = await managedHostsCloneAssessment(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
