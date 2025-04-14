@@ -1,4 +1,4 @@
-import { DsButton, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { DsButton, DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
 import styles from './ManagedInstanceOptimizationBreakdownByConfig.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
@@ -14,19 +14,29 @@ import { GENERAL } from '../../../utils/appConstants';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
+import { ReactComponent as Edit } from '../../../assets/ic_edit.svg';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const dispatch = useDispatch();
     const windowSize = useResize();
+
+    const { multiDataLoading } = useAppSelector(state => state.headers);
+
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(setSelectedConfig(type));
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };
-    const { multiDataLoading } = useAppSelector(state => state.headers);
+
+    const handleEdit = (type: string) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setSelectedConfig(type));
+        setOptimizeInnerpageSummary(type, configData, dispatch);
+    };
 
     const loading = useMemo(() => {
         return allmssqlHostAssessmentLoading || multiDataLoading;
@@ -86,6 +96,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        {/* <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        /> */}
                     </div>
                 </div>
 

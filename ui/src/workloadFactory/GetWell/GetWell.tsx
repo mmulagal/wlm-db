@@ -7,7 +7,8 @@ import {
     Popover,
     DsButton,
     useDialog,
-    TooltipInfo
+    TooltipInfo,
+    Button
 } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
@@ -24,6 +25,7 @@ import { ReactComponent as Union } from '../../assets/Union.svg';
 import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { useDispatch } from 'react-redux';
+import { clearNotifications } from '../../store/notificationSlice';
 
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -53,6 +55,7 @@ import { useState, useEffect, useMemo } from 'react';
 import GetWellApi from './GetWellApi';
 import {
     resetGwData,
+    setGwAdhocError,
     setGwRefreshPage,
     setIsInnerPageOptimize
 } from '../../store/workloadFactory/getWellOptimizeSlice';
@@ -79,7 +82,7 @@ const GetWell = () => {
         osConfigTableData,
         selectedHostname,
         selectedDatabaseInstanceName,
-        gwTimestamp,
+        gwRefreshTimestamp,
         isAssessmentAvailable,
         selectedResourceId,
         selectedDatabaseInstance,
@@ -101,6 +104,7 @@ const GetWell = () => {
 
     useEffect(() => {
         handleFilterClearAll();
+        dispatch(setGwAdhocError(''));
     }, []);
 
     const handleSelect = (filters: any, filterLabel: any) => {
@@ -144,12 +148,26 @@ const GetWell = () => {
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance
         }).then((res: any) => {
-            const { jobId } = res?.data;
+            const jobId = res?.data?.jobId;
             if (jobId) {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
-                        message: 'Assessment triggered successfully'
+                        message: (
+                            <div>
+                                {`Assessment process initiated. Track progress in `}
+                                <Button
+                                    Component="button"
+                                    variant="text"
+                                    onClick={() => {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                        dispatch(clearNotifications());
+                                    }}
+                                >
+                                    {GENERAL.JOB_MONITORING}.
+                                </Button>
+                            </div>
+                        )
                     })
                 );
                 const jobInterval = setInterval(() => {
@@ -175,6 +193,8 @@ const GetWell = () => {
                                     message: 'Assessment failed'
                                 })
                             );
+                            refreshGetWellPage();
+                            dispatch(setGwAdhocError(jobRes?.data?.error));
                             clearInterval(jobInterval);
                         }
                     });
@@ -186,6 +206,8 @@ const GetWell = () => {
                         message: 'Error in triggering assessment'
                     })
                 );
+                setTriggerAssessmentInProgress(false);
+                dispatch(setGwAdhocError(res?.error?.data?.message));
             }
         });
     };
@@ -383,7 +405,7 @@ const GetWell = () => {
                             ) : (
                                 <Popover
                                     popoverClass={styles['copy-popover']}
-                                    children={`Last update: ${gwTimestamp || GENERAL.NOT_AVAILABLE}`}
+                                    children={`Last update: ${gwRefreshTimestamp || GENERAL.NOT_AVAILABLE}`}
                                     trigger="hover"
                                     container={
                                         <div

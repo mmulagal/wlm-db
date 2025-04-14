@@ -132,11 +132,9 @@ async function getAvailableSnapshotPolicyList(
         );
 
         const fsxId = fsxnIds?.split(',')[0];
-        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
-            credentialsId,
-            region,
+        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
             fsxId
-        );
+        ]);
         const svmIdAssignedToInstance = svms.find(svm => {
             if (isDemo()) {
                 return svm;

@@ -117,8 +117,8 @@ import OptimizeOntapInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeOnta
 import Marketing from '../../../Marketing/Marketing';
 import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
 import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSlice';
-import { method } from 'lodash';
 import store from '../../../store/store';
+import DashboardDismissPage from '../../Dashboard/DashboardInnerPage/DashboardDismissPage';
 
 type Tab = {
     tab: string;
@@ -1161,7 +1161,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     variant="Regular_14"
                                     className={
                                         selectedHeaderTab === WLF_TABS.DASHBOARD ||
-                                        selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE
+                                        selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE ||
+                                        selectedHeaderTab === WLF_TABS.DASHBOARD_DISMISS_PAGE
                                             ? `${
                                                   isWorkloadFactory
                                                       ? styles.headerPart1
@@ -1454,6 +1455,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 {selectedHeaderTab === WLF_TABS.OPTIMIZE && <GetWell />}
 
                 {selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE && <DashboardInnerPage />}
+
+                {selectedHeaderTab === WLF_TABS.DASHBOARD_DISMISS_PAGE && <DashboardDismissPage />}
 
                 {selectedHeaderTab === WLF_TABS.OPTIMIZE_INNER_PAGE && <OptimizeInnerPage />}
                 {selectedHeaderTab === WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE && <OptimizeOntapInnerPage />}
