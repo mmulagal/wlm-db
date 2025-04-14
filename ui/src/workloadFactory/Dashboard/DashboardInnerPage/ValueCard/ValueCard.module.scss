@@ -14,5 +14,11 @@
         gap: 4px;
         width: 200px;
         height: 56px;
+
+        .configContainer {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
     }
 }

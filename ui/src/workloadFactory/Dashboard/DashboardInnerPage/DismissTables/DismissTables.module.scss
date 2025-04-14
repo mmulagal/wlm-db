@@ -11,6 +11,22 @@
         }
     }
 
+    .actionDisabled {
+        .actionText {
+            color: var(--text-disabled);
+        }
+
+        button {
+            span {
+                svg {
+                    path {
+                        fill: var(--text-disabled);
+                    }
+                }
+            }
+        }
+    }
+
     .configContainer {
         display: flex;
         gap: 16px;

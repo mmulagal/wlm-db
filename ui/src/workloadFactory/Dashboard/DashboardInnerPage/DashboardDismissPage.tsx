@@ -476,6 +476,7 @@ const DashboardDismissPage = () => {
                             configurationState={valueCardData.configurationState}
                             severity={valueCardData.severity}
                             from="dismissPage"
+                            tooltipText="This configuration is dismissed or postponed for some of the instances."
                         />
 
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>
