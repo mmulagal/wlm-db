@@ -248,7 +248,6 @@ async function runCloneAssessment(
         instanceOntapDetails,
         sqlAuthEnabled
     });
-
     const { fsxId, svmUuid } = instanceOntapDetails[databaseInstanceName];
     const ssmCommand = GET_SANDBOX_DETAILS(databaseInstanceName, sqlAuthEnabled as boolean, GET_SANDBOXES);
 
@@ -311,12 +310,20 @@ async function runCloneAssessment(
         }
         volumeUUIDToDatabaseNameMap.get(ontapVolumeuuid)?.push(databaseName);
     });
-
     // implementation with our wlmdb created sandbox
     const parsedResponse = sqlResponseParsing(response);
     const { cloneResponse } = parsedResponse;
 
-    const sandboxListSSMResponse = JSON.parse(cloneResponse);
+    let sandboxListSSMResponse = [];
+    try {
+        sandboxListSSMResponse = JSON.parse(cloneResponse);
+        if (!Array.isArray(sandboxListSSMResponse)) {
+            throw new Error('Parsed cloneResponse is not an array');
+        }
+    } catch (error) {
+        logger.error('Failed to parse cloneResponse or invalid format', { cloneResponse, error });
+        sandboxListSSMResponse = []; // Default to an empty array if parsing fails
+    }
 
     const sandboxInfo: CloneDetail[] = [];
     let oldClones = 0;
