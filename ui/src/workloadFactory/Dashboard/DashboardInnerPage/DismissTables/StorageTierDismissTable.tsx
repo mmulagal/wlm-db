@@ -9,7 +9,10 @@ import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
-import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
+import {
+    setSelectedRowsForDismiss,
+    setSelectedRowsForOptimize
+} from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from '../RenderTables/FirstColumnCoponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
 import {
@@ -34,7 +37,7 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
     );
 
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
-    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
+    const { selectedRowsForDismiss } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
 
     const tableData = useMemo(() => {
@@ -96,12 +99,12 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
             return disableOptimizeCheckBoxForOptimizeCase(
                 tableData,
                 ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
-                selectedRowsForOptimize
+                selectedRowsForDismiss
             );
         } else {
             return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
         }
-    }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
+    }, [selectedRowsForDismiss, tableData, inProgressOptimizationData]);
 
     const setStatusIcon = (value: string) => {
         if (value === 'Active') {
@@ -157,13 +160,20 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
             width: '220px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
-                    <div className={styles.actionContainer}>
+                    <div
+                        className={
+                            selectedRowsForDismiss.length > 0
+                                ? `${styles.actionContainer} ${styles.actionDisabled}`
+                                : styles.actionContainer
+                        }
+                    >
                         <DsTypography variant="Regular_14" className={styles.actionText}>
                             Set status
                         </DsTypography>
                         <ButtonWithDropdown
                             icon={BtnIcon}
                             variant="icon"
+                            isDisabled={selectedRowsForDismiss.length > 0}
                             items={[
                                 {
                                     id: 'activate',
@@ -218,7 +228,7 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
     useEffect(() => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
-        dispatch(setSelectedRowsForOptimize(rowsData));
+        dispatch(setSelectedRowsForDismiss(rowsData));
 
         if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
@@ -227,7 +237,7 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
 
     const handleBulkOperation = (val: string) => {
         console.log(val);
-        handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForDismiss);
     };
     return (
         <div className={styles.dismissTables}>
@@ -237,10 +247,10 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
                 pluralTitle={`Instances`}
                 singularTitle={'Instance'}
             />
-            {selectedRowsForOptimize.length > 0 && (
+            {selectedRowsForDismiss.length > 0 && (
                 <BulkDismissContainer
                     onClick={(val: any) => handleBulkOperation(val)}
-                    rowData={selectedRowsForOptimize.map((row: any) => row?.configState)}
+                    rowData={selectedRowsForDismiss.map((row: any) => row?.configState)}
                 />
             )}
             <Table
