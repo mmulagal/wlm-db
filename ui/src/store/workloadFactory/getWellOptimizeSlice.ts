@@ -41,13 +41,17 @@ const initialState: GetWellSliceInterface = {
     recommendedInstanceInBulk: {},
     landingFromInnerPage: false,
     isInnerPageOptimize: false,
-    gwAdhocError: ''
+    gwAdhocError: '',
+    selectedCloneTab: 'Clones created with Workload factory (AKA Sandboxes)'
 };
 
 const getWellOptimizeSlice = createSlice({
     name: 'getWellOptimize',
     initialState,
     reducers: {
+        setSelectedCloneTab: (state, action: PayloadAction<string>) => {
+            state.selectedCloneTab = action.payload;
+        },
         setSelectedSnapshot: (state, action: PayloadAction<any>) => {
             state.selectedSnapshot = action.payload;
         },
@@ -191,6 +195,7 @@ const getWellOptimizeSlice = createSlice({
 });
 
 export const {
+    setSelectedCloneTab,
     setSelectedSnapshot,
     setSelectedSnapshotPolicy,
     setSelectedAWSBackup,

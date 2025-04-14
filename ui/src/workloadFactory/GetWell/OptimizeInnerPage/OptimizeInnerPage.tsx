@@ -39,6 +39,7 @@ import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSna
 import CloneManagementTable from './InnerTables/CloneManagementTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import { useRef, useState } from 'react';
+import CloneTabs from './CloneTabs';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -524,16 +525,6 @@ const OptimizeInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
-
-            case GENERAL.CLONE_MANAGEMENT:
-                return (
-                    <CloneManagementTable
-                        type={selectedOptimizeConfig?.type}
-                        data={selectedOptimizeConfig?.data}
-                        lastColDetails={lastColDetails}
-                        handleBulkAction={handleBulkAction}
-                    />
-                );
         }
     };
 
@@ -546,6 +537,7 @@ const OptimizeInnerPage = () => {
         }
         return selectedOptimizeConfig?.type;
     };
+
     return (
         <div className={styles['optimize-inner-page']}>
             <div className={styles.innerPage}>
@@ -595,6 +587,8 @@ const OptimizeInnerPage = () => {
                 <div className={styles.contentSection}>
                     <OptimizeCard />
                 </div>
+
+                {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && <CloneTabs />}
 
                 <div className={styles.tableSection}>{renderTable()}</div>
             </div>
