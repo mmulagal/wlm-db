@@ -22,6 +22,7 @@ export interface GetWellSliceInterface {
     } | null;
     gwRefreshPage: boolean;
     gwTimestamp: string;
+    gwRefreshTimestamp: string;
     optimizingData: any;
     optimizingInstanceData: boolean;
     selectedRecommendedInstance: any;
@@ -38,6 +39,7 @@ export interface GetWellSliceInterface {
     recommendedInstanceInBulk?: any;
     landingFromInnerPage?: boolean;
     isInnerPageOptimize?: boolean;
+    gwAdhocError?: string;
 }
 
 interface CountBreakDown {

@@ -4,6 +4,7 @@ import { setSelectedConfigSummary } from '../../store/workloadFactory/databaseHo
 import {
     setCardData,
     setDriftAssessmentData,
+    setGwRefreshTimestamp,
     setGwTimestamp,
     setInProgressHostData,
     setInProgressOptimizationData,
@@ -35,7 +36,12 @@ import {
     PerConfigInterface,
     RSSConfigAdapterInterface
 } from '../../utils/types/getWellTypes';
-import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from '../../utils/utilityFunctions';
+import {
+    formatDateWithTime,
+    formatNumberWithCustomComma,
+    getCurrentDateTime,
+    sortListOfDict
+} from '../../utils/utilityFunctions';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
@@ -1864,6 +1870,9 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
                 : data?.storage?.timestamp
         )
     );
+
+    // Dispatch timestamp for every get API call
+    dispatch(setGwRefreshTimestamp(getCurrentDateTime()));
 };
 
 export const getUniqueEntries = (arrays: any) => {
