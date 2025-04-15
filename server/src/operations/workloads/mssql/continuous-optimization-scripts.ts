@@ -1192,7 +1192,7 @@ const CHECK_RUNNING_STATUS_WITH_RESTART = (serverNames: string[]) => `
             }
             $serviceResult = @{ name = $SqlService.DisplayName; status = $SqlService.Status.ToString() }
         }
-        $resObj = New-Object PSObject –Property $serviceResult
+        $resObj = New-Object PSObject -Property $serviceResult
         $results += $resObj
     }
     $jsonResult = $results | ConvertTo-Json -Compress
