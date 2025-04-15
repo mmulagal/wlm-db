@@ -32,8 +32,9 @@ export const GENERAL = {
     NO_CRED_SELECTED: 'No credentials selected',
     ALL_REGIONS_SELECTED: 'All regions selected',
     NO_REGIONS_SELECTED: 'No regions selected',
-    ASSESSMENT_PERFORMED: 'Last assessment was performed at : ',
-    ASSESS_NOW: 'Assess now',
+    ASSESSMENT_PERFORMED: 'Automatic daily analysis',
+    LAST_UPDATE: 'Last update:',
+    ASSESS_NOW: 'Analyze now',
     MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',
     POSTGRESQL_TYPE: 'PostgreSQL',
     USER_DATABASE: 'User Database',
@@ -1267,7 +1268,7 @@ export const GENERAL = {
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
     CRR: 'Cross-Region Replication (CRR)',
     CLONING: 'Cloning',
-    CLONE_MANAGEMENT: "Clone management",
+    CLONE_MANAGEMENT: 'Clone management',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
 };
