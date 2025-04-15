@@ -7,10 +7,11 @@ import {
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
+    Parameter,
     PutParameterCommandInput,
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
-import { DescribeRegionsCommandInput } from '@aws-sdk/client-ec2';
+import { DescribeRegionsCommandInput, DescribeRegionsResult } from '@aws-sdk/client-ec2';
 import { isEmpty } from 'lodash-es';
 import {
     sendSSMCommand,
@@ -22,7 +23,7 @@ import {
     describeInstanceInformation
 } from '../../lib/aws/ssm';
 import { decompressSSMResponse, generateHash, sleep } from '../../utils/utils';
-import { AWS_REGIONS, RESTRICTED_FSX_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
+import { AWS_REGION_KEYS, AWS_REGIONS, RESTRICTED_FSX_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParamterObject, MultipleCommandSsmResponse } from '../../utils/common-types';
@@ -309,10 +310,23 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
                 }
             ]
         };
-        const [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
-            getParametersByPath(),
-            describeRegions(input, credentialsId)
-        ]);
+
+        let fsxRegionResponse: Parameter[] = [];
+        let ec2RegionResponse: DescribeRegionsResult = { Regions: [] };
+        try {
+            [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
+                getParametersByPath(),
+                describeRegions(input, credentialsId)
+            ]);
+        } catch (error: any) {
+            if (error?.message?.includes('with an explicit deny in a service control policy')) {
+                logger.warn('Region us-east-1 is blocked by SCP', error);
+                // Returning a static list of regions as the default AWS region is blocked by SCP
+                ec2RegionResponse = { Regions: AWS_REGION_KEYS.map(region => ({ RegionName: region })) };
+            } else {
+                throw error;
+            }
+        }
 
         const { Regions: enabledRegionsInAccount } = ec2RegionResponse;
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
