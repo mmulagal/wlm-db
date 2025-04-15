@@ -587,15 +587,11 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 const isApplicationOptimized = isOptimized(instanceAssessmentData?.license?.status);
                 const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
                 const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
-                const isScheduledLoclaSnapshotOptimized = isOptimized(
-                    instanceAssessmentData?.resiliency?.snapshotPolicy?.status
-                );
-                const isScheduledAWSBackUpOptimized = isOptimized(
-                    instanceAssessmentData?.resiliency?.awsBackup?.status
-                );
+                const isScheduledLoclaSnapshotOptimized = isOptimized(instanceAssessmentData?.snapshotPolicy?.status);
+                const isScheduledAWSBackUpOptimized = isOptimized(instanceAssessmentData?.awsBackup?.status);
 
                 const isCloneOptimized = isOptimized(instanceAssessmentData?.clone?.status);
-                const isCRROptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
+                const isCRROptimized = isOptimized(instanceAssessmentData?.crr?.status);
 
                 if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
                     assessmentGroupedByCategory.compute++;
@@ -723,15 +719,11 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isApplicationSqlServerOptimized = isOptimized(instanceAssessmentData?.license?.status);
                 const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
                 const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
-                const isScheduledLocalSnapshotOptimized = isOptimized(
-                    instanceAssessmentData?.resiliency?.snapshotPolicy?.status
-                );
-                const isScheduledawsBackupOptimized = isOptimized(
-                    instanceAssessmentData?.resiliency?.awsBackup?.status
-                );
+                const isScheduledLocalSnapshotOptimized = isOptimized(instanceAssessmentData?.snapshotPolicy?.status);
+                const isScheduledawsBackupOptimized = isOptimized(instanceAssessmentData?.awsBackup?.status);
 
                 const isCloneOptimized = isOptimized(instanceAssessmentData?.clone?.status);
-                const isCrrOptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
+                const isCrrOptimized = isOptimized(instanceAssessmentData?.crr?.status);
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.storageTier =
@@ -793,12 +785,12 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     ? 1
                     : 0;
                 getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
-                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.snapshotPolicy?.severity] ||
+                    GETWELL_VALUES[instanceAssessmentData?.snapshotPolicy?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
 
                 getAssessmentGroupedByConfigurations.scheduledawsBackup += isScheduledawsBackupOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.scheduledawsBackup =
-                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.awsBackup?.severity] ||
+                    GETWELL_VALUES[instanceAssessmentData?.awsBackup?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.scheduledawsBackup;
 
                 getAssessmentGroupedByConfigurations.clone += isCloneOptimized ? 1 : 0;
@@ -808,7 +800,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
 
                 getAssessmentGroupedByConfigurations.crr += isCrrOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.crr =
-                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.crr?.severity] ||
+                    GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.crr;
             }
         });
