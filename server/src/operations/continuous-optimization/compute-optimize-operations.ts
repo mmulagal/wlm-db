@@ -385,7 +385,6 @@ async function handleComputeRemediation(
             );
 
             if (checkRunningResponse.status !== JOBSTATUS.COMPLETED) {
-                // For this subjob we are not
                 subJobErrorMessage = checkRunningResponse.error;
                 completedWithError = true;
                 throw checkRunningResponse.error;
@@ -519,6 +518,7 @@ async function checkRunningStatus(
         'Checking running status of the service',
         parentJobId
     );
+
     const rawStatusResponse = await callSsmExecution(
         credentialsId,
         region,
@@ -559,7 +559,7 @@ async function checkRunningStatus(
             };
         }
     } catch (error) {
-        logger.error('Error parsing query response:', rawStatusResponse);
+        logger.error('Error in ssm call for running status:', rawStatusResponse);
         jobDetails = {
             status: JOBSTATUS.FAILED,
             error: typeof error === 'string' ? error : JSON.stringify(error)
