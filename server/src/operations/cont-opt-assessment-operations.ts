@@ -44,7 +44,6 @@ import {
     LicenseDriftResponseType,
     MSSQLPatchDriftResponseType,
     ParameterDriftResponseType,
-    ResilienceDriftAssessmentResponseType,
     RssConfigDriftResponseType
 } from '../routes/types/continuous-optimization.types';
 import { getInstanceInfo } from './database/database-operations';
@@ -569,7 +568,9 @@ async function driftAssessmentDataCollection(
     let shouldRunRssConfigAssessment = false;
     let shouldRunMAXDOPAssessment = false;
     let shouldRunMSSQLPatchAssessment = false;
-    let shouldRunResilienceAssessment = false;
+    let shouldRunSnapshotPolicyAssessment = false;
+    let shouldRunAwsBackupAssessment = false;
+    let shouldRunCrrAssessment = false;
     let shouldRunCloneAssessment = false;
 
     let fieldsValues: string | string[] = [];
@@ -583,7 +584,12 @@ async function driftAssessmentDataCollection(
         shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
         shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
         shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
-        shouldRunResilienceAssessment = fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase());
+        shouldRunSnapshotPolicyAssessment = fieldsValues?.includes(
+            AssessmentCategories.SNAPSHOT_POLICY.toLocaleLowerCase()
+        );
+        shouldRunAwsBackupAssessment = fieldsValues?.includes(AssessmentCategories.AWS_BACKUP.toLocaleLowerCase());
+        shouldRunCrrAssessment = fieldsValues?.includes(AssessmentCategories.CRR.toLocaleLowerCase());
+
         shouldRunCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
     } else {
         fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
@@ -594,11 +600,13 @@ async function driftAssessmentDataCollection(
         shouldRunRssConfigAssessment = true;
         shouldRunMAXDOPAssessment = true;
         shouldRunMSSQLPatchAssessment = true;
-        shouldRunResilienceAssessment = true;
+        shouldRunSnapshotPolicyAssessment = true;
+        shouldRunAwsBackupAssessment = true;
+        shouldRunCrrAssessment = true;
         shouldRunCloneAssessment = true;
     }
 
-    if (shouldRunStorageAssessment || shouldRunResilienceAssessment) {
+    if (shouldRunStorageAssessment || shouldRunSnapshotPolicyAssessment) {
         const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
             databaseInstanceRecord.fsxFileSystem
         ]);
@@ -677,34 +685,34 @@ async function driftAssessmentDataCollection(
             instanceLevelAssessmentJobId,
             databaseInstanceRecord,
             instanceVolumeMapping,
-            !shouldRunResilienceAssessment
+            !shouldRunSnapshotPolicyAssessment
                 ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE
                 : shouldRunStorageAssessment
                 ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
                 : STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY
         );
 
-        if (shouldRunResilienceAssessment) {
-            await Promise.all([
-                initiateCrossRegionResiliencyAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    instanceLevelAssessmentJobId,
-                    databaseInstanceRecord,
-                    instanceVolumeMapping
-                ),
-                initiateAWSBackupAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    instanceLevelAssessmentJobId,
-                    databaseInstanceRecord,
-                    instanceVolumeMapping
-                )
-            ]);
+        if (shouldRunCrrAssessment) {
+            await initiateCrossRegionResiliencyAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord,
+                instanceVolumeMapping
+            );
+        }
+        if (shouldRunAwsBackupAssessment) {
+            await initiateAWSBackupAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord,
+                instanceVolumeMapping
+            );
         }
     }
 
@@ -1060,9 +1068,10 @@ async function fetchDriftAssessment(
         shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
             AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
         );
-        shouldCalculateResilienceAssessment = fieldsValues?.includes(
-            AssessmentCategories.RESILIENCY.toLocaleLowerCase()
-        );
+        shouldCalculateResilienceAssessment =
+            fieldsValues?.includes(AssessmentCategories.SNAPSHOT_POLICY.toLocaleLowerCase()) ||
+            fieldsValues?.includes(AssessmentCategories.AWS_BACKUP.toLocaleLowerCase()) ||
+            fieldsValues?.includes(AssessmentCategories.CRR.toLocaleLowerCase());
         shouldCalculateCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
     } else {
         shouldCalculateStorageAssessment = true;
@@ -1075,7 +1084,7 @@ async function fetchDriftAssessment(
         shouldCalculateResilienceAssessment = true;
         shouldCalculateCloneAssessment = true;
     }
-    const driftAssessmentData: DriftAssessmentResponseType = {};
+    let driftAssessmentData: DriftAssessmentResponseType = {};
 
     const [
         storageAssessmentResponse,
@@ -1107,7 +1116,7 @@ async function fetchDriftAssessment(
             ? hostLevelDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
             : Promise.resolve({}),
         shouldCalculateResilienceAssessment
-            ? getResilienceDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? getResilienceDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
             : Promise.resolve({})
     ]);
 
@@ -1221,7 +1230,7 @@ async function fetchDriftAssessment(
     }
 
     if (!isEmpty(resilienceAssessmentResponse)) {
-        driftAssessmentData.resiliency = resilienceAssessmentResponse as ResilienceDriftAssessmentResponseType;
+        driftAssessmentData = { ...driftAssessmentData, ...resilienceAssessmentResponse };
     }
 
     if (!isEmpty(cloneResponse)) {
@@ -1338,7 +1347,9 @@ async function fetchDriftAssessmentPerHost(
                 const instanceFieldsToQuery = [
                     AssessmentCategories.STORAGE,
                     AssessmentCategories.MAXDOP,
-                    AssessmentCategories.RESILIENCY
+                    AssessmentCategories.SNAPSHOT_POLICY,
+                    AssessmentCategories.AWS_BACKUP,
+                    AssessmentCategories.CRR
                 ];
 
                 const driftAssessment = await fetchDriftAssessment(
