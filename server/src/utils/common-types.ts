@@ -557,6 +557,11 @@ type MultipleCommandSsmResponse = {
     error?: string;
 };
 
+interface SsmSqlServerRunningStatus {
+    name: string;
+    status: string;
+}
+
 interface SVM {
     uuid: string;
     _links: {
@@ -639,6 +644,7 @@ export {
     PatchDetail,
     AwsFsxNBackupConfig,
     MultipleCommandSsmResponse,
+    SsmSqlServerRunningStatus,
     CloneAssesment,
     CloneDetail,
     VolumeRecord,

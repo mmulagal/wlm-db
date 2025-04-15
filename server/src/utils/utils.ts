@@ -971,6 +971,14 @@ function isValidProp(propName: string) {
     return propName && propName !== 'undefined' && propName !== 'null';
 }
 
+// When the array has one element, powershell returns only the object instead of the array. This function will convert it to an array
+function formatSsmArrayResponse<T>(response: T | T[]): T[] {
+    if (Array.isArray(response)) {
+        return response;
+    }
+    return response ? [response] : [];
+}
+
 /**
  * Calculates the number of days between two dates.
  * @param startDate - The start date.
@@ -1052,5 +1060,6 @@ export {
     divideArrayIntoChunks,
     isValidProp,
     calculateDaysSince,
-    determineVolumeType
+    determineVolumeType,
+    formatSsmArrayResponse
 };
