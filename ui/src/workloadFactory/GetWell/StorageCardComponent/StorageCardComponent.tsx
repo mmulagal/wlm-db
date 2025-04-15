@@ -1041,7 +1041,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 ))}
 
             {/* Section 7 */}
-            <ButtonWithDropdown
+            {/* <ButtonWithDropdown
                 variant="icon"
                 isDisabled={false}
                 items={[
@@ -1072,7 +1072,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 ]}
             >
                 <ActionMenu />
-            </ButtonWithDropdown>
+            </ButtonWithDropdown> */}
         </div>
     );
 };
