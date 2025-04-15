@@ -398,8 +398,12 @@ const GetWell = () => {
                         </DsTypography>
 
                         {!optimizePrintState &&
-                            (loading || triggerAssessmentInProgress ? (
-                                <div className={styles.refreshIconDisable} id={'assessment-refresh'}>
+                            (true || triggerAssessmentInProgress ? (
+                                <div
+                                    className={styles.refreshIconDisable}
+                                    style={{ marginRight: '0px' }}
+                                    id={'assessment-refresh'}
+                                >
                                     <RefreshIcon />
                                 </div>
                             ) : (
