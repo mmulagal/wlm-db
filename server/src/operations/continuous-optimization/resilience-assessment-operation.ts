@@ -210,7 +210,7 @@ async function getSnapshotPolicyDriftData(
 ): Promise<GenericAssessmentResponseType> {
     logger.info('Calculate snapshot policy drift data for:', { credentialsId, databaseInstanceId, databaseHostId });
     let errorMessage;
-    const snapshotPolicyAssesmentData: ParameterDriftResponseType = {
+    const snapshotPolicyAssessmentData: ParameterDriftResponseType = {
         ...storageGoldenConfigData.resiliency.snapshotPolicy,
         name: AssessmentCategories.SNAPSHOT_POLICY,
         status: AssessmentStatus.NOT_OPTIMIZED,
@@ -255,7 +255,7 @@ async function getSnapshotPolicyDriftData(
             ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumes as unknown as MappedOnTapVolumeResponse));
         }
 
-        snapshotPolicyAssesmentData.totalObjectsAssessed = dataLogVolumeUuids.length;
+        snapshotPolicyAssessmentData.totalObjectsAssessed = dataLogVolumeUuids.length;
         volumes.forEach(volume => {
             const volDetails = volume as Record<string, string>;
 
@@ -269,7 +269,7 @@ async function getSnapshotPolicyDriftData(
             ) {
                 const vol: OntapVolumeType = { ontapVolumeName: volDetails?.name, ontapVolumeUuid: volDetails?.uuid };
                 if (isEmpty(dataLogVolumeUuids) || dataLogVolumeUuids.includes(volDetails?.uuid)) {
-                    snapshotPolicyAssesmentData?.objectsInViolation?.push(vol);
+                    snapshotPolicyAssessmentData?.objectsInViolation?.push(vol);
                 }
             }
         });
@@ -278,20 +278,20 @@ async function getSnapshotPolicyDriftData(
             const { configsOptimized } =
                 ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
             if (configsOptimized?.STORAGE?.includes(OptimizeStorageConfigs.SNAPSHOT_POLICY)) {
-                snapshotPolicyAssesmentData.objectsInViolation = [];
+                snapshotPolicyAssessmentData.objectsInViolation = [];
             }
         }
 
-        if (isEmpty(snapshotPolicyAssesmentData.objectsInViolation)) {
-            snapshotPolicyAssesmentData.status = AssessmentStatus.OPTIMIZED;
+        if (isEmpty(snapshotPolicyAssessmentData.objectsInViolation)) {
+            snapshotPolicyAssessmentData.status = AssessmentStatus.OPTIMIZED;
         }
-        snapshotPolicyAssesmentData.totalObjectsInViolation =
-            snapshotPolicyAssesmentData?.objectsInViolation?.length ?? 0;
+        snapshotPolicyAssessmentData.totalObjectsInViolation =
+            snapshotPolicyAssessmentData?.objectsInViolation?.length ?? 0;
     } catch (error) {
         errorMessage = `Error getting snapshot policy drift data: ${error}`;
         return { errorMessage };
     }
-    return snapshotPolicyAssesmentData;
+    return snapshotPolicyAssessmentData;
 }
 
 async function initiateAWSBackupAssessment(
