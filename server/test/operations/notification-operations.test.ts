@@ -6,7 +6,7 @@ describe('Process email request operations', () => {
     const accountId = ACCOUNT_ID;
     const fileBuffer = Buffer.from('some file content');
     const fileName = 'test.pdf';
-    const fields = { userEmail: 'test@example.com', storageType: 'ebs', instanceName: 'sql01' };
+    const fields = { userEmail: 'test@example.com', storageType: 'ebs', hostName: 'sql01' };
     const emailType = EMAIL_TYPES.SAVINGS_CALCULATIONS;
 
     beforeAll(() => {

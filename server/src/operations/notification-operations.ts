@@ -30,7 +30,7 @@ export default async function processEmailRequest(
     }
 
     if (emailType && emailType === EMAIL_TYPES.SAVINGS_CALCULATIONS) {
-        const { storageType, instanceName } = fields;
+        const { storageType, hostName } = fields;
 
         if (!fileBuffer) {
             throw createError(HttpErrorCodes.BAD_REQUEST, 'Attachment file not found in the request');
@@ -44,19 +44,10 @@ export default async function processEmailRequest(
                 throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid user email in the request');
             case !storageType:
                 throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid storage type in the request');
-            case !instanceName:
-                throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid instance name in the request');
             default:
         }
 
-        response = await sendSavingsCalculationEmail(
-            accountId,
-            fileBuffer,
-            fileName,
-            userEmail,
-            storageType,
-            instanceName
-        );
+        response = await sendSavingsCalculationEmail(accountId, fileBuffer, fileName, userEmail, storageType, hostName);
     } else {
         response.message = 'Invalid emailType';
         throw createError(HttpErrorCodes.BAD_REQUEST, response);
@@ -71,7 +62,7 @@ async function sendSavingsCalculationEmail(
     fileName: string,
     userEmail: string,
     storageType: string,
-    instanceName: string
+    hostName?: string
 ): Promise<EmailResponseType> {
     logger.info('Sending savings calculation email', { accountId, fileName, userEmail, storageType });
     const successMsg = { message: 'Email sent successfully' };
@@ -86,7 +77,9 @@ async function sendSavingsCalculationEmail(
         onprem: 'On-premises'
     };
     const desc = storageDesc[storageType];
-    const emailSubject = `Savings Calculator Report is Ready for the instance: ${instanceName}`;
+    const emailSubject = hostName
+        ? `Savings Calculator Report is Ready for the host: ${hostName}`
+        : 'Savings Calculator Report is Ready';
     const emailBody = `
         <!DOCTYPE html>
         <html lang="en">
@@ -99,7 +92,7 @@ async function sendSavingsCalculationEmail(
                     }
                 </style>
             </head>
-            <body>
+            <body padding="20px">
                 <p>Hi there,</p>
                 <p>
                     Here's the savings calculator report that provides a comparison of your current Microsoft SQL Server environment using ${desc} storage and the potential savings you could achieve by switching to Amazon FSx for NetApp ONTAP.
