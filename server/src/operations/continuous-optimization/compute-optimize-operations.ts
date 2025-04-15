@@ -489,7 +489,7 @@ async function getRunningSqlServers(
         return formatSsmArrayResponse<string>(sqlServers);
     } catch (error) {
         logger.error('Error in ssm call:', error);
-    }
+        return [];
 }
 
 async function checkRunningStatus(
