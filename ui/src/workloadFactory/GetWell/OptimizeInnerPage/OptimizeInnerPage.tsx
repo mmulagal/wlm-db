@@ -36,8 +36,10 @@ import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
+import CloneManagementTable from './InnerTables/CloneManagementTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import { useRef, useState } from 'react';
+import CloneTabs from './CloneTabs';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -134,7 +136,8 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
         ) {
             return (
                 <DsButton
@@ -534,6 +537,7 @@ const OptimizeInnerPage = () => {
         }
         return selectedOptimizeConfig?.type;
     };
+
     return (
         <div className={styles['optimize-inner-page']}>
             <div className={styles.innerPage}>
@@ -583,6 +587,8 @@ const OptimizeInnerPage = () => {
                 <div className={styles.contentSection}>
                     <OptimizeCard />
                 </div>
+
+                {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && <CloneTabs />}
 
                 <div className={styles.tableSection}>{renderTable()}</div>
             </div>

@@ -87,6 +87,12 @@ interface MaxDOPAssesment {
     status: string;
 }
 
+interface AWSBackupAssessment {
+    fileSystemId: string;
+    isAWSBackupEnabled: boolean;
+    errorMessage?: string;
+}
+
 interface CloneDetail {
     databaseHostName: string;
     databaseHostId: string;
@@ -638,5 +644,6 @@ export {
     VolumeRecord,
     MappedOnTapVolumeResponse,
     InstancesResponse,
-    VolumeDBMapEntry
+    VolumeDBMapEntry,
+    AWSBackupAssessment
 };

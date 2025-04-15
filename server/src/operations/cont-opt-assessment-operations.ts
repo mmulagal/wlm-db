@@ -80,7 +80,8 @@ import {
 import {
     getResilienceDriftAssessment,
     initiateCrossRegionResiliencyAssessment,
-    collectSnapshotCopyData
+    collectSnapshotCopyData,
+    initiateAWSBackupAssessment
 } from './continuous-optimization/resilience-assessment-operation';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import {
@@ -400,16 +401,6 @@ async function initiateStorageAssessmentCollection(
         instanceRecord
     });
 
-    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
-        credentialsId,
-        region,
-        instanceRecord.fsxFileSystem
-    );
-
-    instanceRecord.svmOntapUuid = svms.find(svm =>
-        isDemoFlow ? svm : svm?.StorageVirtualMachineId === instanceRecord.svmId
-    )?.UUID;
-
     if (isEmpty(instanceVolumeMapping)) {
         const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
         logger.error(errorMessage);
@@ -577,11 +568,9 @@ async function driftAssessmentDataCollection(
     }
 
     if (shouldRunStorageAssessment || shouldRunResilienceAssessment) {
-        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
-            credentialsId,
-            region,
+        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
             databaseInstanceRecord.fsxFileSystem
-        );
+        ]);
 
         databaseInstanceRecord.svmOntapUuid = svms.find(svm =>
             isDemoFlow ? svm : svm?.StorageVirtualMachineId === databaseInstanceRecord.svmId
@@ -642,15 +631,26 @@ async function driftAssessmentDataCollection(
         );
 
         if (shouldRunResilienceAssessment) {
-            await initiateCrossRegionResiliencyAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                jobId,
-                databaseInstanceRecord,
-                instanceVolumeMapping
-            );
+            await Promise.all([
+                initiateCrossRegionResiliencyAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    jobId,
+                    databaseInstanceRecord,
+                    instanceVolumeMapping
+                ),
+                initiateAWSBackupAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    jobId,
+                    databaseInstanceRecord,
+                    instanceVolumeMapping
+                )
+            ]);
         }
     }
 

@@ -1,7 +1,7 @@
 import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
-import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnCoponent';
+import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnComponent';
 import { useEffect, useMemo } from 'react';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';

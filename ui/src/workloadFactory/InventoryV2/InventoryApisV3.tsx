@@ -18,7 +18,6 @@ import {
     setFsxCredentialStatusLoading,
     setInventoryChartData,
     setInventoryTableData,
-    setInventoryTablesRows,
     setIsDatabaseHostsLoading,
     setIsDiscoverHostLoading,
     setIsDiscoveredHostData,
@@ -26,7 +25,6 @@ import {
     setIsFullPgSqlHostDataLoading,
     setIsManagedHostListLoading,
     setIsPgSqlDatabaseHostsLoading,
-    setIsRefreshed,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
     setPotentialSavingsHostData,
@@ -635,15 +633,16 @@ const InventoryApisV3 = () => {
 
     // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
     const getMssqlData = async (
-        instanceId: any,
+        instanceIdComb: any,
         isManagedHost: boolean,
         fields: Array<string>,
         nextToken: string | null = ''
     ) => {
+        let [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
         try {
             const result: any = await getMssqlInstanceDataApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.data?.regionCode,
+                credentialId: instanceCredId,
+                regionId: instanceRegionId,
                 instances: instanceId,
                 fields: fields.join(','),
                 nextToken: nextToken
@@ -654,53 +653,71 @@ const InventoryApisV3 = () => {
                     let partnerInstanceId = getPartnerInstanceId(host, host?.id);
                     if (
                         partnerInstanceId &&
-                        !runningInstanceListRef.current.includes(partnerInstanceId) &&
-                        !mssqlInstancesDataRef.current[uniqueHostRow(host?.id, credId, regionId)]?.isManagedHost &&
-                        !partnerInstanceList.includes(partnerInstanceId)
+                        !runningInstanceListRef.current.includes(
+                            uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)
+                        ) &&
+                        !mssqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]
+                            ?.isManagedHost &&
+                        !partnerInstanceList.includes(
+                            uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)
+                        )
                     ) {
-                        setPartnerInstanceList([...partnerInstanceList, ...[partnerInstanceId]]);
+                        setPartnerInstanceList([
+                            ...partnerInstanceList,
+                            ...[uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)]
+                        ]);
                     }
 
                     const state = store.getState();
                     const unManagedPerfInstanceIdsListData = state.inventoryV2.unManagedPerfInstanceIdsList;
                     if (
                         partnerInstanceId &&
-                        unManagedPerfInstanceIdsListData.includes(host?.id) &&
-                        !unManagedPerfInstanceIdsListData.includes(partnerInstanceId)
+                        unManagedPerfInstanceIdsListData.includes(
+                            uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                        ) &&
+                        !unManagedPerfInstanceIdsListData.includes(
+                            uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)
+                        )
                     ) {
                         dispatch(
                             setUnManagedPerfInstanceIdsList([
                                 ...unManagedPerfInstanceIdsListData,
-                                ...[partnerInstanceId]
+                                ...[uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)]
                             ])
                         );
                     }
 
-                    if (mssqlInstancesDataRef.current[uniqueHostRow(host?.id, credId, regionId)]) {
-                        mssqlInstancesDataRes[uniqueHostRow(host?.id, credId, regionId)] = {
+                    if (mssqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
+                        mssqlInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
                             isManagedHost:
-                                mssqlInstancesDataRef.current[uniqueHostRow(host?.id, credId, regionId)]?.isManagedHost,
+                                mssqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]
+                                    ?.isManagedHost,
                             loading: false,
                             data: host,
                             error: host?.errors,
-                            fields: mssqlInstancesDataRef.current[uniqueHostRow(host?.id, credId, regionId)]?.fields
+                            fields: mssqlInstancesDataRef.current[
+                                uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                            ]?.fields
                         };
                     }
                 });
-                if (!mssqlInstancesDataRes?.[uniqueHostRow(instanceId, credId, regionId)]) {
-                    mssqlInstancesDataRes[uniqueHostRow(instanceId, credId, regionId)] = {
+                if (!mssqlInstancesDataRes?.[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]) {
+                    mssqlInstancesDataRes[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
                         isManagedHost:
-                            mssqlInstancesDataRef.current[uniqueHostRow(instanceId, credId, regionId)]?.isManagedHost,
+                            mssqlInstancesDataRef.current[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]
+                                ?.isManagedHost,
                         loading: false,
                         data: null,
                         error: null,
-                        fields: mssqlInstancesDataRef.current[uniqueHostRow(instanceId, credId, regionId)]?.fields
+                        fields: mssqlInstancesDataRef.current[
+                            uniqueHostRow(instanceId, instanceCredId, instanceRegionId)
+                        ]?.fields
                     };
                 }
                 dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataRes }));
             } else {
                 let mssqlInstancesDataErr: any = {};
-                mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
+                mssqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
                     isManagedHost: isManagedHost,
                     loading: false,
                     data: null,
@@ -711,7 +728,7 @@ const InventoryApisV3 = () => {
             }
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
-            mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
+            mssqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
                 isManagedHost: isManagedHost,
                 loading: false,
                 data: null,
@@ -727,27 +744,24 @@ const InventoryApisV3 = () => {
         let mssqlInstancesDataLoad: any = {};
         let noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
-            instancesList?.map((ec2InstanceId: any) => {
-                if (!headerSelectedCred?.data?.credentialsId || !headerSelectedRegion?.data?.regionCode) {
+            instancesList?.map((ec2InstanceIdComb: any) => {
+                if (runningInstanceListRef.current.includes(ec2InstanceIdComb)) {
                     return;
                 }
-                if (runningInstanceListRef.current.includes(ec2InstanceId)) {
-                    return;
-                }
-                mssqlInstancesDataLoad[uniqueHostRow(ec2InstanceId, credId, regionId)] = {
+                mssqlInstancesDataLoad[ec2InstanceIdComb] = {
                     isManagedHost: isManagedHost,
                     loading: true,
                     data: null,
                     error: null,
                     fields: fields
                 };
-                noRunningList.push(ec2InstanceId);
+                noRunningList.push(ec2InstanceIdComb);
             });
             dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
             setRunningInstanceList([...runningInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceId: any) => {
+            noRunningList?.map((ec2InstanceIdComb: any) => {
                 setTimeout(() => {
-                    getMssqlData(ec2InstanceId, isManagedHost, fields);
+                    getMssqlData(ec2InstanceIdComb, isManagedHost, fields);
                 }, 1);
             });
         }
@@ -755,15 +769,16 @@ const InventoryApisV3 = () => {
 
     // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
     const getUnmanagedPerfMssqlData = async (
-        instanceId: any,
+        instanceIdComb: any,
         isManagedHost: boolean,
         fields: Array<string>,
         nextToken: string | null = ''
     ) => {
+        let [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
         try {
             const result: any = await getMssqlInstanceDataApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.data?.regionCode,
+                credentialId: instanceCredId,
+                regionId: instanceRegionId,
                 instances: instanceId,
                 fields: fields.join(','),
                 nextToken: nextToken
@@ -771,33 +786,39 @@ const InventoryApisV3 = () => {
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    if (perfMssqlInstancesDataRef.current[uniqueHostRow(host?.id, credId, regionId)]) {
-                        mssqlInstancesDataRes[uniqueHostRow(host?.id, credId, regionId)] = {
+                    if (perfMssqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
+                        mssqlInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
                             isManagedHost:
-                                perfMssqlInstancesDataRef.current[uniqueHostRow(host?.id, credId, regionId)]
-                                    ?.isManagedHost,
+                                perfMssqlInstancesDataRef.current[
+                                    uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                                ]?.isManagedHost,
                             loading: false,
                             data: host,
                             error: host?.errors,
-                            fields: perfMssqlInstancesDataRef.current[uniqueHostRow(host?.id, credId, regionId)]?.fields
+                            fields: perfMssqlInstancesDataRef.current[
+                                uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                            ]?.fields
                         };
                     }
                 });
-                if (!mssqlInstancesDataRes?.[uniqueHostRow(instanceId, credId, regionId)]) {
-                    mssqlInstancesDataRes[uniqueHostRow(instanceId, credId, regionId)] = {
+                if (!mssqlInstancesDataRes?.[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]) {
+                    mssqlInstancesDataRes[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
                         isManagedHost:
-                            perfMssqlInstancesDataRef.current[uniqueHostRow(instanceId, credId, regionId)]
-                                ?.isManagedHost,
+                            perfMssqlInstancesDataRef.current[
+                                uniqueHostRow(instanceId, instanceCredId, instanceRegionId)
+                            ]?.isManagedHost,
                         loading: false,
                         data: null,
                         error: null,
-                        fields: perfMssqlInstancesDataRef.current[uniqueHostRow(instanceId, credId, regionId)]?.fields
+                        fields: perfMssqlInstancesDataRef.current[
+                            uniqueHostRow(instanceId, instanceCredId, instanceRegionId)
+                        ]?.fields
                     };
                 }
                 dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataRes }));
             } else {
                 let mssqlInstancesDataErr: any = {};
-                mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
+                mssqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
                     isManagedHost: isManagedHost,
                     loading: false,
                     data: null,
@@ -808,7 +829,7 @@ const InventoryApisV3 = () => {
             }
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
-            mssqlInstancesDataErr[uniqueHostRow(instanceId, credId, regionId)] = {
+            mssqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
                 isManagedHost: isManagedHost,
                 loading: false,
                 data: null,
@@ -999,31 +1020,31 @@ const InventoryApisV3 = () => {
 
     // This is to call instance API to get perf and protection data
     const callUnmanagedPerfInstanceApi = (
-        instancesList: Array<string>,
+        instancesListComb: Array<string>,
         isManagedHost: boolean,
         fields: Array<string>
     ) => {
         let mssqlInstancesDataLoad: any = {};
         let noRunningList: Array<string> = [];
-        if (instancesList && instancesList.length > 0) {
-            instancesList?.map((ec2InstanceId: any) => {
-                if (runningPerfInstanceListRef.current.includes(uniqueHostRow(ec2InstanceId, credId, regionId))) {
+        if (instancesListComb && instancesListComb.length > 0) {
+            instancesListComb?.map((ec2InstanceIdComb: any) => {
+                if (runningPerfInstanceListRef.current.includes(ec2InstanceIdComb)) {
                     return;
                 }
-                mssqlInstancesDataLoad[uniqueHostRow(ec2InstanceId, credId, regionId)] = {
+                mssqlInstancesDataLoad[ec2InstanceIdComb] = {
                     isManagedHost: isManagedHost,
                     loading: true,
                     data: null,
                     error: null,
                     fields: fields
                 };
-                noRunningList.push(ec2InstanceId);
+                noRunningList.push(ec2InstanceIdComb);
             });
             dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
             setRunningPerfInstanceList([...runningPerfInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceId: any) => {
+            noRunningList?.map((ec2InstanceIdComb: any) => {
                 setTimeout(() => {
-                    getUnmanagedPerfMssqlData(ec2InstanceId, isManagedHost, fields);
+                    getUnmanagedPerfMssqlData(ec2InstanceIdComb, isManagedHost, fields);
                 }, 1);
             });
         }
@@ -1221,8 +1242,6 @@ const InventoryApisV3 = () => {
         // Running instanceList reset
         setRunningInstanceList([]);
         // chart counts
-        // Partner instance list reset
-        setPartnerInstanceList([]);
         // reset partner list in FCI and AOAG
         setRunningPerfInstanceList([]);
         setRunningManagedAssessmentList([]);
@@ -1236,6 +1255,9 @@ const InventoryApisV3 = () => {
         dispatch(setUnmanagedExploreSavingsHost([]));
         dispatch(setPotentialSavingsValues(null));
         dispatch(addInitialData(initialDBHomepageState));
+
+        // Partner instance list reset
+        setPartnerInstanceList([]);
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -1378,6 +1400,7 @@ const InventoryApisV3 = () => {
             );
             if (unmanagedHostList && unmanagedHostList?.length > 0) {
                 callInstanceApi(unmanagedHostList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
+                callUnmanagedPerfInstanceApi(unmanagedHostList, false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
             }
 
             // To Avoid overriding
@@ -1404,6 +1427,7 @@ const InventoryApisV3 = () => {
             );
             if (unmanagedInstanceList && unmanagedInstanceList?.length > 0) {
                 callInstanceApi(unmanagedInstanceList, true, INSTANCE_API_FIELDS.MIXED_STATUS_FIELDS);
+                callUnmanagedPerfInstanceApi(unmanagedInstanceList, true, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
             }
 
             // To Avoid overriding

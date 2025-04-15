@@ -49,10 +49,14 @@ import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
-import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
-import { AssessmentCategories } from '../utils/continous-optimization-consts';
-import { ASSESMENT_CONFIG_DATA, ASSESSMENT_CRR_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
 import { describeFSxVolumes } from '../lib/aws/fsx';
+import { AssessmentCategories } from '../utils/continous-optimization-consts';
+import {
+    ASSESMENT_CONFIG_DATA,
+    ASSESSMENT_AWS_BACKUP_DATA,
+    ASSESSMENT_CRR_CONFIG_DATA
+} from '../utils/demo-utils/demoInventoryData';
+import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 
 const logger = getLogger();
 
@@ -279,31 +283,7 @@ async function createDeploymentMockDataInDB(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    const instanceConfigDataRecord = {
-        account_id: accountId,
-        credentials_id: credentialsId,
-        region,
-        resource_id: resourceId,
-        database_instance_id: instanceId,
-        creation_time: new Date(Date.now()),
-        config_data_type: AssessmentCategories.STORAGE,
-        config_data: ASSESMENT_CONFIG_DATA
-    };
-
-    await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
-
-    const instanceCRRConfigDataRecord = {
-        account_id: accountId,
-        credentials_id: credentialsId,
-        region,
-        resource_id: resourceId,
-        database_instance_id: instanceId,
-        creation_time: new Date(Date.now()),
-        config_data_type: AssessmentCategories.CRR,
-        config_data: ASSESSMENT_CRR_CONFIG_DATA
-    };
-
-    await createDatabaseInstanceConfigData([instanceCRRConfigDataRecord]);
+    await createAssessmentData(accountId, credentialsId, region, resourceId, instanceId);
 
     const jobData = await createJobMockData(
         accountId,
@@ -830,7 +810,7 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
         volumeUuids
     });
 
-    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, fsxId);
+    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, [fsxId]);
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
@@ -921,6 +901,50 @@ async function createEnableMpioJobMockData(
     );
 }
 
+async function createAssessmentData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceId: string,
+    databaseInstanceId: string
+) {
+    const instanceConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.STORAGE,
+        config_data: ASSESMENT_CONFIG_DATA
+    };
+    const instanceCRRConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.CRR,
+        config_data: ASSESSMENT_CRR_CONFIG_DATA
+    };
+    const instanceAWSBackupConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.AWS_BACKUP,
+        config_data: ASSESSMENT_AWS_BACKUP_DATA
+    };
+    await createDatabaseInstanceConfigData([
+        instanceConfigDataRecord,
+        instanceCRRConfigDataRecord,
+        instanceAWSBackupConfigDataRecord
+    ]);
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -939,5 +963,6 @@ export {
     demoGetFsxnVolIdsFromOntapVolIds,
     createOperatingSystemMpioSessionsOptimizeJobMockData,
     createStorageTierJobMockData,
-    createEnableMpioJobMockData
+    createEnableMpioJobMockData,
+    createAssessmentData
 };

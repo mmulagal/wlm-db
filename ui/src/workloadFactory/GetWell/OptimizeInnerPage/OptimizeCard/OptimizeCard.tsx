@@ -152,6 +152,16 @@ const OptimizeCard = () => {
                     block_three: { type: 'Tags', value: data.tags },
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
+            case GENERAL.CLONE_MANAGEMENT:
+                return {
+                    block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: {
+                        type: 'View recommendation',
+                        value: data?.recommendation?.description
+                    }
+                };
             default:
                 return null;
         }
