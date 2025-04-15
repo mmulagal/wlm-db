@@ -96,6 +96,7 @@ import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimizatio
 import { onDemandTriggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { listJobs } from '../lib/database/job';
 import { resetCache } from '../utils/cache';
+import { performSandboxDeletion, runSandboxPreValidations } from './sandbox-operations';
 
 const isDemoFlow = isDemo();
 
@@ -2848,13 +2849,20 @@ async function optimizeClone(
             serverNameWithHostName,
             JOBTYPE.OPTIMIZATION,
             `Optimize clone for ${serverNameWithHostName}`,
-            `Optimize clone for ${serverNameWithHostName}`,
+            `Optimize clone for ${serverNameWithHostName}, clone database ${clone.cloneDatabaseName}`,
             parentJobId,
             jobMetadata
         );
-
-        // Yet To Implement
-        // await handleCloneRemediation();
+        await handleCloneRemediation(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            childCloneJobId,
+            clone,
+            serverNameWithHostName
+        );
     } catch (err) {
         const errorMessage = `Error while optimizing clone ${clone.cloneDatabaseName} ${err}`;
         logger.error(errorMessage);
@@ -2869,6 +2877,107 @@ async function optimizeClone(
     }
     return { jobId: childCloneJobId };
 }
+async function handleCloneRemediation(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    childCloneJobId: string,
+    clone: CloneDetailType,
+    serverNameWithHostName: string
+) {
+    logger.info('Handling clone remediation', {
+        accountId,
+        credentialsId,
+        region,
+        childCloneJobId,
+        clone,
+        serverNameWithHostName
+    });
+
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError = '';
+
+    try {
+        if (clone.clonedBy === 'other') {
+            logger.info(`Deleting clone ${clone.cloneDatabaseName} created by other source.`);
+            // yet to Add logic to delete the clone created by others
+            // await deleteClone();
+        } else if (clone.clonedBy === 'netapp_wf') {
+            if (!['delete', 'refresh'].includes(clone.action)) {
+                throw new Error(`Invalid action type: ${clone.action}`);
+            }
+            switch (clone.action) {
+                case 'delete':
+                    logger.info(`Deleting clone ${clone.cloneDatabaseName} created by netapp_wf.`);
+                    await deleteClone(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        databaseInstanceId,
+                        clone.cloneDatabaseName,
+                        childCloneJobId
+                    );
+                    break;
+
+                case 'refresh':
+                    logger.info(`Refreshing clone ${clone.cloneDatabaseName} created by netapp_wf.`);
+                    await refreshClone(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        databaseInstanceId,
+                        clone.cloneDatabaseName,
+                        childCloneJobId
+                    );
+                    break;
+
+                default:
+                    throw new Error(`Unsupported action: ${clone.action}`);
+            }
+        }
+        logger.info(`Successfully handled clone remediation for ${clone.cloneDatabaseName}`);
+    } catch (error) {
+        jobStatus = JOBSTATUS.FAILED;
+        jobError = `Error while handling clone remediation: ${error}`;
+        logger.error(jobError);
+    } finally {
+        await updateJobDetails(accountId, childCloneJobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+
+        if (jobStatus === JOBSTATUS.FAILED) {
+            updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+        } else {
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+        }
+    }
+}
+
+async function deleteClone(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    cloneDatabaseName: string,
+    jobId: string
+) {
+    const source = { host: databaseHostId, instance: databaseInstanceId, database: cloneDatabaseName };
+    const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
+    logger.info(`Executing delete operation for clone ${cloneDatabaseName}`);
+    performSandboxDeletion(accountId, region, credentialsId, jobId, srcDetails);
+}
+
+// async function refreshClone(accountId: string, credentialsId: string, region: string, databaseHostId: string, databaseInstanceId: string, cloneDatabaseName: string, jobId: string) {
+//     // Logic to refresh the clone
+//     logger.info(`Executing refresh operation for clone ${cloneDatabaseName}`);
+// }
 
 function isDatabaseInstanceMetadata(value: any): value is DatabaseInstanceMetadata {
     return value && typeof value === 'object' && 'configsOptimized' in value;

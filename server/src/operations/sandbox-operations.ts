@@ -3395,5 +3395,7 @@ export {
     checkDatabaseIntegrity,
     getSandboxSnapshots,
     getSourceDetails,
-    getProperty
+    getProperty,
+    performSandboxDeletion,
+    runSandboxPreValidations
 };
