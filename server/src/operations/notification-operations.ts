@@ -89,26 +89,34 @@ async function sendSavingsCalculationEmail(
                 <style>
                     body {
                         font-family: Arial, sans-serif;
+                        padding: 20px;
                     }
                 </style>
             </head>
             <body padding="20px">
                 <p>Hi there,</p>
                 <p>
-                    Here's the savings calculator report that provides a comparison of your current Microsoft SQL Server environment using ${desc} storage and the potential savings you could achieve by switching to Amazon FSx for NetApp ONTAP.
+                    Here's the savings calculator report that provides a comparison of your current Microsoft SQL
+                    Server environment using ${desc} storage and the potential savings you could achieve by
+                    switching to Amazon FSx for NetApp ONTAP.
                 </p>
-                <br />
                 <p>Key highlights from the report include:</p>
                 <ul>
-                    <li>In-depth cost calculations that break down the expenses associated with each storage option.</li>
+                    <li>
+                        In-depth cost calculations that break down the expenses associated with each storage option.
+                    </li>
                     <li>Estimated savings you could realize by migrating to Amazon FSx for NetApp ONTAP.</li>
-                    <li>Practical recommendations to guide you towards the most economical and efficient storage solution for your needs.</li>
+                    <li>
+                        Practical recommendations to guide you towards the most economical and efficient storage
+                        solution for your needs.
+                    </li>
                 </ul>
                 <p>
                     Our goal is to help you make the best decision for your organization's financial and
                     operational success. Please take a moment to review the findings and see how they can
                     positively impact your bottom line.
                 </p>
+                <p>Thanks</p>
             </body>
         </html>
     `;
