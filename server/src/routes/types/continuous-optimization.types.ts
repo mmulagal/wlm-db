@@ -255,7 +255,6 @@ const SnapshotPolicyAssesmentData = Type.Object({
 type SnapshotPolicyAssesmentDataType = Static<typeof SnapshotPolicyAssesmentData>;
 
 const StorageParameterDriftResponse = Type.Object({
-    timestamp: Type.Number(),
     configuration: Type.Object({
         volumes: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
         luns: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
@@ -283,7 +282,8 @@ const DriftAssessmentResponse = Type.Object({
     maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
     mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse])),
     resiliency: Type.Optional(Type.Union([ResilienceDriftAssessmentResponse, ErrorResponse])),
-    clone: Type.Optional(Type.Union([CloneDriftResponse, ErrorResponse]))
+    clone: Type.Optional(Type.Union([CloneDriftResponse, ErrorResponse])),
+    lastAssessmentTimestamp: Type.Optional(Type.Number())
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 

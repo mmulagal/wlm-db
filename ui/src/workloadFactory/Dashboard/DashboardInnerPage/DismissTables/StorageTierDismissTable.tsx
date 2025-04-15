@@ -2,24 +2,18 @@ import { Table, useTable, TableTopBar, ButtonWithDropdown, DsTypography } from '
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './DismissTables.module.scss';
-import { ReactComponent as BtnIcon } from '@netapp/icons/ic_bell.svg';
-import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
-import {
-    setSelectedRowsForDismiss,
-    setSelectedRowsForOptimize
-} from '../../../../store/workloadFactory/databaseHomeSlice';
+import { setSelectedRowsForDismiss } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from '../RenderTables/FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
-import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ReactComponent as MenuIcon } from '../../../../assets/menu-icon2.svg';
 import { ReactComponent as Success } from '../../../../assets/success.svg';
 import { ReactComponent as Warning } from '../../../../assets/warning.svg';
@@ -171,7 +165,6 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
                             Set status
                         </DsTypography>
                         <ButtonWithDropdown
-                            icon={BtnIcon}
                             variant="icon"
                             isDisabled={selectedRowsForDismiss.length > 0}
                             items={[

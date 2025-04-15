@@ -88,6 +88,7 @@ import {
     calculateCloneDrift,
     managedHostsCloneAssessment
 } from './continuous-optimization/clone-assessment-operations';
+import { getLastAssessedTime } from './continuous-optimization/assessment-utils';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -387,7 +388,7 @@ async function initiateStorageAssessmentCollection(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    jobId: string,
+    parentJobId: string,
     instanceRecord: WorkloadInstance,
     instanceVolumeMapping: MappedOnTapVolumeResponse[],
     jobTriggers: STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES = STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
@@ -397,118 +398,149 @@ async function initiateStorageAssessmentCollection(
         credentialsId,
         region,
         databaseHostId,
-        jobId,
+        parentJobId,
         instanceRecord
     });
 
-    if (isEmpty(instanceVolumeMapping)) {
-        const errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    }
-    const volumeRecords =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeRecords)
-            .flat() || [];
-    instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
-    instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
+    let snapshotPolicyAssessmentJobId = '';
 
-    instanceRecord.mappedLunNames =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i.lunNames)
-            .flat() || [];
-
-    const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
-    const ssmComment = 'Get Storage Configuration Assessment';
-
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        command,
-        instanceRecord.activeNodeInstanceid,
-        ssmComment,
-        accountId,
-        false,
-        ASSESSMENT_SSM_EXECUTION_TIMEOUT
-    );
-
-    const parsedResponse = response ? sqlResponseParsing(response) : {};
-    const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
-    if (!isDemo()) {
-        // add snapshot copy details to volumes
-        parsedResponse.volumes = await collectSnapshotCopyData(accountId, credentialsId, instanceRecord, volumes);
-    }
-    await createDatabaseInstanceConfigData([
-        {
-            account_id: accountId,
-            credentials_id: credentialsId,
-            region,
-            resource_id: databaseHostId,
-            database_instance_id: instanceRecord.id,
-            creation_time: new Date(Date.now()),
-            config_data_type: AssessmentCategories.STORAGE,
-            config_data: parsedResponse
+    const { resourceName, name: databaseInstanceName } = instanceRecord;
+    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+    try {
+        if (isEmpty(instanceVolumeMapping)) {
+            errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
-    ]);
+        const volumeRecords =
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i?.volumeRecords)
+                .flat() || [];
+        instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
+        instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
 
-    const resourceWithInstanceName = `${instanceRecord.resourceName}\\${instanceRecord.name}`;
-    const configJobStatus = isDemo()
-        ? JOBSTATUS.COMPLETED
-        : isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
-        ? JOBSTATUS.FAILED
-        : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
-        ? JOBSTATUS.COMPLETED
-        : JOBSTATUS.WARNING;
-    if (
-        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
-        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE.valueOf()
-    ) {
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage configuration assessment',
-            description: 'Storage configuration assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: configJobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId: jobId
-        });
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage layout assessment',
-            description: 'Storage layout assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId: jobId
-        });
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage sizing assessment',
-            description: 'Storage sizing assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId: jobId
-        });
-    }
+        instanceRecord.mappedLunNames =
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i.lunNames)
+                .flat() || [];
 
-    if (
-        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
-        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY.valueOf()
-    ) {
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Resiliency assessment',
-            description: 'Snapshot policy assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: configJobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId: jobId
+        const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
+        const ssmComment = 'Get Storage Configuration Assessment';
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            instanceRecord.activeNodeInstanceid,
+            ssmComment,
+            accountId,
+            false,
+            ASSESSMENT_SSM_EXECUTION_TIMEOUT
+        );
+
+        const parsedResponse = response ? sqlResponseParsing(response) : {};
+        const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
+        if (!isDemo()) {
+            // add snapshot copy details to volumes
+            parsedResponse.volumes = await collectSnapshotCopyData(accountId, credentialsId, instanceRecord, volumes);
+        }
+        await createDatabaseInstanceConfigData([
+            {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource_id: databaseHostId,
+                database_instance_id: instanceRecord.id,
+                creation_time: new Date(Date.now()),
+                config_data_type: AssessmentCategories.STORAGE,
+                config_data: parsedResponse
+            }
+        ]);
+
+        const configJobStatus = isDemo()
+            ? JOBSTATUS.COMPLETED
+            : isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
+            ? JOBSTATUS.FAILED
+            : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
+            ? JOBSTATUS.COMPLETED
+            : JOBSTATUS.WARNING;
+        if (
+            jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+            jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE.valueOf()
+        ) {
+            await registerJob(accountId, credentialsId, region, {
+                name: 'Storage configuration assessment',
+                description: 'Storage configuration assessment',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: configJobStatus,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            });
+            await registerJob(accountId, credentialsId, region, {
+                name: 'Storage layout assessment',
+                description: 'Storage layout assessment',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            });
+            await registerJob(accountId, credentialsId, region, {
+                name: 'Storage sizing assessment',
+                description: 'Storage sizing assessment',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            });
+        }
+
+        if (
+            jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+            jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY.valueOf()
+        ) {
+            ({ id: snapshotPolicyAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+                name: 'Snapshot policy assessment ',
+                description: 'Snapshot policy assessment ',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: configJobStatus,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            }));
+        }
+    } catch (error) {
+        logger.error('Error while initiating storage assessment collection', {
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceRecord,
+            error
         });
+        errorMessage = `Error while initiating storage assessment collection. ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, parentJobId, {
+            endTime: Date.now(),
+            status: jobStatus,
+            error: errorMessage
+        });
+        if (snapshotPolicyAssessmentJobId) {
+            await updateJobDetails(accountId, snapshotPolicyAssessmentJobId, {
+                endTime: Date.now(),
+                status: jobStatus,
+                error: errorMessage
+            });
+        }
     }
 }
 
@@ -615,12 +647,35 @@ async function driftAssessmentDataCollection(
             });
         }
 
+        const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = databaseInstanceRecord;
+        const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+        const instanceDetailsForJob = JSON.stringify({
+            hostName: resourceName,
+            resourceId: databaseHostId,
+            databaseInstanceId,
+            databaseInstanceName,
+            sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+        });
+
+        const jobName = `Microsoft SQL Server assessment for instance ${resourceWithInstanceName}`;
+        const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+
+        const { id: instanceLevelAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+            name: jobName,
+            description: jobDescription,
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+
         await initiateStorageAssessmentCollection(
             accountId,
             credentialsId,
             region,
             databaseHostId,
-            jobId,
+            instanceLevelAssessmentJobId,
             databaseInstanceRecord,
             instanceVolumeMapping,
             !shouldRunResilienceAssessment
@@ -637,7 +692,7 @@ async function driftAssessmentDataCollection(
                     credentialsId,
                     region,
                     databaseHostId,
-                    jobId,
+                    instanceLevelAssessmentJobId,
                     databaseInstanceRecord,
                     instanceVolumeMapping
                 ),
@@ -646,7 +701,7 @@ async function driftAssessmentDataCollection(
                     credentialsId,
                     region,
                     databaseHostId,
-                    jobId,
+                    instanceLevelAssessmentJobId,
                     databaseInstanceRecord,
                     instanceVolumeMapping
                 )
@@ -679,8 +734,7 @@ async function driftAssessmentDataCollection(
 async function triggerAssessment(
     managedInstance: DatabaseInstancesIncludingResource,
     parentJobId: string,
-    fields?: string,
-    skipInstanceLevelJobCreation: boolean = false
+    fields?: string
 ) {
     logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
 
@@ -691,19 +745,8 @@ async function triggerAssessment(
         region,
         resource_id: databaseHostId,
         database_instance_id: databaseInstanceId,
-        database_instance_name: databaseInstanceName,
         resource
     } = managedInstance;
-
-    const { resource_name: resourceName } = resource;
-    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const instanceDetailsForJob = JSON.stringify({
-        hostName: resourceName,
-        resourceId: databaseHostId,
-        databaseInstanceId,
-        databaseInstanceName,
-        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
-    });
 
     let activeNodeInstanceId;
     let newDatabaseInstanceDetails;
@@ -726,21 +769,6 @@ async function triggerAssessment(
         errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
-    }
-
-    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceWithInstanceName}`;
-    const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
-    if (!skipInstanceLevelJobCreation) {
-        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: jobName,
-            description: jobDescription,
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId
-        });
-        parentJobId = jobId;
     }
 
     try {
@@ -1200,6 +1228,18 @@ async function fetchDriftAssessment(
     if (!isEmpty(cloneResponse)) {
         driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
     }
+    // Get last asssessed timestamp
+    try {
+        driftAssessmentData.lastAssessmentTimestamp = await getLastAssessedTime(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+    } catch (error) {
+        logger.error('Error while fetching last assessment timestamp:', error);
+    }
     return driftAssessmentData;
 }
 
@@ -1370,7 +1410,7 @@ async function handleAssessment(
 ) {
     let jobStatus = '';
     try {
-        await triggerAssessment(managedInstance, masterAssessmentJobId, fields, true);
+        await triggerAssessment(managedInstance, masterAssessmentJobId, fields);
     } catch (error) {
         jobStatus = JOBSTATUS.FAILED;
         logger.error(`Error while fetching database instance details ${accountId}, ${error}`);
@@ -1424,16 +1464,9 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         database_instance_name: instanceName
     } = managedInstance;
     try {
-        const instanceDetailsForJob = JSON.stringify({
-            hostName: resourceName,
-            resourceId: databaseHostId,
-            databaseInstanceId,
-            databaseInstanceName: instanceName,
-            sqlServerDeploymentType: RESOURCESTYPE.MSSQL
-        });
         const savedInstanceName = `${resourceName}\\${instanceName}`;
-        const jobName = `Microsoft SQL Server storage assessment for instance ${savedInstanceName}`;
-        const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+        const jobName = `Microsoft SQL Server assessment for instance ${savedInstanceName}`;
+        const jobDescription = `${jobName}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobName,
             description: jobDescription,
