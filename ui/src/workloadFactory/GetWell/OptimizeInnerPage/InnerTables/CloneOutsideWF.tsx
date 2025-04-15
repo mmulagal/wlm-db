@@ -1,4 +1,12 @@
-import { Table, useTable, TableTopBar, DsTypography, ButtonWithDropdown, DsButton } from '@netapp/design-system';
+import {
+    Table,
+    useTable,
+    TableTopBar,
+    DsTypography,
+    ButtonWithDropdown,
+    DsButton,
+    Popover
+} from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 
@@ -102,16 +110,33 @@ const CloneOutsideWF = ({ handleBulkActionForClone }: any) => {
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
-                        <DsButton
-                            isThin
-                            variant="secondary"
-                            isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
-                            onClick={() => {
-                                handleBulkActionForClone('Delete', 'single', rowData);
-                            }}
-                        >
-                            Delete
-                        </DsButton>
+                        {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
+                            <Popover
+                                isAppendedToBody={true}
+                                children={
+                                    <DsTypography variant="Regular_14">
+                                        Bulk action is enabled on selected rows
+                                    </DsTypography>
+                                }
+                                trigger="hover"
+                                container={
+                                    <DsButton variant="secondary" isDisabled={true} isThin>
+                                        Delete
+                                    </DsButton>
+                                }
+                            />
+                        ) : (
+                            <DsButton
+                                isThin
+                                variant="secondary"
+                                isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
+                                onClick={() => {
+                                    handleBulkActionForClone('Delete', 'single', rowData);
+                                }}
+                            >
+                                Delete
+                            </DsButton>
+                        )}
                     </div>
                 );
             }
