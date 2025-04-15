@@ -1,5 +1,6 @@
 import {
     ASSESSMENT_RESOURCE_TYPE,
+    AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
 } from '../../../utils/continous-optimization-consts';
@@ -235,6 +236,7 @@ const GOLDEN_CONFIG = {
         snapshotPolicy: {
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
             severity: SEVERITY.WARNING,
+            recommended: AssessmentStatus.OPTIMIZED,
             resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             recommendation:
                 'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.Use local snapshots as an additional backup mechanism for quick restores or for testing.'
