@@ -2974,10 +2974,19 @@ async function deleteClone(
     performSandboxDeletion(accountId, region, credentialsId, jobId, srcDetails);
 }
 
-// async function refreshClone(accountId: string, credentialsId: string, region: string, databaseHostId: string, databaseInstanceId: string, cloneDatabaseName: string, jobId: string) {
-//     // Logic to refresh the clone
-//     logger.info(`Executing refresh operation for clone ${cloneDatabaseName}`);
-// }
+async function refreshClone(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    cloneDatabaseName: string,
+    jobId: string
+) {
+    // Logic to refresh the clone
+    logger.info(`jobId: ${jobId}`);
+    logger.info(`Executing refresh operation for clone ${cloneDatabaseName}`);
+}
 
 function isDatabaseInstanceMetadata(value: any): value is DatabaseInstanceMetadata {
     return value && typeof value === 'object' && 'configsOptimized' in value;
