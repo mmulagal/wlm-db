@@ -1267,9 +1267,11 @@ export const GENERAL = {
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
     CRR: 'Cross-Region Replication (CRR)',
     CLONING: 'Cloning',
-    CLONE_MANAGEMENT: "Clone management",
+    CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
+        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
+    CLONE_MANAGEMENT_TAB1: 'Clones created with Workload factory (AKA Sandboxes)',
+    CLONE_MANAGEMENT_TAB2: 'Clones created outside of Workload factory'
 };
 
 export const CODE_VIEWER = {

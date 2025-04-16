@@ -61,7 +61,10 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[cloneObj?.status],
                             data: instanceData,
-                            violations: cloneObj?.violations
+                            violations: cloneObj?.violations,
+                            objectsInViolation: cloneObj?.objectsInViolation,
+                            tags: cloneObj?.tags,
+                            severity: cloneObj?.severity
                         });
                     }
                 }

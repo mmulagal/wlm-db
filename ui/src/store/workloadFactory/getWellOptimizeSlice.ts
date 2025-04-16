@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { cardDataDefault } from '../../workloadFactory/GetWell/GetWellUtils';
 import { GetWellSliceInterface } from '../../utils/types/getWellTypes';
+import { GENERAL } from '../../utils/appConstants';
 
 const initialState: GetWellSliceInterface = {
     optimizePageLoading: false,
@@ -42,7 +43,8 @@ const initialState: GetWellSliceInterface = {
     landingFromInnerPage: false,
     isInnerPageOptimize: false,
     gwAdhocError: '',
-    selectedCloneTab: 'Clones created with Workload factory (AKA Sandboxes)'
+    selectedCloneTab: GENERAL.CLONE_MANAGEMENT_TAB1,
+    cloneDashboardData: []
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -190,6 +192,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setGwAdhocError: (state, action: PayloadAction<any>) => {
             state.gwAdhocError = action.payload;
+        },
+        setCloneDashboardData: (state, action: PayloadAction<any>) => {
+            state.cloneDashboardData = action.payload;
         }
     }
 });
@@ -232,7 +237,8 @@ export const {
     setLandingFromInnerPage,
     setGwSelectedRowFsxId,
     setIsInnerPageOptimize,
-    setGwAdhocError
+    setGwAdhocError,
+    setCloneDashboardData
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;
