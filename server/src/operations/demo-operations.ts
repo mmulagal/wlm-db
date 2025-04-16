@@ -24,7 +24,7 @@ import {
     updateResourceMetaData,
     upsertDatabaseInstance
 } from '../lib/database/db';
-import { Metadata, Sandbox, DatabaseInstanceMetadata } from '../utils/common-types';
+import { Metadata, Sandbox, DatabaseInstanceMetadata, ResourceAssessmentData } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
@@ -43,7 +43,8 @@ import {
     mockPGSqlStandaloneDeploymentStack,
     optimizeMpioSessionsJobData,
     optimizeStorageTierJobData,
-    enableMPIOJobData
+    enableMPIOJobData,
+    mockResourceAssessmentData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -54,7 +55,8 @@ import { AssessmentCategories } from '../utils/continous-optimization-consts';
 import {
     ASSESMENT_CONFIG_DATA,
     ASSESSMENT_AWS_BACKUP_DATA,
-    ASSESSMENT_CRR_CONFIG_DATA
+    ASSESSMENT_CRR_CONFIG_DATA,
+    ASSESSMENT_MAXDOP_CONFIG_DATA
 } from '../utils/demo-utils/demoInventoryData';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 
@@ -216,7 +218,8 @@ async function createDeploymentMockDataInDB(
                     collation: SQL_DEFAULT_COLLATION
                 }
             ]
-        })
+        }),
+        assessment: mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData
     };
 
     if (sqlDeploymentMode === 'FCI') {
@@ -938,10 +941,21 @@ async function createAssessmentData(
         config_data_type: AssessmentCategories.AWS_BACKUP,
         config_data: ASSESSMENT_AWS_BACKUP_DATA
     };
+    const instanceMaxdopConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.MAXDOP,
+        config_data: ASSESSMENT_MAXDOP_CONFIG_DATA
+    };
     await createDatabaseInstanceConfigData([
         instanceConfigDataRecord,
         instanceCRRConfigDataRecord,
-        instanceAWSBackupConfigDataRecord
+        instanceAWSBackupConfigDataRecord,
+        instanceMaxdopConfigDataRecord
     ]);
 }
 

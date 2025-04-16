@@ -22,7 +22,7 @@ import {
     ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import storageGoldenConfigData from './golden-configs/storage';
-import { HttpErrorCodes } from '../../utils/consts';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../utils/consts';
 import {
     DatabaseInstance,
     DatabaseInstanceMetadata,
@@ -238,7 +238,7 @@ async function getSnapshotPolicyDriftData(
         ]);
 
         if (isEmpty(persistedConfigurationData)) {
-            errorMessage = `No ${AssessmentCategories.SNAPSHOT_POLICY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
+            errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.SNAPSHOT_POLICY);
             return { errorMessage };
         }
         const { config_data: configData } = persistedConfigurationData;
@@ -409,8 +409,8 @@ async function getAwsBackupDriftData(
         AssessmentCategories.AWS_BACKUP
     );
     if (isEmpty(persistedConfigurationData)) {
-        const errorMessage =
-            'No AWS Backup assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.';
+        const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.AWS_BACKUP);
+        logger.error(errorMessage);
         return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
     }
 
@@ -597,8 +597,7 @@ async function getCrrDriftData(
         AssessmentCategories.CRR
     );
     if (isEmpty(persistedConfigurationData)) {
-        const errorMessage =
-            'No CRR assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.';
+        const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CRR);
         return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
     }
 

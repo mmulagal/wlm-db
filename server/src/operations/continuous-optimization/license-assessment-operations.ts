@@ -10,10 +10,10 @@ import {
 
 import getLogger from '../../utils/logger';
 import { LicenseAssessment, Metadata } from '../../utils/common-types';
-import { getInstanceDetails } from '../database-hosts-operations';
-import { ENT_ENGINE_EDITION, FINDING, SQL_STD } from '../../utils/consts';
+import { ENT_ENGINE_EDITION, FINDING, GENERIC_ASSESSMENT_ERROR_MESSAGE, SQL_STD } from '../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
@@ -44,26 +44,17 @@ async function calculateLicenseDrift(
         return { errorMessage };
     }
     try {
-        const { assessment: { license } = {} } = metadata as unknown as Metadata;
-        if (!isEmpty(license)) {
-            licenseAssessment = license as LicenseAssessment;
-        } else {
-            const { activeNodeInstanceId } = await getInstanceDetails(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId
-            );
-            licenseAssessment = await runLicenseAssessment(accountId, credentialsId, region, activeNodeInstanceId);
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            (metadata as unknown as Metadata).assessment = {
-                ...existingAssessmentData,
-                license: licenseAssessment,
-                lastAssessedDate: new Date().getTime().toString()
-            };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        const { assessment: { license, errors } = {} } = metadata as unknown as Metadata;
+
+        if (isEmpty(license)) {
+            errorMessage = errors?.license
+                ? errors?.license
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.LICENSE);
+            logger.error({ errorMessage });
+            return { errorMessage };
         }
+
+        licenseAssessment = license as LicenseAssessment;
 
         const { licenseFinding, sqlServerInstances } = licenseAssessment;
         const matchingLicenseAssessmentStatus = getMatchingAssessmentStatus(licenseFinding);

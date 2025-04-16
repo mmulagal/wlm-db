@@ -602,4 +602,12 @@ const ASSESSMENT_AWS_BACKUP_DATA = {
     isAWSBackupEnabled: true
 };
 
-export { inventoryDemoData, ASSESMENT_CONFIG_DATA, ASSESSMENT_CRR_CONFIG_DATA, ASSESSMENT_AWS_BACKUP_DATA };
+const ASSESSMENT_MAXDOP_CONFIG_DATA = { status: 'not-optimized', current: '2', recommendedMaxDOP: '4' };
+
+export {
+    inventoryDemoData,
+    ASSESMENT_CONFIG_DATA,
+    ASSESSMENT_CRR_CONFIG_DATA,
+    ASSESSMENT_AWS_BACKUP_DATA,
+    ASSESSMENT_MAXDOP_CONFIG_DATA
+};
