@@ -848,7 +848,8 @@ export const formatApplicationCardMainConfig = (
             tags: item?.tags,
             id: item?.name,
             category: categoryVal,
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            dismissedObj: data?.dismissedConfigurations?.license
         }
     };
     return cardsData;
@@ -914,7 +915,8 @@ export const formatMicrosoftSqlPatchCardConfig = (
                 important: importantPatches
             },
             recommendationText: item?.recommendation,
-            missingPatchList: missingPatchList
+            missingPatchList: missingPatchList,
+            dismissedObj: data?.dismissedConfigurations?.mssqlPatch
         }
     };
     return cardsData;
@@ -963,7 +965,8 @@ export const formatMaxdopPatchCardConfig = (
             tags: item?.tags,
             id: item?.name,
             category: categoryVal,
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            dismissedObj: data?.dismissedConfigurations?.maxDOP
         }
     };
     return cardsData;
@@ -1017,7 +1020,8 @@ export const formatSnapshotPolicyCardConfig = (
             id: item?.name,
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
-            objectsInViolation: item?.objectsInViolation
+            objectsInViolation: item?.objectsInViolation,
+            dismissedObj: data?.dismissedConfigurations?.snapshotPolicy
         }
     };
     return cardsData;
@@ -1071,7 +1075,8 @@ export const formatAWSBackUpPolicyCardConfig = (
             id: item?.name,
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
-            objectsInViolation: item?.objectsInViolation
+            objectsInViolation: item?.objectsInViolation,
+            dismissedObj: data?.dismissedConfigurations?.awsBackup
         }
     };
     return cardsData;
@@ -1126,7 +1131,8 @@ export const formatCRRCardConfig = (
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             violations: item?.violations,
-            objectsInViolation: item?.objectsInViolation
+            objectsInViolation: item?.objectsInViolation,
+            dismissedObj: data?.dismissedConfigurations?.crr
         }
     };
     return cardsData;
@@ -1180,7 +1186,8 @@ export const formatCloneCardConfig = (
             id: item?.name,
             category: categoryVal,
             recommendationText: item?.recommendation,
-            objectsInViolation: item?.objectsInViolation
+            objectsInViolation: item?.objectsInViolation,
+            dismissedObj: data?.dismissedConfigurations?.clone
         }
     };
     return cardsData;
@@ -1250,7 +1257,8 @@ export const formatOsPatchCardConfig = (
                 other: otherViolations
             },
             recommendationText: item?.recommendation,
-            missingPatchList: missingPatchList
+            missingPatchList: missingPatchList,
+            dismissedObj: data?.dismissedConfigurations?.hostOsPatch
         }
     };
     return cardsData;
@@ -1417,7 +1425,8 @@ export const formatRssConfigCardConfig = (
             tcpOffloadState: item?.tcpOffloadState,
             rssOptimizedRows: optimizedRows,
             rssOptimizedValues: optimizedValue,
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            dismissedObj: data?.dismissedConfigurations?.rssConfig
         }
     };
     return cardsData;
@@ -1539,7 +1548,8 @@ export const formatIndividualCardMainConfig = (
                     sizingViolations: item?.sizingViolations,
                     violationDetails: item?.violationDetails,
                     objectsInViolation: item?.objectsInViolation,
-                    recommendationText: item?.recommendation
+                    recommendationText: item?.recommendation,
+                    dismissedObj: data?.dismissedConfigurations?.compute
                 }
             };
         });

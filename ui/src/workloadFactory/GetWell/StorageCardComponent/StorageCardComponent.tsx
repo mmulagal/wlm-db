@@ -21,6 +21,7 @@ import { GENERAL } from '../../../utils/appConstants';
 
 import {
     ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
@@ -243,6 +244,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsFlashingDotsLoader />
                 </div>
             );
+        } else if (cardData?.dismissedObj?.state && cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
+            //Condition to show n/a if state is not active
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            );
         } else {
             return (
                 <div className={styles.tooltipContainer}>
@@ -304,22 +312,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         }
     };
 
-    const sectionFourContent = (cardData: any) => {
-        if (loading) {
-            return (
-                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
-                    <DsFlashingDotsLoader />
-                </div>
-            );
-        } else {
-            return (
-                <div className={styles.warningMsg}>
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                </div>
-            );
-        }
+    const calculateDays = (time: string | any) => {
+        const endTime = time;
+        const now = Date.now();
+
+        const millisecondsPerDay = 1000 * 60 * 60 * 24;
+        const diffInDays = Math.ceil((endTime - now) / millisecondsPerDay);
+
+        return diffInDays;
     };
 
     //Dismiss section content
@@ -337,7 +337,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         <Warning />
                     </div>
 
-                    <DsTypography variant="Regular_14">This issue is postponed until the next 28 days. </DsTypography>
+                    <DsTypography variant="Regular_14" style={{ minWidth: '160px' }}>
+                        {cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED && 'This issue is dismissed. '}
+                        {cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED &&
+                            `This issue is postponed until the next ${calculateDays(
+                                cardData?.dismissedObj?.endTime
+                            )} days. `}{' '}
+                    </DsTypography>
                 </div>
             );
         }
@@ -385,6 +391,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
                     <DsFlashingDotsLoader />
                 </div>
+            );
+        } else if (cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
+            //Condition to show n/a if state is not active
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {GENERAL.NOT_AVAILABLE}
+                </DsTypography>
             );
         } else if (cardData?.block_six?.count) {
             return (
@@ -504,148 +517,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         }
     };
 
-    const sectionThreeContent = (cardData: any) => {
-        if (loading) {
-            return (
-                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
-                    <DsFlashingDotsLoader />
-                </div>
-            );
-        } else if (cardData?.block_three?.list) {
-            let listObj: any = [];
-            cardData?.block_three?.list?.map((item: any) => {
-                const parts = item.split(' ');
-                const value = parts.pop() || ''; // Take the last element as value
-                const key = parts.join(' '); // Join the rest as key
-                listObj.push({ key, value });
-            });
-            return (
-                <div className={styles.tooltipContainer}>
-                    {cardData?.block_three?.list?.length > 0 && (
-                        <div className={styles.tooltip}>
-                            <Popover
-                                popoverClass={''}
-                                children={tooltipListSection(listObj, '120px')}
-                                trigger="hover"
-                                isAppendedToBody={false}
-                                container={<TooltipIcon />}
-                                placement="bottom"
-                            />
-                        </div>
-                    )}
-                    {cardData?.block_three?.list?.length === 0 && (
-                        <div>
-                            <DisabledTooltipIcon />
-                        </div>
-                    )}
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {cardData?.block_three?.list?.length + ' values'}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.isMissingPermissions && cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING) {
-            return (
-                <div className={styles.warningMsg}>
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
-            let listObj = [
-                { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
-                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security },
-                { key: 'Other ', value: cardData?.osPatchMissingPatches?.other }
-            ];
-            return (
-                <div className={styles.tooltipContainer}>
-                    {cardData?.block_three?.value > 0 && (
-                        <div className={styles.tooltip}>
-                            <Popover
-                                popoverClass={''}
-                                children={tooltipListSection(listObj, '30px')}
-                                trigger="hover"
-                                isAppendedToBody={false}
-                                container={<TooltipIcon />}
-                                placement="bottom"
-                            />
-                        </div>
-                    )}
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.sqlPatchMissingPatches && cardData?.block_one?.value === GENERAL.MICROSOFT_SQL_PATCH) {
-            let listObj = [
-                { key: 'Critical ', value: cardData?.sqlPatchMissingPatches?.critical },
-                { key: 'Important ', value: cardData?.sqlPatchMissingPatches?.important }
-            ];
-            return (
-                <div className={styles.tooltipContainer}>
-                    {cardData?.block_three?.value > 0 && (
-                        <div className={styles.tooltip}>
-                            <Popover
-                                popoverClass={''}
-                                children={tooltipListSection(listObj, '30px')}
-                                trigger="hover"
-                                isAppendedToBody={false}
-                                container={<TooltipIcon />}
-                                placement="bottom"
-                            />
-                        </div>
-                    )}
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.block_one?.value === GENERAL.RSS_CONFIGURATION) {
-            let listObj: any = [];
-            let secListObj: any = [];
-            Object.keys(cardData?.rssOptimizedRows).forEach((key: any) => {
-                listObj.push({ key: GW_TOOLTIP_KEYS_MAPPING[key], value: cardData?.rssOptimizedRows?.[key] });
-                secListObj.push({ key: GW_TOOLTIP_KEYS_MAPPING[key], value: cardData?.rssOptimizedValues?.[key] });
-            });
-            let value = '';
-            if (cardData?.block_three?.value && cardData?.block_three?.value === 1) {
-                value = '1 Finding';
-            } else {
-                value = (cardData?.block_three?.value || 0) + ' Findings';
-            }
-            return (
-                <div className={styles.tooltipContainer}>
-                    {cardData?.block_three?.value > 0 && (
-                        <div className={styles.tooltip}>
-                            <Popover
-                                popoverClass={''}
-                                children={tooltipRssListSection(listObj, secListObj)}
-                                trigger="hover"
-                                isAppendedToBody={false}
-                                container={<TooltipIcon />}
-                                placement="bottom"
-                            />
-                        </div>
-                    )}
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {value}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
-            return (
-                <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            );
-        } else {
-            return (
-                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} isDisabled={disableText}>
-                    {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            );
-        }
-    };
     const windowSize = useResize();
 
     // This is the function that will be called when the optimize button is clicked from main cards
@@ -897,16 +768,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </DsTypography>
             </div>
 
-            {/* Section three */}
-            {/* <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
-                {sectionThreeContent(cardData)}
-
-                <DsTypography variant="Regular_14" isDisabled={disableText}>
-                    {cardData?.block_three?.type}
-                </DsTypography>
-            </div> */}
-
-            {/* Section 4 */}
+            {/* Section 3 */}
             <div className={styles.commonSection} style={{ minWidth: '80px' }}>
                 {loading && (
                     <div style={{ height: '22px', display: 'flex', alignItems: 'center' }}>
@@ -923,7 +785,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </DsTypography>
             </div>
 
-            {/* Section Resource Type */}
+            {/* Section Resource Type - 4 */}
             <div
                 className={styles.thirdSection}
                 style={{
@@ -941,7 +803,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </DsTypography>
             </div>
 
-            {/* impacted volume section  */}
+            {/* impacted volume section - 5 */}
             {cardData?.block_six && (
                 <div
                     className={styles.thirdSection}
@@ -956,17 +818,17 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             )}
 
             {/* Dismiss section code */}
-            {/* <div className={styles.dismissSection}>{sectionSevenContent(cardData)}</div> */}
+            {(cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED ||
+                cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED) && (
+                <div className={styles.dismissSection}>{sectionSevenContent(cardData)}</div>
+            )}
 
             {/* <div className={styles.separator} /> */}
 
-            {/* 5 Section */}
-            {/* {windowSize.width >= 1770 &&
-                (cardData?.block_one?.value === 'ONTAP' || cardData?.block_one?.value === 'Operating system') && (
-                    <div className={styles.fourthSection}>
-                        
-                    </div>
-                )} */}
+            {/* extra Section */}
+            {windowSize.width >= 1770 &&
+                (cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
+                    cardData?.dismissedObj?.state === undefined) && <div className={styles.fourthSection}></div>}
 
             {/* 6 section */}
             {!optimizePrintState &&
@@ -1057,7 +919,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         {
                             id: 'activate',
                             children: 'Activate',
-                            isDisabled: false,
+                            isDisabled:
+                                cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
+                                !cardData?.dismissedObj?.state,
                             onClick: () => {
                                 handleSingleAction(type, 'activate');
                             }
@@ -1065,7 +929,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         {
                             id: 'postponeFor30Days',
                             children: 'Postpone for 30 days',
-                            isDisabled: false,
+                            isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED,
                             onClick: () => {
                                 handleSingleAction(type, 'postponeFor30Days');
                             }
@@ -1073,7 +937,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         {
                             id: 'dismiss',
                             children: 'Dismiss',
-                            isDisabled: false,
+                            isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED,
                             onClick: () => {
                                 handleSingleAction(type, 'dismiss');
                             }

@@ -53,6 +53,7 @@ interface CountBreakDown {
 }
 
 export interface AssessmentResponseInterface {
+    dismissedConfigurations?: any;
     lastAssessmentTimestamp?: string;
     storage?: {
         timestamp?: string;

@@ -43,7 +43,8 @@
     }
 
     .dismissSection {
-        height: 64px;
+        width: 224px;
+        min-width: 170px;
         .dismissContainer {
             display: flex;
             gap: 8px;
