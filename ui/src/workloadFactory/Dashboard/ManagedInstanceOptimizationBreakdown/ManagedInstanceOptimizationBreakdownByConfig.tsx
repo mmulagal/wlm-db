@@ -65,7 +65,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData?.storageTier || 0}
                         afterOutOf={configData?.total || 0}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length || 0) /
@@ -97,7 +97,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        {/* <Popover
+                        <Popover
                             children={'Manage configuration state'}
                             trigger="hover"
                             container={
@@ -108,7 +108,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     <Edit />
                                 </div>
                             }
-                        /> */}
+                        />
                     </div>
                 </div>
 
@@ -120,7 +120,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.fileSystemHeadroom}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length || 0) /
@@ -152,6 +152,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -163,7 +176,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.logDriveSize}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length || 0) /
@@ -194,6 +207,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -205,7 +231,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.tempdbDriveSize}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length || 0) /
@@ -236,6 +262,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -247,7 +286,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.userDataFiles}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length || 0) /
@@ -278,6 +317,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -289,7 +341,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.logFiles}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length || 0) /
@@ -316,6 +368,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -327,7 +392,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.tempdbPlacement}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length || 0) /
@@ -358,6 +423,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -369,7 +447,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.ontapConfiguration}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.['ONTAP']?.length || 0) / (configData.total || 1)) * 100
@@ -395,6 +473,10 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <div className={styles.editDisableIcon}>
+                            <Edit />
+                        </div>
                     </div>
                 </div>
 
@@ -406,7 +488,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.operatingSystem}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.['Operating system']?.length || 0) /
@@ -432,6 +514,10 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <div className={styles.editDisableIcon}>
+                            <Edit />
+                        </div>
                     </div>
                 </div>
 
@@ -443,7 +529,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.computeRightsizing}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.COMPUTE_RIGHTSIZING]?.length || 0) /
@@ -471,6 +557,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(GENERAL.COMPUTE_RIGHTSIZING)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -484,7 +583,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.operatingSystemPatch}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.OPERATING_SYSTEM_PATCH]?.length || 0) /
@@ -516,6 +615,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -527,7 +639,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.rssConfiguration}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.RSS_CONFIGURATION]?.length || 0) /
@@ -558,6 +670,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
                 <div className={styles.tile}>
@@ -570,7 +695,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.applicationSqlServer}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.LICENSE_SQL_SERVER]?.length || 0) /
@@ -599,6 +724,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LICENSE)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -610,7 +748,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.mssqlPatch}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.MICROSOFT_SQL_PATCH]?.length || 0) /
@@ -642,6 +780,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -653,7 +804,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.maxdopPatch}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.MAXDOP_PATCH]?.length || 0) /
@@ -682,6 +833,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MAXDOP)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -695,7 +859,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.scheduledLocalSnapshot}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length ||
@@ -728,6 +892,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -739,7 +916,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.crr}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CRR]?.length || 0) /
@@ -759,6 +936,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CRR)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -770,7 +960,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.scheduledawsBackup}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
@@ -805,6 +995,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -816,7 +1019,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={configData.clone}
                         afterOutOf={configData.total}
                         bottomText="Optimized databases:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        width={windowSize.width > 1700 ? '328px' : '248px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length || 0) /
@@ -847,6 +1050,19 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        <Popover
+                            children={'Manage configuration state'}
+                            trigger="hover"
+                            container={
+                                <div
+                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT)}
+                                    className={styles.editIcon}
+                                >
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
             </div>
