@@ -47,6 +47,7 @@ import {
     useOptimizeAwsBackupMutation
 } from '../../../utils/apiService';
 import {
+    setCloneDashboardData,
     setGwPageLoadInstanceData,
     setInProgressHostData,
     setInProgressOptimizationData,
@@ -704,7 +705,53 @@ const DashboardInnerPage = () => {
 
     const handleDialog = (type: string, rowData: any, operation?: string) => {
         if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
-            // ToDo - To open clone management optimize inner page
+            let cloneViolationsList: any = [];
+            if (rowData?.objectsInViolation) {
+                cloneViolationsList =
+                    rowData?.objectsInViolation?.map((obj: AnalyserOptions) => ({
+                        ...obj,
+                        credentialId: rowData?.credentialId,
+                        regionId: rowData?.regionId,
+                        databaseHostId: rowData?.databaseHostId,
+                        hostName: rowData?.hostName,
+                        instanceId: rowData?.instanceId,
+                        serverInstanceName: rowData?.serverInstanceName
+                    })) || [];
+                dispatch(
+                    setCloneDashboardData({
+                        type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        objectsInViolation: cloneViolationsList,
+                        severity: rowData?.severity,
+                        tags: rowData?.tags,
+                        recommendation: cardDataDefault?.clone_management?.recommendation
+                    })
+                );
+            } else {
+                rowData?.map((item: any) => {
+                    cloneViolationsList = [
+                        ...cloneViolationsList,
+                        ...(item?.objectsInViolation?.map((obj: any) => ({
+                            ...obj,
+                            credentialId: item?.credentialId,
+                            regionId: item?.regionId,
+                            databaseHostId: item?.databaseHostId,
+                            hostName: item?.hostName,
+                            instanceId: item?.instanceId,
+                            serverInstanceName: item?.serverInstanceName
+                        })) || [])
+                    ];
+                });
+                dispatch(
+                    setCloneDashboardData({
+                        type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        objectsInViolation: cloneViolationsList,
+                        severity: rowData?.[0]?.severity,
+                        tags: rowData?.[0]?.tags,
+                        recommendation: cardDataDefault?.clone_management?.recommendation
+                    })
+                );
+            }
+            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE));
         } else {
             setDialog(
                 <DialogComponent

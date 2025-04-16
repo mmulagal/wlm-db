@@ -19,60 +19,52 @@ import { useAppSelector } from '../../../../store/storeHooks';
 
 import { ReactComponent as MenuIcon } from '../../../../assets/menu-icon2.svg';
 import BulkCloneContainer from '../../../../common/BulkAction/BulkCloneContainer';
+import { WLF_TABS } from '../../../../utils/consts';
 
-const CloneOutsideWF = ({ handleBulkActionForClone }: any) => {
+const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-
-    const tableData = [
-        {
-            databaseName: 'Database 1',
-            sourceDatabase: 'SQL-Managed-Host-ProdMSSQLSERVER',
-            sourceVolume: 'Volume_1',
-            cloneAge: '0 days',
-            size: '0.00 GB',
-            id: '1'
-        },
-        {
-            databaseName: 'Database 2',
-            sourceDatabase: 'SQL-Managed-Host-ProdMSSQLSERVER',
-            sourceVolume: 'Volume_1',
-            cloneAge: '10 days',
-            size: '0.00 GB',
-            id: '2'
-        },
-        {
-            databaseName: 'Database 3',
-            sourceDatabase: 'SQL-Managed-Host-ProdMSSQLSERVER',
-            sourceVolume: 'Volume_1',
-            cloneAge: '5 days',
-            size: '0.00 GB',
-            id: '3'
-        }
-    ];
 
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'Database name',
-            accessor: 'databaseName',
+            accessor: 'cloneDatabaseName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '210px' : '210px',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-
         {
-            Header: 'Source volume',
-            accessor: 'sourceVolume',
+            Header: 'SQL instance name',
+            accessor: 'serverInstanceName',
+            id: '2',
+            isSortable: false,
+            filterOptions: 'auto',
+            isSticky: true,
+            width: fromPage === WLF_TABS.DASHBOARD ? '194px' : '210px'
+        },
+        {
+            Header: 'SQL host name',
+            accessor: 'hostName',
             id: '3',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: 'auto',
+            width: fromPage === WLF_TABS.DASHBOARD ? '168px' : '210px'
+        },
+
+        {
+            Header: 'Source volume',
+            accessor: 'sourceVolumeNamesList',
+            id: '4',
+            isSortable: false,
+            filterOptions: 'auto',
+            isSticky: true,
+            width: fromPage === WLF_TABS.DASHBOARD ? 'auto' : 'auto',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -80,23 +72,23 @@ const CloneOutsideWF = ({ handleBulkActionForClone }: any) => {
         {
             Header: 'Clone age',
             accessor: 'cloneAge',
-            id: '4',
+            id: '5',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '134px' : '210px',
             renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return (cellData || 0) + ' days';
             }
         },
         {
             Header: 'Size',
             accessor: 'size',
-            id: '5',
+            id: '6',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '96px' : '210px',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -104,8 +96,8 @@ const CloneOutsideWF = ({ handleBulkActionForClone }: any) => {
         {
             Header: '',
             accessor: '',
-            id: '6',
-            width: '220px',
+            id: '7',
+            width: fromPage === WLF_TABS.DASHBOARD ? '200px' : '270px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.buttonContainer}>
@@ -143,19 +135,21 @@ const CloneOutsideWF = ({ handleBulkActionForClone }: any) => {
         }
     ];
 
+    const colDefsForInstance = TableColDefs.filter((item: any) => item.id !== '2' && item.id !== '3');
+
     const tableProps = useTable({
         //@ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
-        columns: TableColDefs,
-        rows: tableData || [],
+        columns: fromPage === WLF_TABS.DASHBOARD ? TableColDefs : colDefsForInstance,
+        rows: data || [],
         pageSize: 50,
         selectionType: 'multiple'
     });
 
     useEffect(() => {
-        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, data);
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
     }, [tableProps.selectionState]);
@@ -165,8 +159,9 @@ const CloneOutsideWF = ({ handleBulkActionForClone }: any) => {
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted clones`}
-                singularTitle={'Impacted clone'}
+                pluralTitle={`Impacted databases`}
+                singularTitle={'Impacted database'}
+                subTitle="Refreshing a clone is only supported for clones created with Workload Factory (Sandboxes)."
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkCloneContainer

@@ -1112,8 +1112,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -1140,6 +1140,66 @@
                                             "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
                                             "sourceVolumeName": "wlmdb_sqllog_1744017353",
                                             "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "objectsInViolation": [
+                                {
+                                    "databaseHostName": "27JanStandalone",
+                                    "databaseHostId": "b9371421ff9b1680",
+                                    "databaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseHostName": "27JanStandalone",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseName": "test1",
+                                    "cloneDatabaseName": "sandbox_1744017481447",
+                                    "cloneAge": 0,
+                                    "clonedBy": "netapp_wf",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
                                             "cloneVolumeType": "log"
                                         }
                                     ]
@@ -2283,8 +2343,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -2311,6 +2371,66 @@
                                             "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
                                             "sourceVolumeName": "wlmdb_sqllog_1744017353",
                                             "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "objectsInViolation": [
+                                {
+                                    "databaseHostName": "27JanStandalone",
+                                    "databaseHostId": "b9371421ff9b1680",
+                                    "databaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseHostName": "27JanStandalone",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseName": "test1",
+                                    "cloneDatabaseName": "sandbox_1744017481447",
+                                    "cloneAge": 0,
+                                    "clonedBy": "netapp_wf",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
                                             "cloneVolumeType": "log"
                                         }
                                     ]
@@ -3454,8 +3574,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -3482,6 +3602,66 @@
                                             "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
                                             "sourceVolumeName": "wlmdb_sqllog_1744017353",
                                             "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "objectsInViolation": [
+                                {
+                                    "databaseHostName": "27JanStandalone",
+                                    "databaseHostId": "b9371421ff9b1680",
+                                    "databaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseHostName": "27JanStandalone",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseName": "test1",
+                                    "cloneDatabaseName": "sandbox_1744017481447",
+                                    "cloneAge": 0,
+                                    "clonedBy": "netapp_wf",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
                                             "cloneVolumeType": "log"
                                         }
                                     ]
@@ -4635,8 +4815,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -4663,6 +4843,66 @@
                                             "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
                                             "sourceVolumeName": "wlmdb_sqllog_1744017353",
                                             "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "objectsInViolation": [
+                                {
+                                    "databaseHostName": "27JanStandalone",
+                                    "databaseHostId": "b9371421ff9b1680",
+                                    "databaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseHostName": "27JanStandalone",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseName": "test1",
+                                    "cloneDatabaseName": "sandbox_1744017481447",
+                                    "cloneAge": 0,
+                                    "clonedBy": "netapp_wf",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
                                             "cloneVolumeType": "log"
                                         }
                                     ]
@@ -5806,8 +6046,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -5834,6 +6074,66 @@
                                             "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
                                             "sourceVolumeName": "wlmdb_sqllog_1744017353",
                                             "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "objectsInViolation": [
+                                {
+                                    "databaseHostName": "27JanStandalone",
+                                    "databaseHostId": "b9371421ff9b1680",
+                                    "databaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseHostName": "27JanStandalone",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseName": "test1",
+                                    "cloneDatabaseName": "sandbox_1744017481447",
+                                    "cloneAge": 0,
+                                    "clonedBy": "netapp_wf",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
                                             "cloneVolumeType": "log"
                                         }
                                     ]
@@ -6977,8 +7277,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -7005,6 +7305,66 @@
                                             "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
                                             "sourceVolumeName": "wlmdb_sqllog_1744017353",
                                             "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "objectsInViolation": [
+                                {
+                                    "databaseHostName": "27JanStandalone",
+                                    "databaseHostId": "b9371421ff9b1680",
+                                    "databaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseHostName": "27JanStandalone",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
+                                    "sourceDatabaseName": "test1",
+                                    "cloneDatabaseName": "sandbox_1744017481447",
+                                    "cloneAge": 0,
+                                    "clonedBy": "netapp_wf",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
+                                            "cloneDatabaseName": "sandbox_1744017481447",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
                                             "cloneVolumeType": "log"
                                         }
                                     ]

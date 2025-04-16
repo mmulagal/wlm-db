@@ -47,7 +47,6 @@ const OptimizeInnerPage = () => {
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
@@ -588,7 +587,9 @@ const OptimizeInnerPage = () => {
                     <OptimizeCard />
                 </div>
 
-                {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && <CloneTabs />}
+                {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && (
+                    <CloneTabs data={selectedOptimizeConfig?.data?.objectsInViolation} />
+                )}
 
                 <div className={styles.tableSection}>{renderTable()}</div>
             </div>

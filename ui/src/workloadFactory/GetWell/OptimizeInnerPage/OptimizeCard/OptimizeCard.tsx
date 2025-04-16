@@ -2,15 +2,17 @@ import { DsTypography, TooltipInfo } from '@netapp/design-system';
 import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './OptimizeCard.module.scss';
 import Tag from '../../../../common/Tag/Tag';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import { WLF_TABS } from '../../../../utils/consts';
 
-const OptimizeCard = () => {
+const OptimizeCard = ({ fromPage = '' }: any) => {
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
+    const { cloneDashboardData } = useAppSelector(state => state.getWellOptimize);
     const [setCardData, setSetCardData] = useState<any>({});
     useEffect(() => {
-        if (selectedOptimizeConfig) {
+        if (selectedOptimizeConfig && !fromPage) {
             let dataObj = {};
             dataObj = {
                 ...selectedOptimizeConfig?.data,
@@ -22,6 +24,18 @@ const OptimizeCard = () => {
             setSetCardData(data);
         }
     }, [selectedOptimizeConfig]);
+
+    useEffect(() => {
+        if (cloneDashboardData && fromPage === WLF_TABS.DASHBOARD) {
+            let dataObj = {};
+            dataObj = {
+                ...cloneDashboardData,
+                impactedCount: cloneDashboardData?.objectsInViolation?.length
+            };
+            const data = getCardData(cloneDashboardData?.type, dataObj);
+            setSetCardData(data);
+        }
+    }, [cloneDashboardData]);
 
     const getCardData = (config: string, data: any) => {
         switch (config) {

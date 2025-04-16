@@ -778,7 +778,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'Clone management recommendation',
+            title: `${GENERAL.CLONE_MANAGEMENT} recommendation`,
             description:
                 'Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
         },
@@ -1177,7 +1177,8 @@ export const formatCloneCardConfig = (
             tags: item?.tags,
             id: item?.name,
             category: categoryVal,
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            objectsInViolation: item?.objectsInViolation
         }
     };
     return cardsData;
