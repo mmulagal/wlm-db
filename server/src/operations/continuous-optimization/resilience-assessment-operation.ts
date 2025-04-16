@@ -274,6 +274,7 @@ async function getSnapshotPolicyDriftData(
             }
         });
         if (isDemoFlow) {
+            snapshotPolicyAssessmentData.totalObjectsAssessed = volumes.length;
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { configsOptimized } =
                 ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
