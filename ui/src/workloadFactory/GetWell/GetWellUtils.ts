@@ -1549,7 +1549,7 @@ export const formatIndividualCardMainConfig = (
                     violationDetails: item?.violationDetails,
                     objectsInViolation: item?.objectsInViolation,
                     recommendationText: item?.recommendation,
-                    dismissedObj: data?.dismissedConfigurations?.compute
+                    dismissedObj: index === 2 ? data?.dismissedConfigurations?.compute : {}
                 }
             };
         });

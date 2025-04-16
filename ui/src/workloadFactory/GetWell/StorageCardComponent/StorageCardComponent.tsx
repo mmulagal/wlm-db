@@ -338,7 +338,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </div>
 
                     <DsTypography variant="Regular_14" style={{ minWidth: '160px' }}>
-                        {cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED && 'This issue is dismissed. '}
+                        {cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED && GENERAL.DISMISSED_MESSAGE}{' '}
                         {cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED &&
                             `This issue is postponed until the next ${calculateDays(
                                 cardData?.dismissedObj?.endTime

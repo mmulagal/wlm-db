@@ -28,6 +28,7 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    DISMISSED_MESSAGE: 'This issue is dismissed.',
     CLONE_MANAGEMENT_REFRESH: 'Clone cleanup Refresh',
     CLONE_MANAGEMENT_DELETE: 'Clone cleanup Delete',
     ALL_CRED_SELECTED: 'All credentials selected',
