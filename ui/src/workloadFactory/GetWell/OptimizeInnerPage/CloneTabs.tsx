@@ -22,16 +22,20 @@ const CloneTabs = ({ data, fromPage = '' }: any) => {
     useEffect(() => {
         let wfDbItems: any = [];
         let otherDbItems: any = [];
+        let wfDbId = 0;
+        let otherDbId = 0;
         data?.map((item: any) => {
             const sourceVolumeNames = item?.clonedVolumeDetails?.map((detail: any) => detail?.sourceVolumeName) || [];
             if (item?.clonedBy === 'netapp_wf') {
                 wfDbItems.push({
                     ...item,
+                    id: String(wfDbId++),
                     sourceVolumeNamesList: sourceVolumeNames.join(',')
                 });
             } else {
                 otherDbItems.push({
                     ...item,
+                    id: String(otherDbId++),
                     sourceVolumeNamesList: sourceVolumeNames.join(',')
                 });
             }

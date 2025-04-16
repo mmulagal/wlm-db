@@ -707,7 +707,6 @@ const DashboardInnerPage = () => {
         if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
             let cloneViolationsList: any = [];
             if (rowData?.objectsInViolation) {
-                cloneViolationsList = [...rowData?.objectsInViolation];
                 cloneViolationsList =
                     rowData?.objectsInViolation?.map((obj: AnalyserOptions) => ({
                         ...obj,
