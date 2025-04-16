@@ -1065,7 +1065,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -2296,7 +2297,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -3527,7 +3529,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -4768,7 +4771,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -5999,7 +6003,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -7230,7 +7235,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"

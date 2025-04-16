@@ -60,7 +60,7 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[snapshotObj?.status],
                             data: instanceData,
-                            violations: snapshotObj?.violations
+                            objectsInViolation: snapshotObj?.objectsInViolation
                         });
                     }
                 }
