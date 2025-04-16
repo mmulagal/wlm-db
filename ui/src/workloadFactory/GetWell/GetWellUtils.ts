@@ -315,7 +315,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_five: {
             type: 'Not optimized configurations',
-            value: ''
+            value: '',
+            minWidth: '200px'
         },
 
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency', 'Reliability']
@@ -340,7 +341,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_five: {
             type: 'Not optimized configurations',
-            value: ''
+            value: '',
+            minWidth: '200px'
         },
         tags: ['Performance efficiency', 'Reliability']
     },
@@ -1015,7 +1017,7 @@ export const formatSnapshotPolicyCardConfig = (
             id: item?.name,
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
-            violations: item?.violations
+            objectsInViolation: item?.objectsInViolation
         }
     };
     return cardsData;

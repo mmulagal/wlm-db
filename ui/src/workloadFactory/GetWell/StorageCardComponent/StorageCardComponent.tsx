@@ -252,7 +252,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 <div className={styles.svgSection}>
                                     {setImage(cardData?.block_two?.value || GENERAL.UNAVAILABLE)}
                                 </div>
-                                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                                <DsTypography
+                                    style={{ whiteSpace: 'nowrap' }}
+                                    variant="Semibold_14"
+                                    isDisabled={disableText}
+                                >
                                     {cardData?.block_two?.value || GENERAL.UNAVAILABLE}
                                 </DsTypography>
                             </>
@@ -329,7 +333,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else {
             return (
                 <div className={styles.dismissContainer}>
-                    <Warning />
+                    <div>
+                        <Warning />
+                    </div>
+
                     <DsTypography variant="Regular_14">This issue is postponed until the next 28 days. </DsTypography>
                 </div>
             );
@@ -882,7 +889,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             </div>
 
             {/* Section Two */}
-            <div className={styles.commonSection}>
+            <div className={styles.commonSection} style={{ minWidth: '160px' }}>
                 {sectionTwoContent(cardData)}
 
                 <DsTypography variant="Regular_14" isDisabled={disableText}>
@@ -900,7 +907,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             </div> */}
 
             {/* Section 4 */}
-            <div className={styles.commonSection}>
+            <div className={styles.commonSection} style={{ minWidth: '80px' }}>
                 {loading && (
                     <div style={{ height: '22px', display: 'flex', alignItems: 'center' }}>
                         <DsFlashingDotsLoader />
@@ -916,12 +923,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </DsTypography>
             </div>
 
-            {/* Section Next */}
+            {/* Section Resource Type */}
             <div
                 className={styles.thirdSection}
                 style={{
                     height: cardData?.block_three?.smallFont ? '56px' : '64px',
-                    minWidth: '200px',
+                    minWidth: cardData?.block_five?.minWidth ? cardData?.block_five?.minWidth : '165px',
                     width: 'fit-content',
                     position: 'relative',
                     top: '3px'
@@ -938,7 +945,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             {cardData?.block_six && (
                 <div
                     className={styles.thirdSection}
-                    style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}
+                    style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px', minWidth: '143px' }}
                 >
                     {sectionSixContent(cardData)}
 
@@ -951,14 +958,15 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             {/* Dismiss section code */}
             {/* <div className={styles.dismissSection}>{sectionSevenContent(cardData)}</div> */}
 
-            {/* 5 Section */}
-            {windowSize.width >= 1770 && (
-                <div className={styles.fourthSection}>
-                    {/* <GetWellChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" /> */}
-                </div>
-            )}
-
             {/* <div className={styles.separator} /> */}
+
+            {/* 5 Section */}
+            {/* {windowSize.width >= 1770 &&
+                (cardData?.block_one?.value === 'ONTAP' || cardData?.block_one?.value === 'Operating system') && (
+                    <div className={styles.fourthSection}>
+                        
+                    </div>
+                )} */}
 
             {/* 6 section */}
             {!optimizePrintState &&
@@ -1041,38 +1049,40 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 ))}
 
             {/* Section 7 */}
-            {/* <ButtonWithDropdown
-                variant="icon"
-                isDisabled={false}
-                items={[
-                    {
-                        id: 'activate',
-                        children: 'Activate',
-                        isDisabled: false,
-                        onClick: () => {
-                            handleSingleAction(type, 'activate');
+            {cardData?.block_one?.value !== 'ONTAP' && cardData?.block_one?.value !== 'Operating system' && (
+                <ButtonWithDropdown
+                    variant="icon"
+                    isDisabled={false}
+                    items={[
+                        {
+                            id: 'activate',
+                            children: 'Activate',
+                            isDisabled: false,
+                            onClick: () => {
+                                handleSingleAction(type, 'activate');
+                            }
+                        },
+                        {
+                            id: 'postponeFor30Days',
+                            children: 'Postpone for 30 days',
+                            isDisabled: false,
+                            onClick: () => {
+                                handleSingleAction(type, 'postponeFor30Days');
+                            }
+                        },
+                        {
+                            id: 'dismiss',
+                            children: 'Dismiss',
+                            isDisabled: false,
+                            onClick: () => {
+                                handleSingleAction(type, 'dismiss');
+                            }
                         }
-                    },
-                    {
-                        id: 'postponeFor30Days',
-                        children: 'Postpone for 30 days',
-                        isDisabled: false,
-                        onClick: () => {
-                            handleSingleAction(type, 'postponeFor30Days');
-                        }
-                    },
-                    {
-                        id: 'dismiss',
-                        children: 'Dismiss',
-                        isDisabled: false,
-                        onClick: () => {
-                            handleSingleAction(type, 'dismiss');
-                        }
-                    }
-                ]}
-            >
-                <ActionMenu />
-            </ButtonWithDropdown> */}
+                    ]}
+                >
+                    <ActionMenu />
+                </ButtonWithDropdown>
+            )}
         </div>
     );
 };

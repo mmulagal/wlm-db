@@ -97,18 +97,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -153,18 +159,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -208,18 +220,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -263,18 +281,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -318,18 +342,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -369,18 +399,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -424,18 +460,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -558,18 +600,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(GENERAL.COMPUTE_RIGHTSIZING)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(GENERAL.COMPUTE_RIGHTSIZING)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -616,18 +664,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -671,18 +725,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
                 <div className={styles.tile}>
@@ -725,18 +785,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LICENSE)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LICENSE)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -781,18 +847,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -834,18 +906,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MAXDOP)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MAXDOP)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -893,18 +971,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -937,18 +1021,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </TooltipComponent>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CRR)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CRR)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -996,18 +1086,26 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() =>
+                                            handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS)
+                                        }
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -1051,18 +1149,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <Popover
-                            children={'Manage configuration state'}
-                            trigger="hover"
-                            container={
-                                <div
-                                    onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT)}
-                                    className={styles.editIcon}
-                                >
-                                    <Edit />
-                                </div>
-                            }
-                        />
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
             </div>

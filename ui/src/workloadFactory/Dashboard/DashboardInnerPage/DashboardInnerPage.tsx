@@ -395,7 +395,7 @@ const DashboardInnerPage = () => {
                             uuid: selectedSnapshot?.data?.uuid,
                             name: selectedSnapshot?.data?.name
                         },
-                        volumes: rowData?.violations
+                        volumes: rowData?.objectsInViolation
                     }
                 ]
             };

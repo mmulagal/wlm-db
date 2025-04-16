@@ -122,6 +122,8 @@ interface CloneAssesment {
     status: string;
     cloneDetails?: CloneDetail[];
     oldClones?: number;
+    oldClonesDetails?: CloneDetail[];
+    oldCloneDatabaseNames?: string[];
 }
 
 interface ResourceAssessmentData {
