@@ -3,10 +3,10 @@ import moment from 'moment';
 import { compact, isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
+    DriftAssessmentResponseType,
+    GenericAssessmentResponseType,
     OntapVolumeType,
-    ParameterDriftResponseType,
-    ResilienceDriftAssessmentResponseType,
-    SnapshotPolicyAssesmentDataType
+    ParameterDriftResponseType
 } from '../../routes/types/continuous-optimization.types';
 import getLogger from '../../utils/logger';
 import {
@@ -160,17 +160,36 @@ async function getResilienceDriftAssessment(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    fields: string = ''
 ) {
-    logger.info('Getting resilience drift assessment for:', { credentialsId, databaseInstanceId, databaseHostId });
+    logger.info('Getting resilience drift assessment for:', {
+        credentialsId,
+        databaseInstanceId,
+        databaseHostId,
+        fields
+    });
+    const fieldsArray = fields ? fields.split(',') : [];
+    const shouldTriggerSnapshotPolicyAssessment =
+        isEmpty(fieldsArray) || fieldsArray.includes(AssessmentCategories.SNAPSHOT_POLICY);
+    const shouldTriggerCrrAssessment = isEmpty(fieldsArray) || fieldsArray.includes(AssessmentCategories.CRR);
+    const shouldTriggerAwsBackupAssessment =
+        isEmpty(fieldsArray) || fieldsArray.includes(AssessmentCategories.AWS_BACKUP);
+
     try {
         const [snapshotPolicy, crrData, awsBackup] = await Promise.all([
-            getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
-            getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
-            getAwsBackupDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            shouldTriggerSnapshotPolicyAssessment
+                ? getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+                : Promise.resolve(undefined),
+            shouldTriggerCrrAssessment
+                ? getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+                : Promise.resolve(undefined),
+            shouldTriggerAwsBackupAssessment
+                ? getAwsBackupDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+                : Promise.resolve(undefined)
         ]);
 
-        const assessmentData: ResilienceDriftAssessmentResponseType = {
+        const assessmentData: DriftAssessmentResponseType = {
             snapshotPolicy,
             crr: crrData,
             awsBackup: awsBackup as ParameterDriftResponseType
@@ -188,9 +207,16 @@ async function getSnapshotPolicyDriftData(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string
-) {
+): Promise<GenericAssessmentResponseType> {
     logger.info('Calculate snapshot policy drift data for:', { credentialsId, databaseInstanceId, databaseHostId });
     let errorMessage;
+    const snapshotPolicyAssessmentData: ParameterDriftResponseType = {
+        ...storageGoldenConfigData.resiliency.snapshotPolicy,
+        name: AssessmentCategories.SNAPSHOT_POLICY,
+        status: AssessmentStatus.NOT_OPTIMIZED,
+        objectsInViolation: [],
+        totalObjectsInViolation: 0
+    };
     try {
         const [[persistedConfigurationData], [mappedVolumesData]] = await Promise.all([
             listDatabaseInstanceConfigData(
@@ -212,7 +238,7 @@ async function getSnapshotPolicyDriftData(
         ]);
 
         if (isEmpty(persistedConfigurationData)) {
-            errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
+            errorMessage = `No ${AssessmentCategories.SNAPSHOT_POLICY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
             return { errorMessage };
         }
         const { config_data: configData } = persistedConfigurationData;
@@ -229,14 +255,7 @@ async function getSnapshotPolicyDriftData(
             ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumes as unknown as MappedOnTapVolumeResponse));
         }
 
-        const snapshotPolicyAssesmentData: SnapshotPolicyAssesmentDataType = {
-            ...storageGoldenConfigData.resiliency.snapshotPolicy,
-            timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
-            status: AssessmentStatus.NOT_OPTIMIZED,
-            violations: [],
-            totalObjectsAssessed: dataLogVolumeUuids.length,
-            totalObjectsInViolation: 0
-        };
+        snapshotPolicyAssessmentData.totalObjectsAssessed = dataLogVolumeUuids.length;
         volumes.forEach(volume => {
             const volDetails = volume as Record<string, string>;
 
@@ -250,7 +269,7 @@ async function getSnapshotPolicyDriftData(
             ) {
                 const vol: OntapVolumeType = { ontapVolumeName: volDetails?.name, ontapVolumeUuid: volDetails?.uuid };
                 if (isEmpty(dataLogVolumeUuids) || dataLogVolumeUuids.includes(volDetails?.uuid)) {
-                    snapshotPolicyAssesmentData.violations.push(vol);
+                    snapshotPolicyAssessmentData?.objectsInViolation?.push(vol);
                 }
             }
         });
@@ -259,20 +278,20 @@ async function getSnapshotPolicyDriftData(
             const { configsOptimized } =
                 ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
             if (configsOptimized?.STORAGE?.includes(OptimizeStorageConfigs.SNAPSHOT_POLICY)) {
-                snapshotPolicyAssesmentData.violations = [];
+                snapshotPolicyAssessmentData.objectsInViolation = [];
             }
         }
 
-        if (isEmpty(snapshotPolicyAssesmentData.violations)) {
-            snapshotPolicyAssesmentData.status = AssessmentStatus.OPTIMIZED;
+        if (isEmpty(snapshotPolicyAssessmentData.objectsInViolation)) {
+            snapshotPolicyAssessmentData.status = AssessmentStatus.OPTIMIZED;
         }
-        snapshotPolicyAssesmentData.totalObjectsInViolation = snapshotPolicyAssesmentData.violations.length;
-
-        return snapshotPolicyAssesmentData;
+        snapshotPolicyAssessmentData.totalObjectsInViolation =
+            snapshotPolicyAssessmentData?.objectsInViolation?.length ?? 0;
     } catch (error) {
         errorMessage = `Error getting snapshot policy drift data: ${error}`;
         return { errorMessage };
     }
+    return snapshotPolicyAssessmentData;
 }
 
 async function initiateAWSBackupAssessment(
