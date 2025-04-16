@@ -129,6 +129,7 @@ import {
 } from './terraform-operations';
 import { getParametersByPath } from '../lib/aws/ssm';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
+import { validateSvmCountCapacity } from './aws/fsx-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -1589,6 +1590,13 @@ async function deployPgSql(
     }
 
     validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
+
+    await validateSvmCountCapacity(
+        credentialsId,
+        region,
+        sqlConfiguration.sqlDeploymentMode,
+        fsxConfiguration.fsxFileSystemId
+    );
 
     let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 

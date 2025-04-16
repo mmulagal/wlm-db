@@ -243,7 +243,6 @@ const StorageParameterErrorResponse = Type.Object({
 });
 
 const StorageParameterDriftResponse = Type.Object({
-    timestamp: Type.Number(),
     configuration: Type.Object({
         volumes: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
         luns: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
@@ -267,7 +266,8 @@ const DriftAssessmentResponse = Type.Object({
     clone: Type.Optional(Type.Union([CloneDriftResponse, ErrorResponse])),
     snapshotPolicy: Type.Optional(GenericAssessmentResponse),
     crr: Type.Optional(GenericAssessmentResponse),
-    awsBackup: Type.Optional(GenericAssessmentResponse)
+    awsBackup: Type.Optional(GenericAssessmentResponse),
+    lastAssessmentTimestamp: Type.Optional(Type.Number())
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 

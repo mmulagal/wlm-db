@@ -41,6 +41,18 @@
         border-right: 1px solid var(--border);
     }
 
+    .dismissSection {
+        height: 64px;
+        .dismissContainer {
+            display: flex;
+            gap: 8px;
+            svg {
+                position: relative;
+                top: 2px;
+            }
+        }
+    }
+
     .tooltipContainer {
         display: flex;
         gap: 8px;

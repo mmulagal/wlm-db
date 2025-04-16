@@ -1,5 +1,4 @@
 import { countBy, isEmpty, isNull } from 'lodash-es';
-import moment from 'moment';
 import {
     AssessmentCategories,
     AssessmentStatus,
@@ -348,7 +347,6 @@ async function calculateStorageDrift(
     }
 
     const driftAssessmentData: StorageParameterDriftResponseType = {
-        timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
         configuration: { volumes: [], luns: [], os: [] },
         sizing: [],
         layout: [],

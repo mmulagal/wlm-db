@@ -87,6 +87,7 @@ import {
     calculateCloneDrift,
     managedHostsCloneAssessment
 } from './continuous-optimization/clone-assessment-operations';
+import { getLastAssessedTime } from './continuous-optimization/assessment-utils';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -1235,6 +1236,18 @@ async function fetchDriftAssessment(
 
     if (!isEmpty(cloneResponse)) {
         driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
+    }
+    // Get last asssessed timestamp
+    try {
+        driftAssessmentData.lastAssessmentTimestamp = await getLastAssessedTime(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+    } catch (error) {
+        logger.error('Error while fetching last assessment timestamp:', error);
     }
     return driftAssessmentData;
 }
