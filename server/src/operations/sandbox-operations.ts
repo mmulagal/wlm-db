@@ -3397,5 +3397,6 @@ export {
     getSourceDetails,
     getProperty,
     performSandboxDeletion,
-    runSandboxPreValidations
+    runSandboxPreValidations,
+    performLifecycleUpdate
 };
