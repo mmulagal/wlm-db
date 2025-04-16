@@ -28,6 +28,8 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    CLONE_MANAGEMENT_REFRESH: 'Clone management Refresh',
+    CLONE_MANAGEMENT_DELETE: 'Clone management Delete',
     ALL_CRED_SELECTED: 'All credentials selected',
     NO_CRED_SELECTED: 'No credentials selected',
     ALL_REGIONS_SELECTED: 'All regions selected',

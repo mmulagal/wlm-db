@@ -172,6 +172,110 @@ const DialogContent = ({
 
     const setContent = () => {
         switch (type) {
+            case GENERAL.CLONE_MANAGEMENT_REFRESH:
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory recommends managing old and costly clones by either deleting or
+                                refreshing them.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                What will happen
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        Workload Factory will refresh the selected clones. Refreshing a clone will
+                                        synchronize it with its source, making it identical and cost-efficient.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        No disruption to your services is expected during this process.
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Select Continue to authorize Workload Factory to automatically perform these
+                                        actions on your behalf.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case GENERAL.CLONE_MANAGEMENT_DELETE:
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory recommends managing old and costly clones by either deleting or
+                                refreshing them.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                What will happen
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        Workload Factory will delete the selected clones. Deleting a clone will remove
+                                        it permanently, freeing up storage space and reducing costs.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        No disruption to your services is expected during this process.
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Select Continue to authorize Workload Factory to automatically perform these
+                                        actions on your behalf.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 return (
                     <div className={styles['storage-tier-block']}>
