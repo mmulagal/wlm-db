@@ -11,7 +11,7 @@ import {
     VolumeRecord
 } from '../../utils/common-types';
 import { getInstanceDetails, getInstanceOntapDetails } from '../database-hosts-operations';
-import { ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
+import { ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, CLONE_AGE } from '../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
@@ -119,7 +119,7 @@ async function calculateCloneDrift(
             ]);
         }
 
-        const { cloneDetails, status, oldClones } = cloneAssessment as CloneAssesment;
+        const { cloneDetails, status, oldClones, oldClonesDetails } = cloneAssessment as CloneAssesment;
         logger.debug('Clone assessment result', cloneDetails);
 
         const recommendationMessage =
@@ -138,6 +138,7 @@ async function calculateCloneDrift(
             cloneDetails,
             totalObjectsAssessed: cloneDetails?.length,
             totalObjectsInViolation: oldClones,
+            objectsInViolation: oldClonesDetails,
             cloneDriftMessage: `${oldClones} out of ${cloneDetails?.length} clones are old and divergent`
         };
     } catch (error: any) {
@@ -329,6 +330,8 @@ async function runCloneAssessment(
     }
 
     const sandboxInfo: CloneDetail[] = [];
+    const oldClonesDetails: CloneDetail[] = []; // Array to store records older than 60 days
+    const oldCloneDatabaseNames: string[] = []; // Array to store cloneDatabaseName strings for old clones
     let oldClones = 0;
     const processedSandboxNames = new Set<string>(); // Set to keep track of sandbox names already processed by netapp_wf
 
@@ -388,7 +391,7 @@ async function runCloneAssessment(
                 // Calculate the number of days since the data volume was created only if the volume type is 'data'
                 if (cloneVolumeType === 'data') {
                     cloneAge = calculateDaysSince(cloneVolumeCreateTime);
-                    if (cloneAge > 60) {
+                    if (cloneAge > CLONE_AGE) {
                         oldClones += 1;
                     }
                 }
@@ -398,10 +401,16 @@ async function runCloneAssessment(
                     databaseObject.cloneAge = cloneAge;
                 }
             });
-            sandboxInfo.push({
+            const modifiedDatabaseObject = {
                 ...databaseObject,
                 clonedBy: 'netapp_wf'
-            });
+            };
+
+            if (databaseObject.cloneAge !== undefined && databaseObject.cloneAge > CLONE_AGE) {
+                oldClonesDetails.push(modifiedDatabaseObject);
+                oldCloneDatabaseNames.push(sandboxName);
+            }
+            sandboxInfo.push(modifiedDatabaseObject);
         }
     });
 
@@ -416,9 +425,6 @@ async function runCloneAssessment(
         // Calculate the number of days since the volume was created
         const createdDate = cloneVolumeCreateTime ? new Date(cloneVolumeCreateTime) : new Date();
         const cloneAge = calculateDaysSince(createdDate);
-        if (cloneAge > 60) {
-            oldClones += 1;
-        }
 
         const clonedVolumeInfo = {
             sourceVolumeName: cloneParentVolumeName,
@@ -446,6 +452,11 @@ async function runCloneAssessment(
                     ]
                 };
 
+                if (cloneAge !== undefined && cloneAge > CLONE_AGE) {
+                    oldClones += 1;
+                    oldClonesDetails.push(databaseObject);
+                    oldCloneDatabaseNames.push(clonedDatabaseName);
+                }
                 sandboxInfo.push(databaseObject);
             }
         });
@@ -457,7 +468,9 @@ async function runCloneAssessment(
     return {
         cloneDetails: sandboxInfo,
         status: optimizationStatus,
-        oldClones
+        oldClones,
+        oldClonesDetails,
+        oldCloneDatabaseNames
     };
 }
 
