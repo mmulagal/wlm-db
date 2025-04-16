@@ -972,7 +972,7 @@ export const formatSnapshotPolicyCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.resiliency?.snapshotPolicy;
+    let item: any = data?.snapshotPolicy;
     let categoryVal = 'resiliency';
     let itemName = 'snapshot-policy';
     let status = item?.status || '';
@@ -1026,7 +1026,7 @@ export const formatAWSBackUpPolicyCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.resiliency?.awsBackup;
+    let item: any = data?.awsBackup;
     let categoryVal = 'resiliency';
     let itemName = 'aws-backup-policy';
     let status = item?.status || '';
@@ -1080,7 +1080,7 @@ export const formatCRRCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.resiliency?.crr;
+    let item: any = data?.crr;
     let categoryVal = 'resiliency';
     let itemName = item?.name || 'crr';
     let status = item?.status || '';
@@ -1984,9 +1984,9 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
     // Dispatch the timestamp to the store
     dispatch(
         setGwTimestamp(
-            data?.storage?.timestamp && isNaN(Date.parse(data?.storage?.timestamp))
-                ? formatDateWithTime(data?.storage?.timestamp)
-                : data?.storage?.timestamp
+            data?.lastAssessmentTimestamp && isNaN(Date.parse(data?.lastAssessmentTimestamp))
+                ? formatDateWithTime(data?.lastAssessmentTimestamp)
+                : data?.lastAssessmentTimestamp
         )
     );
 
