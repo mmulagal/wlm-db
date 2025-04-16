@@ -1,15 +1,24 @@
-import { Button, DsButton, DsFlashingDotsLoader, DsTypography, Popover } from '@netapp/design-system';
+import {
+    Button,
+    ButtonWithDropdown,
+    DsButton,
+    DsFlashingDotsLoader,
+    DsTypography,
+    Popover
+} from '@netapp/design-system';
 import { useDialog } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
+import { ReactComponent as ActionMenu } from '../../../assets/ic_actions_menu_circle.svg';
+import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import styles from './StorageCardComponent.module.scss';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
+
 import { GENERAL } from '../../../utils/appConstants';
-import DialogContent from './DialogContent/DialogContent';
+
 import {
     ASSESSMENT_CONFIG_NAMES,
     GETWELL_STATUS,
@@ -24,7 +33,6 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
-    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -305,6 +313,24 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
                         {GENERAL.NOT_AVAILABLE}
                     </DsTypography>
+                </div>
+            );
+        }
+    };
+
+    //Dismiss section content
+    const sectionSevenContent = (cardData: any) => {
+        if (loading) {
+            return (
+                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
+                    <DsFlashingDotsLoader />
+                </div>
+            );
+        } else {
+            return (
+                <div className={styles.dismissContainer}>
+                    <Warning />
+                    <DsTypography variant="Regular_14">This issue is postponed until the next 28 days. </DsTypography>
                 </div>
             );
         }
@@ -808,7 +834,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Log files' ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
-            type === GENERAL.CRR
+            type === GENERAL.CRR ||
+            type === GENERAL.CLONE_MANAGEMENT
         ) {
             handleNavigateToOptimizePage(type);
         } else {
@@ -826,7 +853,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Storage tier' ||
             type === 'Log drive size' ||
             type === GENERAL.RSS_CONFIGURATION ||
-            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
+            type === GENERAL.CLONE_MANAGEMENT
         ) {
             return 'View & optimize';
         } else if (
@@ -841,6 +869,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             return GENERAL.OPTIMIZE;
         }
     };
+
+    //Function For Dismiss
+    const handleSingleAction = (type: string, action: string) => {};
 
     return (
         <div className={styles.storageCardComponent}>
@@ -903,7 +934,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </DsTypography>
             </div>
 
-            {/* Section Next 2 */}
+            {/* impacted volume section  */}
             {cardData?.block_six && (
                 <div
                     className={styles.thirdSection}
@@ -916,6 +947,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </DsTypography>
                 </div>
             )}
+
+            {/* Dismiss section code */}
+            {/* <div className={styles.dismissSection}>{sectionSevenContent(cardData)}</div> */}
 
             {/* 5 Section */}
             {windowSize.width >= 1770 && (
@@ -1005,6 +1039,40 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         </DsButton>
                     </div>
                 ))}
+
+            {/* Section 7 */}
+            {/* <ButtonWithDropdown
+                variant="icon"
+                isDisabled={false}
+                items={[
+                    {
+                        id: 'activate',
+                        children: 'Activate',
+                        isDisabled: false,
+                        onClick: () => {
+                            handleSingleAction(type, 'activate');
+                        }
+                    },
+                    {
+                        id: 'postponeFor30Days',
+                        children: 'Postpone for 30 days',
+                        isDisabled: false,
+                        onClick: () => {
+                            handleSingleAction(type, 'postponeFor30Days');
+                        }
+                    },
+                    {
+                        id: 'dismiss',
+                        children: 'Dismiss',
+                        isDisabled: false,
+                        onClick: () => {
+                            handleSingleAction(type, 'dismiss');
+                        }
+                    }
+                ]}
+            >
+                <ActionMenu />
+            </ButtonWithDropdown> */}
         </div>
     );
 };

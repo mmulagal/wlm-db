@@ -10,88 +10,62 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY,
-    ASSESSMENT_RESOURCE_TYPE
+    ASSESSMENT_RESOURCE_TYPE,
+    TEST_CONNECTION_COMMAND
 } from '../../utils/continous-optimization-consts';
 import { HostOsPatchAssessmentObject, Metadata } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE, SUCCESS } from '../../utils/consts';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
 import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
+import { callSsmExecution } from '../aws/ssm-operations';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
 
-// async function checkIfWindowsUpdateCatalogReachable(
-//     accountId: string,
-//     credentialsId: string,
-//     region: string,
-//     databaseHostId: string,
-//     metadata: Metadata
-// ) {
-//     logger.info('Checking if Windows Update Catalog is reachable', {
-//         accountId,
-//         credentialsId,
-//         region,
-//         databaseHostId
-//     });
-//     try {
-//         const { node1InstanceId, node2InstanceId } = metadata;
-//         await callSsmExecution(
-//             credentialsId,
-//             region,
-//             [TEST_CONNECTION_COMMAND],
-//             node1InstanceId,
-//             'Check if Windows Update Catalog is reachable'
-//         );
+async function checkIfWindowsUpdateCatalogReachable(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    metadata: Metadata
+) {
+    logger.info('Checking if Windows Update Catalog is reachable', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId
+    });
+    try {
+        const { node1InstanceId, node2InstanceId } = metadata;
+        await callSsmExecution(
+            credentialsId,
+            region,
+            [TEST_CONNECTION_COMMAND],
+            node1InstanceId,
+            'Check if Windows Update Catalog is reachable'
+        );
 
-//         if (node2InstanceId) {
-//             await callSsmExecution(
-//                 credentialsId,
-//                 region,
-//                 [TEST_CONNECTION_COMMAND],
-//                 node2InstanceId,
-//                 'Check if Windows Update Catalog is reachable'
-//             );
-//         }
-//     } catch (error) {
-//         const errorMessage = `Error while checking if Windows Update Catalog is reachable. ${error}`;
-//         logger.error(errorMessage);
-//         throw createError(
-//             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-//             'Windows Update Catalog is not reachable from SQL node/s'
-//         );
-//     }
-// }
-
-// async function triggerHostOsPatchCollection(
-//     accountId: string,
-//     credentialsId: string,
-//     region: string,
-//     databaseHostId: string,
-//     metadata: Metadata
-// ) {
-//     try {
-//         const { node1InstanceId, node2InstanceId } = metadata;
-//         const hostOsPatchAssessment = await runOsPatchAssessment(
-//             accountId,
-//             credentialsId,
-//             region,
-//             databaseHostId,
-//             node1InstanceId,
-//         );
-//         const existingAssessmentData = metadata.assessment;
-//         metadata.assessment = {
-//             ...existingAssessmentData,
-//             hostOsPatch: hostOsPatchAssessment,
-//             lastAssessedDate: new Date().getTime().toString()
-//         };
-//         updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
-//     } catch (error) {
-//         logger.error(`Error while triggering host os patch collection. ${error}`);
-//     }
-// }
+        if (node2InstanceId) {
+            await callSsmExecution(
+                credentialsId,
+                region,
+                [TEST_CONNECTION_COMMAND],
+                node2InstanceId,
+                'Check if Windows Update Catalog is reachable'
+            );
+        }
+    } catch (error) {
+        const errorMessage = `Error while checking if Windows Update Catalog is reachable. ${error}`;
+        logger.error(errorMessage);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Windows Update Catalog is not reachable from SQL node/s'
+        );
+    }
+}
 
 async function calculateHostOsPatchDrift(
     accountId: string,
@@ -280,6 +254,10 @@ async function runOsPatchAssessment(
         : [{ ec2InstanceId: nodeInstanceId }];
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
     if (!isEmpty(clusterNodeInstanceIds)) {
+        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        const metadataObject = metadata as unknown as Metadata;
+        await checkIfWindowsUpdateCatalogReachable(accountId, credentialsId, region, databaseHostId, metadataObject); // Check if Windows Update Catalog is reachable
+
         const isPatchBaselineInProgress = await checkIfPatchBaselineInProgress(
             credentialsId,
             region,

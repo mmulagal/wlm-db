@@ -36,7 +36,8 @@ import OSPatchTable from './RenderTables/OSPatchTable';
 import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
 import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
-import StorageTierDismissTable from './DismissTables/StorageTierDismissTable';
+
+import DismissTable from './DismissTables/DismissTable';
 
 const DashboardDismissPage = () => {
     const dispatch = useDispatch();
@@ -192,8 +193,8 @@ const DashboardDismissPage = () => {
                     instances: selectedConfigSummary.optimizedInstances,
                     configurationState: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: '190px',
+                    tagHeight: '287px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.user_data_files?.recommendation?.description
@@ -205,8 +206,8 @@ const DashboardDismissPage = () => {
                     instances: selectedConfigSummary.optimizedInstances,
                     configurationState: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: '190px',
+                    tagHeight: '287px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.transaction_log_files?.recommendation?.description
@@ -259,8 +260,8 @@ const DashboardDismissPage = () => {
                     instances: selectedConfigSummary.optimizedInstances,
                     configurationState: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '214px',
+                    tagHeight: '311px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.compute_rightsizing?.recommendation?.description
@@ -379,46 +380,9 @@ const DashboardDismissPage = () => {
     const renderTable = () => {
         switch (selectedConfig) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
-                return (
-                    <StorageTierDismissTable
-                        handleSingleAction={handleSingleAction}
-                        handleBulkAction={handleBulkAction}
-                    />
-                );
-            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
-                return <FileSystemHeadroomTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
-                return <LogDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
-                return <TempDBDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
-                return <UserDataFilesTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
-                return <LogFileTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
-                return <TempDBPlacement lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
-                return <ComputeRightSizingTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'ONTAP':
-                return <OntapConfig />;
-            case 'Operating system':
-                return <OperatingSystemTable />;
-            case 'MAXDOP':
-                return <MaxDopTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case GENERAL.MICROSOFT_SQL_PATCH:
-                return <MicrosoftSQLPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case GENERAL.LICENSE_SQL_SERVER:
-                return <LicenseTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case GENERAL.RSS_CONFIGURATION:
-                return <NetworkAdapterTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case GENERAL.OPERATING_SYSTEM_PATCH:
-                return <OSPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
-                return (
-                    <ScheduledLocalSnapshotTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />
-                );
-            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                return <ScheduledAWSBackupTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+                return <DismissTable handleSingleAction={handleSingleAction} handleBulkAction={handleBulkAction} />;
+            default:
+                return <DismissTable handleSingleAction={handleSingleAction} handleBulkAction={handleBulkAction} />;
         }
     };
 
@@ -476,6 +440,7 @@ const DashboardDismissPage = () => {
                             configurationState={valueCardData.configurationState}
                             severity={valueCardData.severity}
                             from="dismissPage"
+                            tooltipText=""
                         />
 
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>

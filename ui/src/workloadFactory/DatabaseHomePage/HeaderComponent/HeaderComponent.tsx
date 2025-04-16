@@ -119,6 +119,7 @@ import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
 import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSlice';
 import store from '../../../store/store';
 import DashboardDismissPage from '../../Dashboard/DashboardInnerPage/DashboardDismissPage';
+import DashboardOptimizeInnerPage from '../../Dashboard/DashboardInnerPage/DashboardOptimizeInnerPage';
 
 type Tab = {
     tab: string;
@@ -1459,6 +1460,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 {selectedHeaderTab === WLF_TABS.DASHBOARD_DISMISS_PAGE && <DashboardDismissPage />}
 
                 {selectedHeaderTab === WLF_TABS.OPTIMIZE_INNER_PAGE && <OptimizeInnerPage />}
+                {selectedHeaderTab === WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE && <DashboardOptimizeInnerPage />}
                 {selectedHeaderTab === WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE && <OptimizeOntapInnerPage />}
 
                 {selectedHeaderTab === WLF_TABS.SANDBOXES && (

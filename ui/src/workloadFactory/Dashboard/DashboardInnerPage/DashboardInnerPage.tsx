@@ -47,6 +47,7 @@ import {
     useOptimizeAwsBackupMutation
 } from '../../../utils/apiService';
 import {
+    setCloneDashboardData,
     setGwPageLoadInstanceData,
     setInProgressHostData,
     setInProgressOptimizationData,
@@ -68,6 +69,7 @@ import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTa
 import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { backupStartTime } from '../../../utils/utilityFunctions';
+import CloneManagementTable from './RenderTables/CloneManagementTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -702,37 +704,87 @@ const DashboardInnerPage = () => {
     };
 
     const handleDialog = (type: string, rowData: any, operation?: string) => {
-        setDialog(
-            <DialogComponent
-                header={`${type} optimization`}
-                content={
-                    <DialogContent
-                        type={type}
-                        recommendationOptions={rowData?.recommendationOptions}
-                        missingPermissions={rowData?.missingPermissions}
-                        recommendedSizeInGib={rowData?.recommendedSizeInGib}
-                        bulkRecommendationOptions={rowData}
-                        operation={operation}
-                    />
-                }
-                primaryButton={GENERAL.CONTINUE}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    callOptimizeApi(type, rowData, operation);
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
-                hidePrimaryButton={
-                    (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
-                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-                        type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
-                    rowData?.missingPermissions &&
-                    rowData?.missingPermissions.length > 0
-                }
-            />
-        );
+        if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+            let cloneViolationsList: any = [];
+            if (rowData?.objectsInViolation) {
+                cloneViolationsList =
+                    rowData?.objectsInViolation?.map((obj: AnalyserOptions) => ({
+                        ...obj,
+                        credentialId: rowData?.credentialId,
+                        regionId: rowData?.regionId,
+                        databaseHostId: rowData?.databaseHostId,
+                        hostName: rowData?.hostName,
+                        instanceId: rowData?.instanceId,
+                        serverInstanceName: rowData?.serverInstanceName
+                    })) || [];
+                dispatch(
+                    setCloneDashboardData({
+                        type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        objectsInViolation: cloneViolationsList,
+                        severity: rowData?.severity,
+                        tags: rowData?.tags,
+                        recommendation: cardDataDefault?.clone_management?.recommendation
+                    })
+                );
+            } else {
+                rowData?.map((item: any) => {
+                    cloneViolationsList = [
+                        ...cloneViolationsList,
+                        ...(item?.objectsInViolation?.map((obj: any) => ({
+                            ...obj,
+                            credentialId: item?.credentialId,
+                            regionId: item?.regionId,
+                            databaseHostId: item?.databaseHostId,
+                            hostName: item?.hostName,
+                            instanceId: item?.instanceId,
+                            serverInstanceName: item?.serverInstanceName
+                        })) || [])
+                    ];
+                });
+                dispatch(
+                    setCloneDashboardData({
+                        type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        objectsInViolation: cloneViolationsList,
+                        severity: rowData?.[0]?.severity,
+                        tags: rowData?.[0]?.tags,
+                        recommendation: cardDataDefault?.clone_management?.recommendation
+                    })
+                );
+            }
+            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE));
+        } else {
+            setDialog(
+                <DialogComponent
+                    header={`${type} optimization`}
+                    content={
+                        <DialogContent
+                            type={type}
+                            recommendationOptions={rowData?.recommendationOptions}
+                            missingPermissions={rowData?.missingPermissions}
+                            recommendedSizeInGib={rowData?.recommendedSizeInGib}
+                            bulkRecommendationOptions={rowData}
+                            operation={operation}
+                        />
+                    }
+                    primaryButton={GENERAL.CONTINUE}
+                    secondaryButton={GENERAL.CANCEL}
+                    callback={() => {
+                        callOptimizeApi(type, rowData, operation);
+                    }}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                    customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
+                    hidePrimaryButton={
+                        (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+                            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
+                        rowData?.missingPermissions &&
+                        rowData?.missingPermissions.length > 0
+                    }
+                />
+            );
+        }
     };
 
     useEffect(() => {
@@ -993,6 +1045,21 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.clone_management?.recommendation?.description
+                    }
+                });
+                break;
         }
     }, [selectedConfig, selectedConfigSummary]);
 
@@ -1094,6 +1161,9 @@ const DashboardInnerPage = () => {
                 );
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
                 return <ScheduledAWSBackupTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+                return <CloneManagementTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
         }
     };
 

@@ -28,12 +28,15 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    CLONE_MANAGEMENT_REFRESH: 'Clone cleanup Refresh',
+    CLONE_MANAGEMENT_DELETE: 'Clone cleanup Delete',
     ALL_CRED_SELECTED: 'All credentials selected',
     NO_CRED_SELECTED: 'No credentials selected',
     ALL_REGIONS_SELECTED: 'All regions selected',
     NO_REGIONS_SELECTED: 'No regions selected',
-    ASSESSMENT_PERFORMED: 'Last assessment was performed at : ',
-    ASSESS_NOW: 'Assess now',
+    ASSESSMENT_PERFORMED: 'Automatic daily analysis',
+    LAST_UPDATE: 'Last update:',
+    ASSESS_NOW: 'Analyze now',
     MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',
     POSTGRESQL_TYPE: 'PostgreSQL',
     USER_DATABASE: 'User Database',
@@ -1266,8 +1269,12 @@ export const GENERAL = {
     SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
     CRR: 'Cross-Region Replication (CRR)',
+    CLONING: 'Cloning',
+    CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
+        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
+    CLONE_MANAGEMENT_TAB1: 'Clones created with Workload factory (AKA Sandboxes)',
+    CLONE_MANAGEMENT_TAB2: 'Clones created outside of Workload factory'
 };
 
 export const CODE_VIEWER = {

@@ -9,7 +9,7 @@ import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHom
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
-import FirstColumnComponent from './FirstColumnCoponent';
+import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
@@ -44,7 +44,7 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const snapshotObj = instanceData?.assessments?.resiliency?.snapshotPolicy;
+                    const snapshotObj = instanceData?.assessments?.snapshotPolicy;
                     const isStorageTierOptimized = isOptimized(snapshotObj?.status);
                     if (!isStorageTierOptimized) {
                         snapshotAssessmentData.push({

@@ -4,6 +4,7 @@ import { setSelectedConfigSummary } from '../../store/workloadFactory/databaseHo
 import {
     setCardData,
     setDriftAssessmentData,
+    setGwRefreshTimestamp,
     setGwTimestamp,
     setInProgressHostData,
     setInProgressOptimizationData,
@@ -35,7 +36,12 @@ import {
     PerConfigInterface,
     RSSConfigAdapterInterface
 } from '../../utils/types/getWellTypes';
-import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from '../../utils/utilityFunctions';
+import {
+    formatDateWithTime,
+    formatNumberWithCustomComma,
+    getCurrentDateTime,
+    sortListOfDict
+} from '../../utils/utilityFunctions';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
@@ -741,6 +747,42 @@ export const cardDataDefault: GwCardDataInterface = {
                 'Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. \nUse FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.'
         },
         tags: ['Reliability']
+    },
+    clone_management: {
+        id: 'clone',
+        category: 'cloning',
+        block_one: {
+            type: GENERAL.CLONING,
+            value: GENERAL.CLONE_MANAGEMENT
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Clone',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: `${GENERAL.CLONE_MANAGEMENT} recommendation`,
+            description:
+                'Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
+        },
+        tags: ['Cost Efficiency']
     }
 };
 
@@ -930,7 +972,7 @@ export const formatSnapshotPolicyCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.resiliency?.snapshotPolicy;
+    let item: any = data?.snapshotPolicy;
     let categoryVal = 'resiliency';
     let itemName = 'snapshot-policy';
     let status = item?.status || '';
@@ -984,7 +1026,7 @@ export const formatAWSBackUpPolicyCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.resiliency?.awsBackup;
+    let item: any = data?.awsBackup;
     let categoryVal = 'resiliency';
     let itemName = 'aws-backup-policy';
     let status = item?.status || '';
@@ -1038,7 +1080,7 @@ export const formatCRRCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.resiliency?.crr;
+    let item: any = data?.crr;
     let categoryVal = 'resiliency';
     let itemName = item?.name || 'crr';
     let status = item?.status || '';
@@ -1082,6 +1124,60 @@ export const formatCRRCardConfig = (
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             violations: item?.violations,
+            objectsInViolation: item?.objectsInViolation
+        }
+    };
+    return cardsData;
+};
+
+export const formatCloneCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.clone;
+    let categoryVal = 'cloning';
+    let itemName = item?.name || 'clone';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName]) {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: item?.current || 0
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: item?.current || 0,
+                count: {
+                    totalObjectsAssessed: item?.totalObjectsAssessed,
+                    totalObjectsInViolation: item?.totalObjectsInViolation
+                }
+            },
+            errorMessage: item?.errorMessage,
+            tags: item?.tags,
+            id: item?.name,
+            category: categoryVal,
+            recommendationText: item?.recommendation,
             objectsInViolation: item?.objectsInViolation
         }
     };
@@ -1609,6 +1705,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let notOptimizedApplication = 0;
     let optimizedResiliency = 0;
     let notOptimizedResiliency = 0;
+    let optimizedCloning = 0;
+    let notOptimizedCloning = 0;
 
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
@@ -1638,6 +1736,12 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 optimizedResiliency++;
             } else {
                 notOptimizedResiliency++;
+            }
+        } else if (nestedObject?.category === 'cloning') {
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+                optimizedCloning++;
+            } else {
+                notOptimizedCloning++;
             }
         }
     });
@@ -1678,38 +1782,58 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             : 0
     };
 
+    let cloningCount = {
+        total: optimizedCloning + notOptimizedCloning,
+        optimized: optimizedCloning,
+        notOptimized: notOptimizedCloning,
+        percent: optimizedCloning
+            ? formatNumberWithCustomComma((optimizedCloning / (optimizedCloning + notOptimizedCloning)) * 100)
+            : 0
+    };
+
     let optBreakDown = {
         storage: storageCount,
         compute: computeCount,
         application: applicationCount,
         resiliency: resiliencyCount,
+        cloning: cloningCount,
         total: {
             // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
-            total: storageCount?.total + computeCount?.total + applicationCount?.total + resiliencyCount?.total,
+            total:
+                storageCount?.total +
+                computeCount?.total +
+                applicationCount?.total +
+                resiliencyCount?.total +
+                cloningCount?.total,
             optimized:
                 storageCount?.optimized +
                 computeCount?.optimized +
                 applicationCount?.optimized +
-                resiliencyCount?.optimized,
+                resiliencyCount?.optimized +
+                cloningCount?.optimized,
             notOptimized:
                 storageCount?.notOptimized +
                 computeCount?.notOptimized +
                 applicationCount?.notOptimized +
-                resiliencyCount?.notOptimized,
+                resiliencyCount?.notOptimized +
+                cloningCount?.notOptimized,
             percent:
                 storageCount?.optimized ||
                 computeCount?.optimized ||
                 applicationCount?.optimized ||
-                resiliencyCount?.optimized
+                resiliencyCount?.optimized ||
+                cloningCount?.optimized
                     ? formatNumberWithCustomComma(
                           ((storageCount?.optimized +
                               computeCount?.optimized +
                               applicationCount?.optimized +
-                              resiliencyCount?.optimized || 0) /
+                              resiliencyCount?.optimized +
+                              cloningCount?.optimized || 0) /
                               (storageCount?.total +
                                   computeCount?.total +
                                   applicationCount?.total +
-                                  resiliencyCount?.total || 1)) *
+                                  resiliencyCount?.total +
+                                  cloningCount?.total || 1)) *
                               100
                       )
                     : 0
@@ -1744,6 +1868,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
     cardsData = formatAWSBackUpPolicyCardConfig(data, optimizingData, cardsData);
 
     cardsData = formatCRRCardConfig(data, optimizingData, cardsData);
+
+    cardsData = formatCloneCardConfig(data, optimizingData, cardsData);
 
     cardsData = {
         ...cardsData,
@@ -1859,11 +1985,14 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
     // Dispatch the timestamp to the store
     dispatch(
         setGwTimestamp(
-            data?.storage?.timestamp && isNaN(Date.parse(data?.storage?.timestamp))
-                ? formatDateWithTime(data?.storage?.timestamp)
-                : data?.storage?.timestamp
+            data?.lastAssessmentTimestamp && isNaN(Date.parse(data?.lastAssessmentTimestamp))
+                ? formatDateWithTime(data?.lastAssessmentTimestamp)
+                : data?.lastAssessmentTimestamp
         )
     );
+
+    // Dispatch timestamp for every get API call
+    dispatch(setGwRefreshTimestamp(getCurrentDateTime()));
 };
 
 export const getUniqueEntries = (arrays: any) => {
@@ -1950,7 +2079,8 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         maxdop: { category: 'Application', subCategory: 'Application_sub' },
         scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
         scheduled_FSx_for_ONTAP_backups: { category: 'Resiliency', subCategory: 'Protection' },
-        crr: { category: 'Resiliency', subCategory: 'Protection' }
+        crr: { category: 'Resiliency', subCategory: 'Protection' },
+        clone_management: { category: 'Cloning', subCategory: 'Cloning' }
     };
 
     Object.keys(cardData).map((key: any) => {
@@ -2682,6 +2812,10 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
             configKey = 'scheduledawsBackup';
+            break;
+
+        case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+            configKey = 'clone';
             break;
     }
     const optimizedInstances = configData[configKey] || 0;

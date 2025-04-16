@@ -38,6 +38,10 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 setTagData(['Reliability']);
                 break;
 
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+                setTagData(['Cost efficiency']);
+                break;
+
             case GENERAL.OPERATING_SYSTEM_PATCH:
                 setTagData(['Security']);
                 break;

@@ -125,7 +125,7 @@ async function calculateComputeDrift(
         if (isEmpty(compute)) {
             errorMessage = errors?.compute
                 ? errors?.compute
-                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HOST_OS_PATCH);
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.COMPUTE);
 
             logger.error({ errorMessage });
             return { errorMessage };

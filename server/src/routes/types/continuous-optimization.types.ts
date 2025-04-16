@@ -49,7 +49,7 @@ const ParameterDriftResponse = Type.Object({
     recommended: Type.String(),
     severity: Type.String(),
     recommendation: Type.String(),
-    objectsInViolation: Type.Optional(Type.Array(Type.String())),
+    objectsInViolation: Type.Optional(Type.Array(Type.Union([Type.String(), OntapVolume]))),
     sizingViolations: Type.Optional(
         Type.Object({
             overProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
@@ -67,6 +67,9 @@ const ParameterDriftResponse = Type.Object({
     resourceType: Type.Optional(Type.String())
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
+
+const GenericAssessmentResponse = Type.Union([ParameterDriftResponse, ErrorResponse]);
+type GenericAssessmentResponseType = Static<typeof GenericAssessmentResponse>;
 
 const AdditionalComputeParameterDriftResponse = Type.Optional(
     Type.Object({
@@ -239,21 +242,7 @@ const StorageParameterErrorResponse = Type.Object({
     errorMessage: Type.String()
 });
 
-const SnapshotPolicyAssesmentData = Type.Object({
-    timestamp: Type.Number(),
-    tags: Type.Array(Type.String()),
-    violations: Type.Array(OntapVolume),
-    severity: Type.String(),
-    status: Type.String(),
-    resourceType: Type.String(),
-    totalObjectsAssessed: Type.Number(),
-    totalObjectsInViolation: Type.Number(),
-    recommendation: Type.String()
-});
-type SnapshotPolicyAssesmentDataType = Static<typeof SnapshotPolicyAssesmentData>;
-
 const StorageParameterDriftResponse = Type.Object({
-    timestamp: Type.Number(),
     configuration: Type.Object({
         volumes: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
         luns: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
@@ -264,14 +253,8 @@ const StorageParameterDriftResponse = Type.Object({
     fileSystems: Type.Array(Type.String())
 });
 
-const ResilienceDriftAssessmentResponse = Type.Object({
-    snapshotPolicy: Type.Optional(Type.Union([SnapshotPolicyAssesmentData, ErrorResponse])),
-    crr: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
-    awsBackup: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
-});
-type ResilienceDriftAssessmentResponseType = Static<typeof ResilienceDriftAssessmentResponse>;
-
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
+
 const DriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
@@ -280,8 +263,11 @@ const DriftAssessmentResponse = Type.Object({
     rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
     maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
     mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse])),
-    resiliency: Type.Optional(Type.Union([ResilienceDriftAssessmentResponse, ErrorResponse])),
-    clone: Type.Optional(Type.Union([CloneDriftResponse, ErrorResponse]))
+    clone: Type.Optional(Type.Union([CloneDriftResponse, ErrorResponse])),
+    snapshotPolicy: Type.Optional(GenericAssessmentResponse),
+    crr: Type.Optional(GenericAssessmentResponse),
+    awsBackup: Type.Optional(GenericAssessmentResponse),
+    lastAssessmentTimestamp: Type.Optional(Type.Number())
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -493,8 +479,6 @@ export {
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerAccount,
     MSSQLPatchDriftResponseType,
-    SnapshotPolicyAssesmentDataType,
-    ResilienceDriftAssessmentResponseType,
     SnapshotSchedule,
     SnapshotScheduleType,
     SnapshotPolicy,
@@ -523,5 +507,7 @@ export {
     BulkOptimizeComputeRequestBody,
     BulkOptimizeComputeRequestBodyType,
     OptimizeGenericRequestBody,
-    CloneDriftResponseType
+    CloneDriftResponseType,
+    GenericAssessmentResponse,
+    GenericAssessmentResponseType
 };

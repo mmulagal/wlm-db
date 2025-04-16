@@ -59,7 +59,7 @@ async function calculateMSSQLPatchDrift(
         if (isEmpty(mssqlPatch)) {
             errorMessage = errors?.mssqlPatch
                 ? errors?.mssqlPatch
-                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HOST_OS_PATCH);
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.MSSQL_PATCH);
             logger.error({ errorMessage });
             return { errorMessage };
         }

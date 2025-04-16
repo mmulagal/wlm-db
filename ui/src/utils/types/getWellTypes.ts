@@ -1,4 +1,5 @@
 export interface GetWellSliceInterface {
+    selectedCloneTab: string;
     optimizePageLoading: boolean;
     driftAssessmentData: AssessmentResponseInterface | null;
     isAssessmentAvailable: boolean;
@@ -18,10 +19,12 @@ export interface GetWellSliceInterface {
         compute?: CountBreakDown;
         application?: CountBreakDown;
         resiliency?: CountBreakDown;
+        cloning?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
     gwTimestamp: string;
+    gwRefreshTimestamp: string;
     optimizingData: any;
     optimizingInstanceData: boolean;
     selectedRecommendedInstance: any;
@@ -38,6 +41,8 @@ export interface GetWellSliceInterface {
     recommendedInstanceInBulk?: any;
     landingFromInnerPage?: boolean;
     isInnerPageOptimize?: boolean;
+    gwAdhocError?: string;
+    cloneDashboardData: any;
 }
 
 interface CountBreakDown {
@@ -48,6 +53,7 @@ interface CountBreakDown {
 }
 
 export interface AssessmentResponseInterface {
+    lastAssessmentTimestamp?: string;
     storage?: {
         timestamp?: string;
         optimisedCount?: {
@@ -68,11 +74,10 @@ export interface AssessmentResponseInterface {
     hostOsPatch?: PerConfigInterface;
     mssqlPatch?: PerConfigInterface;
     maxDOP?: PerConfigInterface;
-    resiliency?: {
-        snapshotPolicy?: PerConfigInterface;
-        awsBackup?: PerConfigInterface;
-        crr?: PerConfigInterface;
-    };
+    snapshotPolicy?: PerConfigInterface;
+    awsBackup?: PerConfigInterface;
+    crr?: PerConfigInterface;
+    clone?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {

@@ -49,7 +49,7 @@ async function calculateLicenseDrift(
         if (isEmpty(license)) {
             errorMessage = errors?.license
                 ? errors?.license
-                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HOST_OS_PATCH);
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.LICENSE);
             logger.error({ errorMessage });
             return { errorMessage };
         }

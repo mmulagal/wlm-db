@@ -1,4 +1,4 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, TooltipInfo } from '@netapp/design-system';
 import styles from './ValueCard.module.scss';
 
 type ValueCardProps = {
@@ -9,6 +9,7 @@ type ValueCardProps = {
     instances?: string;
     configurationState?: string;
     from?: string;
+    tooltipText?: string;
 };
 
 const ValueCard = ({
@@ -17,7 +18,8 @@ const ValueCard = ({
     severity,
     instances,
     configurationState,
-    from = 'innerPage'
+    from = 'innerPage',
+    tooltipText
 }: ValueCardProps) => {
     return (
         <>
@@ -53,9 +55,11 @@ const ValueCard = ({
                     </div>
 
                     <div className={styles.block} style={{ borderRight: '1px solid var(--border' }}>
-                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                            {configurationState}
-                        </DsTypography>
+                        <div className={styles.configContainer}>
+                            {tooltipText && <TooltipInfo>{tooltipText}</TooltipInfo>}
+                            <DsTypography variant="Semibold_14">{configurationState}</DsTypography>
+                        </div>
+
                         <DsTypography variant="Regular_14">Configuration state</DsTypography>
                     </div>
 
