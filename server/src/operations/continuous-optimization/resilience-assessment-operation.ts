@@ -353,7 +353,7 @@ async function initiateAWSBackupAssessment(
 
             logger.debug('Is on-demand backup enabled:', volumeUuidsInBackups);
 
-            if (volumeUuidsInBackups) {
+            if (volumeUuidsInBackups && !isEmpty(volumeUuidsInBackups)) {
                 const backupVolumeSet = new Set(volumeUuidsInBackups);
                 const allUuidsMatch = [...volumeUuidsInBackups].every(uuid => backupVolumeSet.has(uuid));
                 isAWSBackupEnabled = allUuidsMatch;
