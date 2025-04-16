@@ -24,7 +24,7 @@ interface StorageTierTableProps {
     handleSingleAction?: any;
 }
 
-const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: StorageTierTableProps) => {
+const DismissTable = ({ handleBulkAction, handleSingleAction }: StorageTierTableProps) => {
     const dispatch = useDispatch();
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
@@ -256,4 +256,4 @@ const StorageTierDismissTable = ({ handleBulkAction, handleSingleAction }: Stora
     );
 };
 
-export default StorageTierDismissTable;
+export default DismissTable;

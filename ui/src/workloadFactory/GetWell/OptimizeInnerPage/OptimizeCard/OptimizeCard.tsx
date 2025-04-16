@@ -2,7 +2,7 @@ import { DsTypography, TooltipInfo } from '@netapp/design-system';
 import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './OptimizeCard.module.scss';
 import Tag from '../../../../common/Tag/Tag';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { WLF_TABS } from '../../../../utils/consts';
