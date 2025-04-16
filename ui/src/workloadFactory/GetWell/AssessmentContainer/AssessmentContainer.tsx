@@ -5,6 +5,7 @@ import styles from './AssessmentContainer.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 
 const AssessmentContainer = ({ onClick, isLoading }: any) => {
     const { gwTimestamp, gwAdhocError } = useAppSelector(state => state.getWellOptimize);
@@ -16,8 +17,12 @@ const AssessmentContainer = ({ onClick, isLoading }: any) => {
                         <ScanImage />
                     </div>
                     <div className={styles.textSection}>
-                        <DsTypography variant="Regular_14">{GENERAL.ASSESSMENT_PERFORMED}</DsTypography>&nbsp;
-                        <DsTypography variant="Semibold_14">{gwTimestamp}</DsTypography>
+                        <DsTypography variant="Regular_14">{GENERAL.ASSESSMENT_PERFORMED}</DsTypography>
+                        <SeparatorComponent variant="vertical" height="16px" />
+                        <div className={styles.dateSection}>
+                            <DsTypography variant="Regular_14">{GENERAL.LAST_UPDATE}</DsTypography>
+                            <DsTypography variant="Semibold_14">{gwTimestamp}</DsTypography>
+                        </div>
                     </div>
                     {gwAdhocError && (
                         <Popover

@@ -53,6 +53,7 @@ interface CountBreakDown {
 }
 
 export interface AssessmentResponseInterface {
+    lastAssessmentTimestamp?: string;
     storage?: {
         timestamp?: string;
         optimisedCount?: {
@@ -73,11 +74,9 @@ export interface AssessmentResponseInterface {
     hostOsPatch?: PerConfigInterface;
     mssqlPatch?: PerConfigInterface;
     maxDOP?: PerConfigInterface;
-    resiliency?: {
-        snapshotPolicy?: PerConfigInterface;
-        awsBackup?: PerConfigInterface;
-        crr?: PerConfigInterface;
-    };
+    snapshotPolicy?: PerConfigInterface;
+    awsBackup?: PerConfigInterface;
+    crr?: PerConfigInterface;
     clone?: PerConfigInterface;
 }
 

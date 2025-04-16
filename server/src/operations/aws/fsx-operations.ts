@@ -33,7 +33,8 @@ import {
     AWS_RESOURCE_NAME_TAG,
     AWS_FSX_TYPE,
     HttpErrorCodes,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    HA
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import {
@@ -819,6 +820,33 @@ async function updateFsxBackup(
     }
 }
 
+async function validateSvmCountCapacity(
+    credentialsId: string,
+    region: string,
+    deploymentType: string,
+    fsxFileSystemId?: string
+) {
+    logger.info('Validating SVM count capacity', { credentialsId, region, fsxFileSystemId, deploymentType });
+
+    if (fsxFileSystemId) {
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(credentialsId, region, [
+            fsxFileSystemId
+        ]);
+        const svmCount = fsxSVMs?.length || 0;
+        if (deploymentType === HA && svmCount > 4) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                `There is not enough space in FSxN to create additional SVMs required for PostgreSQL HA deployment. Current count: ${svmCount}`
+            );
+        } else if (svmCount > 5) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                `There is not enough space in FSxN to create additional SVMs required for PostgreSQL deployment. Current count: ${svmCount}`
+            );
+        }
+    }
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -837,5 +865,6 @@ export {
     getFsxnVolIdsFromOntapVolIds,
     updateVolumeSizeAndWaitForUpdate,
     getIscsiTargetAddresses,
-    updateFsxBackup
+    updateFsxBackup,
+    validateSvmCountCapacity
 };

@@ -18,7 +18,21 @@
 
             .textSection {
                 display: flex;
+                gap: 16px;
+                align-items: center;
+
+                .dateSection {
+                    display: flex;
+                    gap: 4px;
+                    align-items: center;
+                }
             }
         }
+    }
+}
+
+@media screen and (max-width: 1920px) {
+    .assessment {
+        max-width: 1608px;
     }
 }
