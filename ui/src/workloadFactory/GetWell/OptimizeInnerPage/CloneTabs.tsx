@@ -7,12 +7,17 @@ import CloneInsideWF from './InnerTables/CloneInsideWF';
 import CloneOutsideWF from './InnerTables/CloneOutsideWF';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState } from 'react';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
+import { useDialog } from '@netapp/design-system';
 
 const CloneTabs = ({ data, fromPage = '' }: any) => {
     const dispatch = useDispatch();
     const { selectedCloneTab } = useAppSelector(state => state.getWellOptimize);
     const [wfDatabase, setWfDatabase] = useState<any>(null);
     const [otherDatabase, setOtherDatabase] = useState<any>(null);
+
+    const { setDialog, closeDialog } = useDialog();
 
     useEffect(() => {
         let wfDbItems: any = [];
@@ -41,9 +46,23 @@ const CloneTabs = ({ data, fromPage = '' }: any) => {
     };
 
     const handleBulkActionForClone = (val: string, operation?: string, rowData?: any) => {
-        //Perform APi call for bulk action
-        console.log(val);
+        setDialog(
+            <DialogComponent
+                header={`Clone cleanup optimization - ${val}`}
+                content={<DialogContent type={`${GENERAL.CLONE_MANAGEMENT} ${val}`} />}
+                primaryButton={GENERAL.CONTINUE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    //AP call here
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={'innerPage'}
+            />
+        );
     };
+
     return (
         <>
             <div className={styles.cloneTabs}>

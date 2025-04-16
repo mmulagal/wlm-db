@@ -708,6 +708,16 @@ const DashboardInnerPage = () => {
             let cloneViolationsList: any = [];
             if (rowData?.objectsInViolation) {
                 cloneViolationsList = [...rowData?.objectsInViolation];
+                cloneViolationsList =
+                    rowData?.objectsInViolation?.map((obj: AnalyserOptions) => ({
+                        ...obj,
+                        credentialId: rowData?.credentialId,
+                        regionId: rowData?.regionId,
+                        databaseHostId: rowData?.databaseHostId,
+                        hostName: rowData?.hostName,
+                        instanceId: rowData?.instanceId,
+                        serverInstanceName: rowData?.serverInstanceName
+                    })) || [];
                 dispatch(
                     setCloneDashboardData({
                         type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
@@ -719,7 +729,18 @@ const DashboardInnerPage = () => {
                 );
             } else {
                 rowData?.map((item: any) => {
-                    cloneViolationsList = [...cloneViolationsList, ...item?.objectsInViolation];
+                    cloneViolationsList = [
+                        ...cloneViolationsList,
+                        ...(item?.objectsInViolation?.map((obj: any) => ({
+                            ...obj,
+                            credentialId: item?.credentialId,
+                            regionId: item?.regionId,
+                            databaseHostId: item?.databaseHostId,
+                            hostName: item?.hostName,
+                            instanceId: item?.instanceId,
+                            serverInstanceName: item?.serverInstanceName
+                        })) || [])
+                    ];
                 });
                 dispatch(
                     setCloneDashboardData({

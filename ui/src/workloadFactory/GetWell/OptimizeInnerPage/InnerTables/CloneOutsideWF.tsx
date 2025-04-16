@@ -33,19 +33,19 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '210px' : '210px',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
             Header: 'SQL instance name',
-            accessor: 'instanceName',
+            accessor: 'serverInstanceName',
             id: '2',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: 'auto'
+            width: fromPage === WLF_TABS.DASHBOARD ? '194px' : '210px'
         },
         {
             Header: 'SQL host name',
@@ -54,7 +54,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: 'auto'
+            width: fromPage === WLF_TABS.DASHBOARD ? '168px' : '210px'
         },
 
         {
@@ -64,7 +64,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: 'auto',
+            width: fromPage === WLF_TABS.DASHBOARD ? 'auto' : 'auto',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -76,9 +76,9 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '134px' : '210px',
             renderCell: (cellData: any) => {
-                return cellData ? cellData + ' days' : GENERAL.NOT_AVAILABLE;
+                return (cellData || 0) + ' days';
             }
         },
         {
@@ -88,7 +88,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '96px' : '210px',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -97,7 +97,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             Header: '',
             accessor: '',
             id: '7',
-            width: '220px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '200px' : '270px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.buttonContainer}>

@@ -24,19 +24,19 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '216px' : '211px',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
             Header: 'SQL instance name',
-            accessor: 'instanceName',
+            accessor: 'serverInstanceName',
             id: '2',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: 'auto'
+            width: fromPage === WLF_TABS.DASHBOARD ? '194px' : '211px'
         },
         {
             Header: 'SQL host name',
@@ -45,7 +45,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: 'auto'
+            width: fromPage === WLF_TABS.DASHBOARD ? '168px' : '211px'
         },
 
         {
@@ -55,7 +55,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: 'auto'
+            width: fromPage === WLF_TABS.DASHBOARD ? '178px' : '211px'
         },
         {
             Header: 'Source volume',
@@ -64,7 +64,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? 'auto' : 'auto',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -76,7 +76,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '134px' : '211px',
             renderCell: (cellData: any) => {
                 return (cellData || 0) + ' days';
             }
@@ -88,7 +88,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '210px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '96px' : '211px',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -97,7 +97,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             Header: '',
             accessor: '',
             id: '8',
-            width: '220px',
+            width: fromPage === WLF_TABS.DASHBOARD ? '170px' : '211px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div
