@@ -1432,6 +1432,34 @@ export const formatRssConfigCardConfig = (
     return cardsData;
 };
 
+/** Function to map the dismissed values */
+const mapDismissedValues = (data: any, itemName: string | any) => {
+    for (const key in data) {
+        const section = data[key];
+        if (Array.isArray(section)) {
+            //For sizing and layout
+            for (const item of section) {
+                if (item.name === itemName) {
+                    return item;
+                }
+            }
+        } else if (typeof section === 'object') {
+            //For configuration
+            for (const subKey in section) {
+                const subSection = section[subKey];
+                if (Array.isArray(subSection)) {
+                    for (const item of subSection) {
+                        if (item.name === itemName) {
+                            return item;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return null;
+};
+
 // This function is used to format the data for the individual card main config.
 export const formatIndividualCardMainConfig = (
     data: AssessmentResponseInterface,
@@ -1549,7 +1577,10 @@ export const formatIndividualCardMainConfig = (
                     violationDetails: item?.violationDetails,
                     objectsInViolation: item?.objectsInViolation,
                     recommendationText: item?.recommendation,
-                    dismissedObj: index === 2 ? data?.dismissedConfigurations?.compute : {}
+                    dismissedObj:
+                        index === 2
+                            ? data?.dismissedConfigurations?.compute
+                            : mapDismissedValues(data?.dismissedConfigurations?.storage, item?.name)
                 }
             };
         });

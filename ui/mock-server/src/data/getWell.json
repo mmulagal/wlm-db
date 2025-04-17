@@ -1313,6 +1313,135 @@
         "impactedDatabases": "0 out of 1 clones are old and divergent"
     },
     "dismissedConfigurations": {
+        "storage": {
+            "configuration": {
+                "volumes": [
+                    {
+                        "name": "thin-provision",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "autosize",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "autosize-mode",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "fractional-reserve",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "snapshot-copy-reserve",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "snapshot-autodelete",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "space-mgmt-try-first",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "tiering-policy",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "tiering-min-cooling-days",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    }
+                ],
+                "luns": [
+                    {
+                        "name": "os-type",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "space-reservation-enabled",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "space-allocation-allocated",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    }
+                ],
+                "os": [
+                    {
+                        "name": "mpio-enabled",
+                        "state": "DISMISSED",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "mpio-iscsi-count",
+                        "state": "ACTIVE",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "ntfs-allocation-unit-size",
+                        "state": "ACTIVE",
+                        "startTime": 1739934199000
+                    },
+                    {
+                        "name": "mpio-load-balance-policy",
+                        "state": "ACTIVE",
+                        "startTime": 1739934199000
+                    }
+                ]
+            },
+            "sizing": [
+                {
+                    "name": "performance-tier",
+                    "state": "ACTIVE",
+                    "startTime": 1739934199000
+                },
+                {
+                    "name": "log-drive-size",
+                    "state": "DISMISSED",
+                    "startTime": 1739934199000
+                },
+                {
+                    "name": "tempdb-drive-size",
+                    "state": "DISMISSED",
+                    "startTime": 1739934199000
+                },
+                {
+                    "name": "headroom",
+                    "state": "DISMISSED",
+                    "startTime": 1739934199000
+                }
+            ],
+            "layout": [
+                {
+                    "name": "tempdb-files-location",
+                    "state": "DISMISSED",
+                    "startTime": 1739934199000
+                },
+                {
+                    "name": "log-files-location",
+                    "state": "DISMISSED",
+                    "startTime": 1739934199000
+                },
+                {
+                    "name": "data-files-location",
+                    "state": "DISMISSED",
+                    "startTime": 1739934199000
+                }
+            ]
+        },
         "maxDOP": {
             "name": "max-dop",
             "state": "DISMISSED",
