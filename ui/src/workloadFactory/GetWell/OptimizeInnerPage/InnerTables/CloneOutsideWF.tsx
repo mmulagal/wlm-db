@@ -1,29 +1,35 @@
-import {
-    Table,
-    useTable,
-    TableTopBar,
-    DsTypography,
-    ButtonWithDropdown,
-    DsButton,
-    Popover
-} from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsTypography, DsButton, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-
-import { ReactComponent as MenuIcon } from '../../../../assets/menu-icon2.svg';
 import BulkCloneContainer from '../../../../common/BulkAction/BulkCloneContainer';
-import { WLF_TABS } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../../utils/consts';
+import { disableOptimizeResourceCheckBoxForOptimizeCase } from '../../GetWellUtils';
+import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 
 const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
+    const { inProgressResourceOptimizeData } = useAppSelector(state => state.getWellOptimize);
+
+    // Update tableData when selection changes
+    const updatedTableData = useMemo(() => {
+        if (inProgressResourceOptimizeData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length) {
+            return disableOptimizeResourceCheckBoxForOptimizeCase(
+                data,
+                ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                selectedRowsForOptimizeInnerPage
+            );
+        } else {
+            return data;
+        }
+    }, [selectedRowsForOptimizeInnerPage, data, inProgressResourceOptimizeData]);
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -99,37 +105,49 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             id: '7',
             width: fromPage === WLF_TABS.DASHBOARD ? '200px' : '270px',
             renderCell: (cellData: any, rowData: any) => {
+                const isInProgress = inProgressResourceOptimizeData?.[
+                    ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+                ]?.includes(rowData?.id);
                 return (
-                    <div className={styles.buttonContainer}>
-                        <div />
-                        {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
-                            <Popover
-                                isAppendedToBody={true}
-                                children={
-                                    <DsTypography variant="Regular_14">
-                                        Bulk action is enabled on selected rows
-                                    </DsTypography>
-                                }
-                                trigger="hover"
-                                container={
-                                    <DsButton variant="secondary" isDisabled={true} isThin>
+                    <>
+                        {isInProgress ? (
+                            <div className={styles['optimize-in-progress']}>
+                                <SmallLoader />
+                                <DsTypography variant="Semibold_14">Fixing</DsTypography>
+                            </div>
+                        ) : (
+                            <div className={styles.buttonContainer}>
+                                <div />
+                                {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
+                                    <Popover
+                                        isAppendedToBody={true}
+                                        children={
+                                            <DsTypography variant="Regular_14">
+                                                Bulk action is enabled on selected rows
+                                            </DsTypography>
+                                        }
+                                        trigger="hover"
+                                        container={
+                                            <DsButton variant="secondary" isDisabled={true} isThin>
+                                                Delete
+                                            </DsButton>
+                                        }
+                                    />
+                                ) : (
+                                    <DsButton
+                                        isThin
+                                        variant="secondary"
+                                        isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
+                                        onClick={() => {
+                                            handleBulkActionForClone('Delete', 'single', [rowData]);
+                                        }}
+                                    >
                                         Delete
                                     </DsButton>
-                                }
-                            />
-                        ) : (
-                            <DsButton
-                                isThin
-                                variant="secondary"
-                                isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
-                                onClick={() => {
-                                    handleBulkActionForClone('Delete', 'single', rowData);
-                                }}
-                            >
-                                Delete
-                            </DsButton>
+                                )}
+                            </div>
                         )}
-                    </div>
+                    </>
                 );
             }
         }
@@ -143,7 +161,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
         isHorizontalScroll: false,
         isSorting: false,
         columns: fromPage === WLF_TABS.DASHBOARD ? TableColDefs : colDefsForInstance,
-        rows: data || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple'
     });

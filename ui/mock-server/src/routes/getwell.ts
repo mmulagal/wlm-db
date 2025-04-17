@@ -150,4 +150,13 @@ router.post(
     }
 );
 
+router.post(
+    `${BASE_URL}/v1/mssql/database-hosts/optimize/clone`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 202, { jobId: '1234' });
+        }, 20);
+    }
+);
+
 export default router;

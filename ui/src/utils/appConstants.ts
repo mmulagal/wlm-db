@@ -1273,7 +1273,7 @@ export const GENERAL = {
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
-    CLONE_MANAGEMENT_TAB1: 'Clones created with Workload factory (AKA Sandboxes)',
+    CLONE_MANAGEMENT_TAB1: 'Clones created with Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside of Workload factory'
 };
 

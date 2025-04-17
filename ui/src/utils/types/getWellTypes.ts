@@ -35,6 +35,7 @@ export interface GetWellSliceInterface {
     regionFromJM: string;
     landingFrom: string;
     inProgressOptimizationData: any;
+    inProgressResourceOptimizeData: any;
     inProgressHostData: any;
     jobToInstanceMap: any;
     jobToInstanceMapForBulk: any;

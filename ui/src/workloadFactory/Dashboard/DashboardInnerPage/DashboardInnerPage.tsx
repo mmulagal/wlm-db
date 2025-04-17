@@ -712,7 +712,7 @@ const DashboardInnerPage = () => {
                         ...obj,
                         credentialId: rowData?.credentialId,
                         regionId: rowData?.regionId,
-                        databaseHostId: rowData?.databaseHostId,
+                        resourceId: rowData?.databaseHostId,
                         hostName: rowData?.hostName,
                         instanceId: rowData?.instanceId,
                         serverInstanceName: rowData?.serverInstanceName
@@ -734,7 +734,7 @@ const DashboardInnerPage = () => {
                             ...obj,
                             credentialId: item?.credentialId,
                             regionId: item?.regionId,
-                            databaseHostId: item?.databaseHostId,
+                            resourceId: item?.databaseHostId,
                             hostName: item?.hostName,
                             instanceId: item?.instanceId,
                             serverInstanceName: item?.serverInstanceName

@@ -11,6 +11,7 @@ import StorageTierOptimizeTable from './InnerTables/StorageTierOptimizeTable';
 import store from '../../../store/store';
 import { GENERAL } from '../../../utils/appConstants';
 import {
+    setCloneDashboardData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
@@ -38,7 +39,7 @@ import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
 import CloneManagementTable from './InnerTables/CloneManagementTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CloneTabs from './CloneTabs';
 
 const OptimizeInnerPage = () => {
@@ -58,6 +59,7 @@ const OptimizeInnerPage = () => {
         selectedGwInstanceCredId,
         selectedGwInstanceRegionId
     } = useAppSelector(state => state.getWellOptimize);
+
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -67,6 +69,31 @@ const OptimizeInnerPage = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const userNavigated = useRef(false);
+
+    useEffect(() => {
+        if (selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT) {
+            let cloneViolationsList =
+                selectedOptimizeConfig?.data?.objectsInViolation?.map((obj: AnalyserOptions) => ({
+                    ...obj,
+                    credentialId: selectedGwInstanceCredId,
+                    regionId: selectedGwInstanceRegionId,
+                    resourceId: selectedResourceId,
+                    hostName: selectedHostname,
+                    instanceId: selectedDatabaseInstance,
+                    serverInstanceName: selectedDatabaseInstanceName
+                })) || [];
+
+            dispatch(
+                setCloneDashboardData({
+                    type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                    objectsInViolation: cloneViolationsList,
+                    severity: selectedOptimizeConfig?.data?.severity,
+                    tags: selectedOptimizeConfig?.data?.tags,
+                    recommendation: selectedOptimizeConfig?.data?.recommendation
+                })
+            );
+        }
+    }, [selectedOptimizeConfig]);
 
     const buttonComponent = (rowData: any) => {
         if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
@@ -587,9 +614,7 @@ const OptimizeInnerPage = () => {
                     <OptimizeCard />
                 </div>
 
-                {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && (
-                    <CloneTabs data={selectedOptimizeConfig?.data?.objectsInViolation} />
-                )}
+                {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && <CloneTabs />}
 
                 <div className={styles.tableSection}>{renderTable()}</div>
             </div>

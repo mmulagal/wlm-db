@@ -3,11 +3,13 @@ import store from '../../store/store';
 import { setSelectedConfigSummary } from '../../store/workloadFactory/databaseHomeSlice';
 import {
     setCardData,
+    setCloneDashboardData,
     setDriftAssessmentData,
     setGwRefreshTimestamp,
     setGwTimestamp,
     setInProgressHostData,
     setInProgressOptimizationData,
+    setInProgressResourceOptimizeData,
     setIsInnerPageOptimize,
     setOntapConfigTableData,
     setOptimizationBreakDown,
@@ -2122,6 +2124,64 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOptimizingInstanceData(false));
 };
 
+const updateProgressResourceForBulk = (
+    dispatch: any,
+    type: string,
+    jobId: string,
+    inProgressOptimizationData: any,
+    jobToInstanceMapForBulk: any,
+    inProgressHostData: any,
+    inProgressResourceOptimizeData: any
+) => {
+    const state = store.getState();
+    const { cloneDashboardData } = state.getWellOptimize;
+    let uniqueRanList: any = [];
+    dispatch(
+        setInProgressResourceOptimizeData({
+            ...inProgressResourceOptimizeData,
+            [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
+                const jobInstances =
+                    jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
+                        host?.sqlServerInstances?.flatMap((instance: any) =>
+                            instance?.clones?.map((clone: any) => {
+                                uniqueRanList.push(`${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`);
+                                return `${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`;
+                            })
+                        )
+                    ) || [];
+                return !jobInstances.includes(instanceId);
+            })
+        })
+    );
+
+    let newCloneDashboardData = cloneDashboardData?.objectsInViolation?.map((row: any) => {
+        if (uniqueRanList.includes(`${row?.resourceId}_${row?.instanceId}_${row?.cloneDatabaseName}`)) {
+            return {
+                ...row,
+                isOptimized: true
+            };
+        } else {
+            return row;
+        }
+    });
+
+    dispatch(
+        setCloneDashboardData({
+            ...cloneDashboardData,
+            objectsInViolation: newCloneDashboardData
+        })
+    );
+
+    updateProgressForBulk(
+        dispatch,
+        type,
+        jobId,
+        inProgressOptimizationData,
+        jobToInstanceMapForBulk,
+        inProgressHostData
+    );
+};
+
 const updateProgressForBulk = (
     dispatch: any,
     type: string,
@@ -2388,6 +2448,138 @@ const updateAssessmentWithFailedJobs = (
     }
 };
 
+export const handleOptimizeResourceJob = (
+    res: any,
+    failedMsgData: any,
+    getJobDetailApi: any,
+    dispatch: any,
+    type?: any,
+    bulkRowData?: any
+) => {
+    const state = store.getState();
+    let optimizingData = state.getWellOptimize.optimizingData || {};
+    setTimeout(() => {
+        if (res?.data) {
+            const jobInterval = setInterval(() => {
+                getJobDetailApi({
+                    id: res?.data?.jobId
+                }).then((jobRes: any) => {
+                    const status = jobRes?.data?.status;
+                    const jobId = jobRes?.data?.id;
+                    const subjobs = jobRes?.data?.subJobs;
+                    const state = store.getState();
+                    const {
+                        jobToInstanceMapForBulk,
+                        inProgressOptimizationData,
+                        inProgressHostData,
+                        inProgressResourceOptimizeData
+                    } = state.getWellOptimize;
+                    if (status === JOB_MONITORING_STATUS.COMPLETED || status === JOB_MONITORING_STATUS.WARNING) {
+                        updateProgressResourceForBulk(
+                            dispatch,
+                            type,
+                            jobId,
+                            inProgressOptimizationData,
+                            jobToInstanceMapForBulk,
+                            inProgressHostData,
+                            inProgressResourceOptimizeData
+                        );
+                        bulkRowData?.map((row: any) => {
+                            updateOptimizationStatus(row, dispatch);
+                        });
+                        setTimeout(() => {
+                            formatGetWellData(dispatch);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                    message: `Clone databases optimized successfully.`
+                                })
+                            );
+                        }, 0);
+
+                        dispatch(setOptimizingInstanceData(false));
+                        clearInterval(jobInterval);
+                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                        updateProgressResourceForBulk(
+                            dispatch,
+                            type,
+                            jobId,
+                            inProgressOptimizationData,
+                            jobToInstanceMapForBulk,
+                            inProgressHostData,
+                            inProgressResourceOptimizeData
+                        );
+
+                        setTimeout(() => {
+                            formatGetWellData(dispatch);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: failedMsgData
+                                })
+                            );
+                        }, 0);
+
+                        dispatch(setOptimizingInstanceData(false));
+                        clearInterval(jobInterval);
+                    }
+                });
+            }, OPTIMIZE_POLLING_INTERVAL);
+        } else {
+            let { inProgressOptimizationData, inProgressHostData, inProgressResourceOptimizeData } =
+                state.getWellOptimize;
+            if (bulkRowData?.[0]?.id) {
+                dispatch(
+                    setOptimizingData({
+                        ...optimizingData,
+                        [bulkRowData?.[0]?.id]: ''
+                    })
+                );
+            }
+
+            dispatch(
+                inProgressResourceOptimizeData({
+                    ...inProgressResourceOptimizeData,
+                    [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
+                        const jobResource =
+                            bulkRowData?.map(
+                                (instance: any) =>
+                                    `${instance?.hostId}_${instance?.instanceId}_${instance?.cloneDatabaseName}`
+                            ) || [];
+                        return !jobResource.includes(instanceId);
+                    })
+                })
+            );
+
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+                        const jobInstances =
+                            bulkRowData?.map((instance: any) => `${instance?.hostId}_${instance?.instanceId}`) || [];
+                        return !jobInstances.includes(instanceId);
+                    })
+                })
+            );
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: inProgressHostData?.[type]?.filter(
+                        //Data host id to check
+                        (hostId: any) => {
+                            const jobHostIds = bulkRowData?.map((host: any) => host?.hostId) || [];
+                            return !jobHostIds.includes(hostId);
+                        }
+                    )
+                })
+            );
+
+            // formatGetWellData(dispatch);
+            dispatch(setOptimizingInstanceData(false));
+        }
+    }, 10);
+};
+
 export const handleOptimizeStorageJob = (
     res: any,
     rowData: any,
@@ -2608,6 +2800,14 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                 }
                             }
                         };
+                    } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                clone: { ...instance.assessments.clone, status: 'optimized' }
+                            }
+                        };
                     } else {
                         return instance;
                     }
@@ -2708,6 +2908,42 @@ export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) 
     });
 };
 
+export const disableOptimizeResourceCheckBoxForOptimizeCase = (
+    tableData: any,
+    type: string,
+    selectedRowsForOptimize: any
+) => {
+    const state = store.getState();
+    const { inProgressResourceOptimizeData } = state.getWellOptimize;
+
+    // Extract IDs of rows currently selected for optimization
+    const selectedDatabaseRows = selectedRowsForOptimize.map((row: any) => row.id);
+
+    return tableData.map((row: any) => {
+        // Check if the current row is being optimized
+        const isBeingOptimized =
+            selectedDatabaseRows.includes(row.id) && inProgressResourceOptimizeData?.[type]?.includes(row.id);
+
+        // Combine both conditions
+        let isDisabled = isBeingOptimized;
+        let errorMessage = '';
+
+        return {
+            ...row,
+            cellProps: {
+                ...row.cellProps,
+                isDisabled,
+                selectionProps: {
+                    title: errorMessage,
+                    titleProps: {
+                        placement: 'bottom'
+                    }
+                }
+            }
+        };
+    });
+};
+
 export const disableOptimizeCheckBoxForOptimizeCase = (tableData: any, type: string, selectedRowsForOptimize: any) => {
     const state = store.getState();
     const { inProgressHostData, inProgressOptimizationData } = state.getWellOptimize;
@@ -2758,6 +2994,8 @@ export const nameToIdConfigMapping = (name: string) => {
         ? 'compute-rightsizing'
         : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
         ? 'max-dop'
+        : name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+        ? 'clone'
         : '';
 };
 
