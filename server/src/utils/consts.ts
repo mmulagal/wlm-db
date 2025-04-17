@@ -1719,7 +1719,7 @@ const GENERIC_ASSESSMENT_ERROR_MESSAGE = (category: string) =>
 
 const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
-const CLONE_AGE = 1; // It has to be changed to 60 after testing
+const CLONE_AGE = 0; // It has to be changed to 60 after testing
 
 export {
     WLMDB,

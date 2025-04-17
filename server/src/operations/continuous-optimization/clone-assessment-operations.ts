@@ -67,7 +67,8 @@ async function calculateCloneDrift(
             logger.error(errorMessage);
             return { errorMessage };
         }
-        const { cloneDetails, status, oldClones, oldClonesDetails } = cloneAssessment as CloneAssesment;
+        const { cloneDetails, status, oldClones, oldCloneDetails, oldCloneDatabaseNames } =
+            cloneAssessment as CloneAssesment;
         logger.debug('Clone assessment result', cloneDetails);
 
         const recommendationMessage =
@@ -86,7 +87,8 @@ async function calculateCloneDrift(
             cloneDetails,
             totalObjectsAssessed: cloneDetails?.length,
             totalObjectsInViolation: oldClones,
-            objectsInViolation: oldClonesDetails,
+            objectsInViolation: oldCloneDatabaseNames,
+            oldCloneDetails,
             cloneDriftMessage: `${oldClones} out of ${cloneDetails?.length} clones are old and divergent`
         };
     } catch (error: any) {
@@ -278,7 +280,7 @@ async function runCloneAssessment(
     }
 
     const sandboxInfo: CloneDetail[] = [];
-    const oldClonesDetails: CloneDetail[] = []; // Array to store records older than 60 days
+    const oldCloneDetails: CloneDetail[] = []; // Array to store records older than 60 days
     const oldCloneDatabaseNames: string[] = []; // Array to store cloneDatabaseName strings for old clones
     let oldClones = 0;
     const processedSandboxNames = new Set<string>(); // Set to keep track of sandbox names already processed by netapp_wf
@@ -355,7 +357,7 @@ async function runCloneAssessment(
             };
 
             if (databaseObject.cloneAge !== undefined && databaseObject.cloneAge > CLONE_AGE) {
-                oldClonesDetails.push(modifiedDatabaseObject);
+                oldCloneDetails.push(modifiedDatabaseObject);
                 oldCloneDatabaseNames.push(sandboxName);
             }
             sandboxInfo.push(modifiedDatabaseObject);
@@ -402,7 +404,7 @@ async function runCloneAssessment(
 
                 if (cloneAge !== undefined && cloneAge > CLONE_AGE) {
                     oldClones += 1;
-                    oldClonesDetails.push(databaseObject);
+                    oldCloneDetails.push(databaseObject);
                     oldCloneDatabaseNames.push(clonedDatabaseName);
                 }
                 sandboxInfo.push(databaseObject);
@@ -417,7 +419,7 @@ async function runCloneAssessment(
         cloneDetails: sandboxInfo,
         status: optimizationStatus,
         oldClones,
-        oldClonesDetails,
+        oldCloneDetails,
         oldCloneDatabaseNames
     };
 }

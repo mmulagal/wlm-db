@@ -122,7 +122,7 @@ interface CloneAssesment {
     status: string;
     cloneDetails?: CloneDetail[];
     oldClones?: number;
-    oldClonesDetails?: CloneDetail[];
+    oldCloneDetails?: CloneDetail[];
     oldCloneDatabaseNames?: string[];
 }
 
