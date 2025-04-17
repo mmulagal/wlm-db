@@ -10,6 +10,15 @@ import {
     ontapRestRequestBootstrap
 } from './common-templates';
 
+const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
+  'C:\\SSM\\Cleanup-ONTAP.ps1',
+  'C:\\SSM\\Configure-LUNs.ps1',
+  'C:\\SSM\\Create-Database.ps1',
+  'C:\\SSM\\Invoke-virtualmount.ps1',
+  'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1',
+  'C:\\SSM\\Script-Version.txt'
+`;
+
 const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string, instanceName: string = DEFAULT_INSTANCE_NAME) => ` 
 #Get ACTIVE NODE DRIVE INFO
 Function GetSMBMappedDrivesWithPath() {
@@ -1219,12 +1228,32 @@ Function Call-SqlCmd {
 }
 `;
 
-const READ_SCRIPT_VERSION = `
-$file = "${SCRIPT_VERSON_FILE}"
-if (Test-Path $file -PathType Leaf) {
-    # File exists
-    Get-Content $file
-} 
+const CHECK_SCRIPT_AVAILABILITY_AND_VERSION = `
+    $result = @{};
+    $result['isCreatePossible'] = $False;
+    $result['scriptVersion'] = $Null;
+
+    try {
+        $databaseCreateFileList = @(${REQUIRED_DATABASE_CREATE_FILE_LIST})
+        $isDatabaseCreatePossible = If ((Test-path -path $databaseCreateFileList -PathType Leaf) -contains $False) { $False } Else { $True }
+    } catch {
+        Write_Error -Message $_.Exception.Message
+        $isDatabaseCreatePossible = $False
+        $result['isCreatePossible'] = $False;
+        $result['scriptVersion'] = $Null;
+    }
+    
+    if($isDatabaseCreatePossible -eq $True) {
+        $result['isCreatePossible'] = $True;
+        $file = @(${SCRIPT_VERSON_FILE})
+        if (Test-Path $file -PathType Leaf) {
+            # File exists
+            $val = Get-Content $file | ConvertFrom-Json
+            $result['scriptVersion'] = $val.scriptVersion
+        }     
+    }
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult  
 `;
 
 // {
@@ -1361,7 +1390,7 @@ export {
     sqlQueryExecution,
     readSsmParameter,
     slqcmdExecutionTemplate,
-    READ_SCRIPT_VERSION,
+    CHECK_SCRIPT_AVAILABILITY_AND_VERSION,
     sqlQueryExecutionWithAuth,
     compressResponse,
     GET_FCI_NAME
