@@ -200,12 +200,12 @@ const GetWell = () => {
                             setTriggerAssessmentInProgress(false);
                             dispatch(
                                 addNotification({
-                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    notificationType: NOTIFICATION_TYPES.WARNING,
                                     message: 'Assessment completed with warnings'
                                 })
                             );
                             refreshGetWellPage();
-                            jobRes?.data?.subJobs?.forEach(job => {
+                            jobRes?.data?.subJobs?.forEach((job: { error?: string }) => {
                                 const errorMessage = job?.error;
                                 if(errorMessage){
                                     dispatch(setGwAdhocError(errorMessage));
