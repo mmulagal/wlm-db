@@ -146,14 +146,7 @@ describe('PgSql Database Operations', () => {
     });
 
     it('should return the instance info when executeBashSsmCommand is successful', async () => {
-        const instanceInfo = await getPgSqlInstanceInfo(
-            accountId,
-            credentialsId,
-            region,
-            'test-instance',
-            ['test-node-id'],
-            'wlmdb-data-1234'
-        );
+        const instanceInfo = await getPgSqlInstanceInfo(accountId, credentialsId, region, ['test-node-id']);
         const { dbInstanceId, dbClusterState } = parsePgSqlInstanceInfo(instanceInfo!);
 
         expect(dbInstanceId).toEqual('7450008296037943418');

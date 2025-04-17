@@ -1712,6 +1712,7 @@ const PRICING_LICENSE_KEYS = {
 };
 
 const GERERIC_JOB_ERROR_MESSAGE = 'Examine the subjobs for comprehensive error messages.';
+const PGSQL_DEFAULT_INSTANCE_NAME = 'postgresql';
 
 const GENERIC_ASSESSMENT_ERROR_MESSAGE = (category: string) =>
     `No ${category} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try after running adhoc assessment.`;
@@ -2065,5 +2066,6 @@ export {
     AMAZON_LINUX_AMI_PATH,
     GENERIC_ASSESSMENT_ERROR_MESSAGE,
     RESTRICTED_FSX_REGIONS,
-    CLONE_AGE
+    CLONE_AGE,
+    PGSQL_DEFAULT_INSTANCE_NAME
 };
