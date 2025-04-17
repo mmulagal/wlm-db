@@ -1421,7 +1421,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": {"scriptVersion":"1.0.0","isCreatePossible":true},
+        "StandardOutputContent": "{\"scriptVersion\":\"1.0.0\",\"isCreatePossible\":true}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
