@@ -935,7 +935,8 @@ function getDatabaseClassifications(sqlInstancesDetails: SqlInstanceDetails) {
     const allDatabases = parseStorageDetailsByDb(storageDetailsByDb);
     let primaryDatabases: StorageDetailByDB[] = allDatabases || [];
 
-    const aoagReadReplicaDbs = aoagReadReplica ? parseAoagReadReplica(aoagReadReplica) : undefined;
+    const aoagReadReplicaDbs =
+        aoagReadReplica && !isEmpty(aoagReadReplica) ? parseAoagReadReplica(aoagReadReplica) : undefined;
     const aoagReadReplicaDbNames = aoagReadReplicaDbs?.map(({ databaseName }) => databaseName);
 
     let secondaryDatabases: StorageDetailByDB[] = [];
