@@ -1253,7 +1253,7 @@ export const GENERAL = {
     SQL_COLLATION_NOTE:
         'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You/’ll be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:
         'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
