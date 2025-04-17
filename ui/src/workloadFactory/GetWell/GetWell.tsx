@@ -185,7 +185,7 @@ const GetWell = () => {
                             );
                             refreshGetWellPage();
                             clearInterval(jobInterval);
-                        } else if (status === JOB_MONITORING_STATUS.FAILED || status === JOB_MONITORING_STATUS.WARNING) {
+                        } else if (status === JOB_MONITORING_STATUS.FAILED) {
                             setTriggerAssessmentInProgress(false);
                             dispatch(
                                 addNotification({
@@ -195,6 +195,22 @@ const GetWell = () => {
                             );
                             refreshGetWellPage();
                             dispatch(setGwAdhocError(jobRes?.data?.error));
+                            clearInterval(jobInterval);
+                        }else if (status === JOB_MONITORING_STATUS.WARNING) {
+                            setTriggerAssessmentInProgress(false);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: 'Assessment completed with warnings'
+                                })
+                            );
+                            refreshGetWellPage();
+                            jobRes?.data?.subJobs?.forEach(job => {
+                                const errorMessage = job?.error;
+                                if(errorMessage){
+                                    dispatch(setGwAdhocError(errorMessage));
+                                }
+                              });
                             clearInterval(jobInterval);
                         }
                     });
