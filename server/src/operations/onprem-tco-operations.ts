@@ -680,14 +680,18 @@ async function fetchInstanceTypesByRetry(
     try {
         const licenseType =
             licenseEdition === ENTERPRISE_EDITION ? PRICING_LICENSE_KEYS.SQL_ENT : PRICING_LICENSE_KEYS.SQL_STD;
-        const instanceTypePricingDetails = await getSqlInstancePricingDetails(
+        const allInstanceTypePricingDetails = await getSqlInstancePricingDetails(
             region,
             undefined,
             'windows',
             undefined,
             licenseType
         );
-        const [cheaperInstanceType] = Object.keys(instanceTypePricingDetails);
+        const recommendedInstanceTypePricingDetails = Object.keys(allInstanceTypePricingDetails).filter(allInstType =>
+            instanceTypes?.some(({ InstanceType: type }) => type === allInstType)
+        ); // Filter the instance types that are present in the instanceTypes array ; the list is now sorted by price
+
+        const [cheaperInstanceType] = recommendedInstanceTypePricingDetails;
         instanceType = cheaperInstanceType || instanceType;
     } catch (error) {
         logger.warn('Error fetching cheaper instance type', { error });
@@ -818,9 +822,11 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
                 .map(char => char.charCodeAt(0))
         );
 
+        // Handle potential BOM characters in the decompressed data
         const decompressedData = decompressSync(compressedUint8Array);
         const decompressedBase64 = new TextDecoder().decode(decompressedData);
-        const originalJsonString = atob(decompressedBase64);
+        const cleanedBase64 = decompressedBase64.replace(/^ÿþ/, ''); // Remove BOM characters if present
+        const originalJsonString = atob(cleanedBase64);
         const data = JSON.parse(originalJsonString) as OnPremCollectionObjectV1;
 
         if (!validateOnPremCollectionObjectV1(data)) {
