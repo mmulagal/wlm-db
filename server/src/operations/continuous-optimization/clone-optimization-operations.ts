@@ -1,7 +1,12 @@
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
 import { CloneDetailType } from '../../routes/types/continuous-optimization.types';
-import { AuditStatus, HttpErrorCodes, SandboxLifecycleAction } from '../../utils/consts';
+import {
+    AuditStatus,
+    HttpErrorCodes,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
+    SandboxLifecycleAction
+} from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { updateJobDetails } from '../database/job-operations';
@@ -39,7 +44,7 @@ async function handleCloneRemediation(
     const { cloneDatabaseName, action, clonedBy } = clone;
 
     try {
-        if (clonedBy === 'netapp_wf') {
+        if (clonedBy === SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE) {
             if (!['delete', 'refresh'].includes(action)) {
                 logger.error(`Invalid action type: ${action}`);
             }

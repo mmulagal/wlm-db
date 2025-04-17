@@ -2832,27 +2832,17 @@ async function optimizeClone(
         }
 
         const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, clone.cloneDatabaseName);
+        const { id } = await registerJob(accountId, credentialsId, region, {
+            type: JOBTYPE.OPTIMIZATION,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: serverNameWithHostName as string,
+            name: `Optimize clone for ${serverNameWithHostName}`,
+            startTime: Date.now(),
+            description: `Optimize clone for ${serverNameWithHostName}, clone database ${clone.cloneDatabaseName}`,
+            ...(parentJobId && { parentJobId })
+        });
+        childCloneJobId = id;
 
-        const jobMetadata: JobMetadata = {
-            hostsToOptimize: [
-                {
-                    optimizationType: 'clone',
-                    resourceId: databaseHostId,
-                    sqlServerInstances: [databaseInstanceId]
-                }
-            ]
-        };
-        childCloneJobId = await handleOptimizeJobCreation(
-            accountId,
-            credentialsId,
-            region,
-            serverNameWithHostName,
-            JOBTYPE.OPTIMIZATION,
-            `Optimize clone for ${serverNameWithHostName}`,
-            `Optimize clone for ${serverNameWithHostName}, clone database ${clone.cloneDatabaseName}`,
-            parentJobId,
-            jobMetadata
-        );
         await handleCloneRemediation(
             accountId,
             credentialsId,
@@ -2871,6 +2861,7 @@ async function optimizeClone(
             endTime: Date.now(),
             error: errorMessage
         });
+        // may have to move this to initial call level as we have to do optimize for all clones to mark the status of audit
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
 
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
