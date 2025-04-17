@@ -1,9 +1,8 @@
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
 import { CloneDetailType } from '../../routes/types/continuous-optimization.types';
-import { AuditStatus, HttpErrorCodes, SandboxLifecycleAction } from '../../utils/consts';
+import { HttpErrorCodes, SandboxLifecycleAction } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { updateJobDetails } from '../database/job-operations';
 import {
     runSandboxPreValidations,
@@ -40,9 +39,6 @@ async function handleCloneRemediation(
 
     try {
         if (clonedBy === 'netapp_wf') {
-            if (!['delete', 'refresh'].includes(action)) {
-                logger.error(`Invalid action type: ${action}`);
-            }
             switch (action) {
                 case 'refresh':
                     logger.info(`Refreshing clone ${cloneDatabaseName} created by netapp_wf.`);
@@ -88,12 +84,6 @@ async function handleCloneRemediation(
             endTime: Date.now(),
             error: jobError
         });
-
-        if (jobStatus === JOBSTATUS.FAILED) {
-            updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
-        } else {
-            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
-        }
     }
 }
 
