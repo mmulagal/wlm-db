@@ -980,7 +980,7 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
         if (Number.isNaN(Number(totalThroughput))) {
             const writeBytes = parseFloat(iops?.writeBytesPerSec?.trim());
             const readBytes = parseFloat(iops?.readBytesPerSec?.trim());
-            totalThroughput = readBytes / writeBytes / 1024 / 1024; // Convert to MB/s
+            totalThroughput = (readBytes + writeBytes) / 1024 / 1024; // Convert to MB/s
         }
     }
 
