@@ -15,15 +15,6 @@ const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
   'NetApp.ONTAP'
 `;
 
-const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
-  'C:\\SSM\\Cleanup-ONTAP.ps1',
-  'C:\\SSM\\Configure-LUNs.ps1',
-  'C:\\SSM\\Create-Database.ps1',
-  'C:\\SSM\\Invoke-virtualmount.ps1',
-  'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1',
-  'C:\\SSM\\Script-Version.txt'
-`;
-
 const SQL_PERMISSIONS: string = `
 'VIEW ANY DEFINITION',
 'ALTER ANY DATABASE',
@@ -601,16 +592,12 @@ const GET_MISSING_RESOURCE_DETAILS = [
   $responseObject = @{}
   $scriptStartTime = Get-Date
   $isPS7Available = $False
-  $isDatabaseCreatePossible = $False
   
   try {
     If (Get-Command -Name pwsh -ErrorAction SilentlyContinue) {
       $isPS7Available = $True
     }
 
-    $databaseCreateFileList = @(${REQUIRED_DATABASE_CREATE_FILE_LIST})
-
-    $isDatabaseCreatePossible = If ((Test-path -path $databaseCreateFileList -PathType Leaf) -contains $False) { $False } Else { $True }
     $requiredPsModuleList = @(${REQUIRED_PS_MODULES_FOR_MANAGEMENT})
 
     $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
@@ -621,7 +608,6 @@ const GET_MISSING_RESOURCE_DETAILS = [
     $responseObject['failureInfo'] = $_.Exception.Message
   } finally {
     $responseObject['${IS_PS7_AVAILABLE}'] = $isPS7Available
-    $responseObject['${IS_DATABASE_CREATE_POSSIBLE}'] = $isDatabaseCreatePossible
 
     if ($unavailablePsModuleList.Count -gt 0) {
       $responseObject['${UNAVAILABLE_PS_MODULES}'] = $unavailablePsModuleList;
@@ -636,108 +622,125 @@ const GET_MISSING_RESOURCE_DETAILS = [
 
 const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL: string) => [
     `
-  $ProgressPreference = 'SilentlyContinue'
-  Set-Variable -Option Constant -Name MODULE_INSTALL_STATE_FILE -Value 'NtapPsModuleInstallInProgressFile'
-  Set-Variable -Option Constant -Name NTAP_WF_MODULE_INSTALL_JOB -Value 'NtapWfModuleInstallJob'
+    $ProgressPreference = 'SilentlyContinue'
+    Set-Variable -Option Constant -Name MODULE_INSTALL_STATE_FILE -Value 'NtapPsModuleInstallInProgressFile'
+    Set-Variable -Option Constant -Name NTAP_WF_MODULE_INSTALL_JOB -Value 'NtapWfModuleInstallJob'
+    
+    $ErrorActionPreference = "Stop"
+    $responseObject = @{}
+    $scriptStartTime = Get-Date
+    $exceptionInfo = $null
   
-  $ErrorActionPreference = "Stop"
-  $responseObject = @{}
-  $scriptStartTime = Get-Date
-  $exceptionInfo = $null
-
-  try {
-    $requiredModuleList = @(${requiredModules})
-    $s3SignedUrl = '${s3SignedURL}'
-    $PSToolkitRequiredVersion = '9.15.1.2407'
-    $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
-    $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
-
-    If ($unavailableModuleList.Count -gt 0) {
-
-      #Check if private network
-      $isprivatesubnet = $True
+    function Install-ModulesFromS3 {
+      param (
+          [string]$s3SignedUrl,
+          [array]$unavailableModuleList,
+      )
+  
+      $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\dependent-packages.zip"
+      $Null = Expand-Archive -Path "$Env:Temp\\dependent-packages.zip" -DestinationPath $Env:Temp -Force
+      Unblock-File -Path "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
+  
+      $destinationPath = "C:\\Program Files\\PackageManagement\\ProviderAssemblies"
+      $destinationPathExists = Test-Path -Path $destinationPath
+      if ($destinationPathExists -eq $False) {
+          New-Item -ItemType Directory -Path $destinationPath -Force
+      }
+  
+      Copy-Item "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
+  
+      $sourcelocation = "$Env:Temp\\dependent-packages\\aws"
+      Import-PackageProvider -Name NuGet
       try {
-        $connection =  Invoke-WebRequest www.powershellgallery.com -UseBasicParsing 
-        if($connection.StatusCode -ne "200") {
-          $isprivatesubnet = $True}
-        else {
-          $isprivatesubnet = $False} 
-      } catch {
-       $isprivatesubnet = $True
-       }
-      $responseObject['isprivatesubnet'] =  $isprivatesubnet
-      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-      If($isprivatesubnet -eq $False){
-     
-          If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
-            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          }
-          If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
-            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
-              throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
-            }
-          }
-          If ((Get-PackageProvider -Name NuGet).version -lt [System.version]"2.8.5.201") {
-            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
-              throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
-            }
-          }
-
-          ForEach ($moduleName in $unavailableModuleList) {
-              if($moduleName -eq 'NetApp.ONTAP') {
-                Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-              }
-              else {
-                Install-Module -Name $moduleName -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-              }
-          }
-      }Else{
-          $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\dependent-packages.zip"
-          $Null = Expand-Archive -Path "$Env:Temp\\dependent-packages.zip" -DestinationPath $Env:Temp -Force
-          Unblock-File -Path "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
-          $destinationPath = "C:\\Program Files\\PackageManagement\\ProviderAssemblies"
-          $destinationPathExists = Test-Path -Path $destinationPath
-          if ($destinationPathExists -eq $False) {
-              New-Item -ItemType Directory -Path $destinationPath -Force
-          }
-
-          Copy-Item "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
-
-          $sourcelocation = "$Env:Temp\\dependent-packages\\aws"
-          Import-PackageProvider -Name NuGet
+          Unregister-PSRepository -Name 'AWS'
+      } catch {}
+      Register-PSRepository -Name 'AWS' -SourceLocation $sourcelocation -InstallationPolicy Trusted
+  
+      ForEach ($moduleName in $unavailableModuleList) {
+          Install-Module -Name $moduleName -Repository 'AWS' -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+      }
+  
+      try {
+          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages" -Force -Recurse
+      } catch {}
+      try {
+          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages.zip" -Force -Recurse
+      } catch {}
+    }
+  
+    try {
+      $requiredModuleList = @(${requiredModules})
+      $s3SignedUrl = '${s3SignedURL}'
+      $PSToolkitRequiredVersion = '9.15.1.2407'
+      $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
+      $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
+  
+      If ($unavailableModuleList.Count -gt 0) {
+  
+        #Check if private network
+        $isprivatesubnet = $True
+        try {
+          $connection =  Invoke-WebRequest www.powershellgallery.com -UseBasicParsing 
+          if($connection.StatusCode -ne "200") {
+            $isprivatesubnet = $True}
+          else {
+            $isprivatesubnet = $False} 
+        } catch {
+         $isprivatesubnet = $True
+         }
+        $responseObject['isprivatesubnet'] =  $isprivatesubnet
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+  
+        If($isprivatesubnet -eq $False){
           try {
-              Unregister-PSRepository -Name 'AWS'
+       
+            If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
+              Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            }
+            If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
+              If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+                throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
+              }
+            }
+            If ((Get-PackageProvider -Name NuGet).version -lt [System.version]"2.8.5.201") {
+              If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+                throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
+              }
+            }
+  
+            ForEach ($moduleName in $unavailableModuleList) {
+                if($moduleName -eq 'NetApp.ONTAP') {
+                  Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+                }
+                else {
+                  Install-Module -Name $moduleName -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+                }
+            }
+          } catch {
+            Install-ModulesFromS3 -s3SignedUrl $s3SignedUrl -unavailableModuleList $unavailableModuleList
           }
-          catch {}
-          Register-PSRepository -Name 'AWS' -SourceLocation $sourcelocation -InstallationPolicy Trusted
-          ForEach ($moduleName in $unavailableModuleList) {
-              Install-Module -Name $moduleName -Repository 'AWS' -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-          } 
-          try{
-          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages" -Force -Recurse}catch{}
-          try{
-          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages.zip" -Force -Recurse}catch{}
+        }Else{
+          Install-ModulesFromS3 -s3SignedUrl $s3SignedUrl -unavailableModuleList $unavailableModuleList
+        }
       }
-    }
-  } catch {
-    $exceptionInfo = $_.Exception.Message
-  } finally {
-    if ($exceptionInfo) {
-      $responseObject['${FAILURE_INFO}'] = $exceptionInfo
-    } else {
-      $finallyAvailableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
-      $finallyUnavailableModuleList = $requiredModuleList | ? { $_ -NotIn $finallyAvailableModuleList}
-
-      if ($finallyUnavailableModuleList.Count -gt 0) {
-        $responseObject['${FAILURE_INFO}'] = 'PowerShell module(s) "{0}" could not be installed.' -f $finallyUnavailableModuleList
+    } catch {
+      $exceptionInfo = $_.Exception.Message
+    } finally {
+      if ($exceptionInfo) {
+        $responseObject['${FAILURE_INFO}'] = $exceptionInfo
+      } else {
+        $finallyAvailableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
+        $finallyUnavailableModuleList = $requiredModuleList | ? { $_ -NotIn $finallyAvailableModuleList}
+  
+        if ($finallyUnavailableModuleList.Count -gt 0) {
+          $responseObject['${FAILURE_INFO}'] = 'PowerShell module(s) "{0}" could not be installed.' -f $finallyUnavailableModuleList
+        }
       }
+  
+      $scriptEndTime = Get-Date
+      $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
+      Echo $responseObject | ConvertTo-Json -Compress
     }
-
-    $scriptEndTime = Get-Date
-    $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
-    Echo $responseObject | ConvertTo-Json -Compress
-  }
   `
 ];
 
