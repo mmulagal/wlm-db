@@ -185,7 +185,7 @@ const GetWell = () => {
                             );
                             refreshGetWellPage();
                             clearInterval(jobInterval);
-                        } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                        } else if (status === JOB_MONITORING_STATUS.FAILED || status === JOB_MONITORING_STATUS.WARNING) {
                             setTriggerAssessmentInProgress(false);
                             dispatch(
                                 addNotification({
