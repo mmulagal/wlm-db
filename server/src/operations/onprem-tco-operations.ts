@@ -687,9 +687,11 @@ async function fetchInstanceTypesByRetry(
             undefined,
             licenseType
         );
-        const recommendedInstanceTypePricingDetails = Object.keys(allInstanceTypePricingDetails).filter(allInstType =>
-            instanceTypes?.some(({ InstanceType: type }) => type === allInstType)
-        ); // Filter the instance types that are present in the instanceTypes array ; the list is now sorted by price
+        const recommendedInstanceTypePricingDetails = compact(
+            Object.keys(allInstanceTypePricingDetails).filter(allInstType =>
+                instanceTypes?.some(({ InstanceType: type }) => type === allInstType)
+            )
+        ); // Filter the instance types that are present in the instanceTypes array ; allInstanceTypePricingDetails is already sorted by price, so the first one in recommendedInstanceTypePricingDetails is the cheapest
 
         const [cheaperInstanceType] = recommendedInstanceTypePricingDetails;
         instanceType = cheaperInstanceType || instanceType;
