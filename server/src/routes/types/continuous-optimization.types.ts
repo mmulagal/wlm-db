@@ -36,33 +36,31 @@ const GenericViolationResponse = Type.Object({
 
 type GenericViolationResponseType = Static<typeof GenericViolationResponse>;
 
-const CloneDetailsSchema = Type.Array(
-    Type.Object({
-        databaseHostName: Type.String(),
-        databaseHostId: Type.String(),
-        databaseInstanceName: Type.String(),
-        sourceDatabaseHostName: Type.Optional(Type.String()),
-        sourceDatabaseInstanceName: Type.Optional(Type.String()),
-        sourceDatabaseName: Type.Optional(Type.String()),
-        cloneDatabaseName: Type.Optional(Type.String()),
-        cloneSize: Type.Optional(Type.Number()),
-        cloneAge: Type.Optional(Type.Number()),
-        clonedBy: Type.Optional(Type.String()),
-        tags: Type.Optional(Type.String()),
-        clonedVolumeDetails: Type.Optional(
-            Type.Array(
-                Type.Object({
-                    cloneVolumeUuid: Type.Optional(Type.String()),
-                    cloneVolumeName: Type.Optional(Type.String()),
-                    cloneVolumeCreateTime: Type.Optional(Type.String()),
-                    sourceVolumeName: Type.Optional(Type.String()),
-                    cloneDatabaseName: Type.Optional(Type.String()),
-                    cloneVolumeType: Type.Optional(Type.String())
-                })
-            )
+const CloneDetails = Type.Object({
+    databaseHostName: Type.String(),
+    databaseHostId: Type.String(),
+    databaseInstanceName: Type.String(),
+    sourceDatabaseHostName: Type.Optional(Type.String()),
+    sourceDatabaseInstanceName: Type.Optional(Type.String()),
+    sourceDatabaseName: Type.Optional(Type.String()),
+    cloneDatabaseName: Type.Optional(Type.String()),
+    cloneSize: Type.Optional(Type.Number()),
+    cloneAge: Type.Optional(Type.Number()),
+    clonedBy: Type.Optional(Type.String()),
+    tags: Type.Optional(Type.String()),
+    clonedVolumeDetails: Type.Optional(
+        Type.Array(
+            Type.Object({
+                cloneVolumeUuid: Type.Optional(Type.String()),
+                cloneVolumeName: Type.Optional(Type.String()),
+                cloneVolumeCreateTime: Type.Optional(Type.String()),
+                sourceVolumeName: Type.Optional(Type.String()),
+                cloneDatabaseName: Type.Optional(Type.String()),
+                cloneVolumeType: Type.Optional(Type.String())
+            })
         )
-    })
-);
+    )
+});
 
 const OntapVolume = Type.Object({
     ontapVolumeName: Type.Optional(Type.String()),
@@ -214,8 +212,8 @@ const AdditionalRssConfigParameterDriftResponse = Type.Optional(
 
 const AdditionalCloneParameterDriftResponse = Type.Optional(
     Type.Object({
-        cloneDetails: Type.Optional(CloneDetailsSchema),
-        oldCloneDetails: Type.Optional(CloneDetailsSchema),
+        cloneDetails: Type.Optional(Type.Array(CloneDetails)),
+        oldCloneDetails: Type.Optional(Type.Array(CloneDetails)),
         cloneDriftMessage: Type.Optional(Type.String())
     })
 );
