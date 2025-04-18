@@ -31,6 +31,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
+    setCardData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
@@ -41,6 +42,7 @@ import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
+    useDismissMssqlAssessmentMutation,
     useLazyGetSubTaskListQuery,
     useOptimizeAwsBackupMutation,
     useOptimizeComputeConfigMutation,
@@ -59,6 +61,7 @@ import { backupStartTime } from '../../../utils/utilityFunctions';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
+    const [dismissAction, setDismissAction] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
@@ -68,7 +71,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         selectedDatabaseInstance,
         optimizingInstanceData,
         selectedGwInstanceCredId,
-        selectedGwInstanceRegionId
+        selectedGwInstanceRegionId,
+        cardData: cardDataFromStore
     } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
 
@@ -81,6 +85,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
 
     const [disableText, setDisableText] = useState(false);
 
@@ -749,7 +754,68 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
 
     //Function For Dismiss
-    const handleSingleAction = (type: string, action: string) => {};
+    const handleSingleAction = (action: string) => {
+        setDismissAction(true);
+        const payload = {
+            configurationsToDismiss: [
+                {
+                    name: cardData?.dismissedObj?.name,
+                    configState: action,
+                    databaseHosts: [
+                        {
+                            id: selectedResourceId,
+                            sqlServerInstances: [selectedDatabaseInstance],
+                            credentialsId: selectedGwInstanceCredId,
+                            region: selectedGwInstanceRegionId
+                        }
+                    ]
+                }
+            ]
+        };
+        dismissMssqlAssessment({ payload: payload })
+            .then((res: any) => {
+                setDismissAction(false);
+                const updatedState = res?.data?.configurationsDismissed[0]?.configState;
+                const targetId = cardData?.id;
+
+                if (!targetId || !updatedState) return;
+
+                const updatedCardData = { ...cardDataFromStore };
+
+                for (const [key, value] of Object.entries(updatedCardData)) {
+                    //@ts-ignore
+                    if (value && value?.id === targetId) {
+                        updatedCardData[key] = {
+                            ...value,
+                            dismissedObj: {
+                                //@ts-ignore
+                                ...value.dismissedObj,
+                                state: updatedState
+                            }
+                        };
+                        break;
+                    }
+                }
+
+                dispatch(setCardData(updatedCardData));
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: `Configuration successfully ${action}`
+                    })
+                );
+            })
+            .catch(err => {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: err
+                    })
+                );
+
+                setDismissAction(false);
+            });
+    };
 
     return (
         <div className={styles.storageCardComponent}>
@@ -912,40 +978,44 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
             {/* Section 7 */}
             {cardData?.block_one?.value !== 'ONTAP' && cardData?.block_one?.value !== 'Operating system' && (
-                <ButtonWithDropdown
-                    variant="icon"
-                    isDisabled={false}
-                    items={[
-                        {
-                            id: 'activate',
-                            children: 'Activate',
-                            isDisabled:
-                                cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
-                                !cardData?.dismissedObj?.state,
-                            onClick: () => {
-                                handleSingleAction(type, 'activate');
+                <>
+                    <ButtonWithDropdown
+                        variant="icon"
+                        isDisabled={dismissAction || dismissAction}
+                        items={[
+                            {
+                                id: 'activate',
+                                children: 'Activate',
+                                isDisabled:
+                                    cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
+                                    !cardData?.dismissedObj?.state,
+                                onClick: () => {
+                                    handleSingleAction('active');
+                                }
+                            },
+                            {
+                                id: 'postponeFor30Days',
+                                children: 'Postpone for 30 days',
+                                isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED,
+                                onClick: () => {
+                                    handleSingleAction('postponed');
+                                }
+                            },
+                            {
+                                id: 'dismiss',
+                                children: 'Dismiss',
+                                isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED,
+                                onClick: () => {
+                                    handleSingleAction('dismiss');
+                                }
                             }
-                        },
-                        {
-                            id: 'postponeFor30Days',
-                            children: 'Postpone for 30 days',
-                            isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED,
-                            onClick: () => {
-                                handleSingleAction(type, 'postponeFor30Days');
-                            }
-                        },
-                        {
-                            id: 'dismiss',
-                            children: 'Dismiss',
-                            isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED,
-                            onClick: () => {
-                                handleSingleAction(type, 'dismiss');
-                            }
-                        }
-                    ]}
-                >
-                    <ActionMenu />
-                </ButtonWithDropdown>
+                        ]}
+                    >
+                        <div className={loading || dismissAction ? styles.actionMenu : ''}>
+                            <ActionMenu />
+                        </div>
+                    </ButtonWithDropdown>
+                </>
             )}
         </div>
     );

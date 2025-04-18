@@ -19,6 +19,7 @@ import { addAllMssqlHostAssessmentData, setSelectedHeaderTab } from '../../store
 import { GENERAL } from '../../utils/appConstants';
 import {
     ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
     FINDINGS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
@@ -26,8 +27,7 @@ import {
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
-    STATUS_CONST,
-    WLF_TABS
+    STATUS_CONST
 } from '../../utils/consts';
 import {
     AssessmentResponseInterface,
@@ -1751,37 +1751,52 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let optimizedCloning = 0;
     let notOptimizedCloning = 0;
 
+    let hasDismissedOrPostponedStorage = false;
+    let hasDismissedOrPostponedCompute = false;
+    let hasDismissedOrPostponedApplication = false;
+    let hasDismissedOrPostponedResiliency = false;
+    let hasDismissedOrPostponedCloning = false;
+
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
+        const dismissedState = nestedObject?.dismissedObj?.state;
+        const isOptimizedViaDismissal =
+            dismissedState === CONFIG_STATES.DISMISSED || dismissedState === CONFIG_STATES.POSTPONED;
         if (nestedObject?.category === 'storage') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedStorage++;
             } else {
                 notOptimizedStorage++;
             }
         } else if (nestedObject?.category === 'compute') {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedCompute = true;
             if (
                 nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
-                nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING
+                nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING ||
+                isOptimizedViaDismissal
             ) {
                 optimizedCompute++;
             } else {
                 notOptimizedCompute++;
             }
         } else if (nestedObject?.category === 'application') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedApplication = true;
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedApplication++;
             } else {
                 notOptimizedApplication++;
             }
         } else if (nestedObject?.category === 'resiliency') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
             } else {
                 notOptimizedResiliency++;
             }
         } else if (nestedObject?.category === 'cloning') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedCloning = true;
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedCloning++;
             } else {
                 notOptimizedCloning++;
@@ -1790,6 +1805,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     });
 
     let storageCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedStorage,
         total: optimizedStorage + notOptimizedStorage,
         optimized: optimizedStorage,
         notOptimized: notOptimizedStorage,
@@ -1798,6 +1814,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             : 0
     };
     let computeCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedCompute,
         total: optimizedCompute + notOptimizedCompute,
         optimized: optimizedCompute,
         notOptimized: notOptimizedCompute,
@@ -1806,6 +1823,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             : 0
     };
     let applicationCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedApplication,
         total: optimizedApplication + notOptimizedApplication,
         optimized: optimizedApplication,
         notOptimized: notOptimizedApplication,
@@ -1817,6 +1835,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     };
 
     let resiliencyCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedResiliency,
         total: optimizedResiliency + notOptimizedResiliency,
         optimized: optimizedResiliency,
         notOptimized: notOptimizedResiliency,
@@ -1826,6 +1845,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     };
 
     let cloningCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedCloning,
         total: optimizedCloning + notOptimizedCloning,
         optimized: optimizedCloning,
         notOptimized: notOptimizedCloning,

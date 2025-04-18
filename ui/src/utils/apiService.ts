@@ -993,6 +993,13 @@ export const getWellApi = createApi({
                     method: 'POST'
                 })
             }),
+            dismissMssqlAssessment: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/assessment/dismiss`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             optimizeStorageSizing: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-sizing`,
@@ -1216,5 +1223,6 @@ export const {
     useOptimizeMaxdopConfigForBulkMutation,
     useLazyGetSnapshotPoliciesQuery,
     useOptimizeResiliencyMutation,
-    useOptimizeAwsBackupMutation
+    useOptimizeAwsBackupMutation,
+    useDismissMssqlAssessmentMutation
 } = getWellApi;
