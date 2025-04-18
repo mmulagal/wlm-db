@@ -981,7 +981,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 <>
                     <ButtonWithDropdown
                         variant="icon"
-                        isDisabled={dismissAction || dismissAction}
+                        isDisabled={loading || dismissAction}
                         items={[
                             {
                                 id: 'activate',
