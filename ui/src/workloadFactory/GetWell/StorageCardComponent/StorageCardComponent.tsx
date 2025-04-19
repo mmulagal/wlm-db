@@ -35,10 +35,11 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import { formatGetWellData, formatOptimizationBreakDown, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
@@ -798,6 +799,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }
 
                 dispatch(setCardData(updatedCardData));
+
+                //To setup optimization var values
+                let optBreakDown = formatOptimizationBreakDown(updatedCardData);
+                dispatch(setOptimizationBreakDown(optBreakDown));
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
