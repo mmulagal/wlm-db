@@ -74,7 +74,9 @@ import CloneManagementTable from './RenderTables/CloneManagementTable';
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
-    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData, cloneIsOptimizedRows } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
     const { allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
@@ -708,8 +710,12 @@ const DashboardInnerPage = () => {
             let cloneViolationsList: any = [];
             if (rowData?.objectsInViolation) {
                 cloneViolationsList =
-                    rowData?.objectsInViolation?.map((obj: AnalyserOptions) => ({
+                    rowData?.objectsInViolation?.map((obj: any) => ({
                         ...obj,
+                        isOptimized:
+                            cloneIsOptimizedRows?.[
+                                `${rowData?.databaseHostId}_${rowData?.instanceId}_${obj?.cloneDatabaseName}`
+                            ],
                         credentialId: rowData?.credentialId,
                         regionId: rowData?.regionId,
                         resourceId: rowData?.databaseHostId,
@@ -732,6 +738,10 @@ const DashboardInnerPage = () => {
                         ...cloneViolationsList,
                         ...(item?.objectsInViolation?.map((obj: any) => ({
                             ...obj,
+                            isOptimized:
+                                cloneIsOptimizedRows?.[
+                                    `${item?.databaseHostId}_${item?.instanceId}_${obj?.cloneDatabaseName}`
+                                ],
                             credentialId: item?.credentialId,
                             regionId: item?.regionId,
                             resourceId: item?.databaseHostId,

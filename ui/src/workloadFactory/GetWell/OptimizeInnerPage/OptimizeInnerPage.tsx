@@ -76,7 +76,10 @@ const OptimizeInnerPage = () => {
             let cloneViolationsList =
                 selectedOptimizeConfig?.data?.objectsInViolation?.map((obj: any) => ({
                     ...obj,
-                    isOptimized: cloneIsOptimizedRows?.[`${selectedResourceId}_${selectedDatabaseInstance}_${obj?.cloneDatabaseName}`],
+                    isOptimized:
+                        cloneIsOptimizedRows?.[
+                            `${selectedResourceId}_${selectedDatabaseInstance}_${obj?.cloneDatabaseName}`
+                        ],
                     credentialId: selectedGwInstanceCredId,
                     regionId: selectedGwInstanceRegionId,
                     resourceId: selectedResourceId,

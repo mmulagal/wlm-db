@@ -2170,10 +2170,12 @@ const updateProgressResourceForBulk = (
             return row;
         }
     });
-    dispatch(setCloneIsOptimizedRows({
-        ...cloneIsOptimizedRows,
-        ...cloneIsOptimizedRowsList
-    }));
+    dispatch(
+        setCloneIsOptimizedRows({
+            ...cloneIsOptimizedRows,
+            ...cloneIsOptimizedRowsList
+        })
+    );
 
     dispatch(
         setCloneDashboardData({
@@ -2870,7 +2872,11 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
 
                         let isInstanceOptimized = true;
                         cloneDashboardData?.objectsInViolation?.map((row: any) => {
-                            if (row?.resourceId === rowData?.hostId && row?.instanceId === rowData?.instanceId && !row?.isOptimized) {
+                            if (
+                                row?.resourceId === rowData?.hostId &&
+                                row?.instanceId === rowData?.instanceId &&
+                                !row?.isOptimized
+                            ) {
                                 isInstanceOptimized = false;
                             }
                         });
@@ -2891,7 +2897,6 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                 }
                             };
                         }
-                        
                     } else {
                         return instance;
                     }

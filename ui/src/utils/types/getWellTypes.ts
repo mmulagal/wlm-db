@@ -44,6 +44,7 @@ export interface GetWellSliceInterface {
     isInnerPageOptimize?: boolean;
     gwAdhocError?: string;
     cloneDashboardData: any;
+    cloneIsOptimizedRows: any;
 }
 
 interface CountBreakDown {
