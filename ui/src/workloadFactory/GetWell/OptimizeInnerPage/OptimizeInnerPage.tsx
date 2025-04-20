@@ -73,21 +73,24 @@ const OptimizeInnerPage = () => {
 
     useEffect(() => {
         if (selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT) {
-            let cloneViolationsList = selectedOptimizeConfig?.data?.cloneDetails
-            ?.filter((clone: any) => selectedOptimizeConfig?.data?.objectsInViolation?.includes(clone.cloneDatabaseName))
-            ?.map((obj: any) => ({
-                    ...obj,
-                    isOptimized:
-                        cloneIsOptimizedRows?.[
-                            `${selectedResourceId}_${selectedDatabaseInstance}_${obj?.cloneDatabaseName}`
-                        ],
-                    credentialId: selectedGwInstanceCredId,
-                    regionId: selectedGwInstanceRegionId,
-                    resourceId: selectedResourceId,
-                    hostName: selectedHostname,
-                    instanceId: selectedDatabaseInstance,
-                    serverInstanceName: selectedDatabaseInstanceName
-                })) || [];
+            let cloneViolationsList =
+                selectedOptimizeConfig?.data?.cloneDetails
+                    ?.filter((clone: any) =>
+                        selectedOptimizeConfig?.data?.objectsInViolation?.includes(clone.cloneDatabaseName)
+                    )
+                    ?.map((obj: any) => ({
+                        ...obj,
+                        isOptimized:
+                            cloneIsOptimizedRows?.[
+                                `${selectedResourceId}_${selectedDatabaseInstance}_${obj?.cloneDatabaseName}`
+                            ],
+                        credentialId: selectedGwInstanceCredId,
+                        regionId: selectedGwInstanceRegionId,
+                        resourceId: selectedResourceId,
+                        hostName: selectedHostname,
+                        instanceId: selectedDatabaseInstance,
+                        serverInstanceName: selectedDatabaseInstanceName
+                    })) || [];
 
             dispatch(
                 setCloneDashboardData({

@@ -709,21 +709,22 @@ const DashboardInnerPage = () => {
         if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
             let cloneViolationsList: any = [];
             if (rowData?.objectsInViolation) {
-                cloneViolationsList = rowData?.cloneDetails
-                ?.filter((clone: any) => rowData?.objectsInViolation?.includes(clone.cloneDatabaseName))
-                ?.map((obj: any) => ({
-                        ...obj,
-                        isOptimized:
-                            cloneIsOptimizedRows?.[
-                                `${rowData?.databaseHostId}_${rowData?.instanceId}_${obj?.cloneDatabaseName}`
-                            ],
-                        credentialId: rowData?.credentialId,
-                        regionId: rowData?.regionId,
-                        resourceId: rowData?.databaseHostId,
-                        hostName: rowData?.hostName,
-                        instanceId: rowData?.instanceId,
-                        serverInstanceName: rowData?.serverInstanceName
-                    })) || [];
+                cloneViolationsList =
+                    rowData?.cloneDetails
+                        ?.filter((clone: any) => rowData?.objectsInViolation?.includes(clone.cloneDatabaseName))
+                        ?.map((obj: any) => ({
+                            ...obj,
+                            isOptimized:
+                                cloneIsOptimizedRows?.[
+                                    `${rowData?.databaseHostId}_${rowData?.instanceId}_${obj?.cloneDatabaseName}`
+                                ],
+                            credentialId: rowData?.credentialId,
+                            regionId: rowData?.regionId,
+                            resourceId: rowData?.databaseHostId,
+                            hostName: rowData?.hostName,
+                            instanceId: rowData?.instanceId,
+                            serverInstanceName: rowData?.serverInstanceName
+                        })) || [];
                 dispatch(
                     setCloneDashboardData({
                         type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
@@ -740,18 +741,18 @@ const DashboardInnerPage = () => {
                         ...(item?.cloneDetails
                             ?.filter((clone: any) => item?.objectsInViolation?.includes(clone.cloneDatabaseName))
                             ?.map((obj: any) => ({
-                            ...obj,
-                            isOptimized:
-                                cloneIsOptimizedRows?.[
-                                    `${item?.databaseHostId}_${item?.instanceId}_${obj?.cloneDatabaseName}`
-                                ],
-                            credentialId: item?.credentialId,
-                            regionId: item?.regionId,
-                            resourceId: item?.databaseHostId,
-                            hostName: item?.hostName,
-                            instanceId: item?.instanceId,
-                            serverInstanceName: item?.serverInstanceName
-                        })) || [])
+                                ...obj,
+                                isOptimized:
+                                    cloneIsOptimizedRows?.[
+                                        `${item?.databaseHostId}_${item?.instanceId}_${obj?.cloneDatabaseName}`
+                                    ],
+                                credentialId: item?.credentialId,
+                                regionId: item?.regionId,
+                                resourceId: item?.databaseHostId,
+                                hostName: item?.hostName,
+                                instanceId: item?.instanceId,
+                                serverInstanceName: item?.serverInstanceName
+                            })) || [])
                     ];
                 });
                 dispatch(
