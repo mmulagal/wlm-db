@@ -34,7 +34,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Database name',
+            Header: 'Clone database name',
             accessor: 'cloneDatabaseName',
             id: '1',
             isSortable: false,

@@ -33,7 +33,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Database name',
+            Header: 'Clone database name',
             accessor: 'cloneDatabaseName',
             id: '1',
             isSortable: false,
@@ -101,7 +101,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                         {isInProgress ? (
                             <div className={styles['optimize-in-progress']}>
                                 <SmallLoader />
-                                <DsTypography variant="Semibold_14">Fixing</DsTypography>
+                                <DsTypography variant="Semibold_14">Optimizing</DsTypography>
                             </div>
                         ) : (
                             <div className={styles.buttonContainer}>
@@ -167,7 +167,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                 tableProps={tableProps}
                 pluralTitle={`Impacted databases`}
                 singularTitle={'Impacted database'}
-                subTitle="Refreshing a clone is only supported for clones created with Workload Factory (Sandboxes)."
+                subTitle="Clone refreshing is supported only for clones created in Workload Factory."
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkCloneContainer

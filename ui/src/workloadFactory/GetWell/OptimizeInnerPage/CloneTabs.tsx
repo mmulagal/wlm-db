@@ -251,7 +251,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
     const handleBulkActionForClone = (actionType: string, operation?: string, rowData?: any) => {
         setDialog(
             <DialogComponent
-                header={`Clone cleanup optimization - ${actionType}`}
+                header={`${actionType} clone`}
                 content={<DialogContent type={`${GENERAL.CLONE_MANAGEMENT} ${actionType}`} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
