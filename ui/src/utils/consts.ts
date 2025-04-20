@@ -803,3 +803,10 @@ export const ASSESSMENT_CONFIG_NAMES = {
     CLONE_MANAGEMENT: 'Clone cleanup',
     LICENSE: 'License'
 };
+
+export const CONFIG_STATES = {
+    ACTIVE: 'ACTIVE',
+    POSTPONED: 'POSTPONED',
+    DISMISSED: 'DISMISSED',
+    ACTIVATING: 'ACTIVATING'
+};

@@ -25,7 +25,14 @@ beforeAll(async () => {
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI'
+            sqlDeploymentType: 'FCI',
+            assessment: {
+                rssConfig: {
+                    rssAdapters: [],
+                    tcpOffloadState: 'Disabled',
+                    rssConfigFinding: 'optimized'
+                }
+            }
         }
     });
 

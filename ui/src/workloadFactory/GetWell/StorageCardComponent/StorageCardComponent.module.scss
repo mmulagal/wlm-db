@@ -8,6 +8,14 @@
     gap: 24px;
     border-bottom: 1px solid var(--border);
 
+    .actionMenu {
+        svg {
+            path {
+                fill: var(--text-disabled);
+            }
+        }
+    }
+
     .commonSection {
         display: flex;
         flex-direction: column;
@@ -43,7 +51,8 @@
     }
 
     .dismissSection {
-        height: 64px;
+        width: 224px;
+        min-width: 170px;
         .dismissContainer {
             display: flex;
             gap: 8px;

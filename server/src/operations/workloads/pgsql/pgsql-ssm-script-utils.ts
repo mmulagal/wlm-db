@@ -113,8 +113,9 @@ const ontapRestApi = `
     }
 `;
 
-const getPgsqlInstanceData = (fsxDataVolumeName: string) => `
-    sudo -u postgres pg_controldata /${fsxDataVolumeName} | jq -R -s -c 'split("\\n")[:-1]'
+const getPgsqlInstanceData = `
+    data_dir=$(sudo systemctl cat postgresql | grep Environment=PGDATA | awk -F= '/Environment=PGDATA=/ {print $3}')
+    sudo -u postgres pg_controldata $data_dir | jq -R -s -c 'split("\\n")[:-1]'
 `;
 
 export { getPgSqlStorageSavings, getPgsqlInstanceData, getPgSqlProtection };

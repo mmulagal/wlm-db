@@ -1,5 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
+import { PGSQL_DEFAULT_INSTANCE_NAME, RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
 
 const DiscoverQuery = Type.Object({
@@ -252,7 +252,7 @@ const DatabaseInstanceQueryString = Type.Object({
     )
 });
 
-const MsSqlInstancesRequestQuery = Type.Object({
+const SqlInstancesRequestQuery = Type.Object({
     instances: Type.String({
         description: 'Comma separated Ec2 instance ID associated with the MS SQL Server instance.'
     }),
@@ -261,15 +261,17 @@ const MsSqlInstancesRequestQuery = Type.Object({
 
 const pgSqlServerNode = Type.Object({
     ec2InstanceName: Type.Optional(Type.String({ description: 'Primary node name' })),
-    ec2InstanceId: Type.Optional(Type.String({ description: 'Primary node ID' })),
-    ec2InstancePrivateIpAddress: Type.Optional(Type.String({ description: 'Primary node IP address' }))
+    ec2InstanceId: Type.String({ description: 'Primary node ID' }),
+    ec2InstancePrivateIpAddress: Type.String({ description: 'Primary node IP address' }),
+    ec2InstanceType: Type.String({ description: 'Primary node type' }),
+    ec2UsageOperation: Type.Optional(Type.String({ description: 'EC2 usage operation details' }))
 });
 
 const DiscoverPgSqlResponseInfo = Type.Intersect([
     Type.Omit(DiscoverResponseInfo, ['sqlServerInstances']),
     Type.Object({
         pgsqlServerInstance: Type.Optional(
-            Type.String({ description: 'PostgreSQL instance name', default: 'postgres' })
+            Type.String({ description: 'PostgreSQL instance name', default: PGSQL_DEFAULT_INSTANCE_NAME })
         ),
         pgsqlServerState: Type.Optional(
             Type.String({
@@ -285,6 +287,7 @@ const DiscoverPgSqlResponseInfo = Type.Intersect([
                 enum: ['standalone', 'ha']
             })
         ),
+        pgsqlServerInstanceId: Type.Optional(Type.String({ description: 'PostgreSQL instance ID' })),
         databaseCount: Type.Optional(Type.Number({ description: 'Number of databases in the PostgreSQL instance.' })),
         isPrimary: Type.Optional(Type.Boolean({ description: 'Is this primary PostgreSQL instance' })),
         nodes: Type.Optional(Type.Array(pgSqlServerNode)),
@@ -338,7 +341,7 @@ export {
     DiscoverCredentialsRequestBody,
     DiscoverInstanceParams,
     DiscoverCredentialsType,
-    MsSqlInstancesRequestQuery,
+    SqlInstancesRequestQuery,
     DiscoverCredentialsResponse,
     PrepareResourceResponseBody,
     UnmanageInstanceParams,

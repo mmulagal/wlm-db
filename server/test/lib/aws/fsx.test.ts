@@ -1,4 +1,4 @@
-import '../../simulator/scopes/aws/fsx-scope';
+import { fsxnBackupWithModifiedCreationTime } from '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
@@ -22,7 +22,6 @@ import {
     updateFileSystem
 } from '../../../src/lib/aws/fsx';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
-import { fsxnBackupWithModifiedCreationTime } from '../../simulator/scopes/aws/fsx-scope';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 const VOLUME_ID = 'fsvol-06184c131ec936380';
