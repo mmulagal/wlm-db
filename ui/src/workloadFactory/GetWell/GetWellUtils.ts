@@ -1189,6 +1189,7 @@ export const formatCloneCardConfig = (
             id: item?.name,
             category: categoryVal,
             recommendationText: item?.recommendation,
+            cloneDetails: item?.cloneDetails,
             objectsInViolation: item?.objectsInViolation,
             dismissedObj: data?.dismissedConfigurations?.clone
         }

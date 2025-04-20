@@ -88,18 +88,6 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             }
         },
         {
-            Header: 'Size',
-            accessor: 'size',
-            id: '6',
-            isSortable: false,
-            filterOptions: 'auto',
-            isSticky: true,
-            width: fromPage === WLF_TABS.DASHBOARD ? '96px' : '210px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
-        },
-        {
             Header: '',
             accessor: '',
             id: '7',

@@ -709,8 +709,9 @@ const DashboardInnerPage = () => {
         if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
             let cloneViolationsList: any = [];
             if (rowData?.objectsInViolation) {
-                cloneViolationsList =
-                    rowData?.objectsInViolation?.map((obj: any) => ({
+                cloneViolationsList = rowData?.cloneDetails
+                ?.filter((clone: any) => rowData?.objectsInViolation?.includes(clone.cloneDatabaseName))
+                ?.map((obj: any) => ({
                         ...obj,
                         isOptimized:
                             cloneIsOptimizedRows?.[
@@ -736,7 +737,9 @@ const DashboardInnerPage = () => {
                 rowData?.map((item: any) => {
                     cloneViolationsList = [
                         ...cloneViolationsList,
-                        ...(item?.objectsInViolation?.map((obj: any) => ({
+                        ...(item?.cloneDetails
+                            ?.filter((clone: any) => item?.objectsInViolation?.includes(clone.cloneDatabaseName))
+                            ?.map((obj: any) => ({
                             ...obj,
                             isOptimized:
                                 cloneIsOptimizedRows?.[

@@ -73,8 +73,9 @@ const OptimizeInnerPage = () => {
 
     useEffect(() => {
         if (selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT) {
-            let cloneViolationsList =
-                selectedOptimizeConfig?.data?.objectsInViolation?.map((obj: any) => ({
+            let cloneViolationsList = selectedOptimizeConfig?.data?.cloneDetails
+            ?.filter((clone: any) => selectedOptimizeConfig?.data?.objectsInViolation?.includes(clone.cloneDatabaseName))
+            ?.map((obj: any) => ({
                     ...obj,
                     isOptimized:
                         cloneIsOptimizedRows?.[

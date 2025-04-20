@@ -62,6 +62,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                             assessmentStatus: GETWELL_VALUES[cloneObj?.status],
                             data: instanceData,
                             violations: cloneObj?.violations,
+                            cloneDetails: cloneObj?.cloneDetails,
                             objectsInViolation: cloneObj?.objectsInViolation,
                             tags: cloneObj?.tags,
                             severity: cloneObj?.severity
