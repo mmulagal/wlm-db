@@ -28,6 +28,7 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    ACTIVATING_MESSAGE: 'Active. Will be analyzed in the next analysis.',
     DISMISSED_MESSAGE: 'This issue is dismissed.',
     CLONE_MANAGEMENT_REFRESH: 'Clone cleanup Refresh',
     CLONE_MANAGEMENT_DELETE: 'Clone cleanup Delete',
