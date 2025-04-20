@@ -36,7 +36,7 @@ const initialState: GetWellSliceInterface = {
     regionFromJM: '',
     landingFrom: '',
     inProgressOptimizationData: {},
-    inProgressResourceOptimizeData: {},
+    inProgressResourceOptimizeData: {}, // To maintain the in progress data for resource optimization like clone database
     inProgressHostData: {},
     jobToInstanceMap: {},
     jobToInstanceMapForBulk: [],
@@ -45,8 +45,8 @@ const initialState: GetWellSliceInterface = {
     isInnerPageOptimize: false,
     gwAdhocError: '',
     selectedCloneTab: GENERAL.CLONE_MANAGEMENT_TAB1,
-    cloneDashboardData: [],
-    cloneIsOptimizedRows: {}
+    cloneDashboardData: [], // Data stored for clone in inner page
+    cloneIsOptimizedRows: {} // To maintain optimized rows in clone assessment (resourceId + instanceId + cloneDatabasename)
 };
 
 const getWellOptimizeSlice = createSlice({

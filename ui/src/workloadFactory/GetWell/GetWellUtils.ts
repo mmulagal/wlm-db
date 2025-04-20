@@ -2187,6 +2187,8 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOptimizingInstanceData(false));
 };
 
+// This function is used to update the progress of the optimization process for assessment confif resource level jobs. 
+// Currently it is only written for clone cleanup.
 const updateProgressResourceForBulk = (
     dispatch: any,
     type: string,
@@ -2539,6 +2541,8 @@ const updateAssessmentWithFailedJobs = (
     }
 };
 
+// This function is used to handle the optimization job for resources.
+// Currently only applicable for clone cleanup optimize job
 export const handleOptimizeResourceJob = (
     res: any,
     failedMsgData: any,
@@ -2943,6 +2947,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                             }
                         });
                         if (isInstanceOptimized) {
+                            // If all clone databases are optimized for a instance
                             return {
                                 ...instance,
                                 assessments: {
@@ -2951,6 +2956,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                 }
                             };
                         } else {
+                            // If not all clone databases are optimized for a instance
                             return {
                                 ...instance,
                                 assessments: {
@@ -3059,6 +3065,7 @@ export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) 
     });
 };
 
+// This function is used to disable the checkboxes for the selected rows in the optimize resource page table
 export const disableOptimizeResourceCheckBoxForOptimizeCase = (
     tableData: any,
     type: string,

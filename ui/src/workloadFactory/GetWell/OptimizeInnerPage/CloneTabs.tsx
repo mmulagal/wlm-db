@@ -67,6 +67,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
         setOtherDatabase(otherDbItems);
     }, [cloneDashboardData]);
 
+    // Function to get unique instance row
     const getBulkInstanceList = (jobData: any[], name: string) => {
         const instanceList: any = [];
 

@@ -709,6 +709,7 @@ const DashboardInnerPage = () => {
         if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
             let cloneViolationsList: any = [];
             if (rowData?.objectsInViolation) {
+                // get violations clone details for single selected instance. From dashboard single instance.
                 cloneViolationsList =
                     rowData?.cloneDetails
                         ?.filter((clone: any) => rowData?.objectsInViolation?.includes(clone.cloneDatabaseName))
@@ -735,6 +736,7 @@ const DashboardInnerPage = () => {
                     })
                 );
             } else {
+                // get violations clone details for all selected instance. From dashboard bulk selection.
                 rowData?.map((item: any) => {
                     cloneViolationsList = [
                         ...cloneViolationsList,
