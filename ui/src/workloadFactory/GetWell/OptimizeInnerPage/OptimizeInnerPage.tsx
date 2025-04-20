@@ -57,7 +57,8 @@ const OptimizeInnerPage = () => {
         selectedHostname,
         selectedDatabaseInstanceName,
         selectedGwInstanceCredId,
-        selectedGwInstanceRegionId
+        selectedGwInstanceRegionId,
+        cloneIsOptimizedRows
     } = useAppSelector(state => state.getWellOptimize);
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
@@ -73,8 +74,9 @@ const OptimizeInnerPage = () => {
     useEffect(() => {
         if (selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT) {
             let cloneViolationsList =
-                selectedOptimizeConfig?.data?.objectsInViolation?.map((obj: AnalyserOptions) => ({
+                selectedOptimizeConfig?.data?.objectsInViolation?.map((obj: any) => ({
                     ...obj,
+                    isOptimized: cloneIsOptimizedRows?.[`${selectedResourceId}_${selectedDatabaseInstance}_${obj?.cloneDatabaseName}`],
                     credentialId: selectedGwInstanceCredId,
                     regionId: selectedGwInstanceRegionId,
                     resourceId: selectedResourceId,

@@ -170,7 +170,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, data);
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
-    }, [tableProps.selectionState]);
+    }, [tableProps.selectionState, data]);
 
     return (
         <div className={styles['inner-table']}>

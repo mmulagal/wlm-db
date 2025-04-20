@@ -45,7 +45,8 @@ const initialState: GetWellSliceInterface = {
     isInnerPageOptimize: false,
     gwAdhocError: '',
     selectedCloneTab: GENERAL.CLONE_MANAGEMENT_TAB1,
-    cloneDashboardData: []
+    cloneDashboardData: [],
+    cloneIsOptimizedRows: {}
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -199,6 +200,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setCloneDashboardData: (state, action: PayloadAction<any>) => {
             state.cloneDashboardData = action.payload;
+        },
+        setCloneIsOptimizedRows: (state, action: PayloadAction<any>) => {
+            state.cloneIsOptimizedRows = action.payload;
         }
     }
 });
@@ -243,7 +247,8 @@ export const {
     setGwSelectedRowFsxId,
     setIsInnerPageOptimize,
     setGwAdhocError,
-    setCloneDashboardData
+    setCloneDashboardData,
+    setCloneIsOptimizedRows
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

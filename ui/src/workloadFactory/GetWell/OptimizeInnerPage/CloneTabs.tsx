@@ -23,14 +23,14 @@ import { useLazyGetSubTaskListQuery, useOptimizeCloneCleanupMutation } from '../
 import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { handleOptimizeResourceJob, handleOptimizeStorageJob, nameToIdConfigMapping } from '../GetWellUtils';
+import { handleOptimizeResourceJob, nameToIdConfigMapping } from '../GetWellUtils';
 import store from '../../../store/store';
 
 const CloneTabs = ({ fromPage = '' }: any) => {
     const dispatch = useDispatch();
     const { selectedCloneTab } = useAppSelector(state => state.getWellOptimize);
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
-    const { cloneDashboardData } = useAppSelector(state => state.getWellOptimize);
+    const { cloneDashboardData, cloneIsOptimizedRows } = useAppSelector(state => state.getWellOptimize);
     const { inProgressOptimizationData, inProgressHostData, inProgressResourceOptimizeData } = useAppSelector(
         state => state.getWellOptimize
     );
@@ -70,11 +70,11 @@ const CloneTabs = ({ fromPage = '' }: any) => {
     const getBulkInstanceList = (jobData: any[], name: string) => {
         const instanceList: any = [];
 
-        jobData.forEach(({ type, databaseHosts }) => {
+        jobData.forEach(({ configurationName, databaseHosts }) => {
             databaseHosts.forEach((host: any) => {
                 host.sqlServerInstances.forEach((instance: any) => {
                     instanceList.push({
-                        id: type,
+                        id: configurationName,
                         name: name,
                         hostId: host.id,
                         instanceId: instance?.instanceId,
