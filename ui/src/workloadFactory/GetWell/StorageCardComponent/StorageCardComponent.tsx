@@ -13,6 +13,7 @@ import { ReactComponent as UnderProvisioned } from '../../../assets/under-provis
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as ActionMenu } from '../../../assets/ic_actions_menu_circle.svg';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
+import { ReactComponent as InfoIcon } from '../../../assets/info.svg';
 import styles from './StorageCardComponent.module.scss';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -340,11 +341,17 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             return (
                 <div className={styles.dismissContainer}>
                     <div>
-                        <Warning />
+                        {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && (
+                            <div style={{ position: 'relative', top: '2px' }}>
+                                <InfoIcon />
+                            </div>
+                        )}
+                        {cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVATING && <Warning />}
                     </div>
 
                     <DsTypography variant="Regular_14" style={{ minWidth: '160px' }}>
                         {cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED && GENERAL.DISMISSED_MESSAGE}{' '}
+                        {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && GENERAL.ACTIVATING_MESSAGE}{' '}
                         {cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED &&
                             `This issue is postponed until the next ${calculateDays(
                                 cardData?.dismissedObj?.endTime
@@ -776,7 +783,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         dismissMssqlAssessment({ payload: payload })
             .then((res: any) => {
                 setDismissAction(false);
-                const updatedState = res?.data?.configurationsDismissed[0]?.configState;
+                let updatedState = '';
+                if (action === 'active' && res?.data?.configurationsDismissed[0]?.configState === 'active') {
+                    updatedState = CONFIG_STATES.ACTIVATING;
+                } else {
+                    updatedState = res?.data?.configurationsDismissed[0]?.configState;
+                    updatedState = updatedState?.toUpperCase();
+                }
+
                 const targetId = cardData?.id;
 
                 if (!targetId || !updatedState) return;
@@ -791,7 +805,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             dismissedObj: {
                                 //@ts-ignore
                                 ...value.dismissedObj,
-                                state: updatedState
+                                state: updatedState,
+                                endTime: res?.data?.configurationsDismissed[0]?.endTime
                             }
                         };
                         break;
@@ -890,7 +905,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
             {/* Dismiss section code */}
             {(cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED ||
-                cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED) && (
+                cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED ||
+                cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING) && (
                 <div className={styles.dismissSection}>{sectionSevenContent(cardData)}</div>
             )}
 

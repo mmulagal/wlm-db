@@ -84,7 +84,7 @@ router.post(`${BASE_URL}/v1/mssql/assessment/dismiss`, async (req: {}, res: any)
             configurationsDismissed: [
                 {
                     name: 'performance-tier',
-                    configState: 'DISMISSED',
+                    configState: 'dismissed',
                     startTime: 1744588921000,
                     endTime: 1744588921000,
                     databaseHosts: [

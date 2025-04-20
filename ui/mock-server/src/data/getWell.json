@@ -1461,7 +1461,7 @@
         },
         "clone": {
             "name": "Clone Management",
-            "state": "ACTIVE",
+            "state": "POSTPONED",
             "endTime": 1739934199000,
             "startTime": 1739934199000
         },
