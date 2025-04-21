@@ -40,6 +40,14 @@
                 .editIcon {
                     cursor: pointer;
                 }
+
+                .editDisableIcon {
+                    svg {
+                        path {
+                            fill: var(--text-disabled);
+                        }
+                    }
+                }
             }
         }
 

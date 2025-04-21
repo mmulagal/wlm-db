@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { cardDataDefault } from '../../workloadFactory/GetWell/GetWellUtils';
 import { GetWellSliceInterface } from '../../utils/types/getWellTypes';
+import { GENERAL } from '../../utils/appConstants';
 
 const initialState: GetWellSliceInterface = {
     optimizePageLoading: false,
@@ -35,6 +36,7 @@ const initialState: GetWellSliceInterface = {
     regionFromJM: '',
     landingFrom: '',
     inProgressOptimizationData: {},
+    inProgressResourceOptimizeData: {}, // To maintain the in progress data for resource optimization like clone database
     inProgressHostData: {},
     jobToInstanceMap: {},
     jobToInstanceMapForBulk: [],
@@ -42,7 +44,9 @@ const initialState: GetWellSliceInterface = {
     landingFromInnerPage: false,
     isInnerPageOptimize: false,
     gwAdhocError: '',
-    selectedCloneTab: 'Clones created with Workload factory (AKA Sandboxes)'
+    selectedCloneTab: GENERAL.CLONE_MANAGEMENT_TAB1,
+    cloneDashboardData: [], // Data stored for clone in inner page
+    cloneIsOptimizedRows: {} // To maintain optimized rows in clone assessment (resourceId + instanceId + cloneDatabasename)
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -158,6 +162,9 @@ const getWellOptimizeSlice = createSlice({
         setInProgressOptimizationData: (state, action: PayloadAction<any>) => {
             state.inProgressOptimizationData = action.payload;
         },
+        setInProgressResourceOptimizeData: (state, action: PayloadAction<any>) => {
+            state.inProgressResourceOptimizeData = action.payload;
+        },
         setInProgressHostData: (state, action: PayloadAction<any>) => {
             state.inProgressHostData = action.payload;
         },
@@ -190,6 +197,12 @@ const getWellOptimizeSlice = createSlice({
         },
         setGwAdhocError: (state, action: PayloadAction<any>) => {
             state.gwAdhocError = action.payload;
+        },
+        setCloneDashboardData: (state, action: PayloadAction<any>) => {
+            state.cloneDashboardData = action.payload;
+        },
+        setCloneIsOptimizedRows: (state, action: PayloadAction<any>) => {
+            state.cloneIsOptimizedRows = action.payload;
         }
     }
 });
@@ -223,6 +236,7 @@ export const {
     setOptimizingInstanceData,
     setSelectedRecommendedInstance,
     setInProgressOptimizationData,
+    setInProgressResourceOptimizeData,
     setInProgressHostData,
     setJobToInstanceMap,
     setRecommendedInstanceInBulk,
@@ -232,7 +246,9 @@ export const {
     setLandingFromInnerPage,
     setGwSelectedRowFsxId,
     setIsInnerPageOptimize,
-    setGwAdhocError
+    setGwAdhocError,
+    setCloneDashboardData,
+    setCloneIsOptimizedRows
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

@@ -1000,7 +1000,7 @@ async function getDatabaseHostSummaryV2(
         isManaged: true
     }));
     const errormessages: { [index: string]: string } = {};
-    const { node1InstanceId, node2InstanceId, fsxDataVolumeName } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
         credentialsId,
         region!,
@@ -1008,8 +1008,7 @@ async function getDatabaseHostSummaryV2(
         node2InstanceId,
         resourceId,
         accountId,
-        resourceType,
-        fsxDataVolumeName
+        resourceType
     );
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
@@ -1115,7 +1114,7 @@ async function getDatabaseHostSummaryV2(
                 } else {
                     runningDatabaseInstances =
                         resourceDetail.databaseInstanceDetails?.filter(
-                            instance => instance.instanceState === 'Running'
+                            instance => instance?.instanceState?.toUpperCase() === 'RUNNING'
                         ) ?? [];
                 }
 

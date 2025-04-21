@@ -34,7 +34,8 @@ import {
     getDatabaseInstanceName,
     getDescriptionForMatchingName,
     getQueueUrl,
-    parsePgSqlInstanceInfo
+    parsePgSqlInstanceInfo,
+    generateSqlResourceId
 } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
@@ -48,7 +49,7 @@ import {
     upsertDatabaseInstance
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
-import { getAllInstanceDetails, getMsSqlResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
+import { getAllInstanceDetails, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
 // import { handleNotification } from '../cloud-manager/notification-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
 import { getDeployments } from '../database/database-operations';
@@ -534,7 +535,7 @@ async function processCloudFormationMessages() {
                                                         FSxDataVolumeName: fsxDataVolumeName
                                                     } = resourceProperties;
 
-                                                    const resourceId = getMsSqlResourceId(
+                                                    const resourceId = generateSqlResourceId(
                                                         node1InstanceId,
                                                         node2InstanceId
                                                     );
@@ -691,9 +692,7 @@ async function processCloudFormationMessages() {
                                                                         accountId,
                                                                         credentialsId,
                                                                         region,
-                                                                        instanceName,
-                                                                        nodeIds,
-                                                                        fsxDataVolumeName
+                                                                        nodeIds
                                                                     );
                                                                     const { dbInstanceId } = parsePgSqlInstanceInfo(
                                                                         instanceInfo!

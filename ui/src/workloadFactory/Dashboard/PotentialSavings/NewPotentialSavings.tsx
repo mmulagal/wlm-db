@@ -78,6 +78,28 @@ const NewPotentialSavings = () => {
         return false;
     };
 
+    const setMarginTop = () => {
+        if (
+            !hasPotentialValues() &&
+            !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForEbsHost, potentialSavingsValues?.ebsCost) &&
+            !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForFsxwHost, potentialSavingsValues?.fsxwCost)
+        ) {
+            return '155px';
+        } else if (
+            hasPotentialValues() &&
+            checkForPotentialSavings(potentialSavingsValues?.fsxnCostForEbsHost, potentialSavingsValues?.ebsCost) &&
+            !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForFsxwHost, potentialSavingsValues?.fsxwCost)
+        ) {
+            return '137px';
+        } else if (
+            hasPotentialValues() &&
+            !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForEbsHost, potentialSavingsValues?.ebsCost) &&
+            checkForPotentialSavings(potentialSavingsValues?.fsxnCostForFsxwHost, potentialSavingsValues?.fsxwCost)
+        ) {
+            return '137px';
+        }
+    };
+
     return (
         <div className={styles.potentialSavings}>
             <div className={styles.headSection}>
@@ -262,7 +284,7 @@ const NewPotentialSavings = () => {
                                             categories={['FSx for ONTAP', '', '']}
                                             loadingWithNoData={true}
                                             loading={loading}
-                                            marginTop="155px"
+                                            marginTop={setMarginTop()}
                                             labelChange={true}
                                             labelChangeText="EBS"
                                         />
@@ -312,7 +334,7 @@ const NewPotentialSavings = () => {
                                             categories={['FSx for ONTAP', '', '']}
                                             loadingWithNoData={true}
                                             loading={loading}
-                                            marginTop="155px"
+                                            marginTop={setMarginTop()}
                                             labelChange={true}
                                             labelChangeText="FSx for Windows"
                                         />

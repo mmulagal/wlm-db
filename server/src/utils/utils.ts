@@ -998,6 +998,11 @@ function determineVolumeType(cloneVolumeName: string): 'log' | 'data' | 'unknown
     return 'unknown'; // Default case if neither 'sqllog' nor 'sqldata' is found
 }
 
+function generateSqlResourceId(node1InstanceId: string, node2InstanceId?: string): string {
+    const sortedInstanceIds = [node1InstanceId, node2InstanceId].sort();
+    return node2InstanceId ? generateHash(sortedInstanceIds.join('')) : generateHash(node1InstanceId);
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1056,5 +1061,6 @@ export {
     divideArrayIntoChunks,
     isValidProp,
     calculateDaysSince,
-    determineVolumeType
+    determineVolumeType,
+    generateSqlResourceId
 };

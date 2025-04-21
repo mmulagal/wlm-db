@@ -44,7 +44,7 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const awsBackupObj = instanceData?.assessments?.resiliency?.awsBackup;
+                    const awsBackupObj = instanceData?.assessments?.awsBackup;
                     const isAwsBackupOptimized = isOptimized(awsBackupObj?.status);
                     if (!isAwsBackupOptimized) {
                         awsBackupAssessmentData.push({

@@ -196,6 +196,22 @@ const GetWell = () => {
                             refreshGetWellPage();
                             dispatch(setGwAdhocError(jobRes?.data?.error));
                             clearInterval(jobInterval);
+                        }else if (status === JOB_MONITORING_STATUS.WARNING) {
+                            setTriggerAssessmentInProgress(false);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.WARNING,
+                                    message: 'Assessment completed with warnings'
+                                })
+                            );
+                            refreshGetWellPage();
+                            jobRes?.data?.subJobs?.forEach((job: { error?: string }) => {
+                                const errorMessage = job?.error;
+                                if(errorMessage){
+                                    dispatch(setGwAdhocError(errorMessage));
+                                }
+                              });
+                            clearInterval(jobInterval);
                         }
                     });
                 }, OPTIMIZE_POLLING_INTERVAL);

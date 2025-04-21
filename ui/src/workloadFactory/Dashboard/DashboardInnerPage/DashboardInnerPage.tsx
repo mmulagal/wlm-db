@@ -47,6 +47,7 @@ import {
     useOptimizeAwsBackupMutation
 } from '../../../utils/apiService';
 import {
+    setCloneDashboardData,
     setGwPageLoadInstanceData,
     setInProgressHostData,
     setInProgressOptimizationData,
@@ -73,7 +74,9 @@ import CloneManagementTable from './RenderTables/CloneManagementTable';
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
-    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData, cloneIsOptimizedRows } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
     const { allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
@@ -394,7 +397,7 @@ const DashboardInnerPage = () => {
                             uuid: selectedSnapshot?.data?.uuid,
                             name: selectedSnapshot?.data?.name
                         },
-                        volumes: rowData?.violations
+                        volumes: rowData?.objectsInViolation
                     }
                 ]
             };
@@ -704,7 +707,67 @@ const DashboardInnerPage = () => {
 
     const handleDialog = (type: string, rowData: any, operation?: string) => {
         if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
-            // ToDo - To open clone management optimize inner page
+            let cloneViolationsList: any = [];
+            if (rowData?.objectsInViolation) {
+                // get violations clone details for single selected instance. From dashboard single instance.
+                cloneViolationsList =
+                    rowData?.cloneDetails
+                        ?.filter((clone: any) => rowData?.objectsInViolation?.includes(clone.cloneDatabaseName))
+                        ?.map((obj: any) => ({
+                            ...obj,
+                            isOptimized:
+                                cloneIsOptimizedRows?.[
+                                    `${rowData?.databaseHostId}_${rowData?.instanceId}_${obj?.cloneDatabaseName}`
+                                ],
+                            credentialId: rowData?.credentialId,
+                            regionId: rowData?.regionId,
+                            resourceId: rowData?.databaseHostId,
+                            hostName: rowData?.hostName,
+                            instanceId: rowData?.instanceId,
+                            serverInstanceName: rowData?.serverInstanceName
+                        })) || [];
+                dispatch(
+                    setCloneDashboardData({
+                        type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        objectsInViolation: cloneViolationsList,
+                        severity: rowData?.severity,
+                        tags: rowData?.tags,
+                        recommendation: cardDataDefault?.clone_management?.recommendation
+                    })
+                );
+            } else {
+                // get violations clone details for all selected instance. From dashboard bulk selection.
+                rowData?.map((item: any) => {
+                    cloneViolationsList = [
+                        ...cloneViolationsList,
+                        ...(item?.cloneDetails
+                            ?.filter((clone: any) => item?.objectsInViolation?.includes(clone.cloneDatabaseName))
+                            ?.map((obj: any) => ({
+                                ...obj,
+                                isOptimized:
+                                    cloneIsOptimizedRows?.[
+                                        `${item?.databaseHostId}_${item?.instanceId}_${obj?.cloneDatabaseName}`
+                                    ],
+                                credentialId: item?.credentialId,
+                                regionId: item?.regionId,
+                                resourceId: item?.databaseHostId,
+                                hostName: item?.hostName,
+                                instanceId: item?.instanceId,
+                                serverInstanceName: item?.serverInstanceName
+                            })) || [])
+                    ];
+                });
+                dispatch(
+                    setCloneDashboardData({
+                        type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        objectsInViolation: cloneViolationsList,
+                        severity: rowData?.[0]?.severity,
+                        tags: rowData?.[0]?.tags,
+                        recommendation: cardDataDefault?.clone_management?.recommendation
+                    })
+                );
+            }
+            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE));
         } else {
             setDialog(
                 <DialogComponent

@@ -84,6 +84,10 @@ const discoverPgsqlHosts = `
         echo $primary_conninfo | grep -oP "host=\\K\\S+" || echo "unknown"
     }
 
+    get_server_instance_id() {
+        sudo pg_controldata $data_dir | grep "Database system identifier" | awk -F': +' '{print $2}'
+    }
+
     get_postgres_info() {
         local version=$(get_version)
         local mount_details=$(get_mount_details)
@@ -96,6 +100,7 @@ const discoverPgsqlHosts = `
         local deployment_type=$(get_deployment_type)
         local replica_info="null"
         local primary_host="null"
+        local server_instance_id=$(get_server_instance_id)
 
         if [[ $deployment_type == "ha" ]]; then
             local replica_type=$(get_replica_type)
@@ -118,7 +123,8 @@ const discoverPgsqlHosts = `
             \\"replica_type\\": \\"\${replica_type:-null}\\",
             \\"replica_info\\": \${replica_info},
             \\"primary_host\\": \\"\${primary_host:-null}\\",
-            \\"ebs_volume_id\\": \\"null\\"
+            \\"ebs_volume_id\\": \\"null\\",
+            \\"server_instance_id\\": \\"\${server_instance_id:-null}\\"
         }"
     }
 

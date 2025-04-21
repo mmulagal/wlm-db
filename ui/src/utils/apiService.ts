@@ -979,18 +979,25 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,resiliency,clone`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,clone,snapshot-policy,aws-backup,crr`
                 })
             }),
             getMssqlAssessmentDataForHost: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,resiliency,clone`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,clone,snapshot-policy,aws-backup,crr`
                 })
             }),
             triggerInstanceAssessment: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`,
                     method: 'POST'
+                })
+            }),
+            dismissMssqlAssessment: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/assessment/dismiss`,
+                    method: 'POST',
+                    body: payload
                 })
             }),
             optimizeStorageSizing: builder.mutation({
@@ -1071,6 +1078,13 @@ export const getWellApi = createApi({
             optimizeAwsBackup: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/mssql/database-hosts/optimize/resiliency/aws-backup`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            optimizeCloneCleanup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/clone`,
                     method: 'POST',
                     body: payload
                 })
@@ -1216,5 +1230,7 @@ export const {
     useOptimizeMaxdopConfigForBulkMutation,
     useLazyGetSnapshotPoliciesQuery,
     useOptimizeResiliencyMutation,
-    useOptimizeAwsBackupMutation
+    useOptimizeAwsBackupMutation,
+    useOptimizeCloneCleanupMutation,
+    useDismissMssqlAssessmentMutation
 } = getWellApi;
