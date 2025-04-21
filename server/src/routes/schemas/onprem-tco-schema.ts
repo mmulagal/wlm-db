@@ -30,17 +30,14 @@ const GeneratePayloadInternal = {
     }
 };
 
-const DeleteReportInternal = {
+const DeleteOnPremReport = {
     tags: [RouteTags.ONPREM_TCO],
     summary: 'Delete report for on-premises metrics collector',
     description: 'Delete report for on-premises metrics collector',
-    body: Type.Any(),
-    hide: true,
     params: Type.Object({
         accountId: Type.String({ description: 'The account ID' }),
         resourceId: Type.String({ description: 'The resource ID for part of the onprem report' })
     }),
-    consumes: ['application/json'],
     response: {
         200: Type.Object({
             count: Type.Number()
@@ -105,7 +102,7 @@ const OnpremTcoExploreSavingsSchema = {
 
 export {
     GeneratePayloadInternal,
-    DeleteReportInternal,
+    DeleteOnPremReport,
     DownloadSqlServerDataCollectorScriptSchema,
     UploadOnPremTcoDataSchema,
     ListOnPremDatabaseResourcesSchema,

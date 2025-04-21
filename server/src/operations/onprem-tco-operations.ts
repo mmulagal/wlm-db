@@ -131,11 +131,23 @@ async function deleteOnPremTcoReportResourceRecord(
     resourceIds: string,
     databaseType: DATABASE_TYPE = DATABASE_TYPE.mssql
 ) {
-    logger.info('Delete a report', { accountId, resourceIds });
+    logger.info('Delete sql data collector report', { accountId, resourceIds });
 
     const resourcesIdList = compact(resourceIds.split(','));
-
-    return removeOnPremTcoReportData(undefined, accountId, resourcesIdList, databaseType);
+    try {
+        const response = await removeOnPremTcoReportData(undefined, accountId, resourcesIdList, databaseType);
+        if (response.count === 0) {
+            logger.error('No report found to delete', { accountId, resourceIds });
+            throw createError(HttpErrorCodes.NOT_FOUND, `Report id ${resourceIds} not found for account ${accountId}`);
+        }
+        return response;
+    } catch (error: any) {
+        if (error.status === HttpErrorCodes.NOT_FOUND) {
+            throw createError(error);
+        }
+        logger.error('Error deleting report', { error });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error deleting report ${error}`);
+    }
 }
 
 function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
