@@ -68,9 +68,6 @@ async function handleCloneRemediation(
 
     try {
         if (clonedBy.toLowerCase() === SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE) {
-            if (!['delete', 'refresh'].includes(action)) {
-                logger.error(`Invalid action type: ${action}`);
-            }
             switch (action) {
                 case 'refresh':
                     logger.info(`Refreshing clone ${cloneDatabaseName} created by netapp_wf.`);
