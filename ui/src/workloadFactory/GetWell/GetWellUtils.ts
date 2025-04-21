@@ -2187,7 +2187,7 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOptimizingInstanceData(false));
 };
 
-// This function is used to update the progress of the optimization process for assessment confif resource level jobs. 
+// This function is used to update the progress of the optimization process for assessment confif resource level jobs.
 // Currently it is only written for clone cleanup.
 const updateProgressResourceForBulk = (
     dispatch: any,
@@ -2201,23 +2201,22 @@ const updateProgressResourceForBulk = (
     const state = store.getState();
     const { cloneDashboardData, cloneIsOptimizedRows } = state.getWellOptimize;
     let uniqueRanList: any = [];
-    dispatch(
-        setInProgressResourceOptimizeData({
-            ...inProgressResourceOptimizeData,
-            [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
-                const jobInstances =
-                    jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
-                        host?.sqlServerInstances?.flatMap((instance: any) =>
-                            instance?.clones?.map((clone: any) => {
-                                uniqueRanList.push(`${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`);
-                                return `${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`;
-                            })
-                        )
-                    ) || [];
-                return !jobInstances.includes(instanceId);
-            })
+    let newInProgressResourceOptimizationData: any = {
+        ...inProgressResourceOptimizeData,
+        [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
+            const jobInstances =
+                jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
+                    host?.sqlServerInstances?.flatMap((instance: any) =>
+                        instance?.clones?.map((clone: any) => {
+                            uniqueRanList.push(`${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`);
+                            return `${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`;
+                        })
+                    )
+                ) || [];
+            return !jobInstances.includes(instanceId);
         })
-    );
+    };
+    dispatch(setInProgressResourceOptimizeData(newInProgressResourceOptimizationData));
 
     let cloneIsOptimizedRowsList = {};
     let newCloneDashboardData = cloneDashboardData?.objectsInViolation?.map((row: any) => {
@@ -2248,31 +2247,30 @@ const updateProgressResourceForBulk = (
         })
     );
 
-    dispatch(
-        setInProgressOptimizationData({
-            ...inProgressOptimizationData,
-            [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
-                const jobInstances =
-                    jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
-                        host.sqlServerInstances.map((instance: any) => `${host.id}_${instance?.instanceId}`)
-                    ) || [];
-                return !jobInstances.includes(instanceId);
-            })
+    let newInProgressOptimizationData = {
+        ...inProgressOptimizationData,
+        [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+            const jobInstances =
+                jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
+                    host.sqlServerInstances.map((instance: any) => `${host.id}_${instance?.instanceId}`)
+                ) || [];
+            return !jobInstances.includes(instanceId);
         })
-    );
-    dispatch(
-        setInProgressHostData({
-            ...inProgressHostData,
-            [type]: inProgressHostData?.[type]?.filter(
-                //Data host id to check
-                (hostId: any) => {
-                    const jobHostIds = jobToInstanceMapForBulk[jobId]?.databaseHosts.map((host: any) => host.id) || [];
+    };
+    dispatch(setInProgressOptimizationData(newInProgressOptimizationData));
 
-                    return !jobHostIds.includes(hostId);
-                }
-            )
-        })
-    );
+    let newInProgressHostData = {
+        ...inProgressHostData,
+        [type]: inProgressHostData?.[type]?.filter(
+            //Data host id to check
+            (hostId: any) => {
+                const jobHostIds = jobToInstanceMapForBulk[jobId]?.databaseHosts.map((host: any) => host.id) || [];
+
+                return !jobHostIds.includes(hostId);
+            }
+        )
+    };
+    dispatch(setInProgressHostData(newInProgressHostData));
 };
 
 const updateProgressForBulk = (
