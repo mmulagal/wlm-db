@@ -252,7 +252,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: 'Error deleting the resource.'
+                            message: res?.error?.message || res?.data?.message
                         })
                     );
                 }
@@ -261,7 +261,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: 'Error deleting the resource.'
+                        message: err || 'Error deleting the resource.'
                     })
                 );
             });
