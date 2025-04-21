@@ -143,15 +143,47 @@ async function deleteClone(
     cloneDatabaseName: string,
     jobId: string
 ) {
+    logger.info(`Deleting clone ${cloneDatabaseName} in database host ${databaseHostId}`, {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        cloneDatabaseName
+    });
+
+    let deleteJobId = '';
     try {
+        const { id } = await registerJob(accountId, credentialsId, region, {
+            name: `Delete clone ${cloneDatabaseName}`,
+            description: `Delete clone ${cloneDatabaseName} in database host ${databaseHostId}`,
+            resourceName: cloneDatabaseName,
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.OPTIMIZATION,
+            parentJobId: jobId
+        });
+        deleteJobId = id;
         const source = { host: databaseHostId, instance: databaseInstanceId, database: cloneDatabaseName };
         const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
         logger.info(`Executing delete operation for clone ${cloneDatabaseName}`);
-        await performSandboxDeletion(accountId, region, credentialsId, jobId, srcDetails);
+        await performSandboxDeletion(accountId, region, credentialsId, deleteJobId, srcDetails);
         logger.info(`Successfully deleted clone ${cloneDatabaseName}`);
+
+        await updateJobDetails(accountId, deleteJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
     } catch (error: any) {
         const errorMsg = `Error while deleting clone ${cloneDatabaseName}: ${error.message}`;
         logger.error(errorMsg, error);
+
+        await updateJobDetails(accountId, deleteJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: errorMsg
+        });
+
         throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
 }
@@ -174,7 +206,20 @@ async function refreshClone(
         cloneDatabaseName
     });
 
+    let refreshJobId = '';
+
     try {
+        const { id } = await registerJob(accountId, credentialsId, region, {
+            name: `Refresh clone ${cloneDatabaseName}`,
+            description: `Refresh clone ${cloneDatabaseName} in database host ${databaseHostId}`,
+            resourceName: cloneDatabaseName,
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.OPTIMIZATION,
+            parentJobId: jobId
+        });
+        refreshJobId = id;
+
         const source = { host: databaseHostId, instance: databaseInstanceId, database: cloneDatabaseName };
         const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
         // Fetch the latest snapshot for the sandbox
@@ -193,14 +238,12 @@ async function refreshClone(
                 `No snapshots found for sandbox ${cloneDatabaseName} in database host ${databaseHostId}`
             );
         }
-
-        // Convert the `created` property to a number and get the latest snapshot
         const latestSnapshot = snapshots.reduce(
             (latest: { name: string; created: number }, current: { name: string; created: string }) => {
-                const currentCreated = new Date(current.created).getTime(); // Convert `created` to a timestamp
+                const currentCreated = new Date(current.created).getTime();
                 return currentCreated > latest.created ? { ...current, created: currentCreated } : latest;
             },
-            { name: '', created: 0 } // Initial value for `reduce`
+            { name: '', created: 0 }
         );
 
         logger.info(`Latest snapshot for sandbox ${cloneDatabaseName}: ${latestSnapshot.name}`, {
@@ -210,16 +253,25 @@ async function refreshClone(
             accountId,
             credentialsId,
             region,
-            jobId,
+            refreshJobId,
             srcDetails,
             SandboxLifecycleAction.REFRESH,
             latestSnapshot.name
         );
 
         logger.info(`Successfully refreshed sandbox ${cloneDatabaseName} to the latest snapshot`);
+        await updateJobDetails(accountId, refreshJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
     } catch (error: any) {
         const errorMsg = `Error while refreshing sandbox ${cloneDatabaseName} in database host ${databaseHostId}: ${error.message}`;
         logger.error(errorMsg, error);
+        await updateJobDetails(accountId, refreshJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: errorMsg
+        });
         throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
 }
