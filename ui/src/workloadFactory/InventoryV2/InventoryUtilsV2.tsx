@@ -1008,6 +1008,8 @@ export const formatDiscoverInstanceData = (
 };
 
 export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
+    let updatedState = store.getState();
+    const { isDemoMode } = updatedState.auth;
     if (!data || data.length < 2) {
         return data;
     }
@@ -1055,10 +1057,26 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
         return weightB - weightA;
     });
 
+    if (isDemoMode) {
+        const order = {
+            'Microsoft SQL Server': 1,
+            Oracle: 2,
+            PostgreSQL: 3
+        };
+
+        result.sort((a, b) => {
+            //@ts-ignore
+            return (order[a.hostType] || 99) - (order[b.hostType] || 99);
+        });
+
+        return result;
+    }
     return result;
 };
 
 export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
+    let updatedState = store.getState();
+    const { isDemoMode } = updatedState.auth;
     if (!data || data.length < 2) {
         return data;
     }
@@ -1087,7 +1105,42 @@ export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
         return weightB - weightA;
     });
 
+    if (isDemoMode) {
+        const order = {
+            'Microsoft SQL Server': 1,
+            Oracle: 2,
+            PostgreSQL: 3
+        };
+
+        result.sort((a, b) => {
+            //@ts-ignore
+            return (order[a.hostType] || 99) - (order[b.hostType] || 99);
+        });
+
+        return result;
+    }
     return result;
+};
+
+export const sortDatabaseTableData = (data: Array<InventoryTableData>) => {
+    let updatedState = store.getState();
+    const { isDemoMode } = updatedState.auth;
+
+    if (isDemoMode) {
+        const order = {
+            'Microsoft SQL Server': 1,
+            Oracle: 2,
+            PostgreSQL: 3
+        };
+
+        data.sort((a, b) => {
+            //@ts-ignore
+            return (order[a.hostType] || 99) - (order[b.hostType] || 99);
+        });
+
+        return data;
+    }
+    return data;
 };
 
 export const getMhUnmanagedInstances = (
