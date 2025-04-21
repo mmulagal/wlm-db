@@ -62,6 +62,10 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                     {instanceOptimizationSummary?.totalInstances}
                                 </DsTypography>
 
+                                {instanceOptimizationSummary?.hasDismissedOrPostponed && (
+                                    <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>
+                                )}
+
                                 {loading && (
                                     <div className={styles.loadingPosition}>
                                         <DsFlashingDotsLoader />
@@ -98,9 +102,15 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                     <ChartComponent />
                     <div className={styles.secondPartSmallRes}>
                         <div className={styles.headSectionSmall}>
-                            <DsTypography variant="Semibold_16" className={styles.heading}>
-                                Total managed instances &nbsp;{instanceOptimizationSummary?.totalInstances}
-                            </DsTypography>
+                            <div className={styles.manageInstanceTooltipSection}>
+                                <DsTypography variant="Semibold_16">
+                                    Total managed instances &nbsp;{instanceOptimizationSummary?.totalInstances}
+                                </DsTypography>
+                                {instanceOptimizationSummary?.hasDismissedOrPostponed && (
+                                    <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>
+                                )}
+                            </div>
+
                             {loading && (
                                 <div style={{ position: 'relative', top: '12px' }}>
                                     <DsFlashingDotsLoader />

@@ -2,6 +2,7 @@ import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-
 import styles from './BarComponent.module.scss';
 import ProgressBar from '../../../common/ProgressBar/ProgressBar';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
+import { CONFIG_STATES, CONFIG_STATES_UI } from '../../../utils/consts';
 
 type BarComponentType = {
     color: string;
@@ -184,7 +185,8 @@ const BarComponent = ({
                     <div className={styles.bottomTextSection}>
                         <Warning />
                         <DsTypography variant="Regular_14">
-                            This configuration is {textMessage === 'Dismissed' ? 'dismissed' : 'postponed'}.
+                            This configuration analysis is{' '}
+                            {textMessage === CONFIG_STATES_UI.DISMISSED ? 'dismissed' : 'postponed'}.
                         </DsTypography>
                     </div>
                 )}

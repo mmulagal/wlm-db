@@ -811,3 +811,10 @@ export const CONFIG_STATES = {
     DISMISSED: 'DISMISSED',
     ACTIVATING: 'ACTIVATING'
 };
+
+export const CONFIG_STATES_UI = {
+    ACTIVE: 'Active',
+    POSTPONED: 'Postponed',
+    DISMISSED: 'Dismissed',
+    ACTIVATING: 'Activating'
+};
