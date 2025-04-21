@@ -264,8 +264,8 @@ async function callSsmExecution(
     };
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
-        const { response } = await executeSSMDocument(credentialsId, region, params, accountId);
-        let { error, output = '' } = await extractSsmResponse({ response });
+        const response = await executeSSMDocument(credentialsId, region, params, accountId);
+        let { error, output = '' } = await extractSsmResponse(response);
         if (error) {
             throw createError(error);
         }
@@ -274,16 +274,16 @@ async function callSsmExecution(
             writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
         }
         if (output.endsWith('--output truncated--')) {
-            if (!response?.CommandId) {
+            if (!response?.response?.CommandId) {
                 throw createError('Command Id not found');
             }
             const responses = await getSsmResponseFromCloudWatch(
                 credentialsId,
                 region,
-                response?.CommandId,
+                response?.response?.CommandId,
                 activeNodeInstanceId
             );
-            output = responses.join(',');
+            output = responses.join('');
         }
         return output;
     } catch (error: any) {
@@ -299,7 +299,8 @@ async function getSsmResponseFromCloudWatch(
 ) {
     logger.info('Getting SSM response from CloudWatch', { credentialId, region, commandId, instanceId });
     const logGroupName = CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE;
-    const logStreamName = `${commandId}/${instanceId}/aws-runPowerShellScript/stdout`;
+    const logStreamSuffix = 'aws-runPowerShellScript/stdout';
+    const logStreamName = `${commandId}/${instanceId}/${logStreamSuffix}`;
 
     try {
         const logs = await getLogs(credentialId, region, logGroupName, logStreamName);

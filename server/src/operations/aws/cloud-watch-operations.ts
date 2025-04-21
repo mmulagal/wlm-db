@@ -1,8 +1,9 @@
 import { Statistic, GetMetricStatisticsCommandInput } from '@aws-sdk/client-cloudwatch';
 import ms from 'ms';
-import getMetricStatistics, { getPaginatedLogs } from '../../lib/aws/cloud-watch';
+import getMetricStatistics from '../../lib/aws/cloud-watch';
 import getLogger from '../../utils/logger';
 import { describeFSx } from '../../lib/aws/fsx';
+import getPaginatedLogs from '../../lib/aws/cloud-watch-logs';
 
 const logger = getLogger();
 
@@ -273,15 +274,14 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
 
 async function getLogs(credentialsId: string, region: string, logGroupName: string, logStreamName: string) {
     logger.info('Getting cloudwatch logs response:', { region, credentialsId, logGroupName, logStreamName });
-    const limit = 200;
-    const params = {
+
+    const input = {
         logGroupName,
-        logStreamName,
-        limit
+        logStreamName
     };
 
     try {
-        const logs = await getPaginatedLogs(credentialsId, region, params);
+        const logs = await getPaginatedLogs(credentialsId, region, input);
         return logs;
     } catch (error) {
         logger.error('Error reading log events from CloudWatch:', error);

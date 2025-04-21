@@ -260,7 +260,7 @@
                 "Action": [
                     "logs:GetLogEvents"
                 ],
-                "Resource": "arn:aws:logs:*:*:log-group:WLMDB-Ssm-Response:*"
+                "Resource": "arn:aws:logs:*:*:log-group:netapp/wlmdb/*"
             }
         ]
     }
