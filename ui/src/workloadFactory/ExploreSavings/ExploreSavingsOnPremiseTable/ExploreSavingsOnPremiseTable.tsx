@@ -237,25 +237,34 @@ const ExploreSavingsOnPremiseTable = () => {
 
     //Delete function
     const handleDelete = (rowData: any) => {
-        deleteOnPremTco({ resourceId: rowData.resourceId }).then((res: any) => {
-            if (res && res?.data?.count === 1) {
-                const updatedTableData = tableData.filter((item: any) => item.uniqueId !== rowData.uniqueId);
-                setTableData(updatedTableData);
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: 'Deleted successfully.'
-                    })
-                );
-            } else {
+        deleteOnPremTco({ resourceId: rowData.resourceId })
+            .then((res: any) => {
+                if (res && res?.data?.count === 1) {
+                    const updatedTableData = tableData.filter((item: any) => item.uniqueId !== rowData.uniqueId);
+                    setTableData(updatedTableData);
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: 'Deleted successfully.'
+                        })
+                    );
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: 'Error deleting the resource.'
+                        })
+                    );
+                }
+            })
+            .catch((err: any) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
                         message: 'Error deleting the resource.'
                     })
                 );
-            }
-        });
+            });
     };
 
     const lastColDetails = () => {
