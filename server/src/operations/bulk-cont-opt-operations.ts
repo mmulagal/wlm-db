@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import throat from 'throat';
 import getLogger from '../utils/logger';
-import { HttpErrorCodes } from '../utils/consts';
+import { AuditStatus, HttpErrorCodes } from '../utils/consts';
 import {
     BulkOptimizeCloneInHostRequestBodyType,
     BulkOptimizeComputePerHostRequestBodyType,
@@ -31,6 +31,7 @@ import {
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
 import { handleOptimizeRssOptimization } from './continuous-optimization/rssConfig-optimize-operations';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const logger = getLogger();
 
@@ -125,6 +126,7 @@ async function bulkCloneOptimization(accountId: string, hostsToOptimize: BulkOpt
 
     const jobDescription = 'Optimize clones';
 
+    // First Job Created
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
         '',
@@ -184,14 +186,17 @@ async function handleBulkCloneOptimization(
                         }
                     })
                 );
-            } catch (error) {
+            } catch (error: any) {
                 logger.error(
                     `Error occurred while optimizing operating system configuration for account ${accountId}. Error: ${error}`
                 );
+                // Main Parent Job will be updated only after all the clone actions are performed
+                updateLongRunningAuditGroup(AuditStatus.FAILED, error?.message);
                 masterOptimizeParentStatus = JOBSTATUS.FAILED;
             } finally {
                 if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
                     await updateParentJobStatus(accountId, parentJobId);
+                    updateLongRunningAuditGroup(AuditStatus.SUCCESS);
                 }
             }
         })

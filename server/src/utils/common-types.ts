@@ -649,5 +649,6 @@ export {
     InstancesResponse,
     VolumeDBMapEntry,
     AWSBackupAssessment,
-    ResourceAssessmentData
+    ResourceAssessmentData,
+    ClonedVolumeDetail
 };

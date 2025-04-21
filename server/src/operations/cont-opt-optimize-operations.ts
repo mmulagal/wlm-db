@@ -16,7 +16,8 @@ import {
     StorageTierParams,
     MaxDOPAssesment,
     AwsFsxNBackupConfig,
-    CloneAssesment
+    CloneAssesment,
+    CloneDetail
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -2797,6 +2798,7 @@ async function optimizeClone(
     clone: CloneDetailType,
     parentJobId: string
 ) {
+    // 2nd Level Job having master parent job id
     logger.info('Optimizing clone', {
         accountId,
         credentialsId,
@@ -2808,6 +2810,8 @@ async function optimizeClone(
     });
 
     let childCloneJobId = '';
+
+    const { cloneDatabaseName, clonedBy } = clone;
     try {
         const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
             accountId,
@@ -2822,8 +2826,8 @@ async function optimizeClone(
             database_instances: { database_instance_name: instanceName = '' } = {},
             resource: { resource_name: sqlServerName = '' } = {}
         } = persistedConfigurationData || {};
-        const clones = configData as unknown as CloneAssesment;
-        logger.debug(`Clones data ${JSON.stringify(clones)}`);
+        const { oldCloneDetails } = configData as unknown as CloneAssesment;
+        logger.debug(`Clones data ${JSON.stringify(oldCloneDetails)}`);
 
         // check whether required for clones
         if (!instanceName || !sqlServerName) {
@@ -2831,18 +2835,26 @@ async function optimizeClone(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or sql server name is missing');
         }
 
-        const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, clone.cloneDatabaseName);
+        const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, cloneDatabaseName);
         const { id } = await registerJob(accountId, credentialsId, region, {
             type: JOBTYPE.OPTIMIZATION,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName as string,
             name: `Optimize clone for ${serverNameWithHostName}`,
             startTime: Date.now(),
-            description: `Optimize clone for ${serverNameWithHostName}, clone database ${clone.cloneDatabaseName}`,
+            description: `Optimize clone for ${serverNameWithHostName}, clone database ${cloneDatabaseName}`,
             ...(parentJobId && { parentJobId })
         });
         childCloneJobId = id;
 
+        const matchingClone: CloneDetail | undefined = oldCloneDetails?.find(
+            ({ cloneDatabaseName: databaseName, clonedBy: owner }) =>
+                databaseName === cloneDatabaseName && owner === clonedBy?.toLowerCase()
+        );
+
+        if (!matchingClone) {
+            throw createError(HttpErrorCodes.NOT_FOUND, `Clone ${cloneDatabaseName} not found for ${clonedBy}`);
+        }
         await handleCloneRemediation(
             accountId,
             credentialsId,
@@ -2851,8 +2863,14 @@ async function optimizeClone(
             databaseInstanceId,
             childCloneJobId,
             clone,
+            matchingClone,
             serverNameWithHostName
         );
+        // can update once the job is success for this newly created child job one
+        await updateJobDetails(accountId, childCloneJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
     } catch (err) {
         const errorMessage = `Error while optimizing clone ${clone.cloneDatabaseName} ${err}`;
         logger.error(errorMessage);
@@ -2861,12 +2879,8 @@ async function optimizeClone(
             endTime: Date.now(),
             error: errorMessage
         });
-        // may have to move this to initial call level as we have to do optimize for all clones to mark the status of audit
-        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
-
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
-    return { jobId: childCloneJobId };
 }
 
 function isDatabaseInstanceMetadata(value: any): value is DatabaseInstanceMetadata {

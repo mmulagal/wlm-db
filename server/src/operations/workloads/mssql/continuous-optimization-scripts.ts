@@ -1,8 +1,9 @@
 import { BulkOptimizeSnapshotPolicyParamsType } from '../../../routes/types/continuous-optimization.types';
 import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
-import { ontapRestRequest } from './common-templates';
+import { ontapJobStatusTemplate, ontapRestRequest } from './common-templates';
 import {
     COMPUTE_OPTIMIZE_LOG_PATH,
+    DELETE_CLONE_VOLUME_LOG_PATH,
     DISCOVER_OPERATION_LOG_PATH,
     RESILIENCY_OPTIMIZE_LOG_PATH,
     RSS_OPTIMIZE_LOG_PATH,
@@ -1499,6 +1500,54 @@ const GET_SANDBOX_DETAILS = (instanceName: string, sqlAuthEnabled: boolean, quer
     Write-Output $jsonResult
 `;
 
+const DELETE_CLONE_VOLUMES = (params: { fsxId: string; region: string; volUuids: string }) => `
+    # Delete clone volumes
+    Start-Transcript -Path ${DELETE_CLONE_VOLUME_LOG_PATH} -Append | Out-Null
+    ${JSON_CHECK};
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = '${params.fsxId}'
+    $FSxRegion = '${params.region}'
+    $volUuids = '${params.volUuids}' | ConvertFrom-Json
+    $apiEndpoint = '/storage/volumes/'
+    ${ontapRestRequest}
+    ${ontapJobStatusTemplate}
+    
+    # Initialize an array to collect results for each volume
+    $finalResults = @()
+    
+    foreach($volUuid in $volUuids) {
+        $result = @{}
+        $result['volumeUuid'] = $volUuid
+        try {
+            Write-Information "Deleting Clone Volume for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid"
+            $apiEndpointWithPathParams = $apiEndpoint + $volUuid
+            $response = Invoke-ONTAPRequest -ApiEndpoint $apiEndpointWithPathParams -method "DELETE"
+            $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
+            if ($jobStatus.state -eq 'success') {
+                $result['status'] = 'success'
+                $result['jobUuid'] = $response.job.uuid
+            } else {
+                $result['status'] = 'failed'
+                $result['error'] = "Ontap error: Could not delete volume $volUuid. $($jobStatus.message)"
+            }
+        } catch {
+            $result['status'] = 'failed'
+            $result['error'] = $_.Exception.Message
+            Write-Information "Error occurred while deleting FSx volume for Volume UUID: $volUuid. Error: $_.Exception.Message"
+        }
+        $finalResults += $result
+    }
+    
+    $res = @{ "volumes" = $finalResults }
+    $res = $res | ConvertTo-Json
+    if([string]::IsNullOrEmpty($res)) {
+        throw "Failed to compress the response because the response is either null or empty. $res"
+    }
+    ${compressResponse}
+    Stop-Transcript | Out-Null
+    return (Deflate-String $res)
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
@@ -1518,5 +1567,6 @@ export {
     SET_MAXDOP,
     JSON_CHECK,
     GET_LATEST_SNAPSHOT_TIME,
-    GET_SANDBOX_DETAILS
+    GET_SANDBOX_DETAILS,
+    DELETE_CLONE_VOLUMES
 };
