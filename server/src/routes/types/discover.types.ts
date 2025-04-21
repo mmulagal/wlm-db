@@ -332,7 +332,10 @@ const DiscoverPgSqlResponseBody = Type.Object({
 const oracleDatabaseInstance = Type.Object({
     instanceName: Type.String({ description: 'Oracle instance name' }),
     instanceId: Type.String({ description: 'Oracle instance ID' }),
-    instanceState: Type.String({ description: 'Oracle instance state' }),
+    instanceState: Type.String({
+        description: 'Oracle instance state',
+        enum: ['STARTED', 'MOUNTED', 'OPEN', 'OPEN MIGRATE']
+    }),
     version: Type.String({ description: 'Oracle instance version' }),
     instanceType: Type.String({
         description: 'database type',
@@ -352,7 +355,19 @@ const oracleDatabaseInstance = Type.Object({
             Type.Object({
                 pdbName: Type.String({ description: 'Oracle pluggable database name' }),
                 pdbId: Type.String({ description: 'Oracle pluggable database ID' }),
-                pdbStatus: Type.String()
+                pdbStatus: Type.String({
+                    enum: [
+                        'NEW',
+                        'NORMAL',
+                        'UNPLUGGED',
+                        'RELOCATED',
+                        'RELOCATING',
+                        'REFRESHING',
+                        'UNDEFINED',
+                        'UNUSABLE'
+                    ],
+                    description: 'Oracle pluggable database status'
+                })
             })
         )
     ),
@@ -383,18 +398,10 @@ const oracleDatabaseInstance = Type.Object({
 const DiscoverOracleResponseInfo = Type.Intersect([
     Type.Omit(DiscoverResponseInfo, ['sqlServerInstances']),
     Type.Object({
-        oracleServerInstance: Type.Optional(Type.String({ description: 'host name', default: 'oracle' })),
-        oracleServerState: Type.Optional(
-            Type.String({
-                description: 'Oracle host server state',
-                enum: ['running', 'stopped']
-            })
-        ),
-        oracleServerVersion: Type.Optional(Type.String({ description: 'Oracle version' })),
         oracleServerDeploymentType: Type.Optional(
             Type.String({
                 description: 'Oracle deployment architecture.',
-                enum: ['standalone', 'ha']
+                enum: ['Standalone', 'HA']
             })
         ),
         databaseInstanceDetails: Type.Optional(Type.Array(oracleDatabaseInstance)),
@@ -416,7 +423,7 @@ type DiscoverPgSqlResponseBodyType = Static<typeof DiscoverPgSqlResponseBody>;
 type DiscoverPgSqlResponseType = Static<typeof DiscoverPgSqlResponseInfo>;
 type pgsqlNodeDetailsType = Static<typeof pgSqlServerNode>;
 type DiscoverOracleInstanceType = Static<typeof oracleDatabaseInstance>;
-// type DiscoverOracleResponseBodyType = Static<typeof DiscoverOracleResponseBody>;
+type DiscoverOracleResponseBodyType = Static<typeof DiscoverOracleResponseBody>;
 type DiscoverOracleResponseType = Static<typeof DiscoverOracleResponseInfo>;
 
 export {
@@ -445,5 +452,6 @@ export {
     MultiHostManageResponseBody,
     DiscoverOracleResponseBody,
     DiscoverOracleInstanceType,
+    DiscoverOracleResponseBodyType,
     DiscoverOracleResponseType
 };

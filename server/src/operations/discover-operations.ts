@@ -98,7 +98,8 @@ import {
     DiscoverPgSqlResponseType,
     DiscoverPgSqlResponseBodyType,
     DiscoverOracleResponseType,
-    DiscoverOracleInstanceType
+    DiscoverOracleInstanceType,
+    DiscoverOracleResponseBodyType
 } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
@@ -2426,7 +2427,7 @@ function getDiscoveredOracleInstancesStorageDetails(
     localVolumeName?: string,
     nfsMountPoint?: string
 ) {
-    logger.debug('Get discovered oracle instances storage details', {
+    logger.info('Get discovered oracle instances storage details', {
         ebsVolumeIDs,
         endPointIpWithFsxInfo,
         fsIdWithFsxInfo,
@@ -2480,7 +2481,7 @@ async function discoverOracleResources(
     pageSize?: number,
     nextToken?: string,
     ec2InstanceIds: string[] = []
-) {
+): Promise<DiscoverOracleResponseBodyType> {
     logger.info('Discover Oracle resources', {
         accountId,
         credentialsId,
@@ -2491,7 +2492,10 @@ async function discoverOracleResources(
     });
 
     const filters = [
-        { Name: 'platform-details', Values: ['Linux/UNIX', 'Red Hat Enterprise Linux with SQL Server Standard'] },
+        {
+            Name: 'platform-details',
+            Values: ['Linux/UNIX', 'Red Hat Enterprise Linux', 'Red Hat Enterprise Linux with SQL Server Standard']
+        },
         { Name: 'instance-state-name', Values: ['running'] }
     ];
 
@@ -2520,7 +2524,7 @@ async function discoverOracleResources(
     const ssmCommandInput: SendCommandCommandInput = {
         DocumentName: 'AWS-RunShellScript',
         InstanceIds: compact(ssmConnectedEc2Instances.map(target => target?.ec2InstanceId)),
-        Comment: 'Discover PostgreSQL resources',
+        Comment: 'Discover Oracle resources',
         Parameters: {
             commands: [discoverOracleHosts],
             executionTimeout: [config.get<string>('ssm.execution-timeout')]
@@ -2614,11 +2618,9 @@ async function discoverOracleResources(
                 let parsedResponse;
                 try {
                     parsedResponse = sqlResponseParsing(output || '{}');
-                    logger.info('Parsed SSM ORACLE response', { parsedResponse });
+                    logger.debug('Parsed SSM ORACLE response', { parsedResponse });
                     ec2Instance = {
                         ...ec2Instance,
-                        oracleServerVersion: '19',
-                        oracleServerState: 'running',
                         oracleServerDeploymentType: 'Standalone'
                     };
 
@@ -2639,7 +2641,8 @@ async function discoverOracleResources(
                         } = dbInstance.database_details;
 
                         const pluggableDatabases = [];
-                        if (isCDB === 'YES') {
+                        const isContainerDbInstance = isCDB === 'YES';
+                        if (isContainerDbInstance) {
                             for (const pluggableDatabase of dbInstance.pdb_database_details) {
                                 const { pdb_id: pdbId, pdb_name: pdbName, status: pdbStatus } = pluggableDatabase;
                                 pluggableDatabases.push({
@@ -2651,7 +2654,6 @@ async function discoverOracleResources(
                         }
                         const nfsIpAddress = dbInstance.nfs_ip_address;
                         const nfsMountPoint = dbInstance.nfs_mount_point;
-
                         const storageDetails = getDiscoveredOracleInstancesStorageDetails(
                             ec2Instance.ebsVolumeIDs!,
                             endPointIpWithFsxInfo,
@@ -2668,14 +2670,14 @@ async function discoverOracleResources(
                             instanceName,
                             version,
                             instanceState,
-                            instanceType: isCDB === 'YES' ? 'MULTI_TENANT' : 'SINGLE_TENANT',
-                            databaseCount: isCDB === 'YES' ? pluggableDatabases.length : 1,
+                            instanceType: isContainerDbInstance ? 'MULTI_TENANT' : 'SINGLE_TENANT',
+                            databaseCount: isContainerDbInstance ? pluggableDatabases.length : 1,
                             databaseDetails: {
                                 databaseId,
                                 databaseName,
                                 openMode
                             },
-                            ...(isCDB === 'YES' && {
+                            ...(isContainerDbInstance && {
                                 pluggableDatabases
                             }),
                             storage: storageDetails

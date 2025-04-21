@@ -4,30 +4,20 @@ const getStorageDetails = `
     find_mountpoint() {
         local target="$1"
         local mountPoint
-
-        # Loop through the directory structure to find the mount point.
-        while true; do
-            mountPoint=$(findmnt -n -o SOURCE "$target")
-            if [ -n "$mountPoint" ]; then
-                dns_name=$(echo "$mountPoint" | cut -d':' -f1)
-                nfs_mount_point=$(echo "$mountPoint" | cut -d':' -f2-)
-                # Check if dns_name already appears to be an IP address (simple check for digits and dots)
-                if [[ $dns_name =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
-                    nfs_ip_address="$dns_name"
-                else
-                    nfs_ip_address=$(dig +short "$dns_name")
-                fi
-
-                echo "$nfs_ip_address,$nfs_mount_point"
-                return 0
+        mountPoint=$(findmnt -T "$target" -n -o SOURCE)
+        if [ -n "$mountPoint" ]; then
+            dns_name=$(echo "$mountPoint" | cut -d':' -f1)
+            nfs_mount_point=$(echo "$mountPoint" | cut -d':' -f2-)
+            # Check if dns_name already appears to be an IP address (simple check for digits and dots)
+            if [[ $dns_name =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+                nfs_ip_address="$dns_name"
+            else
+                nfs_ip_address=$(dig +short "$dns_name")
             fi
 
-            target=$(dirname "$target")
-            # Stop if we've reached the root directory.
-            if [ "$target" = "/" ]; then
-                break
-            fi
-        done
+            echo "$nfs_ip_address,$nfs_mount_point"
+            return 0
+        fi
 
         echo "Mount point not found for $1."
         return 1
@@ -43,12 +33,6 @@ const getStorageDetails = `
             EXIT;
 EOF
     }
-
-    # Check if the instance is running by checking for its PMON process.
-    if ! pgrep -f "ora_pmon_$ORACLE_SID" > /dev/null 2>&1; then
-        echo "Instance $ORACLE_SID is not active. Skipping."
-        continue
-    fi
 
     # Query to retrieve data file path.
     DATA_FILE=$(get_data_file_path)
@@ -75,8 +59,8 @@ const discoverOracleHosts = `
         exit 0
     fi
 
-    RESULTS="["  # start of our JSON array
-    FIRST=1      # flag to determine if we add a comma
+    RESULTS="["  # start of the JSON array
+    FIRST=1      # flag to determine the first object
 
     # Parse /etc/oratab, ignoring comment lines (#) and blank lines
     SIDS=$(grep -v '^#' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
@@ -136,6 +120,12 @@ EOF
 
     for sid in $SIDS; do
         export ORACLE_SID="$sid"
+
+        # Check if the instance is running by checking for its PMON process.
+        if ! pgrep -f "ora_pmon_$ORACLE_SID" > /dev/null 2>&1; then
+            echo "Instance $ORACLE_SID is not active. Skipping."
+            continue
+        fi
 
         INSTANCE_DETAILS=$(get_instance_details)
         DATABASE_DETAILS=$(get_database_details)

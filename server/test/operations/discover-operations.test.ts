@@ -3,7 +3,8 @@ import {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
     manageSqlServerV2,
-    discoverPgSqlResources
+    discoverPgSqlResources,
+    discoverOracleResources
 } from '../../src/operations/discover-operations';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import '../simulator/scopes/aws/ec2-scope';
@@ -91,6 +92,15 @@ describe('Discover operations: PGSQL', () => {
         const response = await discoverPgSqlResources(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 10);
         const connectedResources = response.items.find(item => item.ssmState === 'connected');
         expect(connectedResources?.pgsqlServerVersion).toEqual('psql (PostgreSQL) 16.5');
+        expect(response).toBeDefined();
+    });
+});
+
+describe('Discover operations: Oracle', () => {
+    it('Discover EC2 instances hosting Oracle Server', async () => {
+        const response = await discoverOracleResources(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 10);
+        const connectedResources = response.items.find(item => item.ssmState === 'connected');
+        expect(connectedResources?.databaseInstanceDetails).toBeDefined();
         expect(response).toBeDefined();
     });
 });
