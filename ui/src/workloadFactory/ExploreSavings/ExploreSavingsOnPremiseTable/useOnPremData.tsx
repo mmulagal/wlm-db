@@ -47,7 +47,8 @@ export const useOnPremData = () => {
                     totalInstance: perRowInstance?.length,
                     instanceNameList:
                         perRowInstance?.map((detail: { sqlInstanceName: string }) => detail?.sqlInstanceName) || [],
-                    nameForSorting: perRow?.resourceName?.toLowerCase()
+                    nameForSorting: perRow?.resourceName?.toLowerCase(),
+                    uniqueId: 'id' + Math.random().toString(16).slice(2)
                 };
                 result.push(rowData);
             });

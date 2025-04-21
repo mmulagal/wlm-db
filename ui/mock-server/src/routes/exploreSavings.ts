@@ -49,6 +49,14 @@ router.post(`${BASE_URL}/v1/notification/email?emailType=savings-calculations`, 
     }, 50);
 });
 
+router.delete(`${BASE_URL}/v1/mssql/onprem-tco/resources/:resourceId`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            count: 1
+        });
+    }, 50);
+});
+
 router.post(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/instances/:instanceId/storage-savings/ebs/calculations`,
     async (req: {}, res: any) => {
