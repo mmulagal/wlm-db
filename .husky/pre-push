@@ -6,5 +6,6 @@ echo "Running pre-push hooks"
 set -x
 
 cd server
+npm run apidoc
 npm run build
 npm run test:nowatch

@@ -15,7 +15,7 @@ const ScheduledLocalSnapshotOptimizeTable = ({ type, data, lastColDetails, handl
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let id = 0;
-        return data?.violations?.map((row: any) => ({
+        return data?.objectsInViolation?.map((row: any) => ({
             volumeName: row?.ontapVolumeName,
             ontapVolumeUuid: row?.ontapVolumeUuid,
             id: String(id++)

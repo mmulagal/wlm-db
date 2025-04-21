@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
 import { ReactComponent as DevCircle } from '../../../assets/DevCircle.svg';
 import styles from './OptimizeComponent.module.scss';
 import GetWellBar from './GetWellBar/GetWellBar';
@@ -8,7 +8,7 @@ import { GENERAL } from '../../../utils/appConstants';
 type OptimizeComponentType = {
     text: string;
     value: string | any;
-    data?: { optimized?: number; total?: number };
+    data?: { optimized?: number; total?: number; hasDismissedOrPostponed?: boolean };
     image: any;
     isComingSoon: boolean;
 };
@@ -69,7 +69,15 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
                         {!loading && !isAssessmentAvailable ? (
                             <div style={{ height: '24px' }} />
                         ) : (
-                            <DsTypography variant="Regular_14">Optimized configurations:</DsTypography>
+                            <div className={styles.tooltipContainer}>
+                                {data?.hasDismissedOrPostponed && (
+                                    <TooltipInfo>
+                                        Some configurations are dismissed or postponed. Use filters to view dismissed &
+                                        postponed configurations.
+                                    </TooltipInfo>
+                                )}
+                                <DsTypography variant="Regular_14">Optimized configurations:</DsTypography>
+                            </div>
                         )}
 
                         {!loading &&

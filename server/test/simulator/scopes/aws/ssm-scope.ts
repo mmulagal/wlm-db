@@ -546,7 +546,7 @@ const enableMpioAndConfigure = {
 };
 
 const pgsqlInstanceInfo = {
-    commands: [getPgsqlInstanceData('wlmdb-data-1234')]
+    commands: [getPgsqlInstanceData]
 };
 
 const rssConfigAssessmentSsm = {

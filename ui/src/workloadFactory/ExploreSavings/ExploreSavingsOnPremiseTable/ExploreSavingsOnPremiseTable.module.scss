@@ -85,6 +85,12 @@
         }
     }
 
+    .lasColContainer {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
     .detectManage {
         width: 134px;
         height: 32px;
@@ -99,6 +105,22 @@
             align-items: center;
             margin-top: 2px;
             color: var(--text-button-primary);
+        }
+    }
+
+    .menuPointerDisabled {
+        font-weight: 600;
+        font-size: 22px;
+        width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        height: 16px;
+        color: var(--text-disabled);
+
+        .menuPointer {
+            height: 40px;
         }
     }
 

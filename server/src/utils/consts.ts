@@ -1712,10 +1712,15 @@ const PRICING_LICENSE_KEYS = {
 };
 
 const GERERIC_JOB_ERROR_MESSAGE = 'Examine the subjobs for comprehensive error messages.';
+const PGSQL_DEFAULT_INSTANCE_NAME = 'postgresql';
+
+const GENERIC_ASSESSMENT_ERROR_MESSAGE = (category: string) =>
+    `No ${category} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try after running adhoc assessment.`;
 
 const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'WLMDB-Ssm-Response';
+const CLONE_AGE = 0; // It has to be changed to 60 after testing
 
 export {
     WLMDB,
@@ -2060,6 +2065,9 @@ export {
     PGSQL_SYSTEM_DATABASES,
     AWS_REGION_KEYS,
     AMAZON_LINUX_AMI_PATH,
+    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+    GENERIC_ASSESSMENT_ERROR_MESSAGE,
     RESTRICTED_FSX_REGIONS,
-    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE
+    CLONE_AGE,
+    PGSQL_DEFAULT_INSTANCE_NAME
 };

@@ -1,6 +1,7 @@
 import createError from 'http-errors';
 import { isArray, isEmpty } from 'lodash-es';
-import { generateHash, sqlResponseParsing } from '../../../utils/utils';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
+import { generateHash, parsePgSqlInstanceInfo, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import {
@@ -12,7 +13,8 @@ import {
     MSSQL_DATABASE_TYPES,
     ONLINE,
     OFFLINE,
-    PGSQL_SYSTEM_DATABASES
+    PGSQL_SYSTEM_DATABASES,
+    PGSQL_DEFAULT_INSTANCE_NAME
 } from '../../../utils/consts';
 import { DatabaseInstance, PgSqlInstanceDetails, ResourceDetails } from '../../../utils/common-types';
 import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
@@ -25,16 +27,43 @@ import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 
 const logger = getLogger();
 
-async function getPgSqlInstanceInfo(
+const IN_PRODUCTION = 'in production';
+
+async function getPgSqlInstanceDetails(
     accountId: string,
     credentialsId: string,
     region: string,
-    instanceName: string,
-    nodeIds: string[],
-    fsxDataVolumeName: string
+    node1InstanceId: string,
+    node2InstanceId?: string
 ) {
-    logger.info('Fetching pg sql instance info', { accountId, nodeIds, instanceName, fsxDataVolumeName });
-    const commands = [getPgsqlInstanceData(fsxDataVolumeName)];
+    logger.info('Getting PGSQL instance details', {
+        accountId,
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId
+    });
+    const instanceInfo = (await getPgSqlInstanceInfo(accountId, credentialsId, region, [node1InstanceId])) || '';
+    const { dbInstanceId, dbClusterState } = parsePgSqlInstanceInfo(instanceInfo);
+    const instanceDetails = {
+        databaseInstanceId: dbInstanceId,
+        instanceName: PGSQL_DEFAULT_INSTANCE_NAME,
+        instanceState: dbClusterState === IN_PRODUCTION ? ServerState.UP : ServerState.DOWN, // in production state: The database cluster is fully operational and running. This is the normal state when the PostgreSQL server is up and accepting connections
+        isDefault: true
+    };
+    return {
+        isSSMConnected: true,
+        activeNodeInstanceId: node1InstanceId,
+        standbyNodeInstanceId: node2InstanceId,
+        instanceName: PGSQL_DEFAULT_INSTANCE_NAME, // PGSQL instances have no instance name, defaulting to postgresql
+        ssmConnectionStatus: ConnectionStatus.CONNECTED,
+        instancesDetails: [instanceDetails]
+    };
+}
+
+async function getPgSqlInstanceInfo(accountId: string, credentialsId: string, region: string, nodeIds: string[]) {
+    logger.info('Fetching pg sql instance info', { accountId, nodeIds });
+    const commands = [getPgsqlInstanceData];
     const comment = 'pgsql instance info';
     let response;
     try {
@@ -66,8 +95,7 @@ async function getPgSqlInstanceInfo(
         const errorMessage = `Error fetching pgsql instance id:,
             ${err},
             ${credentialsId},
-            ${region},
-            ${instanceName},`;
+            ${region}`;
         throw createError(errorMessage);
     }
 }
@@ -286,7 +314,7 @@ async function getPgSqlDatabaseInstancesSummary(
 
         const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
             databaseInstanceId,
-            databaseInstanceName: 'postgresql',
+            databaseInstanceName: PGSQL_DEFAULT_INSTANCE_NAME,
             status: '',
             databaseCount: 0
         };
@@ -519,6 +547,7 @@ async function getPgSqlProtectionStatus(
 }
 
 export {
+    getPgSqlInstanceDetails,
     getPgSqlResourceId,
     getPgSqlInstanceInfo,
     getPgSqlStorageSavingsVolumeData,

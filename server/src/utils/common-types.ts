@@ -31,6 +31,7 @@ interface ComputeAssessment {
 interface HostOsPatchAssessmentObject {
     baselineId: string;
     criticalNonCompliantCount: number;
+    otherNonCompliantCount: number;
     ec2InstanceId: string;
     operationStartTime: number;
     operationEndTime: number;
@@ -121,6 +122,8 @@ interface CloneAssesment {
     status: string;
     cloneDetails?: CloneDetail[];
     oldClones?: number;
+    oldCloneDetails?: CloneDetail[];
+    oldCloneDatabaseNames?: string[];
 }
 
 interface ResourceAssessmentData {
@@ -645,5 +648,6 @@ export {
     MappedOnTapVolumeResponse,
     InstancesResponse,
     VolumeDBMapEntry,
-    AWSBackupAssessment
+    AWSBackupAssessment,
+    ResourceAssessmentData
 };

@@ -1062,49 +1062,48 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                             "resourceType": "Instance"
                         },
-                        "resiliency": {
-                            "snapshotPolicy": {
-                                "timestamp": 1740049582000,
-                                "tags": ["Reliability"],
-                                "violations": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    },
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
-                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
-                                    }
-                                ],
-                                "severity": "warning",
-                                "status": "optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": 4,
-                                "totalObjectsInViolation": 1
-                            },
-                            "crr": {
-                                "name": "crr",
-                                "severity": "warning",
-                                "status": "optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": "sql-instance-volume-count",
-                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
-                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
-                                "tags": "Reliability",
-                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
-                            },
-                            "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "status": "optimized",
-                                "recommended": "To have the AWS Backup enabled",
-                                "severity": "warning",
-                                "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
-                                "tags": ["Reliability"],
-                                "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                                "totalObjectsAssessed": 1,
-                                "totalObjectsInViolation": 1,
-                                "resourceType": "Filesystem"
-                            }
+                        "snapshotPolicy": {
+                            "timestamp": 1740049582000,
+                            "tags": ["Reliability"],
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "severity": "warning",
+                            "status": "optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": 4,
+                            "totalObjectsInViolation": 1
+                        },
+                        "crr": {
+                            "name": "crr",
+                            "severity": "warning",
+                            "status": "optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "sql-instance-volume-count",
+                            "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                            "tags": "Reliability",
+                            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
+                        },
+                        "awsBackup": {
+                            "name": "scheduled-fsx-for-ontap-backups",
+                            "status": "optimized",
+                            "recommended": "To have the AWS Backup enabled",
+                            "severity": "warning",
+                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 1,
+                            "resourceType": "Filesystem"
                         },
                         "clone": {
                             "name": "Clone Management",
@@ -1114,8 +1113,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -1145,9 +1144,228 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
                                 }
                             ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
+                            ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "configuration": {
+                                    "volumes": [
+                                        {
+                                            "name": "thin-provision",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize-mode",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "fractional-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-copy-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-autodelete",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-mgmt-try-first",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-policy",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-min-cooling-days",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "luns": [
+                                        {
+                                            "name": "os-type",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-reservation-enabled",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-allocation-allocated",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "os": [
+                                        {
+                                            "name": "mpio-enabled",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-iscsi-count",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "ntfs-allocation-unit-size",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-load-balance-policy",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        }
+                                    ]
+                                },
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -2235,49 +2453,48 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                             "resourceType": "Instance"
                         },
-                        "resiliency": {
-                            "snapshotPolicy": {
-                                "timestamp": 1740049582000,
-                                "tags": ["Reliability"],
-                                "violations": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    },
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
-                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
-                                    }
-                                ],
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": 4,
-                                "totalObjectsInViolation": 1
-                            },
-                            "crr": {
-                                "name": "crr",
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": "sql-instance-volume-count",
-                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
-                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
-                                "tags": "Reliability",
-                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
-                            },
-                            "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "status": "not-optimized",
-                                "recommended": "To have the AWS Backup enabled",
-                                "severity": "warning",
-                                "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
-                                "tags": ["Reliability"],
-                                "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                                "totalObjectsAssessed": 1,
-                                "totalObjectsInViolation": 1,
-                                "resourceType": "Filesystem"
-                            }
+                        "snapshotPolicy": {
+                            "timestamp": 1740049582000,
+                            "tags": ["Reliability"],
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": 4,
+                            "totalObjectsInViolation": 1
+                        },
+                        "crr": {
+                            "name": "crr",
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "sql-instance-volume-count",
+                            "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                            "tags": "Reliability",
+                            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
+                        },
+                        "awsBackup": {
+                            "name": "scheduled-fsx-for-ontap-backups",
+                            "status": "not-optimized",
+                            "recommended": "To have the AWS Backup enabled",
+                            "severity": "warning",
+                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 1,
+                            "resourceType": "Filesystem"
                         },
                         "clone": {
                             "name": "Clone Management",
@@ -2287,8 +2504,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -2318,9 +2535,228 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
                                 }
                             ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
+                            ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "configuration": {
+                                    "volumes": [
+                                        {
+                                            "name": "thin-provision",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize-mode",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "fractional-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-copy-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-autodelete",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-mgmt-try-first",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-policy",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-min-cooling-days",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "luns": [
+                                        {
+                                            "name": "os-type",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-reservation-enabled",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-allocation-allocated",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "os": [
+                                        {
+                                            "name": "mpio-enabled",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-iscsi-count",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "ntfs-allocation-unit-size",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-load-balance-policy",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        }
+                                    ]
+                                },
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -3408,49 +3844,48 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                             "resourceType": "Instance"
                         },
-                        "resiliency": {
-                            "snapshotPolicy": {
-                                "timestamp": 1740049582000,
-                                "tags": ["Reliability"],
-                                "violations": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    },
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
-                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
-                                    }
-                                ],
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": 4,
-                                "totalObjectsInViolation": 1
-                            },
-                            "crr": {
-                                "name": "crr",
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": "sql-instance-volume-count",
-                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
-                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
-                                "tags": "Reliability",
-                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
-                            },
-                            "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "status": "not-optimized",
-                                "recommended": "To have the AWS Backup enabled",
-                                "severity": "warning",
-                                "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
-                                "tags": ["Reliability"],
-                                "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                                "totalObjectsAssessed": 1,
-                                "totalObjectsInViolation": 1,
-                                "resourceType": "Filesystem"
-                            }
+                        "snapshotPolicy": {
+                            "timestamp": 1740049582000,
+                            "tags": ["Reliability"],
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": 4,
+                            "totalObjectsInViolation": 1
+                        },
+                        "crr": {
+                            "name": "crr",
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "sql-instance-volume-count",
+                            "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                            "tags": "Reliability",
+                            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
+                        },
+                        "awsBackup": {
+                            "name": "scheduled-fsx-for-ontap-backups",
+                            "status": "not-optimized",
+                            "recommended": "To have the AWS Backup enabled",
+                            "severity": "warning",
+                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 1,
+                            "resourceType": "Filesystem"
                         },
                         "clone": {
                             "name": "Clone Management",
@@ -3460,8 +3895,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -3491,9 +3926,229 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
                                 }
                             ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
+                            ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "configuration": {
+                                    "volumes": [
+                                        {
+                                            "name": "thin-provision",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize-mode",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "fractional-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-copy-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-autodelete",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-mgmt-try-first",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-policy",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-min-cooling-days",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "luns": [
+                                        {
+                                            "name": "os-type",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-reservation-enabled",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-allocation-allocated",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "os": [
+                                        {
+                                            "name": "mpio-enabled",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-iscsi-count",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "ntfs-allocation-unit-size",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-load-balance-policy",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        }
+                                    ]
+                                },
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "POSTPONED",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER",
+                                "endTime": 1739934199000
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -4591,49 +5246,48 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                             "resourceType": "Instance"
                         },
-                        "resiliency": {
-                            "snapshotPolicy": {
-                                "timestamp": 1740049582000,
-                                "tags": ["Reliability"],
-                                "violations": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    },
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
-                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
-                                    }
-                                ],
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": 4,
-                                "totalObjectsInViolation": 1
-                            },
-                            "crr": {
-                                "name": "crr",
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": "sql-instance-volume-count",
-                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
-                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
-                                "tags": "Reliability",
-                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
-                            },
-                            "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "status": "not-optimized",
-                                "recommended": "To have the AWS Backup enabled",
-                                "severity": "warning",
-                                "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
-                                "tags": ["Reliability"],
-                                "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                                "totalObjectsAssessed": 1,
-                                "totalObjectsInViolation": 1,
-                                "resourceType": "Filesystem"
-                            }
+                        "snapshotPolicy": {
+                            "timestamp": 1740049582000,
+                            "tags": ["Reliability"],
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": 4,
+                            "totalObjectsInViolation": 1
+                        },
+                        "crr": {
+                            "name": "crr",
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "sql-instance-volume-count",
+                            "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                            "tags": "Reliability",
+                            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
+                        },
+                        "awsBackup": {
+                            "name": "scheduled-fsx-for-ontap-backups",
+                            "status": "not-optimized",
+                            "recommended": "To have the AWS Backup enabled",
+                            "severity": "warning",
+                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 1,
+                            "resourceType": "Filesystem"
                         },
                         "clone": {
                             "name": "Clone Management",
@@ -4643,8 +5297,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -4674,9 +5328,228 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
                                 }
                             ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
+                            ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "configuration": {
+                                    "volumes": [
+                                        {
+                                            "name": "thin-provision",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize-mode",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "fractional-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-copy-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-autodelete",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-mgmt-try-first",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-policy",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-min-cooling-days",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "luns": [
+                                        {
+                                            "name": "os-type",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-reservation-enabled",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-allocation-allocated",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "os": [
+                                        {
+                                            "name": "mpio-enabled",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-iscsi-count",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "ntfs-allocation-unit-size",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-load-balance-policy",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        }
+                                    ]
+                                },
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -5764,49 +6637,48 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                             "resourceType": "Instance"
                         },
-                        "resiliency": {
-                            "snapshotPolicy": {
-                                "timestamp": 1740049582000,
-                                "tags": ["Reliability"],
-                                "violations": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    },
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
-                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
-                                    }
-                                ],
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": 4,
-                                "totalObjectsInViolation": 1
-                            },
-                            "crr": {
-                                "name": "crr",
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": "sql-instance-volume-count",
-                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
-                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
-                                "tags": "Reliability",
-                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
-                            },
-                            "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "status": "not-optimized",
-                                "recommended": "To have the AWS Backup enabled",
-                                "severity": "warning",
-                                "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
-                                "tags": ["Reliability"],
-                                "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                                "totalObjectsAssessed": 1,
-                                "totalObjectsInViolation": 1,
-                                "resourceType": "Filesystem"
-                            }
+                        "snapshotPolicy": {
+                            "timestamp": 1740049582000,
+                            "tags": ["Reliability"],
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": 4,
+                            "totalObjectsInViolation": 1
+                        },
+                        "crr": {
+                            "name": "crr",
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "sql-instance-volume-count",
+                            "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                            "tags": "Reliability",
+                            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
+                        },
+                        "awsBackup": {
+                            "name": "scheduled-fsx-for-ontap-backups",
+                            "status": "not-optimized",
+                            "recommended": "To have the AWS Backup enabled",
+                            "severity": "warning",
+                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 1,
+                            "resourceType": "Filesystem"
                         },
                         "clone": {
                             "name": "Clone Management",
@@ -5816,8 +6688,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -5847,9 +6719,228 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
                                 }
                             ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
+                            ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "configuration": {
+                                    "volumes": [
+                                        {
+                                            "name": "thin-provision",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize-mode",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "fractional-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-copy-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-autodelete",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-mgmt-try-first",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-policy",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-min-cooling-days",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "luns": [
+                                        {
+                                            "name": "os-type",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-reservation-enabled",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-allocation-allocated",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "os": [
+                                        {
+                                            "name": "mpio-enabled",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-iscsi-count",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "ntfs-allocation-unit-size",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-load-balance-policy",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        }
+                                    ]
+                                },
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -6937,49 +8028,48 @@
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                             "resourceType": "Instance"
                         },
-                        "resiliency": {
-                            "snapshotPolicy": {
-                                "timestamp": 1740049582000,
-                                "tags": ["Reliability"],
-                                "violations": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    },
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
-                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
-                                    }
-                                ],
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": 4,
-                                "totalObjectsInViolation": 1
-                            },
-                            "crr": {
-                                "name": "crr",
-                                "severity": "warning",
-                                "status": "not-optimized",
-                                "resourceType": "Volume",
-                                "totalObjectsAssessed": "sql-instance-volume-count",
-                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
-                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
-                                "tags": "Reliability",
-                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
-                            },
-                            "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "status": "not-optimized",
-                                "recommended": "To have the AWS Backup enabled",
-                                "severity": "warning",
-                                "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
-                                "tags": ["Reliability"],
-                                "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
-                                "totalObjectsAssessed": 1,
-                                "totalObjectsInViolation": 1,
-                                "resourceType": "Filesystem"
-                            }
+                        "snapshotPolicy": {
+                            "timestamp": 1740049582000,
+                            "tags": ["Reliability"],
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                },
+                                {
+                                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                }
+                            ],
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": 4,
+                            "totalObjectsInViolation": 1
+                        },
+                        "crr": {
+                            "name": "crr",
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "sql-instance-volume-count",
+                            "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                            "tags": "Reliability",
+                            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
+                        },
+                        "awsBackup": {
+                            "name": "scheduled-fsx-for-ontap-backups",
+                            "status": "not-optimized",
+                            "recommended": "To have the AWS Backup enabled",
+                            "severity": "warning",
+                            "recommendation": "Scheduled FSx for ONTAP backups recommendation: Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. Use FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": ["fs-01d9727eb6a7d3e9a"],
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 1,
+                            "resourceType": "Filesystem"
                         },
                         "clone": {
                             "name": "Clone Management",
@@ -6989,8 +8079,8 @@
                             "recommendation": "All clones are proper and up-to-date with the source.",
                             "tags": ["Cost efficiency"],
                             "resourceType": "Database",
-                            "totalObjectsAssessed": 2,
-                            "totalObjectsInViolation": 1,
+                            "totalObjectsAssessed": 3,
+                            "totalObjectsInViolation": 2,
                             "cloneDetails": [
                                 {
                                     "databaseHostName": "27JanStandalone",
@@ -7020,9 +8110,228 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
+                                },
+                                {
+                                    "databaseHostName": "27JanStandalone1",
+                                    "databaseHostId": "b9371421ff9b16801",
+                                    "databaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseHostName": "27JanStandalone1",
+                                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                                    "sourceDatabaseName": "test11",
+                                    "cloneDatabaseName": "sandbox_17440174814471",
+                                    "cloneAge": 0,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "data"
+                                        },
+                                        {
+                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:001",
+                                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                                            "cloneDatabaseName": "sandbox_17440174814471",
+                                            "cloneVolumeType": "log"
+                                        }
+                                    ]
                                 }
                             ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
+                            ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "configuration": {
+                                    "volumes": [
+                                        {
+                                            "name": "thin-provision",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "autosize-mode",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "fractional-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-copy-reserve",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "snapshot-autodelete",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-mgmt-try-first",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-policy",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "tiering-min-cooling-days",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "luns": [
+                                        {
+                                            "name": "os-type",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-reservation-enabled",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "space-allocation-allocated",
+                                            "state": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "os": [
+                                        {
+                                            "name": "mpio-enabled",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-iscsi-count",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "ntfs-allocation-unit-size",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        },
+                                        {
+                                            "name": "mpio-load-balance-policy",
+                                            "state": "ACTIVE",
+                                            "startTime": 1739934199000
+                                        }
+                                    ]
+                                },
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute123": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },

@@ -11,6 +11,7 @@ import {
     getDiscoveredHostDeploymentV2,
     getOptimizationStatus,
     getProtectionText,
+    sortDatabaseTableData,
     sortInstanceTableData,
     sortInventoryTableData,
     uniqueHostRow
@@ -217,7 +218,7 @@ const InventoryV2 = () => {
                 setInventoryTablesRows({
                     hosts: sortInventoryTableData(hostTableRows),
                     instances: sortInstanceTableData(instanceTableRows),
-                    databases: databaseTableRows
+                    databases: sortDatabaseTableData(databaseTableRows)
                 })
             );
         } else {
