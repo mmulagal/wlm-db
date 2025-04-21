@@ -85,6 +85,12 @@
         }
     }
 
+    .lasColContainer {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
     .detectManage {
         width: 134px;
         height: 32px;
