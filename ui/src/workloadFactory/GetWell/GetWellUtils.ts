@@ -18,7 +18,7 @@ import {
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { addAllMssqlHostAssessmentData, setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
+import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -2167,7 +2167,12 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         const checkTags =
             !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags?.includes(tag)).length > 0;
 
-        if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags) {
+        const checkConfigState =
+            !filters.configState ||
+            (!cardData[key]['dismissedObj']?.state && filters.configState.includes(CONFIG_STATES.ACTIVE)) ||
+            filters.configState?.includes(cardData[key]['dismissedObj']?.state);
+
+        if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags && checkConfigState) {
             filteredCardData[key] = cardData[key];
             if (categoryData[key] && cardData[key]['block_two'].value) {
                 configCount++;
