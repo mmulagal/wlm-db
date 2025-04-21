@@ -55,7 +55,9 @@
             {
                 "Sid": "FSxNGroup",
                 "Effect": "Allow",
-                "Action": ["fsx:TagResource"],
+                "Action": [
+                    "fsx:TagResource"
+                ],
                 "Resource": "*",
                 "Condition": {
                     "StringLike": {
@@ -131,8 +133,13 @@
             {
                 "Sid": "ArnGroup",
                 "Effect": "Allow",
-                "Action": ["cloudformation:SignalResource"],
-                "Resource": ["arn:aws:cloudformation:*:*:stack/WLMDB*", "arn:aws:logs:*:*:log-group:WLMDB*"]
+                "Action": [
+                    "cloudformation:SignalResource"
+                ],
+                "Resource": [
+                    "arn:aws:cloudformation:*:*:stack/WLMDB*",
+                    "arn:aws:logs:*:*:log-group:WLMDB*"
+                ]
             },
             {
                 "Sid": "IAMGroup",
@@ -177,7 +184,12 @@
             {
                 "Sid": "SSMParameterStore",
                 "Effect": "Allow",
-                "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameters"],
+                "Action": [
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
+                    "ssm:PutParameter",
+                    "ssm:DeleteParameters"
+                ],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             }
         ]
@@ -227,18 +239,28 @@
                     "ssm:DescribeInstanceInformation",
                     "fsx:ListTagsForResource"
                 ],
-                "Resource": ["*"]
+                "Resource": [
+                    "*"
+                ]
             },
             {
                 "Sid": "SSMParameterStore",
                 "Effect": "Allow",
                 "Action": [
-                    "ssm:GetParameter", 
-                    "ssm:GetParameters", 
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
                     "ssm:PutParameter",
                     "ssm:DeleteParameters"
                 ],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
+            },
+            {
+                "Sid": "SSMResponseCloudWatch",
+                "Effect": "Allow",
+                "Action": [
+                    "logs:GetLogEvents"
+                ],
+                "Resource": "arn:aws:logs:*:*:log-group:WLMDB-Ssm-Response:*"
             }
         ]
     }
