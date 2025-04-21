@@ -1,33 +1,39 @@
-import {
-    Table,
-    useTable,
-    TableTopBar,
-    DsTypography,
-    ButtonWithDropdown,
-    DsButton,
-    Popover
-} from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsTypography, DsButton, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-
-import { ReactComponent as MenuIcon } from '../../../../assets/menu-icon2.svg';
 import BulkCloneContainer from '../../../../common/BulkAction/BulkCloneContainer';
-import { WLF_TABS } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../../utils/consts';
+import { disableOptimizeResourceCheckBoxForOptimizeCase } from '../../GetWellUtils';
+import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 
 const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
+    const { inProgressResourceOptimizeData } = useAppSelector(state => state.getWellOptimize);
+
+    // Update tableData when selection changes
+    const updatedTableData = useMemo(() => {
+        if (inProgressResourceOptimizeData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length) {
+            return disableOptimizeResourceCheckBoxForOptimizeCase(
+                data,
+                ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                selectedRowsForOptimizeInnerPage
+            );
+        } else {
+            return data;
+        }
+    }, [selectedRowsForOptimizeInnerPage, data, inProgressResourceOptimizeData]);
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Database name',
+            Header: 'Clone database name',
             accessor: 'cloneDatabaseName',
             id: '1',
             isSortable: false,
@@ -82,54 +88,54 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             }
         },
         {
-            Header: 'Size',
-            accessor: 'size',
-            id: '6',
-            isSortable: false,
-            filterOptions: 'auto',
-            isSticky: true,
-            width: fromPage === WLF_TABS.DASHBOARD ? '96px' : '210px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
-        },
-        {
             Header: '',
             accessor: '',
             id: '7',
             width: fromPage === WLF_TABS.DASHBOARD ? '200px' : '270px',
             renderCell: (cellData: any, rowData: any) => {
+                const isInProgress = inProgressResourceOptimizeData?.[
+                    ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+                ]?.includes(rowData?.id);
                 return (
-                    <div className={styles.buttonContainer}>
-                        <div />
-                        {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
-                            <Popover
-                                isAppendedToBody={true}
-                                children={
-                                    <DsTypography variant="Regular_14">
-                                        Bulk action is enabled on selected rows
-                                    </DsTypography>
-                                }
-                                trigger="hover"
-                                container={
-                                    <DsButton variant="secondary" isDisabled={true} isThin>
+                    <>
+                        {isInProgress ? (
+                            <div className={styles['optimize-in-progress']}>
+                                <SmallLoader />
+                                <DsTypography variant="Semibold_14">Optimizing</DsTypography>
+                            </div>
+                        ) : (
+                            <div className={styles.buttonContainer}>
+                                <div />
+                                {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
+                                    <Popover
+                                        isAppendedToBody={true}
+                                        children={
+                                            <DsTypography variant="Regular_14">
+                                                Bulk action is enabled on selected rows
+                                            </DsTypography>
+                                        }
+                                        trigger="hover"
+                                        container={
+                                            <DsButton variant="secondary" isDisabled={true} isThin>
+                                                Delete
+                                            </DsButton>
+                                        }
+                                    />
+                                ) : (
+                                    <DsButton
+                                        isThin
+                                        variant="secondary"
+                                        isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
+                                        onClick={() => {
+                                            handleBulkActionForClone('Delete', 'single', [rowData]);
+                                        }}
+                                    >
                                         Delete
                                     </DsButton>
-                                }
-                            />
-                        ) : (
-                            <DsButton
-                                isThin
-                                variant="secondary"
-                                isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
-                                onClick={() => {
-                                    handleBulkActionForClone('Delete', 'single', rowData);
-                                }}
-                            >
-                                Delete
-                            </DsButton>
+                                )}
+                            </div>
                         )}
-                    </div>
+                    </>
                 );
             }
         }
@@ -143,7 +149,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
         isHorizontalScroll: false,
         isSorting: false,
         columns: fromPage === WLF_TABS.DASHBOARD ? TableColDefs : colDefsForInstance,
-        rows: data || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple'
     });
@@ -152,7 +158,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, data);
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
-    }, [tableProps.selectionState]);
+    }, [tableProps.selectionState, data]);
 
     return (
         <div className={styles['inner-table']}>
@@ -161,7 +167,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                 tableProps={tableProps}
                 pluralTitle={`Impacted databases`}
                 singularTitle={'Impacted database'}
-                subTitle="Refreshing a clone is only supported for clones created with Workload Factory (Sandboxes)."
+                subTitle="Clone refreshing is supported only for clones created in Workload Factory."
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkCloneContainer

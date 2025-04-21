@@ -35,6 +35,7 @@ export interface GetWellSliceInterface {
     regionFromJM: string;
     landingFrom: string;
     inProgressOptimizationData: any;
+    inProgressResourceOptimizeData: any;
     inProgressHostData: any;
     jobToInstanceMap: any;
     jobToInstanceMapForBulk: any;
@@ -43,6 +44,7 @@ export interface GetWellSliceInterface {
     isInnerPageOptimize?: boolean;
     gwAdhocError?: string;
     cloneDashboardData: any;
+    cloneIsOptimizedRows: any;
 }
 
 interface CountBreakDown {

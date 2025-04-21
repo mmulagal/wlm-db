@@ -30,7 +30,7 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
             let dataObj = {};
             dataObj = {
                 ...cloneDashboardData,
-                impactedCount: cloneDashboardData?.objectsInViolation?.length
+                impactedCount: cloneDashboardData?.objectsInViolation?.filter((item: any) => !item.isOptimized).length
             };
             const data = getCardData(cloneDashboardData?.type, dataObj);
             setSetCardData(data);

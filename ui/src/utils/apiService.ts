@@ -1081,6 +1081,13 @@ export const getWellApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            optimizeCloneCleanup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/clone`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1224,5 +1231,6 @@ export const {
     useLazyGetSnapshotPoliciesQuery,
     useOptimizeResiliencyMutation,
     useOptimizeAwsBackupMutation,
+    useOptimizeCloneCleanupMutation,
     useDismissMssqlAssessmentMutation
 } = getWellApi;
