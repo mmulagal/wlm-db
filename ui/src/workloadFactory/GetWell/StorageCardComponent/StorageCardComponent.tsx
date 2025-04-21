@@ -837,6 +837,17 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             });
     };
 
+    const dismissDisableButton = () => {
+        if (
+            cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED ||
+            cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED ||
+            cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING
+        ) {
+            return true;
+        }
+        return false;
+    };
+
     return (
         <div className={styles.storageCardComponent}>
             {/* Section one */}
@@ -990,7 +1001,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         <DsButton
                             variant="secondary"
                             onClick={() => handleDifferentNavigation()}
-                            isDisabled={loading || disableOptimizeButton}
+                            isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
                         >
                             {setButtonText()}
                         </DsButton>
