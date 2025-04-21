@@ -132,8 +132,8 @@ async function checkScriptNeedsUpdate(accountId: string, credentialsId: string, 
             false
         );
         if (resp) {
-            const { scriptVersion, isCreatePossible } = sqlResponseParsing(resp);
-            if (scriptVersion === CURRENT_SCRIPT_VERSION && isCreatePossible) {
+            const { scriptVersion } = sqlResponseParsing(resp);
+            if (scriptVersion === CURRENT_SCRIPT_VERSION) {
                 return false;
             }
         }

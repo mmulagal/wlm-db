@@ -1342,7 +1342,7 @@ async function performPrepareTasks(
     const psResponse = await preparePsModulesForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId);
 
     await updateJobDetails(accountId, parentJobId, {
-        status: psResponse === JOBSTATUS.COMPLETED ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
+        status: psResponse,
         endTime: Date.now()
     });
 }

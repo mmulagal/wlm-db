@@ -717,6 +717,8 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
                 }
             }
           } catch {
+            $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
+            $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
             Install-ModulesFromS3 -s3SignedUrl $s3SignedUrl -unavailableModuleList $unavailableModuleList
           }
         }Else{
