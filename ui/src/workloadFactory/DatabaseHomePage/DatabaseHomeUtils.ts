@@ -827,7 +827,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const tempdbDriveSizeStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
                     (item: any) => item.name === 'tempdb-drive-size'
                 );
-                const isTempdbDriveSizeOptimized = isOptimized(tempdbDriveSizeObj?.status, tempdbDriveSizeStateObj);
+                const isTempdbDriveSizeOptimized = isOptimized(tempdbDriveSizeObj?.status, tempdbDriveSizeStateObj?.state);
                 setConfigState(configState, 'tempdbDriveSize', tempdbDriveSizeStateObj?.state);
 
                 const userDataFilesObj = instanceAssessmentData?.storage?.layout?.find(
