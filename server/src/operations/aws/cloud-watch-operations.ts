@@ -1,6 +1,6 @@
 import { Statistic, GetMetricStatisticsCommandInput } from '@aws-sdk/client-cloudwatch';
 import ms from 'ms';
-import getMetricStatistics from '../../lib/aws/cloud-watch';
+import getMetricStatistics, { getPaginatedLogs } from '../../lib/aws/cloud-watch';
 import getLogger from '../../utils/logger';
 import { describeFSx } from '../../lib/aws/fsx';
 
@@ -271,9 +271,28 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
     return { peakCpuUtilizationPercentage, averageNetworkBandwidthGbps };
 }
 
+async function getLogs(credentialsId: string, region: string, logGroupName: string, logStreamName: string) {
+    logger.info('Getting cloudwatch logs response:', { region, credentialsId, logGroupName, logStreamName });
+    const limit = 200;
+    const params = {
+        logGroupName,
+        logStreamName,
+        limit
+    };
+
+    try {
+        const logs = await getPaginatedLogs(credentialsId, region, params);
+        return logs;
+    } catch (error) {
+        logger.error('Error reading log events from CloudWatch:', error);
+        throw error;
+    }
+}
+
 export {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch,
     getInstanceUtilization,
-    getEbsVolumeUtilization
+    getEbsVolumeUtilization,
+    getLogs
 };

@@ -1715,6 +1715,8 @@ const GERERIC_JOB_ERROR_MESSAGE = 'Examine the subjobs for comprehensive error m
 
 const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
+const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'WLMDB-Ssm-Response';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -2058,5 +2060,6 @@ export {
     PGSQL_SYSTEM_DATABASES,
     AWS_REGION_KEYS,
     AMAZON_LINUX_AMI_PATH,
-    RESTRICTED_FSX_REGIONS
+    RESTRICTED_FSX_REGIONS,
+    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE
 };

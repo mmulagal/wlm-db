@@ -3,6 +3,7 @@ import {
     GetMetricStatisticsCommand,
     GetMetricStatisticsCommandInput
 } from '@aws-sdk/client-cloudwatch';
+import { CloudWatchLogsClient, GetLogEventsCommandInput, paginateGetLogEvents } from '@aws-sdk/client-cloudwatch-logs';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -23,6 +24,20 @@ async function getCloudWatchClient(region: string, credentialsId: string) {
     }
 }
 
+async function getCloudWatchLogsClient(region: string, credentialsId: string) {
+    logger.debug('Getting cloud watch logs client:', region, credentialsId);
+    try {
+        const {
+            credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
+        } = await getCredentialsDetails(credentialsId);
+        const credentials = { accessKeyId, secretAccessKey, sessionToken };
+        return new CloudWatchLogsClient({ region, credentials });
+    } catch (error) {
+        logger.error('Cloud watch logs client creation failed', error);
+        throw error;
+    }
+}
+
 export default async function getMetricStatistics(
     credentialsId: string,
     region: string,
@@ -39,3 +54,37 @@ export default async function getMetricStatistics(
         throw error;
     }
 }
+
+async function getPaginatedLogs(
+    credentialsId: string,
+    region: string,
+    params: GetLogEventsCommandInput
+): Promise<string[]> {
+    logger.info('Getting paginated cloud watch logs:', credentialsId, region, params);
+    const client = await getCloudWatchLogsClient(region, credentialsId);
+    const logs: string[] = [];
+
+    const paginator = paginateGetLogEvents(
+        {
+            client,
+            pageSize: params.limit,
+            stopOnSameToken: true
+        },
+        {
+            logGroupName: params.logGroupName,
+            logStreamName: params.logStreamName
+        }
+    );
+
+    for await (const { events } of paginator) {
+        const log = events?.map(({ message }) => message).join();
+        if (log) {
+            logs.push(log);
+        }
+    }
+
+    logger.info('Number of paginated logs retrieved', logs.length);
+    return logs;
+}
+
+export { getPaginatedLogs };
