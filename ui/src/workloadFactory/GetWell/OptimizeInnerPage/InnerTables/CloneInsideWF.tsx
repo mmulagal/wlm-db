@@ -2,7 +2,7 @@ import { Table, useTable, TableTopBar, DsTypography, ButtonWithDropdown } from '
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
@@ -10,15 +10,31 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { ReactComponent as MenuIcon } from '../../../../assets/menu-icon2.svg';
 import BulkCloneContainer from '../../../../common/BulkAction/BulkCloneContainer';
-import { WLF_TABS } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../../utils/consts';
+import { disableOptimizeResourceCheckBoxForOptimizeCase } from '../../GetWellUtils';
+import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 
 const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
+    const { inProgressResourceOptimizeData } = useAppSelector(state => state.getWellOptimize);
+
+    // Update tableData when selection changes
+    const updatedTableData = useMemo(() => {
+        if (inProgressResourceOptimizeData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length) {
+            return disableOptimizeResourceCheckBoxForOptimizeCase(
+                data,
+                ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                selectedRowsForOptimizeInnerPage
+            );
+        } else {
+            return data;
+        }
+    }, [selectedRowsForOptimizeInnerPage, data, inProgressResourceOptimizeData]);
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Database name',
+            Header: 'Clone database name',
             accessor: 'cloneDatabaseName',
             id: '1',
             isSortable: false,
@@ -82,59 +98,59 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             }
         },
         {
-            Header: 'Size',
-            accessor: 'size',
-            id: '7',
-            isSortable: false,
-            filterOptions: 'auto',
-            isSticky: true,
-            width: fromPage === WLF_TABS.DASHBOARD ? '96px' : '211px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
-        },
-        {
             Header: '',
             accessor: '',
             id: '8',
             width: fromPage === WLF_TABS.DASHBOARD ? '170px' : '211px',
             renderCell: (cellData: any, rowData: any) => {
+                const isInProgress = inProgressResourceOptimizeData?.[
+                    ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+                ]?.includes(rowData?.id);
                 return (
-                    <div
-                        className={
-                            selectedRowsForOptimizeInnerPage.length > 0
-                                ? `${styles.actionContainer} ${styles.actionDisabled}`
-                                : styles.actionContainer
-                        }
-                    >
-                        <DsTypography variant="Regular_14" className={styles.actionText}>
-                            Optimize
-                        </DsTypography>
-                        <ButtonWithDropdown
-                            variant="icon"
-                            isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
-                            items={[
-                                {
-                                    id: 'refresh',
-                                    children: 'Refresh',
-                                    isDisabled: false,
-                                    onClick: () => {
-                                        handleBulkActionForClone('Refresh', 'single', rowData);
-                                    }
-                                },
-                                {
-                                    id: 'delete',
-                                    children: 'Delete',
-                                    isDisabled: false,
-                                    onClick: () => {
-                                        handleBulkActionForClone('Delete', 'single', rowData);
-                                    }
+                    <>
+                        {isInProgress ? (
+                            <div className={styles['optimize-in-progress']}>
+                                <SmallLoader />
+                                <DsTypography variant="Semibold_14">Fixing</DsTypography>
+                            </div>
+                        ) : (
+                            <div
+                                className={
+                                    selectedRowsForOptimizeInnerPage.length > 0
+                                        ? `${styles.actionContainer} ${styles.actionDisabled}`
+                                        : styles.actionContainer
                                 }
-                            ]}
-                        >
-                            <MenuIcon />
-                        </ButtonWithDropdown>
-                    </div>
+                            >
+                                <DsTypography variant="Regular_14" className={styles.actionText}>
+                                    Optimize
+                                </DsTypography>
+                                <ButtonWithDropdown
+                                    variant="icon"
+                                    isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
+                                    items={[
+                                        {
+                                            id: 'refresh',
+                                            children: 'Refresh',
+                                            isDisabled: false,
+                                            onClick: () => {
+                                                handleBulkActionForClone('Refresh', 'single', [rowData]);
+                                            }
+                                        },
+                                        {
+                                            id: 'delete',
+                                            children: 'Delete',
+                                            isDisabled: false,
+                                            onClick: () => {
+                                                handleBulkActionForClone('Delete', 'single', [rowData]);
+                                            }
+                                        }
+                                    ]}
+                                >
+                                    <MenuIcon />
+                                </ButtonWithDropdown>
+                            </div>
+                        )}
+                    </>
                 );
             }
         }
@@ -148,7 +164,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
         isHorizontalScroll: false,
         isSorting: false,
         columns: fromPage === WLF_TABS.DASHBOARD ? TableColDefs : colDefsForInstance,
-        rows: data || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple'
     });
@@ -157,7 +173,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, data);
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
-    }, [tableProps.selectionState]);
+    }, [tableProps.selectionState, data]);
 
     return (
         <div className={styles['inner-table']}>
@@ -171,7 +187,9 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                 <BulkCloneContainer
                     action1={'Delete'}
                     action2={'Refresh'}
-                    onClick={(val: any) => handleBulkActionForClone(val, 'bulk', selectedRowsForOptimizeInnerPage)}
+                    onClick={(val: any) => {
+                        handleBulkActionForClone(val, 'bulk', selectedRowsForOptimizeInnerPage);
+                    }}
                 />
             )}
             <Table

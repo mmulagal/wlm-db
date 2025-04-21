@@ -131,11 +131,23 @@ async function deleteOnPremTcoReportResourceRecord(
     resourceIds: string,
     databaseType: DATABASE_TYPE = DATABASE_TYPE.mssql
 ) {
-    logger.info('Delete a report', { accountId, resourceIds });
+    logger.info('Delete sql data collector report', { accountId, resourceIds });
 
     const resourcesIdList = compact(resourceIds.split(','));
-
-    return removeOnPremTcoReportData(undefined, accountId, resourcesIdList, databaseType);
+    try {
+        const response = await removeOnPremTcoReportData(undefined, accountId, resourcesIdList, databaseType);
+        if (response.count === 0) {
+            logger.error('No report found to delete', { accountId, resourceIds });
+            throw createError(HttpErrorCodes.NOT_FOUND, `Report id ${resourceIds} not found for account ${accountId}`);
+        }
+        return response;
+    } catch (error: any) {
+        if (error.status === HttpErrorCodes.NOT_FOUND) {
+            throw createError(error);
+        }
+        logger.error('Error deleting report', { error });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error deleting report ${error}`);
+    }
 }
 
 function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
@@ -680,14 +692,20 @@ async function fetchInstanceTypesByRetry(
     try {
         const licenseType =
             licenseEdition === ENTERPRISE_EDITION ? PRICING_LICENSE_KEYS.SQL_ENT : PRICING_LICENSE_KEYS.SQL_STD;
-        const instanceTypePricingDetails = await getSqlInstancePricingDetails(
+        const allInstanceTypePricingDetails = await getSqlInstancePricingDetails(
             region,
             undefined,
             'windows',
             undefined,
             licenseType
         );
-        const [cheaperInstanceType] = Object.keys(instanceTypePricingDetails);
+        const recommendedInstanceTypePricingDetails = compact(
+            Object.keys(allInstanceTypePricingDetails).filter(allInstType =>
+                instanceTypes?.some(({ InstanceType: type }) => type === allInstType)
+            )
+        ); // Filter the instance types that are present in the instanceTypes array ; allInstanceTypePricingDetails is already sorted by price, so the first one in recommendedInstanceTypePricingDetails is the cheapest
+
+        const [cheaperInstanceType] = recommendedInstanceTypePricingDetails;
         instanceType = cheaperInstanceType || instanceType;
     } catch (error) {
         logger.warn('Error fetching cheaper instance type', { error });
@@ -818,9 +836,11 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
                 .map(char => char.charCodeAt(0))
         );
 
+        // Handle potential BOM characters in the decompressed data
         const decompressedData = decompressSync(compressedUint8Array);
         const decompressedBase64 = new TextDecoder().decode(decompressedData);
-        const originalJsonString = atob(decompressedBase64);
+        const cleanedBase64 = decompressedBase64.replace(/^ÿþ/, ''); // Remove BOM characters if present
+        const originalJsonString = atob(cleanedBase64);
         const data = JSON.parse(originalJsonString) as OnPremCollectionObjectV1;
 
         if (!validateOnPremCollectionObjectV1(data)) {
@@ -935,7 +955,8 @@ function getDatabaseClassifications(sqlInstancesDetails: SqlInstanceDetails) {
     const allDatabases = parseStorageDetailsByDb(storageDetailsByDb);
     let primaryDatabases: StorageDetailByDB[] = allDatabases || [];
 
-    const aoagReadReplicaDbs = aoagReadReplica ? parseAoagReadReplica(aoagReadReplica) : undefined;
+    const aoagReadReplicaDbs =
+        aoagReadReplica && !isEmpty(aoagReadReplica) ? parseAoagReadReplica(aoagReadReplica) : undefined;
     const aoagReadReplicaDbNames = aoagReadReplicaDbs?.map(({ databaseName }) => databaseName);
 
     let secondaryDatabases: StorageDetailByDB[] = [];
@@ -973,7 +994,7 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
         if (Number.isNaN(Number(totalThroughput))) {
             const writeBytes = parseFloat(iops?.writeBytesPerSec?.trim());
             const readBytes = parseFloat(iops?.readBytesPerSec?.trim());
-            totalThroughput = readBytes / writeBytes / 1024 / 1024; // Convert to MB/s
+            totalThroughput = (readBytes + writeBytes) / 1024 / 1024; // Convert to MB/s
         }
     }
 

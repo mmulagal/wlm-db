@@ -33,7 +33,8 @@ import {
     retryWithDelay,
     getServerNameWithHostname,
     sqlResponseParsing,
-    isValidProp
+    isValidProp,
+    generateSqlResourceId
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -66,7 +67,8 @@ import {
     SINGLE_AZ,
     AL2023_AMI_NAME,
     AMAZON_LINUX_AMI_PATH,
-    HA
+    HA,
+    PGSQL_DEFAULT_INSTANCE_NAME
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -106,7 +108,6 @@ import {
     validateSQLInstanceConnectivity
 } from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
@@ -1646,7 +1647,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                         isResourceTobeCreated = false;
                     } else {
                         // A resource ID is a hash generated using available EC2 instance IDs.
-                        resourceId = getMsSqlResourceId(node1InstanceId, node2InstanceId);
+                        resourceId = generateSqlResourceId(node1InstanceId, node2InstanceId);
                         const {
                             items: [resourceDetails]
                         } = await getResources(accountId, resourceId, credentialsId, region);
@@ -2175,7 +2176,8 @@ async function discoverPgSqlResources(
                         deployment_type: deploymentType,
                         replica_info: replicaInfo,
                         replica_type: replicaType,
-                        primary_host: primaryHostIp
+                        primary_host: primaryHostIp,
+                        server_instance_id: serverInstanceId
                     } = parsedResponse;
 
                     ec2Instance = {
@@ -2185,10 +2187,11 @@ async function discoverPgSqlResources(
                         pgsqlServerName: getPgSqlHostName(hostname, pgSqlServer),
                         pgsqlServerDeploymentType: isValidProp(deploymentType) ? deploymentType : undefined,
                         databaseCount: isValidProp(databaseCount) ? databaseCount : 0,
+                        pgsqlServerInstanceId: isValidProp(serverInstanceId) ? serverInstanceId : undefined,
                         ...(deploymentType === HA && {
                             isPrimary: replicaType === 'primary',
                             primaryNode: await getPrimaryHostDetails(credentialsId, region, primaryHostIp),
-                            nodes: await await getReplicaNodes(credentialsId, region, replicaInfo, replicaType)
+                            nodes: await getReplicaNodes(credentialsId, region, replicaInfo, replicaType)
                         })
                     };
 
@@ -2310,6 +2313,104 @@ function getPgSqlHostName(hostname: string, pgSqlServer: string) {
     return pgSqlServer;
 }
 
+// Get pgsql resource details
+async function getPgSqlResourceDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instancesString: string,
+    fields?: string
+) {
+    logger.info('Get PostgreSQL resource details', { accountId, credentialsId, region, instancesString, fields });
+    const instances = Array.isArray(instancesString) ? instancesString : instancesString?.split(',');
+    const { items: ec2Instances } = await discoverPgSqlResources(
+        accountId,
+        credentialsId,
+        region,
+        undefined,
+        undefined,
+        instances
+    );
+
+    const errorInstances: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
+
+    const resourceDetailsList: ResourceDetails[] = ec2Instances?.map(ec2Instance => {
+        const resourceDetails: ResourceDetails = {
+            id: null,
+            account_id: accountId,
+            resource_id: generateSqlResourceId(ec2Instance.ec2InstanceId),
+            resource_type: RESOURCESTYPE.PGSQL,
+            resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
+            cloud_provider_name: CloudProviders.AWS,
+            cloud_provider_account_id: null,
+            region,
+            credentials_id: credentialsId,
+            metadata: {
+                creationDate: Date.now(),
+                node1InstanceId: ec2Instance.ec2InstanceId
+            },
+            clusterNodeDetails: ec2Instance.nodes,
+            databaseInstanceDetails: [],
+            co_relation_id: null,
+            ebsVolumeIds: [],
+            ec2UsageOperation: ec2Instance.ec2UsageOperation
+        };
+        const clonedResourceDetails = cloneDeep(resourceDetails);
+
+        const { storage } = ec2Instance;
+        let ebsVolumeIds: string[] | undefined = [];
+        let fsxnId: string | undefined;
+        storage?.forEach(({ type, id }) => {
+            // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
+            // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
+            ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
+            fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
+        });
+
+        resourceDetails.ebsVolumeIds = resourceDetails.ebsVolumeIds?.concat(ebsVolumeIds);
+
+        resourceDetails.databaseInstanceDetails?.push({
+            database_instance_id: ec2Instance.pgsqlServerInstanceId || '',
+            database_instance_name: ec2Instance.pgsqlServerInstance || PGSQL_DEFAULT_INSTANCE_NAME,
+            database_type: RESOURCESTYPE.PGSQL,
+            is_default: true,
+            instanceState: ec2Instance.pgsqlServerState,
+            region,
+            credentials_id: credentialsId,
+            metadata: { userDatabase: [] },
+            fsxn_ids: fsxnId || '',
+            ebsVolumeIds,
+            database_deployment_type: ec2Instance.pgsqlServerDeploymentType,
+            storage_type: fsxnId ? STORAGE_TYPE.FSXN : ebsVolumeIds.length > 0 ? STORAGE_TYPE.EBS : NOT_AVAILABLE,
+            resource: clonedResourceDetails
+        });
+        return resourceDetails;
+    });
+
+    let response = await Promise.all(
+        resourceDetailsList.map(async resourceDetail =>
+            getDatabaseHostSummaryV2(
+                accountId,
+                resourceDetail.resource_id,
+                credentialsId,
+                region,
+                fields ||
+                    'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
+                resourceDetail,
+                false // unmanaged host,
+            )
+        )
+    );
+
+    if (errorInstances.length > 0) {
+        response = response.concat(errorInstances);
+    }
+    return {
+        count: response.length,
+        items: response
+    };
+}
+
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
@@ -2318,5 +2419,6 @@ export {
     fetchUnmanagedHostsInformationV2,
     unmanageDatabaseInstance,
     discoverPgSqlResources,
-    prepareDbScriptsForManage
+    prepareDbScriptsForManage,
+    getPgSqlResourceDetails
 };

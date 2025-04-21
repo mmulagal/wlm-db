@@ -1065,7 +1065,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -1143,37 +1144,6 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
-                                }
-                            ],
-                            "objectsInViolation": [
-                                {
-                                    "databaseHostName": "27JanStandalone",
-                                    "databaseHostId": "b9371421ff9b1680",
-                                    "databaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseHostName": "27JanStandalone",
-                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseName": "test1",
-                                    "cloneDatabaseName": "sandbox_1744017481447",
-                                    "cloneAge": 0,
-                                    "clonedBy": "netapp_wf",
-                                    "clonedVolumeDetails": [
-                                        {
-                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
-                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "data"
-                                        },
-                                        {
-                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
-                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "log"
-                                        }
-                                    ]
                                 },
                                 {
                                     "databaseHostName": "27JanStandalone1",
@@ -1204,6 +1174,10 @@
                                         }
                                     ]
                                 }
+                            ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
                         }
@@ -2296,7 +2270,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -2374,37 +2349,6 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
-                                }
-                            ],
-                            "objectsInViolation": [
-                                {
-                                    "databaseHostName": "27JanStandalone",
-                                    "databaseHostId": "b9371421ff9b1680",
-                                    "databaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseHostName": "27JanStandalone",
-                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseName": "test1",
-                                    "cloneDatabaseName": "sandbox_1744017481447",
-                                    "cloneAge": 0,
-                                    "clonedBy": "netapp_wf",
-                                    "clonedVolumeDetails": [
-                                        {
-                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
-                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "data"
-                                        },
-                                        {
-                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
-                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "log"
-                                        }
-                                    ]
                                 },
                                 {
                                     "databaseHostName": "27JanStandalone1",
@@ -2435,6 +2379,10 @@
                                         }
                                     ]
                                 }
+                            ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
                         }
@@ -3527,7 +3475,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -3605,37 +3554,6 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
-                                }
-                            ],
-                            "objectsInViolation": [
-                                {
-                                    "databaseHostName": "27JanStandalone",
-                                    "databaseHostId": "b9371421ff9b1680",
-                                    "databaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseHostName": "27JanStandalone",
-                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseName": "test1",
-                                    "cloneDatabaseName": "sandbox_1744017481447",
-                                    "cloneAge": 0,
-                                    "clonedBy": "netapp_wf",
-                                    "clonedVolumeDetails": [
-                                        {
-                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
-                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "data"
-                                        },
-                                        {
-                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
-                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "log"
-                                        }
-                                    ]
                                 },
                                 {
                                     "databaseHostName": "27JanStandalone1",
@@ -3666,6 +3584,10 @@
                                         }
                                     ]
                                 }
+                            ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
                         }
@@ -4768,7 +4690,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -4846,37 +4769,6 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
-                                }
-                            ],
-                            "objectsInViolation": [
-                                {
-                                    "databaseHostName": "27JanStandalone",
-                                    "databaseHostId": "b9371421ff9b1680",
-                                    "databaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseHostName": "27JanStandalone",
-                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseName": "test1",
-                                    "cloneDatabaseName": "sandbox_1744017481447",
-                                    "cloneAge": 0,
-                                    "clonedBy": "netapp_wf",
-                                    "clonedVolumeDetails": [
-                                        {
-                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
-                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "data"
-                                        },
-                                        {
-                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
-                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "log"
-                                        }
-                                    ]
                                 },
                                 {
                                     "databaseHostName": "27JanStandalone1",
@@ -4907,6 +4799,10 @@
                                         }
                                     ]
                                 }
+                            ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
                         }
@@ -5999,7 +5895,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -6077,37 +5974,6 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
-                                }
-                            ],
-                            "objectsInViolation": [
-                                {
-                                    "databaseHostName": "27JanStandalone",
-                                    "databaseHostId": "b9371421ff9b1680",
-                                    "databaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseHostName": "27JanStandalone",
-                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseName": "test1",
-                                    "cloneDatabaseName": "sandbox_1744017481447",
-                                    "cloneAge": 0,
-                                    "clonedBy": "netapp_wf",
-                                    "clonedVolumeDetails": [
-                                        {
-                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
-                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "data"
-                                        },
-                                        {
-                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
-                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "log"
-                                        }
-                                    ]
                                 },
                                 {
                                     "databaseHostName": "27JanStandalone1",
@@ -6138,6 +6004,10 @@
                                         }
                                     ]
                                 }
+                            ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
                         }
@@ -7230,7 +7100,8 @@
                         "snapshotPolicy": {
                             "timestamp": 1740049582000,
                             "tags": ["Reliability"],
-                            "violations": [
+                            "name": "snapshot-policy",
+                            "objectsInViolation": [
                                 {
                                     "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                     "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
@@ -7308,37 +7179,6 @@
                                             "cloneVolumeType": "log"
                                         }
                                     ]
-                                }
-                            ],
-                            "objectsInViolation": [
-                                {
-                                    "databaseHostName": "27JanStandalone",
-                                    "databaseHostId": "b9371421ff9b1680",
-                                    "databaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseHostName": "27JanStandalone",
-                                    "sourceDatabaseInstanceName": "MSSQLSERVER",
-                                    "sourceDatabaseName": "test1",
-                                    "cloneDatabaseName": "sandbox_1744017481447",
-                                    "cloneAge": 0,
-                                    "clonedBy": "netapp_wf",
-                                    "clonedVolumeDetails": [
-                                        {
-                                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
-                                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "data"
-                                        },
-                                        {
-                                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
-                                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
-                                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
-                                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
-                                            "cloneDatabaseName": "sandbox_1744017481447",
-                                            "cloneVolumeType": "log"
-                                        }
-                                    ]
                                 },
                                 {
                                     "databaseHostName": "27JanStandalone1",
@@ -7369,6 +7209,10 @@
                                         }
                                     ]
                                 }
+                            ],
+                            "objectsInViolation": [
+                                "sandbox_1744017481447",
+                                "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
                         }

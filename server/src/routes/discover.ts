@@ -4,10 +4,11 @@ import {
     DiscoverMsSqlSchema,
     DiscoverCredentialsSchema,
     PrepareForManageSchema,
-    MsSqlInstancesSchemaV2,
+    MsSqlInstancesSchema,
     UnManageMsSqlSchema,
     ManageMsSqlSchemaV2,
-    DiscoverPgSqlSchema
+    DiscoverPgSqlSchema,
+    PgSqlResourceDetailsSchema
 } from './schemas/discover-schemas';
 import {
     getHostAndSqlServerInfo,
@@ -16,7 +17,8 @@ import {
     prepareForManage,
     fetchUnmanagedHostsInformationV2,
     unmanageDatabaseInstance,
-    discoverPgSqlResources
+    discoverPgSqlResources,
+    getPgSqlResourceDetails
 } from '../operations/discover-operations';
 
 import getLogger from '../utils/logger';
@@ -73,7 +75,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get(`${DISCOVER_MSSQL_API_PATH}/instances`, { schema: MsSqlInstancesSchemaV2 }, async request => {
+    server.get(`${DISCOVER_MSSQL_API_PATH}/instances`, { schema: MsSqlInstancesSchema }, async request => {
         const {
             params: { accountId, credentialsId, region },
             query: { instances, fields }
@@ -124,4 +126,18 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         const apiInfo = await discoverPgSqlResources(accountId, credentialsId, region, pageSize, nextToken);
         return apiInfo;
     });
+
+    server.get(
+        `${DISCOVER_PGSQL_API_PATH}/resource-details`,
+        { schema: PgSqlResourceDetailsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                query: { instances, fields }
+            } = castRequest(request);
+
+            const apiInfo = await getPgSqlResourceDetails(accountId, credentialsId, region, instances, fields);
+            return reply.send(apiInfo);
+        }
+    );
 }

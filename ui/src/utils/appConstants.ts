@@ -28,6 +28,8 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    ACTIVATING_MESSAGE: 'Active. Will be analyzed in the next analysis.',
+    DISMISSED_MESSAGE: 'This issue is dismissed.',
     CLONE_MANAGEMENT_REFRESH: 'Clone cleanup Refresh',
     CLONE_MANAGEMENT_DELETE: 'Clone cleanup Delete',
     ALL_CRED_SELECTED: 'All credentials selected',
@@ -1252,7 +1254,7 @@ export const GENERAL = {
     SQL_COLLATION_NOTE:
         'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You/’ll be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You will be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:
         'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
@@ -1273,8 +1275,8 @@ export const GENERAL = {
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
-    CLONE_MANAGEMENT_TAB1: 'Clones created with Workload factory (AKA Sandboxes)',
-    CLONE_MANAGEMENT_TAB2: 'Clones created outside of Workload factory'
+    CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
+    CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory'
 };
 
 export const CODE_VIEWER = {

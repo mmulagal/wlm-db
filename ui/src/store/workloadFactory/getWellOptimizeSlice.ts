@@ -36,6 +36,7 @@ const initialState: GetWellSliceInterface = {
     regionFromJM: '',
     landingFrom: '',
     inProgressOptimizationData: {},
+    inProgressResourceOptimizeData: {}, // To maintain the in progress data for resource optimization like clone database
     inProgressHostData: {},
     jobToInstanceMap: {},
     jobToInstanceMapForBulk: [],
@@ -44,7 +45,8 @@ const initialState: GetWellSliceInterface = {
     isInnerPageOptimize: false,
     gwAdhocError: '',
     selectedCloneTab: GENERAL.CLONE_MANAGEMENT_TAB1,
-    cloneDashboardData: []
+    cloneDashboardData: [], // Data stored for clone in inner page
+    cloneIsOptimizedRows: {} // To maintain optimized rows in clone assessment (resourceId + instanceId + cloneDatabasename)
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -160,6 +162,9 @@ const getWellOptimizeSlice = createSlice({
         setInProgressOptimizationData: (state, action: PayloadAction<any>) => {
             state.inProgressOptimizationData = action.payload;
         },
+        setInProgressResourceOptimizeData: (state, action: PayloadAction<any>) => {
+            state.inProgressResourceOptimizeData = action.payload;
+        },
         setInProgressHostData: (state, action: PayloadAction<any>) => {
             state.inProgressHostData = action.payload;
         },
@@ -195,6 +200,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setCloneDashboardData: (state, action: PayloadAction<any>) => {
             state.cloneDashboardData = action.payload;
+        },
+        setCloneIsOptimizedRows: (state, action: PayloadAction<any>) => {
+            state.cloneIsOptimizedRows = action.payload;
         }
     }
 });
@@ -228,6 +236,7 @@ export const {
     setOptimizingInstanceData,
     setSelectedRecommendedInstance,
     setInProgressOptimizationData,
+    setInProgressResourceOptimizeData,
     setInProgressHostData,
     setJobToInstanceMap,
     setRecommendedInstanceInBulk,
@@ -238,7 +247,8 @@ export const {
     setGwSelectedRowFsxId,
     setIsInnerPageOptimize,
     setGwAdhocError,
-    setCloneDashboardData
+    setCloneDashboardData,
+    setCloneIsOptimizedRows
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

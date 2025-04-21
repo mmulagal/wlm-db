@@ -8,7 +8,7 @@ import {
     UploadOnPremTcoDataSchema,
     ListOnPremDatabaseResourcesSchema,
     GeneratePayloadInternal,
-    DeleteReportInternal,
+    DeleteOnPremReport,
     OnpremTcoExploreSavingsSchema,
     GetOnPremDatabaseResourceSchema
 } from './schemas/onprem-tco-schema';
@@ -52,19 +52,6 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
                 }
 
                 const response = await generatePayload(accountId, fileName, fileContent);
-                return reply.send(response);
-            }
-        );
-
-        server.delete(
-            `${API_PATH_ON_PREM_TCO}/internal/resources/:resourceId`,
-            { schema: DeleteReportInternal },
-            async (request: FastifyRequest, reply) => {
-                const {
-                    params: { accountId, resourceId }
-                } = castRequest(request);
-
-                const response = await deleteOnPremTcoReportResourceRecord(accountId, resourceId, MSSQL);
                 return reply.send(response);
             }
         );
@@ -140,6 +127,19 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
                 sqlInstanceData,
                 snapshotInfo
             );
+            return reply.send(response);
+        }
+    );
+
+    server.delete(
+        `${API_PATH_ON_PREM_TCO}/resources/:resourceId`,
+        { schema: DeleteOnPremReport },
+        async (request: FastifyRequest, reply) => {
+            const {
+                params: { accountId, resourceId }
+            } = castRequest(request);
+
+            const response = await deleteOnPremTcoReportResourceRecord(accountId, resourceId, MSSQL);
             return reply.send(response);
         }
     );

@@ -12,7 +12,6 @@ import OptimizeCard from '../../GetWell/OptimizeInnerPage/OptimizeCard/OptimizeC
 const DashboardOptimizeInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
-    const { cloneDashboardData } = useAppSelector(state => state.getWellOptimize);
 
     return (
         <>
@@ -64,7 +63,7 @@ const DashboardOptimizeInnerPage = () => {
                     </div>
 
                     {selectedConfig === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT && (
-                        <CloneTabs data={cloneDashboardData?.objectsInViolation} fromPage={WLF_TABS.DASHBOARD} />
+                        <CloneTabs fromPage={WLF_TABS.DASHBOARD} />
                     )}
                 </div>
             </div>

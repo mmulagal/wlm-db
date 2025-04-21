@@ -920,6 +920,12 @@ export const exploreSavingsApi = createApi({
                     body: payload
                 })
             }),
+            deleteOnPremTco: builder.mutation({
+                query: ({ resourceId }) => ({
+                    url: `v1/mssql/onprem-tco/resources/${resourceId}`,
+                    method: 'DELETE'
+                })
+            }),
             getSendEmail: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/notification/email?emailType=savings-calculations`,
@@ -991,6 +997,13 @@ export const getWellApi = createApi({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`,
                     method: 'POST'
+                })
+            }),
+            dismissMssqlAssessment: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/assessment/dismiss`,
+                    method: 'POST',
+                    body: payload
                 })
             }),
             optimizeStorageSizing: builder.mutation({
@@ -1071,6 +1084,13 @@ export const getWellApi = createApi({
             optimizeAwsBackup: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/mssql/database-hosts/optimize/resiliency/aws-backup`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            optimizeCloneCleanup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/clone`,
                     method: 'POST',
                     body: payload
                 })
@@ -1193,6 +1213,7 @@ export const {
 export const {
     useGetSendEmailMutation,
     useGetUploadScriptMutation,
+    useDeleteOnPremTcoMutation,
     useGetOnPremSavingsMutation,
     useGetOnPremCalculationsMutation,
     useGetStorageSavingsMutation,
@@ -1216,5 +1237,7 @@ export const {
     useOptimizeMaxdopConfigForBulkMutation,
     useLazyGetSnapshotPoliciesQuery,
     useOptimizeResiliencyMutation,
-    useOptimizeAwsBackupMutation
+    useOptimizeAwsBackupMutation,
+    useOptimizeCloneCleanupMutation,
+    useDismissMssqlAssessmentMutation
 } = getWellApi;
