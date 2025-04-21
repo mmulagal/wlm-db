@@ -290,7 +290,7 @@ const ExploreSavingsOnPremiseTable = () => {
                         </div>
 
                         <div className={styles.deleteMenu}>
-                            {
+                            {!isDemoMode && (
                                 <MenuPopover
                                     isMenuOpen={
                                         menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id
@@ -319,7 +319,13 @@ const ExploreSavingsOnPremiseTable = () => {
                                     CustomMenu={undefined}
                                     disabledText={undefined}
                                 />
-                            }
+                            )}
+
+                            {isDemoMode && (
+                                <div className={styles.menuPointerDisabled}>
+                                    <span className={styles.menuPointer}>...</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
