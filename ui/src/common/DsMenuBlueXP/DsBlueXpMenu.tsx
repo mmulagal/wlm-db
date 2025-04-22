@@ -11,6 +11,8 @@ export interface DsBlueXpMenuProps {
     className?: string;
 }
 
+//DsMenu
+
 export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) => {
     enum MenuItems {
         links = 'links',
