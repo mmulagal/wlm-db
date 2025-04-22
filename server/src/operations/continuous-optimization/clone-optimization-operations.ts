@@ -522,4 +522,4 @@ function validateAndExtractClonedVolumeUuids(
     return { volumeUuids, volumeNames, volumeUuidToNameMap };
 }
 
-export { handleCloneRemediation, deleteClone, refreshClone };
+export default handleCloneRemediation;

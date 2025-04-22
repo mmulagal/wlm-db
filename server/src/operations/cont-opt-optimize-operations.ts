@@ -97,7 +97,7 @@ import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimizatio
 import { onDemandTriggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { listJobs } from '../lib/database/job';
 import { resetCache } from '../utils/cache';
-import { handleCloneRemediation } from './continuous-optimization/clone-optimization-operations';
+import handleCloneRemediation from './continuous-optimization/clone-optimization-operations';
 
 const isDemoFlow = isDemo();
 
