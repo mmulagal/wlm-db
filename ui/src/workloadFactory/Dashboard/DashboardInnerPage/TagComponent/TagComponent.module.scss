@@ -23,3 +23,9 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .tagComponent {
+        width: calc(408px + ((100vw - 1920px) * 0.3059));
+    }
+}
