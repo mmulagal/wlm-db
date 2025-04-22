@@ -1,7 +1,7 @@
 import { RouteTags } from '../../utils/consts';
 import {
     DatabaseHostSummaryForMultiInstanceListResponse,
-    DatabaseHostSummaryPerStorageTypeListResponse
+    PgSqlDbHostSummaryListResponse
 } from '../types/database-hosts.types';
 import {
     DiscoverMsSqlResponseBody,
@@ -9,7 +9,7 @@ import {
     DiscoverInstanceParams,
     DiscoverCredentialsRequestBody,
     DiscoverCredentialsResponse,
-    MsSqlInstancesRequestQuery,
+    SqlInstancesRequestQuery,
     PrepareResourceResponseBody,
     MultiInstanceManageMsSqlRequestBody,
     MultiInstanceUnmanageResponseBody,
@@ -112,20 +112,7 @@ const MsSqlInstancesSchema = {
     Headers: GenericHeaders,
     tags: [RouteTags.DISCOVER],
     params: CredentialsIdParams,
-    querystring: MsSqlInstancesRequestQuery,
-    hide: process.env.NODE_ENV === 'production',
-    summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server (deprecated).',
-    description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
-    response: {
-        200: DatabaseHostSummaryPerStorageTypeListResponse
-    }
-};
-
-const MsSqlInstancesSchemaV2 = {
-    Headers: GenericHeaders,
-    tags: [RouteTags.DISCOVER],
-    params: CredentialsIdParams,
-    querystring: MsSqlInstancesRequestQuery,
+    querystring: SqlInstancesRequestQuery,
     summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     response: {
@@ -151,13 +138,24 @@ const DiscoverPgSqlSchema = {
     }
 };
 
+const PgSqlResourceDetailsSchema = {
+    ...DiscoveryBaseRequest,
+    params: CredentialsIdParams,
+    querystring: SqlInstancesRequestQuery,
+    summary: 'Get resource details of non-NetApp deployed PostgreSQL instances.',
+    description: 'Get resource details of non-NetApp deployed PostgreSQL instances.',
+    response: {
+        200: PgSqlDbHostSummaryListResponse
+    }
+};
+
 export {
     DiscoverCredentialsSchema,
     DiscoverMsSqlSchema,
-    MsSqlInstancesSchema,
     PrepareForManageSchema,
-    MsSqlInstancesSchemaV2,
+    MsSqlInstancesSchema,
     UnManageMsSqlSchema,
     ManageMsSqlSchemaV2,
-    DiscoverPgSqlSchema
+    DiscoverPgSqlSchema,
+    PgSqlResourceDetailsSchema
 };

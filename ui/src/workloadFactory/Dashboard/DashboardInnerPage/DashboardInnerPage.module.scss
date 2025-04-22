@@ -29,8 +29,29 @@
             }
         }
 
+        // .tableSection {
+        //     margin-top: 44px;
+        //     display: flex;
+        //     justify-content: center;
+        // }
         .tableSection {
             margin-top: 44px;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+
+            .buttonContainer {
+                display: flex;
+                justify-content: space-between;
+                width: 92%;
+
+                [class*='dsButtons'] {
+                    border-radius: 20px !important;
+                }
+            }
+        }
+
+        .contentSection {
             display: flex;
             justify-content: center;
         }

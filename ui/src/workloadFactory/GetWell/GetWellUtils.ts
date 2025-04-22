@@ -3,11 +3,14 @@ import store from '../../store/store';
 import { setSelectedConfigSummary } from '../../store/workloadFactory/databaseHomeSlice';
 import {
     setCardData,
+    setCloneDashboardData,
+    setCloneIsOptimizedRows,
     setDriftAssessmentData,
     setGwRefreshTimestamp,
     setGwTimestamp,
     setInProgressHostData,
     setInProgressOptimizationData,
+    setInProgressResourceOptimizeData,
     setIsInnerPageOptimize,
     setOntapConfigTableData,
     setOptimizationBreakDown,
@@ -15,10 +18,12 @@ import {
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { addAllMssqlHostAssessmentData, setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
+import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
+    CONFIG_STATES_UI,
     FINDINGS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
@@ -26,8 +31,7 @@ import {
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
-    STATUS_CONST,
-    WLF_TABS
+    STATUS_CONST
 } from '../../utils/consts';
 import {
     AssessmentResponseInterface,
@@ -315,7 +319,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_five: {
             type: 'Not optimized configurations',
-            value: ''
+            value: '',
+            minWidth: '200px'
         },
 
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency', 'Reliability']
@@ -340,7 +345,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_five: {
             type: 'Not optimized configurations',
-            value: ''
+            value: '',
+            minWidth: '200px'
         },
         tags: ['Performance efficiency', 'Reliability']
     },
@@ -778,7 +784,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'Clone management recommendation',
+            title: `${GENERAL.CLONE_MANAGEMENT} recommendation`,
             description:
                 'Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
         },
@@ -846,7 +852,8 @@ export const formatApplicationCardMainConfig = (
             tags: item?.tags,
             id: item?.name,
             category: categoryVal,
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            dismissedObj: data?.dismissedConfigurations?.license
         }
     };
     return cardsData;
@@ -912,7 +919,8 @@ export const formatMicrosoftSqlPatchCardConfig = (
                 important: importantPatches
             },
             recommendationText: item?.recommendation,
-            missingPatchList: missingPatchList
+            missingPatchList: missingPatchList,
+            dismissedObj: data?.dismissedConfigurations?.mssqlPatch
         }
     };
     return cardsData;
@@ -961,7 +969,8 @@ export const formatMaxdopPatchCardConfig = (
             tags: item?.tags,
             id: item?.name,
             category: categoryVal,
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            dismissedObj: data?.dismissedConfigurations?.maxDOP
         }
     };
     return cardsData;
@@ -972,7 +981,7 @@ export const formatSnapshotPolicyCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.resiliency?.snapshotPolicy;
+    let item: any = data?.snapshotPolicy;
     let categoryVal = 'resiliency';
     let itemName = 'snapshot-policy';
     let status = item?.status || '';
@@ -1015,7 +1024,8 @@ export const formatSnapshotPolicyCardConfig = (
             id: item?.name,
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
-            violations: item?.violations
+            objectsInViolation: item?.objectsInViolation,
+            dismissedObj: data?.dismissedConfigurations?.snapshotPolicy
         }
     };
     return cardsData;
@@ -1026,7 +1036,7 @@ export const formatAWSBackUpPolicyCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.resiliency?.awsBackup;
+    let item: any = data?.awsBackup;
     let categoryVal = 'resiliency';
     let itemName = 'aws-backup-policy';
     let status = item?.status || '';
@@ -1069,7 +1079,8 @@ export const formatAWSBackUpPolicyCardConfig = (
             id: item?.name,
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
-            objectsInViolation: item?.objectsInViolation
+            objectsInViolation: item?.objectsInViolation,
+            dismissedObj: data?.dismissedConfigurations?.awsBackup
         }
     };
     return cardsData;
@@ -1080,7 +1091,7 @@ export const formatCRRCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.resiliency?.crr;
+    let item: any = data?.crr;
     let categoryVal = 'resiliency';
     let itemName = item?.name || 'crr';
     let status = item?.status || '';
@@ -1124,7 +1135,8 @@ export const formatCRRCardConfig = (
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             violations: item?.violations,
-            objectsInViolation: item?.objectsInViolation
+            objectsInViolation: item?.objectsInViolation,
+            dismissedObj: data?.dismissedConfigurations?.crr
         }
     };
     return cardsData;
@@ -1177,7 +1189,10 @@ export const formatCloneCardConfig = (
             tags: item?.tags,
             id: item?.name,
             category: categoryVal,
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            cloneDetails: item?.cloneDetails,
+            objectsInViolation: item?.objectsInViolation,
+            dismissedObj: data?.dismissedConfigurations?.clone
         }
     };
     return cardsData;
@@ -1247,7 +1262,8 @@ export const formatOsPatchCardConfig = (
                 other: otherViolations
             },
             recommendationText: item?.recommendation,
-            missingPatchList: missingPatchList
+            missingPatchList: missingPatchList,
+            dismissedObj: data?.dismissedConfigurations?.hostOsPatch
         }
     };
     return cardsData;
@@ -1414,10 +1430,39 @@ export const formatRssConfigCardConfig = (
             tcpOffloadState: item?.tcpOffloadState,
             rssOptimizedRows: optimizedRows,
             rssOptimizedValues: optimizedValue,
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            dismissedObj: data?.dismissedConfigurations?.rssConfig
         }
     };
     return cardsData;
+};
+
+/** Function to map the dismissed values */
+const mapDismissedValues = (data: any, itemName: string | any) => {
+    for (const key in data) {
+        const section = data[key];
+        if (Array.isArray(section)) {
+            //For sizing and layout
+            for (const item of section) {
+                if (item.name === itemName) {
+                    return item;
+                }
+            }
+        } else if (typeof section === 'object') {
+            //For configuration
+            for (const subKey in section) {
+                const subSection = section[subKey];
+                if (Array.isArray(subSection)) {
+                    for (const item of subSection) {
+                        if (item.name === itemName) {
+                            return item;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return null;
 };
 
 // This function is used to format the data for the individual card main config.
@@ -1536,7 +1581,11 @@ export const formatIndividualCardMainConfig = (
                     sizingViolations: item?.sizingViolations,
                     violationDetails: item?.violationDetails,
                     objectsInViolation: item?.objectsInViolation,
-                    recommendationText: item?.recommendation
+                    recommendationText: item?.recommendation,
+                    dismissedObj:
+                        index === 2
+                            ? data?.dismissedConfigurations?.compute
+                            : mapDismissedValues(data?.dismissedConfigurations?.storage, item?.name)
                 }
             };
         });
@@ -1707,37 +1756,52 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let optimizedCloning = 0;
     let notOptimizedCloning = 0;
 
+    let hasDismissedOrPostponedStorage = false;
+    let hasDismissedOrPostponedCompute = false;
+    let hasDismissedOrPostponedApplication = false;
+    let hasDismissedOrPostponedResiliency = false;
+    let hasDismissedOrPostponedCloning = false;
+
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
+        const dismissedState = nestedObject?.dismissedObj?.state;
+        const isOptimizedViaDismissal =
+            dismissedState === CONFIG_STATES.DISMISSED || dismissedState === CONFIG_STATES.POSTPONED;
         if (nestedObject?.category === 'storage') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedStorage++;
             } else {
                 notOptimizedStorage++;
             }
         } else if (nestedObject?.category === 'compute') {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedCompute = true;
             if (
                 nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
-                nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING
+                nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING ||
+                isOptimizedViaDismissal
             ) {
                 optimizedCompute++;
             } else {
                 notOptimizedCompute++;
             }
         } else if (nestedObject?.category === 'application') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedApplication = true;
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedApplication++;
             } else {
                 notOptimizedApplication++;
             }
         } else if (nestedObject?.category === 'resiliency') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
             } else {
                 notOptimizedResiliency++;
             }
         } else if (nestedObject?.category === 'cloning') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (isOptimizedViaDismissal) hasDismissedOrPostponedCloning = true;
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedCloning++;
             } else {
                 notOptimizedCloning++;
@@ -1746,6 +1810,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     });
 
     let storageCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedStorage,
         total: optimizedStorage + notOptimizedStorage,
         optimized: optimizedStorage,
         notOptimized: notOptimizedStorage,
@@ -1754,6 +1819,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             : 0
     };
     let computeCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedCompute,
         total: optimizedCompute + notOptimizedCompute,
         optimized: optimizedCompute,
         notOptimized: notOptimizedCompute,
@@ -1762,6 +1828,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             : 0
     };
     let applicationCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedApplication,
         total: optimizedApplication + notOptimizedApplication,
         optimized: optimizedApplication,
         notOptimized: notOptimizedApplication,
@@ -1773,6 +1840,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     };
 
     let resiliencyCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedResiliency,
         total: optimizedResiliency + notOptimizedResiliency,
         optimized: optimizedResiliency,
         notOptimized: notOptimizedResiliency,
@@ -1782,6 +1850,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     };
 
     let cloningCount = {
+        hasDismissedOrPostponed: hasDismissedOrPostponedCloning,
         total: optimizedCloning + notOptimizedCloning,
         optimized: optimizedCloning,
         notOptimized: notOptimizedCloning,
@@ -1984,9 +2053,9 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
     // Dispatch the timestamp to the store
     dispatch(
         setGwTimestamp(
-            data?.storage?.timestamp && isNaN(Date.parse(data?.storage?.timestamp))
-                ? formatDateWithTime(data?.storage?.timestamp)
-                : data?.storage?.timestamp
+            data?.lastAssessmentTimestamp && isNaN(Date.parse(data?.lastAssessmentTimestamp))
+                ? formatDateWithTime(data?.lastAssessmentTimestamp)
+                : data?.lastAssessmentTimestamp
         )
     );
 
@@ -2099,7 +2168,12 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         const checkTags =
             !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags?.includes(tag)).length > 0;
 
-        if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags) {
+        const checkConfigState =
+            !filters.configState ||
+            (!cardData[key]['dismissedObj']?.state && filters.configState.includes(CONFIG_STATES.ACTIVE)) ||
+            filters.configState?.includes(cardData[key]['dismissedObj']?.state);
+
+        if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags && checkConfigState) {
             filteredCardData[key] = cardData[key];
             if (categoryData[key] && cardData[key]['block_two'].value) {
                 configCount++;
@@ -2117,6 +2191,92 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOptimizationBreakDown(null));
     dispatch(setOptimizingData({}));
     dispatch(setOptimizingInstanceData(false));
+};
+
+// This function is used to update the progress of the optimization process for assessment confif resource level jobs.
+// Currently it is only written for clone cleanup.
+const updateProgressResourceForBulk = (
+    dispatch: any,
+    type: string,
+    jobId: string,
+    inProgressOptimizationData: any,
+    jobToInstanceMapForBulk: any,
+    inProgressHostData: any,
+    inProgressResourceOptimizeData: any
+) => {
+    const state = store.getState();
+    const { cloneDashboardData, cloneIsOptimizedRows } = state.getWellOptimize;
+    let uniqueRanList: any = [];
+    let newInProgressResourceOptimizationData: any = {
+        ...inProgressResourceOptimizeData,
+        [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
+            const jobInstances =
+                jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
+                    host?.sqlServerInstances?.flatMap((instance: any) =>
+                        instance?.clones?.map((clone: any) => {
+                            uniqueRanList.push(`${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`);
+                            return `${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`;
+                        })
+                    )
+                ) || [];
+            return !jobInstances.includes(instanceId);
+        })
+    };
+    dispatch(setInProgressResourceOptimizeData(newInProgressResourceOptimizationData));
+
+    let cloneIsOptimizedRowsList = {};
+    let newCloneDashboardData = cloneDashboardData?.objectsInViolation?.map((row: any) => {
+        if (uniqueRanList.includes(`${row?.resourceId}_${row?.instanceId}_${row?.cloneDatabaseName}`)) {
+            cloneIsOptimizedRowsList = {
+                ...cloneIsOptimizedRowsList,
+                [`${row?.resourceId}_${row?.instanceId}_${row?.cloneDatabaseName}`]: true
+            };
+            return {
+                ...row,
+                isOptimized: true
+            };
+        } else {
+            return row;
+        }
+    });
+    dispatch(
+        setCloneIsOptimizedRows({
+            ...cloneIsOptimizedRows,
+            ...cloneIsOptimizedRowsList
+        })
+    );
+
+    dispatch(
+        setCloneDashboardData({
+            ...cloneDashboardData,
+            objectsInViolation: newCloneDashboardData
+        })
+    );
+
+    let newInProgressOptimizationData = {
+        ...inProgressOptimizationData,
+        [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+            const jobInstances =
+                jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
+                    host.sqlServerInstances.map((instance: any) => `${host.id}_${instance?.instanceId}`)
+                ) || [];
+            return !jobInstances.includes(instanceId);
+        })
+    };
+    dispatch(setInProgressOptimizationData(newInProgressOptimizationData));
+
+    let newInProgressHostData = {
+        ...inProgressHostData,
+        [type]: inProgressHostData?.[type]?.filter(
+            //Data host id to check
+            (hostId: any) => {
+                const jobHostIds = jobToInstanceMapForBulk[jobId]?.databaseHosts.map((host: any) => host.id) || [];
+
+                return !jobHostIds.includes(hostId);
+            }
+        )
+    };
+    dispatch(setInProgressHostData(newInProgressHostData));
 };
 
 const updateProgressForBulk = (
@@ -2385,6 +2545,177 @@ const updateAssessmentWithFailedJobs = (
     }
 };
 
+// This function is used to handle the optimization job for resources.
+// Currently only applicable for clone cleanup optimize job
+export const handleOptimizeResourceJob = (
+    res: any,
+    failedMsgData: any,
+    getJobDetailApi: any,
+    dispatch: any,
+    type?: any,
+    bulkRowData?: any
+) => {
+    const state = store.getState();
+    let optimizingData = state.getWellOptimize.optimizingData || {};
+    setTimeout(() => {
+        if (res?.data) {
+            const jobInterval = setInterval(() => {
+                getJobDetailApi({
+                    id: res?.data?.jobId
+                }).then((jobRes: any) => {
+                    const status = jobRes?.data?.status;
+                    const jobId = jobRes?.data?.id;
+                    const subjobs = jobRes?.data?.subJobs;
+                    const state = store.getState();
+                    const {
+                        jobToInstanceMapForBulk,
+                        inProgressOptimizationData,
+                        inProgressHostData,
+                        inProgressResourceOptimizeData
+                    } = state.getWellOptimize;
+                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                        updateProgressResourceForBulk(
+                            dispatch,
+                            type,
+                            jobId,
+                            inProgressOptimizationData,
+                            jobToInstanceMapForBulk,
+                            inProgressHostData,
+                            inProgressResourceOptimizeData
+                        );
+                        bulkRowData?.map((row: any) => {
+                            updateOptimizationStatus(row, dispatch);
+                        });
+                        setTimeout(() => {
+                            formatGetWellData(dispatch);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                    message: `Clone databases optimized successfully.`
+                                })
+                            );
+                        }, 0);
+
+                        dispatch(setOptimizingInstanceData(false));
+                        clearInterval(jobInterval);
+                    } else if (status === JOB_MONITORING_STATUS.WARNING) {
+                        updateProgressResourceForBulk(
+                            dispatch,
+                            type,
+                            jobId,
+                            inProgressOptimizationData,
+                            jobToInstanceMapForBulk,
+                            inProgressHostData,
+                            inProgressResourceOptimizeData
+                        );
+
+                        let successJobCount = 0;
+                        bulkRowData?.map((row: any) => {
+                            const isSuccess = subjobs?.filter((subjob: any) => {
+                                return (
+                                    subjob?.status === JOB_MONITORING_STATUS.COMPLETED &&
+                                    subjob?.hostsToOptimize?.[0]?.resourceId === row?.hostId &&
+                                    subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0] === row?.instanceId
+                                );
+                            });
+                            if (isSuccess?.length) {
+                                successJobCount++;
+                                updateOptimizationStatus(row, dispatch);
+                            }
+                        });
+                        setTimeout(() => {
+                            formatGetWellData(dispatch);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.INFO,
+                                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances optimized successfully.`
+                                })
+                            );
+                        }, 0);
+
+                        dispatch(setOptimizingInstanceData(false));
+                        clearInterval(jobInterval);
+                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                        updateProgressResourceForBulk(
+                            dispatch,
+                            type,
+                            jobId,
+                            inProgressOptimizationData,
+                            jobToInstanceMapForBulk,
+                            inProgressHostData,
+                            inProgressResourceOptimizeData
+                        );
+
+                        setTimeout(() => {
+                            formatGetWellData(dispatch);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: failedMsgData
+                                })
+                            );
+                        }, 0);
+
+                        dispatch(setOptimizingInstanceData(false));
+                        clearInterval(jobInterval);
+                    }
+                });
+            }, OPTIMIZE_POLLING_INTERVAL);
+        } else {
+            let { inProgressOptimizationData, inProgressHostData, inProgressResourceOptimizeData } =
+                state.getWellOptimize;
+            if (bulkRowData?.[0]?.id) {
+                dispatch(
+                    setOptimizingData({
+                        ...optimizingData,
+                        [bulkRowData?.[0]?.id]: ''
+                    })
+                );
+            }
+
+            dispatch(
+                inProgressResourceOptimizeData({
+                    ...inProgressResourceOptimizeData,
+                    [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
+                        const jobResource =
+                            bulkRowData?.map(
+                                (instance: any) =>
+                                    `${instance?.hostId}_${instance?.instanceId}_${instance?.cloneDatabaseName}`
+                            ) || [];
+                        return !jobResource.includes(instanceId);
+                    })
+                })
+            );
+
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+                        const jobInstances =
+                            bulkRowData?.map((instance: any) => `${instance?.hostId}_${instance?.instanceId}`) || [];
+                        return !jobInstances.includes(instanceId);
+                    })
+                })
+            );
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: inProgressHostData?.[type]?.filter(
+                        //Data host id to check
+                        (hostId: any) => {
+                            const jobHostIds = bulkRowData?.map((host: any) => host?.hostId) || [];
+                            return !jobHostIds.includes(hostId);
+                        }
+                    )
+                })
+            );
+
+            // formatGetWellData(dispatch);
+            dispatch(setOptimizingInstanceData(false));
+        }
+    }, 10);
+};
+
 export const handleOptimizeStorageJob = (
     res: any,
     rowData: any,
@@ -2605,6 +2936,39 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                 }
                             }
                         };
+                    } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+                        const state = store.getState();
+                        const { cloneDashboardData } = state.getWellOptimize;
+
+                        let isInstanceOptimized = true;
+                        cloneDashboardData?.objectsInViolation?.map((row: any) => {
+                            if (
+                                row?.resourceId === rowData?.hostId &&
+                                row?.instanceId === rowData?.instanceId &&
+                                !row?.isOptimized
+                            ) {
+                                isInstanceOptimized = false;
+                            }
+                        });
+                        if (isInstanceOptimized) {
+                            // If all clone databases are optimized for a instance
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    clone: { ...instance.assessments.clone, status: 'optimized' }
+                                }
+                            };
+                        } else {
+                            // If not all clone databases are optimized for a instance
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    clone: { ...instance.assessments.clone, status: 'not-optimized' }
+                                }
+                            };
+                        }
                     } else {
                         return instance;
                     }
@@ -2705,6 +3069,43 @@ export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) 
     });
 };
 
+// This function is used to disable the checkboxes for the selected rows in the optimize resource page table
+export const disableOptimizeResourceCheckBoxForOptimizeCase = (
+    tableData: any,
+    type: string,
+    selectedRowsForOptimize: any
+) => {
+    const state = store.getState();
+    const { inProgressResourceOptimizeData } = state.getWellOptimize;
+
+    // Extract IDs of rows currently selected for optimization
+    const selectedDatabaseRows = selectedRowsForOptimize.map((row: any) => row.id);
+
+    return tableData?.map((row: any) => {
+        // Check if the current row is being optimized
+        const isBeingOptimized =
+            selectedDatabaseRows.includes(row.id) && inProgressResourceOptimizeData?.[type]?.includes(row.id);
+
+        // Combine both conditions
+        let isDisabled = isBeingOptimized;
+        let errorMessage = '';
+
+        return {
+            ...row,
+            cellProps: {
+                ...row.cellProps,
+                isDisabled,
+                selectionProps: {
+                    title: errorMessage,
+                    titleProps: {
+                        placement: 'bottom'
+                    }
+                }
+            }
+        };
+    });
+};
+
 export const disableOptimizeCheckBoxForOptimizeCase = (tableData: any, type: string, selectedRowsForOptimize: any) => {
     const state = store.getState();
     const { inProgressHostData, inProgressOptimizationData } = state.getWellOptimize;
@@ -2755,6 +3156,8 @@ export const nameToIdConfigMapping = (name: string) => {
         ? 'compute-rightsizing'
         : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
         ? 'max-dop'
+        : name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+        ? 'clone'
         : '';
 };
 
@@ -2809,6 +3212,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
             configKey = 'scheduledLocalSnapshot';
             break;
+        case ASSESSMENT_CONFIG_NAMES.CRR:
+            configKey = 'crr';
+            break;
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
             configKey = 'scheduledawsBackup';
             break;
@@ -2818,12 +3224,32 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
     }
     const optimizedInstances = configData[configKey] || 0;
+    let configStateValue = '';
+    if (!configData?.configState?.[configKey] || configData?.configState?.[configKey]?.includes(CONFIG_STATES.ACTIVE)) {
+        configStateValue = CONFIG_STATES_UI.ACTIVE;
+    } else if (configData?.configState?.[configKey].includes(CONFIG_STATES.POSTPONED)) {
+        configStateValue = CONFIG_STATES_UI.POSTPONED;
+    } else if (configData?.configState?.[configKey].includes(CONFIG_STATES.DISMISSED)) {
+        configStateValue = CONFIG_STATES_UI.DISMISSED;
+    }
+
+    let tooltipText = '';
+    if (
+        configData?.configState?.[configKey]?.includes(CONFIG_STATES.ACTIVE) &&
+        (configData?.configState?.[configKey]?.includes(CONFIG_STATES.POSTPONED) ||
+            configData?.configState?.[configKey]?.includes(CONFIG_STATES.DISMISSED))
+    ) {
+        tooltipText = GENERAL.DISMISS_MIX_CASE_TOOLTIP;
+    }
     dispatch(
         setSelectedConfigSummary({
+            totalInstances: configData?.total || 0,
             optimizedInstances: optimizedInstances,
             notOptimizedInstances: configData?.total - optimizedInstances,
             optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
-            severity: configData?.severityObj?.[configKey] || ''
+            severity: configData?.severityObj?.[configKey] || '',
+            configState: configStateValue,
+            tooltipText: tooltipText
         })
     );
 };

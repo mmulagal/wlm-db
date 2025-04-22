@@ -1,11 +1,10 @@
 import { isEmpty } from 'lodash-es';
-import createError from 'http-errors';
 
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import { MaxDOPAssesment } from '../../utils/common-types';
 import { getInstanceDetails } from '../database-hosts-operations';
-import { HttpErrorCodes } from '../../utils/consts';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
@@ -18,10 +17,7 @@ import { GET_VCPU_AND_MAXDOP_DETAILS } from '../workloads/mssql/continuous-optim
 import { callSsmExecution } from '../aws/ssm-operations';
 import { sqlResponseParsing } from '../../utils/utils';
 import { ParameterDriftResponseType } from '../../routes/types/continuous-optimization.types';
-import {
-    createDatabaseInstanceConfigData,
-    listDatabaseInstanceConfigData
-} from '../../lib/database/database-instance-config';
+import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 
 const logger = getLogger();
 
@@ -47,44 +43,13 @@ async function calculateMaxDOPDrift(
         logger.debug('Persisted max DOP configuration data from DB', persistedConfigurationData);
         const maxDOP = persistedConfigurationData?.config_data as unknown as MaxDOPAssesment;
 
-        let maxDOPAssessment;
-
-        if (!isEmpty(maxDOP)) {
-            maxDOPAssessment = maxDOP as MaxDOPAssesment;
-        } else {
-            const {
-                activeNodeInstanceId,
-                newDatabaseInstanceDetails: { database_instance_name: instanceName, sqlAuthEnabled }
-            } = await getInstanceDetails(accountId, credentialsId, region, databaseHostId, databaseInstanceId);
-
-            if (!activeNodeInstanceId) {
-                logger.error('Active node instance id not found');
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Active node instance id not found');
-            }
-
-            maxDOPAssessment = await runMaxDOPAssessment(
-                accountId,
-                credentialsId,
-                region,
-                activeNodeInstanceId,
-                instanceName,
-                sqlAuthEnabled
-            );
-            logger.debug('Max DOP assessment result while calculating', maxDOPAssessment);
-
-            await createDatabaseInstanceConfigData([
-                {
-                    account_id: accountId,
-                    credentials_id: credentialsId,
-                    region,
-                    resource_id: databaseHostId,
-                    database_instance_id: databaseInstanceId,
-                    creation_time: new Date(Date.now()),
-                    config_data_type: AssessmentCategories.MAXDOP,
-                    config_data: maxDOPAssessment
-                }
-            ]);
+        if (isEmpty(maxDOP)) {
+            errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.MAXDOP);
+            logger.error({ errorMessage });
+            return { errorMessage };
         }
+
+        const maxDOPAssessment = maxDOP as MaxDOPAssesment;
 
         const { current, recommendedMaxDOP, status } = maxDOPAssessment;
         const recommendationMessage =

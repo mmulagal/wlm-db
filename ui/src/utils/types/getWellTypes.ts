@@ -35,6 +35,7 @@ export interface GetWellSliceInterface {
     regionFromJM: string;
     landingFrom: string;
     inProgressOptimizationData: any;
+    inProgressResourceOptimizeData: any;
     inProgressHostData: any;
     jobToInstanceMap: any;
     jobToInstanceMapForBulk: any;
@@ -42,6 +43,8 @@ export interface GetWellSliceInterface {
     landingFromInnerPage?: boolean;
     isInnerPageOptimize?: boolean;
     gwAdhocError?: string;
+    cloneDashboardData: any;
+    cloneIsOptimizedRows: any;
 }
 
 interface CountBreakDown {
@@ -52,6 +55,8 @@ interface CountBreakDown {
 }
 
 export interface AssessmentResponseInterface {
+    dismissedConfigurations?: any;
+    lastAssessmentTimestamp?: string;
     storage?: {
         timestamp?: string;
         optimisedCount?: {
@@ -72,11 +77,9 @@ export interface AssessmentResponseInterface {
     hostOsPatch?: PerConfigInterface;
     mssqlPatch?: PerConfigInterface;
     maxDOP?: PerConfigInterface;
-    resiliency?: {
-        snapshotPolicy?: PerConfigInterface;
-        awsBackup?: PerConfigInterface;
-        crr?: PerConfigInterface;
-    };
+    snapshotPolicy?: PerConfigInterface;
+    awsBackup?: PerConfigInterface;
+    crr?: PerConfigInterface;
     clone?: PerConfigInterface;
 }
 

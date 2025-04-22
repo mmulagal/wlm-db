@@ -131,11 +131,23 @@ async function deleteOnPremTcoReportResourceRecord(
     resourceIds: string,
     databaseType: DATABASE_TYPE = DATABASE_TYPE.mssql
 ) {
-    logger.info('Delete a report', { accountId, resourceIds });
+    logger.info('Delete sql data collector report', { accountId, resourceIds });
 
     const resourcesIdList = compact(resourceIds.split(','));
-
-    return removeOnPremTcoReportData(undefined, accountId, resourcesIdList, databaseType);
+    try {
+        const response = await removeOnPremTcoReportData(undefined, accountId, resourcesIdList, databaseType);
+        if (response.count === 0) {
+            logger.error('No report found to delete', { accountId, resourceIds });
+            throw createError(HttpErrorCodes.NOT_FOUND, `Report id ${resourceIds} not found for account ${accountId}`);
+        }
+        return response;
+    } catch (error: any) {
+        if (error.status === HttpErrorCodes.NOT_FOUND) {
+            throw createError(error);
+        }
+        logger.error('Error deleting report', { error });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error deleting report ${error}`);
+    }
 }
 
 function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
@@ -493,12 +505,6 @@ function processEbsDisks(disks: EBSClassification[]) {
                     throughput = 0; // Throughput is not applicable for io1
                     break;
                 }
-                case 'st1': {
-                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 125), sizeInGigaBytes(16, 'TiB')); // Minimum volume size is 125, max 16TiB GiB for st1
-                    volumeIops = 0; // IOPS is not applicable for st1
-                    throughput = 0; // Minimum throughput is 125
-                    break;
-                }
                 case 'gp3':
                 default: {
                     volumeIops = Math.min(Math.max(volumeIops, 3000), 16000); // Minimum IOPS is 3000
@@ -583,8 +589,10 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
     const { nodeDetails } = windowsConfig;
     let maxVCpuCount = 4;
     let minMemoryMiB = 1024; // 1 GiB
+
+    let networkBandwidthGbps = 0;
     nodeDetails.forEach(node => {
-        const { numberOfVcpus, ramSize: ramSizeGiB } = node;
+        const { numberOfVcpus, ramSize: ramSizeGiB, networkConfiguration } = node;
         if (numberOfVcpus > maxVCpuCount) {
             maxVCpuCount = numberOfVcpus;
         }
@@ -592,6 +600,14 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         if (ramSizeInMiB > minMemoryMiB) {
             minMemoryMiB = ramSizeInMiB;
         }
+        const networkConfig = Array.isArray(networkConfiguration) ? networkConfiguration : [networkConfiguration];
+
+        // Loop through the network configurations to find the maximum speed
+        networkConfig.forEach(({ speedMbps }) => {
+            if (speedMbps > 0) {
+                networkBandwidthGbps = Math.max(networkBandwidthGbps, speedMbps / 1000); // Convert to Gbps
+            }
+        });
     });
 
     maxVCpuCount = getPowerOfTwoVcpuCount(maxVCpuCount);
@@ -600,13 +616,18 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
-            VCpuCount: { Min: 4, Max: Math.ceil(maxVCpuCount) },
+            VCpuCount: { Min: Math.ceil(maxVCpuCount), Max: Math.ceil(maxVCpuCount) }, // both min and max are same to ensure we get the same instance type matching the vcpu count of the on-prem server
             MemoryMiB: { Min: Math.ceil(minMemoryMiB) },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
-
-            AllowedInstanceTypes: ['m*', 'c*', 'r*']
-        },
-        InstanceGenerations: [InstanceGeneration.CURRENT]
+            AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+            InstanceGenerations: [InstanceGeneration.CURRENT],
+            NetworkBandwidthGbps: networkBandwidthGbps
+                ? {
+                      Min: Math.ceil(networkBandwidthGbps),
+                      Max: Math.ceil(networkBandwidthGbps) + 1 // Adding 1 Gbps to the max value to allow for some flexibility
+                  }
+                : undefined
+        }
     };
 
     return fetchInstanceTypesByRetry(region, instanceRequirements, licenseEdition);
@@ -680,14 +701,20 @@ async function fetchInstanceTypesByRetry(
     try {
         const licenseType =
             licenseEdition === ENTERPRISE_EDITION ? PRICING_LICENSE_KEYS.SQL_ENT : PRICING_LICENSE_KEYS.SQL_STD;
-        const instanceTypePricingDetails = await getSqlInstancePricingDetails(
+        const allInstanceTypePricingDetails = await getSqlInstancePricingDetails(
             region,
             undefined,
             'windows',
             undefined,
             licenseType
         );
-        const [cheaperInstanceType] = Object.keys(instanceTypePricingDetails);
+        const recommendedInstanceTypePricingDetails = compact(
+            Object.keys(allInstanceTypePricingDetails).filter(allInstType =>
+                instanceTypes?.some(({ InstanceType: type }) => type === allInstType)
+            )
+        ); // Filter the instance types that are present in the instanceTypes array ; allInstanceTypePricingDetails is already sorted by price, so the first one in recommendedInstanceTypePricingDetails is the cheapest
+
+        const [cheaperInstanceType] = recommendedInstanceTypePricingDetails;
         instanceType = cheaperInstanceType || instanceType;
     } catch (error) {
         logger.warn('Error fetching cheaper instance type', { error });
@@ -818,9 +845,11 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
                 .map(char => char.charCodeAt(0))
         );
 
+        // Handle potential BOM characters in the decompressed data
         const decompressedData = decompressSync(compressedUint8Array);
         const decompressedBase64 = new TextDecoder().decode(decompressedData);
-        const originalJsonString = atob(decompressedBase64);
+        const cleanedBase64 = decompressedBase64.replace(/^ÿþ/, ''); // Remove BOM characters if present
+        const originalJsonString = atob(cleanedBase64);
         const data = JSON.parse(originalJsonString) as OnPremCollectionObjectV1;
 
         if (!validateOnPremCollectionObjectV1(data)) {
@@ -911,8 +940,6 @@ function getEbsDisks(region: string, instance: SqlInstanceDetails, classificatio
         } else if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 16000 && avgThroughputPerDb <= 1000) {
             // 1000 MB/s
             ebsType = 'io1';
-        } else if (avgVolumeSizePerDb > 125 && avgIopsPerDb <= 500 && avgThroughputPerDb <= 500) {
-            ebsType = 'st1';
         }
 
         return {
@@ -935,7 +962,8 @@ function getDatabaseClassifications(sqlInstancesDetails: SqlInstanceDetails) {
     const allDatabases = parseStorageDetailsByDb(storageDetailsByDb);
     let primaryDatabases: StorageDetailByDB[] = allDatabases || [];
 
-    const aoagReadReplicaDbs = aoagReadReplica ? parseAoagReadReplica(aoagReadReplica) : undefined;
+    const aoagReadReplicaDbs =
+        aoagReadReplica && !isEmpty(aoagReadReplica) ? parseAoagReadReplica(aoagReadReplica) : undefined;
     const aoagReadReplicaDbNames = aoagReadReplicaDbs?.map(({ databaseName }) => databaseName);
 
     let secondaryDatabases: StorageDetailByDB[] = [];
@@ -973,7 +1001,7 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
         if (Number.isNaN(Number(totalThroughput))) {
             const writeBytes = parseFloat(iops?.writeBytesPerSec?.trim());
             const readBytes = parseFloat(iops?.readBytesPerSec?.trim());
-            totalThroughput = readBytes / writeBytes / 1024 / 1024; // Convert to MB/s
+            totalThroughput = (readBytes + writeBytes) / 1024 / 1024; // Convert to MB/s
         }
     }
 

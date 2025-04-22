@@ -12,6 +12,7 @@ import {
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
+    DBType,
     DETECT_HOST_VAR,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
@@ -1012,6 +1013,12 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
         return data;
     }
 
+    const databasesWeights: any = {
+        [DBType.MSSQL]: 30000,
+        [DBType.ORACLE]: 20000,
+        [DBType.POSTGRESQL]: 10000
+    };
+
     const statusWeights: any = {
         [INVENTORY_STATUS.ONLINE]: 3000,
         [INVENTORY_STATUS.OFFLINE]: 2000,
@@ -1042,11 +1049,13 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
             bManageWeight = 5;
         }
         const weightA =
+            databasesWeights[a?.hostType || ''] +
             statusWeights[a.status || ''] +
             actionWeights[a?.storageType || ''] +
             aManageWeight +
             isDetectedWeights[a?.isDetected?.toString() || ''];
         const weightB =
+            databasesWeights[b?.hostType || ''] +
             statusWeights[b.status || ''] +
             actionWeights[b?.storageType || ''] +
             bManageWeight +
@@ -1062,6 +1071,12 @@ export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
     if (!data || data.length < 2) {
         return data;
     }
+
+    const databasesWeights: any = {
+        [DBType.MSSQL]: 30000,
+        [DBType.ORACLE]: 20000,
+        [DBType.POSTGRESQL]: 10000
+    };
 
     const statusWeights: any = {
         [INVENTORY_STATUS.CASE_SENSITIVE_UP]: 3000,
@@ -1081,8 +1096,42 @@ export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
     };
 
     const result = data.slice().sort((a, b) => {
-        const weightA = statusWeights[a.status || ''] + isManagedWeights[a?.statusColText || ''];
-        const weightB = statusWeights[b.status || ''] + isManagedWeights[b?.statusColText || ''];
+        const weightA =
+            databasesWeights[a?.hostType || ''] +
+            statusWeights[a.status || ''] +
+            isManagedWeights[a?.statusColText || ''];
+        const weightB =
+            databasesWeights[b?.hostType || ''] +
+            statusWeights[b.status || ''] +
+            isManagedWeights[b?.statusColText || ''];
+
+        return weightB - weightA;
+    });
+
+    return result;
+};
+
+export const sortDatabaseTableData = (data: Array<InventoryTableData>) => {
+    if (!data || data.length < 2) {
+        return data;
+    }
+    // Sorting based on database type and status
+    const databasesWeights: any = {
+        [DBType.MSSQL]: 30000,
+        [DBType.ORACLE]: 20000,
+        [DBType.POSTGRESQL]: 10000
+    };
+
+    const statusWeights: any = {
+        ONLINE: 3000,
+        OFFLINE: 2000,
+        UNKNOWN: 1000
+    };
+
+    const result = data.slice().sort((a, b) => {
+        const weightA = databasesWeights[a?.hostType || ''] + statusWeights[a.status || ''];
+
+        const weightB = databasesWeights[b?.hostType || ''] + statusWeights[b.status || ''];
 
         return weightB - weightA;
     });

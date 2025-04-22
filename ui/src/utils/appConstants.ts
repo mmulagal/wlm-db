@@ -28,6 +28,10 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    ACTIVATING_MESSAGE: 'Active. Will be analyzed in the next analysis.',
+    DISMISSED_MESSAGE: 'This issue is dismissed.',
+    CLONE_MANAGEMENT_REFRESH: 'Clone cleanup Refresh',
+    CLONE_MANAGEMENT_DELETE: 'Clone cleanup Delete',
     ALL_CRED_SELECTED: 'All credentials selected',
     NO_CRED_SELECTED: 'No credentials selected',
     ALL_REGIONS_SELECTED: 'All regions selected',
@@ -1250,7 +1254,7 @@ export const GENERAL = {
     SQL_COLLATION_NOTE:
         'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You/’ll be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You will be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:
         'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
@@ -1268,9 +1272,19 @@ export const GENERAL = {
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
     CRR: 'Cross-Region Replication (CRR)',
     CLONING: 'Cloning',
-    CLONE_MANAGEMENT: 'Clone management',
+    CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
+        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
+    CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
+    CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
+    MANAGED_INSTANCE_DISMISS_INFO:
+        'You postponed the analysis for some instances in your database configurations. Instances with postponed analysis do not affect the optimization score.',
+    MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.',
+    DISMISS_MIX_CASE_TOOLTIP: 'This configurations analysis is dismissed or postponed for some of the instances.',
+    DISMISS_PAGE_MSG: [
+        'You can postpone or dismiss the analysis of a specific configuration for your SQL Server instances. Postponing delays the analysis for 30 days and dismissing the analysis stops',
+        "the analysis until you reactivate it manually. Postponed or dismissed configuration analyses won't affect the total optimization score."
+    ]
 };
 
 export const CODE_VIEWER = {

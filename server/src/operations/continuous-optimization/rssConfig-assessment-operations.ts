@@ -1,5 +1,4 @@
 import { isEmpty } from 'lodash-es';
-import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { Metadata, RssConfigAssesment } from '../../utils/common-types';
@@ -8,16 +7,17 @@ import {
     AwsWellArchitecturedPillars,
     NUMASTATIC,
     SEVERITY,
-    ASSESSMENT_RESOURCE_TYPE
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategories
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { GET_RSS_CONFIG_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
-import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
+
 import { registerJob, updateJobDetails } from '../database/job-operations';
-import { HttpErrorCodes } from '../../utils/consts';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -39,42 +39,25 @@ async function calculateRssConfigDrift(
         return { errorMessage };
     }
     try {
-        const { assessment: { rssConfig } = {} } = metadata as unknown as Metadata;
-        if (!isEmpty(rssConfig)) {
-            rssConfigAssessment = rssConfig as RssConfigAssesment;
-            if (isDemo()) {
-                rssConfigAssessment.rssAdapters = rssConfigAssessment?.rssAdapters?.filter(
-                    adapter => !(metadata as Metadata)?.isRssConfigOptimized?.includes(adapter.adapterName)
-                );
-                if (rssConfigAssessment?.rssAdapters?.length === 0) {
-                    rssConfigAssessment.rssConfigFinding = AssessmentStatus.OPTIMIZED;
-                }
-            }
-        } else {
-            const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-            const { activeNodeInstanceId } = await getActiveSqlNode(
-                credentialsId,
-                region,
-                node1InstanceId,
-                node2InstanceId
-            );
+        const { assessment: { rssConfig, errors } = {} } = metadata as unknown as Metadata;
 
-            if (!activeNodeInstanceId) {
-                logger.error('Active node instance id not found');
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Active node instance id not found');
-            }
-
-            rssConfigAssessment = await runRssConfigAssessment(accountId, credentialsId, region, activeNodeInstanceId);
-
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            (metadata as unknown as Metadata).assessment = {
-                ...existingAssessmentData,
-                rssConfig: rssConfigAssessment,
-                lastAssessedDate: new Date().getTime().toString()
-            };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        if (isEmpty(rssConfig)) {
+            errorMessage = errors?.rssConfig
+                ? errors?.rssConfig
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.RSS_CONFIG);
+            logger.error({ errorMessage });
+            return { errorMessage };
         }
 
+        rssConfigAssessment = rssConfig as RssConfigAssesment;
+        if (isDemo()) {
+            rssConfigAssessment.rssAdapters = rssConfigAssessment?.rssAdapters?.filter(
+                adapter => !(metadata as Metadata)?.isRssConfigOptimized?.includes(adapter.adapterName)
+            );
+            if (rssConfigAssessment?.rssAdapters?.length === 0) {
+                rssConfigAssessment.rssConfigFinding = AssessmentStatus.OPTIMIZED;
+            }
+        }
         const {
             rssConfigFinding,
             rssAdapters,

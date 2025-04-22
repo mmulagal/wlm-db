@@ -65,10 +65,12 @@
             .headSectionSmall {
                 display: flex;
                 justify-content: space-between;
-            }
 
-            .heading {
-                margin-bottom: 16px;
+                .manageInstanceTooltipSection {
+                    margin-bottom: 16px;
+                    display: flex;
+                    gap: 4px;
+                }
             }
 
             .firstBlockSection {

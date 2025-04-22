@@ -10,17 +10,17 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY,
-    TEST_CONNECTION_COMMAND,
-    ASSESSMENT_RESOURCE_TYPE
+    ASSESSMENT_RESOURCE_TYPE,
+    TEST_CONNECTION_COMMAND
 } from '../../utils/continous-optimization-consts';
 import { HostOsPatchAssessmentObject, Metadata } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
-import { HttpErrorCodes, SUCCESS } from '../../utils/consts';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
-import { callSsmExecution } from '../aws/ssm-operations';
 import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
+import { callSsmExecution } from '../aws/ssm-operations';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
@@ -67,35 +67,6 @@ async function checkIfWindowsUpdateCatalogReachable(
     }
 }
 
-async function triggerHostOsPatchCollection(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    metadata: Metadata
-) {
-    try {
-        const { node1InstanceId, node2InstanceId } = metadata;
-        const hostOsPatchAssessment = await runOsPatchAssessment(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            node1InstanceId,
-            !!node2InstanceId // assumption: if both node1 and node2 instance ids are present, then it is a cluster
-        );
-        const existingAssessmentData = metadata.assessment;
-        metadata.assessment = {
-            ...existingAssessmentData,
-            hostOsPatch: hostOsPatchAssessment,
-            lastAssessedDate: new Date().getTime().toString()
-        };
-        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
-    } catch (error) {
-        logger.error(`Error while triggering host os patch collection. ${error}`);
-    }
-}
-
 async function calculateHostOsPatchDrift(
     accountId: string,
     credentialsId: string,
@@ -114,24 +85,16 @@ async function calculateHostOsPatchDrift(
     }
     const metadataObject = metadata as unknown as Metadata;
     try {
-        let hostOsPatchAssessment;
-
-        const { assessment: { hostOsPatch } = {} } = metadataObject;
-        if (!isEmpty(hostOsPatch)) {
-            hostOsPatchAssessment = hostOsPatch as HostOsPatchAssessmentObject[];
-        } else {
-            await checkIfWindowsUpdateCatalogReachable(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                metadataObject
-            ); // Check if Windows Update Catalog is reachable
-            triggerHostOsPatchCollection(accountId, credentialsId, region, databaseHostId, metadataObject); // Trigger the collection of host os patch data in the background
-            errorMessage = `No ${AssessmentCategories.HOST_OS_PATCH} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
-            logger.error(errorMessage);
-            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+        const { assessment: { hostOsPatch, errors } = {} } = metadataObject;
+        if (isEmpty(hostOsPatch)) {
+            errorMessage = errors?.hostOsPatch
+                ? errors?.hostOsPatch
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HOST_OS_PATCH);
+            logger.error({ errorMessage });
+            return { errorMessage };
         }
+
+        const hostOsPatchAssessment = hostOsPatch as HostOsPatchAssessmentObject[];
 
         const ec2InstancesToPatch = hostOsPatchAssessment?.filter(
             ({ criticalNonCompliantCount, securityNonCompliantCount }) =>
@@ -291,6 +254,10 @@ async function runOsPatchAssessment(
         : [{ ec2InstanceId: nodeInstanceId }];
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
     if (!isEmpty(clusterNodeInstanceIds)) {
+        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        const metadataObject = metadata as unknown as Metadata;
+        await checkIfWindowsUpdateCatalogReachable(accountId, credentialsId, region, databaseHostId, metadataObject); // Check if Windows Update Catalog is reachable
+
         const isPatchBaselineInProgress = await checkIfPatchBaselineInProgress(
             credentialsId,
             region,

@@ -123,7 +123,8 @@ export const FROM_DIALOG = {
 
 export const DBType = {
     POSTGRESQL: 'PostgreSQL',
-    MSSQL: 'Microsoft SQL Server'
+    MSSQL: 'Microsoft SQL Server',
+    ORACLE: 'Oracle'
 };
 
 export const API_NAME = {
@@ -350,6 +351,7 @@ export const WLF_TABS = {
     DASHBOARD_INNER_PAGE: 'DashboardInnerPage',
     DASHBOARD_DISMISS_PAGE: 'DashboardDismissPage',
     OPTIMIZE_INNER_PAGE: 'OptimizeInnerPage',
+    DASHBOARD_OPTIMIZE_INNER_PAGE: 'DashboardOptimizeInnerPage',
     OPTIMIZE_ONTAP_INNER_PAGE: 'OptimizeOntapInnerPage',
     INVENTORY: 'Inventory',
     OVERVIEW: 'Overview',
@@ -799,6 +801,20 @@ export const ASSESSMENT_CONFIG_NAMES = {
     OS: 'os',
     RSS_CONFIGURATION: 'Network adapter settings',
     SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
-    CLONE_MANAGEMENT: 'Clone Management',
+    CLONE_MANAGEMENT: 'Clone cleanup',
     LICENSE: 'License'
+};
+
+export const CONFIG_STATES = {
+    ACTIVE: 'ACTIVE',
+    POSTPONED: 'POSTPONED',
+    DISMISSED: 'DISMISSED',
+    ACTIVATING: 'ACTIVATING'
+};
+
+export const CONFIG_STATES_UI = {
+    ACTIVE: 'Active',
+    POSTPONED: 'Postponed',
+    DISMISSED: 'Dismissed',
+    ACTIVATING: 'Activating'
 };
