@@ -1,0 +1,53 @@
+.dsHamburgerMenu {
+    [class*='buttonContent'] {
+        [class*='extenrnalIcon'] {
+            svg {
+                color: var(--icon-secondary) !important;
+            }
+        }
+    }
+
+    [class*='actionListRef'] {
+        position: relative;
+        left: 8px;
+
+        [class*='itemsContainer'] {
+            width: 320px;
+
+            > div {
+                [class*='dropDownItemPopover'] {
+                    .blueMenuItem {
+                        display: flex;
+                        align-items: center;
+                        padding-left: 24px;
+                        height: 68px;
+                        width: 100%;
+                        box-sizing: border-box;
+                        white-space: nowrap;
+                        text-decoration: none;
+                        cursor: pointer;
+
+                        &:hover {
+                            background-color: var(--hover-background);
+                        }
+
+                        .extenalLink {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+
+                            svg {
+                                width: 16px;
+                                height: 16px;
+
+                                path {
+                                    fill: var(--icon-secondary);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
