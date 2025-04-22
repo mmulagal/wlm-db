@@ -20,7 +20,7 @@ interface NetworkConfiguration {
 interface NodeDetail {
     ramSize: number;
     hostId: string;
-    networkConfiguration: NetworkConfiguration[];
+    networkConfiguration: NetworkConfiguration | NetworkConfiguration[];
     driveDetails: {
         value: string;
         PSComputerName: string;

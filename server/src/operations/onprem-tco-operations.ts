@@ -505,12 +505,6 @@ function processEbsDisks(disks: EBSClassification[]) {
                     throughput = 0; // Throughput is not applicable for io1
                     break;
                 }
-                case 'st1': {
-                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 125), sizeInGigaBytes(16, 'TiB')); // Minimum volume size is 125, max 16TiB GiB for st1
-                    volumeIops = 0; // IOPS is not applicable for st1
-                    throughput = 0; // Minimum throughput is 125
-                    break;
-                }
                 case 'gp3':
                 default: {
                     volumeIops = Math.min(Math.max(volumeIops, 3000), 16000); // Minimum IOPS is 3000
@@ -595,8 +589,10 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
     const { nodeDetails } = windowsConfig;
     let maxVCpuCount = 4;
     let minMemoryMiB = 1024; // 1 GiB
+
+    let networkBandwidthGbps = 0;
     nodeDetails.forEach(node => {
-        const { numberOfVcpus, ramSize: ramSizeGiB } = node;
+        const { numberOfVcpus, ramSize: ramSizeGiB, networkConfiguration } = node;
         if (numberOfVcpus > maxVCpuCount) {
             maxVCpuCount = numberOfVcpus;
         }
@@ -604,6 +600,14 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         if (ramSizeInMiB > minMemoryMiB) {
             minMemoryMiB = ramSizeInMiB;
         }
+        const networkConfig = Array.isArray(networkConfiguration) ? networkConfiguration : [networkConfiguration];
+
+        // Loop through the network configurations to find the maximum speed
+        networkConfig.forEach(({ speedMbps }) => {
+            if (speedMbps > 0) {
+                networkBandwidthGbps = Math.max(networkBandwidthGbps, speedMbps / 1000); // Convert to Gbps
+            }
+        });
     });
 
     maxVCpuCount = getPowerOfTwoVcpuCount(maxVCpuCount);
@@ -612,13 +616,18 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
-            VCpuCount: { Min: 4, Max: Math.ceil(maxVCpuCount) },
+            VCpuCount: { Min: Math.ceil(maxVCpuCount), Max: Math.ceil(maxVCpuCount) }, // both min and max are same to ensure we get the same instance type matching the vcpu count of the on-prem server
             MemoryMiB: { Min: Math.ceil(minMemoryMiB) },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
-
-            AllowedInstanceTypes: ['m*', 'c*', 'r*']
-        },
-        InstanceGenerations: [InstanceGeneration.CURRENT]
+            AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+            InstanceGenerations: [InstanceGeneration.CURRENT],
+            NetworkBandwidthGbps: networkBandwidthGbps
+                ? {
+                      Min: Math.ceil(networkBandwidthGbps),
+                      Max: Math.ceil(networkBandwidthGbps) + 1 // Adding 1 Gbps to the max value to allow for some flexibility
+                  }
+                : undefined
+        }
     };
 
     return fetchInstanceTypesByRetry(region, instanceRequirements, licenseEdition);
@@ -931,8 +940,6 @@ function getEbsDisks(region: string, instance: SqlInstanceDetails, classificatio
         } else if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 16000 && avgThroughputPerDb <= 1000) {
             // 1000 MB/s
             ebsType = 'io1';
-        } else if (avgVolumeSizePerDb > 125 && avgIopsPerDb <= 500 && avgThroughputPerDb <= 500) {
-            ebsType = 'st1';
         }
 
         return {
