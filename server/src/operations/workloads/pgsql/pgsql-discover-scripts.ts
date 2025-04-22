@@ -38,6 +38,14 @@ const discoverPgsqlHosts = `
         fi
     }
 
+    is_default_auth() {
+        if ! sudo psql -U postgres -c "\\q" > /dev/null 2>&1; then
+            return 1
+        else
+            return 0
+        fi
+    }
+
     get_server_running_status() {
         if sudo pg_isready -U 'postgres' > /dev/null 2>&1; then
             echo "running"
@@ -52,7 +60,9 @@ const discoverPgsqlHosts = `
     }
 
     get_database_count() {
-        count=$(sudo psql -U postgres -t -A -c "SELECT count(*) FROM pg_database WHERE datistemplate = false;" 2>/dev/null)
+        if is_default_auth; then
+            count=$(sudo psql -U postgres -t -A -c "SELECT count(*) FROM pg_database WHERE datistemplate = false;" 2>/dev/null)
+        fi
         echo "\${count:-0}"
     }
 
@@ -66,12 +76,16 @@ const discoverPgsqlHosts = `
     }
 
     get_replica_info() {
-        replicas=$(sudo psql -U postgres -t -A -c "SELECT json_agg(t) FROM (SELECT client_addr FROM pg_stat_replication) t;" 2>/dev/null)
+        if is_default_auth; then
+            replicas=$(sudo psql -U postgres -t -A -c "SELECT json_agg(t) FROM (SELECT client_addr FROM pg_stat_replication) t;" 2>/dev/null)
+        fi
         echo "\${replicas:-[]}"
     }
 
     get_replica_type() {
-        r_type=$(sudo psql -U postgres -t -A -c "SELECT pg_is_in_recovery();" 2>/dev/null)
+        if is_default_auth; then
+            r_type=$(sudo psql -U postgres -t -A -c "SELECT pg_is_in_recovery();" 2>/dev/null)
+        fi
         if [[ $r_type == "t" ]]; then
             echo "replica"
         else
@@ -80,7 +94,9 @@ const discoverPgsqlHosts = `
     }
 
     get_primary_host() {
-        primary_conninfo=$(sudo -u postgres psql -t -A -c "SHOW primary_conninfo;" 2>/dev/null | xargs)
+        if is_default_auth; then
+            primary_conninfo=$(sudo -u postgres psql -t -A -c "SHOW primary_conninfo;" 2>/dev/null | xargs)
+        fi
         echo $primary_conninfo | grep -oP "host=\\K\\S+" || echo "unknown"
     }
 
@@ -101,7 +117,7 @@ const discoverPgsqlHosts = `
         local replica_info="null"
         local primary_host="null"
         local server_instance_id=$(get_server_instance_id)
-
+        local default_auth=$(is_default_auth)
         if [[ $deployment_type == "ha" ]]; then
             local replica_type=$(get_replica_type)
             if [[ $replica_type == "replica" ]]; then
@@ -124,7 +140,8 @@ const discoverPgsqlHosts = `
             \\"replica_info\\": \${replica_info},
             \\"primary_host\\": \\"\${primary_host:-null}\\",
             \\"ebs_volume_id\\": \\"null\\",
-            \\"server_instance_id\\": \\"\${server_instance_id:-null}\\"
+            \\"server_instance_id\\": \\"\${server_instance_id:-null}\\",
+            \\"default_auth\\": \\"\${default_auth:-null}\\"
         }"
     }
 
