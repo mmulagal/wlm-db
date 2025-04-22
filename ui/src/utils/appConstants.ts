@@ -203,7 +203,7 @@ export const GENERAL = {
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
-    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across multiple Availability Zones',
+    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Failover Cluster Instance across multiple Availability Zones',
     PGSQL_STANDALONE: 'Deploy your PostgreSQL Server on a single node',
     PGSQL_HA:
         'Deploy your PostgreSQL Server across multiple Availability Zones for high availability and data redundancy',
