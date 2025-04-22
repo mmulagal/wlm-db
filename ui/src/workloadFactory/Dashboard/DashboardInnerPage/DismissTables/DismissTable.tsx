@@ -175,9 +175,10 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
         // }
     }, [tableProps.selectionState]);
 
-    const handleBulkOperation = (val: string) => {
-        handleBulkAction(type, selectedRowsForDismiss);
+    const handleBulkOperation = (action: string, dialogCheck: boolean) => {
+        handleBulkAction(type, selectedRowsForDismiss, action, dialogCheck);
     };
+
     return (
         <div className={styles.dismissTables}>
             <TableTopBar
@@ -188,8 +189,8 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
             />
             {selectedRowsForDismiss.length > 0 && (
                 <BulkDismissContainer
-                    onClick={(val: any) => handleBulkOperation(val)}
-                    rowData={selectedRowsForDismiss.map((row: any) => row?.configState)}
+                    onClick={(val: any, dialogCheck: boolean) => handleBulkOperation(val, dialogCheck)}
+                    rowData={selectedRowsForDismiss?.map((row: any) => row?.configState)}
                 />
             )}
             <Table

@@ -12,7 +12,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { cardDataDefault, setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
-import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/DialogContent';
 import { GENERAL } from '../../../utils/appConstants';
 import {
     getAssessmentGroupedByConfigurations,
@@ -20,6 +19,7 @@ import {
 } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
 import DismissTable from './DismissTables/DismissTable';
+import { useDismissMssqlAssessmentMutation } from '../../../utils/apiService';
 
 const DashboardDismissPage = () => {
     const dispatch = useDispatch();
@@ -29,6 +29,9 @@ const DashboardDismissPage = () => {
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+
+    const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
+
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         instances: '',
@@ -46,24 +49,6 @@ const DashboardDismissPage = () => {
 
     const callDismissApi = (type: any, rowData?: any, operation?: string) => {
         // ToDO: Call the API to dismiss the selected configuration
-    };
-
-    const handleDialog = (type: string, rowData: any, operation?: string) => {
-        setDialog(
-            <DialogComponent
-                header={`${type} optimization`}
-                content={<DialogContent type={type} bulkRecommendationOptions={rowData} operation={operation} />}
-                primaryButton={GENERAL.CONTINUE}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    callDismissApi(type, rowData, operation);
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
-            />
-        );
     };
 
     useEffect(() => {
@@ -363,11 +348,59 @@ const DashboardDismissPage = () => {
      * action = activate, dismiss, postpone
      */
     const handleSingleAction = (type: string, rowData: any, action: string) => {
-        // ToDo: Call the API to dismiss the selected configuration
+        callDismissApi(type, [rowData], action);
     };
 
-    const handleBulkAction = (type: string, rowData: any) => {
-        handleDialog(type, rowData, 'bulk');
+    const handleBulkAction = (type: string, rowData: any, action: string, dialogCheck: boolean) => {
+        let setHeader = '';
+        let setContent: Array<string> = [];
+        let setPrimaryButton = '';
+        if (dialogCheck && action === 'activate') {
+            setHeader = `Activate SQL Server instance analysis`;
+            setContent = [
+                'Are you ready to re-activate the analysis for the selected SQL Server instances?',
+                'Select "Activate" to continue.'
+            ];
+            setPrimaryButton = 'Activate';
+        } else if (dialogCheck && action === 'postponed') {
+            setHeader = `Postpone SQL Server instance analysis`;
+            setContent = [
+                'Are you ready to re-postpone the analysis for the selected SQL Server instances?',
+                'Select "Postpone" to continue.'
+            ];
+            setPrimaryButton = 'Postpone';
+        } else if (dialogCheck && action === 'dismiss') {
+            setHeader = `Dismiss SQL Server instance analysis`;
+            setContent = [
+                'Are you ready to dismiss the analysis for the selected SQL Server instances?',
+                'Select "Dismiss" to continue.'
+            ];
+            setPrimaryButton = 'Dismiss';
+        }
+
+        if (dialogCheck) {
+            setDialog(
+                <DialogComponent
+                    header={setHeader}
+                    content={
+                        <>
+                            <DsTypography variant="Regular_14">{setContent[0]}</DsTypography>
+                            <DsTypography variant="Regular_14">{setContent[1]}</DsTypography>
+                        </>
+                    }
+                    primaryButton={setPrimaryButton}
+                    secondaryButton={GENERAL.CANCEL}
+                    callback={() => {
+                        callDismissApi(type, rowData, action);
+                    }}
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                />
+            );
+        } else {
+            callDismissApi(type, rowData, action);
+        }
     };
 
     const getConfigObj = (type: string, instanceData: any) => {
