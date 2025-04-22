@@ -3080,7 +3080,7 @@ export const disableOptimizeResourceCheckBoxForOptimizeCase = (
     // Extract IDs of rows currently selected for optimization
     const selectedDatabaseRows = selectedRowsForOptimize.map((row: any) => row.id);
 
-    return tableData.map((row: any) => {
+    return tableData?.map((row: any) => {
         // Check if the current row is being optimized
         const isBeingOptimized =
             selectedDatabaseRows.includes(row.id) && inProgressResourceOptimizeData?.[type]?.includes(row.id);
