@@ -53,7 +53,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
         if (value === CONFIG_STATES.ACTIVE) {
             return CONFIG_STATES_UI.ACTIVE;
         } else if (value === CONFIG_STATES.POSTPONED) {
-            return CONFIG_STATES_UI.POSTPONED + ' untill ' + formatDateAssess(rowData?.configObj?.endTime);
+            return CONFIG_STATES_UI.POSTPONED + ' until ' + formatDateAssess(rowData?.configObj?.endTime);
         } else if (value === CONFIG_STATES.DISMISSED) {
             return CONFIG_STATES_UI.DISMISSED;
         } else {
