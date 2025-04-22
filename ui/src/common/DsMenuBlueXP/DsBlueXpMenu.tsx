@@ -1,7 +1,7 @@
 import { ReactComponent as MenuIcon } from '@netapp/icons/ic_menu.svg';
 import { ReactComponent as ExternalLinkIcon } from '@netapp/icons/ic_external_link.svg';
 
-import styles from './dsBlueXpMenu.module.scss';
+import styles from './DsBlueXpMenu.module.scss';
 import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 
 export interface DsBlueXpMenuProps {
@@ -10,6 +10,8 @@ export interface DsBlueXpMenuProps {
     domain: string;
     className?: string;
 }
+
+//DsMenu
 
 export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) => {
     enum MenuItems {
