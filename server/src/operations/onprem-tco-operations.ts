@@ -611,7 +611,7 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         // Loop through the network configurations to find the maximum speed
         networkConfig.forEach(({ speedMbps }) => {
             if (speedMbps > 0) {
-                networkBandwidthGbps = Math.max(networkBandwidthGbps, speedMbps / 1024); // Convert to Gbps
+                networkBandwidthGbps = Math.max(networkBandwidthGbps, speedMbps / 1000); // Convert to Gbps
             }
         });
     });
