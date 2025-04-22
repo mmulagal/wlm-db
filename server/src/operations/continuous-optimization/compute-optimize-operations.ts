@@ -481,14 +481,14 @@ async function getRunningSqlServers(
             activeNodeInstanceId,
             'Getting running SQL server names',
             accountId,
-            undefined,
+            false,
             COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
         );
 
         const sqlServers: string | string[] = sqlResponseParsing(rawResponse);
         return formatSsmArrayResponse<string>(sqlServers);
     } catch (error) {
-        logger.error('Error in ssm call:', error);
+        logger.error('Error while fetching running sql servers:', error);
     }
 }
 
@@ -526,7 +526,7 @@ async function checkRunningStatus(
         activeNodeInstanceId,
         'Checking running status of the service',
         accountId,
-        undefined,
+        false,
         COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
     );
 
@@ -548,16 +548,10 @@ async function checkRunningStatus(
             }
         });
 
-        if (allRunning) {
-            jobDetails = {
-                status: JOBSTATUS.COMPLETED
-            };
-        } else {
-            jobDetails = {
-                status: JOBSTATUS.FAILED,
-                error: `Some SQL servers (${faultyServers}) are not running.`
-            };
-        }
+        jobDetails = {
+            status: allRunning ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
+            error: allRunning ? '' : `Some SQL servers (${faultyServers}) are not running.`
+        };
     } catch (error) {
         logger.error('Error in ssm call for running status:', rawStatusResponse);
         jobDetails = {

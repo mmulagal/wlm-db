@@ -1171,11 +1171,11 @@ const GET_RUNNING_SQL_SERVERS = () => `
 `;
 
 const CHECK_RUNNING_STATUS_WITH_RESTART = (serverNames: string[]) => `
-    Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
+    Start-Transcript -Path ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
     $serverNames = @(${serverNames.map(name => `'${name}'`).join(', ')})
     $sqlServices = Get-Service | Where-Object { $_.DisplayName -in $serverNames }
     $results = @()
-    if ($sqlServices -eq $null) {
+    if ([string]::IsNullOrEmpty($sqlServices)) {
         Write-Output '[]'
         return
     }
