@@ -18,7 +18,7 @@ import { useLazyGetRollbackSnapshotsQuery } from '../../../../utils/apiService';
 const RebaseRollbackContent = ({ rowData }: any) => {
     const { isRollbackSelected, rollbackSnapshotList, selectedRollbackSnapshot, rollbackSnapshotsLoading } =
         useAppSelector(state => state?.sandbox);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
     const [snapshotsFetched, setSnapshotsFetched] = useState(false);
 
     const dispatch = useDispatch();
@@ -35,8 +35,8 @@ const RebaseRollbackContent = ({ rowData }: any) => {
         if (isRollbackSelected && !snapshotsFetched) {
             dispatch(updateRollbackSnapshotsLoading(true));
             getRollbackSnapshotApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                region: headerSelectedRegion?.label2,
+                credentialId: headerSelectedCredSandbox?.data?.credentialsId,
+                region: headerSelectedRegionSandbox?.label2,
                 databaseHostId: rowData?.databaseHostId,
                 instanceId: rowData?.instanceId,
                 sandboxName: rowData?.name

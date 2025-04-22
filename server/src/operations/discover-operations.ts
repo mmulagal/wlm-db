@@ -1340,16 +1340,10 @@ async function performPrepareTasks(
         parentJobId
     });
 
-    const [dbResponse, psResponse] = await Promise.all([
-        prepareDbScriptsForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId),
-        preparePsModulesForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId)
-    ]);
+    const psResponse = await preparePsModulesForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId);
 
     await updateJobDetails(accountId, parentJobId, {
-        status:
-            dbResponse === JOBSTATUS.COMPLETED && psResponse === JOBSTATUS.COMPLETED
-                ? JOBSTATUS.COMPLETED
-                : JOBSTATUS.FAILED,
+        status: psResponse,
         endTime: Date.now()
     });
 }
@@ -1560,11 +1554,6 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                     if (missingResourceJson[UNAVAILABLE_PS_MODULES]) {
                         precheckErrorList.push(
                             `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare".`
-                        );
-                    }
-                    if (missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
-                        precheckErrorList.push(
-                            'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare".'
                         );
                     }
 
@@ -2430,5 +2419,6 @@ export {
     fetchUnmanagedHostsInformationV2,
     unmanageDatabaseInstance,
     discoverPgSqlResources,
+    prepareDbScriptsForManage,
     getPgSqlResourceDetails
 };

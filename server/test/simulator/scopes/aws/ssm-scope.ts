@@ -47,7 +47,7 @@ import {
     GET_DEFAULT_COLLATION,
     GET_DEFAULT_DRIVES,
     sqlQueryExecution,
-    READ_SCRIPT_VERSION,
+    CHECK_SCRIPT_AVAILABILITY_AND_VERSION,
     sqlQueryExecutionWithAuth
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import {
@@ -518,7 +518,7 @@ const getConnectionInforCommand = {
 };
 
 const checkScriptUpdate = {
-    commands: [READ_SCRIPT_VERSION]
+    commands: [CHECK_SCRIPT_AVAILABILITY_AND_VERSION]
 };
 
 const dbSummary = {
