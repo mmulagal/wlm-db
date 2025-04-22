@@ -120,7 +120,7 @@ async function handleCloneRemediation(
                     serverNameWithHostName,
                     childCloneJobId
                 );
-                logger.info(`Successfully handled clone remediation for ${cloneDatabaseName}`);
+                logger.debug(`Successfully handled clone remediation for ${cloneDatabaseName}`);
             } else {
                 const errMsg = `The clone ${cloneDatabaseName} volume is associated with multiple databases. Hence it cannot be deleted.`;
                 logger.error(errMsg);
@@ -166,9 +166,9 @@ async function deleteClone(
         deleteJobId = id;
         const source = { host: databaseHostId, instance: databaseInstanceId, database: cloneDatabaseName };
         const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
-        logger.info(`Executing delete operation for clone ${cloneDatabaseName}`);
+        logger.debug(`Executing delete operation for clone ${cloneDatabaseName}`);
         await performSandboxDeletion(accountId, region, credentialsId, deleteJobId, srcDetails);
-        logger.info(`Successfully deleted clone ${cloneDatabaseName}`);
+        logger.debug(`Successfully deleted clone ${cloneDatabaseName}`);
 
         await updateJobDetails(accountId, deleteJobId, {
             status: JOBSTATUS.COMPLETED,
@@ -259,7 +259,7 @@ async function refreshClone(
             latestSnapshot.name
         );
 
-        logger.info(`Successfully refreshed sandbox ${cloneDatabaseName} to the latest snapshot`);
+        logger.debug(`Successfully refreshed sandbox ${cloneDatabaseName} to the latest snapshot`);
         await updateJobDetails(accountId, refreshJobId, {
             status: JOBSTATUS.COMPLETED,
             endTime: Date.now()
@@ -344,7 +344,7 @@ async function deleteCloneForOthers(
             )
         );
         const { volumes } = sqlResponseParsing(response);
-        logger.info(`Successfully deleted clone volumes: ${volumes}`);
+        logger.debug(`Successfully deleted clone volumes: ${volumes}`);
 
         const failedVolumes = volumes.filter((v: DeleteVolumeResult) => v.status === 'failed');
 
