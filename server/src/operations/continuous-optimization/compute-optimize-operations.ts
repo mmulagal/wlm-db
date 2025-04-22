@@ -489,6 +489,7 @@ async function getRunningSqlServers(
         return formatSsmArrayResponse<string>(sqlServers);
     } catch (error) {
         logger.error('Error while fetching running sql servers:', error);
+        return [];
     }
 }
 
