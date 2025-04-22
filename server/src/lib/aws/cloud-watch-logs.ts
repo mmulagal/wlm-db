@@ -36,8 +36,8 @@ export default async function getPaginatedLogs(
         input
     );
 
-    for await (const { events } of paginator) {
-        const log = events?.map(({ message }) => message).join('');
+    for await (const page of paginator) {
+        const log = page?.events?.map(({ message }) => message).join('');
         if (log) {
             logs.push(log);
         }
