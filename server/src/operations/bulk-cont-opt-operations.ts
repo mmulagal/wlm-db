@@ -153,53 +153,58 @@ async function handleBulkCloneOptimization(
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
 
     const flattenedInstances = extractInstancesToOptimize(hostsToOptimize);
-    // Process all instances and their clones concurrently
-    await Promise.all(
-        flattenedInstances.map(async instance => {
-            if (isEmpty(instance.clones)) {
-                logger.warn(
-                    `No clones found for instance ${instance.instanceId} in databaseHost ${instance.databaseHostId}.`
-                );
-                return;
-            }
 
-            try {
-                await Promise.all(
-                    instance.clones?.map(async clone => {
-                        try {
-                            await optimizeClone(
-                                accountId,
-                                instance.credentialsId,
-                                instance.region,
-                                instance.databaseHostId,
-                                instance.instanceId,
-                                clone,
-                                parentJobId
-                            );
-                            logger.info(
-                                `Successfully optimized clone ${clone.cloneDatabaseName} for instance ${instance.instanceId} in databaseHost ${instance.databaseHostId}.`
-                            );
-                        } catch (error: any) {
-                            logger.error(
-                                `Error occurred while optimizing clone ${clone.cloneDatabaseName} for host ${instance.databaseHostId}, instance ${instance.instanceId}. Error: ${error}`
-                            );
-                        }
-                    })
-                );
-            } catch (error: any) {
-                logger.error(
-                    `Error occurred while optimizing operating system configuration for account ${accountId}. Error: ${error}`
-                );
-                // Main Parent Job will be updated only after all the clone actions are performed
-                updateLongRunningAuditGroup(AuditStatus.FAILED, error?.message);
-                masterOptimizeParentStatus = JOBSTATUS.FAILED;
-            } finally {
-                if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
-                    await updateParentJobStatus(accountId, parentJobId);
-                    updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+    // Process all instances and their clones with a concurrency limit of 3
+    await Promise.all(
+        flattenedInstances.map(
+            throat(3, async instance => {
+                if (isEmpty(instance.clones)) {
+                    logger.warn(
+                        `No clones found for instance ${instance.instanceId} in databaseHost ${instance.databaseHostId}.`
+                    );
+                    return;
                 }
-            }
-        })
+
+                try {
+                    await Promise.all(
+                        instance.clones?.map(
+                            throat(3, async clone => {
+                                try {
+                                    await optimizeClone(
+                                        accountId,
+                                        instance.credentialsId,
+                                        instance.region,
+                                        instance.databaseHostId,
+                                        instance.instanceId,
+                                        clone,
+                                        parentJobId
+                                    );
+                                    logger.info(
+                                        `Successfully optimized clone ${clone.cloneDatabaseName} for instance ${instance.instanceId} in databaseHost ${instance.databaseHostId}.`
+                                    );
+                                } catch (error: any) {
+                                    logger.error(
+                                        `Error occurred while optimizing clone ${clone.cloneDatabaseName} for host ${instance.databaseHostId}, instance ${instance.instanceId}. Error: ${error}`
+                                    );
+                                }
+                            })
+                        )
+                    );
+                } catch (error: any) {
+                    logger.error(
+                        `Error occurred while optimizing operating system configuration for account ${accountId}. Error: ${error}`
+                    );
+                    // Main Parent Job will be updated only after all the clone actions are performed
+                    updateLongRunningAuditGroup(AuditStatus.FAILED, error?.message);
+                    masterOptimizeParentStatus = JOBSTATUS.FAILED;
+                } finally {
+                    if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
+                        await updateParentJobStatus(accountId, parentJobId);
+                        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+                    }
+                }
+            })
+        )
     );
 }
 
