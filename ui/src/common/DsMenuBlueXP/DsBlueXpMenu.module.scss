@@ -16,7 +16,7 @@
 
             > div {
                 [class*='dropDownItemPopover'] {
-                    .blueMenuItem {
+                    [class*='blueMenuItem'] {
                         display: flex;
                         align-items: center;
                         padding-left: 24px;
@@ -31,7 +31,7 @@
                             background-color: var(--hover-background);
                         }
 
-                        .extenalLink {
+                        [class*='extenalLink'] {
                             display: flex;
                             align-items: center;
                             gap: 8px;
