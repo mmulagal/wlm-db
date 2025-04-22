@@ -3,110 +3,61 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './DismissTables.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useMemo } from 'react';
-import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
-import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { useEffect } from 'react';
+import { formatDateAssess, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForDismiss } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from '../RenderTables/FirstColumnComponent';
-import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
-import {
-    disableOptimizeCheckBoxForErrCase,
-    disableOptimizeCheckBoxForOptimizeCase
-} from '../../../GetWell/GetWellUtils';
+import { CONFIG_STATES, CONFIG_STATES_UI } from '../../../../utils/consts';
 import { ReactComponent as MenuIcon } from '../../../../assets/menu-icon2.svg';
 import { ReactComponent as Success } from '../../../../assets/success.svg';
 import { ReactComponent as Warning } from '../../../../assets/warning.svg';
 import BulkDismissContainer from '../../../../common/BulkAction/BulkDismissContainer';
+import { GENERAL } from '../../../../utils/appConstants';
 
 interface StorageTierTableProps {
     handleBulkAction: any;
     handleSingleAction?: any;
+    tableData?: any;
+    type?: string;
 }
 
-const DismissTable = ({ handleBulkAction, handleSingleAction }: StorageTierTableProps) => {
+const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }: StorageTierTableProps) => {
     const dispatch = useDispatch();
-    const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
-        state => state.inventoryV2
-    );
-
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { selectedRowsForDismiss } = useAppSelector(state => state.databaseHome);
-    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
 
-    const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
-        let uniqueResourceList: Array<string> = [];
-        allmssqlHostAssessmentData?.map((hostData: any) => {
-            if (
-                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
-                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
-                uniqueResourceList.includes(hostData?.databaseHostId)
-            ) {
-                return;
-            }
-            uniqueResourceList.push(hostData?.databaseHostId);
-
-            hostData?.instancesAssessment?.map((instanceData: any, index: number) => {
-                if (!instanceData?.error) {
-                    const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
-                        (item: any) => item.name === 'performance-tier'
-                    );
-                    const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
-                    if (!isStorageTierOptimized) {
-                        storageTierAssessmentData.push({
-                            credentialId: hostData?.credentialId,
-                            regionId: hostData?.regionId,
-                            databaseHostId: hostData?.databaseHostId,
-                            instanceId: instanceData?.databaseInstanceId,
-                            serverInstanceName: instanceData?.databaseInstanceName,
-                            performanceTier: performanceTierObj?.current,
-                            totalObjectsAssessed: performanceTierObj?.totalObjectsAssessed,
-                            totalObjectsInViolation: performanceTierObj?.totalObjectsInViolation,
-                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName,
-                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
-                            data: instanceData,
-                            configState:
-                                index === 0 ? 'Active' : index === 1 ? 'Postponed until 10 April 2025' : 'Dismissed'
-                        });
-                    }
-                }
-            });
-        });
-        return mapHostStatusToAssessmentData(
-            inventoryTableData,
-            storageTierAssessmentData,
-            getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
-        );
-    }, [
-        allmssqlHostAssessmentData,
-        inventoryTableData,
-        getDatabaseHosts,
-        headerSelectedMultiCredIdsList,
-        headerSelectedMultiRegionIdsList
-    ]);
-
-    // Update tableData when selection changes
-    const updatedTableData = useMemo(() => {
-        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
-            return disableOptimizeCheckBoxForOptimizeCase(
-                tableData,
-                ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
-                selectedRowsForDismiss
-            );
-        } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
-        }
-    }, [selectedRowsForDismiss, tableData, inProgressOptimizationData]);
+    // // Update tableData when selection changes
+    // const updatedTableData = useMemo(() => {
+    //     if (inProgressOptimizationData?.[type]?.length) {
+    //         return disableOptimizeCheckBoxForOptimizeCase(
+    //             tableData,
+    //             type,
+    //             selectedRowsForDismiss
+    //         );
+    //     } else {
+    //         return disableOptimizeCheckBoxForErrCase(tableData, type);
+    //     }
+    // }, [selectedRowsForDismiss, tableData, inProgressOptimizationData]);
 
     const setStatusIcon = (value: string) => {
-        if (value === 'Active') {
+        if (value === CONFIG_STATES.ACTIVE) {
             return <Success />;
-        } else if (value.includes('Postponed')) {
+        } else if (value.includes(CONFIG_STATES.POSTPONED)) {
             return <Warning />;
         } else {
             return <Warning />;
+        }
+    };
+
+    const mapStatus = (value: string, rowData: any) => {
+        if (value === CONFIG_STATES.ACTIVE) {
+            return CONFIG_STATES_UI.ACTIVE;
+        } else if (value === CONFIG_STATES.POSTPONED) {
+            return CONFIG_STATES_UI.POSTPONED + ' untill ' + formatDateAssess(rowData?.configObj?.endTime);
+        } else if (value === CONFIG_STATES.DISMISSED) {
+            return CONFIG_STATES_UI.DISMISSED;
+        } else {
+            return GENERAL.NOT_AVAILABLE;
         }
     };
 
@@ -141,7 +92,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction }: StorageTierTable
                     <div className={styles.configContainer}>
                         {setStatusIcon(cellData)}
                         <DsTypography variant="Regular_14" className={styles.statusText}>
-                            {cellData}
+                            {mapStatus(cellData, rowData)}
                         </DsTypography>
                     </div>
                 );
@@ -171,29 +122,25 @@ const DismissTable = ({ handleBulkAction, handleSingleAction }: StorageTierTable
                                 {
                                     id: 'activate',
                                     children: 'Activate',
-                                    isDisabled: rowData?.configState === 'Active',
+                                    isDisabled: rowData?.configState === CONFIG_STATES.ACTIVE,
                                     onClick: () => {
-                                        handleSingleAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, rowData, 'activate');
+                                        handleSingleAction(type, rowData, 'activate');
                                     }
                                 },
                                 {
                                     id: 'postponeFor30Days',
                                     children: 'Postpone for 30 days',
-                                    isDisabled: rowData?.configState.includes('Postponed'),
+                                    isDisabled: rowData?.configState.includes(CONFIG_STATES.POSTPONED),
                                     onClick: () => {
-                                        handleSingleAction(
-                                            ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
-                                            rowData,
-                                            'postponeFor30Days'
-                                        );
+                                        handleSingleAction(type, rowData, 'postponeFor30Days');
                                     }
                                 },
                                 {
                                     id: 'dismiss',
                                     children: 'Dismiss',
-                                    isDisabled: rowData?.configState === 'Dismissed',
+                                    isDisabled: rowData?.configState === CONFIG_STATES.DISMISSED,
                                     onClick: () => {
-                                        handleSingleAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, rowData, 'dismiss');
+                                        handleSingleAction(type, rowData, 'dismiss');
                                     }
                                 }
                             ]}
@@ -212,25 +159,24 @@ const DismissTable = ({ handleBulkAction, handleSingleAction }: StorageTierTable
         isHorizontalScroll: false,
         isSorting: false,
         columns: TableColDefs,
-        rows: updatedTableData || [],
+        rows: tableData || [],
         pageSize: 50,
         selectionType: 'multiple',
         defaultSelectedRows: []
     });
 
     useEffect(() => {
-        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
 
         dispatch(setSelectedRowsForDismiss(rowsData));
 
-        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
-            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
-        }
-    }, [tableProps.selectionState, inProgressOptimizationData]);
+        // if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        //     checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
+        // }
+    }, [tableProps.selectionState]);
 
     const handleBulkOperation = (val: string) => {
-        console.log(val);
-        handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForDismiss);
+        handleBulkAction(type, selectedRowsForDismiss);
     };
     return (
         <div className={styles.dismissTables}>
