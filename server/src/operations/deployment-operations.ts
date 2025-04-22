@@ -1602,9 +1602,9 @@ async function deployPgSql(
 
     try {
         // Get the Max capacity - headroom of 35% for OS and other services
-        // Divide by 1.25 (data + 25% log) to get the max database size
+        // Divide by 1.25 (data + 75% log) to get the max database size
         // Further divide by 2 for HA mode as we would create 2 data volumes
-        let maxDatabaseSizeInGib = ((1 - 0.35) * 192 * 1024) / 1.25;
+        let maxDatabaseSizeInGib = ((1 - 0.35) * 192 * 1024) / 1.75;
         maxDatabaseSizeInGib = Number(maxDatabaseSizeInGib / (sqlDeploymentMode === HA ? 2 : 1));
         if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > maxDatabaseSizeInGib) {
             throw createError(412, `Supported Fsxn disk size should be between 120GiB to ${maxDatabaseSizeInGib}GiB`);

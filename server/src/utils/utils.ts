@@ -260,7 +260,7 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode:
         databaseType === DatabaseTypes.PG_SQL && (sqlDeploymentMode === HA || sqlDeploymentMode === FCI);
     if (databaseType === DatabaseTypes.PG_SQL) {
         FSxDataVolumeSize = FSxDataLunSizeInMib; // Absolute value of database size, as there won't be any LUN incase of NFS mounts
-        FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+        FSxLogVolumeSize = Math.ceil(0.75 * FSxDataVolumeSize); // 75% of FSxDataVolumeSize
         FSxTempDbVolumeSize = 0; // No TempDB volume for PostgreSQL
         FSxQuorumVolumeSize = 0; // No Quorum volume for PostgreSQL
     }
