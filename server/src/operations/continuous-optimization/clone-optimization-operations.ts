@@ -286,7 +286,7 @@ async function deleteCloneForOthers(
     params: {
         fsxId: string;
         activeNodeInstanceId: string;
-        volumeUuids: string;
+        volumeUuids: string[];
         volumeNames: string;
         volumeUuidToNameMap: Map<string, string>;
     },
@@ -324,7 +324,7 @@ async function deleteCloneForOthers(
         const ssmParams = {
             fsxId,
             region,
-            volUuids: volumeUuids
+            volUuids: JSON.stringify(volumeUuids)
         };
 
         const command = [DELETE_CLONE_VOLUMES(ssmParams)];
@@ -498,13 +498,13 @@ function validateAndExtractClonedVolumeUuids(
     cloneDatabaseName: string | undefined,
     clonedVolumeDetails: ClonedVolumeDetail[] | undefined,
     volumeUUIDToDatabaseNameMap: Map<string, string[]>
-): { volumeUuids: string; volumeNames: string; volumeUuidToNameMap: Map<string, string> } | false {
+): { volumeUuids: string[]; volumeNames: string; volumeUuidToNameMap: Map<string, string> } | false {
     if (!cloneDatabaseName || !clonedVolumeDetails) {
         return false;
     }
 
-    let volumeUuids: string = '';
-    let volumeNames: string = '';
+    const volumeUuids: string[] = [];
+    const volumeNames: string[] = [];
     const volumeUuidToNameMap = new Map<string, string>();
 
     for (const { cloneVolumeUuid, cloneVolumeName } of clonedVolumeDetails) {
@@ -515,11 +515,15 @@ function validateAndExtractClonedVolumeUuids(
         if (!dbNames || dbNames.length !== 1 || dbNames[0] !== cloneDatabaseName) {
             return false;
         }
-        volumeUuids += cloneVolumeUuid;
-        volumeNames += cloneVolumeName;
+        volumeUuids.push(cloneVolumeUuid);
+        volumeNames.push(cloneVolumeName || '');
         volumeUuidToNameMap.set(cloneVolumeUuid, cloneVolumeName as string);
     }
-    return { volumeUuids, volumeNames, volumeUuidToNameMap };
+    return {
+        volumeUuids,
+        volumeNames: volumeNames.join(','),
+        volumeUuidToNameMap
+    };
 }
 
 export default handleCloneRemediation;
