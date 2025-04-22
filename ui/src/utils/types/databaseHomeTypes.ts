@@ -175,6 +175,9 @@ export interface DatabaseHostsEntities {
         optimizedInstances: number;
         notOptimizedInstances: number;
         severity: string;
+        configState: string;
+        totalInstances: number;
+        tooltipText: string;
     };
     selectedAssessmentRow: any;
     sandboxAgeRange: {

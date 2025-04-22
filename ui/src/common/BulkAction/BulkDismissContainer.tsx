@@ -1,6 +1,7 @@
 import { DsButton, DsTypography } from '@netapp/design-system';
 import styles from './BulkActionContainer.module.scss';
 import SeparatorComponent from '../SeparatorComponent/SeparatorComponent';
+import { CONFIG_STATES } from '../../utils/consts';
 
 type BulkActionContainerProps = {
     onClick: any;
@@ -9,16 +10,54 @@ type BulkActionContainerProps = {
 
 const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) => {
     const buttonContainer = () => {
-        const checkForOnlyPostponed = rowData.length > 0 && rowData.every((item: any) => item.includes('Postponed'));
-        const hasDismissed = rowData.length > 0 && rowData.includes('Dismissed');
-        const hasPostponed = rowData.length > 0 && rowData.some((item: any) => item.includes('Postponed'));
-        const hasDismissedAndPostponed = hasDismissed && hasPostponed;
-        const isOnlyActiveOrDismissed =
-            rowData.length > 0 && rowData.every((item: any) => item === 'Active' || item === 'Dismissed');
-        const hasActive = rowData.length > 0 && rowData.includes('Active');
-        const hasDismissedAndActive = isOnlyActiveOrDismissed && hasActive && hasDismissed;
+        const checkForOnlyPostponed =
+            rowData.length > 0 && rowData.every((item: any) => item === CONFIG_STATES.POSTPONED);
+        const checkForOnlyActive = rowData.length > 0 && rowData.every((item: any) => item === CONFIG_STATES.ACTIVE);
+        const checkForOnlyDismissed =
+            rowData.length > 0 && rowData.every((item: any) => item === CONFIG_STATES.DISMISSED);
 
-        if (checkForOnlyPostponed) {
+        const hasDismissedAndPostponed =
+            rowData.length > 0 &&
+            rowData.some((item: any) => item === CONFIG_STATES.POSTPONED) &&
+            rowData.some((item: any) => item === CONFIG_STATES.DISMISSED);
+
+        const hasDismissedAndActive =
+            rowData.length > 0 &&
+            rowData.some((item: any) => item === CONFIG_STATES.ACTIVE) &&
+            rowData.some((item: any) => item === CONFIG_STATES.DISMISSED);
+
+        const hasActiveAndPostponed =
+            rowData.length > 0 &&
+            rowData.some((item: any) => item === CONFIG_STATES.ACTIVE) &&
+            rowData.some((item: any) => item === CONFIG_STATES.POSTPONED);
+
+        const hasActiveAndDismissAndPostponed =
+            rowData.length > 0 &&
+            rowData.some((item: any) => item === CONFIG_STATES.ACTIVE) &&
+            rowData.some((item: any) => item === CONFIG_STATES.POSTPONED) &&
+            rowData.some((item: any) => item === CONFIG_STATES.DISMISSED);
+
+        if (hasActiveAndDismissAndPostponed) {
+            return (
+                <div className={styles.bulkButtonContainer}>
+                    <DsTypography variant="Regular_14" className={styles.actionText}>
+                        {'No common action available'}
+                    </DsTypography>
+                </div>
+            );
+        } else if (checkForOnlyPostponed) {
+            return (
+                <div className={styles.bulkButtonContainer}>
+                    <DsButton type="text" onClick={() => onClick('activate')}>
+                        {'Activate'}
+                    </DsButton>
+                    <SeparatorComponent variant="vertical" height="16px" />
+                    <DsButton type="text" onClick={() => onClick('dismiss')}>
+                        {'Dismiss'}
+                    </DsButton>
+                </div>
+            );
+        } else if (checkForOnlyActive) {
             return (
                 <div className={styles.bulkButtonContainer}>
                     <DsButton type="text" onClick={() => onClick('postponed')}>
@@ -27,6 +66,18 @@ const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) =>
                     <SeparatorComponent variant="vertical" height="16px" />
                     <DsButton type="text" onClick={() => onClick('dismiss')}>
                         {'Dismiss'}
+                    </DsButton>
+                </div>
+            );
+        } else if (checkForOnlyDismissed) {
+            return (
+                <div className={styles.bulkButtonContainer}>
+                    <DsButton type="text" onClick={() => onClick('activate')}>
+                        {'Activate'}
+                    </DsButton>
+                    <SeparatorComponent variant="vertical" height="16px" />
+                    <DsButton type="text" onClick={() => onClick('postponed')}>
+                        {'Postponed for 30 days'}
                     </DsButton>
                 </div>
             );
@@ -43,6 +94,14 @@ const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) =>
                 <div className={styles.bulkButtonContainer}>
                     <DsButton type="text" onClick={() => onClick('postponed')}>
                         {'Postponed for 30 days'}
+                    </DsButton>
+                </div>
+            );
+        } else if (hasActiveAndPostponed) {
+            return (
+                <div className={styles.bulkButtonContainer}>
+                    <DsButton type="text" onClick={() => onClick('dismiss')}>
+                        {'Dismiss'}
                     </DsButton>
                 </div>
             );

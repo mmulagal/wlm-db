@@ -60,7 +60,7 @@ const ValueCard = ({
                             <DsTypography variant="Semibold_14">{configurationState}</DsTypography>
                         </div>
 
-                        <DsTypography variant="Regular_14">Configuration state</DsTypography>
+                        <DsTypography variant="Regular_14">Analysis state</DsTypography>
                     </div>
 
                     <div className={styles.block}>
