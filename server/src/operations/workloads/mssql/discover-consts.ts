@@ -634,38 +634,37 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
     function Install-ModulesFromS3 {
       param (
           [string]$s3SignedUrl,
-          [array]$unavailableModuleList,
+          [array]$unavailableModuleList
       )
-  
-      $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\dependent-packages.zip"
-      $Null = Expand-Archive -Path "$Env:Temp\\dependent-packages.zip" -DestinationPath $Env:Temp -Force
-      Unblock-File -Path "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
-  
-      $destinationPath = "C:\\Program Files\\PackageManagement\\ProviderAssemblies"
-      $destinationPathExists = Test-Path -Path $destinationPath
-      if ($destinationPathExists -eq $False) {
-          New-Item -ItemType Directory -Path $destinationPath -Force
+      if($unavailableModuleList.Count -gt 0) {
+        $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\dependent-packages.zip"
+        $Null = Expand-Archive -Path "$Env:Temp\\dependent-packages.zip" -DestinationPath $Env:Temp -Force
+        Unblock-File -Path "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
+    
+        $destinationPath = "C:\\Program Files\\PackageManagement\\ProviderAssemblies"
+        $destinationPathExists = Test-Path -Path $destinationPath
+        if ($destinationPathExists -eq $False) {
+            New-Item -ItemType Directory -Path $destinationPath -Force
+        }
+    
+        Copy-Item "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
+    
+        $sourcelocation = "$Env:Temp\\dependent-packages\\aws"
+        Import-PackageProvider -Name NuGet
+        try {
+            Unregister-PSRepository -Name 'AWS'
+        } catch {}
+        Register-PSRepository -Name 'AWS' -SourceLocation $sourcelocation -InstallationPolicy Trusted
+    
+        ForEach ($moduleName in $unavailableModuleList) {
+            Install-Module -Name $moduleName -Repository 'AWS' -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+        }
+    
+        try {
+            Remove-Item -LiteralPath "$Env:Temp\\dependent-packages" -Force -Recurse
+            Remove-Item -LiteralPath "$Env:Temp\\dependent-packages.zip" -Force -Recurse
+        } catch {}
       }
-  
-      Copy-Item "$Env:Temp\\dependent-packages\\powershell\\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
-  
-      $sourcelocation = "$Env:Temp\\dependent-packages\\aws"
-      Import-PackageProvider -Name NuGet
-      try {
-          Unregister-PSRepository -Name 'AWS'
-      } catch {}
-      Register-PSRepository -Name 'AWS' -SourceLocation $sourcelocation -InstallationPolicy Trusted
-  
-      ForEach ($moduleName in $unavailableModuleList) {
-          Install-Module -Name $moduleName -Repository 'AWS' -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-      }
-  
-      try {
-          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages" -Force -Recurse
-      } catch {}
-      try {
-          Remove-Item -LiteralPath "$Env:Temp\\dependent-packages.zip" -Force -Recurse
-      } catch {}
     }
   
     try {
