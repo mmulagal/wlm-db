@@ -269,10 +269,6 @@ async function callSsmExecution(
         if (error) {
             throw createError(error);
         }
-        if (cacheData) {
-            logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
-            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
-        }
         if (output.endsWith('--output truncated--')) {
             if (!response?.response?.CommandId) {
                 throw createError('Command Id not found');
@@ -284,6 +280,10 @@ async function callSsmExecution(
                 activeNodeInstanceId
             );
             output = responses.join('');
+        }
+        if (cacheData) {
+            logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
+            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
         }
         return output;
     } catch (error: any) {
