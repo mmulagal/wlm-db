@@ -595,8 +595,10 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
     const { nodeDetails } = windowsConfig;
     let maxVCpuCount = 4;
     let minMemoryMiB = 1024; // 1 GiB
+
+    let networkBandwidthGbps = 0;
     nodeDetails.forEach(node => {
-        const { numberOfVcpus, ramSize: ramSizeGiB } = node;
+        const { numberOfVcpus, ramSize: ramSizeGiB, networkConfiguration } = node;
         if (numberOfVcpus > maxVCpuCount) {
             maxVCpuCount = numberOfVcpus;
         }
@@ -604,6 +606,14 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         if (ramSizeInMiB > minMemoryMiB) {
             minMemoryMiB = ramSizeInMiB;
         }
+        const networkConfig = Array.isArray(networkConfiguration) ? networkConfiguration : [networkConfiguration];
+
+        // Loop through the network configurations to find the maximum speed
+        networkConfig.forEach(({ speedMbps }) => {
+            if (speedMbps > 0) {
+                networkBandwidthGbps = Math.max(networkBandwidthGbps, speedMbps / 1024); // Convert to Gbps
+            }
+        });
     });
 
     maxVCpuCount = getPowerOfTwoVcpuCount(maxVCpuCount);
@@ -612,13 +622,18 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
-            VCpuCount: { Min: 4, Max: Math.ceil(maxVCpuCount) },
+            VCpuCount: { Min: Math.ceil(maxVCpuCount), Max: Math.ceil(maxVCpuCount) },
             MemoryMiB: { Min: Math.ceil(minMemoryMiB) },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
-
-            AllowedInstanceTypes: ['m*', 'c*', 'r*']
-        },
-        InstanceGenerations: [InstanceGeneration.CURRENT]
+            AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+            InstanceGenerations: [InstanceGeneration.CURRENT],
+            NetworkBandwidthGbps: networkBandwidthGbps
+                ? {
+                      Min: Math.ceil(networkBandwidthGbps),
+                      Max: Math.ceil(networkBandwidthGbps) + 1 // Adding 1 Gbps to the max value to allow for some flexibility
+                  }
+                : undefined
+        }
     };
 
     return fetchInstanceTypesByRetry(region, instanceRequirements, licenseEdition);
