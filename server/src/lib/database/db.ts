@@ -813,6 +813,30 @@ async function updateTrackedEc2Record(
     });
 }
 
+async function updateDatabaseInstanceConfigurations(
+    accountId: string,
+    credentialsId: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    updatedConfigs: any
+) {
+    logger.info('Updating resource metadata', { accountId, databaseInstanceId, updatedConfigs });
+    accountId = checkAccount(accountId);
+
+    // Update the database instance with the new configurations array.
+    return prisma.client.database_instances.updateMany({
+        where: {
+            account_id: accountId,
+            resource_id: databaseHostId,
+            credentials_id: credentialsId,
+            database_instance_id: databaseInstanceId
+        },
+        data: {
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
+        }
+    });
+}
+
 export {
     Resource,
     listDeployments,
@@ -845,5 +869,6 @@ export {
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record,
-    listAllManagedInstances
+    listAllManagedInstances,
+    updateDatabaseInstanceConfigurations
 };

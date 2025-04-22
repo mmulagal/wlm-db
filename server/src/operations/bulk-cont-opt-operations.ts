@@ -53,13 +53,6 @@ async function bulkOptimization(
     for (const host of hostsToOptimize) {
         const validationResults = await Promise.all(
             host.databaseHosts.map(async ({ credentialsId, region }) => {
-                if (!credentialsId || !region) {
-                    const errorMessage =
-                        'Invalid input: credentialsId and region must be provided in all databaseHosts entries.';
-                    logger.error(errorMessage);
-                    throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
-                }
-
                 const isValid = await validateRequestDetails(accountId, credentialsId, region);
 
                 if (!isValid) {
