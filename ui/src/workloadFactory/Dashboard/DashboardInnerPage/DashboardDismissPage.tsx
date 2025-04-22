@@ -371,54 +371,55 @@ const DashboardDismissPage = () => {
     };
 
     const getConfigObj = (type: string, instanceData: any) => {
-        if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
-            return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                (item: any) => item.name === 'performance-tier'
-            );
-        } else if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
-            return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                (item: any) => item.name === 'headroom'
-            );
-        } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) {
-            return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                (item: any) => item.name === 'log-drive-size'
-            );
-        } else if (type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) {
-            return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                (item: any) => item.name === 'tempdb-drive-size'
-            );
-        } else if (type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF) {
-            return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                (item: any) => item.name === 'data-files-location'
-            );
-        } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF) {
-            return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                (item: any) => item.name === 'log-files-location'
-            );
-        } else if (type === ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT) {
-            return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                (item: any) => item.name === 'tempdb-files-location'
-            );
-        } else if (type === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
-            return instanceData?.assessments?.dismissedConfigurations?.compute;
-        } else if (type === 'MAXDOP') {
-            return instanceData?.assessments?.dismissedConfigurations?.maxDOP;
-        } else if (type === GENERAL.MICROSOFT_SQL_PATCH) {
-            return instanceData?.assessments?.dismissedConfigurations?.mssqlPatch;
-        } else if (type === GENERAL.LICENSE_SQL_SERVER) {
-            return instanceData?.assessments?.dismissedConfigurations?.license;
-        } else if (type === GENERAL.RSS_CONFIGURATION) {
-            return instanceData?.assessments?.dismissedConfigurations?.rssConfig;
-        } else if (type === GENERAL.OPERATING_SYSTEM_PATCH) {
-            return instanceData?.assessments?.dismissedConfigurations?.hostOsPatch;
-        } else if (type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT) {
-            return instanceData?.assessments?.dismissedConfigurations?.snapshotPolicy;
-        } else if (type === GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
-            return instanceData?.assessments?.dismissedConfigurations?.awsBackup;
-        } else if (type === GENERAL.CLONE_MANAGEMENT) {
-            return instanceData?.assessments?.dismissedConfigurations?.clone;
-        } else {
-            return;
+        switch (type) {
+            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
+                return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item.name === 'performance-tier'
+                );
+            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+                return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item.name === 'headroom'
+                );
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
+                return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item.name === 'log-drive-size'
+                );
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
+                return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item.name === 'tempdb-drive-size'
+                );
+            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
+                return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
+                    (item: any) => item.name === 'data-files-location'
+                );
+            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
+                return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
+                    (item: any) => item.name === 'log-files-location'
+                );
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
+                return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
+                    (item: any) => item.name === 'tempdb-files-location'
+                );
+            case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
+                return instanceData?.assessments?.dismissedConfigurations?.compute;
+            case 'MAXDOP':
+                return instanceData?.assessments?.dismissedConfigurations?.maxDOP;
+            case GENERAL.MICROSOFT_SQL_PATCH:
+                return instanceData?.assessments?.dismissedConfigurations?.mssqlPatch;
+            case GENERAL.LICENSE_SQL_SERVER:
+                return instanceData?.assessments?.dismissedConfigurations?.license;
+            case GENERAL.RSS_CONFIGURATION:
+                return instanceData?.assessments?.dismissedConfigurations?.rssConfig;
+            case GENERAL.OPERATING_SYSTEM_PATCH:
+                return instanceData?.assessments?.dismissedConfigurations?.hostOsPatch;
+            case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
+                return instanceData?.assessments?.dismissedConfigurations?.snapshotPolicy;
+            case GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                return instanceData?.assessments?.dismissedConfigurations?.awsBackup;
+            case GENERAL.CLONE_MANAGEMENT:
+                return instanceData?.assessments?.dismissedConfigurations?.clone;
+            default:
+                return;
         }
     };
 
