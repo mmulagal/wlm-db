@@ -57,6 +57,7 @@ async function calculateRssConfigDrift(
             if (rssConfigAssessment?.rssAdapters?.length === 0) {
                 rssConfigAssessment.rssConfigFinding = AssessmentStatus.OPTIMIZED;
             }
+            rssConfigAssessment.totalObjectsInViolation = rssConfigAssessment.rssAdapters?.length;
         }
         const {
             rssConfigFinding,
