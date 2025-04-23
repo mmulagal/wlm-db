@@ -600,6 +600,12 @@ interface InstancesResponse {
     [key: string]: MappedOnTapVolumeResponse;
 }
 
+interface MappedVolumeResponseForClone {
+    volumeMapping: MappedOnTapVolumeResponse;
+    fsxId: string;
+    activeNodeInstanceId: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -650,5 +656,6 @@ export {
     VolumeDBMapEntry,
     AWSBackupAssessment,
     ResourceAssessmentData,
-    ClonedVolumeDetail
+    ClonedVolumeDetail,
+    MappedVolumeResponseForClone
 };

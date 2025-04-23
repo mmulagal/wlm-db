@@ -17,7 +17,8 @@ import {
     MaxDOPAssesment,
     AwsFsxNBackupConfig,
     CloneAssesment,
-    CloneDetail
+    CloneDetail,
+    MappedVolumeResponseForClone
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -97,7 +98,7 @@ import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimizatio
 import { onDemandTriggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { listJobs } from '../lib/database/job';
 import { resetCache } from '../utils/cache';
-import handleCloneRemediation from './continuous-optimization/clone-optimization-operations';
+import { handleCloneRemediation } from './continuous-optimization/clone-optimization-operations';
 
 const isDemoFlow = isDemo();
 
@@ -2725,7 +2726,7 @@ async function triggerAssessmentAfterOptimization(
     databaseHostId: string,
     serverNameWithHostName: string,
     parentJobId: string,
-    instanceToAssess: WorkloadInstance,
+    instanceToAssess: { id: string },
     fields?: string
 ) {
     logger.info('Triggering assessment after optimization', {
@@ -2796,7 +2797,11 @@ async function optimizeClone(
     databaseHostId: string,
     databaseInstanceId: string,
     clone: CloneDetailType,
-    parentJobId: string
+    configData: CloneAssesment,
+    sqlServerName: string,
+    instanceName: string,
+    parentJobId: string,
+    volumeMapping?: MappedVolumeResponseForClone
 ) {
     // 2nd Level Job having master parent job id
     logger.info('Optimizing clone', {
@@ -2806,6 +2811,10 @@ async function optimizeClone(
         databaseHostId,
         databaseInstanceId,
         clone,
+        configData,
+        sqlServerName,
+        instanceName,
+        volumeMapping,
         parentJobId
     });
 
@@ -2813,27 +2822,8 @@ async function optimizeClone(
 
     const { cloneDatabaseName, clonedBy } = clone;
     try {
-        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-            accountId,
-            region,
-            credentialsId,
-            databaseHostId,
-            databaseInstanceId,
-            AssessmentCategories.CLONE
-        );
-        const {
-            config_data: configData,
-            database_instances: { database_instance_name: instanceName = '' } = {},
-            resource: { resource_name: sqlServerName = '' } = {}
-        } = persistedConfigurationData || {};
         const { oldCloneDetails } = configData as unknown as CloneAssesment;
         logger.debug(`Clones data ${JSON.stringify(oldCloneDetails)}`);
-
-        // check whether required for clones
-        if (!instanceName || !sqlServerName) {
-            logger.error('Instance name or sql server name is missing');
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or sql server name is missing');
-        }
 
         const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, cloneDatabaseName);
         const { id } = await registerJob(accountId, credentialsId, region, {
@@ -2864,7 +2854,8 @@ async function optimizeClone(
             childCloneJobId,
             clone,
             matchingClone,
-            serverNameWithHostName
+            serverNameWithHostName,
+            volumeMapping
         );
         // can update once the job is success for this newly created child job one
         await updateJobDetails(accountId, childCloneJobId, {
@@ -2895,5 +2886,6 @@ export {
     activeSqlNodeDetails,
     optimizeMaxDop,
     handleUpdateAwsBackup,
-    optimizeClone
+    optimizeClone,
+    triggerAssessmentAfterOptimization
 };

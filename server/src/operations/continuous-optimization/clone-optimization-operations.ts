@@ -21,6 +21,7 @@ import {
     CloneDetail,
     ClonedVolumeDetail,
     InstancesResponse,
+    MappedVolumeResponseForClone,
     Metadata,
     VolumeDBMapEntry
 } from '../../utils/common-types';
@@ -51,7 +52,8 @@ async function handleCloneRemediation(
     childCloneJobId: string,
     clone: CloneDetailType,
     cloneDetail: CloneDetail,
-    serverNameWithHostName: string
+    serverNameWithHostName: string,
+    volumeMapping?: MappedVolumeResponseForClone
 ) {
     logger.info('Handling clone remediation', {
         accountId,
@@ -100,13 +102,14 @@ async function handleCloneRemediation(
         } else if (clonedBy.toLowerCase() === 'other') {
             logger.info(`Deleting clone ${cloneDatabaseName} created by other source.`);
             // To Check a cloned volume is mapped to any other database while doing deletion
-            const result = await getVolumeDetailsForClonesInInstance(
+            const result = await extractVolumeDetailsForClonesInInstance(
                 accountId,
                 credentialsId,
                 region,
                 databaseHostId,
                 databaseInstanceId,
-                cloneDetail
+                cloneDetail,
+                volumeMapping as MappedVolumeResponseForClone
             );
             if (result !== false) {
                 await deleteCloneForOthers(
@@ -378,15 +381,16 @@ async function deleteCloneForOthers(
     }
 }
 
-async function getVolumeDetailsForClonesInInstance(
+async function extractVolumeDetailsForClonesInInstance(
     accountId: string,
     credentialsId: string,
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    cloneDetail: CloneDetail
+    cloneDetail: CloneDetail,
+    cloneVolumeMapping: MappedVolumeResponseForClone
 ) {
-    logger.info('Fetching volume details for clones in instance', {
+    logger.info('Extracting volume details for clones in instance', {
         accountId,
         credentialsId,
         region,
@@ -397,7 +401,99 @@ async function getVolumeDetailsForClonesInInstance(
 
     try {
         const { cloneDatabaseName, clonedVolumeDetails } = cloneDetail;
+        const {
+            volumeMapping: { volumeDBMap },
+            fsxId,
+            activeNodeInstanceId
+        } = cloneVolumeMapping;
 
+        // Check if volumeDBMap is empty or undefined
+        if (!volumeDBMap || volumeDBMap.length === 0) {
+            const errorMsg = `volumeDBMap is empty or undefined for database instance ${databaseInstanceId}`;
+            logger.error(errorMsg);
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMsg);
+        }
+
+        // Map to store the volume uuid associated to the database names
+        const volumeUUIDToDatabaseNameMap = new Map<string, string[]>();
+        volumeDBMap?.forEach((entry: VolumeDBMapEntry) => {
+            const { databaseName, ontapVolumeuuid } = entry;
+            if (!volumeUUIDToDatabaseNameMap.has(ontapVolumeuuid)) {
+                volumeUUIDToDatabaseNameMap.set(ontapVolumeuuid, []);
+            }
+            volumeUUIDToDatabaseNameMap.get(ontapVolumeuuid)?.push(databaseName);
+        });
+
+        const result = validateAndExtractClonedVolumeUuids(
+            cloneDatabaseName,
+            clonedVolumeDetails,
+            volumeUUIDToDatabaseNameMap
+        );
+        if (result === false) {
+            return false;
+        }
+        return {
+            volumeUuids: result.volumeUuids,
+            volumeNames: result.volumeNames,
+            volumeUuidToNameMap: result.volumeUuidToNameMap,
+            fsxId,
+            activeNodeInstanceId
+        };
+    } catch (error: any) {
+        const errorMsg = `Error while fetching volume details for clones in instance ${databaseInstanceId}: ${error.message}`;
+        logger.error(errorMsg, error);
+        throw createError(error?.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    }
+}
+
+function validateAndExtractClonedVolumeUuids(
+    cloneDatabaseName: string | undefined,
+    clonedVolumeDetails: ClonedVolumeDetail[] | undefined,
+    volumeUUIDToDatabaseNameMap: Map<string, string[]>
+): { volumeUuids: string[]; volumeNames: string; volumeUuidToNameMap: Map<string, string> } | false {
+    if (!cloneDatabaseName || !clonedVolumeDetails) {
+        return false;
+    }
+
+    const volumeUuids: string[] = [];
+    const volumeNames: string[] = [];
+    const volumeUuidToNameMap = new Map<string, string>();
+
+    for (const { cloneVolumeUuid, cloneVolumeName } of clonedVolumeDetails) {
+        if (!cloneVolumeUuid) {
+            return false;
+        }
+        const dbNames = volumeUUIDToDatabaseNameMap.get(cloneVolumeUuid);
+        if (!dbNames || dbNames.length !== 1 || dbNames[0] !== cloneDatabaseName) {
+            return false;
+        }
+        volumeUuids.push(cloneVolumeUuid);
+        volumeNames.push(cloneVolumeName || '');
+        volumeUuidToNameMap.set(cloneVolumeUuid, cloneVolumeName as string);
+    }
+    return {
+        volumeUuids,
+        volumeNames: volumeNames.join(','),
+        volumeUuidToNameMap
+    };
+}
+
+async function getMappedVolumeDetailForInstance(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Fetching mapped volume details for instance', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    });
+
+    try {
         const [{ metadata, resource_id: resourceId }] = await listResources(
             accountId,
             databaseHostId,
@@ -454,76 +550,17 @@ async function getVolumeDetailsForClonesInInstance(
                 logger.error(errorMessage);
                 throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
             }
-            const { volumeDBMap } = volumeMapping;
-
-            // Map to store the volume uuid associated to the database names
-            const volumeUUIDToDatabaseNameMap = new Map<string, string[]>();
-            volumeDBMap?.forEach((entry: VolumeDBMapEntry) => {
-                const { databaseName, ontapVolumeuuid } = entry;
-                if (!volumeUUIDToDatabaseNameMap.has(ontapVolumeuuid)) {
-                    volumeUUIDToDatabaseNameMap.set(ontapVolumeuuid, []);
-                }
-                volumeUUIDToDatabaseNameMap.get(ontapVolumeuuid)?.push(databaseName);
-            });
-
-            const result = validateAndExtractClonedVolumeUuids(
-                cloneDatabaseName,
-                clonedVolumeDetails,
-                volumeUUIDToDatabaseNameMap
-            );
-            if (result === false) {
-                return false;
-            }
-            return {
-                volumeUuids: result.volumeUuids,
-                volumeNames: result.volumeNames,
-                volumeUuidToNameMap: result.volumeUuidToNameMap,
-                fsxId,
-                activeNodeInstanceId
-            };
+            return { volumeMapping, fsxId, activeNodeInstanceId };
         }
-
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `No metadata found for the database host ${databaseHostId} and instance ${databaseInstanceId}`
         );
     } catch (error: any) {
-        const errorMsg = `Error while fetching volume details for clones in instance ${databaseInstanceId}: ${error.message}`;
+        const errorMsg = `Error while fetching mapped volume details for instance ${databaseInstanceId}: ${error.message}`;
         logger.error(errorMsg, error);
         throw createError(error?.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
 }
 
-function validateAndExtractClonedVolumeUuids(
-    cloneDatabaseName: string | undefined,
-    clonedVolumeDetails: ClonedVolumeDetail[] | undefined,
-    volumeUUIDToDatabaseNameMap: Map<string, string[]>
-): { volumeUuids: string[]; volumeNames: string; volumeUuidToNameMap: Map<string, string> } | false {
-    if (!cloneDatabaseName || !clonedVolumeDetails) {
-        return false;
-    }
-
-    const volumeUuids: string[] = [];
-    const volumeNames: string[] = [];
-    const volumeUuidToNameMap = new Map<string, string>();
-
-    for (const { cloneVolumeUuid, cloneVolumeName } of clonedVolumeDetails) {
-        if (!cloneVolumeUuid) {
-            return false;
-        }
-        const dbNames = volumeUUIDToDatabaseNameMap.get(cloneVolumeUuid);
-        if (!dbNames || dbNames.length !== 1 || dbNames[0] !== cloneDatabaseName) {
-            return false;
-        }
-        volumeUuids.push(cloneVolumeUuid);
-        volumeNames.push(cloneVolumeName || '');
-        volumeUuidToNameMap.set(cloneVolumeUuid, cloneVolumeName as string);
-    }
-    return {
-        volumeUuids,
-        volumeNames: volumeNames.join(','),
-        volumeUuidToNameMap
-    };
-}
-
-export default handleCloneRemediation;
+export { handleCloneRemediation, getMappedVolumeDetailForInstance };

@@ -3,11 +3,12 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import throat from 'throat';
 import getLogger from '../utils/logger';
-import { AuditStatus, HttpErrorCodes } from '../utils/consts';
+import { AuditStatus, HttpErrorCodes, SSM_COMMAND_CACHE_TYPE } from '../utils/consts';
 import {
     BulkOptimizeCloneInHostRequestBodyType,
     BulkOptimizeComputePerHostRequestBodyType,
     BulkOptimizeGeneralPerHostRequestBodyType,
+    CloneDetailType,
     OptimizeClonesPerHostRequestBodyType,
     OptimizePerHostRequestBodyType
 } from '../routes/types/continuous-optimization.types';
@@ -18,10 +19,12 @@ import {
     optimizeMaxDop,
     optimizeOperatingSystemSettings,
     optimizeSizing,
-    optimizeStorageTier
+    optimizeStorageTier,
+    triggerAssessmentAfterOptimization
 } from './cont-opt-optimize-operations';
 import { updateJobDetails, updateParentJobStatus } from './database/job-operations';
 import {
+    AssessmentCategories,
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
@@ -32,6 +35,11 @@ import optimizeCompute from './continuous-optimization/compute-optimize-operatio
 import { listResources } from '../lib/database/db';
 import { handleOptimizeRssOptimization } from './continuous-optimization/rssConfig-optimize-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
+import { resetCache } from '../utils/cache';
+import { getServerNameWithHostname } from '../utils/utils';
+import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { CloneAssesment, MappedVolumeResponseForClone } from '../utils/common-types';
+import { getMappedVolumeDetailForInstance } from './continuous-optimization/clone-optimization-operations';
 
 const logger = getLogger();
 
@@ -150,62 +158,86 @@ async function handleBulkCloneOptimization(
 ) {
     logger.info(`Handle bulk optimizing clone: ${accountId}, ${hostsToOptimize}, ${parentJobId}`);
 
-    let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-
     const flattenedInstances = extractInstancesToOptimize(hostsToOptimize);
-
     // Process all instances and their clones with a concurrency limit of 3
     await Promise.all(
         flattenedInstances.map(
             throat(3, async instance => {
-                if (isEmpty(instance.clones)) {
-                    logger.warn(
-                        `No clones found for instance ${instance.instanceId} in databaseHost ${instance.databaseHostId}.`
-                    );
+                const { instanceId, clones, region, credentialsId, databaseHostId } = instance;
+                if (isEmpty(clones)) {
+                    logger.warn(`No clones found for instance ${instanceId} in databaseHost ${databaseHostId}.`);
                     return;
                 }
 
                 try {
+                    // Fetch configuration data once for the databaseHostId and databaseInstanceId
+                    const { configData, instanceName, sqlServerName, serverNameWithHostName, volumeMapping } =
+                        await fetchInstanceConfigurationAndVolumeMapping(
+                            accountId,
+                            credentialsId,
+                            region,
+                            databaseHostId,
+                            instanceId,
+                            clones
+                        );
+
                     await Promise.all(
-                        instance.clones?.map(
+                        clones?.map(
                             throat(3, async clone => {
                                 try {
                                     await optimizeClone(
                                         accountId,
-                                        instance.credentialsId,
-                                        instance.region,
-                                        instance.databaseHostId,
-                                        instance.instanceId,
+                                        credentialsId,
+                                        region,
+                                        databaseHostId,
+                                        instanceId,
                                         clone,
-                                        parentJobId
+                                        configData as unknown as CloneAssesment,
+                                        sqlServerName,
+                                        instanceName,
+                                        parentJobId,
+                                        volumeMapping
                                     );
                                     logger.info(
-                                        `Successfully optimized clone ${clone.cloneDatabaseName} for instance ${instance.instanceId} in databaseHost ${instance.databaseHostId}.`
+                                        `Successfully optimized clone ${clone.cloneDatabaseName} for instance ${instanceId} in databaseHost ${databaseHostId}.`
                                     );
                                 } catch (error: any) {
                                     logger.error(
-                                        `Error occurred while optimizing clone ${clone.cloneDatabaseName} for host ${instance.databaseHostId}, instance ${instance.instanceId}. Error: ${error}`
+                                        `Error occurred while optimizing clone ${clone.cloneDatabaseName} for host ${databaseHostId}, instance ${instanceId}. Error: ${error}`
                                     );
                                 }
                             })
                         )
                     );
-                } catch (error: any) {
-                    logger.error(
-                        `Error occurred while optimizing operating system configuration for account ${accountId}. Error: ${error}`
+                    // once the optimize done for the specific instance id in a host, Run the assessment for that
+                    resetCache(SSM_COMMAND_CACHE_TYPE);
+                    await triggerAssessmentAfterOptimization(
+                        credentialsId,
+                        region,
+                        accountId,
+                        databaseHostId,
+                        serverNameWithHostName,
+                        parentJobId,
+                        { id: instanceId },
+                        AssessmentCategories.CLONE
                     );
-                    // Main Parent Job will be updated only after all the clone actions are performed
-                    updateLongRunningAuditGroup(AuditStatus.FAILED, error?.message);
-                    masterOptimizeParentStatus = JOBSTATUS.FAILED;
-                } finally {
-                    if (masterOptimizeParentStatus !== JOBSTATUS.FAILED) {
-                        await updateParentJobStatus(accountId, parentJobId);
-                        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
-                    }
+                } catch (err: any) {
+                    logger.error(
+                        `Error occurred while optimizing clone configuration for account ${accountId}. Error: ${err}`
+                    );
                 }
             })
         )
     );
+    const status = await updateParentJobStatus(accountId, parentJobId);
+    if (status === JOBSTATUS.COMPLETED) {
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+    } else if (status === JOBSTATUS.FAILED) {
+        updateLongRunningAuditGroup(
+            AuditStatus.FAILED,
+            `Error occurred while optimizing clone for account ${accountId}`
+        );
+    }
 }
 
 async function handleOptimization(
@@ -461,6 +493,67 @@ async function handleBulkComputeOptimization(
             endTime: Date.now()
         });
     }
+}
+
+async function fetchInstanceConfigurationAndVolumeMapping(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    instanceId: string,
+    clones: CloneDetailType[]
+): Promise<{
+    configData: CloneAssesment;
+    instanceName: string;
+    sqlServerName: string;
+    serverNameWithHostName: string;
+    volumeMapping?: MappedVolumeResponseForClone;
+}> {
+    // Fetch configuration data for the databaseHostId and databaseInstanceId
+    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        instanceId,
+        AssessmentCategories.CLONE
+    );
+
+    const {
+        config_data: configData,
+        database_instances: { database_instance_name: instanceName = '' } = {},
+        resource: { resource_name: sqlServerName = '' } = {}
+    } = persistedConfigurationData || {};
+
+    if (!instanceName || !sqlServerName) {
+        logger.error('Instance name or SQL server name is missing');
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or SQL server name is missing');
+    }
+
+    const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName);
+
+    // Check if any clone requires volume mapping
+    const requiresVolumeMapping = clones.some(clone => clone.action === 'delete' && clone.clonedBy === 'other');
+
+    let volumeMapping: MappedVolumeResponseForClone | undefined;
+    if (requiresVolumeMapping) {
+        // Fetch the mapped volume details for the instance
+        volumeMapping = await getMappedVolumeDetailForInstance(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceId
+        );
+    }
+
+    return {
+        configData: configData as unknown as CloneAssesment,
+        instanceName,
+        sqlServerName,
+        serverNameWithHostName,
+        volumeMapping
+    };
 }
 
 // Flattens hostsToOptimize to extract SQL Server instances and their metadata.
