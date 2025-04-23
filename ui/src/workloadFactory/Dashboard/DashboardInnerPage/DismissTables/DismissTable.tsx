@@ -85,7 +85,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
             Header: 'Configuration state',
             accessor: 'configState',
             id: '3',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return (
