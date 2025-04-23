@@ -3,23 +3,28 @@ import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATE_ACTIONS, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
 import { useEffect, useMemo, useState } from 'react';
-import { cardDataDefault, setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
+import { cardDataDefault, setOptimizeInnerpageSummary, updateConfigStateStatus } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import {
+    categorizeStateInstances,
     getAssessmentGroupedByConfigurations,
     mapHostStatusToAssessmentData
 } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
 import DismissTable from './DismissTables/DismissTable';
 import { useDismissMssqlAssessmentMutation } from '../../../utils/apiService';
+import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import { setInProgressStateData } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import store from '../../../store/store';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
 const DashboardDismissPage = () => {
     const dispatch = useDispatch();
@@ -47,8 +52,195 @@ const DashboardDismissPage = () => {
         cardName: ''
     });
 
-    const callDismissApi = (type: any, rowData?: any, operation?: string) => {
-        // ToDO: Call the API to dismiss the selected configuration
+    const getPayloadType = (type: string) => {
+        switch (type) {
+            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
+                type = 'performance-tier';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+                type = 'headroom';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
+                type = 'log-drive-size';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
+                type = 'tempdb-drive-size';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
+                type = 'data-files-location';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
+                type = 'log-files-location';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
+                type = 'tempdb-files-location';
+                break;
+            case GENERAL.COMPUTE_RIGHTSIZING:
+                type = 'compute';
+                break;
+            case GENERAL.RSS_CONFIGURATION:
+                type = 'rss-config';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                type = 'snapshot-policy';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                type = 'aws-backup';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.MAXDOP:
+                type = 'max-dop';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH:
+                type = 'mssql-patch';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
+                type = 'host-os-patch';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.LICENSE:
+                type = 'license';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.CRR:
+                type = 'crr';
+                break;
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+                type = 'clone';
+                break;
+            default:
+                break;
+        }
+        return type;
+    };
+
+    const callDismissApi = (type: any, rowData?: any, action?: string) => {
+        const state = store.getState();
+        const { inProgressStateData } = state.getWellOptimize;
+
+        let name = getPayloadType(type);
+
+        const payload = {
+            configurationsToDismiss: [
+                {
+                    configurationName: name,
+                    configState: action,
+                    databaseHosts: Object.values(
+                        rowData.reduce(
+                            (
+                                acc: Record<
+                                    string,
+                                    {
+                                        id: string;
+                                        sqlServerInstances: string[];
+                                        credentialsId: string;
+                                        region: string;
+                                    }
+                                >,
+                                {
+                                    databaseHostId,
+                                    instanceId,
+                                    hostName,
+                                    credentialId,
+                                    regionId,
+                                    configState
+                                }: {
+                                    databaseHostId: string;
+                                    instanceId: string;
+                                    hostName: string;
+                                    credentialId: string;
+                                    regionId: string;
+                                    configState: string;
+                                }
+                            ) => {
+                                if (configState !== action) {
+                                    let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                    if (!acc[uniqueRow]) {
+                                        acc[uniqueRow] = {
+                                            id: databaseHostId,
+                                            sqlServerInstances: [],
+                                            credentialsId: credentialId,
+                                            region: regionId
+                                        };
+                                    }
+                                    acc[uniqueRow].sqlServerInstances.push(instanceId);
+                                }
+                                return acc;
+                            },
+                            {}
+                        )
+                    )
+                }
+            ]
+        };
+
+        const hostinstances = payload?.configurationsToDismiss?.flatMap((host: any) =>
+            host.databaseHosts.flatMap((databaseHost: any) =>
+                databaseHost.sqlServerInstances.map(
+                    (instance: any) =>
+                        `${databaseHost.id}_${instance}_${databaseHost?.credentialsId}_${databaseHost?.region}`
+                )
+            )
+        );
+        dispatch(
+            setInProgressStateData({
+                ...inProgressStateData,
+                [type]: [...(inProgressStateData[type] || []), ...hostinstances]
+            })
+        );
+
+        dismissMssqlAssessment({ payload: payload })
+            .then((res: any) => {
+                if (!res.error) {
+                    let { successList, failedList } = categorizeStateInstances(res?.data, type);
+                    successList?.map((perRow: any) => {
+                        updateConfigStateStatus(perRow, dispatch, action);
+                    });
+                    dispatch(
+                        setInProgressStateData({
+                            ...inProgressStateData,
+                            [type]: (inProgressStateData[type] || []).filter(
+                                (instance: string) => !hostinstances.includes(instance)
+                            )
+                        })
+                    );
+
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: `Analysis state was changed.`
+                        })
+                    );
+                } else {
+                    dispatch(
+                        setInProgressStateData({
+                            ...inProgressStateData,
+                            [type]: (inProgressStateData[type] || []).filter(
+                                (instance: string) => !hostinstances.includes(instance)
+                            )
+                        })
+                    );
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: `Failed to change analysis state.`
+                        })
+                    );
+                }
+            })
+            .catch(err => {
+                dispatch(
+                    setInProgressStateData({
+                        ...inProgressStateData,
+                        [type]: (inProgressStateData[type] || []).filter(
+                            (instance: string) => !hostinstances.includes(instance)
+                        )
+                    })
+                );
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: err
+                    })
+                );
+            });
     };
 
     useEffect(() => {
@@ -355,21 +547,21 @@ const DashboardDismissPage = () => {
         let setHeader = '';
         let setContent: Array<string> = [];
         let setPrimaryButton = '';
-        if (dialogCheck && action === 'activate') {
+        if (dialogCheck && action === CONFIG_STATE_ACTIONS.ACTIVE) {
             setHeader = `Activate SQL Server instance analysis`;
             setContent = [
                 'Are you ready to re-activate the analysis for the selected SQL Server instances?',
                 'Select "Activate" to continue.'
             ];
             setPrimaryButton = 'Activate';
-        } else if (dialogCheck && action === 'postponed') {
+        } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.POSTPONED) {
             setHeader = `Postpone SQL Server instance analysis`;
             setContent = [
                 'Are you ready to re-postpone the analysis for the selected SQL Server instances?',
                 'Select "Postpone" to continue.'
             ];
             setPrimaryButton = 'Postpone';
-        } else if (dialogCheck && action === 'dismiss') {
+        } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.DISMISS) {
             setHeader = `Dismiss SQL Server instance analysis`;
             setContent = [
                 'Are you ready to dismiss the analysis for the selected SQL Server instances?',

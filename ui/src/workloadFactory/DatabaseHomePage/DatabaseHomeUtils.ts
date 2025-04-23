@@ -827,7 +827,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const tempdbDriveSizeStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
                     (item: any) => item.name === 'tempdb-drive-size'
                 );
-                const isTempdbDriveSizeOptimized = isOptimized(tempdbDriveSizeObj?.status, tempdbDriveSizeStateObj?.state);
+                const isTempdbDriveSizeOptimized = isOptimized(
+                    tempdbDriveSizeObj?.status,
+                    tempdbDriveSizeStateObj?.state
+                );
                 setConfigState(configState, 'tempdbDriveSize', tempdbDriveSizeStateObj?.state);
 
                 const userDataFilesObj = instanceAssessmentData?.storage?.layout?.find(
@@ -1192,4 +1195,72 @@ export const formatAssessmentTableData = (data: any) => {
         }
     });
     return result;
+};
+
+export const categorizeStateInstances = (data: any, type: string) => {
+    const successList: any = [];
+    const failedList: any = [];
+
+    data?.configurationsDismissed?.map((config: any) => {
+        config?.databaseHosts?.map((host: any) => {
+            const { id, credentialsId, region, status, failedInstances } = host;
+
+            if (status === 'Success') {
+                host?.sqlServerInstances?.map((instanceId: string) => {
+                    successList.push({
+                        id: config?.name,
+                        name: type,
+                        hostId: id,
+                        instanceId: instanceId,
+                        credentialId: credentialsId,
+                        regionId: region,
+                        state: config?.state,
+                        endTime: config?.endTime
+                    });
+                });
+            } else if (status === 'Failed') {
+                host?.sqlServerInstances?.map((instanceId: string) => {
+                    failedList.push(`${id}_${instanceId}_${credentialsId}_${region}`);
+                    failedList.push({
+                        id: config?.name,
+                        name: type,
+                        hostId: id,
+                        instanceId: instanceId,
+                        credentialId: credentialsId,
+                        regionId: region,
+                        state: config?.state,
+                        endTime: config?.endTime
+                    });
+                });
+            } else if (status === 'Partial' && failedInstances) {
+                host?.sqlServerInstances?.map((instanceId: string) => {
+                    if (failedInstances?.[instanceId]) {
+                        failedList.push({
+                            id: config?.name,
+                            name: type,
+                            hostId: id,
+                            instanceId: instanceId,
+                            credentialId: credentialsId,
+                            regionId: region,
+                            state: config?.state,
+                            endTime: config?.endTime
+                        });
+                    } else {
+                        successList.push({
+                            id: config?.name,
+                            name: type,
+                            hostId: id,
+                            instanceId: instanceId,
+                            credentialId: credentialsId,
+                            regionId: region,
+                            state: config?.state,
+                            endTime: config?.endTime
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    return { successList, failedList };
 };

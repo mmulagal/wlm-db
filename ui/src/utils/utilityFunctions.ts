@@ -43,6 +43,7 @@ import { databaseHomeApi } from './apiService';
 import {
     addInitialData,
     initialDBHomepageState,
+    setSelectedRowsForDismiss,
     setSelectedRowsForOptimize
 } from '../store/workloadFactory/databaseHomeSlice';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
@@ -1186,6 +1187,21 @@ export const checkBoxHandleManage = (tableData: any, rowsData: any, dispatch: an
     //@ts-ignore
     tableData.allSelected = false;
     dispatch(setSelectedRowsForManage([]));
+};
+
+export const checkBoxHandleDismiss = (tableData: any, rowsData: any, dispatch: any) => {
+    if (!rowsData || rowsData.length === 0) return;
+
+    rowsData.forEach((row: any) => {
+        //@ts-ignore
+        tableData.rows[row.id] = false;
+    });
+
+    //@ts-ignore
+    tableData.count = 0;
+    //@ts-ignore
+    tableData.allSelected = false;
+    dispatch(setSelectedRowsForDismiss([]));
 };
 
 // Getting the last 7 days

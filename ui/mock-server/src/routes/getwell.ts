@@ -83,18 +83,18 @@ router.post(`${BASE_URL}/v1/mssql/assessment/dismiss`, async (req: {}, res: any)
         generateResponse(res, 202, {
             configurationsDismissed: [
                 {
-                    name: 'performance-tier',
-                    configState: 'dismissed',
+                    name: 'clone',
+                    configState: 'active',
                     startTime: 1744588921000,
                     endTime: 1744588921000,
                     databaseHosts: [
                         {
-                            id: 'string',
-                            sqlServerInstances: ['string'],
-                            credentialsId: 'string',
-                            region: 'string',
+                            id: 'resource-id-4',
+                            sqlServerInstances: ['41', '42'],
+                            credentialsId: '3ad8702c-a2fd-48d2-be50-1ba6ce83acd5',
+                            region: 'us-east-1',
                             status: 'Success', // If only some instances are updated successfully, the status will be marked as 'partial', and the error message will indicate how many instances succeeded versus failed.
-                            failedInstances: { instanceId: 'error' }
+                            failedInstances: {}
                         }
                     ]
                 }

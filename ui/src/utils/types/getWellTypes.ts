@@ -45,6 +45,7 @@ export interface GetWellSliceInterface {
     gwAdhocError?: string;
     cloneDashboardData: any;
     cloneIsOptimizedRows: any;
+    inProgressStateData: any;
 }
 
 interface CountBreakDown {

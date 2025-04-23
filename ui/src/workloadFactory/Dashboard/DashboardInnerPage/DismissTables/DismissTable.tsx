@@ -4,14 +4,19 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './DismissTables.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect } from 'react';
-import { formatDateAssess, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import {
+    checkBoxHandleDismiss,
+    formatDateAssess,
+    getSelectedFromSelectionState
+} from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForDismiss } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from '../RenderTables/FirstColumnComponent';
-import { CONFIG_STATES, CONFIG_STATES_UI } from '../../../../utils/consts';
+import { CONFIG_STATES, CONFIG_STATES_UI, CONFIG_STATE_ACTIONS } from '../../../../utils/consts';
 import { ReactComponent as MenuIcon } from '../../../../assets/menu-icon2.svg';
 import { ReactComponent as Success } from '../../../../assets/success.svg';
 import { ReactComponent as Warning } from '../../../../assets/warning.svg';
+import { ReactComponent as Info } from '../../../../assets/info.svg';
 import BulkDismissContainer from '../../../../common/BulkAction/BulkDismissContainer';
 import { GENERAL } from '../../../../utils/appConstants';
 
@@ -25,23 +30,13 @@ interface StorageTierTableProps {
 const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }: StorageTierTableProps) => {
     const dispatch = useDispatch();
     const { selectedRowsForDismiss } = useAppSelector(state => state.databaseHome);
-
-    // // Update tableData when selection changes
-    // const updatedTableData = useMemo(() => {
-    //     if (inProgressOptimizationData?.[type]?.length) {
-    //         return disableOptimizeCheckBoxForOptimizeCase(
-    //             tableData,
-    //             type,
-    //             selectedRowsForDismiss
-    //         );
-    //     } else {
-    //         return disableOptimizeCheckBoxForErrCase(tableData, type);
-    //     }
-    // }, [selectedRowsForDismiss, tableData, inProgressOptimizationData]);
+    const { inProgressStateData } = useAppSelector(state => state.getWellOptimize);
 
     const setStatusIcon = (value: string) => {
         if (value === CONFIG_STATES.ACTIVE) {
             return <Success />;
+        } else if (value === CONFIG_STATES.ACTIVATING) {
+            return <Info />;
         } else if (value.includes(CONFIG_STATES.POSTPONED)) {
             return <Warning />;
         } else {
@@ -53,9 +48,14 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
         if (value === CONFIG_STATES.ACTIVE) {
             return CONFIG_STATES_UI.ACTIVE;
         } else if (value === CONFIG_STATES.POSTPONED) {
-            return CONFIG_STATES_UI.POSTPONED + ' until ' + formatDateAssess(rowData?.configObj?.endTime);
+            return (
+                CONFIG_STATES_UI.POSTPONED +
+                (rowData?.configObj?.endTime ? ' until ' + formatDateAssess(rowData?.configObj?.endTime) : '')
+            );
         } else if (value === CONFIG_STATES.DISMISSED) {
             return CONFIG_STATES_UI.DISMISSED;
+        } else if (value === CONFIG_STATES.ACTIVATING) {
+            return GENERAL.ACTIVATING_MESSAGE;
         } else {
             return GENERAL.NOT_AVAILABLE;
         }
@@ -122,9 +122,11 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                                 {
                                     id: 'activate',
                                     children: 'Activate',
-                                    isDisabled: rowData?.configState === CONFIG_STATES.ACTIVE,
+                                    isDisabled:
+                                        rowData?.configState === CONFIG_STATES.ACTIVE ||
+                                        rowData?.configState === CONFIG_STATES.ACTIVATING,
                                     onClick: () => {
-                                        handleSingleAction(type, rowData, 'activate');
+                                        handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.ACTIVE);
                                     }
                                 },
                                 {
@@ -132,7 +134,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                                     children: 'Postpone for 30 days',
                                     isDisabled: rowData?.configState.includes(CONFIG_STATES.POSTPONED),
                                     onClick: () => {
-                                        handleSingleAction(type, rowData, 'postponeFor30Days');
+                                        handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.POSTPONED);
                                     }
                                 },
                                 {
@@ -140,7 +142,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                                     children: 'Dismiss',
                                     isDisabled: rowData?.configState === CONFIG_STATES.DISMISSED,
                                     onClick: () => {
-                                        handleSingleAction(type, rowData, 'dismiss');
+                                        handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.DISMISS);
                                     }
                                 }
                             ]}
@@ -170,10 +172,10 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
 
         dispatch(setSelectedRowsForDismiss(rowsData));
 
-        // if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
-        //     checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
-        // }
-    }, [tableProps.selectionState]);
+        if (rowsData.length > 0 && inProgressStateData?.[type || '']?.length) {
+            checkBoxHandleDismiss(tableProps.selectionState, rowsData, dispatch);
+        }
+    }, [tableProps.selectionState, inProgressStateData]);
 
     const handleBulkOperation = (action: string, dialogCheck: boolean) => {
         handleBulkAction(type, selectedRowsForDismiss, action, dialogCheck);

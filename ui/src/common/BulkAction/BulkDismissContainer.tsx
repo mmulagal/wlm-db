@@ -1,7 +1,7 @@
 import { DsButton, DsTypography } from '@netapp/design-system';
 import styles from './BulkActionContainer.module.scss';
 import SeparatorComponent from '../SeparatorComponent/SeparatorComponent';
-import { CONFIG_STATES } from '../../utils/consts';
+import { CONFIG_STATES, CONFIG_STATE_ACTIONS } from '../../utils/consts';
 
 type BulkActionContainerProps = {
     onClick: any;
@@ -26,15 +26,15 @@ const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) =>
             <div className={styles.bulkButtonContainer}>
                 <DsButton
                     type="text"
-                    onClick={() => onClick('activate', hasSomeActive)}
+                    onClick={() => onClick(CONFIG_STATE_ACTIONS.ACTIVE, hasSomeActive)}
                     isDisabled={checkForOnlyActive}
                 >
-                    {'Activate'}
+                    {'Reactivate'}
                 </DsButton>
                 <SeparatorComponent variant="vertical" height="16px" />
                 <DsButton
                     type="text"
-                    onClick={() => onClick('postponed', hasSomePostponed)}
+                    onClick={() => onClick(CONFIG_STATE_ACTIONS.POSTPONED, hasSomePostponed)}
                     isDisabled={checkForOnlyPostponed}
                 >
                     {'Postponed for 30 days'}
@@ -42,7 +42,7 @@ const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) =>
                 <SeparatorComponent variant="vertical" height="16px" />
                 <DsButton
                     type="text"
-                    onClick={() => onClick('dismiss', hasSomeDismissed)}
+                    onClick={() => onClick(CONFIG_STATE_ACTIONS.DISMISS, hasSomeDismissed)}
                     isDisabled={checkForOnlyDismissed}
                 >
                     {'Dismiss'}

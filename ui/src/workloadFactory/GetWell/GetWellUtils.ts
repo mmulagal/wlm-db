@@ -24,6 +24,7 @@ import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
     CONFIG_STATES_UI,
+    CONFIG_STATE_ACTIONS,
     FINDINGS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
@@ -2982,6 +2983,396 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
         }
     });
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
+};
+
+export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any) => {
+    let setAction = '';
+    if (action === CONFIG_STATE_ACTIONS.DISMISS) {
+        setAction = CONFIG_STATES.DISMISSED;
+    } else if (action === CONFIG_STATE_ACTIONS.POSTPONED) {
+        setAction = CONFIG_STATES.POSTPONED;
+    } else if (action === CONFIG_STATE_ACTIONS.ACTIVE) {
+        setAction = CONFIG_STATES.ACTIVATING;
+    }
+    const state = store.getState();
+    const updatedAsessmentData = state.inventoryV2.allmssqlHostAssessmentData?.map((hostData: any) => {
+        if (
+            hostData?.databaseHostId === rowData?.hostId &&
+            hostData?.credentialId === rowData?.credentialId &&
+            hostData?.regionId === rowData?.regionId
+        ) {
+            const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
+                if (instance?.databaseInstanceId === rowData?.instanceId) {
+                    const storageSizingMap: any = {
+                        'Log drive size': 'log-drive-size',
+                        'Storage tier': 'performance-tier',
+                        'File system headroom': 'headroom',
+                        'TempDB drive size': 'tempdb-drive-size'
+                    };
+                    const storageLayoutMap: any = {
+                        [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: 'data-files-location',
+                        [ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]: 'log-files-location',
+                        [ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]: 'tempdb-files-location'
+                    };
+                    const storageConfigurationMap: any = {
+                        'os-type': 'luns',
+                        'space-reservation-enabled': 'luns',
+                        'space-allocation-allocated': 'luns',
+                        'mpio-enabled': 'os',
+                        'mpio-iscsi-count': 'os',
+                        'ntfs-allocation-unit-size': 'os',
+                        'mpio-load-balance-policy': 'os',
+                        'thin-provision': 'volumes',
+                        autosize: 'volumes',
+                        'autosize-mode': 'volumes',
+                        'fractional-reserve': 'volumes',
+                        'snapshot-copy-reserve': 'volumes',
+                        'snapshot-autodelete': 'volumes',
+                        'space-mgmt-try-first': 'volumes',
+                        'tiering-policy': 'volumes',
+                        'tiering-min-cooling-days': 'volumes'
+                    };
+                    const otherConfigMap: any = {
+                        [ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]: 'compute',
+                        [ASSESSMENT_CONFIG_NAMES.MAXDOP]: 'max-dop',
+                        [ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]: 'clone',
+                        [ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]: 'rss-config',
+                        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]: 'snapshot-policy',
+                        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'aws-backup',
+                        [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'mssql-patch',
+                        [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'host-os-patch',
+                        [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
+                        [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
+                    };
+                    if (storageSizingMap[rowData?.name]) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                dismissedConfigurations: {
+                                    ...instance?.assessments?.dismissedConfigurations,
+                                    storage: {
+                                        ...instance?.assessments?.dismissedConfigurations?.storage,
+                                        sizing: instance?.assessments?.dismissedConfigurations?.storage?.sizing
+                                            ? instance?.assessments?.dismissedConfigurations?.storage?.sizing.map(
+                                                  (item: any) => {
+                                                      if (item?.name === storageSizingMap[rowData?.name]) {
+                                                          return {
+                                                              ...item,
+                                                              state: setAction,
+                                                              endTime: rowData?.endTime
+                                                          };
+                                                      } else {
+                                                          return item;
+                                                      }
+                                                  }
+                                              )
+                                            : [
+                                                  {
+                                                      name: storageSizingMap[rowData?.name],
+                                                      state: setAction,
+                                                      endTime: rowData?.endTime
+                                                  }
+                                              ]
+                                    }
+                                } || {
+                                    storage: {
+                                        sizing: [
+                                            {
+                                                name: storageSizingMap[rowData?.name],
+                                                state: setAction,
+                                                endTime: rowData?.endTime
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        };
+                    } else if (storageLayoutMap[rowData?.name]) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                dismissedConfigurations: {
+                                    ...instance?.assessments?.dismissedConfigurations,
+                                    storage: {
+                                        ...instance?.assessments?.dismissedConfigurations?.storage,
+                                        layout: instance?.assessments?.dismissedConfigurations?.storage?.layout
+                                            ? instance?.assessments?.dismissedConfigurations?.storage?.layout.map(
+                                                  (item: any) => {
+                                                      if (item?.name === storageLayoutMap[rowData?.name]) {
+                                                          return {
+                                                              ...item,
+                                                              state: setAction,
+                                                              endTime: rowData?.endTime
+                                                          };
+                                                      } else {
+                                                          return item;
+                                                      }
+                                                  }
+                                              )
+                                            : [
+                                                  {
+                                                      name: storageLayoutMap[rowData?.name],
+                                                      state: setAction,
+                                                      endTime: rowData?.endTime
+                                                  }
+                                              ]
+                                    }
+                                } || {
+                                    storage: {
+                                        layout: [
+                                            {
+                                                name: storageLayoutMap[rowData?.name],
+                                                state: setAction,
+                                                endTime: rowData?.endTime
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        };
+                    } else if (storageConfigurationMap[rowData?.id]) {
+                        const key = storageConfigurationMap[rowData?.id];
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                dismissedConfigurations: {
+                                    ...instance?.assessments?.dismissedConfigurations,
+                                    storage: {
+                                        ...instance?.assessments?.dismissedConfigurations?.storage,
+                                        configuration: {
+                                            ...instance?.assessments?.dismissedConfigurations?.storage?.configuration,
+                                            [key]: instance?.assessments?.dismissedConfigurations?.storage
+                                                ?.configuration?.[key]
+                                                ? instance?.assessments?.dismissedConfigurations?.storage?.configuration?.[
+                                                      key
+                                                  ].map((item: any) => {
+                                                      if (item.name === rowData?.id) {
+                                                          return {
+                                                              ...item,
+                                                              state: setAction,
+                                                              endTime: rowData?.endTime
+                                                          };
+                                                      } else {
+                                                          return item;
+                                                      }
+                                                  })
+                                                : [
+                                                      {
+                                                          name: rowData?.id,
+                                                          state: setAction,
+                                                          endTime: rowData?.endTime
+                                                      }
+                                                  ]
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                    } else if (otherConfigMap[rowData?.name]) {
+                        let name = otherConfigMap[rowData?.name];
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                dismissedConfigurations: {
+                                    ...instance?.assessments?.dismissedConfigurations,
+                                    [name]: instance?.assessments?.dismissedConfigurations?.[name]
+                                        ? {
+                                              ...instance?.assessments?.dismissedConfigurations?.[name],
+                                              state: setAction,
+                                              endTime: rowData?.endTime
+                                          }
+                                        : {
+                                              name: name,
+                                              state: setAction,
+                                              endTime: rowData?.endTime
+                                          }
+                                }
+                            }
+                        };
+                    } else {
+                        return instance;
+                    }
+                } else {
+                    return instance;
+                }
+            });
+            return { ...hostData, instancesAssessment: updatedInstancesAssessment };
+        } else {
+            return hostData;
+        }
+    });
+    dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
+};
+
+export const updateConfigStatePerInstance = (setAction: any, name: string, endTime: any) => {
+    const state = store.getState();
+    const { driftAssessmentData } = state.getWellOptimize;
+    const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size'];
+    const storageLayoutMap: any = ['data-files-location', 'log-files-location', 'tempdb-files-location'];
+    const storageConfigurationMap: any = {
+        'os-type': 'luns',
+        'space-reservation-enabled': 'luns',
+        'space-allocation-allocated': 'luns',
+        'mpio-enabled': 'os',
+        'mpio-iscsi-count': 'os',
+        'ntfs-allocation-unit-size': 'os',
+        'mpio-load-balance-policy': 'os',
+        'thin-provision': 'volumes',
+        autosize: 'volumes',
+        'autosize-mode': 'volumes',
+        'fractional-reserve': 'volumes',
+        'snapshot-copy-reserve': 'volumes',
+        'snapshot-autodelete': 'volumes',
+        'space-mgmt-try-first': 'volumes',
+        'tiering-policy': 'volumes',
+        'tiering-min-cooling-days': 'volumes'
+    };
+    const otherConfigMap: any = [
+        'compute',
+        'max-dop',
+        'clone',
+        'rss-config',
+        'snapshot-policy',
+        'aws-backup',
+        'mssql-patch',
+        'host-os-patch',
+        'crr',
+        'license'
+    ];
+    if (storageSizingMap.includes(name)) {
+        return {
+            ...driftAssessmentData,
+            dismissedConfigurations: {
+                ...driftAssessmentData?.dismissedConfigurations,
+                storage: {
+                    ...driftAssessmentData?.dismissedConfigurations?.storage,
+                    sizing: driftAssessmentData?.dismissedConfigurations?.storage?.sizing
+                        ? driftAssessmentData?.dismissedConfigurations?.storage?.sizing.map((item: any) => {
+                              if (item?.name === name) {
+                                  return {
+                                      ...item,
+                                      state: setAction,
+                                      endTime: endTime
+                                  };
+                              } else {
+                                  return item;
+                              }
+                          })
+                        : [
+                              {
+                                  name: name,
+                                  state: setAction,
+                                  endTime: endTime
+                              }
+                          ]
+                }
+            } || {
+                storage: {
+                    sizing: [
+                        {
+                            name: name,
+                            state: setAction,
+                            endTime: endTime
+                        }
+                    ]
+                }
+            }
+        };
+    } else if (storageLayoutMap.includes(name)) {
+        return {
+            ...driftAssessmentData,
+            dismissedConfigurations: {
+                ...driftAssessmentData?.dismissedConfigurations,
+                storage: {
+                    ...driftAssessmentData?.dismissedConfigurations?.storage,
+                    layout: driftAssessmentData?.dismissedConfigurations?.storage?.layout
+                        ? driftAssessmentData?.dismissedConfigurations?.storage?.layout.map((item: any) => {
+                              if (item?.name === name) {
+                                  return {
+                                      ...item,
+                                      state: setAction,
+                                      endTime: endTime
+                                  };
+                              } else {
+                                  return item;
+                              }
+                          })
+                        : [
+                              {
+                                  name: name,
+                                  state: setAction,
+                                  endTime: endTime
+                              }
+                          ]
+                }
+            } || {
+                storage: {
+                    layout: [
+                        {
+                            name: name,
+                            state: setAction,
+                            endTime: endTime
+                        }
+                    ]
+                }
+            }
+        };
+    } else if (storageConfigurationMap[name]) {
+        const key = storageConfigurationMap[name];
+        return {
+            ...driftAssessmentData,
+            dismissedConfigurations: {
+                ...driftAssessmentData?.dismissedConfigurations,
+                storage: {
+                    ...driftAssessmentData?.dismissedConfigurations?.storage,
+                    configuration: {
+                        ...driftAssessmentData?.dismissedConfigurations?.storage?.configuration,
+                        [key]: driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key]
+                            ? driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key].map(
+                                  (item: any) => {
+                                      if (item.name === key) {
+                                          return { ...item, state: setAction, endTime: endTime };
+                                      } else {
+                                          return item;
+                                      }
+                                  }
+                              )
+                            : [
+                                  {
+                                      name: key,
+                                      state: setAction,
+                                      endTime: endTime
+                                  }
+                              ]
+                    }
+                }
+            }
+        };
+    } else if (otherConfigMap.includes(name)) {
+        return {
+            ...driftAssessmentData,
+            dismissedConfigurations: {
+                ...driftAssessmentData?.dismissedConfigurations,
+                [name]: driftAssessmentData?.dismissedConfigurations?.[name]
+                    ? {
+                          ...driftAssessmentData?.dismissedConfigurations?.[name],
+                          state: setAction,
+                          endTime: endTime
+                      }
+                    : {
+                          name: name,
+                          state: setAction,
+                          endTime: endTime
+                      }
+            }
+        };
+    } else {
+        return driftAssessmentData;
+    }
 };
 
 export const checkIfDisableForOptimize = (

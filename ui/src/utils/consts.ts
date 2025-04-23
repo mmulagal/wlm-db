@@ -818,3 +818,18 @@ export const CONFIG_STATES_UI = {
     DISMISSED: 'Dismissed',
     ACTIVATING: 'Activating'
 };
+
+export const CONFIG_STATE_ACTIONS = {
+    ACTIVE: 'ACTIVE',
+    DISMISS: 'DISMISSED',
+    POSTPONED: 'POSTPONED'
+};
+
+export const CONFIG_NAME_TO_ID_MAPPING = {
+    storageSizingMap: {
+        'Log drive size': 'log-drive-size',
+        'Storage tier': 'performance-tier',
+        'File system headroom': 'headroom',
+        'TempDB drive size': 'tempdb-drive-size'
+    }
+};

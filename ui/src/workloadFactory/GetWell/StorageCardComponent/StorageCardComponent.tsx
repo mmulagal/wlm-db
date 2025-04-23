@@ -23,6 +23,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
+    CONFIG_STATE_ACTIONS,
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
@@ -33,6 +34,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
     setCardData,
+    setDriftAssessmentData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
@@ -40,7 +42,12 @@ import {
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { formatGetWellData, formatOptimizationBreakDown, handleOptimizeStorageJob } from '../GetWellUtils';
+import {
+    formatGetWellData,
+    formatOptimizationBreakDown,
+    handleOptimizeStorageJob,
+    updateConfigStatePerInstance
+} from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
@@ -59,7 +66,7 @@ import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDi
 import store from '../../../store/store';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { handleDialog } from './optimizeUtils';
-import { backupStartTime } from '../../../utils/utilityFunctions';
+import { backupStartTime, formatDateAssess } from '../../../utils/utilityFunctions';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -353,9 +360,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         {cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED && GENERAL.DISMISSED_MESSAGE}{' '}
                         {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && GENERAL.ACTIVATING_MESSAGE}{' '}
                         {cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED &&
-                            `This issue is postponed until the next ${calculateDays(
-                                cardData?.dismissedObj?.endTime
-                            )} days. `}{' '}
+                            `This issue is postponed until ${formatDateAssess(cardData?.dismissedObj?.endTime)}`}{' '}
                     </DsTypography>
                 </div>
             );
@@ -784,7 +789,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             .then((res: any) => {
                 setDismissAction(false);
                 let updatedState = '';
-                if (action === 'active' && res?.data?.configurationsDismissed[0]?.configState === 'active') {
+                if (
+                    action === CONFIG_STATE_ACTIONS.ACTIVE &&
+                    res?.data?.configurationsDismissed[0]?.configState === CONFIG_STATE_ACTIONS.ACTIVE
+                ) {
                     updatedState = CONFIG_STATES.ACTIVATING;
                 } else {
                     updatedState = res?.data?.configurationsDismissed[0]?.configState;
@@ -795,33 +803,19 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
                 if (!targetId || !updatedState) return;
 
-                const updatedCardData = { ...cardDataFromStore };
+                let newData =
+                    updateConfigStatePerInstance(
+                        updatedState,
+                        targetId,
+                        res?.data?.configurationsDismissed[0]?.endTime
+                    ) || {};
+                dispatch(setDriftAssessmentData(newData));
+                formatGetWellData(dispatch, newData);
 
-                for (const [key, value] of Object.entries(updatedCardData)) {
-                    //@ts-ignore
-                    if (value && value?.id === targetId) {
-                        updatedCardData[key] = {
-                            ...value,
-                            dismissedObj: {
-                                //@ts-ignore
-                                ...value.dismissedObj,
-                                state: updatedState,
-                                endTime: res?.data?.configurationsDismissed[0]?.endTime
-                            }
-                        };
-                        break;
-                    }
-                }
-
-                dispatch(setCardData(updatedCardData));
-
-                //To setup optimization var values
-                let optBreakDown = formatOptimizationBreakDown(updatedCardData);
-                dispatch(setOptimizationBreakDown(optBreakDown));
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: `Configuration successfully ${action}`
+                        message: `Analysis state was changed.`
                     })
                 );
             })
@@ -1022,7 +1016,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                     cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
                                     !cardData?.dismissedObj?.state,
                                 onClick: () => {
-                                    handleSingleAction('active');
+                                    handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
                                 }
                             },
                             {
@@ -1030,7 +1024,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 children: 'Postpone for 30 days',
                                 isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED,
                                 onClick: () => {
-                                    handleSingleAction('postponed');
+                                    handleSingleAction(CONFIG_STATE_ACTIONS.POSTPONED);
                                 }
                             },
                             {
@@ -1038,7 +1032,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 children: 'Dismiss',
                                 isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED,
                                 onClick: () => {
-                                    handleSingleAction('dismiss');
+                                    handleSingleAction(CONFIG_STATE_ACTIONS.DISMISS);
                                 }
                             }
                         ]}
