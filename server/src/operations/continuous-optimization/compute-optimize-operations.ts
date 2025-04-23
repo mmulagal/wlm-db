@@ -549,7 +549,7 @@ async function checkRunningStatus(
             error: faultyServers.length === 0 ? '' : `Some SQL servers (${faultyServers}) are not running.`
         };
     } catch (error) {
-        logger.error('Error in ssm call for sql service running status:', rawStatusResponse);
+        logger.error('Error while fetching sql service running status:', rawStatusResponse);
         jobDetails = {
             status: JOBSTATUS.FAILED,
             error: typeof error === 'string' ? error : JSON.stringify(error)
