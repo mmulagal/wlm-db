@@ -1182,15 +1182,15 @@ const CHECK_RUNNING_STATUS_WITH_RESTART = (serverNames: string[]) => `
     foreach ($sqlService in $sqlServices) {
         $serviceResult = @{}
         if ($sqlService.Status -eq 'Running') {
-            $serviceResult = @{ name = $sqlService.DisplayName; status = 'Running' }
+            $serviceResult = @{ name = $sqlService.Name; status = 'Running' }
         } else {
             try { $sqlService.WaitForStatus('Running', '00:00:20')} catch {}
-            $sqlService = Get-Service | Where-Object { $_.DisplayName -eq $sqlService.DisplayName }
+            $sqlService = Get-Service | Where-Object { $_.Name -eq $sqlService.Name }
             if ($sqlService.Status -ne 'Running') {
-                Start-Service -DisplayName $sqlService.DisplayName
+                Start-Service -Name $sqlService.Name
                 try { $sqlService.WaitForStatus('Running', '00:00:20')} catch {}
             }
-            $serviceResult = @{ name = $sqlService.DisplayName; status = $sqlService.Status.ToString() }
+            $serviceResult = @{ name = $sqlService.Name; status = $sqlService.Status.ToString() }
         }
         $resObj = New-Object PSObject -Property $serviceResult
         $results += $resObj
