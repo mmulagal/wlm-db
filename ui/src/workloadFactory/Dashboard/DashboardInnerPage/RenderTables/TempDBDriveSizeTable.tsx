@@ -49,7 +49,14 @@ const TempDBDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                     const tempdbDriveSizeObj = instanceData?.assessments?.storage?.sizing?.find(
                         (item: any) => item.name === 'tempdb-drive-size'
                     );
-                    const isStorageTierOptimized = isOptimized(tempdbDriveSizeObj?.status);
+                    const tempdbDriveSizeStateObj =
+                        instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
+                            (item: any) => item.name === 'tempdb-drive-size'
+                        );
+                    const isStorageTierOptimized = isOptimized(
+                        tempdbDriveSizeObj?.status,
+                        tempdbDriveSizeStateObj?.state
+                    );
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -63,7 +70,8 @@ const TempDBDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                             assessmentStatus: GETWELL_VALUES[tempdbDriveSizeObj?.status],
                             sizingViolations: tempdbDriveSizeObj?.sizingViolations,
                             missingPermissions: tempdbDriveSizeObj?.missingPermissions,
-                            data: instanceData
+                            data: instanceData,
+                            configObj: tempdbDriveSizeStateObj
                         });
                     }
                 }
@@ -112,7 +120,7 @@ const TempDBDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {

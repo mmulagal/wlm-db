@@ -30,7 +30,7 @@ import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as ErrorIcon } from '../../../../assets/error-icon.svg';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import MissingPermissionsMsg from './MissingPermissionsMsg';
-import { setHeaderSelectedCred } from '../../../../store/workloadFactory/headersSlice';
+import { setHeaderSelectedCred, setHeaderSelectedMultiCred } from '../../../../store/workloadFactory/headersSlice';
 
 const AwsAccount = () => {
     const { setDialog } = useDialog();
@@ -166,10 +166,16 @@ const AwsAccount = () => {
     useEffect(() => {
         const credValue = selectedCredential?.data?.name;
         if (credValue) {
-            const label1 = `${GENERAL.HEADER_CREDENTIAL} | ${credValue}`;
-            const label2 = `${GENERAL.HEADER_ACCOUNT_ID}: ${selectedCredential?.data?.providerAccountId}`;
-            const option = generateOptionType(label1, label1, label2, false, '', selectedCredential?.data);
-            dispatch(setHeaderSelectedCred(option));
+            const valueToStore = {
+                value: selectedCredential?.value,
+                label: selectedCredential?.value,
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: selectedCredential?.data
+            };
+            dispatch(setHeaderSelectedCred(null));
+            dispatch(setHeaderSelectedMultiCred([valueToStore]));
         }
     }, [selectedCredential]);
 

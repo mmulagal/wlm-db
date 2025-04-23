@@ -123,7 +123,8 @@ export const FROM_DIALOG = {
 
 export const DBType = {
     POSTGRESQL: 'PostgreSQL',
-    MSSQL: 'Microsoft SQL Server'
+    MSSQL: 'Microsoft SQL Server',
+    ORACLE: 'Oracle'
 };
 
 export const API_NAME = {
@@ -809,4 +810,11 @@ export const CONFIG_STATES = {
     POSTPONED: 'POSTPONED',
     DISMISSED: 'DISMISSED',
     ACTIVATING: 'ACTIVATING'
+};
+
+export const CONFIG_STATES_UI = {
+    ACTIVE: 'Active',
+    POSTPONED: 'Postponed',
+    DISMISSED: 'Dismissed',
+    ACTIVATING: 'Activating'
 };

@@ -203,7 +203,7 @@ export const GENERAL = {
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
-    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across multiple Availability Zones',
+    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Failover Cluster Instance across multiple Availability Zones',
     PGSQL_STANDALONE: 'Deploy your PostgreSQL Server on a single node',
     PGSQL_HA:
         'Deploy your PostgreSQL Server across multiple Availability Zones for high availability and data redundancy',
@@ -1254,7 +1254,7 @@ export const GENERAL = {
     SQL_COLLATION_NOTE:
         'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You will be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:
         'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
@@ -1276,7 +1276,15 @@ export const GENERAL = {
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
-    CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory'
+    CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
+    MANAGED_INSTANCE_DISMISS_INFO:
+        'You postponed the analysis for some instances in your database configurations. Instances with postponed analysis do not affect the optimization score.',
+    MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.',
+    DISMISS_MIX_CASE_TOOLTIP: 'This configurations analysis is dismissed or postponed for some of the instances.',
+    DISMISS_PAGE_MSG: [
+        'You can postpone or dismiss the analysis of a specific configuration for your SQL Server instances. Postponing delays the analysis for 30 days and dismissing the analysis stops',
+        "the analysis until you reactivate it manually. Postponed or dismissed configuration analyses won't affect the total optimization score."
+    ]
 };
 
 export const CODE_VIEWER = {

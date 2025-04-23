@@ -1164,45 +1164,39 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
     
 `;
 
-const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceNamePattern: string) => `
-    Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
-    $result = @{}
-    try {
-        $SQLService = Get-Service | Where-Object { $_.Name -like "*${serviceNamePattern}*" } | Select-Object -First 1
-        if ($null -eq $SQLService) {
-            throw [System.Exception] "Service not found"
-        }
+const GET_RUNNING_SQL_SERVERS = () => `
+    $sqlServices = Get-Service | Where-Object { $_.DisplayName -like "*SQL Server (*)" -and $_.Status -eq 'Running' } | Select-Object -ExpandProperty DisplayName
+    $jsonArray = @($sqlServices) | ConvertTo-Json
+    Write-Output $jsonArray
+`;
 
-        if ($SQLService.Status -eq 'Running') { 
-            $result = @{ status = 'Running' }
-            return
-        }
-
-        $SQLService.WaitForStatus('Running', '00:00:20')
-
-        $SQLService = Get-Service | Where-Object { $_.Name -like "*${serviceNamePattern}*" } | Select-Object -First 1
-        if ($null -eq $SQLService) {
-            throw [System.Exception] "Service not found"
-        }
-
-        if ($SQLService.Status -eq 'Running') { 
-            $result = @{ status = 'Running' }
-            return
-        }
-
-        $SQLService.Start()
-        
-        $SQLService.WaitForStatus('Running', '00:00:20')
-        $result = @{ status = (Get-Service | Where-Object { $_.Name -like "*${serviceNamePattern}*" } | Select-Object -First 1).Status.ToString() }
-    } catch {
-        $result = @{ status = 'failed'; error = $_.Exception.Message }
-        Write-Information "Error occurred while checking service status: $_.Exception.Message"
-    } finally {
-        $jsonResult = $result | ConvertTo-Json -Compress
-        Write-Information "Service status: $($result.status)"
-        Stop-Transcript | Out-Null
-        Write-Output $jsonResult
+const CHECK_RUNNING_STATUS_WITH_RESTART = (serverNames: string[]) => `
+    Start-Transcript -Path ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
+    $serverNames = @(${serverNames.map(name => `'${name}'`).join(', ')})
+    $sqlServices = Get-Service | Where-Object { $_.DisplayName -in $serverNames }
+    $results = @()
+    if ([string]::IsNullOrEmpty($sqlServices)) {
+        Write-Output '[]'
+        return
     }
+    foreach ($SqlService in $sqlServices) {
+        $serviceResult = @{}
+        if ($SqlService.Status -eq 'Running') {
+            $serviceResult = @{ name = $SqlService.DisplayName; status = 'Running' }
+        } else {
+            try { $SqlService.WaitForStatus('Running', '00:00:20')} catch {}
+            $SqlService = Get-Service | Where-Object { $_.DisplayName -eq $SqlService.DisplayName }
+            if ($SqlService.Status -ne 'Running') {
+                $SqlService.Start()
+                try { $SqlService.WaitForStatus('Running', '00:00:20')} catch {}
+            }
+            $serviceResult = @{ name = $SqlService.DisplayName; status = $SqlService.Status.ToString() }
+        }
+        $resObj = New-Object PSObject -Property $serviceResult
+        $results += $resObj
+    }
+    $jsonResult = $results | ConvertTo-Json -Compress
+    Write-Output $jsonResult
 `;
 
 const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boolean) => `
@@ -1509,6 +1503,7 @@ export {
     GET_CLUSTER_NODE_NAMES,
     GET_RSS_CONFIG_DETAILS,
     OPTIMIZE_NETWORK_ADAPTERS,
+    GET_RUNNING_SQL_SERVERS,
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_SQL_PATCHES,

@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     setAggregatedSandboxList,
     setAllSandboxList,
+    setIsRefreshedSandbox,
     setSandboxListState,
     setSandboxSavingsState
 } from '../../store/workloadFactory/sandboxSlice';
@@ -27,7 +28,17 @@ const SandboxApis = () => {
             dispatch(setAggregatedSandboxList([]));
             dispatch(setAllSandboxList([]));
         }
-    }, [headerSelectedCredSandbox, headerSelectedRegionSandbox, isRefreshedSandbox, refreshBlocked]);
+    }, [headerSelectedCredSandbox, headerSelectedRegionSandbox, refreshBlocked]);
+
+    useEffect(() => {
+        if (isRefreshedSandbox) {
+            setCredId(headerSelectedCredSandbox?.data?.credentialsId);
+            setRegionId(headerSelectedRegionSandbox?.label2);
+            dispatch(setAggregatedSandboxList([]));
+            dispatch(setAllSandboxList([]));
+            dispatch(setIsRefreshedSandbox(false));
+        }
+    }, [isRefreshedSandbox]);
 
     const {
         data: sandboxList,
@@ -51,7 +62,7 @@ const SandboxApis = () => {
             credentialId: credId,
             region: regionId
         },
-        { skip: !credId || !regionId || refreshBlocked }
+        { skip: !credId || !regionId || refreshBlocked || aggregatedSandboxList.length }
     );
 
     useEffect(() => {

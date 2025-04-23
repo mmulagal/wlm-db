@@ -273,7 +273,9 @@ const OptimizeInnerPage = () => {
                                 {
                                     id: selectedResourceId,
                                     sqlServerInstances: [selectedDatabaseInstance],
-                                    networkAdapters: [singleRowData?.adapterName]
+                                    networkAdapters: [singleRowData?.adapterName],
+                                    credentialsId: selectedGwInstanceCredId,
+                                    region: selectedGwInstanceRegionId
                                 }
                             ]
                         }

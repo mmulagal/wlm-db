@@ -405,7 +405,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsFlashingDotsLoader />
                 </div>
             );
-        } else if (cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
+        } else if (cardData?.dismissedObj?.state && cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
             //Condition to show n/a if state is not active
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>

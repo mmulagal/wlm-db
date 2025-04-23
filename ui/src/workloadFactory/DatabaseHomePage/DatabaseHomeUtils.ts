@@ -4,6 +4,7 @@ import store from '../../store/store';
 import { setManagedHostInstanceLoading } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
+    CONFIG_STATES,
     COSTING_TYPES,
     FINDINGS,
     GETWELL_CONFIG,
@@ -451,16 +452,35 @@ export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) =>
     };
 };
 
-export const isOptimized = (status?: string) => {
+export const isOptimized = (status?: string, dismissState?: string) => {
     return (
         status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
-        status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase()
+        status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase() ||
+        dismissState === CONFIG_STATES.DISMISSED ||
+        dismissState === CONFIG_STATES.POSTPONED ||
+        dismissState === CONFIG_STATES.ACTIVATING
     );
+};
+
+export const hasPostponedOrDismissed = (obj: any): boolean => {
+    const checkState = (item: any): boolean => {
+        if (typeof item !== 'object' || item === null) return false;
+
+        return Object.keys(item).some(key => {
+            if (typeof item[key] === 'object') {
+                return checkState(item[key]);
+            }
+            return key === 'state' && (item[key] === CONFIG_STATES.POSTPONED || item[key] === CONFIG_STATES.DISMISSED);
+        });
+    };
+
+    return checkState(obj);
 };
 
 export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
     let totalInstances = 0;
     let optimizedInstances = 0;
+    let isDismissedConfig = false;
 
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
@@ -480,16 +500,40 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
             if (!instance?.error) {
                 totalInstances++;
                 const instanceAssessmentData = instance?.assessments;
-                const isComputeOptimized = isOptimized(instanceAssessmentData?.compute?.status);
-                const isRssConfigOptimized = isOptimized(instanceAssessmentData?.rssConfig?.status);
-                const isOperatingSystemOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
-                const isLicenseOptimized = isOptimized(instanceAssessmentData?.license?.status);
-                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
-                const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
-                const isCloneOptimized = isOptimized(instanceAssessmentData?.clone?.status);
-                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
-                    isOptimized(item?.status)
+                const isComputeOptimized = isOptimized(
+                    instanceAssessmentData?.compute?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.compute?.state
                 );
+                const isRssConfigOptimized = isOptimized(
+                    instanceAssessmentData?.rssConfig?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.rssConfig?.state
+                );
+                const isOperatingSystemOptimized = isOptimized(
+                    instanceAssessmentData?.hostOsPatch?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.state
+                );
+                const isLicenseOptimized = isOptimized(
+                    instanceAssessmentData?.license?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.license?.state
+                );
+                const isMicrosoftSqlPatchOptimized = isOptimized(
+                    instanceAssessmentData?.mssqlPatch?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.state
+                );
+                const isMaxdopPatchOptimized = isOptimized(
+                    instanceAssessmentData?.maxDOP?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.maxDOP?.state
+                );
+                const isCloneOptimized = isOptimized(
+                    instanceAssessmentData?.clone?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.clone?.state
+                );
+                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
+                    let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
+                        (config: any) => config.name === item.name
+                    )?.state;
+                    return isOptimized(item?.status, configState);
+                });
                 const isAllStorageSizingPresent =
                     instanceAssessmentData?.storage?.sizing?.length === 4 &&
                     instanceAssessmentData?.storage.sizing.every((item: any) => {
@@ -498,14 +542,22 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                         );
                     });
                 const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-                    return isOptimized(item?.status);
+                    let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                        (config: any) => config.name === item.name
+                    )?.state;
+                    return isOptimized(item?.status, configState);
                 });
                 const isStorageConfigOptimized =
                     instanceAssessmentData &&
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
                     Object.values(instanceAssessmentData?.storage?.configuration).every((item: any) =>
-                        item?.every((subItem: any) => isOptimized(subItem?.status))
+                        item?.every((subItem: any) => {
+                            let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[
+                                item
+                            ]?.find((config: any) => config.name === subItem.name)?.state;
+                            return isOptimized(subItem?.status, configState);
+                        })
                     );
                 if (
                     isComputeOptimized &&
@@ -522,6 +574,11 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 ) {
                     optimizedInstances += 1;
                 }
+
+                const isDismissedInstance = hasPostponedOrDismissed(instanceAssessmentData?.dismissedConfigurations);
+                if (isDismissedInstance) {
+                    isDismissedConfig = true;
+                }
             }
         });
     });
@@ -529,7 +586,8 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
         totalInstances,
         optimizedInstances,
         notOptimizedInstances: totalInstances - optimizedInstances,
-        optimizedPercent: Math.round((optimizedInstances / totalInstances) * 100)
+        optimizedPercent: Math.round((optimizedInstances / totalInstances) * 100),
+        hasDismissedOrPostponed: isDismissedConfig
     };
 };
 
@@ -561,14 +619,29 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
             if (!instance?.error) {
                 assessmentGroupedByCategory.total++;
                 const instanceAssessmentData = instance?.assessments;
-                const isComputeOptimized = isOptimized(instanceAssessmentData?.compute?.status);
-                const isOperatingSystemPatchOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
-                const isRssConfigurationOptimized = isOptimized(instanceAssessmentData?.rssConfig?.status);
-                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
-                    isOptimized(item?.status)
+                const isComputeOptimized = isOptimized(
+                    instanceAssessmentData?.compute?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.compute?.state
                 );
+                const isOperatingSystemPatchOptimized = isOptimized(
+                    instanceAssessmentData?.hostOsPatch?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.state
+                );
+                const isRssConfigurationOptimized = isOptimized(
+                    instanceAssessmentData?.rssConfig?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.rssConfig?.state
+                );
+                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
+                    let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
+                        (config: any) => config.name === item.name
+                    )?.state;
+                    return isOptimized(item?.status, configState);
+                });
                 const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-                    return isOptimized(item?.status);
+                    let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                        (config: any) => config.name === item.name
+                    )?.state;
+                    return isOptimized(item?.status, configState);
                 });
                 const isAllStorageSizingPresent =
                     instanceAssessmentData?.storage?.sizing?.length === 4 &&
@@ -582,16 +655,42 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
                     Object.values(instanceAssessmentData?.storage?.configuration).every((item: any) =>
-                        item?.every((subItem: any) => isOptimized(subItem?.status))
+                        item?.every((subItem: any) => {
+                            let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[
+                                item
+                            ]?.find((config: any) => config.name === subItem.name)?.state;
+                            return isOptimized(subItem?.status, configState);
+                        })
                     );
-                const isApplicationOptimized = isOptimized(instanceAssessmentData?.license?.status);
-                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
-                const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
-                const isScheduledLoclaSnapshotOptimized = isOptimized(instanceAssessmentData?.snapshotPolicy?.status);
-                const isScheduledAWSBackUpOptimized = isOptimized(instanceAssessmentData?.awsBackup?.status);
+                const isApplicationOptimized = isOptimized(
+                    instanceAssessmentData?.license?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.license?.state
+                );
+                const isMicrosoftSqlPatchOptimized = isOptimized(
+                    instanceAssessmentData?.mssqlPatch?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.state
+                );
+                const isMaxdopPatchOptimized = isOptimized(
+                    instanceAssessmentData?.maxDOP?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.maxDOP?.state
+                );
+                const isScheduledLoclaSnapshotOptimized = isOptimized(
+                    instanceAssessmentData?.snapshotPolicy?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.state
+                );
+                const isScheduledAWSBackUpOptimized = isOptimized(
+                    instanceAssessmentData?.awsBackup?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.awsBackup?.state
+                );
 
-                const isCloneOptimized = isOptimized(instanceAssessmentData?.clone?.status);
-                const isCRROptimized = isOptimized(instanceAssessmentData?.crr?.status);
+                const isCloneOptimized = isOptimized(
+                    instanceAssessmentData?.clone?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.clone?.state
+                );
+                const isCRROptimized = isOptimized(
+                    instanceAssessmentData?.crr?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.state
+                );
 
                 if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
                     assessmentGroupedByCategory.compute++;
@@ -620,6 +719,15 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
     return assessmentGroupedByCategory;
 };
 
+export const setConfigState = (configState: any, configName: string, state: string) => {
+    if (state && !configState[configName]?.includes(state)) {
+        configState[configName] = [...configState[configName], state];
+    } else if (!state && !configState[configName]?.includes(CONFIG_STATES.ACTIVE)) {
+        configState[configName] = [...configState[configName], CONFIG_STATES.ACTIVE];
+    }
+    return configState;
+};
+
 export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
     let getAssessmentGroupedByConfigurations: any = {
         storageTier: 0,
@@ -645,6 +753,28 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         severityObj: {}
     };
 
+    let configState: any = {
+        storageTier: [],
+        fileSystemHeadroom: [],
+        logDriveSize: [],
+        tempdbDriveSize: [],
+        userDataFiles: [],
+        logFiles: [],
+        tempdbPlacement: [],
+        ontapConfiguration: [],
+        operatingSystem: [],
+        computeRightsizing: [],
+        operatingSystemPatch: [],
+        rssConfiguration: [],
+        applicationSqlServer: [],
+        mssqlPatch: [],
+        maxdopPatch: [],
+        scheduledLocalSnapshot: [],
+        scheduledawsBackup: [],
+        clone: [],
+        crr: []
+    };
+
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
     let uniqueResourceList: Array<string> = [];
@@ -667,63 +797,192 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const perfTierObj = instanceAssessmentData?.storage?.sizing?.find(
                     (item: any) => item.name === 'performance-tier'
                 );
-                const isStorageTierOptimized = isOptimized(perfTierObj?.status);
+                const perfTierStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item.name === 'performance-tier'
+                );
+                const isStorageTierOptimized = isOptimized(perfTierObj?.status, perfTierStateObj?.state);
+                setConfigState(configState, 'storageTier', perfTierStateObj?.state);
 
                 const headroomObj = instanceAssessmentData?.storage?.sizing?.find(
                     (item: any) => item.name === 'headroom'
                 );
-                const isFileSystemHeadroomOptimized = isOptimized(headroomObj?.status);
+                const headroomStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item.name === 'headroom'
+                );
+                const isFileSystemHeadroomOptimized = isOptimized(headroomObj?.status, headroomStateObj?.state);
+                setConfigState(configState, 'fileSystemHeadroom', headroomStateObj?.state);
 
                 const logDriveSizeObj = instanceAssessmentData?.storage?.sizing?.find(
                     (item: any) => item.name === 'log-drive-size'
                 );
-                const isLogDriveSizeOptimized = isOptimized(logDriveSizeObj?.status);
+                const logDriveSizeStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item.name === 'log-drive-size'
+                );
+                const isLogDriveSizeOptimized = isOptimized(logDriveSizeObj?.status, logDriveSizeStateObj?.state);
+                setConfigState(configState, 'logDriveSize', logDriveSizeStateObj?.state);
 
                 const tempdbDriveSizeObj = instanceAssessmentData?.storage?.sizing?.find(
                     (item: any) => item.name === 'tempdb-drive-size'
                 );
-                const isTempdbDriveSizeOptimized = isOptimized(tempdbDriveSizeObj?.status);
+                const tempdbDriveSizeStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item.name === 'tempdb-drive-size'
+                );
+                const isTempdbDriveSizeOptimized = isOptimized(tempdbDriveSizeObj?.status, tempdbDriveSizeStateObj?.state);
+                setConfigState(configState, 'tempdbDriveSize', tempdbDriveSizeStateObj?.state);
 
                 const userDataFilesObj = instanceAssessmentData?.storage?.layout?.find(
                     (item: any) => item.name === 'data-files-location'
                 );
-                const isUserDataFilesOptimized = isOptimized(userDataFilesObj?.status);
+                const userDataFilesStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
+                    (item: any) => item.name === 'data-files-location'
+                );
+                const isUserDataFilesOptimized = isOptimized(userDataFilesObj?.status, userDataFilesStateObj?.state);
+                setConfigState(configState, 'userDataFiles', userDataFilesStateObj?.state);
 
                 const logFilesObj = instanceAssessmentData?.storage?.layout?.find(
                     (item: any) => item.name === 'log-files-location'
                 );
-                const isLogFilesOptimized = isOptimized(logFilesObj?.status);
+                const logFilesStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
+                    (item: any) => item.name === 'log-files-location'
+                );
+                const isLogFilesOptimized = isOptimized(logFilesObj?.status, logFilesStateObj?.state);
+                setConfigState(configState, 'logFiles', logFilesStateObj?.state);
 
                 const tempdbFilesLocationObj = instanceAssessmentData?.storage?.layout?.find(
                     (item: any) => item.name === 'tempdb-files-location'
                 );
-                const isTempdbPlacementOptimized = isOptimized(tempdbFilesLocationObj?.status);
+                const tempdbFilesLocationStateObj =
+                    instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
+                        (item: any) => item.name === 'tempdb-files-location'
+                    );
+                const isTempdbPlacementOptimized = isOptimized(
+                    tempdbFilesLocationObj?.status,
+                    tempdbFilesLocationStateObj?.state
+                );
+                setConfigState(configState, 'tempdbPlacement', tempdbFilesLocationStateObj?.state);
 
                 const isOntapConfigurationOptimized =
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
-                    instanceAssessmentData?.storage?.configuration?.luns?.every((item: any) =>
-                        isOptimized(item?.status)
-                    ) &&
-                    instanceAssessmentData?.storage?.configuration?.volumes?.every((item: any) =>
-                        isOptimized(item?.status)
-                    );
+                    instanceAssessmentData?.storage?.configuration?.luns?.every((item: any) => {
+                        let configStateVal =
+                            instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.luns?.find(
+                                (config: any) => config.name === item.name
+                            )?.state;
+                        setConfigState(configState, 'ontapConfiguration', configStateVal);
+                        return isOptimized(item?.status, configStateVal);
+                    }) &&
+                    instanceAssessmentData?.storage?.configuration?.volumes?.every((item: any) => {
+                        let configStateVal =
+                            instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.volumes?.find(
+                                (config: any) => config.name === item.name
+                            )?.state;
+                        setConfigState(configState, 'ontapConfiguration', configStateVal);
+                        return isOptimized(item?.status, configStateVal);
+                    });
                 const isOperatingSystemOptimized =
                     instanceAssessmentData &&
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
-                    instanceAssessmentData?.storage?.configuration?.os?.every((item: any) => isOptimized(item?.status));
-                const isComputeRightsizingOptimized = isOptimized(instanceAssessmentData?.compute?.status);
-                const isOpearingSystemPatchOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
-                const isRssConfigurationOptimized = isOptimized(instanceAssessmentData?.rssConfig?.status);
-                const isApplicationSqlServerOptimized = isOptimized(instanceAssessmentData?.license?.status);
-                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
-                const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
-                const isScheduledLocalSnapshotOptimized = isOptimized(instanceAssessmentData?.snapshotPolicy?.status);
-                const isScheduledawsBackupOptimized = isOptimized(instanceAssessmentData?.awsBackup?.status);
+                    instanceAssessmentData?.storage?.configuration?.os?.every((item: any) => {
+                        let configStateVal =
+                            instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.os?.find(
+                                (config: any) => config.name === item.name
+                            )?.state;
+                        setConfigState(configState, 'operatingSystem', configStateVal);
+                        return isOptimized(item?.status, configStateVal);
+                    });
+                const isComputeRightsizingOptimized = isOptimized(
+                    instanceAssessmentData?.compute?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.compute?.state
+                );
+                setConfigState(
+                    configState,
+                    'computeRightsizing',
+                    instanceAssessmentData?.dismissedConfigurations?.compute?.state
+                );
 
-                const isCloneOptimized = isOptimized(instanceAssessmentData?.clone?.status);
-                const isCrrOptimized = isOptimized(instanceAssessmentData?.crr?.status);
+                const isOpearingSystemPatchOptimized = isOptimized(
+                    instanceAssessmentData?.hostOsPatch?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.state
+                );
+                setConfigState(
+                    configState,
+                    'operatingSystemPatch',
+                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.state
+                );
+
+                const isRssConfigurationOptimized = isOptimized(
+                    instanceAssessmentData?.rssConfig?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.rssConfig?.state
+                );
+                setConfigState(
+                    configState,
+                    'rssConfiguration',
+                    instanceAssessmentData?.dismissedConfigurations?.rssConfig?.state
+                );
+
+                const isApplicationSqlServerOptimized = isOptimized(
+                    instanceAssessmentData?.license?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.license?.state
+                );
+                setConfigState(
+                    configState,
+                    'applicationSqlServer',
+                    instanceAssessmentData?.dismissedConfigurations?.license?.state
+                );
+
+                const isMicrosoftSqlPatchOptimized = isOptimized(
+                    instanceAssessmentData?.mssqlPatch?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.state
+                );
+                setConfigState(
+                    configState,
+                    'mssqlPatch',
+                    instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.state
+                );
+
+                const isMaxdopPatchOptimized = isOptimized(
+                    instanceAssessmentData?.maxDOP?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.maxDOP?.state
+                );
+                setConfigState(
+                    configState,
+                    'maxdopPatch',
+                    instanceAssessmentData?.dismissedConfigurations?.maxDOP?.state
+                );
+
+                const isScheduledLocalSnapshotOptimized = isOptimized(
+                    instanceAssessmentData?.snapshotPolicy?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.state
+                );
+                setConfigState(
+                    configState,
+                    'scheduledLocalSnapshot',
+                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.state
+                );
+
+                const isScheduledawsBackupOptimized = isOptimized(
+                    instanceAssessmentData?.awsBackup?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.awsBackup?.state
+                );
+                setConfigState(
+                    configState,
+                    'scheduledawsBackup',
+                    instanceAssessmentData?.dismissedConfigurations?.awsBackup?.state
+                );
+
+                const isCloneOptimized = isOptimized(
+                    instanceAssessmentData?.clone?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.clone?.state
+                );
+                setConfigState(configState, 'clone', instanceAssessmentData?.dismissedConfigurations?.clone?.state);
+
+                const isCrrOptimized = isOptimized(
+                    instanceAssessmentData?.crr?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.state
+                );
+                setConfigState(configState, 'crr', instanceAssessmentData?.dismissedConfigurations?.crr?.state);
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.storageTier =
@@ -805,7 +1064,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
             }
         });
     });
-    return getAssessmentGroupedByConfigurations;
+    return {
+        ...getAssessmentGroupedByConfigurations,
+        configState: configState
+    };
 };
 
 export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {

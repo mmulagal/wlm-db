@@ -3,7 +3,6 @@ import styles from './HeaderComponent.module.scss';
 
 import {
     BlueXPListeners,
-    DsBlueXpMenu,
     DsButton,
     DsSelect,
     DsTypography,
@@ -37,11 +36,9 @@ import { useDispatch } from 'react-redux';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
-    setHeaderSelectedCred,
     setHeaderSelectedCredSandbox,
     setHeaderSelectedMultiCred,
     setHeaderSelectedMultiRegion,
-    setHeaderSelectedRegion,
     setHeaderSelectedRegionSandbox,
     setMultiDataLoading,
     setMultiDataStatus,
@@ -120,6 +117,7 @@ import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSli
 import store from '../../../store/store';
 import DashboardDismissPage from '../../Dashboard/DashboardInnerPage/DashboardDismissPage';
 import DashboardOptimizeInnerPage from '../../Dashboard/DashboardInnerPage/DashboardOptimizeInnerPage';
+import { DsBlueXpMenu } from '../../../common/DsMenuBlueXP/DsBlueXpMenu';
 
 type Tab = {
     tab: string;

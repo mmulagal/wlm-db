@@ -260,7 +260,7 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode:
         databaseType === DatabaseTypes.PG_SQL && (sqlDeploymentMode === HA || sqlDeploymentMode === FCI);
     if (databaseType === DatabaseTypes.PG_SQL) {
         FSxDataVolumeSize = FSxDataLunSizeInMib; // Absolute value of database size, as there won't be any LUN incase of NFS mounts
-        FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+        FSxLogVolumeSize = Math.ceil(0.75 * FSxDataVolumeSize); // 75% of FSxDataVolumeSize
         FSxTempDbVolumeSize = 0; // No TempDB volume for PostgreSQL
         FSxQuorumVolumeSize = 0; // No Quorum volume for PostgreSQL
     }
@@ -975,6 +975,14 @@ function isValidProp(propName: string) {
     return propName && propName !== 'undefined' && propName !== 'null';
 }
 
+// When the array has one element, powershell returns only the object instead of the array. This function will convert it to an array
+function formatSsmArrayResponse<T>(response: T | T[]): T[] {
+    if (Array.isArray(response)) {
+        return response;
+    }
+    return response ? [response] : [];
+}
+
 /**
  * Calculates the number of days between two dates.
  * @param startDate - The start date.
@@ -1062,5 +1070,6 @@ export {
     isValidProp,
     calculateDaysSince,
     determineVolumeType,
+    formatSsmArrayResponse,
     generateSqlResourceId
 };

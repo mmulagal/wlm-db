@@ -920,6 +920,12 @@ export const exploreSavingsApi = createApi({
                     body: payload
                 })
             }),
+            deleteOnPremTco: builder.mutation({
+                query: ({ resourceId }) => ({
+                    url: `v1/mssql/onprem-tco/resources/${resourceId}`,
+                    method: 'DELETE'
+                })
+            }),
             getSendEmail: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/notification/email?emailType=savings-calculations`,
@@ -1207,6 +1213,7 @@ export const {
 export const {
     useGetSendEmailMutation,
     useGetUploadScriptMutation,
+    useDeleteOnPremTcoMutation,
     useGetOnPremSavingsMutation,
     useGetOnPremCalculationsMutation,
     useGetStorageSavingsMutation,

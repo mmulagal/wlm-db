@@ -1421,7 +1421,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"scriptVersion\":\"1.0.0\"}\r\n",
+        "StandardOutputContent": "{\"scriptVersion\":\"1.0.0\",\"isCreatePossible\":true}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -2030,7 +2030,35 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"status\":\"Running\",\"error\":\"\"}\r\n",
+        "StandardOutputContent": "[{\"name\":\"SQL Server (SQLSTD1)\",\"status\":\"Running\"},{\"name\":\"SQL Server (MSSQLSERVER)\",\"status\":\"Running\"}]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "getRunningSqlServersCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "e61c4445-17d7-466a-9492-92dabeb73c48",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getRunningSqlServersCommand",
+        "Comment": "Get running sql server names",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT2.193S",
+        "ExecutionEndDateTime": "2025-01-14T10:12:59.186Z",
+        "ExecutionStartDateTime": "2025-01-14T10:12:57.186Z",
+        "InstanceId": "i-07e76a4b916548dc0",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[\"SQL Server (SQLSTD1)\",\"SQL Server (MSSQLSERVER)\"]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -2154,8 +2182,12 @@
                         "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
                         "name": "daily",
                         "cron": {
-                            "minutes": [10],
-                            "hours": [0]
+                            "minutes": [
+                                10
+                            ],
+                            "hours": [
+                                0
+                            ]
                         },
                         "_links": {
                             "self": {

@@ -24,7 +24,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
-import { setHeaderSelectedRegion } from '../../../../store/workloadFactory/headersSlice';
+import { setHeaderSelectedMultiRegion, setHeaderSelectedRegion } from '../../../../store/workloadFactory/headersSlice';
 
 const RegionVpc = () => {
     const dispatch = useDispatch();
@@ -69,9 +69,16 @@ const RegionVpc = () => {
     useEffect(() => {
         const regionValue = selectedRegionData?.data?.regionName;
         if (regionValue) {
-            const label2 = selectedRegionData?.data?.regionCode;
-            const option = generateOptionType(regionValue, regionValue, label2, false, '', selectedRegionData?.data);
-            dispatch(setHeaderSelectedRegion(option));
+            const valueToStore = {
+                value: selectedRegionData?.value,
+                label: selectedRegionData?.value,
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: selectedRegionData?.data
+            };
+            dispatch(setHeaderSelectedRegion(null));
+            dispatch(setHeaderSelectedMultiRegion([valueToStore]));
         }
     }, [selectedRegionData]);
 

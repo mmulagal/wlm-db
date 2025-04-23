@@ -1180,6 +1180,104 @@
                                 "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations12": {
+                            "storage": {
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -2385,6 +2483,104 @@
                                 "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -3590,6 +3786,105 @@
                                 "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "POSTPONED",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER",
+                                "endTime": 1739934199000
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -4805,6 +5100,104 @@
                                 "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -6010,6 +6403,104 @@
                                 "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },
@@ -7215,6 +7706,104 @@
                                 "sandbox_17440174814471"
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
+                        },
+                        "dismissedConfigurations": {
+                            "storage": {
+                                "sizing": [
+                                    {
+                                        "name": "performance-tier",
+                                        "state": "ACTIVE",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "tempdb-drive-size",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "headroom",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ],
+                                "layout": [
+                                    {
+                                        "name": "tempdb-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "log-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    },
+                                    {
+                                        "name": "data-files-location",
+                                        "state": "DISMISSED",
+                                        "startTime": 1739934199000
+                                    }
+                                ]
+                            },
+                            "maxDOP": {
+                                "name": "max-dop",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "mssqlPatch": {
+                                "name": "mssql-patch",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "hostOsPatch": {
+                                "name": "host-os-patch",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "clone": {
+                                "name": "Clone Management",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "awsBackup": {
+                                "name": "scheduled-fsx-for-ontap-backups",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000,
+                                "deactivationReason": "USER"
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "state": "POSTPONED",
+                                "endTime": 1739934199000,
+                                "startTime": 1739934199000
+                            },
+                            "snapshotPolicy": {
+                                "name": "snapshot-policy",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "license": {
+                                "name": "sql-license",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            },
+                            "rssConfig": {
+                                "name": "rss-config",
+                                "state": "ACTIVE",
+                                "startTime": 1739934199000
+                            },
+                            "compute": {
+                                "name": "compute-rightsizing",
+                                "state": "DISMISSED",
+                                "startTime": 1739934199000
+                            }
                         }
                     }
                 },

@@ -10,6 +10,7 @@ import { getInstanceDetails } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import {
     DatabaseInstance,
+    DatabaseInstanceConfigurations,
     DatabaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     MappedOnTapVolumeResponse,
@@ -1036,12 +1037,9 @@ async function fetchDriftAssessment(
         databaseInstanceId,
         fields
     });
-    try {
-        await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-    } catch (error) {
-        logger.error('Error fetching instance details:', error);
-        throw error;
-    }
+
+    const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    const { configurations } = instanceDetail as unknown as DatabaseInstance;
 
     let shouldCalculateStorageAssessment = false;
     let shouldCalculateComputeAssessment = false;
@@ -1124,7 +1122,6 @@ async function fetchDriftAssessment(
 
     if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
         if (isDemoFlow) {
-            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
             const storageConfigsOptimized =
                 (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
@@ -1238,7 +1235,14 @@ async function fetchDriftAssessment(
     if (!isEmpty(cloneResponse)) {
         driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
     }
-    // Get last asssessed timestamp
+
+    if (configurations) {
+        const { dismissedConfigurations = {} } = configurations as DatabaseInstanceConfigurations;
+        driftAssessmentData.dismissedConfigurations = dismissedConfigurations;
+        logger.debug('Configurations successfully added to driftAssessmentData:', configurations);
+    }
+
+    // Get last assessed timestamp
     try {
         driftAssessmentData.lastAssessmentTimestamp = await getLastAssessedTime(
             accountId,

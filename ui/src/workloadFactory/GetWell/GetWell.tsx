@@ -29,6 +29,7 @@ import { clearNotifications } from '../../store/notificationSlice';
 
 import {
     ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
     WLF_TABS
@@ -196,7 +197,7 @@ const GetWell = () => {
                             refreshGetWellPage();
                             dispatch(setGwAdhocError(jobRes?.data?.error));
                             clearInterval(jobInterval);
-                        }else if (status === JOB_MONITORING_STATUS.WARNING) {
+                        } else if (status === JOB_MONITORING_STATUS.WARNING) {
                             setTriggerAssessmentInProgress(false);
                             dispatch(
                                 addNotification({
@@ -207,10 +208,10 @@ const GetWell = () => {
                             refreshGetWellPage();
                             jobRes?.data?.subJobs?.forEach((job: { error?: string }) => {
                                 const errorMessage = job?.error;
-                                if(errorMessage){
+                                if (errorMessage) {
                                     dispatch(setGwAdhocError(errorMessage));
                                 }
-                              });
+                            });
                             clearInterval(jobInterval);
                         }
                     });
@@ -795,6 +796,52 @@ const GetWell = () => {
                                                     variant="underline"
                                                 />
                                             </div>
+                                            <div className={styles.dropDown}>
+                                                <DsSelect
+                                                    title=""
+                                                    selectedOptionIds={
+                                                        defaultFilterOptions['configState']
+                                                            ? defaultFilterOptions['configState']
+                                                            : []
+                                                    }
+                                                    isExpanded={isAccordionOpen ? undefined : false}
+                                                    isCleanable={false}
+                                                    formatLabel={() =>
+                                                        `Configuration state: ${
+                                                            !defaultFilterOptions['configState']?.length ||
+                                                            defaultFilterOptions['configState'].length === 3
+                                                                ? 'All'
+                                                                : ''
+                                                        }(${
+                                                            defaultFilterOptions['configState']?.length > 0
+                                                                ? defaultFilterOptions['configState']?.length
+                                                                : 3
+                                                        })`
+                                                    }
+                                                    placeholder="Placeholder text"
+                                                    options={[
+                                                        {
+                                                            id: 0,
+                                                            label: 'Active',
+                                                            value: CONFIG_STATES.ACTIVE
+                                                        },
+                                                        {
+                                                            id: 1,
+                                                            label: 'Postponed',
+                                                            value: CONFIG_STATES.POSTPONED
+                                                        },
+                                                        {
+                                                            id: 2,
+                                                            label: 'Dismissed',
+                                                            value: CONFIG_STATES.DISMISSED
+                                                        }
+                                                    ]}
+                                                    selectionType="multi"
+                                                    isWithActions={true}
+                                                    onSelect={(option: any) => handleSelect(option, 'configState')}
+                                                    variant="underline"
+                                                />
+                                            </div>
                                         </div>
 
                                         <div
@@ -971,6 +1018,34 @@ const GetWell = () => {
                                                 defaultFilterOptions['tags']?.length === 6
                                                     ? 'All(6)'
                                                     : `${defaultFilterOptions['tags']?.length}/6`}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={styles.items}>
+                                            <DsTypography
+                                                style={{
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
+                                                }}
+                                                variant="Regular_14"
+                                            >
+                                                Configuration state:
+                                            </DsTypography>
+                                            <DsTypography
+                                                style={{
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
+                                                }}
+                                                variant="Semibold_14"
+                                            >
+                                                {!defaultFilterOptions['configState']?.length ||
+                                                defaultFilterOptions['configState']?.length === 3
+                                                    ? 'All(3)'
+                                                    : `${defaultFilterOptions['configState']?.length}/3`}
                                             </DsTypography>
                                         </div>
                                     </div>

@@ -43,7 +43,14 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                     const tempDbPlacementObj = instanceData?.assessments?.storage?.layout?.find(
                         (item: any) => item.name === 'tempdb-files-location'
                     );
-                    const isStorageTierOptimized = isOptimized(tempDbPlacementObj?.status);
+                    const tempDbPlacementStateObj =
+                        instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
+                            (item: any) => item.name === 'tempdb-files-location'
+                        );
+                    const isStorageTierOptimized = isOptimized(
+                        tempDbPlacementObj?.status,
+                        tempDbPlacementStateObj?.state
+                    );
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -55,7 +62,8 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[tempDbPlacementObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: tempDbPlacementStateObj
                         });
                     }
                 }
@@ -103,7 +111,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {

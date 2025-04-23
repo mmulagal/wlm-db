@@ -186,6 +186,10 @@ interface DatabaseInstanceMetadata {
     assessmentResults?: any;
 }
 
+interface DatabaseInstanceConfigurations {
+    dismissedConfigurations: DatabaseInstanceDismissConfigs;
+}
+
 interface CreateDbMetrics {
     numberofUserDbsCreated: number;
 }
@@ -352,6 +356,7 @@ interface DatabaseInstance {
     sqlAuthEnabled?: boolean;
     isManaged?: boolean;
     resource: ResourceDetails;
+    configurations?: DatabaseInstanceConfigurations | JsonValue;
 }
 
 interface InstanceDetails {
@@ -560,6 +565,11 @@ type MultipleCommandSsmResponse = {
     error?: string;
 };
 
+interface SsmSqlServerRunningStatus {
+    name: string;
+    status: string;
+}
+
 interface SVM {
     uuid: string;
     _links: {
@@ -598,6 +608,32 @@ interface MappedOnTapVolumeResponse {
 }
 interface InstancesResponse {
     [key: string]: MappedOnTapVolumeResponse;
+}
+
+interface InstanceDismissParams {
+    name: string;
+    configState: string;
+    startTime: number;
+    endTime?: number;
+    deactivationReason?: string;
+}
+
+interface DatabaseInstanceDismissConfigs {
+    storage?: {
+        configuration?: {
+            volumes?: InstanceDismissParams[];
+            luns?: InstanceDismissParams[];
+            os?: InstanceDismissParams[];
+        };
+        sizing?: InstanceDismissParams[];
+        layout?: InstanceDismissParams[];
+    };
+    compute?: InstanceDismissParams;
+    license?: InstanceDismissParams;
+    hostOsPatch?: InstanceDismissParams;
+    rssConfig?: InstanceDismissParams;
+    maxDop?: InstanceDismissParams;
+    mssqlPatch?: InstanceDismissParams;
 }
 
 interface MappedVolumeResponseForClone {
@@ -648,6 +684,7 @@ export {
     PatchDetail,
     AwsFsxNBackupConfig,
     MultipleCommandSsmResponse,
+    SsmSqlServerRunningStatus,
     CloneAssesment,
     CloneDetail,
     VolumeRecord,
@@ -657,5 +694,8 @@ export {
     AWSBackupAssessment,
     ResourceAssessmentData,
     ClonedVolumeDetail,
-    MappedVolumeResponseForClone
+    MappedVolumeResponseForClone,
+    InstanceDismissParams,
+    DatabaseInstanceDismissConfigs,
+    DatabaseInstanceConfigurations
 };

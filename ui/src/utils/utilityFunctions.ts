@@ -315,14 +315,18 @@ export const fsxPassVal = (password: string) => {
         const isAtLeastEightChars = password.length >= 8;
         const hasAtLeastOneNumber = /[0-9]/.test(password);
         const hasAtLeastOneAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 1;
-        
-            if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName) && !password.includes('admin')) {
-                return '';
-            } else {
-                return GENERAL.PASSWORD_ERROR_CHECK;
-            }
 
-       
+        if (
+            isAtLeastEightChars &&
+            hasAtLeastOneNumber &&
+            hasAtLeastOneAlphabetic &&
+            !password.includes(fsxUserName) &&
+            !password.includes('admin')
+        ) {
+            return '';
+        } else {
+            return GENERAL.PASSWORD_ERROR_CHECK;
+        }
     }
 };
 
@@ -379,6 +383,12 @@ export const customErrorMessages = (inputString: string, endpoint: string) => {
 
 export const getCssVariableValue = (variableName: string) =>
     getComputedStyle(document.body).getPropertyValue(variableName);
+
+export const formatDateAssess = (date: string | number) => {
+    const dateStr = date.toString();
+    const timeStamp = dateStr.substring(6, dateStr.length - 2);
+    return moment(new Date(parseInt(timeStamp))).format('DD MMMM YYYY');
+};
 
 export const formatDate = (date: string | number) => {
     const dateStr = date.toString();
