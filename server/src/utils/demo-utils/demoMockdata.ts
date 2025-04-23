@@ -3368,7 +3368,8 @@ const mockResourceAssessmentData = {
                 recommendedBaseProcessorNumber: 2,
                 recommendedReceiveQueues: 4
             },
-            rssConfigFinding: 'not-optimized'
+            rssConfigFinding: 'not-optimized',
+            totalObjectsAssessed: 1
         },
         mssqlPatch: [
             {

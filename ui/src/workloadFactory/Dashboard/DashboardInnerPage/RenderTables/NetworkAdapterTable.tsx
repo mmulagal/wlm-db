@@ -128,7 +128,7 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {

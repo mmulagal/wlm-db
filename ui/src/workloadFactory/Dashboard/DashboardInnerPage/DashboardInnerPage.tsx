@@ -954,8 +954,8 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '204px',
+                    tagHeight: '301px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.compute_rightsizing?.recommendation?.description

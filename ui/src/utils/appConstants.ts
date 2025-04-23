@@ -203,7 +203,7 @@ export const GENERAL = {
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
-    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across multiple Availability Zones',
+    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Failover Cluster Instance across multiple Availability Zones',
     PGSQL_STANDALONE: 'Deploy your PostgreSQL Server on a single node',
     PGSQL_HA:
         'Deploy your PostgreSQL Server across multiple Availability Zones for high availability and data redundancy',
@@ -1279,7 +1279,12 @@ export const GENERAL = {
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:
         'You postponed the analysis for some instances in your database configurations. Instances with postponed analysis do not affect the optimization score.',
-    MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.'
+    MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.',
+    DISMISS_MIX_CASE_TOOLTIP: 'This configurations analysis is dismissed or postponed for some of the instances.',
+    DISMISS_PAGE_MSG: [
+        'You can postpone or dismiss the analysis of a specific configuration for your SQL Server instances. Postponing delays the analysis for 30 days and dismissing the analysis stops',
+        "the analysis until you reactivate it manually. Postponed or dismissed configuration analyses won't affect the total optimization score."
+    ]
 };
 
 export const CODE_VIEWER = {

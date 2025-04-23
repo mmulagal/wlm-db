@@ -143,7 +143,7 @@ describe(' Secrets Manager string', () => {
     it('calculateFsxnStorageCapacity storage capacity breakdown for pgsql', () => {
         const response = calculateFsxnStorageCapacity(2048, 'fci', 'PGSQL');
         expect(response.FSxDataVolumeSize).toEqual(2048 * 1024);
-        expect(response.FSxLogVolumeSize).toEqual(Math.ceil(0.25 * 2048 * 1024));
+        expect(response.FSxLogVolumeSize).toEqual(Math.ceil(0.75 * 2048 * 1024));
         expect(response.FSxTempDbVolumeSize).toEqual(0);
         expect(response.FSxQuorumVolumeSize).toEqual(0);
     });

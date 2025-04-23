@@ -69,6 +69,39 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         }
     };
 
+    const renderOptimizationBar = (
+        assessmentKey: string,
+        optimizedCount: number,
+        headingText: string,
+        configStateKey: any
+    ) => {
+        const dismissedOrPostponedText = hasDismissedOrPosponed(configStateKey);
+        const total = configData?.total || 1;
+        const afterOutOfTotal = configData?.total;
+        const optimizePercentage = Math.round(
+            ((inProgressOptimizationData?.[assessmentKey]?.length || 0) / total) * 100
+        );
+        const isLoading = loading || (inProgressOptimizationData?.[assessmentKey]?.length || 0) > 0;
+        const width = windowSize.width > 1700 ? '328px' : '248px';
+
+        return (
+            <BarComponent
+                color="#5E8DCD"
+                headingText={headingText}
+                percentage={dismissedOrPostponedText ? 0 : Math.round((optimizedCount / total) * 100)}
+                beforeOutOf={dismissedOrPostponedText ? undefined : optimizedCount}
+                afterOutOf={dismissedOrPostponedText ? undefined : afterOutOfTotal}
+                bottomText={dismissedOrPostponedText ? undefined : 'Optimized instances:'}
+                width={width}
+                from="dashboard"
+                optimizePercentage={dismissedOrPostponedText ? 0 : optimizePercentage}
+                loading={dismissedOrPostponedText ? loading : isLoading}
+                textMessage={dismissedOrPostponedText || undefined}
+                tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
+            />
+        );
+    };
+
     return (
         <div className={styles.managedBreakdown}>
             <div className={styles.headSection}>
@@ -81,37 +114,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
             <div className={styles.mainSection}>
                 <div className={`${styles.tile} ${styles.firstTile}`}>
-                    {hasDismissedOrPosponed(configData?.configState?.storageTier) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText="Storage tier"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.storageTier)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText="Storage tier"
-                            percentage={Math.round(((configData?.storageTier || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData?.storageTier || 0}
-                            afterOutOf={configData?.total || 0}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.storageTier)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+                        configData?.storageTier || 0,
+                        'Storage tier',
+                        configData?.configState?.storageTier
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -157,41 +164,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.fileSystemHeadroom) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText="File system headroom"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.fileSystemHeadroom)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText="File system headroom"
-                            percentage={Math.round(
-                                ((configData.fileSystemHeadroom || 0) / (configData.total || 1)) * 100
-                            )}
-                            beforeOutOf={configData.fileSystemHeadroom}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length ||
-                                    0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.fileSystemHeadroom)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+                        configData?.fileSystemHeadroom || 0,
+                        'File system headroom',
+                        configData?.configState?.fileSystemHeadroom
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -237,38 +214,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.logDriveSize) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText="Log drive size"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.logDriveSize)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText="Log drive size"
-                            percentage={Math.round(((configData.logDriveSize || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.logDriveSize}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.logDriveSize)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
+                        configData?.logDriveSize || 0,
+                        'Log drive size',
+                        configData?.configState?.logDriveSize
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -314,39 +264,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.tempdbDriveSize) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText="TempDB drive size"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.tempdbDriveSize)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText="TempDB drive size"
-                            percentage={Math.round(((configData.tempdbDriveSize || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.tempdbDriveSize}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length ||
-                                    0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.tempdbDriveSize)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
+                        configData.tempdbDriveSize || 0,
+                        'TempDB drive size',
+                        configData?.configState?.tempdbDriveSize
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -392,38 +314,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.userDataFiles) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText="Data files (.mdf)"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.userDataFiles)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText="Data files (.mdf)"
-                            percentage={Math.round(((configData.userDataFiles || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.userDataFiles}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.userDataFiles)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
+                        configData.userDataFiles || 0,
+                        'Data files (.mdf)',
+                        configData?.configState?.userDataFiles
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -468,37 +363,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.logFiles) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText="Log files (.ldf)"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.logFiles)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText="Log files (.ldf)"
-                            percentage={Math.round(((configData.logFiles || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.logFiles}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.logFiles)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
+                        configData.logFiles || 0,
+                        'Log files (.ldf)',
+                        configData?.configState?.logFiles
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -539,38 +408,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.tempdbPlacement) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.tempdbPlacement)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT}
-                            percentage={Math.round(((configData.tempdbPlacement || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.tempdbPlacement}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.tempdbPlacement)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
+                        configData.tempdbPlacement || 0,
+                        ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
+                        configData?.configState?.tempdbPlacement
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -615,35 +457,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.ontapConfiguration) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText="ONTAP"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.ontapConfiguration)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText="ONTAP"
-                            percentage={Math.round(
-                                ((configData.ontapConfiguration || 0) / (configData.total || 1)) * 100
-                            )}
-                            beforeOutOf={configData.ontapConfiguration}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.['ONTAP']?.length || 0) / (configData.total || 1)) * 100
-                            )}
-                            loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.ONTAP]?.length > 0}
-                            tooltipMessage={hasMixedState(configData?.configState?.ontapConfiguration)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.ONTAP,
+                        configData.ontapConfiguration || 0,
+                        'ONTAP',
+                        configData?.configState?.ontapConfiguration
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -673,35 +491,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.operatingSystem) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText="Operating system"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.operatingSystem)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText="Operating system"
-                            percentage={Math.round(((configData.operatingSystem || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.operatingSystem}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.['Operating system']?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OS]?.length > 0}
-                            tooltipMessage={hasMixedState(configData?.configState?.operatingSystem)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.OS,
+                        configData.operatingSystem || 0,
+                        'Operating system',
+                        configData?.configState?.operatingSystem
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -731,37 +525,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.computeRightsizing) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.COMPUTE_RIGHTSIZING}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.computeRightsizing)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.COMPUTE_RIGHTSIZING}
-                            percentage={Math.round(
-                                ((configData.computeRightsizing || 0) / (configData.total || 1)) * 100
-                            )}
-                            beforeOutOf={configData.computeRightsizing}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[GENERAL.COMPUTE_RIGHTSIZING]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={loading || inProgressOptimizationData['compute-rightsizing']?.length > 0}
-                            tooltipMessage={hasMixedState(configData?.configState?.computeRightsizing)}
-                        />
+                    {renderOptimizationBar(
+                        GENERAL.COMPUTE_RIGHTSIZING,
+                        configData.computeRightsizing || 0,
+                        GENERAL.COMPUTE_RIGHTSIZING,
+                        configData?.configState?.computeRightsizing
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -806,40 +574,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.operatingSystemPatch) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.OPERATING_SYSTEM_PATCH}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.operatingSystemPatch)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.OPERATING_SYSTEM_PATCH}
-                            percentage={Math.round(
-                                ((configData.operatingSystemPatch || 0) / (configData.total || 1)) * 100
-                            )}
-                            beforeOutOf={configData.operatingSystemPatch}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[GENERAL.OPERATING_SYSTEM_PATCH]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.operatingSystemPatch)}
-                        />
+                    {renderOptimizationBar(
+                        GENERAL.OPERATING_SYSTEM_PATCH,
+                        configData.operatingSystemPatch || 0,
+                        GENERAL.OPERATING_SYSTEM_PATCH,
+                        configData?.configState?.operatingSystemPatch
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -884,40 +623,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.rssConfiguration) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.RSS_CONFIGURATION}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.rssConfiguration)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.RSS_CONFIGURATION}
-                            percentage={Math.round(
-                                ((configData.rssConfiguration || 0) / (configData.total || 1)) * 100
-                            )}
-                            beforeOutOf={configData.rssConfiguration}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[GENERAL.RSS_CONFIGURATION]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.rssConfiguration)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
+                        configData.rssConfiguration || 0,
+                        GENERAL.RSS_CONFIGURATION,
+                        configData?.configState?.rssConfiguration
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -962,37 +672,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                 </div>
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.applicationSqlServer) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.LICENSE_SQL_SERVER}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.applicationSqlServer)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.LICENSE_SQL_SERVER}
-                            percentage={Math.round(
-                                ((configData.applicationSqlServer || 0) / (configData.total || 1)) * 100
-                            )}
-                            beforeOutOf={configData.applicationSqlServer}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[GENERAL.LICENSE_SQL_SERVER]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LICENSE]?.length > 0}
-                            tooltipMessage={hasMixedState(configData?.configState?.applicationSqlServer)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.LICENSE,
+                        configData.applicationSqlServer || 0,
+                        GENERAL.LICENSE_SQL_SERVER,
+                        configData?.configState?.applicationSqlServer
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -1037,39 +721,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.mssqlPatch) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.MICROSOFT_SQL_PATCH}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.mssqlPatch)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.MICROSOFT_SQL_PATCH}
-                            percentage={Math.round(((configData.mssqlPatch || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.mssqlPatch}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[GENERAL.MICROSOFT_SQL_PATCH]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]?.length >
-                                    0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.mssqlPatch)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+                        configData.mssqlPatch || 0,
+                        GENERAL.MICROSOFT_SQL_PATCH,
+                        configData?.configState?.mssqlPatch
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -1114,35 +770,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.maxdopPatch) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.MAXDOP_PATCH}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.maxdopPatch)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.MAXDOP_PATCH}
-                            percentage={Math.round(((configData.maxdopPatch || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.maxdopPatch}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[GENERAL.MAXDOP_PATCH]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0}
-                            tooltipMessage={hasMixedState(configData?.configState?.maxdopPatch)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.MAXDOP,
+                        configData.maxdopPatch || 0,
+                        GENERAL.MAXDOP_PATCH,
+                        configData?.configState?.maxdopPatch
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -1188,41 +820,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.scheduledLocalSnapshot) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.SCHEDULED_LOCAL_SNAPSHOT}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.scheduledLocalSnapshot)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.SCHEDULED_LOCAL_SNAPSHOT}
-                            percentage={Math.round(
-                                ((configData.scheduledLocalSnapshot || 0) / (configData.total || 1)) * 100
-                            )}
-                            beforeOutOf={configData.scheduledLocalSnapshot}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]
-                                    ?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.scheduledLocalSnapshot)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+                        configData.scheduledLocalSnapshot || 0,
+                        GENERAL.SCHEDULED_LOCAL_SNAPSHOT,
+                        configData?.configState?.scheduledLocalSnapshot
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -1268,35 +870,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.crr) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.CRR}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.crr)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.CRR}
-                            percentage={Math.round(((configData.crr || 0) / (configData.total || 1)) * 100)}
-                            beforeOutOf={configData.crr}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CRR]?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0}
-                            tooltipMessage={hasMixedState(configData?.configState?.crr)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.CRR,
+                        configData.crr || 0,
+                        GENERAL.CRR,
+                        configData?.configState?.crr
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -1332,42 +910,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 </div>
 
                 <div className={styles.tile}>
-                    {hasDismissedOrPosponed(configData?.configState?.scheduledawsBackup) ? (
-                        <BarComponent
-                            color="#5E8DCD"
-                            percentage={0}
-                            headingText={GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            textMessage={hasDismissedOrPosponed(configData?.configState?.scheduledawsBackup)}
-                            optimizePercentage={0}
-                            loading={loading}
-                        />
-                    ) : (
-                        <BarComponent
-                            color="#5E8DCD"
-                            headingText={GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
-                            percentage={Math.round(
-                                ((configData.scheduledawsBackup || 0) / (configData.total || 1)) * 100
-                            )}
-                            beforeOutOf={configData.scheduledawsBackup}
-                            afterOutOf={configData.total}
-                            bottomText="Optimized instances:"
-                            width={windowSize.width > 1700 ? '328px' : '248px'}
-                            from="dashboard"
-                            optimizePercentage={Math.round(
-                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
-                                    ?.length || 0) /
-                                    (configData.total || 1)) *
-                                    100
-                            )}
-                            loading={
-                                loading ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
-                                    ?.length > 0
-                            }
-                            tooltipMessage={hasMixedState(configData?.configState?.scheduledawsBackup)}
-                        />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                        configData.scheduledawsBackup || 0,
+                        GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                        configData?.configState?.scheduledawsBackup
                     )}
 
                     <SeparatorComponent variant="vertical" height="60px" />

@@ -23,6 +23,7 @@ import { GENERAL } from '../../utils/appConstants';
 import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
+    CONFIG_STATES_UI,
     FINDINGS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
@@ -3080,7 +3081,7 @@ export const disableOptimizeResourceCheckBoxForOptimizeCase = (
     // Extract IDs of rows currently selected for optimization
     const selectedDatabaseRows = selectedRowsForOptimize.map((row: any) => row.id);
 
-    return tableData.map((row: any) => {
+    return tableData?.map((row: any) => {
         // Check if the current row is being optimized
         const isBeingOptimized =
             selectedDatabaseRows.includes(row.id) && inProgressResourceOptimizeData?.[type]?.includes(row.id);
@@ -3211,6 +3212,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
             configKey = 'scheduledLocalSnapshot';
             break;
+        case ASSESSMENT_CONFIG_NAMES.CRR:
+            configKey = 'crr';
+            break;
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
             configKey = 'scheduledawsBackup';
             break;
@@ -3220,12 +3224,32 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
     }
     const optimizedInstances = configData[configKey] || 0;
+    let configStateValue = '';
+    if (!configData?.configState?.[configKey] || configData?.configState?.[configKey]?.includes(CONFIG_STATES.ACTIVE)) {
+        configStateValue = CONFIG_STATES_UI.ACTIVE;
+    } else if (configData?.configState?.[configKey].includes(CONFIG_STATES.POSTPONED)) {
+        configStateValue = CONFIG_STATES_UI.POSTPONED;
+    } else if (configData?.configState?.[configKey].includes(CONFIG_STATES.DISMISSED)) {
+        configStateValue = CONFIG_STATES_UI.DISMISSED;
+    }
+
+    let tooltipText = '';
+    if (
+        configData?.configState?.[configKey]?.includes(CONFIG_STATES.ACTIVE) &&
+        (configData?.configState?.[configKey]?.includes(CONFIG_STATES.POSTPONED) ||
+            configData?.configState?.[configKey]?.includes(CONFIG_STATES.DISMISSED))
+    ) {
+        tooltipText = GENERAL.DISMISS_MIX_CASE_TOOLTIP;
+    }
     dispatch(
         setSelectedConfigSummary({
+            totalInstances: configData?.total || 0,
             optimizedInstances: optimizedInstances,
             notOptimizedInstances: configData?.total - optimizedInstances,
             optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
-            severity: configData?.severityObj?.[configKey] || ''
+            severity: configData?.severityObj?.[configKey] || '',
+            configState: configStateValue,
+            tooltipText: tooltipText
         })
     );
 };

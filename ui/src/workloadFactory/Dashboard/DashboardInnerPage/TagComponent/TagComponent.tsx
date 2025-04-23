@@ -59,6 +59,9 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
             case GENERAL.LICENSE_SQL_SERVER:
                 setTagData(['Cost optimization']);
                 break;
+            case ASSESSMENT_CONFIG_NAMES.CRR:
+                setTagData(['Reliability']);
+                break;
 
             case 'ONTAP':
             case 'Operating system':

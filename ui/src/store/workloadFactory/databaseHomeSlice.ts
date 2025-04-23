@@ -67,7 +67,10 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         optimizationScore: '',
         optimizedInstances: 0,
         notOptimizedInstances: 0,
-        severity: ''
+        severity: '',
+        configState: '',
+        totalInstances: 0,
+        tooltipText: ''
     },
     selectedAssessmentRow: null,
     sandboxAgeRange: {

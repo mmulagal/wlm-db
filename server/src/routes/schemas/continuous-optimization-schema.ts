@@ -19,7 +19,9 @@ import {
     AvailableSnapshotPoliciesResponse,
     OptimizeResiliencyBody,
     OptimizeGenericRequestBody,
-    BulkOptimizeComputeRequestBody
+    BulkOptimizeComputeRequestBody,
+    BulkDismissConfigurationRequestBody,
+    BulkDismissConfigurationResponse
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -238,6 +240,17 @@ const BulkOptimizeAwsBackupSchema = {
     description: 'Enable scheduled AWS FSx for ONTAP backups.'
 };
 
+const BulkDismissConfigurationSchema = {
+    params: AccountIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: BulkDismissConfigurationRequestBody,
+    summary: 'Dismiss Assessment Configurations',
+    description: 'Dismiss Assessment Configurations for selected database instances.',
+    response: {
+        200: BulkDismissConfigurationResponse
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -255,5 +268,6 @@ export {
     BulkOptimizeStorageTierSchema,
     BulkOptimizeComputeSchema,
     BulkOptimizeMaxDopSchema,
-    BulkOptimizeAwsBackupSchema
+    BulkOptimizeAwsBackupSchema,
+    BulkDismissConfigurationSchema
 };

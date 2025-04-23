@@ -29,7 +29,8 @@ import {
     AvailableSnapshotPolicies,
     BulkOptimizeMaxDopSchema,
     OptimizeResilienceSchema,
-    BulkOptimizeAwsBackupSchema
+    BulkOptimizeAwsBackupSchema,
+    BulkDismissConfigurationSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -45,6 +46,7 @@ import {
     handleResiliecyOptimize
 } from '../operations/continuous-optimization/resilience-optimize-operations';
 import { OptimizeResiliencyBodyType } from './types/continuous-optimization.types';
+import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-utils';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/mssql';
@@ -357,6 +359,18 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP,
                     hostsToOptimize
                 );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/assessment/dismiss`,
+            { schema: BulkDismissConfigurationSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { configurationsToDismiss }
+                } = castRequest(request);
+                const response = await updateDismissConfigurations(accountId, configurationsToDismiss);
                 return reply.send(response);
             }
         );

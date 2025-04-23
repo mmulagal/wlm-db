@@ -1181,7 +1181,7 @@
                             ],
                             "impactedDatabases": "0 out of 1 clones are old and divergent"
                         },
-                        "dismissedConfigurations": {
+                        "dismissedConfigurations12": {
                             "storage": {
                                 "configuration": {
                                     "volumes": [
@@ -8327,7 +8327,7 @@
                                 "state": "ACTIVE",
                                 "startTime": 1739934199000
                             },
-                            "compute123": {
+                            "compute": {
                                 "name": "compute-rightsizing",
                                 "state": "DISMISSED",
                                 "startTime": 1739934199000
