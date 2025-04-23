@@ -46,7 +46,8 @@ const MicrosoftSQLPatchTable = ({ lastColDetails, handleBulkAction }: StorageTie
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const mssqlPatchObj = instanceData?.assessments?.mssqlPatch;
-                    const isStorageTierOptimized = isOptimized(mssqlPatchObj?.status);
+                    const mssqlPatchStateObj = instanceData?.assessments?.dismissedConfigurations?.mssqlPatch;
+                    const isStorageTierOptimized = isOptimized(mssqlPatchObj?.status, mssqlPatchStateObj?.state);
                     if (!isStorageTierOptimized) {
                         mssqlPatchAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -58,7 +59,8 @@ const MicrosoftSQLPatchTable = ({ lastColDetails, handleBulkAction }: StorageTie
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[mssqlPatchObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: mssqlPatchStateObj
                         });
                     }
                 }

@@ -45,7 +45,8 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const awsBackupObj = instanceData?.assessments?.awsBackup;
-                    const isAwsBackupOptimized = isOptimized(awsBackupObj?.status);
+                    const awsBackupStateObj = instanceData?.assessments?.dismissedConfigurations?.awsBackup;
+                    const isAwsBackupOptimized = isOptimized(awsBackupObj?.status, awsBackupStateObj?.state);
                     if (!isAwsBackupOptimized) {
                         awsBackupAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -60,7 +61,8 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[awsBackupObj?.status],
                             data: instanceData,
-                            objectsInViolation: awsBackupObj?.objectsInViolation
+                            objectsInViolation: awsBackupObj?.objectsInViolation,
+                            configObj: awsBackupStateObj
                         });
                     }
                 }

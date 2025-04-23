@@ -46,7 +46,8 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const cloneObj = instanceData?.assessments?.clone;
-                    const isCloneOptimized = isOptimized(cloneObj?.status);
+                    const cloneStateObj = instanceData?.assessments?.dismissedConfigurations?.clone;
+                    const isCloneOptimized = isOptimized(cloneObj?.status, cloneStateObj?.state);
                     if (!isCloneOptimized) {
                         cloneAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -65,7 +66,8 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                             cloneDetails: cloneObj?.cloneDetails,
                             objectsInViolation: cloneObj?.objectsInViolation,
                             tags: cloneObj?.tags,
-                            severity: cloneObj?.severity
+                            severity: cloneObj?.severity,
+                            configObj: cloneStateObj
                         });
                     }
                 }

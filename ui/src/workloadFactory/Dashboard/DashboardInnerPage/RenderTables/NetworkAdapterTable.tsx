@@ -47,7 +47,8 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const rssConfigObj = instanceData?.assessments?.rssConfig;
-                    const isStorageTierOptimized = isOptimized(rssConfigObj?.status);
+                    const rssConfigStateObj = instanceData?.assessments?.dismissedConfigurations?.rssConfig;
+                    const isStorageTierOptimized = isOptimized(rssConfigObj?.status, rssConfigStateObj?.state);
                     let nonOptimizedAdapters = 0;
                     rssConfigObj?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
                         if (!adapter?.rssEnabled) {
@@ -79,7 +80,8 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[rssConfigObj?.status],
                             data: instanceData,
-                            networkAdapters: rssConfigObj?.rssAdapters?.map((adapter: any) => adapter?.adapterName)
+                            networkAdapters: rssConfigObj?.rssAdapters?.map((adapter: any) => adapter?.adapterName),
+                            configObj: rssConfigStateObj
                         });
                     }
                 }

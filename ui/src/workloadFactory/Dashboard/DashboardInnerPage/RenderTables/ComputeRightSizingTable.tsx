@@ -46,7 +46,11 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const computeRightSizingObj = instanceData?.assessments?.compute;
-                    const isStorageTierOptimized = isOptimized(computeRightSizingObj?.status);
+                    const computeRightSizingStateObj = instanceData?.assessments?.dismissedConfigurations?.compute;
+                    const isStorageTierOptimized = isOptimized(
+                        computeRightSizingObj?.status,
+                        computeRightSizingStateObj?.state
+                    );
                     if (!isStorageTierOptimized) {
                         let computeMissingPermissions = false;
                         if (
@@ -67,7 +71,8 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             assessmentStatus: GETWELL_VALUES[computeRightSizingObj?.status],
                             recommendationOptions: computeRightSizingObj?.recommendationOptions,
                             isMissingPermissions: computeMissingPermissions,
-                            data: instanceData
+                            data: instanceData,
+                            configObj: computeRightSizingStateObj
                         });
                     }
                 }

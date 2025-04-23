@@ -43,7 +43,11 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                     const logDataFilesObj = instanceData?.assessments?.storage?.layout?.find(
                         (item: any) => item.name === 'log-files-location'
                     );
-                    const isStorageTierOptimized = isOptimized(logDataFilesObj?.status);
+                    const logDataFilesStateObj =
+                        instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
+                            (item: any) => item.name === 'log-files-location'
+                        );
+                    const isStorageTierOptimized = isOptimized(logDataFilesObj?.status, logDataFilesStateObj?.state);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -57,7 +61,8 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[logDataFilesObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: logDataFilesStateObj
                         });
                     }
                 }

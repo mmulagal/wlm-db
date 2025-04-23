@@ -46,7 +46,8 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const maxdopObj = instanceData?.assessments?.maxDOP;
-                    const isMaxdopOptimized = isOptimized(maxdopObj?.status);
+                    const maxdopStateObj = instanceData?.assessments?.dismissedConfigurations?.maxDOP;
+                    const isMaxdopOptimized = isOptimized(maxdopObj?.status, maxdopStateObj?.state);
                     if (!isMaxdopOptimized) {
                         maxdopAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -58,7 +59,8 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[maxdopObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: maxdopStateObj
                         });
                     }
                 }

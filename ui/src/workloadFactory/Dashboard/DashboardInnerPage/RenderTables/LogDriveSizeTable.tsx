@@ -48,7 +48,11 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                     const logDriveSizeObj = instanceData?.assessments?.storage?.sizing?.find(
                         (item: any) => item.name === 'log-drive-size'
                     );
-                    const isStorageTierOptimized = isOptimized(logDriveSizeObj?.status);
+                    const logDriveSizeStateObj =
+                        instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
+                            (item: any) => item.name === 'log-drive-size'
+                        );
+                    const isStorageTierOptimized = isOptimized(logDriveSizeObj?.status, logDriveSizeStateObj?.state);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -64,7 +68,8 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                             assessmentStatus: GETWELL_VALUES[logDriveSizeObj?.status],
                             sizingViolations: logDriveSizeObj?.sizingViolations,
                             missingPermissions: logDriveSizeObj?.missingPermissions,
-                            data: instanceData
+                            data: instanceData,
+                            configObj: logDriveSizeStateObj
                         });
                     }
                 }

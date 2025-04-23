@@ -48,7 +48,14 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                     const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
                         (item: any) => item.name === 'performance-tier'
                     );
-                    const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
+                    const performanceTierStateObj =
+                        instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
+                            (item: any) => item.name === 'performance-tier'
+                        );
+                    const isStorageTierOptimized = isOptimized(
+                        performanceTierObj?.status,
+                        performanceTierStateObj?.state
+                    );
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -62,7 +69,8 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: performanceTierStateObj
                         });
                     }
                 }

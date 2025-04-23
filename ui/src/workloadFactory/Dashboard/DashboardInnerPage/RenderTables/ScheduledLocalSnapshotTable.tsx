@@ -45,7 +45,8 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const snapshotObj = instanceData?.assessments?.snapshotPolicy;
-                    const isStorageTierOptimized = isOptimized(snapshotObj?.status);
+                    const snapshotStateObj = instanceData?.assessments?.dismissedConfigurations?.snapshotPolicy;
+                    const isStorageTierOptimized = isOptimized(snapshotObj?.status, snapshotStateObj?.state);
                     if (!isStorageTierOptimized) {
                         snapshotAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -60,7 +61,8 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[snapshotObj?.status],
                             data: instanceData,
-                            objectsInViolation: snapshotObj?.objectsInViolation
+                            objectsInViolation: snapshotObj?.objectsInViolation,
+                            configObj: snapshotStateObj
                         });
                     }
                 }

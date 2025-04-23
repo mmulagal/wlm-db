@@ -46,7 +46,8 @@ const OSPatchTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const hostOsPatchObj = instanceData?.assessments?.hostOsPatch;
-                    const isRowOptimized = isOptimized(hostOsPatchObj?.status);
+                    const hostOsPatchStateObj = instanceData?.assessments?.dismissedConfigurations?.hostOsPatch;
+                    const isRowOptimized = isOptimized(hostOsPatchObj?.status, hostOsPatchStateObj?.state);
                     if (!isRowOptimized) {
                         hostOsPatchAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -58,7 +59,8 @@ const OSPatchTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[hostOsPatchObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: hostOsPatchStateObj
                         });
                     }
                 }
