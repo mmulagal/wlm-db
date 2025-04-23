@@ -18,7 +18,9 @@ import {
     getRegionDetails,
     getServerNameWithHostname,
     parseMultipleCommandResponse,
-    decompressSSMResponse
+    decompressSSMResponse,
+    divideArrayIntoChunks,
+    extractVersionDetails
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -141,7 +143,7 @@ describe(' Secrets Manager string', () => {
     it('calculateFsxnStorageCapacity storage capacity breakdown for pgsql', () => {
         const response = calculateFsxnStorageCapacity(2048, 'fci', 'PGSQL');
         expect(response.FSxDataVolumeSize).toEqual(2048 * 1024);
-        expect(response.FSxLogVolumeSize).toEqual(Math.ceil(0.25 * 2048 * 1024));
+        expect(response.FSxLogVolumeSize).toEqual(Math.ceil(0.75 * 2048 * 1024));
         expect(response.FSxTempDbVolumeSize).toEqual(0);
         expect(response.FSxQuorumVolumeSize).toEqual(0);
     });
@@ -154,7 +156,8 @@ describe(' Secrets Manager string', () => {
         const response = parseMultipleCommandResponse(decompressedResponse);
         expect(response.length).toEqual(2);
         expect(response[1].error).toEqual(
-            'Cannot validate argument on parameter \'PartitionNumber\'. The argument is null. Provide a valid value for the argument, and then try running the command again.'
+            // eslint-disable-next-line quotes
+            "Cannot validate argument on parameter 'PartitionNumber'. The argument is null. Provide a valid value for the argument, and then try running the command again."
         );
     });
 
@@ -163,5 +166,29 @@ describe(' Secrets Manager string', () => {
         const response = parseMultipleCommandResponse(decompressedResponse);
         expect(response.length).toEqual(2);
         expect(isEmpty(response.find(r => r.error))).toBeTruthy();
+    });
+
+    it('Divide array into chunks', () => {
+        const array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        const response = divideArrayIntoChunks(array, 3);
+        expect(response.length).toEqual(4);
+    });
+
+    it('Extracts MSSQL version details from sql version string', () => {
+        const sqlVersion = `Microsoft SQL Server 2016 (SP3-GDR) (KB5046855) - 13.0.6455.2 (X64)
+ \n\tOct 15 2024 11:23:31 \n\tCopyright (c) Microsoft Corporation\n\tStandard Ed
+ition (64-bit) on Windows Server 2016 Datacenter 10.0 <X64> (Build 14393: ) (Hyp
+ervisor)\n`;
+
+        const { releaseDate, version } = extractVersionDetails(sqlVersion);
+        expect(releaseDate).toEqual('Oct 15 2024');
+        expect(version).toEqual('2016');
+    });
+
+    it('Extracts unknown version details from sql version string', () => {
+        const sqlVersion = 'Some random string';
+
+        const { releaseDate } = extractVersionDetails(sqlVersion);
+        expect(releaseDate).toEqual('Unknown');
     });
 });

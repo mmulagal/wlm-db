@@ -17,6 +17,9 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL } from '../../../../utils/consts';
 import MSSQLPatchDialog from './MSSQLPatchDialog';
 
+import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
+import ScheduledAWSBackupDialog from './ScheduledAWSBackupDialog';
+
 type DialogType = {
     type: string;
     recommendationOptions?: any;
@@ -169,6 +172,110 @@ const DialogContent = ({
 
     const setContent = () => {
         switch (type) {
+            case GENERAL.CLONE_MANAGEMENT_REFRESH:
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory recommends managing old and costly clones by either deleting or
+                                refreshing them.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                What will happen
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        Workload Factory will refresh the selected clones. Refreshing a clone will
+                                        synchronize it with its source, making it identical and cost-efficient.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        No disruption to your services is expected during this process.
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Select Continue to authorize Workload Factory to automatically perform these
+                                        actions on your behalf.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case GENERAL.CLONE_MANAGEMENT_DELETE:
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory recommends managing old and costly clones by either deleting or
+                                refreshing them.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                What will happen
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        Workload Factory will delete the selected clones. Deleting a clone will remove
+                                        it permanently, freeing up storage space and reducing costs.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        No disruption to your services is expected during this process.
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Select Continue to authorize Workload Factory to automatically perform these
+                                        actions on your behalf.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 return (
                     <div className={styles['storage-tier-block']}>
@@ -388,6 +495,7 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
+
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 return missingPermissions && missingPermissions.length ? (
                     driveSizeMissingPermissions(missingPermissions)
@@ -829,6 +937,8 @@ const DialogContent = ({
                     </div>
                 );
 
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                return <ScheduledLocalSnapshotDalog type={type} data={bulkRecommendationOptions} />;
             case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 return (
                     <div className={styles['storage-tier-block']}>
@@ -1006,6 +1116,9 @@ const DialogContent = ({
                     </div>
                 );
 
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                return <ScheduledAWSBackupDialog type={type} />;
+
             case ASSESSMENT_CONFIG_NAMES.MAXDOP:
                 return (
                     <div className={styles['storage-tier-block']}>
@@ -1048,6 +1161,110 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">{GENERAL.NOTE_PONT_TWO}</DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory recommends optimizing your SQL Server's performance by adjusting its
+                                storage tiers.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                What will happen
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        All TCP offloading features will be disabled.
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        The number of receive queues will be set to 8 if the number of vCPUs is greater
+                                        than 8, or to the number of vCPUs if it is 8 or fewer.
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        The RSS profile will be configured to NUMAStatic.
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        The base processor number will be set to 2.
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        The system will be rebooted after changes to these network adapter settings.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {selectedDatabaseStorageType === 'FCI'
+                                    ? GENERAL.NOTE
+                                    : GETWELL_DIALOG_CONTENT.DOWNTIME_WARNING}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    {selectedDatabaseStorageType === 'FCI' ? (
+                                        <DsTypography variant="Regular_14">
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_FCI[0]}
+                                        </DsTypography>
+                                    ) : (
+                                        <DsTypography variant="Regular_14">
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_STANDALONE[0]}
+                                        </DsTypography>
+                                    )}
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    {selectedDatabaseStorageType === 'FCI' ? (
+                                        <DsTypography variant="Regular_14">
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_FCI[1]}
+                                        </DsTypography>
+                                    ) : (
+                                        <DsTypography variant="Regular_14">
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_STANDALONE[1]}
+                                        </DsTypography>
+                                    )}
                                 </div>
                             </div>
                         </div>

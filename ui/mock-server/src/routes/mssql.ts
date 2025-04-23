@@ -264,7 +264,7 @@ router.post(
 
         setTimeout(() => {
             generateResponse(res, 200, resData);
-        }, 5000);
+        }, 100);
     }
 );
 

@@ -35,6 +35,19 @@
             .buttonContainer {
                 display: flex;
                 align-items: center;
+                gap: 24px;
+
+                .editIcon {
+                    cursor: pointer;
+                }
+
+                .editDisableIcon {
+                    svg {
+                        path {
+                            fill: var(--text-disabled);
+                        }
+                    }
+                }
             }
         }
 

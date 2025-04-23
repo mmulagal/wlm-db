@@ -1,23 +1,24 @@
 import { RouteTags } from '../../utils/consts';
 import {
     DatabaseHostSummaryForMultiInstanceListResponse,
-    DatabaseHostSummaryPerStorageTypeListResponse
+    PgSqlDbHostSummaryListResponse
 } from '../types/database-hosts.types';
 import {
     DiscoverMsSqlResponseBody,
-    DiscoverMsSqlQuery,
+    DiscoverQuery,
     DiscoverInstanceParams,
     DiscoverCredentialsRequestBody,
     DiscoverCredentialsResponse,
-    MsSqlInstancesRequestQuery,
+    SqlInstancesRequestQuery,
     PrepareResourceResponseBody,
     MultiInstanceManageMsSqlRequestBody,
-    MultiInstanceManageResponseBody,
     MultiInstanceUnmanageResponseBody,
     UnmanageInstanceParams,
-    DatabaseInstanceQueryString
+    DatabaseInstanceQueryString,
+    DiscoverPgSqlResponseBody,
+    MultiHostManageResponseBody
 } from '../types/discover.types';
-import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
+import { GenericHeaders, CredentialsIdParams, AccountIdParams } from '../types/generic.types';
 
 const DiscoveryBaseRequest = {
     Headers: GenericHeaders,
@@ -27,7 +28,7 @@ const DiscoveryBaseRequest = {
 const DiscoverMsSqlSchema = {
     ...DiscoveryBaseRequest,
     params: CredentialsIdParams,
-    querystring: DiscoverMsSqlQuery,
+    querystring: DiscoverQuery,
     summary: 'Discover EC2 instances hosting Microsoft SQL Server.',
     description: `Discover AWS EC2 instances hosting Microsoft SQL Server.
         EC2 instances meeting the following constraints are
@@ -86,12 +87,12 @@ const UnManageMsSqlSchema = {
 
 const ManageMsSqlSchemaV2 = {
     ...DiscoveryBaseRequest,
-    params: CredentialsIdParams,
+    params: AccountIdParams,
     body: MultiInstanceManageMsSqlRequestBody,
     summary: 'Manage SQL Server instances',
     description: 'Manage SQL Server instances',
     response: {
-        200: MultiInstanceManageResponseBody
+        200: MultiHostManageResponseBody
     }
 };
 
@@ -111,32 +112,50 @@ const MsSqlInstancesSchema = {
     Headers: GenericHeaders,
     tags: [RouteTags.DISCOVER],
     params: CredentialsIdParams,
-    querystring: MsSqlInstancesRequestQuery,
-    hide: process.env.NODE_ENV === 'production',
-    summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server (deprecated).',
-    description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
-    response: {
-        200: DatabaseHostSummaryPerStorageTypeListResponse
-    }
-};
-
-const MsSqlInstancesSchemaV2 = {
-    Headers: GenericHeaders,
-    tags: [RouteTags.DISCOVER],
-    params: CredentialsIdParams,
-    querystring: MsSqlInstancesRequestQuery,
+    querystring: SqlInstancesRequestQuery,
     summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     response: {
         200: DatabaseHostSummaryForMultiInstanceListResponse
     }
 };
+
+const DiscoverPgSqlSchema = {
+    ...DiscoveryBaseRequest,
+    params: CredentialsIdParams,
+    querystring: DiscoverQuery,
+    summary: 'Discover EC2 instances hosting PostgreSQL Server.',
+    description: `Discover AWS EC2 instances hosting PostgreSQL Server.
+        EC2 instances meeting the following constraints are
+        considered for discovery:
+        <ul>
+            <li> Instance is in running state.
+            <li> Machines running images of Amazon Linux 2023.
+            <li> Architecture is x86_64.
+        </ul>`,
+    response: {
+        200: DiscoverPgSqlResponseBody
+    }
+};
+
+const PgSqlResourceDetailsSchema = {
+    ...DiscoveryBaseRequest,
+    params: CredentialsIdParams,
+    querystring: SqlInstancesRequestQuery,
+    summary: 'Get resource details of non-NetApp deployed PostgreSQL instances.',
+    description: 'Get resource details of non-NetApp deployed PostgreSQL instances.',
+    response: {
+        200: PgSqlDbHostSummaryListResponse
+    }
+};
+
 export {
     DiscoverCredentialsSchema,
     DiscoverMsSqlSchema,
-    MsSqlInstancesSchema,
     PrepareForManageSchema,
-    MsSqlInstancesSchemaV2,
+    MsSqlInstancesSchema,
     UnManageMsSqlSchema,
-    ManageMsSqlSchemaV2
+    ManageMsSqlSchemaV2,
+    DiscoverPgSqlSchema,
+    PgSqlResourceDetailsSchema
 };

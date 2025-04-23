@@ -1,15 +1,17 @@
 import config from 'config';
 import ms from 'ms';
 import createError from 'http-errors';
+import throat from 'throat';
 import {
     CommandInvocationStatus,
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
+    Parameter,
     PutParameterCommandInput,
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
-import { DescribeRegionsCommandInput } from '@aws-sdk/client-ec2';
+import { DescribeRegionsCommandInput, DescribeRegionsResult } from '@aws-sdk/client-ec2';
 import { isEmpty } from 'lodash-es';
 import {
     sendSSMCommand,
@@ -17,17 +19,24 @@ import {
     getParametersByPath,
     getConnectionStatus,
     putParameter,
-    getParameter
+    getParameter,
+    describeInstanceInformation
 } from '../../lib/aws/ssm';
 import { decompressSSMResponse, generateHash, sleep } from '../../utils/utils';
-import { AWS_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
+import {
+    AWS_REGION_KEYS,
+    AWS_REGIONS,
+    RESTRICTED_FSX_REGIONS,
+    SSM_COMMAND_CACHE_TYPE,
+    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE
+} from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
-import { SSMParamterObject } from '../../utils/common-types';
+import { SSMParamterObject, MultipleCommandSsmResponse } from '../../utils/common-types';
 import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { SSM_RUN_SHELL_SCRIPT_DOC } from '../workloads/pgsql/const';
+import { getLogs } from './cloud-watch-operations';
 
 const logger = getLogger();
 
@@ -36,40 +45,38 @@ async function pollCommandStatusForAllInstances(
     region: string,
     commandId: string,
     instanceIds: string[],
-    pollInterval: number = ms(config.get<string>('ssm.poll-interval'))
+    pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
+    throttleSize: number = 5
 ) {
     logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollInterval });
-    const pollStatuses: {
-        commandId: string;
-        instanceId: string;
-        response?: GetCommandInvocationCommandOutput;
-        error?: string;
-    }[] = [];
+    const pollStatuses: MultipleCommandSsmResponse[] = [];
 
     await Promise.all(
-        instanceIds.map(async instanceId => {
-            const pollParams = {
-                CommandId: commandId,
-                InstanceId: instanceId
-            };
-            try {
-                const response = await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
-                logger.debug('SSM command Response:', response);
-                pollStatuses.push({
-                    commandId,
-                    instanceId,
-                    response
-                });
-            } catch (error) {
-                const errorMessage = `Error executing SSM command on instance ${instanceId}, commandId ${commandId} :  ${error}`;
-                logger.error(errorMessage);
-                pollStatuses.push({
-                    commandId,
-                    instanceId,
-                    error: errorMessage
-                }); // continue polling for other instances even if one fails as this is a generic function; caller function should decide to proceed or fail based on the response
-            }
-        })
+        instanceIds.map(
+            throat(throttleSize, async instanceId => {
+                const pollParams = {
+                    CommandId: commandId,
+                    InstanceId: instanceId
+                };
+                try {
+                    const response = await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
+                    logger.debug('SSM command Response:', response);
+                    pollStatuses.push({
+                        commandId,
+                        instanceId,
+                        response
+                    });
+                } catch (error) {
+                    const errorMessage = `Error executing SSM command on instance ${instanceId}, commandId ${commandId} :  ${error}`;
+                    logger.error(errorMessage);
+                    pollStatuses.push({
+                        commandId,
+                        instanceId,
+                        error: errorMessage
+                    }); // continue polling for other instances even if one fails as this is a generic function; caller function should decide to proceed or fail based on the response
+                }
+            })
+        )
     );
 
     return pollStatuses;
@@ -130,17 +137,27 @@ async function executeSSMDocumentMultipleInstances(
     region: string,
     params: SendCommandCommandInput,
     accountId?: string,
-    pollDuration?: number
+    pollDuration?: number,
+    throttleSize: number = 5,
+    createCache: boolean = true
 ) {
     logger.info('Execute SSM document on multiple instances', {
         credentialsId,
         region,
         params,
         accountId,
-        pollDuration
+        pollDuration,
+        throttleSize,
+        createCache
     });
     const { InstanceIds: instanceIds } = params;
     if (instanceIds && !isEmpty(instanceIds)) {
+        const cacheHashKey = generateHash(instanceIds.join('') + JSON.stringify(params));
+        if (createCache && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+            logger.info('Reading from cache', instanceIds.join(), cacheHashKey);
+            return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as MultipleCommandSsmResponse[];
+        }
+
         const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
         await sleep(1000);
         try {
@@ -150,9 +167,14 @@ async function executeSSMDocumentMultipleInstances(
                     region,
                     commandId,
                     instanceIds,
-                    pollDuration
+                    pollDuration,
+                    throttleSize
                 );
                 logger.debug('SSM command Response:', response);
+                if (createCache) {
+                    logger.info('Writing to cache', instanceIds.join(), cacheHashKey);
+                    writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, response);
+                }
                 return response;
             }
             throw new Error('SSM command Id not found');
@@ -185,8 +207,8 @@ async function executeSSMDocument(
     await sleep(1000);
     try {
         const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
-        logger.debug('SSM command Response:', response);
-        return response;
+        logger.debug('SSM command commandId, Response:', commandId, response);
+        return { response };
     } catch (error) {
         const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
         logger.error(errorMessage);
@@ -202,9 +224,19 @@ async function callSsmExecution(
     comment?: string,
     accountId?: string,
     cacheData: boolean = true,
-    executionTimeout?: string
+    executionTimeout?: string,
+    documentName: string = SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    documentVersion: string = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
 ) {
-    logger.info('Calling SSM command execution', credentialsId, region, commands, activeNodeInstanceId);
+    logger.info(
+        'Calling SSM command execution',
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        documentName,
+        documentVersion
+    );
     const cacheHashKey = generateHash(activeNodeInstanceId + commands);
 
     if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
@@ -213,8 +245,8 @@ async function callSsmExecution(
     }
 
     const defaultParams = {
-        DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
-        Documentversion: '1',
+        DocumentName: documentName,
+        Documentversion: documentVersion,
         Parameters: {
             // DBS-1449 - Adding execution timeout in sec
             executionTimeout: [executionTimeout || config.get<string>('ssm.execution-timeout')],
@@ -224,26 +256,31 @@ async function callSsmExecution(
     const params = {
         ...defaultParams,
         InstanceIds: [activeNodeInstanceId],
-        ...(comment && { Comment: comment?.substring(0, 100) })
+        ...(comment && { Comment: comment?.substring(0, 100) }),
+        CloudWatchOutputConfig: {
+            CloudWatchLogGroupName: CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+            CloudWatchOutputEnabled: true
+        }
     };
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
         const response = await executeSSMDocument(credentialsId, region, params, accountId);
-        if (response?.StandardErrorContent) {
-            const errorMessage = `SSM command ${response.CommandId}  execution  failed on node ${activeNodeInstanceId}  Error: ${response?.StandardErrorContent}`;
-            logger.error(errorMessage);
-            throw createError(errorMessage);
+        let { error, output = '' } = await extractSsmResponse(response);
+        if (error) {
+            throw createError(error);
         }
-        if (
-            response.Status === CommandInvocationStatus.TIMED_OUT ||
-            response.Status === CommandInvocationStatus.CANCELLED
-        ) {
-            const errorMessage = `SSM command ${response.CommandId} execution  timed out on node ${activeNodeInstanceId}`;
-            logger.error(errorMessage);
-            throw createError(errorMessage);
+        if (output.endsWith('--output truncated--')) {
+            if (!response?.response?.CommandId) {
+                throw createError('Command Id not found');
+            }
+            const responses = await getSsmResponseFromCloudWatch(
+                credentialsId,
+                region,
+                response?.response?.CommandId,
+                activeNodeInstanceId
+            );
+            output = responses.join('');
         }
-
-        const output = await decompressSSMResponse(response?.StandardOutputContent || '');
         if (cacheData) {
             logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
             writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
@@ -254,78 +291,36 @@ async function callSsmExecution(
     }
 }
 
-async function executeBashSsmCommand(
-    credentialsId: string,
+async function getSsmResponseFromCloudWatch(
+    credentialId: string,
     region: string,
-    commands: Array<string>,
-    activeNodeInstanceId: string,
-    accountId?: string,
-    cacheData: boolean = true,
-    executionTimeout?: string,
-    comment?: string
+    commandId: string,
+    instanceId: string
 ) {
-    logger.info('Calling SSM bash command execution', credentialsId, region, commands, activeNodeInstanceId);
-    const cacheHashKey = generateHash(activeNodeInstanceId + commands);
+    logger.info('Getting SSM response from CloudWatch', { credentialId, region, commandId, instanceId });
+    const logGroupName = CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE;
+    const logStreamSuffix = 'aws-runPowerShellScript/stdout';
+    const logStreamName = `${commandId}/${instanceId}/${logStreamSuffix}`;
 
-    if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
-        logger.info('Reading from cache', activeNodeInstanceId, cacheHashKey);
-        return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
-    }
-
-    const defaultParams = {
-        DocumentName: SSM_RUN_SHELL_SCRIPT_DOC,
-        Documentversion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION,
-        Parameters: {
-            // DBS-1449 - Adding execution timeout in sec
-            executionTimeout: [executionTimeout || config.get<string>('ssm.execution-timeout')],
-            commands
-        }
-    };
-    const params = {
-        ...defaultParams,
-        InstanceIds: [activeNodeInstanceId],
-        ...(comment && { Comment: comment })
-    };
     try {
-        logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
-        const response = await executeSSMDocument(credentialsId, region, params, accountId);
-        if (response?.StandardErrorContent) {
-            const errorMessage = `SSM command ${response.CommandId}  execution  failed on node ${activeNodeInstanceId}  Error: ${response?.StandardErrorContent}`;
-            logger.error(errorMessage);
-            throw createError(errorMessage);
-        }
-        if (
-            response.Status === CommandInvocationStatus.TIMED_OUT ||
-            response.Status === CommandInvocationStatus.CANCELLED
-        ) {
-            const errorMessage = `SSM command ${response.CommandId} execution  timed out on node ${activeNodeInstanceId}`;
-            logger.error(errorMessage);
-            throw createError(errorMessage);
-        }
-
-        logger.info('SSM RESP>>', response, typeof response);
-        const output = response?.StandardOutputContent;
-        if (cacheData) {
-            logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
-            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
-        }
-        return output;
-    } catch (error: any) {
-        throw createError(error);
+        const logs = await getLogs(credentialId, region, logGroupName, logStreamName);
+        return logs;
+    } catch (error) {
+        logger.error('Error getting logs from CloudWatch', error);
+        throw createError('Error getting logs from CloudWatch');
     }
 }
 
 async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP');
 
+    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+
     try {
         const fsxRegionResponse = await getParametersByPath();
 
-        const fsxRegionsList: Array<FSxAvailableRegionType> = [];
-        const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
-
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
-            if (regionCode && !restrictedRegions.includes(regionCode)) {
+            if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
                 fsxRegionsList.push({
                     regionCode,
                     regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
@@ -346,6 +341,8 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
 async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
+    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+
     try {
         const input: DescribeRegionsCommandInput = {
             AllRegions: true,
@@ -356,17 +353,27 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
                 }
             ]
         };
-        const [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
-            getParametersByPath(credentialsId),
-            describeRegions(input, credentialsId)
-        ]);
 
-        const fsxRegionsList: Array<FSxAvailableRegionType> = [];
-        const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
+        let fsxRegionResponse: Parameter[] = [];
+        let ec2RegionResponse: DescribeRegionsResult = { Regions: [] };
+        try {
+            [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
+                getParametersByPath(),
+                describeRegions(input, credentialsId)
+            ]);
+        } catch (error: any) {
+            if (error?.message?.includes('with an explicit deny in a service control policy')) {
+                logger.warn('Region us-east-1 is blocked by SCP', error);
+                // Returning a static list of regions as the default AWS region is blocked by SCP
+                ec2RegionResponse = { Regions: AWS_REGION_KEYS.map(region => ({ RegionName: region })) };
+            } else {
+                throw error;
+            }
+        }
 
         const { Regions: enabledRegionsInAccount } = ec2RegionResponse;
         fsxRegionResponse.forEach(({ Value: regionCode }) => {
-            if (regionCode && !restrictedRegions.includes(regionCode)) {
+            if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
                 if (enabledRegionsInAccount?.some(enabledRegion => enabledRegion?.RegionName === regionCode)) {
                     fsxRegionsList.push({
                         regionCode,
@@ -436,6 +443,64 @@ async function getEc2SqlParameters(credentialsId: string, region: string, ec2Ins
     return [];
 }
 
+async function getSSMConnectionStatusByInstanceIds(credentialsId: string, region: string, instanceIds: string[]) {
+    logger.info('Get SSM connection status by instance ids', { credentialsId, region, instanceIds });
+
+    if (isEmpty(instanceIds)) {
+        return new Map();
+    }
+
+    const params = {
+        Filters: [
+            {
+                Key: 'InstanceIds',
+                Values: instanceIds
+            }
+        ]
+    };
+
+    const results = await describeInstanceInformation(credentialsId, region, params);
+
+    return new Map(
+        results.map(({ InstanceId, PingStatus }) => [
+            InstanceId,
+            PingStatus === 'Online' ? 'connected' : 'notconnected'
+        ])
+    );
+}
+
+async function extractSsmResponse(ssmResponse: {
+    commandId?: string;
+    instanceId?: string;
+    response?: GetCommandInvocationCommandOutput;
+    error?: string;
+}) {
+    const { commandId, instanceId, response, error } = ssmResponse;
+    logger.info(`Extract SSM response from instance ${instanceId} for command with id: ${commandId}`, { response });
+
+    if (error) {
+        return { error };
+    }
+
+    if (response?.StandardErrorContent) {
+        const errorMessage = `SSM command ${commandId}  execution  failed on node ${instanceId}  Error: ${response?.StandardErrorContent}`;
+        logger.error(errorMessage);
+        return { error: response?.StandardErrorContent };
+    }
+
+    if (
+        response?.Status === CommandInvocationStatus.TIMED_OUT ||
+        response?.Status === CommandInvocationStatus.CANCELLED
+    ) {
+        const errorMessage = `SSM command ${commandId} execution  timed out on node ${instanceId}`;
+        logger.error(errorMessage);
+        return { error: errorMessage };
+    }
+
+    const output = await decompressSSMResponse(response?.StandardOutputContent || '');
+    return { output };
+}
+
 export {
     executeSSMDocument,
     getGenericFSxOntapRegionsList,
@@ -447,5 +512,6 @@ export {
     callSsmExecution,
     getEc2SqlParameters,
     executeSSMDocumentMultipleInstances,
-    executeBashSsmCommand
+    getSSMConnectionStatusByInstanceIds,
+    extractSsmResponse
 };

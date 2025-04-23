@@ -6,7 +6,7 @@ describe('Process email request operations', () => {
     const accountId = ACCOUNT_ID;
     const fileBuffer = Buffer.from('some file content');
     const fileName = 'test.pdf';
-    const fields = { userEmail: 'test@example.com', storageType: 'ebs' };
+    const fields = { userEmail: 'test@example.com', storageType: 'ebs', hostName: 'sql01' };
     const emailType = EMAIL_TYPES.SAVINGS_CALCULATIONS;
 
     beforeAll(() => {
@@ -25,9 +25,9 @@ describe('Process email request operations', () => {
         );
     });
 
-    it("should throw error if file name doesn't contain .pdf", async () => {
+    it('should throw error if file name does not contain .pdf', async () => {
         await expect(processEmailRequest(accountId, fileBuffer, 'faultyFileName', fields, emailType)).rejects.toThrow(
-            /Invalid file name in the request/
+            /Invalid file extension found, expected .pdf/
         );
     });
 
@@ -81,7 +81,8 @@ describe('Send savings calculation email operations', () => {
             Buffer.from('some file content'),
             'test.pdf',
             'example@email.com',
-            'ebs'
+            'ebs',
+            'sql01'
         );
         expect(response).toEqual({ message: 'Email sent successfully' });
     });

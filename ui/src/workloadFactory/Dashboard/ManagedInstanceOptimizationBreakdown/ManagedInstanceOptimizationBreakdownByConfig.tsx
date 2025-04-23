@@ -1,10 +1,10 @@
-import { DsButton, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { DsButton, DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
 import styles from './ManagedInstanceOptimizationBreakdownByConfig.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATES_UI, WLF_TABS } from '../../../utils/consts';
 import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -14,12 +14,16 @@ import { GENERAL } from '../../../utils/appConstants';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
+import { ReactComponent as Edit } from '../../../assets/ic_edit.svg';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const dispatch = useDispatch();
     const windowSize = useResize();
+
+    const { multiDataLoading } = useAppSelector(state => state.headers);
+
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
@@ -27,9 +31,76 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };
 
+    const handleEdit = (type: string) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setSelectedConfig(type));
+        setOptimizeInnerpageSummary(type, configData, dispatch);
+    };
+
+    const loading = useMemo(() => {
+        return allmssqlHostAssessmentLoading || multiDataLoading;
+    }, [allmssqlHostAssessmentLoading, multiDataLoading]);
+
     const configData = useMemo(() => {
         return getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
     }, [allmssqlHostAssessmentData]);
+
+    const hasDismissedOrPosponed = (state: any) => {
+        if (state.includes(CONFIG_STATES.ACTIVE)) {
+            return '';
+        } else if (state.includes(CONFIG_STATES.POSTPONED)) {
+            return CONFIG_STATES_UI.POSTPONED;
+        } else if (state.includes(CONFIG_STATES.DISMISSED)) {
+            return CONFIG_STATES_UI.DISMISSED;
+        } else {
+            return '';
+        }
+    };
+
+    const hasMixedState = (state: any) => {
+        if (
+            state.includes(CONFIG_STATES.ACTIVE) &&
+            (state.includes(CONFIG_STATES.POSTPONED) || state.includes(CONFIG_STATES.DISMISSED))
+        ) {
+            return GENERAL.MIXED_STATE_CONFIG_TOOLTIP;
+        } else {
+            return '';
+        }
+    };
+
+    const renderOptimizationBar = (
+        assessmentKey: string,
+        optimizedCount: number,
+        headingText: string,
+        configStateKey: any
+    ) => {
+        const dismissedOrPostponedText = hasDismissedOrPosponed(configStateKey);
+        const total = configData?.total || 1;
+        const afterOutOfTotal = configData?.total;
+        const optimizePercentage = Math.round(
+            ((inProgressOptimizationData?.[assessmentKey]?.length || 0) / total) * 100
+        );
+        const isLoading = loading || (inProgressOptimizationData?.[assessmentKey]?.length || 0) > 0;
+        const width = windowSize.width > 1700 ? '328px' : '248px';
+
+        return (
+            <BarComponent
+                color="#5E8DCD"
+                headingText={headingText}
+                percentage={dismissedOrPostponedText ? 0 : Math.round((optimizedCount / total) * 100)}
+                beforeOutOf={dismissedOrPostponedText ? undefined : optimizedCount}
+                afterOutOf={dismissedOrPostponedText ? undefined : afterOutOfTotal}
+                bottomText={dismissedOrPostponedText ? undefined : 'Optimized instances:'}
+                width={width}
+                from="dashboard"
+                optimizePercentage={dismissedOrPostponedText ? 0 : optimizePercentage}
+                loading={dismissedOrPostponedText ? loading : isLoading}
+                textMessage={dismissedOrPostponedText || undefined}
+                tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
+            />
+        );
+    };
 
     return (
         <div className={styles.managedBreakdown}>
@@ -38,27 +109,17 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     Managed instances optimization breakdown by configurations
                 </DsTypography>
 
-                {allmssqlHostAssessmentLoading && <FlashingDotsLoader />}
+                {loading && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>
                 <div className={`${styles.tile} ${styles.firstTile}`}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText="Storage tier"
-                        percentage={Math.round(((configData?.storageTier || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData?.storageTier || 0}
-                        afterOutOf={configData?.total || 0}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+                        configData?.storageTier || 0,
+                        'Storage tier',
+                        configData?.configState?.storageTier
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -71,7 +132,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-storage-tier"
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                hasDismissedOrPosponed(configData?.configState?.storageTier) !== '' ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.storageTier === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
@@ -79,26 +141,35 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText="File system headroom"
-                        percentage={Math.round(((configData.fileSystemHeadroom || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.fileSystemHeadroom}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+                        configData?.fileSystemHeadroom || 0,
+                        'File system headroom',
+                        configData?.configState?.fileSystemHeadroom
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -111,7 +182,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                hasDismissedOrPosponed(configData?.configState?.fileSystemHeadroom) !== '' ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.fileSystemHeadroom === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
@@ -119,26 +191,35 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText="Log drive size"
-                        percentage={Math.round(((configData.logDriveSize || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.logDriveSize}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
+                        configData?.logDriveSize || 0,
+                        'Log drive size',
+                        configData?.configState?.logDriveSize
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -151,7 +232,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-log-drive-size"
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                hasDismissedOrPosponed(configData?.configState?.logDriveSize) !== '' ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.logDriveSize === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
@@ -159,26 +241,35 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText="TempDB drive size"
-                        percentage={Math.round(((configData.tempdbDriveSize || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.tempdbDriveSize}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
+                        configData.tempdbDriveSize || 0,
+                        'TempDB drive size',
+                        configData?.configState?.tempdbDriveSize
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -191,7 +282,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                hasDismissedOrPosponed(configData?.configState?.tempdbDriveSize) !== '' ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.tempdbDriveSize === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
@@ -199,26 +291,35 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText="Data files (.mdf)"
-                        percentage={Math.round(((configData.userDataFiles || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.userDataFiles}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
+                        configData.userDataFiles || 0,
+                        'Data files (.mdf)',
+                        configData?.configState?.userDataFiles
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -239,26 +340,35 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText="Log files (.ldf)"
-                        percentage={Math.round(((configData.logFiles || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.logFiles}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
+                        configData.logFiles || 0,
+                        'Log files (.ldf)',
+                        configData?.configState?.logFiles
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -275,26 +385,35 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText={ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT}
-                        percentage={Math.round(((configData.tempdbPlacement || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.tempdbPlacement}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
+                        configData.tempdbPlacement || 0,
+                        ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
+                        configData?.configState?.tempdbPlacement
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -315,23 +434,35 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText="ONTAP"
-                        percentage={Math.round(((configData.ontapConfiguration || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.ontapConfiguration}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['ONTAP']?.length || 0) / (configData.total || 1)) * 100
-                        )}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.ONTAP,
+                        configData.ontapConfiguration || 0,
+                        'ONTAP',
+                        configData?.configState?.ontapConfiguration
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -344,32 +475,28 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize('ONTAP');
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                hasDismissedOrPosponed(configData?.configState?.ontapConfiguration) !== '' ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.ontapConfiguration === configData?.total
                             }
                         >
                             Optimize
                         </DsButton>
+
+                        <div className={styles.editDisableIcon}>
+                            <Edit />
+                        </div>
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText="Operating system"
-                        percentage={Math.round(((configData.operatingSystem || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.operatingSystem}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['Operating system']?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.OS,
+                        configData.operatingSystem || 0,
+                        'Operating system',
+                        configData?.configState?.operatingSystem
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -382,33 +509,28 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize('Operating system');
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                hasDismissedOrPosponed(configData?.configState?.operatingSystem) !== '' ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.operatingSystem === configData?.total
                             }
                         >
                             Optimize
                         </DsButton>
+
+                        <div className={styles.editDisableIcon}>
+                            <Edit />
+                        </div>
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText={GENERAL.COMPUTE_RIGHTSIZING}
-                        percentage={Math.round(((configData.computeRightsizing || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.computeRightsizing}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[GENERAL.COMPUTE_RIGHTSIZING]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                        loading={inProgressOptimizationData['compute-rightsizing']?.length > 0}
-                    />
+                    {renderOptimizationBar(
+                        GENERAL.COMPUTE_RIGHTSIZING,
+                        configData.computeRightsizing || 0,
+                        GENERAL.COMPUTE_RIGHTSIZING,
+                        configData?.configState?.computeRightsizing
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -421,34 +543,43 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                hasDismissedOrPosponed(configData?.configState?.computeRightsizing) !== '' ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.computeRightsizing === configData?.total
                             }
                         >
                             Optimize
                         </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(GENERAL.COMPUTE_RIGHTSIZING)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText={GENERAL.OPERATING_SYSTEM_PATCH}
-                        percentage={Math.round(
-                            ((configData.operatingSystemPatch || 0) / (configData.total || 1)) * 100
-                        )}
-                        beforeOutOf={configData.operatingSystemPatch}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[GENERAL.OPERATING_SYSTEM_PATCH]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                    />
+                    {renderOptimizationBar(
+                        GENERAL.OPERATING_SYSTEM_PATCH,
+                        configData.operatingSystemPatch || 0,
+                        GENERAL.OPERATING_SYSTEM_PATCH,
+                        configData?.configState?.operatingSystemPatch
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -469,66 +600,84 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText={GENERAL.RSS_CONFIGURATION}
-                        percentage={Math.round(((configData.rssConfiguration || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.rssConfiguration}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[GENERAL.RSS_CONFIGURATION]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
+                        configData.rssConfiguration || 0,
+                        GENERAL.RSS_CONFIGURATION,
+                        configData?.configState?.rssConfiguration
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(GENERAL.RSS_CONFIGURATION);
+                            }}
+                            data-testid="wlm-db-optimize-rss-configuration"
+                            isDisabled={
+                                hasDismissedOrPosponed(configData?.configState?.rssConfiguration) !== '' ||
+                                loading ||
+                                configData?.total === 0 ||
+                                configData.rssConfiguration === configData?.total ||
+                                inProgressOptimizationData[GENERAL.RSS_CONFIGURATION]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-rss-configuration"
-                                    variant="secondary"
-                                    isDisabled={true}
-                                >
-                                    Optimize
-                                </DsButton>
+                            Optimize
+                        </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
                             </div>
-                        </TooltipComponent>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
-
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText={GENERAL.LICENSE_SQL_SERVER}
-                        percentage={Math.round(
-                            ((configData.applicationSqlServer || 0) / (configData.total || 1)) * 100
-                        )}
-                        beforeOutOf={configData.applicationSqlServer}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[GENERAL.LICENSE_SQL_SERVER]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.LICENSE,
+                        configData.applicationSqlServer || 0,
+                        GENERAL.LICENSE_SQL_SERVER,
+                        configData?.configState?.applicationSqlServer
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -549,25 +698,35 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.LICENSE)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText={GENERAL.MICROSOFT_SQL_PATCH}
-                        percentage={Math.round(((configData.mssqlPatch || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.mssqlPatch}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[GENERAL.MICROSOFT_SQL_PATCH]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+                        configData.mssqlPatch || 0,
+                        GENERAL.MICROSOFT_SQL_PATCH,
+                        configData?.configState?.mssqlPatch
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -588,25 +747,35 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText={GENERAL.MAXDOP_PATCH}
-                        percentage={Math.round(((configData.maxdopPatch || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.maxdopPatch}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[GENERAL.MAXDOP_PATCH]?.length || 0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.MAXDOP,
+                        configData.maxdopPatch || 0,
+                        GENERAL.MAXDOP_PATCH,
+                        configData?.configState?.maxdopPatch
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
@@ -619,7 +788,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             }}
                             data-testid="wlm-db-optimize-maxdop"
                             isDisabled={
-                                allmssqlHostAssessmentLoading ||
+                                hasDismissedOrPosponed(configData?.configState?.maxdopPatch) !== '' ||
+                                loading ||
                                 configData?.total === 0 ||
                                 configData?.maxdopPatch === configData?.total ||
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
@@ -627,51 +797,245 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             Optimize
                         </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.MAXDOP)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
 
                 <div className={styles.tile}>
-                    <BarComponent
-                        color="#5E8DCD"
-                        headingText={GENERAL.SCHEDULED_LOCAL_SNAPSHOT}
-                        percentage={Math.round(
-                            ((configData.scheduledLocalSnapshot || 0) / (configData.total || 1)) * 100
-                        )}
-                        beforeOutOf={configData.scheduledLocalSnapshot}
-                        afterOutOf={configData.total}
-                        bottomText="Optimized instances:"
-                        width={windowSize.width > 1700 ? '360px' : '280px'}
-                        from="dashboard"
-                        optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length ||
-                                0) /
-                                (configData.total || 1)) *
-                                100
-                        )}
-                        loading={
-                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
-                        }
-                    />
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+                        configData.scheduledLocalSnapshot || 0,
+                        GENERAL.SCHEDULED_LOCAL_SNAPSHOT,
+                        configData?.configState?.scheduledLocalSnapshot
+                    )}
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
+                            }}
+                            data-testid="wlm-db-optimize-snapshot"
+                            isDisabled={
+                                hasDismissedOrPosponed(configData?.configState?.scheduledLocalSnapshot) !== '' ||
+                                loading ||
+                                configData?.total === 0 ||
+                                configData?.scheduledLocalSnapshot === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
+                            }
                         >
+                            Optimize
+                        </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.CRR,
+                        configData.crr || 0,
+                        GENERAL.CRR,
+                        configData?.configState?.crr
+                    )}
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <TooltipComponent title={''} placement="bottom" width="120px" height="30px">
                             <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-scheduled-local-snapshot"
-                                    variant="secondary"
-                                    isDisabled={true}
-                                >
+                                <DsButton data-testid="wlm-db-optimize-crr" variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CRR)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    {renderOptimizationBar(
+                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                        configData.scheduledawsBackup || 0,
+                        GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                        configData?.configState?.scheduledawsBackup
+                    )}
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
+                            }}
+                            data-testid="wlm-db-optimize-awsbackup"
+                            isDisabled={
+                                hasDismissedOrPosponed(configData?.configState?.scheduledawsBackup) !== '' ||
+                                loading ||
+                                configData?.total === 0 ||
+                                configData?.scheduledawsBackup === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
+                                    ?.length > 0
+                            }
+                        >
+                            Optimize
+                        </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() =>
+                                            handleEdit(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS)
+                                        }
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    {hasDismissedOrPosponed(configData?.configState?.clone) ? (
+                        <BarComponent
+                            color="#5E8DCD"
+                            percentage={0}
+                            headingText={GENERAL.CLONE_MANAGEMENT}
+                            width={windowSize.width > 1700 ? '328px' : '248px'}
+                            from="dashboard"
+                            textMessage={hasDismissedOrPosponed(configData?.configState?.clone)}
+                            optimizePercentage={0}
+                            loading={loading}
+                        />
+                    ) : (
+                        <BarComponent
+                            color="#5E8DCD"
+                            headingText={GENERAL.CLONE_MANAGEMENT}
+                            percentage={Math.round(((configData.clone || 0) / (configData.total || 1)) * 100)}
+                            beforeOutOf={configData.clone}
+                            afterOutOf={configData.total}
+                            bottomText="Optimized databases:"
+                            width={windowSize.width > 1700 ? '328px' : '248px'}
+                            from="dashboard"
+                            optimizePercentage={Math.round(
+                                ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length || 0) /
+                                    (configData.total || 1)) *
+                                    100
+                            )}
+                            loading={
+                                loading ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
+                            }
+                            tooltipMessage={hasMixedState(configData?.configState?.clone)}
+                        />
+                    )}
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
+                            }}
+                            data-testid="wlm-db-optimize-clone"
+                            isDisabled={
+                                hasDismissedOrPosponed(configData?.configState?.clone) !== '' ||
+                                loading ||
+                                configData?.total === 0 ||
+                                configData?.clone === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
+                            }
+                        >
+                            Optimize
+                        </DsButton>
+
+                        {loading ? (
+                            <div className={styles.editDisableIcon}>
+                                <Edit />
+                            </div>
+                        ) : (
+                            <Popover
+                                children={'Manage configuration state'}
+                                trigger="hover"
+                                container={
+                                    <div
+                                        onClick={() => handleEdit(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT)}
+                                        className={styles.editIcon}
+                                    >
+                                        <Edit />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 </div>
             </div>

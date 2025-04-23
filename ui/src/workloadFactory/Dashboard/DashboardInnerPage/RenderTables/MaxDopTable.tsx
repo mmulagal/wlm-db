@@ -6,16 +6,16 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
-import BulkActionContainer from './BulkActionContainer';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
-import FirstColumnComponent from './FirstColumnCoponent';
+import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 interface MaxdopTableProps {
     lastColDetails: any;
@@ -27,17 +27,31 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
         let maxdopAssessmentData: any = [];
-        allmssqlHostAssessmentData.map((hostData: any) => {
+        let uniqueResourceList: Array<string> = [];
+        allmssqlHostAssessmentData?.map((hostData: any) => {
+            if (
+                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                uniqueResourceList.includes(hostData?.databaseHostId)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(hostData?.databaseHostId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const maxdopObj = instanceData?.assessments?.maxDOP;
-                    const isMaxdopOptimized = isOptimized(maxdopObj?.status);
+                    const maxdopStateObj = instanceData?.assessments?.dismissedConfigurations?.maxDOP;
+                    const isMaxdopOptimized = isOptimized(maxdopObj?.status, maxdopStateObj?.state);
                     if (!isMaxdopOptimized) {
                         maxdopAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
@@ -45,7 +59,8 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[maxdopObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: maxdopStateObj
                         });
                     }
                 }
@@ -56,7 +71,13 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
             maxdopAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+    }, [
+        allmssqlHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
@@ -88,7 +109,7 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {
@@ -137,7 +158,9 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

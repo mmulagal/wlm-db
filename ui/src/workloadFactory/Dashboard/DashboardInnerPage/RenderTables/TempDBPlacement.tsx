@@ -9,32 +9,52 @@ import { useMemo, useEffect } from 'react';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
-import BulkActionContainer from './BulkActionContainer';
-import FirstColumnComponent from './FirstColumnCoponent';
+import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
-        allmssqlHostAssessmentData.map((hostData: any) => {
+        let uniqueResourceList: Array<string> = [];
+        allmssqlHostAssessmentData?.map((hostData: any) => {
+            if (
+                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                uniqueResourceList.includes(hostData?.databaseHostId)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(hostData?.databaseHostId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const tempDbPlacementObj = instanceData?.assessments?.storage?.layout?.find(
                         (item: any) => item.name === 'tempdb-files-location'
                     );
-                    const isStorageTierOptimized = isOptimized(tempDbPlacementObj?.status);
+                    const tempDbPlacementStateObj =
+                        instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
+                            (item: any) => item.name === 'tempdb-files-location'
+                        );
+                    const isStorageTierOptimized = isOptimized(
+                        tempDbPlacementObj?.status,
+                        tempDbPlacementStateObj?.state
+                    );
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
@@ -42,7 +62,8 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[tempDbPlacementObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: tempDbPlacementStateObj
                         });
                     }
                 }
@@ -53,7 +74,13 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
             storageTierAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+    }, [
+        allmssqlHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     const updatedTableData = useMemo(() => {
         if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length) {
@@ -84,7 +111,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {
@@ -133,7 +160,9 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

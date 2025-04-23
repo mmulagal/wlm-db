@@ -3275,6 +3275,372 @@ const onPremAOAGAUploadObject = {
     fileName: 'SQLServerDataResponse-GOLDEN-AOAG.json'
 };
 
+const mockResourceAssessmentData = {
+    assessment: {
+        compute: {
+            finding: 'over-provisioned',
+            findingReasonCodes: [
+                'CPUOverprovisioned',
+                'EBSIOPSOverprovisioned',
+                'EBSThroughputOverprovisioned',
+                'NetworkBandwidthOverprovisioned',
+                'NetworkPPSOverprovisioned'
+            ],
+            currentInstanceType: 'r7i.xlarge',
+            recommendationOptions: [
+                {
+                    instanceType: 'm6a.large',
+
+                    platformDifferences: [],
+
+                    rank: 1,
+                    savingsOpportunity: {
+                        estimatedMonthlySavings: {
+                            currency: 'USD',
+                            value: 57.524
+                        },
+                        savingsOpportunityPercentage: 37.17
+                    }
+                },
+                {
+                    instanceType: 'm7i-flex.large',
+
+                    platformDifferences: [],
+
+                    rank: 2,
+                    savingsOpportunity: {
+                        estimatedMonthlySavings: {
+                            currency: 'USD',
+                            value: 3.576
+                        },
+                        savingsOpportunityPercentage: 2.311
+                    }
+                },
+                {
+                    instanceType: 'm5a.large',
+
+                    platformDifferences: [],
+
+                    rank: 3,
+                    savingsOpportunity: {
+                        estimatedMonthlySavings: {
+                            currency: 'USD',
+                            value: 3.576
+                        },
+                        savingsOpportunityPercentage: 2.311
+                    }
+                }
+            ]
+        },
+        license: {
+            licenseFinding: 'OPTIMIZED',
+            sqlServerInstances: [
+                {
+                    sqlServerName: 'MEGASQL',
+
+                    sqlServerState: 'Running',
+
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerVersion: '15.0.2000.5',
+
+                    sqlServerInstance: 'MEGASQL',
+
+                    sqlServerProductYear: 2019,
+
+                    sqlServerEngineEdition: 2
+                }
+            ],
+            recommendedLicenseType: 'SQL std'
+        },
+        rssConfig: {
+            rssAdapters: [
+                {
+                    adapterName: 'Ethernet 3',
+                    rssEnabled: true,
+                    rssProfile: 'NUMAStatic',
+                    baseProcessorNumber: 0,
+                    numberOfReceiveQueues: 4
+                }
+            ],
+            tcpOffloadState: 'Disabled',
+            recommendedAdapterSettings: {
+                recommendedRssProfile: 'NUMAStatic',
+                recommendedBaseProcessorNumber: 2,
+                recommendedReceiveQueues: 4
+            },
+            rssConfigFinding: 'not-optimized',
+            totalObjectsAssessed: 1
+        },
+        mssqlPatch: [
+            {
+                ec2InstanceId: 'i-0a1f31a39bd2d9362',
+                missingPatchDetails: [
+                    {
+                        kbId: 'KB4583458',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB4583458)',
+                        severity: 'Important',
+                        releaseDate: '2021-01-12T18:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB4583459',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB4583459)',
+                        severity: 'Important',
+                        releaseDate: '2021-01-12T18:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5014356',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5014356)',
+                        severity: 'Important',
+                        releaseDate: '2022-06-14T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5021124',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB5021124)',
+                        severity: 'Important',
+                        releaseDate: '2023-02-14T18:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5021125',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5021125)',
+                        severity: 'Important',
+                        releaseDate: '2023-03-05T19:18:30.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5029377',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5029377)',
+                        severity: 'Important',
+                        releaseDate: '2023-10-10T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5029378',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB5029378)',
+                        severity: 'Important',
+                        releaseDate: '2023-10-10T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5035434',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5035434)',
+                        severity: 'Important',
+                        releaseDate: '2024-04-09T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5036335',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB5036335)',
+                        severity: 'Important',
+                        releaseDate: '2024-04-09T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5040948',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB5040948)',
+                        severity: 'Important',
+                        releaseDate: '2024-07-09T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5040986',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5040986)',
+                        severity: 'Important',
+                        releaseDate: '2024-07-09T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5042214',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5042214)',
+                        severity: 'Important',
+                        releaseDate: '2024-09-10T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5046056',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046056)',
+                        severity: 'Important',
+                        releaseDate: '2024-10-08T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5046859',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046859)',
+                        severity: 'Important',
+                        releaseDate: '2024-11-12T18:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    }
+                ],
+                missingPatchesCount: 14,
+                criticalMissingPatchesCount: 0,
+                importantMissingPatchesCount: 14
+            },
+            {
+                ec2InstanceId: 'i-0253886610c274a28',
+                missingPatchDetails: [
+                    {
+                        kbId: 'KB4583458',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB4583458)',
+                        severity: 'Important',
+                        releaseDate: '2021-01-12T18:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB4583459',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB4583459)',
+                        severity: 'Important',
+                        releaseDate: '2021-01-12T18:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5014356',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5014356)',
+                        severity: 'Important',
+                        releaseDate: '2022-06-14T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5021124',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB5021124)',
+                        severity: 'Important',
+                        releaseDate: '2023-02-14T18:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5021125',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5021125)',
+                        severity: 'Important',
+                        releaseDate: '2023-03-05T19:18:30.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5029377',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5029377)',
+                        severity: 'Important',
+                        releaseDate: '2023-10-10T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5029378',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB5029378)',
+                        severity: 'Important',
+                        releaseDate: '2023-10-10T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5035434',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5035434)',
+                        severity: 'Important',
+                        releaseDate: '2024-04-09T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5036335',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB5036335)',
+                        severity: 'Important',
+                        releaseDate: '2024-04-09T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5040948',
+                        title: 'Security Update for SQL Server 2019 RTM CU (KB5040948)',
+                        severity: 'Important',
+                        releaseDate: '2024-07-09T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5040986',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5040986)',
+                        severity: 'Important',
+                        releaseDate: '2024-07-09T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5042214',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5042214)',
+                        severity: 'Important',
+                        releaseDate: '2024-09-10T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5046056',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046056)',
+                        severity: 'Important',
+                        releaseDate: '2024-10-08T17:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5046859',
+                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046859)',
+                        severity: 'Important',
+                        releaseDate: '2024-11-12T18:00:00.000Z',
+                        classification: 'SecurityUpdates'
+                    }
+                ],
+                missingPatchesCount: 14,
+                criticalMissingPatchesCount: 0,
+                importantMissingPatchesCount: 14
+            }
+        ],
+        hostOsPatch: [
+            {
+                baselineId: 'pb-03e4a480964bbb87f',
+                ec2InstanceId: 'i-0a1f31a39bd2d9362',
+                operationEndTime: 999,
+                operationStartTime: 1,
+                missingPatchDetails: [
+                    {
+                        kbId: 'KB5051979',
+                        state: 'Missing',
+                        title: '2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)',
+                        severity: 'Critical',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5050187',
+                        state: 'Missing',
+                        title: '2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)',
+                        severity: 'Important',
+                        classification: 'SecurityUpdates'
+                    }
+                ],
+                otherNonCompliantCount: 0,
+                criticalNonCompliantCount: 0,
+                securityNonCompliantCount: 2
+            },
+            {
+                baselineId: 'pb-03e4a480964bbb87f',
+                ec2InstanceId: 'i-0253886610c274a28',
+                operationEndTime: 819,
+                operationStartTime: 244,
+                missingPatchDetails: [
+                    {
+                        kbId: 'KB5051979',
+                        state: 'Missing',
+                        title: '2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)',
+                        severity: 'Critical',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5050187',
+                        state: 'Missing',
+                        title: '2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)',
+                        severity: 'Important',
+                        classification: 'SecurityUpdates'
+                    }
+                ],
+                otherNonCompliantCount: 0,
+                criticalNonCompliantCount: 0,
+                securityNonCompliantCount: 2
+            }
+        ],
+        lastAssessedDate: '1740495336926'
+    }
+};
+
 export {
     masterStackData,
     validationStack1Data,
@@ -3298,5 +3664,6 @@ export {
     DEMO_PRODUCT_RATE,
     onpremStdUploadObject,
     onPremAOAGAUploadObject,
-    onPremFCIUploadObject
+    onPremFCIUploadObject,
+    mockResourceAssessmentData
 };

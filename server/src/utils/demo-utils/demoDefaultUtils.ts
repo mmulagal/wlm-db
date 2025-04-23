@@ -26,18 +26,17 @@ import {
     createOperatingSystemMpioSessionsOptimizeJobMockData,
     createStorageTierJobMockData,
     createEnableMpioJobMockData,
-    createDeploymentMockDataInDBForPgSql
+    createDeploymentMockDataInDBForPgSql,
+    createAssessmentData
 } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
 import { listConfig, upsertDatabaseInstance } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { createJobs, listJobs } from '../../lib/database/job';
-import { ASSESMENT_CONFIG_DATA, inventoryDemoData } from './demoInventoryData';
+import { inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
 import { instanceDemoData } from './instancesResponse';
-import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
-import { AssessmentCategories } from '../continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -49,12 +48,12 @@ function createDemoResources(
     serverName: string,
     storageProtocol?: string,
     resourceId?: string,
-    databaseType: string = DatabaseTypes.MS_SQL_SERVER
+    databaseType: string = DatabaseTypes.MS_SQL_SERVER,
+    deploymentType: string = 'Standalone'
 ) {
     logger.info('Creating demo database resources and corresponding details.');
     const stackName = randomize('A', 10);
     const stackId = randomize('A0', 10);
-    const sqlDeploymentMode = 'FCI';
     const fsxFilSystemId = `fs-${randomize('0', 8)}`;
 
     if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
@@ -64,7 +63,7 @@ function createDemoResources(
             stackName,
             region,
             credentialsId,
-            sqlDeploymentMode,
+            deploymentType,
             fsxFilSystemId,
             awsAccountId,
             serverName || `sqldatabase${randomize('a', 4)}`,
@@ -79,7 +78,7 @@ function createDemoResources(
             stackName,
             region,
             credentialsId,
-            sqlDeploymentMode,
+            deploymentType,
             fsxFilSystemId,
             awsAccountId,
             serverName || `pgsqldatabase${randomize('a', 4)}`,
@@ -165,7 +164,6 @@ async function createDemoResourcesPerRegion(
         // create 3 new resources and configurations
         logger.info('Creating demo resources');
         const prodOneResourceId = randomUUID();
-        const devOneResourceId = randomUUID();
         const devFourResourceId = randomUUID();
 
         const instances = [
@@ -177,19 +175,8 @@ async function createDemoResourcesPerRegion(
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-MarketingCampaigns' },
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-SupplierManagement' }
                 ],
-                databaseType: DatabaseTypes.MS_SQL_SERVER
-            },
-            {
-                resourceId: devOneResourceId,
-                hostName: 'SQL-Managed-Host-STG',
-                protocol: STORAGE_PROTOCOLS.SMB,
-                sqlInstances: [
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGDEV-FinancialAccounts' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGDEV-EmployeeDirectory' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGDEV-InventoryControl' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGPROD-SupplierManagement' }
-                ],
-                databaseType: DatabaseTypes.MS_SQL_SERVER
+                databaseType: DatabaseTypes.MS_SQL_SERVER,
+                deploymentType: 'Standalone'
             },
             {
                 resourceId: devFourResourceId,
@@ -199,25 +186,28 @@ async function createDemoResourcesPerRegion(
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-SalesAnalytics' },
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-ProjectManagement' }
                 ],
-                databaseType: DatabaseTypes.MS_SQL_SERVER
+                databaseType: DatabaseTypes.MS_SQL_SERVER,
+                deploymentType: 'FCI'
             },
             {
                 resourceId: randomUUID(),
                 hostName: 'PGSQL-Managed-Host-STG',
                 protocol: STORAGE_PROTOCOLS.NFS,
                 sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
-                databaseType: DatabaseTypes.PG_SQL
+                databaseType: DatabaseTypes.PG_SQL,
+                deploymentType: 'Standalone'
             },
             {
                 resourceId: randomUUID(),
                 hostName: 'PGSQLServer-Dev-02',
                 protocol: STORAGE_PROTOCOLS.NFS,
                 sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
-                databaseType: DatabaseTypes.PG_SQL
+                databaseType: DatabaseTypes.PG_SQL,
+                deploymentType: 'HA'
             }
         ];
 
-        instances.forEach(async ({ resourceId, hostName, protocol, sqlInstances, databaseType }) => {
+        instances.forEach(async ({ resourceId, hostName, protocol, sqlInstances, databaseType, deploymentType }) => {
             await createDemoResources(
                 accountId,
                 region,
@@ -226,7 +216,8 @@ async function createDemoResourcesPerRegion(
                 hostName,
                 protocol,
                 resourceId,
-                databaseType
+                databaseType,
+                deploymentType
             );
             const instanceNames: string[] = [];
             let instanceIds: string = '';
@@ -236,6 +227,7 @@ async function createDemoResourcesPerRegion(
                     accountId,
                     resourceId,
                     sqlInstanceName,
+                    deploymentType,
                     sqlInstanceId,
                     credentialsId,
                     region,
@@ -390,6 +382,7 @@ async function createDatabaseInstances(
     accountId: string,
     resourceId: string,
     databaseInstanceName: string,
+    deploymentType: string,
     databaseInstanceId: string,
     credentialsId: string,
     region: string,
@@ -406,7 +399,7 @@ async function createDatabaseInstances(
         fsxnIds: fsxId,
         isDefault: false,
         source: RESOURCE_SOURCE.DEPLOY,
-        sqlDeploymentType: 'FCI',
+        sqlDeploymentType: deploymentType,
         fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
         numberofUserDbsCreated: 1,
         sandboxCreated: true,
@@ -417,18 +410,7 @@ async function createDatabaseInstances(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    const instanceConfigDataRecord = {
-        account_id: accountId,
-        credentials_id: credentialsId,
-        region,
-        resource_id: resourceId,
-        database_instance_id: databaseInstanceId,
-        creation_time: new Date(Date.now()),
-        config_data_type: AssessmentCategories.STORAGE,
-        config_data: ASSESMENT_CONFIG_DATA
-    };
-
-    await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
+    await createAssessmentData(accountId, credentialsId, region, resourceId, databaseInstanceId);
 
     return databaseInstanceId;
 }

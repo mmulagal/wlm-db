@@ -14,6 +14,11 @@ export const initialCreateSandboxState: CreateSandboxEntities = {
         databaseListLoading: false,
         databaseListError: null
     },
+    selectedCs: {
+        selectedDatabaseHost: null,
+        selectedDatabaseInstance: null,
+        selectedDatabase: null
+    },
     source: {
         selectedDatabaseHost: null,
         selectedDatabaseInstance: null,
@@ -43,7 +48,9 @@ export const initialCreateSandboxState: CreateSandboxEntities = {
     isNA: false,
     showError: false,
     dataFilePath: '',
-    logFilePath: ''
+    logFilePath: '',
+    selectedSandboxCredId: '',
+    selectedSandboxRegionId: ''
 };
 
 const createSandboxSlice = createSlice({
@@ -64,6 +71,20 @@ const createSandboxSlice = createSlice({
         },
         setDbMountPointsState: (state, action: PayloadAction<any>) => {
             state.getDbMountPoints = action.payload;
+        },
+        setSelectedCsData: (state, action: PayloadAction<any>) => {
+            state.selectedCs.selectedDatabaseHost = action.payload.host;
+            state.selectedCs.selectedDatabaseInstance = action.payload.instance;
+            state.selectedCs.selectedDatabase = action.payload.database;
+        },
+        setSelectedCsDbHost: (state, action: PayloadAction<any>) => {
+            state.selectedCs.selectedDatabaseHost = action.payload;
+        },
+        setSelectedCsDbInstance: (state, action: PayloadAction<any>) => {
+            state.selectedCs.selectedDatabaseInstance = action.payload;
+        },
+        setSelectedCsDatabase: (state, action: PayloadAction<any>) => {
+            state.selectedCs.selectedDatabase = action.payload;
         },
         setSourceDbHost: (state, action: PayloadAction<any>) => {
             state.source.selectedDatabaseHost = action.payload;
@@ -118,6 +139,16 @@ const createSandboxSlice = createSlice({
         },
         updateLogFilePath: (state, action: PayloadAction<any>) => {
             state.logFilePath = action.payload;
+        },
+        setSelectedSandboxCredId: (state, action: PayloadAction<any>) => {
+            state.selectedSandboxCredId = action.payload;
+        },
+        setSelectedSandboxRegionId: (state, action: PayloadAction<any>) => {
+            state.selectedSandboxRegionId = action.payload;
+        },
+        setSelectedSandboxHeaderValue: (state, action: PayloadAction<any>) => {
+            state.selectedSandboxCredId = action.payload.credId;
+            state.selectedSandboxRegionId = action.payload.regionId;
         }
     }
 });
@@ -145,7 +176,14 @@ export const {
     setDriveInfoState,
     setDbMountPointsState,
     updateDataFilePath,
-    updateLogFilePath
+    updateLogFilePath,
+    setSelectedSandboxCredId,
+    setSelectedSandboxRegionId,
+    setSelectedSandboxHeaderValue,
+    setSelectedCsData,
+    setSelectedCsDbHost,
+    setSelectedCsDbInstance,
+    setSelectedCsDatabase
 } = createSandboxSlice.actions;
 
 export default createSandboxSlice;

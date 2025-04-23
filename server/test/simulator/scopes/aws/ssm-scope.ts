@@ -16,7 +16,8 @@ import {
     DescribeInstancePatchStatesCommand,
     DescribeInstancePatchesCommand,
     DescribeAvailablePatchesCommand,
-    ListCommandsCommand
+    ListCommandsCommand,
+    DescribeInstanceInformationCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import {
@@ -35,6 +36,7 @@ import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-
 import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
 import describeAvailablePatchesResponse from '../../responses/aws/ssm-describe-available-patches.json';
 import listCommandsCommandResponse from '../../responses/aws/list-commands-command.json';
+import getSsmInstanceInformationResponse from '../../responses/aws/ssm-instance-information.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
     restGetUtilForOntap,
@@ -45,7 +47,7 @@ import {
     GET_DEFAULT_COLLATION,
     GET_DEFAULT_DRIVES,
     sqlQueryExecution,
-    READ_SCRIPT_VERSION,
+    CHECK_SCRIPT_AVAILABILITY_AND_VERSION,
     sqlQueryExecutionWithAuth
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import {
@@ -96,8 +98,13 @@ import {
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
-import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
+import {
+    DATABASES_COUNT,
+    LIST_DATABASES,
+    PERFORMANCE_METRICS
+} from '../../../../src/operations/workloads/pgsql/queries';
 import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
+import { CROSS_REGION_REPLICATION_SCRIPT } from '../../../../src/operations/workloads/mssql/resiliency-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -511,11 +518,11 @@ const getConnectionInforCommand = {
 };
 
 const checkScriptUpdate = {
-    commands: [READ_SCRIPT_VERSION]
+    commands: [CHECK_SCRIPT_AVAILABILITY_AND_VERSION]
 };
 
 const dbSummary = {
-    commands: [sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false)]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES, false)]
 };
 
 const validateMpio = {
@@ -539,7 +546,7 @@ const enableMpioAndConfigure = {
 };
 
 const pgsqlInstanceInfo = {
-    commands: [getPgsqlInstanceData('wlmdb-data-1234')]
+    commands: [getPgsqlInstanceData]
 };
 
 const rssConfigAssessmentSsm = {
@@ -547,7 +554,7 @@ const rssConfigAssessmentSsm = {
 };
 
 const checkRunningStatus = {
-    commands: [CHECK_RUNNING_STATUS_WITH_RESTART('$env:computername')]
+    commands: [CHECK_RUNNING_STATUS_WITH_RESTART('MSSQLSERVER')]
 };
 
 const getInstalledSQLVersion = {
@@ -560,6 +567,10 @@ const getInstalledSQLPatches = {
 
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
+const pgsqlDatabases = { commands: [LIST_DATABASES] };
+
+const pgsqlPerformanceMetrics = { commands: [PERFORMANCE_METRICS] };
+
 const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
@@ -569,6 +580,8 @@ const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
 const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
 const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
 const getVCPUAndMaxDopDetails = /#Get vCPU and MAXDOP Details/;
+const crrAssessmentDataRegex = /#Get CRR details/;
+const pgsqlProtectionRegex = /pgsql protection script/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -792,13 +805,41 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('setSnapshotPolicy'))
     .on(SendCommandCommand, params => {
+        const commentString = /# Get list of creation dates for latest snapshot copies of each volume/;
+        return commentString.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getSnapshotCopyDetails'))
+    .on(SendCommandCommand, params => {
         return /#Set MAXDOP/.test(params.Parameters.commands?.[0]);
     })
     .resolves(getSampleCommandResponse('setMaxDOP'))
     .on(SendCommandCommand, params => {
         return getVCPUAndMaxDopDetails.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getVCPUAndMaxDOPDetails'));
+    .resolves(getSampleCommandResponse('getVCPUAndMaxDOPDetails'))
+    .on(SendCommandCommand, params => {
+        const commentString = /# Optimize Network Adapters/;
+        return commentString.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('optimizeNetworkAdapters'))
+    .on(SendCommandCommand, { Parameters: pgsqlDatabases })
+    .resolves(listSendCommandCommandResponse.getPgsqldatabasesCommand)
+    .on(SendCommandCommand, { Parameters: pgsqlPerformanceMetrics })
+    .resolves(listSendCommandCommandResponse.getPgsqlPerformanceMetricsCommand)
+    .on(SendCommandCommand, params => {
+        return crrAssessmentDataRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand)
+    .on(SendCommandCommand, params => {
+        return pgsqlProtectionRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('pgsqlProtection'))
+    .on(SendCommandCommand, params => params.Comment === 'Discover PostgreSQL resources')
+    .resolves(getSampleCommandResponse('discoverPgsqlResources'))
+    .on(SendCommandCommand, params => {
+        return /#Get sandbox Details/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getSandboxDetails'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1017,7 +1058,7 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'getClusterNodeNames',
-            '{    "currentNode":  "sqlnode1-44317", "ownerNode":  "sqlnode1-44317",    "clusterNodes":  [                         "sqlnode1-44317",                         "sqlnode2-44317"                     ]}'
+            '{    "currentNode":  "sqlnode1-44317", "ownerNodes":  "sqlnode1-44317",    "clusterNodes":  [                         "sqlnode1-44317",                         "sqlnode2-44317"                     ]}'
         )
     )
     .on(GetCommandInvocationCommand, {
@@ -1037,6 +1078,10 @@ ssmMock
     })
     .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse)
     .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-crrAssessmentCommand'
+    })
+    .resolves(getCommandInvocationResponse.getCRRAssessmentCommandResponse)
+    .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-listSnapshotPolicies'
     })
     .resolves(
@@ -1051,7 +1096,16 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'setSnapshotPolicy',
-            '{ "errors": { }, "response": [ { "uuid": "18873848-d09c-11ef-a0ec-61a27a6bebc8"}, {"uuid":"4155f74d-b1ff-11ef-b315-11b9ce95d982"}, {"uuid":"61a6f6da-34d3-11ee-9989-a51720c855dc"}]}'
+            '{"errors":{},"response":[{"uuid":"18873848-d09c-11ef-a0ec-61a27a6bebc8"},{"uuid":"4155f74d-b1ff-11ef-b315-11b9ce95d982"},{"uuid":"61a6f6da-34d3-11ee-9989-a51720c855dc"}]}'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotCopyDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getSnapshotCopyDetails',
+            JSON.stringify(getCommandInvocationResponse.getSnapshotCopyDetailsResponse)
         )
     )
     .on(GetCommandInvocationCommand, {
@@ -1064,12 +1118,49 @@ ssmMock
         )
     )
     .on(GetCommandInvocationCommand, {
-        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getVCPUAndMaxDOPDetails'
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-discoverPgsqlResources'
     })
     .resolves(
         getSampleCommandResponseWithOutput(
-            'getVCPUAndMaxDOPDetails',
-            '{\"vcpuCount\":4,\"maxDOP\":\"4\"}\r\n'
+            'discoverPgsqlResources',
+            JSON.stringify(getCommandInvocationResponse.discoverPgsqlServer)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getVCPUAndMaxDOPDetails'
+    })
+    .resolves(getSampleCommandResponseWithOutput('getVCPUAndMaxDOPDetails', '{"vcpuCount":4,"maxDOP":"4"}\r\n'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeNetworkAdapters'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeNetworkAdapters',
+            JSON.stringify(getCommandInvocationResponse.optimizeNetworkAdaptersResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqldatabasesCommand' })
+    .resolves(getCommandInvocationResponse.getPgsqlDatabasesCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlPerformanceMetricsCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPgsqlPerformanceMetricsCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-pgsqlProtection'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'pgsqlProtection',
+            '{ "records": [ { "uuid": "65ce42b0-093b-11f0-9005-d94de70408b8", "name": "wlmdb_pgsqldata_1742880617685", "snapshot_count": 1, "_links": { "self": { "href": "/api/storage/volumes/65ce42b0-093b-11f0-9005-d94de70408b8" } } } ], "num_records": 1, "_links": { "self": { "href": "/api/storage/volumes?fields=snapshot_count&name=wlmdb_pgsqldata_1742880617685" } } }'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSandboxDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getSandboxDetails',
+            '{"cloneResponse":"[{\\"database_name\\":\\"sandbox_1743487277979\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"account-aHP3esT5\\"},{\\"name\\":\\"cloned_by\\",\\"value\\":\\"netapp_wf\\"},{\\"name\\":\\"createdAt\\",\\"value\\":1743487614964},{\\"name\\":\\"source\\",\\"value\\":\\"stvyar9|MSSQLSERVER|apr1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743487614964}]},{\\"database_name\\":\\"sandbox_ap90\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"acco…ar9|MSSQLSERVER|test1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743486922070}]},{\\"database_name\\":\\"sandbox_test234\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"account-aHP3esT5\\"},{\\"name\\":\\"cloned_by\\",\\"value\\":\\"netapp_wf\\"},{\\"name\\":\\"createdAt\\",\\"value\\":1743487698523},{\\"name\\":\\"source\\",\\"value\\":\\"stvyar9|MSSQLSERVER|test1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743487698523}]}]"}'
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
@@ -1101,3 +1192,4 @@ ssmMock.on(ListCommandsCommand).callsFake(async (command: ListCommandsCommand) =
     response.Commands = [];
     return response;
 });
+ssmMock.on(DescribeInstanceInformationCommand).resolves(getSsmInstanceInformationResponse);

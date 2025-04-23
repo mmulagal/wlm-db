@@ -13,9 +13,10 @@ type ChartType = {
     data2: any;
     centerText: string;
     centerValue?: string;
+    loading?: boolean;
 };
 
-const HostDistributionChart = ({ color1, color2, data1, data2, centerText, centerValue }: ChartType) => {
+const HostDistributionChart = ({ color1, color2, data1, data2, centerText, centerValue, loading }: ChartType) => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
@@ -61,11 +62,11 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText, cente
                     {centerValue}
                 </Typography>
                 <Typography variant="Regular_14">{centerText}</Typography>
-                {/* {discoverHostLoading && (
+                {loading && (
                     <div style={{ marginTop: '6px' }}>
                         <DsFlashingDotsLoader />
                     </div>
-                )} */}
+                )}
             </div>
             {/* {!totalHosts && <div className={styles.emptyCircle}></div>} */}
             <canvas ref={ref} id="chart-area" width={200} height={200}></canvas>

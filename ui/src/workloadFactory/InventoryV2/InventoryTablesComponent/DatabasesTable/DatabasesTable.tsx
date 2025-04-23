@@ -1,0 +1,449 @@
+import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
+import { INVENTORY_STATUS } from '../../../../utils/consts';
+import styles from '../InventoryTable.module.scss';
+import { GENERAL } from '../../../../utils/appConstants';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useDispatch } from 'react-redux';
+import { setSelectedFilterValue, setTableManageColumnState } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { useTable } from '../../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
+import { useEffect, useRef, useState } from 'react';
+import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
+import { isAwsBackupEnabledText } from '../../InventoryUtilsV2';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
+import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
+import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
+import { useNavigate } from 'react-router-dom';
+
+const DatabasesTable = () => {
+    const { selectedInventoryTab, selectedFilterValue, databaseTableRows, tableManageColumnState } = useAppSelector(
+        state => state.inventoryV2
+    );
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { databaseHostsLoading: pgsqldatabaseHostsLoading, fullHostDataLoading: pgsqlfullHostDataLoading } =
+        useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
+    const dispatch = useDispatch();
+    const [loading, setLoading] = useState(false);
+
+    const [menuOpenedRow, setOpenedRow] = useState(null);
+    const menuOpenedRowDetail: any = useRef(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        setLoading(
+            databaseHostsLoading ||
+                fullHostDataLoading ||
+                pgsqldatabaseHostsLoading ||
+                pgsqlfullHostDataLoading ||
+                multiDataLoading
+        );
+    }, [
+        databaseHostsLoading,
+        fullHostDataLoading,
+        pgsqldatabaseHostsLoading,
+        pgsqlfullHostDataLoading,
+        multiDataLoading
+    ]);
+
+    const getInitialFilter = () => {
+        if (
+            selectedInventoryTab === 'Databases' &&
+            selectedFilterValue?.flag === true &&
+            selectedFilterValue?.filterType === 'single'
+        ) {
+            dispatch(
+                setSelectedFilterValue({
+                    flag: false,
+                    value: ''
+                })
+            );
+            return {
+                textFilter: '',
+                count: 3,
+                columns: {
+                    '2': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.hostName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '8': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.credentialName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '10': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.regionName]: true
+                        },
+                        valuesArray: [true]
+                    }
+                }
+            };
+        } else if (
+            selectedInventoryTab === 'Databases' &&
+            selectedFilterValue?.flag === true &&
+            selectedFilterValue?.filterType === 'multi'
+        ) {
+            dispatch(
+                setSelectedFilterValue({
+                    flag: false,
+                    value: ''
+                })
+            );
+            return {
+                textFilter: '',
+                count: 4,
+                columns: {
+                    '2': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.hostName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '4': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.instanceName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '8': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.credentialName]: true
+                        },
+                        valuesArray: [true]
+                    },
+                    '10': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value?.regionName]: true
+                        },
+                        valuesArray: [true]
+                    }
+                }
+            };
+        } else {
+            return undefined;
+        }
+    };
+
+    const protectionTooltipText = (data: any) => {
+        return (
+            <div className={styles.protectionTooltip}>
+                <DsTypography variant="Semibold_13" className={styles.textHeight}>
+                    {GENERAL.PROTECTED_BY}:
+                </DsTypography>
+                {data.map((val: any, index: number) => (
+                    <DsTypography key={index} variant="Regular_13" className={styles.textHeight}>
+                        {val}
+                    </DsTypography>
+                ))}
+            </div>
+        );
+    };
+
+    const DatabasesColDefs: ColumnProps[] = [
+        {
+            id: '1',
+            Header: 'Database name',
+            accessor: 'name',
+            isSortable: true,
+            width: '200px',
+            isSticky: true,
+            renderCell: (cellData: any, rowData: any) => {
+                const name = rowData?.name;
+                return (
+                    <div>
+                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                        <div className={styles.firstColText}>
+                            {rowData?.status === 'ONLINE' && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                            )}
+                            {rowData?.status === 'OFFLINE' && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            )}
+                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
+                            )}
+                            <DsTypography variant="Regular_13">
+                                {rowData?.status === 'ONLINE'
+                                    ? INVENTORY_STATUS.ONLINE
+                                    : rowData?.status === 'OFFLINE'
+                                    ? INVENTORY_STATUS.OFFLINE
+                                    : rowData?.status}
+                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                {!rowData?.status && !rowData?.loading && 'Unknown'}
+                            </DsTypography>
+                        </div>
+                    </div>
+                );
+            }
+        },
+        {
+            Header: 'Host name',
+            accessor: 'hostName',
+            id: '2',
+            width: '200px',
+            filterOptions: getFilterOptions(databaseTableRows, 'hostName'),
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Engine type',
+            accessor: 'hostType',
+            id: '3',
+            width: '200px',
+            filterOptions: getFilterOptions(databaseTableRows, 'hostType'),
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Instance name',
+            accessor: 'databaseInstanceName',
+            id: '4',
+            width: '200px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Protection status',
+            accessor: 'isProtected',
+            id: '5',
+            width: '200px',
+            filterOptions: getFilterOptions(databaseTableRows, 'isProtected'),
+            renderCell: (cellData: any, rowData: any) => {
+                const protectionData = rowData?.protection;
+                let protectedByList = [];
+                let awsBackup = isAwsBackupEnabledText(rowData, '');
+                if (
+                    protectionData?.isFsxOntapSnapshotsEnabled &&
+                    String(protectionData?.isFsxOntapSnapshotsEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
+                ) {
+                    protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
+                }
+                if (awsBackup && String(awsBackup)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) {
+                    protectedByList.push(GENERAL.AWS_BACKUP);
+                }
+                if (
+                    protectionData?.isSqlNativeEnabled &&
+                    String(protectionData?.isSqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
+                ) {
+                    protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
+                }
+
+                return (
+                    <>
+                        {protectionData && (
+                            <div className={styles.colTextProtection}>
+                                <div className={styles.protection}>
+                                    {cellData === GENERAL.PROTECTED && (
+                                        <ProtectedIcon
+                                            style={{
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--green-60)'
+                                            }}
+                                        />
+                                    )}
+                                    {cellData === GENERAL.NOT_PROTECTED && (
+                                        <NotProtectedIcon
+                                            style={{
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--grey-45)'
+                                            }}
+                                        />
+                                    )}
+                                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                </div>
+                                {protectedByList?.length > 0 && (
+                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                        {protectionTooltipText(protectedByList)}
+                                    </TooltipInfo>
+                                )}
+                            </div>
+                        )}
+                        {!protectionData && GENERAL.NOT_AVAILABLE}
+                    </>
+                );
+            }
+        },
+        {
+            Header: 'Database Type',
+            accessor: 'type',
+            id: '6',
+            width: '200px',
+            filterOptions: getFilterOptions(databaseTableRows, 'type'),
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Database size',
+            accessor: 'sizeRange',
+            csvAccessor: 'Database size',
+            id: '7',
+            width: '200px',
+            filterOptions: [
+                { label: '0 - 100 MiB', value: '0 - 100 MiB' },
+                { label: '100 MiB - 1 GiB', value: '100 MiB - 1 GiB' },
+                { label: '1 GiB - 10 GiB', value: '1 GiB - 10 GiB' },
+                { label: '10 GiB - 5 TiB', value: '10 GiB - 5 TiB' },
+                { label: '5 TiB+', value: '5 TiB+' }
+            ],
+            renderCell: (cellData: any, rowData: any) => {
+                return formatSize(rowData?.size);
+            }
+        },
+        {
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            id: '8',
+            width: '184px',
+            isSortable: true,
+            filterOptions: getFilterOptions(databaseTableRows, 'credentialName'),
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'AWS account',
+            accessor: 'accountId',
+            id: '9',
+            width: '184px',
+            filterOptions: getFilterOptions(databaseTableRows, 'accountId'),
+            isSortable: true,
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Region',
+            accessor: 'regionName',
+            id: '10',
+            width: '184px',
+            isSortable: true,
+            filterOptions: getFilterOptions(databaseTableRows, 'regionName'),
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        }
+    ];
+    const tableProps = useTable({
+        isSorting: false,
+        columns: DatabasesColDefs,
+        rows: databaseTableRows,
+        pageSize: 50,
+        selectionType: 'none',
+        isHorizontalScroll: true,
+        isManagedColumns: true,
+        isLazyLoading: loading,
+        //@ts-ignore
+        initialFilterState: getInitialFilter(),
+        initialColumnState: tableManageColumnState.databaseTable,
+        manageColumnsProps: {
+            renderCell: (cellData: any, rowData: any) => {
+                let disableOption = false;
+                let disableMessage = '';
+
+                if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+                    disableOption = true;
+                    disableMessage = 'Create sandbox option is not available for PostgreSQL databases.';
+                } else if (rowData?.type === GENERAL.SYSTEM_DATABASE) {
+                    disableOption = true;
+                    disableMessage = 'Create sandbox option is not available for system database.';
+                }
+                const menu = [
+                    {
+                        id: 'createSandbox',
+                        displayName: 'Create sandbox',
+                        disabled: disableOption,
+                        infoText: disableMessage
+                    }
+                ];
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={[...menu]}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    if (menuId === 'createSandbox') {
+                                        dispatch(
+                                            setSelectedSandboxHeaderValue({
+                                                credId: rowData?.credentialId,
+                                                regionId: rowData?.regionId
+                                            })
+                                        );
+                                        dispatch(
+                                            setSelectedCsData({
+                                                host: rowData?.hostName,
+                                                instance: rowData?.databaseInstanceName,
+                                                database: rowData?.name
+                                            })
+                                        );
+                                        navigate('../create-new-sandbox');
+                                    }
+                                }
+                            }}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    </div>
+                );
+            }
+        }
+    });
+
+    useEffect(() => {
+        dispatch(setTableManageColumnState({ ...tableManageColumnState, databaseTable: tableProps.columnsState }));
+    }, [tableProps.columnsState]);
+    return (
+        <>
+            <div className={styles.inventoryTable}>
+                <div
+                    //  @ts-ignore
+                    className={styles.table}
+                >
+                    <TableTopBar
+                        //@ts-ignore
+                        tableProps={tableProps}
+                        pluralTitle="Databases"
+                        singularTitle="Database"
+                        exportToCsvOptions={{ fileName: `DatabaseTable-${new Date(Date.now()).toLocaleString()}.csv` }}
+                        subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
+                    />
+                    <Table
+                        //@ts-ignore
+                        tableProps={tableProps}
+                        isDoubleRow={true}
+                    />
+                </div>
+            </div>
+        </>
+    );
+};
+
+export default DatabasesTable;

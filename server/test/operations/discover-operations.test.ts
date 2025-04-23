@@ -2,7 +2,8 @@ import { faker } from '@faker-js/faker';
 import {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
-    manageSqlServerV2
+    manageSqlServerV2,
+    discoverPgSqlResources
 } from '../../src/operations/discover-operations';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import '../simulator/scopes/aws/ec2-scope';
@@ -35,17 +36,32 @@ describe('Discover operations', () => {
     // });
 
     it('Manage EC2 hosting SQL Server V2: No SSM connectivity)', async () => {
-        const resp = await manageSqlServerV2(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'i-1d9i5v18g5392mf1v', [
-            'NO_SUCH_INSTANCE'
-        ]);
-
-        expect(resp.items).toEqual([
+        const resp = await manageSqlServerV2(ACCOUNT_ID, [
             {
-                databaseInstanceName: 'NO_SUCH_INSTANCE',
-                status: 'failed',
-                errorMessage: 'SQL Server instance not found.'
+                credentialsId: CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                ec2InstanceId: 'i-1d9i5v18g5392mf1v',
+                databaseInstanceNames: ['NO_SUCH_INSTANCE']
             }
         ]);
+
+        expect(resp).toEqual({
+            hosts: [
+                {
+                    resourceId: '67e09d3a49604bf2',
+                    instances: [
+                        {
+                            databaseInstanceName: 'NO_SUCH_INSTANCE',
+                            status: 'failed',
+                            errorMessage: 'SQL Server instance not found.'
+                        }
+                    ],
+                    credentialsId: CREDENTIALS_ID,
+                    region: 'us-east-1',
+                    ec2InstanceId: 'i-1d9i5v18g5392mf1v'
+                }
+            ]
+        });
     });
 
     it('Store discovered resource credentials', async () => {
@@ -66,6 +82,15 @@ describe('Discover operations', () => {
             'i-0e5af83448e1b83ef',
             params
         );
+        expect(response).toBeDefined();
+    });
+});
+
+describe('Discover operations: PGSQL', () => {
+    it('Discover EC2 instances hosting PostgreSQL Server', async () => {
+        const response = await discoverPgSqlResources(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 10);
+        const connectedResources = response.items.find(item => item.ssmState === 'connected');
+        expect(connectedResources?.pgsqlServerVersion).toEqual('psql (PostgreSQL) 16.5');
         expect(response).toBeDefined();
     });
 });

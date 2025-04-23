@@ -276,83 +276,73 @@ afterAll(async () => {
 
 describe('Continuous optimization optimize operations', () => {
     it('Bulk optimize sizing parameters', async () => {
-        const response = await bulkOptimization(
-            ACCOUNT_ID,
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            OPTIMIZATION_CATEGORIES.STORAGE_SIZING,
-            [
-                {
-                    type: OPTIMIZE_SIZING_CONFIGS.HEADROOM,
-                    databaseHosts: [
-                        {
-                            id: RESOURCE_ID,
-                            sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d']
-                        }
-                    ]
-                }
-            ]
-        );
+        const response = await bulkOptimization(ACCOUNT_ID, OPTIMIZATION_CATEGORIES.STORAGE_SIZING, [
+            {
+                configurationName: OPTIMIZE_SIZING_CONFIGS.HEADROOM,
+                databaseHosts: [
+                    {
+                        id: RESOURCE_ID,
+                        sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                        region: DEFAULT_AWS_REGION,
+                        credentialsId: CREDENTIALS_ID
+                    }
+                ]
+            }
+        ]);
 
         expect(response.jobId).toBeDefined();
         await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
     });
 
     it('Bulk optimize operating system parameters', async () => {
-        const response = await bulkOptimization(
-            ACCOUNT_ID,
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM,
-            [
-                {
-                    type: OptimizeOperatingSystemParams.MPIO_SESSIONS,
-                    databaseHosts: [
-                        {
-                            id: RESOURCE_ID,
-                            sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d']
-                        }
-                    ]
-                }
-            ]
-        );
+        const response = await bulkOptimization(ACCOUNT_ID, OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM, [
+            {
+                configurationName: OptimizeOperatingSystemParams.MPIO_SESSIONS,
+                databaseHosts: [
+                    {
+                        id: RESOURCE_ID,
+                        sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                        region: DEFAULT_AWS_REGION,
+                        credentialsId: CREDENTIALS_ID
+                    }
+                ]
+            }
+        ]);
 
         expect(response.jobId).toBeDefined();
         await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
     });
 
     it('Bulk optimize storage-tier parameters', async () => {
-        const response = await bulkOptimization(
-            ACCOUNT_ID,
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            OPTIMIZATION_CATEGORIES.STORAGE_TIER,
-            [
-                {
-                    type: OptimizeStorageTierParams.STORAGE_TIER,
-                    databaseHosts: [
-                        {
-                            id: RESOURCE_ID,
-                            sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d']
-                        }
-                    ]
-                }
-            ]
-        );
+        const response = await bulkOptimization(ACCOUNT_ID, OPTIMIZATION_CATEGORIES.STORAGE_TIER, [
+            {
+                configurationName: OptimizeStorageTierParams.STORAGE_TIER,
+                databaseHosts: [
+                    {
+                        id: RESOURCE_ID,
+                        sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                        region: DEFAULT_AWS_REGION,
+                        credentialsId: CREDENTIALS_ID
+                    }
+                ]
+            }
+        ]);
 
         expect(response.jobId).toBeDefined();
         await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
     });
 
     it('Bulk optimize compute parameters', async () => {
-        const response = await bulkComputeOptimization(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, [
+        const response = await bulkComputeOptimization(ACCOUNT_ID, [
             {
-                type: OptimizeComputeParams.COMPUTE,
+                configurationName: OptimizeComputeParams.COMPUTE,
                 databaseHosts: [
                     {
                         id: RESOURCE_ID,
                         sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d'],
-                        instanceType: 'm5.large'
+                        instanceType: 'm5.large',
+                        region: DEFAULT_AWS_REGION,
+                        credentialsId: CREDENTIALS_ID
                     }
                 ]
             }

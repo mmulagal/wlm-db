@@ -11,10 +11,10 @@ import StorageTierOptimizeTable from './InnerTables/StorageTierOptimizeTable';
 import store from '../../../store/store';
 import { GENERAL } from '../../../utils/appConstants';
 import {
+    setCloneDashboardData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
-    setLandingFrom,
     setLandingFromInnerPage,
     setOptimizingData,
     setOptimizingInstanceData
@@ -23,7 +23,9 @@ import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../.
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import {
     useLazyGetSubTaskListQuery,
+    useOptimizeComputeConfigForBulkMutation,
     useOptimizeComputeConfigMutation,
+    useOptimizeResiliencyMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
     useOptimizeStorageTierMutation
@@ -35,7 +37,10 @@ import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
-import { useRef, useState } from 'react';
+import CloneManagementTable from './InnerTables/CloneManagementTable';
+import CRROptimizeTable from './InnerTables/CRROptimizeTable';
+import { useEffect, useRef, useState } from 'react';
+import CloneTabs from './CloneTabs';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -43,31 +48,99 @@ const OptimizeInnerPage = () => {
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
-
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
-        useAppSelector(state => state.getWellOptimize);
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedHostname,
+        selectedDatabaseInstanceName,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        cloneIsOptimizedRows
+    } = useAppSelector(state => state.getWellOptimize);
+
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [optimizeResiliency] = useOptimizeResiliencyMutation();
+    const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
     const userNavigated = useRef(false);
 
-    const buttonComponent = () => {
-        if (
-            selectedOptimizeConfig?.type === 'Data files' ||
-            selectedOptimizeConfig?.type === 'Log files' ||
-            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
-            selectedOptimizeConfig?.type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
-        ) {
+    useEffect(() => {
+        if (selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT) {
+            let cloneViolationsList =
+                selectedOptimizeConfig?.data?.cloneDetails
+                    ?.filter((clone: any) =>
+                        selectedOptimizeConfig?.data?.objectsInViolation?.includes(clone.cloneDatabaseName)
+                    )
+                    ?.map((obj: any) => ({
+                        ...obj,
+                        isOptimized:
+                            cloneIsOptimizedRows?.[
+                                `${selectedResourceId}_${selectedDatabaseInstance}_${obj?.cloneDatabaseName}`
+                            ],
+                        credentialId: selectedGwInstanceCredId,
+                        regionId: selectedGwInstanceRegionId,
+                        resourceId: selectedResourceId,
+                        hostName: selectedHostname,
+                        instanceId: selectedDatabaseInstance,
+                        serverInstanceName: selectedDatabaseInstanceName
+                    })) || [];
+
+            dispatch(
+                setCloneDashboardData({
+                    type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                    objectsInViolation: cloneViolationsList,
+                    severity: selectedOptimizeConfig?.data?.severity,
+                    tags: selectedOptimizeConfig?.data?.tags,
+                    recommendation: selectedOptimizeConfig?.data?.recommendation
+                })
+            );
+        }
+    }, [selectedOptimizeConfig]);
+
+    const buttonComponent = (rowData: any) => {
+        if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
             return (
                 <Popover
                     isAppendedToBody={true}
                     children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                    trigger="hover"
+                    delayHide={200}
+                    interactive={true}
+                    container={
+                        <DsButton variant="secondary" isDisabled={true} isThin>
+                            Optimize
+                        </DsButton>
+                    }
+                />
+            );
+        }
+        if (selectedOptimizeConfig?.type === GENERAL.CRR) {
+            return (
+                <DsButton isThin variant="secondary" isDisabled={true}>
+                    Optimize
+                </DsButton>
+            );
+        } else if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&
+            (rowData?.status === 'Over-provisioned' || rowData?.status === 'Shared drive')
+        ) {
+            return (
+                <Popover
+                    isAppendedToBody={true}
+                    children={
+                        rowData?.status === 'Over-provisioned' ? (
+                            <DsTypography variant="Regular_14">{GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR}</DsTypography>
+                        ) : (
+                            <DsTypography variant="Regular_14">{GENERAL.NOT_OPTIMIZED_SHARED_DRIVES}</DsTypography>
+                        )
+                    }
                     trigger="hover"
                     delayHide={200}
                     interactive={true}
@@ -93,19 +166,49 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
-        } else {
+        } else if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+        ) {
             return (
                 <DsButton
                     isThin
                     variant="secondary"
-                    isDisabled={false}
+                    isDisabled={rowData?.status === 'Over-provisioned' || rowData?.status === 'Shared drive'}
                     onClick={() => {
                         // optimizeAction(rowData);
-                        // handleDialog(name, rowData, 'single');
+                        handleDialog(
+                            setDialog,
+                            selectedOptimizeConfig?.type,
+                            callOptimizeApi,
+                            closeDialog,
+                            selectedOptimizeConfig?.data,
+                            'single',
+                            rowData
+                        );
                     }}
                 >
                     Optimize
                 </DsButton>
+            );
+        } else {
+            return (
+                <Popover
+                    isAppendedToBody={true}
+                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                    trigger="hover"
+                    delayHide={200}
+                    interactive={true}
+                    container={
+                        <DsButton variant="secondary" isDisabled={true} isThin>
+                            Optimize
+                        </DsButton>
+                    }
+                />
             );
         }
     };
@@ -121,7 +224,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
-                        {/* {buttonComponent()} */}
+                        {buttonComponent(rowData)}
                     </div>
                 );
             }
@@ -129,7 +232,7 @@ const OptimizeInnerPage = () => {
     };
 
     // This is the function that will be called when the optimize button is clicked from main cards
-    const callOptimizeApi = (type: any) => {
+    const callOptimizeApi = (type: any, operation: string, singleRowData: any) => {
         let payload: null | object = {};
         let apiCall = null;
 
@@ -140,18 +243,117 @@ const OptimizeInnerPage = () => {
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
+        } else if (type === GENERAL.RSS_CONFIGURATION) {
+            apiCall = optimizeComputeConfigForBulk;
+            if (operation === 'bulk') {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'rss-config',
+                            databaseHosts: [
+                                {
+                                    id: selectedResourceId,
+                                    sqlServerInstances: [selectedDatabaseInstance],
+                                    networkAdapters: selectedRowsForOptimizeInnerPage.map(
+                                        (item: any) => item?.adapterName
+                                    ),
+                                    credentialsId: selectedGwInstanceCredId,
+                                    region: selectedGwInstanceRegionId
+                                }
+                            ]
+                        }
+                    ]
+                };
+            } else {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'rss-config',
+                            databaseHosts: [
+                                {
+                                    id: selectedResourceId,
+                                    sqlServerInstances: [selectedDatabaseInstance],
+                                    networkAdapters: [singleRowData?.adapterName]
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
         } else if (
-            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
             type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
         ) {
             apiCall = optimizeStorageSizing;
             payload = {
-                type: [selectedOptimizeConfig?.data?.id]
+                configurationName: [selectedOptimizeConfig?.data?.id]
             };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) {
+            apiCall = optimizeStorageSizing;
+
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: 'log-drive-size',
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.logAccessPath)
+                };
+            } else {
+                payload = {
+                    configurationName: 'log-drive-size',
+                    objectsToOptimize: [singleRowData?.logAccessPath]
+                };
+            }
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
-            payload = null;
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: 'storage-tier',
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
+                };
+            } else {
+                payload = {
+                    configurationName: 'storage-tier',
+                    objectsToOptimize: [singleRowData?.objectName]
+                };
+            }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
+            apiCall = optimizeResiliency;
+            const state = store.getState();
+            const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: ['snapshot-policy'],
+                    params: [
+                        {
+                            snapshotPolicy: {
+                                uuid: selectedSnapshot?.data?.uuid,
+                                name: selectedSnapshot?.data?.name
+                            },
+                            volumes: selectedRowsForOptimizeInnerPage.map(({ volumeName, ontapVolumeUuid }: any) => ({
+                                ontapVolumeName: volumeName,
+                                ontapVolumeUuid: ontapVolumeUuid
+                            }))
+                        }
+                    ]
+                };
+            } else {
+                payload = {
+                    configurationName: ['snapshot-policy'],
+                    params: [
+                        {
+                            snapshotPolicy: {
+                                uuid: selectedSnapshot?.data?.uuid,
+                                name: selectedSnapshot?.data?.name
+                            },
+                            volumes: [
+                                {
+                                    ontapVolumeName: singleRowData?.volumeName,
+                                    ontapVolumeUuid: singleRowData?.ontapVolumeUuid
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -213,8 +415,8 @@ const OptimizeInnerPage = () => {
         );
 
         apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
             payload: payload
@@ -247,6 +449,7 @@ const OptimizeInnerPage = () => {
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
                         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        dispatch(setLandingFromInnerPage(true));
                     }
                 }, 1000);
 
@@ -258,12 +461,17 @@ const OptimizeInnerPage = () => {
                     id: selectedOptimizeConfig?.data?.id,
                     name: type,
                     hostId: selectedResourceId,
-                    instanceId: selectedDatabaseInstance
+                    instanceId: selectedDatabaseInstance,
+                    credentialId: selectedGwInstanceCredId,
+                    regionId: selectedGwInstanceRegionId
                 },
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                type
+                type,
+                '',
+                {},
+                true
             );
         });
     };
@@ -274,7 +482,8 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type,
             callOptimizeApi,
             closeDialog,
-            selectedOptimizeConfig?.data
+            selectedOptimizeConfig?.data,
+            'bulk'
         );
     };
 
@@ -324,8 +533,7 @@ const OptimizeInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
-            case 'Network adapter settings':
-            case 'Network adapters':
+            case GENERAL.RSS_CONFIGURATION:
                 return (
                     <RSSOptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -337,6 +545,15 @@ const OptimizeInnerPage = () => {
             case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
                 return (
                     <ScheduledLocalSnapshotOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case GENERAL.CRR:
+                return (
+                    <CRROptimizeTable
                         type={selectedOptimizeConfig?.type}
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
@@ -355,6 +572,7 @@ const OptimizeInnerPage = () => {
         }
         return selectedOptimizeConfig?.type;
     };
+
     return (
         <div className={styles['optimize-inner-page']}>
             <div className={styles.innerPage}>
@@ -404,6 +622,8 @@ const OptimizeInnerPage = () => {
                 <div className={styles.contentSection}>
                     <OptimizeCard />
                 </div>
+
+                {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && <CloneTabs />}
 
                 <div className={styles.tableSection}>{renderTable()}</div>
             </div>

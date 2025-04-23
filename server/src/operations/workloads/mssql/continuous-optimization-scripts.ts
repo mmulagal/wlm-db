@@ -1,14 +1,11 @@
-import {
-    BulkOptimizeSnapshotPolicyParamsType,
-    OntapRequestParams,
-    OptimizeStorageParams,
-    WorkloadInstance
-} from '../../../utils/common-types';
+import { BulkOptimizeSnapshotPolicyParamsType } from '../../../routes/types/continuous-optimization.types';
+import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
     COMPUTE_OPTIMIZE_LOG_PATH,
     DISCOVER_OPERATION_LOG_PATH,
     RESILIENCY_OPTIMIZE_LOG_PATH,
+    RSS_OPTIMIZE_LOG_PATH,
     SIZING_OPERATIONS_LOG_PATH,
     STORAGE_ASSESSMENT_LOG_PATH
 } from './const';
@@ -20,13 +17,7 @@ import {
     SERVER_VERSION,
     TEMPDB_DRIVE_SIZE
 } from './queries';
-import {
-    compressResponse,
-    readSsmParameter,
-    restGetUtilForOntap,
-    slqcmdExecutionTemplate,
-    GET_FCI_NAME
-} from './ssm-script-utils';
+import { compressResponse, readSsmParameter, slqcmdExecutionTemplate, GET_FCI_NAME } from './ssm-script-utils';
 
 const JSON_CHECK = `
         function Test-ValidJson {
@@ -111,18 +102,27 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             $responseObject = [ordered]@{}
             $responseObject['data'] = @()
             $responseObject['log'] = @()
-             $responseObject['tempDb'] = @()
+            $responseObject['tempDb'] = @()
+            $partitionmap = @{}
             $winvolumes = $sqlresponse | ConvertFrom-Json
             foreach ($winvolume in $winvolumes) {
                 # check in winvolume volume id is null or empty string
                 if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
-                    
-                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
-                    $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
+                    if( -not $partitionmap.Contains( $winvolume.volumeid ) ) {
+                        $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
+                        $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
+                        $partitionmap[$winvolume.volumeid] = @{"volume"= $vol
+                                                      "partition" = $partition
+                                         }
+                    } else {
+                        $vol = $partitionmap[$winvolume.volumeid]["volume"]
+                        $partition = $partitionmap[$winvolume.volumeid]["partition"]
+                
+                }
+                
                     if ($vol.bustype -eq 'iscsi') {
                         $object = @{
                         "name" = $winvolume.name
-                        "fileName" = $winvolume.filename
                         "lunSerialNumber" = $vol.serialnumber
                         "sizeInMb" = $winvolume.sizeInMb
                         "diskNumber" = $vol.number
@@ -146,14 +146,14 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
     
             $QueryFilter = ''
-            foreach ($vol in $responseObject.data) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
-            }
-            foreach ($vol in $responseObject.log) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
-            }
-            foreach ($vol in $responseObject.tempDb) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
+            $serialNumbers = @()
+            $serialNumbers += $responseObject.data | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers += $responseObject.log | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers += $responseObject.tempDb | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers = $serialNumbers | Select-Object -Unique
+
+            foreach ($serialNumber in $serialNumbers) {
+                $QueryFilter += $serialNumber + '|'
             }
             $QueryFilter = $QueryFilter.TrimEnd('|')
             $Params = @{
@@ -355,7 +355,6 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
                         $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
                     }
                     $driveObject | Add-Member -MemberType NoteProperty -Name "logDriveLetter" -Value $logDrive.logDriveLetter 
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "logDrivePath" -Value $logDrive.logDrivePath
                     $driveObject | Add-Member -MemberType NoteProperty -Name "logDriveTotalSizeMB" -Value $logDrive.logDriveTotalSizeMB
                     $allDriveDetails += $driveObject
                 }
@@ -385,7 +384,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     if($netappDataDrives -notcontains $defaultDataDriveDetails.dataDriveLetter) 
     {
         $driveDetailsErrors["instanceDataDrivesError"] = "Data drive is not a NetApp drive."
-        Write-Information "Data drive is not a NetApp drive. $defaultDataDriveDetails"
+        Write-Information "Data drive $defaultDataDriveDetails.dataDriveLetter is not a NetApp drive."
     }
     else {
     if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails )) {
@@ -396,7 +395,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
    if($netappDataDrives -notcontains $defaultLogDriveDetails.logDriveLetter) 
     {
         $driveDetailsErrors["instanceLogDrivesError"] = "Log drive is not a NetApp drive."
-        Write-Information "Log drive is not a NetApp drive. $defaultLogDriveDetails"
+        Write-Information "Log drive $defaultLogDriveDetails.logDriveLetter is not a NetApp drive."
     }
     else {
     $defaultLogDrive = 'shared-drive'
@@ -409,7 +408,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     if($netappDataDrives -notcontains $defaultTempDBDriveDetails.tempdbDriveLetter) 
     {
         $driveDetailsErrors["instanceTempDBDriveError"] = "TempDB drive is not a NetApp drive."
-        Write-Information "TempDB drive is not a NetApp drive. $defaultTempDBDriveDetails"
+        Write-Information "TempDB drive $defaultTempDBDriveDetails.tempdbDriveLetter is not a NetApp drive."
     }
     else {
     if(($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter) -and ($defaultTempDBDriveDetails -notcontains $defaultLogDriveDetails.logDriveLetter)) {
@@ -514,6 +513,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $sqlInstance = "${instanceRecord.name}"
     $FSxID = "${instanceRecord.fsxFileSystem}"
     $FSxRegion = "${instanceRecord.region}"
+    $OntapSvmUuid = "${instanceRecord.svmOntapUuid}"
     $MappedVolumeNames = '${JSON.stringify(instanceRecord.mappedVolumeNames)}' | ConvertFrom-Json
     $MappedVolumeUuids = '${JSON.stringify(instanceRecord.mappedVolumesUuids)}' | ConvertFrom-Json
     $MappedLunNames = '${JSON.stringify(instanceRecord.mappedLunNames)}' | ConvertFrom-Json
@@ -616,6 +616,11 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     # Lun details
     $APIEndpoint = '/storage/luns'
     $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
+
+    if ($OntapSvmUuid -ne '') {
+        $APIQueryFilter += "&svm.uuid=$OntapSvmUuid"
+    }
+
     $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
     Write-Information "Getting ONTAP LUN details for LUNs: ${instanceRecord.mappedLunNames?.join('|')}"
     try{
@@ -728,8 +733,47 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $DriftAssessmentData['layout']['default-log-files-location'] =  $defaultLogDrive;
         }
 
-        $DriftAssessmentData['layout']['user-database-layout'] = $($responseObject)
+        $SimplifiedDataDriveDetails = @()
+        foreach($drive in $responseObject.data) {
+            $Detail = $SimplifiedDataDriveDetails | Where-Object { $_.diskNumber -eq $drive.diskNumber }
+             $object = @{
+                    "name" = $drive.name
+                    "sizeInMb" = $drive.sizeInMb
+                }
+            if($null -eq $Detail) {
+                $drive.PSObject.Properties.Remove('name')
+                $drive.PSObject.Properties.Remove('sizeInMb')
+                $drive.databaseDetails = @($object)
+                $SimplifiedDataDriveDetails += $drive
+            }  else {
+                $Detail.databaseDetails += $object
+            }
+        }
 
+        $SimplifiedLogDriveDetails = @()
+        foreach($drive in $responseObject.log) {
+            $Detail = $SimplifiedLogDriveDetails | Where-Object { $_.diskNumber -eq $drive.diskNumber }
+            $object = @{
+                    "name" = $drive.name
+                    "sizeInMb" = $drive.sizeInMb
+                }
+            if($null -eq $Detail) {
+                $drive.PSObject.Properties.Remove('name')
+                $drive.PSObject.Properties.Remove('sizeInMb')
+                $drive.databaseDetails = @($object)
+                $SimplifiedLogDriveDetails += $drive
+            }  else {
+               
+                $Detail.databaseDetails += $object
+            }
+        }
+
+        $userDatabaseLayout = @{
+            "data" = $SimplifiedDataDriveDetails
+            "log" = $SimplifiedLogDriveDetails
+            "tempDb" = $responseObject.tempDb
+        }
+        $DriftAssessmentData['layout']['user-database-layout'] = $($userDatabaseLayout)
 
         $DriftAssessmentData['sizing'] = @{}
         if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"] ))) {
@@ -740,7 +784,18 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         }
 
         $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierDetails);
-        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($consolidatedDriveDetails));
+
+        $SimplifiedDriveDetails = @()
+        foreach($drive in $consolidatedDriveDetails) {
+            $Detail = $SimplifiedDriveDetails | Where-Object { $_.logAccessPath -eq $drive.logAccessPath -and $_.dataAccessPath -eq $drive.dataAccessPath }
+            if($null -eq $Detail) {
+                $SimplifiedDriveDetails += $drive
+            }  else {
+                $Detail.databaseName =  $Detail.databaseName + ',' + $drive.databaseName
+            }
+        }
+
+        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($SimplifiedDriveDetails));
         
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
@@ -815,7 +870,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $DriftAssessmentData['os']['ntfs-allocation-unit-size'] = $($ntfsUnitSize)
     } catch {$DriftAssessmentData['errors']['ntfs-allocation'] = $_.Exception.Message}
 
-    $response = $DriftAssessmentData | ConvertTo-Json -Depth 5
+    $response = $DriftAssessmentData | ConvertTo-Json -Depth 8 -Compress
 
     if([string]::IsNullOrEmpty($response)) {
         throw "Failed to compress the response because the response is either null or empty. $response"
@@ -988,7 +1043,7 @@ const GET_CLUSTER_NODE_NAMES = () => `
     $currentNode = hostname
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
     $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
-    @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNode = $ownerNode;} | ConvertTo-Json
+    @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNodes = $ownerNode;} | ConvertTo-Json
     Write-Information "Cluster nodes: $clusterNodes with owner node: $ownerNode"
     Stop-Transcript | Out-Null
 
@@ -1024,28 +1079,121 @@ const GET_RSS_CONFIG_DETAILS = () => `
     Write-Output $jsonResult
 `;
 
-const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
+const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
+    # Optimize Network Adapters
+    Start-Transcript -Path ${RSS_OPTIMIZE_LOG_PATH} -Append | Out-Null
+
+    $response = @{}
+    $response['errors'] = @{}
+    $response['response'] = @{}
+
+    $networkAdapters = @(${networkAdapters.map(name => `'${name}'`).join(', ')})
+    $optimalRssProfile = 'NUMAStatic'
+
+    try {
+        # Disable global TCP Offload
+        Set-NetOffloadGlobalSetting -Chimney Disabled
+
+        # Optimize RSS settings for each network adapter
+        if($networkAdapters.Count -eq 0) {
+            Write-Information "No network adapters passed to optimize, checking for network adapters"
+            $networkAdapters = Get-NetAdapterRss | Select-Object -ExpandProperty Name
+        }
+
+        foreach($adapterName in $networkAdapters) {
+            try {
+                $currentRssSettings = Get-NetAdapterRss -Name $adapterName
+                $parameters = @{}
+                $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+                
+                $optimalRssReceiveQueues = $vcpus
+                $optimalBaseProcessorNumber = $currentRssSettings.BaseProcessorNumber
+                if($vcpus -ge 4) {
+                    $optimalBaseProcessorNumber = 2
+                } else {
+                    Write-Information "Number of vCPUs is less than 4. Not optimizing base processor number for adapter: $adapterName"
+                }
+                if($vcpus -gt 8) {
+                    $optimalRssReceiveQueues = 8
+                }
+                if ($currentRssSettings.Enabled -eq $false) {
+                    Write-Information "Enabling RSS on adapter: $adapterName"
+                    Enable-NetAdapterRss -Name $adapterName -NoRestart
+                }
+                if ($currentRssSettings.NumberOfReceiveQueues -ne $optimalRssReceiveQueues) {
+                    $parameters['NumberOfReceiveQueues'] = $optimalRssReceiveQueues
+                }
+                if ($currentRssSettings.BaseProcessorNumber -lt $optimalBaseProcessorNumber) {
+                    $parameters['BaseProcessorNumber'] = $optimalBaseProcessorNumber
+                }
+                if ($currentRssSettings.Profile -ne $optimalRssProfile) {
+                    $parameters['Profile'] = $optimalRssProfile
+                }
+                
+                if ($parameters.Count -gt 0) {
+                    Write-Information "Setting RSS best practices values on adapter: $adapterName, $parameters"
+                    $parameters['Name'] = $adapterName
+                    Set-NetAdapterRss @parameters -NoRestart
+                }
+                # wait for insyance to respond back to the SSM invocation before reboot
+            } catch {
+                $errMsg = "Error occurred while optimizing network adapter: $adapterName $_.Exception.Message"
+                Write-Information $errMsg
+                $response['errors'][$adapterName] = $errMsg
+            }          
+        }
+        Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r", "/t 10") -Wait -NoNewWindow
+    } catch {
+        $errMsg = "Error occurred while optimizing network adapters: $_.Exception.Message"
+        Write-Information $errMsg
+        $response['errors']['networkAdapters'] = $errMsg
+    }
+         
+    if($response.errors.Count -eq 0) {
+        $response['response'] = "SUCCESS"
+    } else {
+        $response['response'] = "FAILED"
+    }
+    
+    $response = $response | ConvertTo-Json
+    if([string]::IsNullOrEmpty($response)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
+    Stop-Transcript | Out-Null
+    return ($response)
+    
+`;
+
+const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceNamePattern: string) => `
     Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     $result = @{}
     try {
-        $SQLService = Get-Service -Name "${serviceName}"
+        $SQLService = Get-Service | Where-Object { $_.Name -like "*${serviceNamePattern}*" } | Select-Object -First 1
+        if ($null -eq $SQLService) {
+            throw [System.Exception] "Service not found"
+        }
+
         if ($SQLService.Status -eq 'Running') { 
-            $result = @{ status = $SQLService.Status }
+            $result = @{ status = 'Running' }
             return
         }
 
         $SQLService.WaitForStatus('Running', '00:00:20')
 
-        $SQLService = Get-Service -Name "${serviceName}"
+        $SQLService = Get-Service | Where-Object { $_.Name -like "*${serviceNamePattern}*" } | Select-Object -First 1
+        if ($null -eq $SQLService) {
+            throw [System.Exception] "Service not found"
+        }
+
         if ($SQLService.Status -eq 'Running') { 
-            $result = @{ status = $SQLService.Status }
+            $result = @{ status = 'Running' }
             return
         }
 
         $SQLService.Start()
         
         $SQLService.WaitForStatus('Running', '00:00:20')
-        $result = @{ status = (Get-Service -Name "${serviceName}").Status }
+        $result = @{ status = (Get-Service | Where-Object { $_.Name -like "*${serviceNamePattern}*" } | Select-Object -First 1).Status.ToString() }
     } catch {
         $result = @{ status = 'failed'; error = $_.Exception.Message }
         Write-Information "Error occurred while checking service status: $_.Exception.Message"
@@ -1126,7 +1274,88 @@ const GET_INSTALLED_MSSQL_VERSION = () => `
 
 const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
     # Get list of snapshot policies on cluster level
-    ${restGetUtilForOntap(fsxId, region, '/storage/snapshot-policies', '', 'fields=svm,scope')}
+    Start-Transcript -Path ${RESILIENCY_OPTIMIZE_LOG_PATH} -Append | Out-Null
+    ${JSON_CHECK};
+    $response = @{}
+    $response['errors'] = @{}
+    $response['response'] = @{}
+    $response['response']['snapshotPolicies'] = @{}
+    $response['errors']['snapshotPolicies'] = @{}
+    $response['response']['snapshotSchedules'] = @{}
+    $response['errors']['snapshotSchedules'] = @{}
+    $FSxID = '${fsxId}'
+    $FSxRegion = '${region}'
+    
+    $snapshotPoliciesUri = '/storage/snapshot-policies'
+    $snapshotPoliciesQueryFilter = "enabled=true"
+    $snapshotPoliciesQueryFields = 'fields=svm,scope,copies'
+    $snapshotPoliciesQueryFilter = 'enabled=true'
+    
+    $snapshotScheduleUri = '/cluster/schedules'
+    $snapshotScheduleQueryFields = 'fields=uuid,interval,cron'
+    ${ontapRestRequest}
+    try {
+        Write-Information "Fetching ONTAP snapshot policies for FSx ID: $FSxID FSX region: $FSxRegion"
+        $response['response']['snapshotPolicies'] = Invoke-ONTAPRequest -ApiEndpoint $snapshotPoliciesUri -ApiQueryFields $snapshotPoliciesQueryFields -ApiQueryFilter $snapshotPoliciesQueryFilter
+    } catch {
+        Write-Information "Error occurred while fetching ONTAP snapshot policies. Error: $_.Exception.Message"
+        $response['errors']['snapshotPolicies'] = $_.Exception.Message
+    }
+    
+    try{
+        Write-Information "Fetching ONTAP snapshot schedules for FSx ID: $FSxID FSX region: $FSxRegion"
+        $response['response']['snapshotSchedules'] = Invoke-ONTAPRequest -ApiEndpoint $snapshotScheduleUri -ApiQueryFields $snapshotScheduleQueryFields
+    } catch {
+        Write-Information "Error occurred while fetching ONTAP snapshot schedules. Error: $_.Exception.Message"
+        $response['errors']['snapshotSchedules'] = $_.Exception.Message
+    }
+    $response = $response | ConvertTo-Json -Depth 7
+    if([string]::IsNullOrEmpty($response)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
+    ${compressResponse}
+    Stop-Transcript | Out-Null
+    return (Deflate-String $response)
+`;
+
+const GET_LATEST_SNAPSHOT_TIME = (volumeUuids: string[], fsxId: string, region: string) => `
+    # Get list of creation dates for latest snapshot copies of each volume
+    Start-Transcript -Path ${RESILIENCY_OPTIMIZE_LOG_PATH} -Append | Out-Null
+    ${JSON_CHECK};
+    $response = @{}
+    $response['errors'] = @{}
+    $response['response'] = @{}
+    $volumes = @(${volumeUuids.map(uuid => `'${uuid}'`).join(', ')})
+    $FSxID = '${fsxId}'
+    $FSxRegion = '${region}'
+    $apiEndpoint = '/storage/volumes/'
+    $apiQueryFilter = "order_by=create_time desc&max_records=1"
+    $apiQueryFields = "fields=create_time"
+    ${ontapRestRequest}
+    try {
+        Write-Information "Getting snapshot copy details for volumes: $volumes"
+        foreach($volume in $volumes) {
+            try {
+                Write-Information "Getting snapshot copy details for volume: $volume"
+                $rawRes = Invoke-ONTAPRequest -ApiEndpoint ($apiEndpoint + $volume + '/snapshots') -ApiQueryFilter $apiQueryFilter -ApiQueryFields $apiQueryFields
+                $response.response[$volume] = $rawRes.records.create_time
+            } catch {
+                $response.errors[$volume] = $_.Exception.Message
+                Write-Information "Error occurred while fetching snapshot copy details for volume: $volume. Error: $_.Exception.Message"
+            }
+        }
+        $response = $response | ConvertTo-Json
+        if([string]::IsNullOrEmpty($response)) {
+            throw "Failed to compress the response because the response is either null or empty. $response"
+        }
+        ${compressResponse}
+        Stop-Transcript | Out-Null
+        return (Deflate-String $response)
+    } catch {
+        Write-Information "Error occurred while fetching snapshot copy details: $_.Exception.Message"
+        Stop-Transcript | Out-Null
+        return $_.Exception.Message
+    }
 `;
 
 /**
@@ -1171,7 +1400,7 @@ const SET_VOLUME_SNAPSHOT_POLICY = (params: BulkOptimizeSnapshotPolicyParamsType
     $res = $res | ConvertTo-Json
 
     if([string]::IsNullOrEmpty($res)) {
-        throw "Failed to compress the response because the response is either null or empty. $response"
+        throw "Failed to compress the response because the response is either null or empty. $res"
     }
     ${compressResponse}
     Stop-Transcript | Out-Null
@@ -1235,6 +1464,41 @@ const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: 
     Write-Output $jsonResult
 `;
 
+const GET_SANDBOX_DETAILS = (instanceName: string, sqlAuthEnabled: boolean, query: string) => `
+    #Get sandbox Details
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $sqlInstanceName = "${instanceName}"
+    $query = "${query}"
+
+    ${slqcmdExecutionTemplate}
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
+    
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+    }
+    
+    $cloneResponse = Call-SqlCmd -SqlCredential $sqlCredential -Query $query -InstanceName "$ServerInstanceName"
+    
+    # Check if $cloneResponse is Null, empty, or whitespace
+    if ([string]::IsNullOrEmpty($cloneResponse) -or $cloneResponse -ieq "Null") {
+        Write-Information "No sandboxes found for the given query."
+        $result = [PSCustomObject]@{
+            cloneResponse = @() # Return an empty array to indicate no sandboxes
+        }
+    } else {
+        $result = [PSCustomObject]@{
+            cloneResponse = $cloneResponse
+        }
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
@@ -1244,11 +1508,15 @@ export {
     MOVE_ALL_CLUSTER_GROUPS,
     GET_CLUSTER_NODE_NAMES,
     GET_RSS_CONFIG_DETAILS,
+    OPTIMIZE_NETWORK_ADAPTERS,
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_SQL_PATCHES,
     GET_INSTALLED_MSSQL_VERSION,
     GET_CLUSTER_SNAPSHOT_POLICIES,
     SET_VOLUME_SNAPSHOT_POLICY,
-    SET_MAXDOP
+    SET_MAXDOP,
+    JSON_CHECK,
+    GET_LATEST_SNAPSHOT_TIME,
+    GET_SANDBOX_DETAILS
 };

@@ -4,8 +4,11 @@ import { ASSESSMENT_CONFIG_NAMES } from '../../../utils/consts';
 import DialogContent from './DialogContent/DialogContent';
 
 //Function for handling the dialog from getwell page
-export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, cardData) => {
-    if (type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH || type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH) {
+export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, cardData, operation, singleRowData) => {
+    if (
+        type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
+        type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH
+    ) {
         setDialog(
             <DialogComponent
                 header={`${type}`}
@@ -43,7 +46,7 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    callOptimizeApi(type);
+                    callOptimizeApi(type, operation, singleRowData);
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -65,7 +68,7 @@ const isDialogPrimaryBtnDisabled = rowData => {
     return rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
 };
 
-export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData) => {
+export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
     setDialog(
         <DialogComponent
             header={`${rowData?.name} optimization`}
@@ -73,7 +76,7 @@ export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowDa
             primaryButton={GENERAL.CONTINUE}
             secondaryButton={GENERAL.CANCEL}
             callback={() => {
-                callOptimizeApi(rowData);
+                callOptimizeApi(rowData, operation, singleRowData);
             }}
             closeCallback={() => {
                 closeDialog();

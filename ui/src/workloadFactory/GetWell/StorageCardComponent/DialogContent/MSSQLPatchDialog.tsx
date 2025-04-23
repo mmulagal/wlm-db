@@ -17,7 +17,7 @@ const MSSQLPatchDialog = ({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                 ...item,
                 id: index
             };
-        })
+        });
     }, [missingPatchList]);
 
     const EncryptionColDefs: ColumnProps[] = [

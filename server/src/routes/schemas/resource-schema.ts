@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox';
 import { RouteTags } from '../../utils/consts';
-import { CredentialsIdParams } from '../types/generic.types';
+import { AccountIdParams, CredentialsIdParams } from '../types/generic.types';
 import {
     FileSystemsCredentialsStatusRequestQuery,
     FileSystemsCredentialsStatusResponse,
@@ -35,10 +35,12 @@ const FileSystemCredentialsStatusSchema = {
 
 const GetManagedResourcesSchema = {
     tags: [RouteTags.RESOURCE],
-    params: CredentialsIdParams,
+    hide: process.env.NODE_ENV === 'production',
+    params: AccountIdParams,
     querystring: ManageResourcesQueryString,
     summary: 'List managed resources',
-    description: 'List managed resources for the given account and region',
+    description:
+        'List managed resources for the given account and multiple optional regions, credentials and database type parameters',
     response: {
         200: ManageResourcesResponse
     }

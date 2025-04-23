@@ -1,4 +1,7 @@
 export interface InventorySliceData {
+    tableManageColumnState: any;
+    selectedFilterValue: {} | any;
+    selectedInventoryTab: string;
     optimizeInnerPageValues: {} | any;
     selectedOptimizeConfig: any;
     breadCrumbSelectedFrom: string;
@@ -12,11 +15,13 @@ export interface InventorySliceData {
         databaseHostsLoading: boolean;
         fullHostDataLoading: boolean;
     };
+    multiMssqlDatabaseHostsData: any;
     getPgSqlDatabaseHosts: {
         databaseHostsData: any;
         databaseHostsLoading: boolean;
         fullHostDataLoading: boolean;
     };
+    multiPgSqlDatabaseHostsData: any;
     discoveredHosts: {
         discoveredHostData: any;
         discoverHostLoading: boolean;
@@ -40,7 +45,6 @@ export interface InventorySliceData {
     unManagedPerfInstanceIdsList: Array<string>;
     managedHostInstanceLoading: boolean;
     selectedHeaderTab: string;
-    managedHostInitialColumns: any;
     isRefreshed: boolean;
     managedAssessmentHostIdsList: Array<string>;
     managedAssessmentHostData: any;
@@ -49,13 +53,30 @@ export interface InventorySliceData {
     potentialSavingsHostData: {
         [key: string]: any;
     };
+    selectedRowsForManage: Array<any>;
+    hostTableRows: Array<any>;
+    instanceTableRows: Array<any>;
+    databaseTableRows: Array<any>;
+    dashSandboxList: {
+        data: Array<any>;
+        loading: boolean;
+        error: string;
+    };
+    dashSandboxSavings: {
+        data: Array<any>;
+        loading: boolean;
+        error: string;
+    };
+    createResourceApiLoading: boolean;
 }
 
 export interface InventoryTableData {
     ec2InstanceId?: string;
     ec2InstanceName?: string;
+    resourceId?: string;
     id?: string;
     name?: string;
+    hostType?: string;
     status?: string;
     ssmState?: string;
     totalInstance?: number;
@@ -72,10 +93,17 @@ export interface InventoryTableData {
     allocatedCapacity?: number;
     isManagedHost?: boolean;
     loading?: boolean;
+    fullManagedInstanceLoading?: boolean;
     isDetected?: boolean;
     storageType?: string;
     sqlServerInstances?: Array<InventoryTableInstanceDatInterface>;
     hasInstanceData?: boolean;
+    credentialId?: string;
+    regionId?: string;
+    credentialName?: string;
+    regionName?: string;
+    accountId?: string;
+    statusColText?: string;
 }
 
 export interface InventoryTableInstanceDatInterface {
@@ -128,6 +156,7 @@ export interface InventoryTableInstanceDatInterface {
         serverEdition?: string;
         serverVersion?: string;
     };
+    sqlServerDeploymentType?: string;
 }
 
 export interface StorageInterface {
@@ -252,6 +281,7 @@ export interface StorageInterface {
 
 export interface ManagedHostsRowInterface {
     id?: string;
+    hostType?: string;
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
@@ -384,6 +414,8 @@ export interface DiscoverHostInterface {
         cidrBlock?: string;
     };
     sqlServerInstances?: Array<SQLServerInstancesDiscovered>;
+    credentialId?: string;
+    regionId?: string;
 }
 
 export interface SQLServerInstancesDiscovered {

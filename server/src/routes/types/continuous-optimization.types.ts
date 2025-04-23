@@ -36,6 +36,32 @@ const GenericViolationResponse = Type.Object({
 
 type GenericViolationResponseType = Static<typeof GenericViolationResponse>;
 
+const CloneDetails = Type.Object({
+    databaseHostName: Type.String(),
+    databaseHostId: Type.String(),
+    databaseInstanceName: Type.String(),
+    sourceDatabaseHostName: Type.Optional(Type.String()),
+    sourceDatabaseInstanceName: Type.Optional(Type.String()),
+    sourceDatabaseName: Type.Optional(Type.String()),
+    cloneDatabaseName: Type.Optional(Type.String()),
+    cloneSize: Type.Optional(Type.Number()),
+    cloneAge: Type.Optional(Type.Number()),
+    clonedBy: Type.Optional(Type.String()),
+    tags: Type.Optional(Type.String()),
+    clonedVolumeDetails: Type.Optional(
+        Type.Array(
+            Type.Object({
+                cloneVolumeUuid: Type.Optional(Type.String()),
+                cloneVolumeName: Type.Optional(Type.String()),
+                cloneVolumeCreateTime: Type.Optional(Type.String()),
+                sourceVolumeName: Type.Optional(Type.String()),
+                cloneDatabaseName: Type.Optional(Type.String()),
+                cloneVolumeType: Type.Optional(Type.String())
+            })
+        )
+    )
+});
+
 const OntapVolume = Type.Object({
     ontapVolumeName: Type.Optional(Type.String()),
     ontapVolumeUuid: Type.Optional(Type.String())
@@ -49,7 +75,7 @@ const ParameterDriftResponse = Type.Object({
     recommended: Type.String(),
     severity: Type.String(),
     recommendation: Type.String(),
-    objectsInViolation: Type.Optional(Type.Array(Type.String())),
+    objectsInViolation: Type.Optional(Type.Array(Type.Union([Type.String(), OntapVolume]))),
     sizingViolations: Type.Optional(
         Type.Object({
             overProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
@@ -67,6 +93,9 @@ const ParameterDriftResponse = Type.Object({
     resourceType: Type.Optional(Type.String())
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
+
+const GenericAssessmentResponse = Type.Union([ParameterDriftResponse, ErrorResponse]);
+type GenericAssessmentResponseType = Static<typeof GenericAssessmentResponse>;
 
 const AdditionalComputeParameterDriftResponse = Type.Optional(
     Type.Object({
@@ -181,6 +210,14 @@ const AdditionalRssConfigParameterDriftResponse = Type.Optional(
     })
 );
 
+const AdditionalCloneParameterDriftResponse = Type.Optional(
+    Type.Object({
+        cloneDetails: Type.Optional(Type.Array(CloneDetails)),
+        oldCloneDetails: Type.Optional(Type.Array(CloneDetails)),
+        cloneDriftMessage: Type.Optional(Type.String())
+    })
+);
+
 const ComputeDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalComputeParameterDriftResponse]);
 type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
 
@@ -196,26 +233,15 @@ type RssConfigDriftResponseType = Static<typeof RssConfigDriftResponse>;
 const MSSQLPatchDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalMSSQLPatchParameterDriftResponse]);
 type MSSQLPatchDriftResponseType = Static<typeof MSSQLPatchDriftResponse>;
 
+const CloneDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalCloneParameterDriftResponse]);
+type CloneDriftResponseType = Static<typeof CloneDriftResponse>;
+
 const StorageParameterErrorResponse = Type.Object({
     name: Type.String(),
     errorMessage: Type.String()
 });
 
-const SnapshotPolicyAssesmentData = Type.Object({
-    timestamp: Type.Number(),
-    tags: Type.Array(Type.String()),
-    violations: Type.Array(Type.String()),
-    severity: Type.String(),
-    status: Type.String(),
-    resourceType: Type.String(),
-    totalObjectsAssessed: Type.Number(),
-    totalObjectsInViolation: Type.Number(),
-    recommendation: Type.String()
-});
-type SnapshotPolicyAssesmentDataType = Static<typeof SnapshotPolicyAssesmentData>;
-
 const StorageParameterDriftResponse = Type.Object({
-    timestamp: Type.Number(),
     configuration: Type.Object({
         volumes: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
         luns: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
@@ -226,21 +252,55 @@ const StorageParameterDriftResponse = Type.Object({
     fileSystems: Type.Array(Type.String())
 });
 
-const ResilienceDriftAssessmentResponse = Type.Object({
-    snapshotPolicy: Type.Optional(Type.Union([SnapshotPolicyAssesmentData, ErrorResponse]))
-});
-type ResilienceDriftAssessmentResponseType = Static<typeof ResilienceDriftAssessmentResponse>;
-
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
+
+const instanceDismissResponse = Type.Object({
+    name: Type.String(),
+    configState: Type.String(),
+    endTime: Type.Optional(Type.Number())
+});
+
+const dismissedConfigurationsResponse = Type.Object({
+    storage: Type.Optional(
+        Type.Object({
+            configuration: Type.Optional(
+                Type.Object({
+                    volumes: Type.Optional(Type.Array(instanceDismissResponse)),
+                    luns: Type.Optional(Type.Array(instanceDismissResponse)),
+                    os: Type.Optional(Type.Array(instanceDismissResponse))
+                })
+            ),
+            sizing: Type.Optional(Type.Array(instanceDismissResponse)),
+            layout: Type.Optional(Type.Array(instanceDismissResponse))
+        })
+    ),
+    compute: Type.Optional(instanceDismissResponse),
+    license: Type.Optional(instanceDismissResponse),
+    hostOsPatch: Type.Optional(instanceDismissResponse),
+    rssConfig: Type.Optional(instanceDismissResponse),
+    maxDOP: Type.Optional(instanceDismissResponse),
+    mssqlPatch: Type.Optional(instanceDismissResponse),
+    crr: Type.Optional(instanceDismissResponse),
+    clone: Type.Optional(instanceDismissResponse),
+    snapshotPolicy: Type.Optional(instanceDismissResponse),
+    awsBackup: Type.Optional(instanceDismissResponse)
+});
+type dismissedConfigurationsResponseType = Static<typeof dismissedConfigurationsResponse>;
+
 const DriftAssessmentResponse = Type.Object({
-    storage: Type.Optional(StorageParameterDriftResponse),
+    storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
     license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
     rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
     maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
     mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse])),
-    resiliency: Type.Optional(Type.Union([ResilienceDriftAssessmentResponse, ErrorResponse]))
+    clone: Type.Optional(Type.Union([CloneDriftResponse, ErrorResponse])),
+    snapshotPolicy: Type.Optional(GenericAssessmentResponse),
+    crr: Type.Optional(GenericAssessmentResponse),
+    awsBackup: Type.Optional(GenericAssessmentResponse),
+    lastAssessmentTimestamp: Type.Optional(Type.Number()),
+    dismissedConfigurations: Type.Optional(dismissedConfigurationsResponse)
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -280,6 +340,30 @@ const BulkOptimizePerHostRequestBody = Type.Object({
     )
 });
 
+const SnapshotSchedule = Type.Object({
+    uuid: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String()),
+    cron: Type.Optional(
+        Type.Object({
+            hours: Type.Optional(Type.Array(Type.Number())),
+            minutes: Type.Optional(Type.Array(Type.Number())),
+            weekdays: Type.Optional(Type.Array(Type.Number())),
+            months: Type.Optional(Type.Array(Type.Number())),
+            days: Type.Optional(Type.Array(Type.Number()))
+        })
+    ),
+    retention: Type.Optional(Type.String()),
+    interval: Type.Optional(Type.String())
+});
+type SnapshotScheduleType = Static<typeof SnapshotSchedule>;
+
+const SnapshotPolicyDetails = Type.Object({
+    uuid: Type.String(),
+    name: Type.String(),
+    schedules: Type.Optional(Type.Array(SnapshotSchedule))
+});
+type SnapshotPolicyDetailsType = Static<typeof SnapshotPolicyDetails>;
+
 const SnapshotPolicy = Type.Object({
     uuid: Type.String(),
     name: Type.String()
@@ -287,7 +371,7 @@ const SnapshotPolicy = Type.Object({
 type SnapshotPolicyType = Static<typeof SnapshotPolicy>;
 
 const AvailableSnapshotPoliciesResponse = Type.Object({
-    snapshotPolicies: Type.Optional(Type.Array(SnapshotPolicy)),
+    snapshotPolicies: Type.Optional(Type.Array(SnapshotPolicyDetails)),
     errorMessage: Type.Optional(Type.String())
 });
 
@@ -299,7 +383,7 @@ const BulkOptimizeSnapshotPolicyRequestBody = Type.Object({
 });
 
 const OptimizeResiliencyBody = Type.Object({
-    type: Type.Array(Type.Enum(OPTIMIZE_RESILIENCY_CONFIGS)),
+    configurationName: Type.Array(Type.Enum(OPTIMIZE_RESILIENCY_CONFIGS)),
     params: Type.Optional(Type.Array(Type.Union([BulkOptimizeSnapshotPolicyRequestBody])))
 });
 type OptimizeResiliencyBodyType = Static<typeof OptimizeResiliencyBody>;
@@ -318,20 +402,46 @@ const OptimizeComputeRequestBody = Type.Object({
 
 type OptimizeComputeRequestBodyType = Static<typeof OptimizeComputeRequestBody>;
 const OptimizeSizingRequestBody = Type.Object({
-    type: Type.Array(Type.Enum(OPTIMIZE_SIZING_CONFIGS))
+    configurationName: Type.Array(Type.Enum(OPTIMIZE_SIZING_CONFIGS))
 });
 
 type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 
-const OptimizePerHostRequestBody = Type.Object({
-    id: Type.String({ minLength: 1 }),
-    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
-    instanceType: Type.Optional(Type.String())
+const UpdateFSxNBackupRequestBody = Type.Object({
+    fsxFileSystemId: Type.Optional(Type.String()),
+    backupRetentionDays: Type.Optional(Type.Number({ minimum: 1, maximum: 90 })),
+    backupStartTime: Type.Optional(
+        Type.String({
+            description: '00:00 to 23:59 padded UTC timestamp',
+            pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+        })
+    )
 });
+
+const OptimizePerHostRequestBody = Type.Intersect([
+    Type.Object({
+        id: Type.String({ minLength: 1 }),
+        sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+        credentialsId: Type.String(),
+        region: Type.String(),
+        instanceType: Type.Optional(Type.String()),
+        networkAdapters: Type.Optional(Type.Array(Type.String()))
+    }),
+    UpdateFSxNBackupRequestBody
+]);
+
 type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;
 
 const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
+});
+
+const OptimizeGenericRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OPTIMIZE_SIZING_CONFIGS,
+        ...OptimizeStorageTierParams
+    }),
+    objectsToOptimize: Type.Optional(Type.Array(Type.String({ minLength: 1 })))
 });
 
 const DriftAssessmentResponsePerAccount = Type.Object({
@@ -341,12 +451,13 @@ const DriftAssessmentResponsePerAccount = Type.Object({
 });
 
 const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
-    type: Type.Enum({
+    configurationName: Type.Enum({
         ...OPTIMIZE_SIZING_CONFIGS,
         ...OptimizeOperatingSystemParams,
         ...OptimizeStorageTierParams,
         ...OptimizeComputeParams,
-        ...OptimizeMaxDopParams
+        ...OptimizeMaxDopParams,
+        ...OPTIMIZE_RESILIENCY_CONFIGS
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });
@@ -358,6 +469,85 @@ const BulkOptimizeGeneralRequestBody = Type.Object({
 });
 
 type BulkOptimizeGeneralRequestBodyType = Static<typeof BulkOptimizeGeneralRequestBody>;
+
+const BulkOptimizeSnapshotPolicyParams = Type.Object({
+    fsxId: Type.String(),
+    region: Type.String(),
+    volUuids: Type.String(),
+    apiBody: Type.String()
+});
+type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
+
+const BulkOptimizeComputePerHostRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OptimizeComputeParams
+    }),
+    databaseHosts: Type.Array(OptimizePerHostRequestBody)
+});
+type BulkOptimizeComputePerHostRequestBodyType = Static<typeof BulkOptimizeComputePerHostRequestBody>;
+
+const BulkOptimizeComputeRequestBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeComputePerHostRequestBody)
+});
+type BulkOptimizeComputeRequestBodyType = Static<typeof BulkOptimizeComputeRequestBody>;
+
+const DatabaseHostsWithInstancesBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
+const DatabaseHostsWithInstances = Type.Intersect([
+    DatabaseHostsWithInstancesBody,
+    Type.Object({
+        status: Type.Optional(Type.String()),
+        failedInstances: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    instanceId: Type.String(),
+                    errorMessage: Type.String()
+                })
+            )
+        )
+    })
+]);
+
+const BulkDismissConfiguration = Type.Object({
+    name: Type.String(),
+    configState: Type.String(),
+    databaseHosts: Type.Array(DatabaseHostsWithInstances)
+});
+
+type BulkDismissConfigurationType = Static<typeof BulkDismissConfiguration>;
+
+const BulkDismissConfigurationBody = Type.Object({
+    name: Type.String(),
+    configState: Type.String(),
+    databaseHosts: Type.Array(DatabaseHostsWithInstancesBody)
+});
+
+type BulkDismissConfigurationBodyType = Static<typeof BulkDismissConfiguration>;
+
+const BulkDismissConfigurationRequestBody = Type.Object({
+    configurationsToDismiss: Type.Array(BulkDismissConfigurationBody)
+});
+
+type BulkDismissConfigurationRequestBodyType = Static<typeof BulkDismissConfigurationRequestBody>;
+
+const BulkDismissConfigurationResponse = Type.Object({
+    dismisssedConfigurations: Type.Array(
+        Type.Object({
+            name: Type.String(),
+            configState: Type.String(),
+            startTime: Type.Number(),
+            endTime: Type.Optional(Type.Number()),
+            databaseHosts: Type.Array(DatabaseHostsWithInstances)
+        })
+    )
+});
+
+type BulkDismissConfigurationResponseType = Static<typeof BulkDismissConfigurationResponse>;
 
 export {
     DriftAssessmentResponse,
@@ -380,10 +570,12 @@ export {
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerAccount,
     MSSQLPatchDriftResponseType,
-    SnapshotPolicyAssesmentDataType,
-    ResilienceDriftAssessmentResponseType,
+    SnapshotSchedule,
+    SnapshotScheduleType,
     SnapshotPolicy,
     SnapshotPolicyType,
+    SnapshotPolicyDetails,
+    SnapshotPolicyDetailsType,
     OntapVolumeType,
     AvailableSnapshotPoliciesResponse,
     AvailableSnapshotPoliciesResponseType,
@@ -398,5 +590,22 @@ export {
     BulkOptimizeGeneralPerHostRequestBodyType,
     GenericViolationResponseType,
     OptimizeResiliencyBodyType,
-    OptimizeResiliencyBody
+    OptimizeResiliencyBody,
+    BulkOptimizeSnapshotPolicyParams,
+    BulkOptimizeSnapshotPolicyParamsType,
+    BulkOptimizeComputePerHostRequestBodyType,
+    BulkOptimizeComputePerHostRequestBody,
+    BulkOptimizeComputeRequestBody,
+    BulkOptimizeComputeRequestBodyType,
+    OptimizeGenericRequestBody,
+    CloneDriftResponseType,
+    GenericAssessmentResponse,
+    GenericAssessmentResponseType,
+    BulkDismissConfigurationType,
+    BulkDismissConfigurationRequestBodyType,
+    BulkDismissConfigurationResponseType,
+    BulkDismissConfigurationRequestBody,
+    BulkDismissConfigurationResponse,
+    dismissedConfigurationsResponseType,
+    BulkDismissConfigurationBodyType
 };

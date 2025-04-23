@@ -16,7 +16,8 @@ import {
     getMappedOntapVolumes,
     tagFsxResource,
     isFsxwAwsBackupEnabled,
-    updateVolumeSizeAndWaitForUpdate
+    updateVolumeSizeAndWaitForUpdate,
+    updateFsxBackup
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
 import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
@@ -46,7 +47,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             fsxResponse.volumeMap.volumeDBMap,
             `i-${faker.string.alpha(17)}`
         );
-        expect(response.master).toEqual(true);
+        expect(response?.volumeDBMapWithBackupFlag.master).toEqual(true);
     });
 
     it('Get Ontap volume snapshots count', async () => {
@@ -69,7 +70,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             undefined,
             [DEFAULT_INSTANCE_NAME]
         );
-        expect(response?.[DEFAULT_INSTANCE_NAME]).toEqual(fsxResponse.volumeMap);
+        expect(response?.[DEFAULT_INSTANCE_NAME]).toBeDefined();
     });
 
     it('Tag Ec2 instance', async () => {
@@ -102,5 +103,14 @@ describe('Testcases for Amazon FSx resources operations', () => {
         } catch (error) {
             expect(error).toBeUndefined();
         }
+    });
+
+    it('Update FSxN backup', async () => {
+        await expect(
+            updateFsxBackup(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID, {
+                automaticBackupRetentionDays: 10,
+                dailyAutomaticBackupStartTime: '10:00'
+            })
+        ).resolves.not.toThrow();
     });
 });

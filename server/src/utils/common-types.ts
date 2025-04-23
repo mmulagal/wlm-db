@@ -1,7 +1,7 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
-import { Static, Type } from '@sinclair/typebox';
+import { GetCommandInvocationCommandOutput } from '@aws-sdk/client-ssm';
 
 interface LicenseAssessment {
     licenseFinding: string;
@@ -31,6 +31,7 @@ interface ComputeAssessment {
 interface HostOsPatchAssessmentObject {
     baselineId: string;
     criticalNonCompliantCount: number;
+    otherNonCompliantCount: number;
     ec2InstanceId: string;
     operationStartTime: number;
     operationEndTime: number;
@@ -77,6 +78,8 @@ interface RssConfigAssesment {
     };
     rssAdapters?: RssAdapter[];
     tcpOffloadState: string;
+    totalObjectsAssessed?: number;
+    totalObjectsInViolation?: number;
 }
 
 interface MaxDOPAssesment {
@@ -85,12 +88,51 @@ interface MaxDOPAssesment {
     status: string;
 }
 
+interface AWSBackupAssessment {
+    fileSystemId: string;
+    isAWSBackupEnabled: boolean;
+    errorMessage?: string;
+}
+
+interface CloneDetail {
+    databaseHostName: string;
+    databaseHostId: string;
+    databaseInstanceName: string;
+    sourceDatabaseHostName?: string;
+    sourceDatabaseInstanceName?: string;
+    sourceDatabaseName?: string;
+    cloneDatabaseName?: string;
+    tag?: string | null;
+    cloneAge?: number;
+    clonedBy?: string;
+    cloneSize?: number;
+    clonedVolumeDetails?: ClonedVolumeDetail[];
+}
+
+interface ClonedVolumeDetail {
+    cloneVolumeUuid?: string;
+    cloneVolumeName?: string;
+    sourceVolumeName?: string;
+    cloneVolumeCreateTime?: string;
+    cloneDatabaseName?: string;
+    cloneVolumeType?: string;
+}
+
+interface CloneAssesment {
+    status: string;
+    cloneDetails?: CloneDetail[];
+    oldClones?: number;
+    oldCloneDetails?: CloneDetail[];
+    oldCloneDatabaseNames?: string[];
+}
+
 interface ResourceAssessmentData {
     license?: LicenseAssessment;
     compute?: ComputeAssessment;
     hostOsPatch?: HostOsPatchAssessmentObject[];
     rssConfig?: RssConfigAssesment;
     maxDOP?: MaxDOPAssesment;
+    clone?: CloneAssesment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
     lastAssessedDate?: string;
     errors?: {
@@ -101,6 +143,16 @@ interface ResourceAssessmentData {
         license?: string;
     };
 }
+
+interface ResourceAssessmentResults {
+    license?: any;
+    compute?: any;
+    hostOsPatch?: any;
+    rssConfig?: any;
+    maxDOP?: any;
+    mssqlPatch?: any;
+}
+
 interface Metadata {
     node1InstanceId: string;
     node2InstanceId?: string;
@@ -121,13 +173,21 @@ interface Metadata {
     isComputeOptimized?: boolean;
     isLicenseOptimized?: boolean;
     isHostOsPatchOptimized?: boolean;
+    isRssConfigOptimized?: string[];
     assessment?: ResourceAssessmentData;
+    assessmentResults?: ResourceAssessmentResults;
 }
-interface databaseInstanceMetadata {
+
+interface DatabaseInstanceMetadata {
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
     configsOptimized?: any;
+    assessmentResults?: any;
+}
+
+interface DatabaseInstanceConfigurations {
+    dismissedConfigurations: DatabaseInstanceDismissConfigs;
 }
 
 interface CreateDbMetrics {
@@ -145,7 +205,7 @@ interface UserDatabase {
     size: number;
     status: string;
     type: string;
-    protection: { isAwsBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
+    protection?: { isAwsBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
     collation: string;
 }
 
@@ -281,7 +341,7 @@ interface DatabaseInstance {
     database_instance_id: string;
     database_type: string;
     is_default: boolean;
-    metadata: databaseInstanceMetadata | JsonValue;
+    metadata: DatabaseInstanceMetadata | JsonValue;
     created_time?: string | Date;
     database_deployment_type?: string;
     fsxn_ids: string;
@@ -296,6 +356,7 @@ interface DatabaseInstance {
     sqlAuthEnabled?: boolean;
     isManaged?: boolean;
     resource: ResourceDetails;
+    configurations?: DatabaseInstanceConfigurations | JsonValue;
 }
 
 interface InstanceDetails {
@@ -334,8 +395,6 @@ interface LogDriveDetails {
     lunUuid: string;
     svmName: string;
     databaseName: string;
-    logDrivePath: string;
-    dataDrivePath: string;
     logAccessPath: string;
     dataAccessPath: string;
     logDriveLetter: string;
@@ -410,6 +469,7 @@ interface StorageAssessment {
         'tempdb-files-location': string;
         'default-log-files-location': string;
         'default-data-files-location': string;
+        'data-tempdb-drive-details': string;
     };
 }
 
@@ -490,15 +550,86 @@ interface DatabaseInstancesIncludingResource extends DatabaseInstances {
 interface StorageTierParams extends OptimizeParams {
     svmId: string;
     svmName: string;
+    volumesToOptimize?: string[];
 }
 
-const BulkOptimizeSnapshotPolicyParams = Type.Object({
-    fsxId: Type.String(),
-    region: Type.String(),
-    volUuids: Type.String(),
-    apiBody: Type.String()
-});
-type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
+interface AwsFsxNBackupConfig {
+    automaticBackupRetentionDays: number;
+    dailyAutomaticBackupStartTime: string;
+}
+
+type MultipleCommandSsmResponse = {
+    commandId: string;
+    instanceId: string;
+    response?: GetCommandInvocationCommandOutput;
+    error?: string;
+};
+
+interface SVM {
+    uuid: string;
+    _links: {
+        self: {
+            href: string;
+        };
+    };
+}
+
+interface ParentVolume {
+    name: string;
+}
+
+interface Clone {
+    is_flexclone?: boolean;
+    parent_volume?: ParentVolume;
+}
+
+interface VolumeRecord {
+    uuid: string;
+    create_time?: string;
+    name: string;
+    snapshot_count?: number;
+    clone?: Clone;
+    svm?: SVM;
+}
+interface VolumeDBMapEntry {
+    ontapVolumeuuid: string;
+    databaseName: string;
+}
+
+interface MappedOnTapVolumeResponse {
+    volumeRecords: VolumeRecord[];
+    volumeDBMap: VolumeDBMapEntry[];
+    lunNames: string[];
+}
+interface InstancesResponse {
+    [key: string]: MappedOnTapVolumeResponse;
+}
+
+interface InstanceDismissParams {
+    name: string;
+    configState: string;
+    startTime: number;
+    endTime?: number;
+    deactivationReason?: string;
+}
+
+interface DatabaseInstanceDismissConfigs {
+    storage?: {
+        configuration?: {
+            volumes?: InstanceDismissParams[];
+            luns?: InstanceDismissParams[];
+            os?: InstanceDismissParams[];
+        };
+        sizing?: InstanceDismissParams[];
+        layout?: InstanceDismissParams[];
+    };
+    compute?: InstanceDismissParams;
+    license?: InstanceDismissParams;
+    hostOsPatch?: InstanceDismissParams;
+    rssConfig?: InstanceDismissParams;
+    maxDop?: InstanceDismissParams;
+    mssqlPatch?: InstanceDismissParams;
+}
 
 export {
     Metadata,
@@ -514,7 +645,7 @@ export {
     UserDatabase,
     MissingPermission,
     MissingPermissionInterface,
-    databaseInstanceMetadata,
+    DatabaseInstanceMetadata,
     Sandbox,
     DatabaseInstance,
     InstanceDetails,
@@ -540,6 +671,17 @@ export {
     RssConfigAssesment,
     MaxDOPAssesment,
     PatchDetail,
-    BulkOptimizeSnapshotPolicyParams,
-    BulkOptimizeSnapshotPolicyParamsType
+    AwsFsxNBackupConfig,
+    MultipleCommandSsmResponse,
+    CloneAssesment,
+    CloneDetail,
+    VolumeRecord,
+    MappedOnTapVolumeResponse,
+    InstancesResponse,
+    VolumeDBMapEntry,
+    AWSBackupAssessment,
+    ResourceAssessmentData,
+    InstanceDismissParams,
+    DatabaseInstanceDismissConfigs,
+    DatabaseInstanceConfigurations
 };

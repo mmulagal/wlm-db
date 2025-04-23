@@ -30,6 +30,18 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 setTagData(['Operational excellence']);
                 break;
 
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                setTagData(['Reliability']);
+                break;
+
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                setTagData(['Reliability']);
+                break;
+
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+                setTagData(['Cost efficiency']);
+                break;
+
             case GENERAL.OPERATING_SYSTEM_PATCH:
                 setTagData(['Security']);
                 break;
@@ -46,6 +58,9 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
 
             case GENERAL.LICENSE_SQL_SERVER:
                 setTagData(['Cost optimization']);
+                break;
+            case ASSESSMENT_CONFIG_NAMES.CRR:
+                setTagData(['Reliability']);
                 break;
 
             case 'ONTAP':

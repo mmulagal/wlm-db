@@ -13,10 +13,17 @@ import { getManagedInstanceOptimizationSummary } from '../../DatabaseHomePage/Da
 const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) => {
     const windowSize = useResize();
     const { allmssqlHostAssessmentLoading, allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
+        state => state.headers
+    );
 
     const instanceOptimizationSummary = useMemo(() => {
         return getManagedInstanceOptimizationSummary(allmssqlHostAssessmentData);
-    }, [allmssqlHostAssessmentData]);
+    }, [allmssqlHostAssessmentData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
+
+    const loading = useMemo(() => {
+        return allmssqlHostAssessmentLoading || multiDataLoading;
+    }, [allmssqlHostAssessmentLoading, multiDataLoading]);
 
     const ChartComponent = useMemo(() => {
         return () => (
@@ -27,9 +34,10 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                 data2={100 - instanceOptimizationSummary?.optimizedPercent}
                 centerText={'Optimization score'}
                 centerValue={`${instanceOptimizationSummary?.optimizedPercent || 0}%`}
+                loading={loading}
             />
         );
-    }, [instanceOptimizationSummary]);
+    }, [instanceOptimizationSummary, loading]);
 
     return (
         <div className={styles.managedInstance}>
@@ -39,7 +47,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                 </DsTypography>
 
                 <div className={styles.ManageInstanceTooltipSection}>
-                    {allmssqlHostAssessmentLoading && <FlashingDotsLoader />}
+                    {loading && <FlashingDotsLoader />}
                     <TooltipInfo>{GENERAL.MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP}</TooltipInfo>
                 </div>
             </div>
@@ -54,7 +62,11 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                     {instanceOptimizationSummary?.totalInstances}
                                 </DsTypography>
 
-                                {allmssqlHostAssessmentLoading && (
+                                {instanceOptimizationSummary?.hasDismissedOrPostponed && (
+                                    <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>
+                                )}
+
+                                {loading && (
                                     <div className={styles.loadingPosition}>
                                         <DsFlashingDotsLoader />
                                     </div>
@@ -70,7 +82,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                             color="var(--chart-4)"
                             text={'Optimized instances'}
                             isLoading={false}
-                            loadingInFirstRow={allmssqlHostAssessmentLoading}
+                            loadingInFirstRow={loading}
                         />
 
                         <SeparatorComponent variant="vertical" height="48px" />
@@ -79,7 +91,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                             color="var(--chart-disabled)"
                             text={'Not-optimized instances '}
                             isLoading={false}
-                            loadingInFirstRow={allmssqlHostAssessmentLoading}
+                            loadingInFirstRow={loading}
                         />
                     </div>
                 </div>
@@ -90,10 +102,16 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                     <ChartComponent />
                     <div className={styles.secondPartSmallRes}>
                         <div className={styles.headSectionSmall}>
-                            <DsTypography variant="Semibold_16" className={styles.heading}>
-                                Total managed instances &nbsp;{instanceOptimizationSummary?.totalInstances}
-                            </DsTypography>
-                            {allmssqlHostAssessmentLoading && (
+                            <div className={styles.manageInstanceTooltipSection}>
+                                <DsTypography variant="Semibold_16">
+                                    Total managed instances &nbsp;{instanceOptimizationSummary?.totalInstances}
+                                </DsTypography>
+                                {instanceOptimizationSummary?.hasDismissedOrPostponed && (
+                                    <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>
+                                )}
+                            </div>
+
+                            {loading && (
                                 <div style={{ position: 'relative', top: '12px' }}>
                                     <DsFlashingDotsLoader />
                                 </div>
@@ -111,7 +129,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <DsTypography className={styles.valueText} variant="Semibold_14">
                                     {String(instanceOptimizationSummary?.optimizedInstances)} instances
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                         </div>
 
@@ -126,7 +144,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <DsTypography className={styles.valueText} variant="Semibold_14">
                                     {String(instanceOptimizationSummary?.notOptimizedInstances)} instances
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                         </div>
                     </div>

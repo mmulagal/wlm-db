@@ -15,6 +15,7 @@ import {
     setInProgressOptimizationData,
     setJobToInstanceMap,
     setLandingFrom,
+    setLandingFromInnerPage,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -25,7 +26,7 @@ import {
     useOptimizeStorageConfigMutation,
     useOptimizeOperatingSystemMutation
 } from '../../../utils/apiService';
-import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
+import { handleDialog, handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 
 import OntapTable from './InnerTables/OntapTable';
 import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
@@ -40,38 +41,28 @@ const OptimizeOntapInnerPage = () => {
     const userNavigated = useRef(false);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
-        useAppSelector(state => state.getWellOptimize);
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedHostname,
+        selectedDatabaseInstanceName,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
+    } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
-    const buttonComponent = () => {
+    const buttonComponent = (rowData: any) => {
         if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
                 <Popover
                     isAppendedToBody={true}
                     children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
-                    trigger="hover"
-                    delayHide={200}
-                    interactive={true}
-                    container={
-                        <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
-                        </DsButton>
-                    }
-                />
-            );
-        } else if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
-            return (
-                <Popover
-                    isAppendedToBody={true}
-                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
                     trigger="hover"
                     delayHide={200}
                     interactive={true}
@@ -89,8 +80,14 @@ const OptimizeOntapInnerPage = () => {
                     variant="secondary"
                     isDisabled={false}
                     onClick={() => {
-                        // optimizeAction(rowData);
-                        // handleDialog(name, rowData, 'single');
+                        handleOntapDialog(
+                            setDialog,
+                            callOptimizeApi,
+                            closeDialog,
+                            selectedOptimizeConfig?.data,
+                            'single',
+                            rowData
+                        );
                     }}
                 >
                     Optimize
@@ -99,8 +96,7 @@ const OptimizeOntapInnerPage = () => {
         }
     };
 
-    const lastColDetails = (name: string, data?: any, width: any = '372px') => {
-        //302
+    const lastColDetails = (name: string, data?: any, width: any = '302px') => {
         return {
             id: '4',
             Header: '',
@@ -111,7 +107,7 @@ const OptimizeOntapInnerPage = () => {
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
-                        {/* {buttonComponent()} */}
+                        {buttonComponent(rowData)}
                     </div>
                 );
             }
@@ -120,7 +116,7 @@ const OptimizeOntapInnerPage = () => {
 
     // This is the function that will be called when the optimize button is clicked from main cards
     // This is the function that will be called when the user clicks on the optimize button from sub menus
-    const callOptimizeApi = (rowData: any) => {
+    const callOptimizeApi = (rowData: any, operation: string, singleRowData: any) => {
         // Only 1 config can be passed at a time
         const state = store.getState();
         let payload = {};
@@ -129,20 +125,41 @@ const OptimizeOntapInnerPage = () => {
         if (rowData?.type === 'volume' || rowData?.type === 'lun') {
             statusType = 'ontap';
             apiCall = optimizeStorageConfig;
-            payload = {
-                assessments: [
-                    {
-                        configurationName: rowData?.id,
-                        objectsToOptimize: rowData?.objectsInViolation
-                    }
-                ]
-            };
+
+            if (operation === 'bulk') {
+                payload = {
+                    assessments: [
+                        {
+                            configurationName: rowData?.id,
+                            objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
+                        }
+                    ]
+                };
+            } else {
+                payload = {
+                    assessments: [
+                        {
+                            configurationName: rowData?.id,
+                            objectsToOptimize: [singleRowData?.objectName]
+                        }
+                    ]
+                };
+            }
         } else {
             statusType = 'os';
             apiCall = optimizeOs;
-            payload = {
-                configurationName: rowData?.id
-            };
+
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: rowData?.id,
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
+                };
+            } else {
+                payload = {
+                    configurationName: rowData?.id,
+                    objectsToOptimize: [singleRowData?.objectName]
+                };
+            }
         }
 
         // call optimize api
@@ -193,8 +210,8 @@ const OptimizeOntapInnerPage = () => {
         );
 
         apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
             databaseHostId: selectedResourceId || selectedOptimizeConfig?.hostId,
             instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
             payload: payload
@@ -227,6 +244,7 @@ const OptimizeOntapInnerPage = () => {
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
                         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        dispatch(setLandingFromInnerPage(true));
                     }
                 }, 1000);
 
@@ -237,18 +255,23 @@ const OptimizeOntapInnerPage = () => {
                 {
                     ...rowData,
                     hostId: selectedResourceId || selectedOptimizeConfig?.hostId,
-                    instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId
+                    instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
+                    credentialId: selectedGwInstanceCredId,
+                    regionId: selectedGwInstanceRegionId
                 },
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                statusType
+                statusType,
+                '',
+                {},
+                true
             );
         });
     };
 
     const handleBulkAction = () => {
-        handleOntapDialog(setDialog, callOptimizeApi, closeDialog, selectedOptimizeConfig?.data);
+        handleOntapDialog(setDialog, callOptimizeApi, closeDialog, selectedOptimizeConfig?.data, 'bulk');
     };
 
     const renderTable = () => {
@@ -324,6 +347,7 @@ const OptimizeOntapInnerPage = () => {
                                 dataTestId: 'wlm-db-optimize-configuration',
                                 onClick: () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    dispatch(setLandingFromInnerPage(true));
                                 }
                             },
                             {

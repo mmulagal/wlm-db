@@ -1,7 +1,7 @@
 .potentialSavings {
     background-color: var(--content-background);
     width: 792px;
-    height: 432px;
+    height: 551px;
     box-shadow: 2px 2px 6px 0px #e0e0e0;
 
     .headSection {
@@ -63,9 +63,105 @@
     // }
 
     .mainSection {
-        padding: 40px 120px 40px 40px;
+        padding: 40px 40px 40px 40px;
         display: flex;
         gap: 112px;
+
+        .imageContainer {
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            margin-top: 80px;
+        }
+
+        .newValueSection {
+            display: flex;
+            gap: 20px;
+            flex-direction: column;
+
+            .leftSide {
+                display: flex;
+                flex-direction: column;
+                gap: 28px;
+
+                .topSection {
+                    display: flex;
+                    gap: 16px;
+
+                    .subContent {
+                        display: flex;
+                        flex-direction: column;
+                        width: max-content;
+
+                        .loaderText {
+                            display: flex;
+                            gap: 8px;
+                        }
+                    }
+                }
+            }
+
+            .textSection {
+                display: flex;
+                gap: 8px;
+                margin-top: 16px;
+                align-items: baseline;
+
+                .square {
+                    width: 12px;
+                    height: 12px;
+                }
+            }
+
+            .rightSide {
+                display: flex;
+                flex-direction: column;
+            }
+
+            [class*='_yLabel'] {
+                margin-top: 10px;
+            }
+        }
+
+        .noDataSection {
+            width: 100%;
+
+            .leftSide {
+                display: flex;
+                flex-direction: column;
+                gap: 28px;
+
+                .noDataBanner {
+                    width: 100%;
+                    height: 92px;
+                    background-color: var(--hover-background);
+                    padding: 16px 40px;
+                    display: flex;
+                    gap: 40px;
+
+                    .section {
+                        display: flex;
+                        flex-direction: column;
+                    }
+                }
+
+                .topSection {
+                    display: flex;
+                    gap: 16px;
+
+                    .subContent {
+                        display: flex;
+                        flex-direction: column;
+                        width: max-content;
+
+                        .loaderText {
+                            display: flex;
+                            gap: 8px;
+                        }
+                    }
+                }
+            }
+        }
 
         .valueSection {
             display: flex;
@@ -77,7 +173,7 @@
             .subContent {
                 display: flex;
                 flex-direction: column;
-                width: 160px;
+                width: max-content;
 
                 .loaderText {
                     display: flex;
@@ -88,6 +184,17 @@
 
         .chartSection {
             max-height: 306px;
+        }
+
+        .newChartSection {
+            max-height: 306px;
+            width: 280px;
+            margin-left: 20px;
+        }
+
+        .chartContainer {
+            display: flex;
+            gap: 56px;
         }
     }
 }
@@ -109,6 +216,10 @@
                 .subContent2 {
                     width: 244px;
                 }
+            }
+
+            .newChartSection {
+                width: 220px;
             }
         }
     }

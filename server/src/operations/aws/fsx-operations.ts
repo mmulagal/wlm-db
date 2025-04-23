@@ -3,9 +3,16 @@ import randomize from 'randomatic';
 import createError from 'http-errors';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { DescribeBackupsCommandInput, ListTagsForResourceCommandInput, Tag } from '@aws-sdk/client-fsx';
+import {
+    Backup,
+    DescribeBackupsCommandInput,
+    FileSystem,
+    ListTagsForResourceCommandInput,
+    Tag
+} from '@aws-sdk/client-fsx';
 import { attempt, compact, isEmpty } from 'lodash-es';
 import ms from 'ms';
+import throat from 'throat';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -15,7 +22,8 @@ import {
     createTag,
     describeFSx,
     describeVolumes,
-    updateFsxVolumeSize
+    updateFsxVolumeSize,
+    updateFileSystem
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -23,15 +31,21 @@ import {
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
-    FSX_BATCH_CONCURRENCY_VALUE,
     AWS_FSX_TYPE,
     HttpErrorCodes,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    HA
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
-import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
+import {
+    AwsFsxNBackupConfig,
+    DatabaseInstance,
+    ResourceDetails,
+    VolumeSpaceRecord,
+    VolumeRecord
+} from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { convertToBytes, getFsxArn, isDemo, sleep } from '../../utils/utils';
+import { convertToBytes, divideArrayIntoChunks, getFsxArn, isDemo, sleep } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
@@ -47,92 +61,118 @@ interface FsxStorage {
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
-async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
-    const enetInterfaceIds = fileSys.NetworkInterfaceIds;
-    const enetInterfaces: DescribeNetworkInterfacesRequest = {
-        Filters: [
-            {
-                Name: 'network-interface-id',
-                Values: enetInterfaceIds
-            }
-        ]
-    };
-    const [{ StorageVirtualMachines: fsxSVMs }, { Volumes: fsxVolumes }, networkInterfacesList] = await Promise.all([
-        describeFSxStorageVirtualMachines(credentialsId, region, fileSys.FileSystemId!),
-        describeFSxVolumes(credentialsId, region, fileSys.FileSystemId!),
-        getNetworkInterfacesList(credentialsId, region, enetInterfaces)
-    ]);
-    const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups ?? []).flat());
+async function getFSXDetails(credentialsId: string, region: string, fileSystems: FileSystem[]) {
+    const allFileSystems: FSxFileSystemType[] = [];
+    const fileSystemChunks = divideArrayIntoChunks(fileSystems, 20);
+    await Promise.all(
+        fileSystemChunks.map(
+            throat(3, async fileSystemChunk => {
+                const fileSystemIds = fileSystemChunk.map(({ FileSystemId }) => FileSystemId!).flat();
+                const enetInterfaceIds = fileSystemChunk.map(({ NetworkInterfaceIds }) => NetworkInterfaceIds!).flat();
+                const enetInterfaces: DescribeNetworkInterfacesRequest = {
+                    Filters: [
+                        {
+                            Name: 'network-interface-id',
+                            Values: enetInterfaceIds
+                        }
+                    ]
+                };
+                const [{ StorageVirtualMachines: fsxSVMs }, { Volumes: fsxVolumes }, networkInterfacesList] =
+                    await Promise.all([
+                        describeFSxStorageVirtualMachines(credentialsId, region, fileSystemIds),
+                        describeFSxVolumes(credentialsId, region, fileSystemIds),
+                        getNetworkInterfacesList(credentialsId, region, enetInterfaces)
+                    ]);
 
-    const volumesList: FSxFileSystemType['volumes'] = fsxVolumes?.map(
-        ({ VolumeId: volumeId, VolumeType: volumeType, OntapConfiguration: volumeOntapConfiguration }) => ({
-            volumeId,
-            volumeType,
-            securityStyle: volumeOntapConfiguration?.SecurityStyle,
-            sizeInMegabytes: volumeOntapConfiguration?.SizeInMegabytes,
-            storageEfficiencyEnabled: volumeOntapConfiguration?.StorageEfficiencyEnabled,
-            storageVirtualMachineId: volumeOntapConfiguration?.StorageVirtualMachineId,
-            ontapVolumeType: volumeOntapConfiguration?.OntapVolumeType
-        })
+                fileSystemChunk.forEach(fileSys => {
+                    const sgs = new Set(
+                        networkInterfacesList
+                            .filter(enet => fileSys.NetworkInterfaceIds.includes(enet.id))
+                            .map(enet => enet.securityGroups ?? [])
+                            .flat()
+                    );
+                    const volumesList: FSxFileSystemType['volumes'] = fsxVolumes
+                        ?.filter(volume => volume.FileSystemId === fileSys.FileSystemId)
+                        .map(
+                            ({
+                                VolumeId: volumeId,
+                                VolumeType: volumeType,
+                                OntapConfiguration: volumeOntapConfiguration
+                            }) => ({
+                                volumeId,
+                                volumeType,
+                                securityStyle: volumeOntapConfiguration?.SecurityStyle,
+                                sizeInMegabytes: volumeOntapConfiguration?.SizeInMegabytes,
+                                storageEfficiencyEnabled: volumeOntapConfiguration?.StorageEfficiencyEnabled,
+                                storageVirtualMachineId: volumeOntapConfiguration?.StorageVirtualMachineId,
+                                ontapVolumeType: volumeOntapConfiguration?.OntapVolumeType
+                            })
+                        );
+
+                    const svmList: FSxFileSystemType['storageVirtualMachines'] = fsxSVMs
+                        ?.filter(svm => svm.FileSystemId === fileSys.FileSystemId)
+                        .map(
+                            ({
+                                StorageVirtualMachineId: storageVirtualMachineId,
+                                Name: storageVirtualMachineName,
+                                ResourceARN: resourceARN,
+                                Subtype: subtype,
+                                Lifecycle: lifeCycle,
+                                CreationTime: creationTime,
+                                UUID: uuid
+                            }) => ({
+                                storageVirtualMachineId,
+                                storageVirtualMachineName,
+                                resourceARN,
+                                lifeCycle,
+                                subtype,
+                                creationTime,
+                                uuid
+                            })
+                        );
+                    const { Tags: tags } = fileSys;
+                    const tag = tags?.find((t: { Key: string }) => t.Key === AWS_RESOURCE_NAME_TAG);
+                    const { OntapConfiguration: ontapConfig } = fileSys;
+                    allFileSystems.push({
+                        fileSystemId: fileSys.FileSystemId!,
+                        name: tag?.Value,
+                        kmsKeyId: fileSys.KmsKeyId,
+                        lifecycle: fileSys.Lifecycle!,
+                        networkInterfaceIds: fileSys.NetworkInterfaceIds,
+                        subnetIds: fileSys.SubnetIds,
+                        vpcId: fileSys.VpcId,
+                        ontapConfiguration: {
+                            deploymentType: ontapConfig?.DeploymentType,
+                            endpointIpAddressRange: ontapConfig?.EndpointIpAddressRange,
+                            fsxAdminPassword: ontapConfig?.FsxAdminPassword,
+                            preferredSubnetId: ontapConfig?.PreferredSubnetId,
+                            routeTableIds: ontapConfig?.RouteTableIds,
+                            throughputCapacity: ontapConfig?.ThroughputCapacity,
+                            diskIopsConfiguration: {
+                                iops: ontapConfig?.DiskIopsConfiguration?.Iops,
+                                mode: ontapConfig?.DiskIopsConfiguration?.Mode
+                            },
+                            endpoints: {
+                                intercluster: {
+                                    dnsName: ontapConfig?.Endpoints?.Intercluster?.DNSName,
+                                    ipAddresses: ontapConfig?.Endpoints?.Intercluster?.IpAddresses
+                                },
+                                management: {
+                                    dnsName: ontapConfig?.Endpoints?.Management?.DNSName,
+                                    ipAddresses: ontapConfig?.Endpoints?.Management?.IpAddresses
+                                }
+                            }
+                        },
+                        volumes: volumesList,
+                        securityGroups: Array.from(sgs),
+                        storageVirtualMachines: svmList
+                    });
+                });
+            })
+        )
     );
 
-    const svmList: FSxFileSystemType['storageVirtualMachines'] = fsxSVMs?.map(
-        ({
-            StorageVirtualMachineId: storageVirtualMachineId,
-            Name: storageVirtualMachineName,
-            ResourceARN: resourceARN,
-            Subtype: subtype,
-            Lifecycle: lifeCycle,
-            CreationTime: creationTime,
-            UUID: uuid
-        }) => ({
-            storageVirtualMachineId,
-            storageVirtualMachineName,
-            resourceARN,
-            lifeCycle,
-            subtype,
-            creationTime,
-            uuid
-        })
-    );
-    // Get the FSx filesystem name, if available.
-    const { Tags: tags } = fileSys;
-    const tag = tags?.find(({ Key: key }: { Key: string }) => key === AWS_RESOURCE_NAME_TAG);
-    const { OntapConfiguration: ontapConfig } = fileSys;
-    return {
-        fileSystemId: fileSys.FileSystemId!,
-        name: tag?.Value,
-        kmsKeyId: fileSys.KmsKeyId,
-        lifecycle: fileSys.Lifecycle!,
-        networkInterfaceIds: fileSys.NetworkInterfaceIds,
-        subnetIds: fileSys.SubnetIds,
-        vpcId: fileSys.VpcId,
-        ontapConfiguration: {
-            deploymentType: ontapConfig.DeploymentType,
-            endpointIpAddressRange: ontapConfig?.EndpointIpAddressRange,
-            fsxAdminPassword: ontapConfig?.FsxAdminPassword,
-            preferredSubnetId: ontapConfig?.PreferredSubnetId,
-            routeTableIds: ontapConfig?.RouteTableIds,
-            throughputCapacity: ontapConfig?.ThroughputCapacity,
-            diskIopsConfiguration: {
-                iops: ontapConfig?.DiskIopsConfiguration?.Iops,
-                mode: ontapConfig?.DiskIopsConfiguration?.Mode
-            },
-            endpoints: {
-                intercluster: {
-                    dnsName: ontapConfig?.Endpoints?.Intercluster?.DNSName,
-                    ipAddresses: ontapConfig?.Endpoints?.Intercluster?.IpAddresses
-                },
-                management: {
-                    dnsName: ontapConfig?.Endpoints?.Management?.DNSName,
-                    ipAddresses: ontapConfig?.Endpoints?.Management?.IpAddresses
-                }
-            }
-        },
-        volumes: volumesList,
-        securityGroups: Array.from(sgs),
-        storageVirtualMachines: svmList
-    };
+    return allFileSystems;
 }
 
 /*
@@ -172,13 +212,15 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
             StorageType === FSX_STORAGE_TYPE
     );
 
-    const ontapFSxFilesystems: FSxFileSystemType[] = await Promise.map(
-        allFSxFilesystems!,
-        async fileSystem => getFSXDetails(credentialsId, region, fileSystem),
-        {
-            concurrency: FSX_BATCH_CONCURRENCY_VALUE
-        }
-    );
+    const ontapFSxFilesystems: FSxFileSystemType[] = await getFSXDetails(credentialsId, region, allFSxFilesystems);
+
+    // const ontapFSxFilesystems: FSxFileSystemType[] = await Promise.map(
+    //     allFSxFilesystems!,
+    //     async fileSystem => getFSXDetails(credentialsId, region, fileSystem),
+    //     {
+    //         concurrency: FSX_BATCH_CONCURRENCY_VALUE
+    //     }
+    // );
 
     return { filesystems: ontapFSxFilesystems };
 }
@@ -259,7 +301,7 @@ async function getFsxnVolIdsFromOntapVolIds(
         volumeUuids
     });
 
-    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, fsxId);
+    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, [fsxId]);
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
@@ -287,7 +329,7 @@ async function isFsxnAwsBackupEnabled(
     region: string,
     fileSystemId: string,
     volumeUuids: string[],
-    volumeDBMap: any,
+    volumeDBMap?: any,
     activeNodeInstanceId?: string
 ) {
     logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled', {
@@ -306,41 +348,63 @@ async function isFsxnAwsBackupEnabled(
             fileSystemId,
             volumeUuids
         );
+        let volumeDBMapWithBackupFlag;
+        const backups: Backup[] = [];
         if (!isEmpty(volumeIds)) {
-            const input: DescribeBackupsCommandInput = {
-                Filters: [
-                    {
-                        Name: 'volume-id',
-                        Values: volumeIds
-                    }
-                ]
-            };
-            const backups = await describeFSxBackups(credentialsId, region, input);
+            const volumeChunks = divideArrayIntoChunks(volumeIds, 20);
+            await Promise.all(
+                volumeChunks.map(
+                    throat(3, async volumeIdsChunk => {
+                        const input: DescribeBackupsCommandInput = {
+                            Filters: [
+                                {
+                                    Name: 'volume-id',
+                                    Values: volumeIdsChunk
+                                }
+                            ]
+                        };
+                        const { Backups } = await describeFSxBackups(credentialsId, region, input);
+                        backups.push(...Backups!);
+                    })
+                )
+            );
 
             // Update the volumeDBMap to mark the volumes that have backups.
+            // And the Backup is latest by 2 days
             const volumeUuidsInBackups: string[] = [];
-            backups.Backups?.forEach(backup => {
+            const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+            const now = new Date();
+
+            backups?.forEach(backup => {
                 const volumeId = backup.Volume?.VolumeId;
-                if (volumeId && uuidVolumeIdMap[volumeId]) {
-                    const volumeUuid = uuidVolumeIdMap[volumeId];
-                    if (!volumeUuidsInBackups.includes(volumeUuid)) {
-                        volumeUuidsInBackups.push(volumeUuid);
+                const volumeUuid = volumeId && uuidVolumeIdMap[volumeId];
+                if (volumeUuid && uuidVolumeIdMap[volumeId]) {
+                    if (backup.CreationTime) {
+                        const backupTime = new Date(backup.CreationTime);
+                        const isLatest = now.getTime() - backupTime.getTime() < twoDaysInMs;
+                        if (isLatest && !volumeUuidsInBackups.includes(volumeUuid)) {
+                            volumeUuidsInBackups.push(volumeUuid);
+                        } else if (!isLatest) {
+                            logger.debug('Found old backup', volumeUuid, backup.BackupId, backupTime);
+                        }
                     }
                 }
             });
 
-            // This function maps the volumes in the volumeDBMap to their backup status,
-            // indicating whether they have backups or not. {master: true, model: true, msdb: true};
-            const volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
-                const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
-                acc[volume.databaseName] = fsxbackup;
-                return acc;
-            }, {});
+            if (volumeDBMap) {
+                // This function maps the volumes in the volumeDBMap to their backup status,
+                // indicating whether they have backups or not. {master: true, model: true, msdb: true};
+                volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
+                    const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
+                    acc[volume.databaseName] = fsxbackup;
+                    return acc;
+                }, {});
+            }
 
             logger.debug('fsx backups here', backups, uuidVolumeIdMap, volumeDBMapWithBackupFlag);
-            return volumeDBMapWithBackupFlag;
+            return { volumeDBMapWithBackupFlag, volumeUuidsInBackups };
         }
-        return false;
+        return { volumeDBMapWithBackupFlag: {}, volumeUuidsInBackups: [] };
     }
 }
 
@@ -369,7 +433,7 @@ async function getOntapVolumesSnapshotCount(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    volumeRecords: Record<string, string | number>[],
+    volumeRecords: VolumeRecord[],
     volumeDBMap: any
 ) {
     logger.info('Fetching ontap snapshots count ', {
@@ -427,7 +491,9 @@ async function getMappedOntapVolumes(
     includeLogVolumes = false,
     accountId?: string,
     executionTimeout?: string,
-    svmOntapUuid?: string
+    svmOntapUuid?: string,
+    instanceOntapDetails?: Record<string, object>,
+    fields: string = ''
 ) {
     const ssmComment = 'Get ontap volumes mapped to data drive of all databases in a server';
     logger.info(ssmComment, {
@@ -440,7 +506,9 @@ async function getMappedOntapVolumes(
         includeLogVolumes,
         accountId,
         executionTimeout,
-        svmOntapUuid
+        svmOntapUuid,
+        instanceOntapDetails,
+        fields
     });
 
     try {
@@ -453,9 +521,10 @@ async function getMappedOntapVolumes(
             psIsSystemDatabase,
             instanceNames,
             isSqlAuthEnabled,
-            '',
+            fields,
             includeLogVolumes,
-            svmOntapUuid
+            svmOntapUuid,
+            instanceOntapDetails
         );
 
         const response = await callSsmExecution(
@@ -486,14 +555,9 @@ async function getMappedOntapVolumes(
                 const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
                 iName = originalInstanceName;
                 if (volumes && !isEmpty(volumes?.records)) {
-                    const volumeRecords = volumes.records.map((record: Record<string, string | number>) => ({
-                        name: record.name,
-                        uuid: record.uuid,
-                        snapshot_count: record.snapshot_count
-                    }));
-                    instancesResponse[iName] = { volumeRecords, volumeDBMap, lunNames };
+                    instancesResponse[iName] = { volumeRecords: volumes.records, volumeDBMap, lunNames };
                 } else {
-                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: {}, lunNames: [] };
+                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: [], lunNames: [] };
                 }
             } else {
                 logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);
@@ -570,7 +634,7 @@ async function getFsxStorageDetails(credentialsId: string, region: string, fileS
     logger.info('Getting FSx storage details', { credentialsId, region, fileSystemId });
     const [fsxSSDCapacity, { Volumes: fsxVolumes }] = await Promise.all([
         getFsxStorageCapacity(credentialsId, region, fileSystemId),
-        describeFSxVolumes(credentialsId, region, fileSystemId)
+        describeFSxVolumes(credentialsId, region, [fileSystemId])
     ]);
 
     const { storage } = fsxSSDCapacity ?? {};
@@ -722,17 +786,64 @@ async function updateVolumeSizeAndWaitForUpdate(
 async function getIscsiTargetAddresses(credentialsId: string, region: string, fsxId: string, svmId: string) {
     // Fetch iSCSCI target addresses
     logger.info('Fetching iSCSI target addresses', { credentialsId, region, fsxId, svmId });
-    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
-        credentialsId,
-        region,
+    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(credentialsId, region, [
         fsxId as string
-    );
+    ]);
     const {
         Endpoints: { Iscsi: { IpAddresses: iscsiTargetAddresses = [] as string[] } = { IpAddresses: [] } } = {
             Iscsi: { IpAddresses: [] }
         }
     } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
     return iscsiTargetAddresses;
+}
+
+async function updateFsxBackup(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fsxFileSystemId: string,
+    configuration: AwsFsxNBackupConfig
+) {
+    logger.info('Updating FSX backup policy', { credentialsId, region, fsxFileSystemId });
+    try {
+        await updateFileSystem(accountId, credentialsId, region, {
+            FileSystemId: fsxFileSystemId,
+            OntapConfiguration: {
+                AutomaticBackupRetentionDays: configuration.automaticBackupRetentionDays,
+                DailyAutomaticBackupStartTime: configuration.dailyAutomaticBackupStartTime
+            }
+        });
+    } catch (err) {
+        logger.error('Error updating file system:', err);
+        throw err;
+    }
+}
+
+async function validateSvmCountCapacity(
+    credentialsId: string,
+    region: string,
+    deploymentType: string,
+    fsxFileSystemId?: string
+) {
+    logger.info('Validating SVM count capacity', { credentialsId, region, fsxFileSystemId, deploymentType });
+
+    if (fsxFileSystemId) {
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(credentialsId, region, [
+            fsxFileSystemId
+        ]);
+        const svmCount = fsxSVMs?.length || 0;
+        if (deploymentType === HA && svmCount > 4) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                `There is not enough space in FSxN to create additional SVMs required for PostgreSQL HA deployment. Current count: ${svmCount}`
+            );
+        } else if (svmCount > 5) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                `There is not enough space in FSxN to create additional SVMs required for PostgreSQL deployment. Current count: ${svmCount}`
+            );
+        }
+    }
 }
 
 export {
@@ -752,5 +863,7 @@ export {
     getFsxVolumeDetails,
     getFsxnVolIdsFromOntapVolIds,
     updateVolumeSizeAndWaitForUpdate,
-    getIscsiTargetAddresses
+    getIscsiTargetAddresses,
+    updateFsxBackup,
+    validateSvmCountCapacity
 };

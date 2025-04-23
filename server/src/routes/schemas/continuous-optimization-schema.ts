@@ -1,15 +1,15 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
-import { CredentialsIdParams } from '../types/generic.types';
+import { AccountIdParams, CredentialsIdParams } from '../types/generic.types';
 import {
     DatabaseHostInstanceSummaryParams,
     DatabaseHostOptionalInstanceSummaryParams,
     DatabaseHostSummaryParams,
     DatabaseQueryString
 } from '../types/database-hosts.types';
+
 import {
     OptimizeStorageRequestBody,
-    OptimizeSizingRequestBody,
     DriftAssessmentResponse,
     OptimizeComputeRequestBody,
     OptimizeOperatingSystemRequestBody,
@@ -17,7 +17,11 @@ import {
     DriftAssessmentResponsePerAccount,
     BulkOptimizeGeneralRequestBody,
     AvailableSnapshotPoliciesResponse,
-    OptimizeResiliencyBody
+    OptimizeResiliencyBody,
+    OptimizeGenericRequestBody,
+    BulkOptimizeComputeRequestBody,
+    BulkDismissConfigurationRequestBody,
+    BulkDismissConfigurationResponse
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -91,7 +95,7 @@ const OptimizeSizingSchema = {
     summary: 'Optimize storage sizing for a database instance',
     description: 'Optimize sizing parameters as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
-    body: OptimizeSizingRequestBody,
+    body: OptimizeGenericRequestBody,
     tags: [RouteTags.ASSESSMENT],
     response: {
         200: Type.Object({
@@ -102,8 +106,8 @@ const OptimizeSizingSchema = {
 
 const OptimizeComputeSchema = {
     ...resourceRequest,
-    summary: 'Optimize compute for a database instance',
-    description: 'Optimize compute as per the best practice for the selected database instance.',
+    summary: 'Optimize compute rightsizing for a database instance',
+    description: 'Optimize compute rightsizing as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeComputeRequestBody,
     tags: [RouteTags.ASSESSMENT],
@@ -134,6 +138,7 @@ const OptimizeStorageTierSchema = {
     description: 'Optimize storage-tier parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
+    body: OptimizeGenericRequestBody,
     response: {
         200: Type.Object({
             jobId: Type.String()
@@ -172,14 +177,16 @@ const OptimizeResilienceSchema = {
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeResiliencyBody,
     tags: [RouteTags.ASSESSMENT],
-    resourceRequest: {
-        200: AvailableSnapshotPoliciesResponse
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
     }
 };
 
 const BulkOptimizeGeneralSchema = {
     ...resourceRequest,
-    params: CredentialsIdParams,
+    params: AccountIdParams,
     tags: [RouteTags.ASSESSMENT],
     body: BulkOptimizeGeneralRequestBody,
     response: {
@@ -208,15 +215,40 @@ const BulkOptimizeStorageTierSchema = {
 };
 
 const BulkOptimizeComputeSchema = {
-    ...BulkOptimizeGeneralSchema,
+    ...resourceRequest,
+    params: AccountIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: BulkOptimizeComputeRequestBody,
     summary: 'Optimize compute',
-    description: 'Optimize compute parameters as per the best practice for selected database instances.'
+    description: 'Optimize compute parameters as per the best practice for selected database instances.',
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
 };
 
 const BulkOptimizeMaxDopSchema = {
     ...BulkOptimizeGeneralSchema,
     summary: 'Optimize max-dop',
     description: 'Optimize max-dop parameters as per the best practice for selected database instances.'
+};
+
+const BulkOptimizeAwsBackupSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Enable scheduled AWS FSx for ONTAP backups',
+    description: 'Enable scheduled AWS FSx for ONTAP backups.'
+};
+
+const BulkDismissConfigurationSchema = {
+    params: AccountIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: BulkDismissConfigurationRequestBody,
+    summary: 'Dismiss Assessment Configurations',
+    description: 'Dismiss Assessment Configurations for selected database instances.',
+    response: {
+        200: BulkDismissConfigurationResponse
+    }
 };
 
 export {
@@ -235,5 +267,7 @@ export {
     BulkOptimizeOperatingSystemSchema,
     BulkOptimizeStorageTierSchema,
     BulkOptimizeComputeSchema,
-    BulkOptimizeMaxDopSchema
+    BulkOptimizeMaxDopSchema,
+    BulkOptimizeAwsBackupSchema,
+    BulkDismissConfigurationSchema
 };

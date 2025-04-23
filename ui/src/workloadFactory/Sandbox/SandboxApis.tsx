@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     setAggregatedSandboxList,
     setAllSandboxList,
+    setIsRefreshedSandbox,
     setSandboxListState,
     setSandboxSavingsState
 } from '../../store/workloadFactory/sandboxSlice';
@@ -11,9 +12,9 @@ import { useGetSandboxListQuery, useGetSandboxSavingsQuery } from '../../utils/a
 const SandboxApis = () => {
     const dispatch = useAppDispatch();
 
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
     const { getSandboxList, aggregatedSandboxList, allSandboxList } = useAppSelector(state => state.sandbox);
-    const { isRefreshed } = useAppSelector(state => state.inventoryV2);
+    const { isRefreshedSandbox } = useAppSelector(state => state.sandbox);
     const { refreshBlocked } = useAppSelector(state => state?.auth);
 
     const [credId, setCredId] = useState(null);
@@ -22,12 +23,22 @@ const SandboxApis = () => {
 
     useEffect(() => {
         if (!refreshBlocked) {
-            setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
+            setCredId(headerSelectedCredSandbox?.data?.credentialsId);
+            setRegionId(headerSelectedRegionSandbox?.label2);
             dispatch(setAggregatedSandboxList([]));
             dispatch(setAllSandboxList([]));
         }
-    }, [headerSelectedCred, headerSelectedRegion, isRefreshed, refreshBlocked]);
+    }, [headerSelectedCredSandbox, headerSelectedRegionSandbox, refreshBlocked]);
+
+    useEffect(() => {
+        if (isRefreshedSandbox) {
+            setCredId(headerSelectedCredSandbox?.data?.credentialsId);
+            setRegionId(headerSelectedRegionSandbox?.label2);
+            dispatch(setAggregatedSandboxList([]));
+            dispatch(setAllSandboxList([]));
+            dispatch(setIsRefreshedSandbox(false));
+        }
+    }, [isRefreshedSandbox]);
 
     const {
         data: sandboxList,
@@ -51,7 +62,7 @@ const SandboxApis = () => {
             credentialId: credId,
             region: regionId
         },
-        { skip: !credId || !regionId || refreshBlocked }
+        { skip: !credId || !regionId || refreshBlocked || aggregatedSandboxList.length }
     );
 
     useEffect(() => {

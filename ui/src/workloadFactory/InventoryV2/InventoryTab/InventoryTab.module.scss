@@ -1,0 +1,50 @@
+.inventoryTab {
+    margin: 0 auto;
+    margin-bottom: 40px;
+
+    border-bottom: 1px solid var(--grey-30);
+    display: flex;
+    gap: 4px;
+    width: 87.3%;
+
+    .headers {
+        height: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: 600;
+        padding-bottom: 12px;
+    }
+
+    .headerWidthFirst {
+        width: 170px;
+    }
+
+    .headerWidthSecond {
+        width: 204px;
+    }
+
+    .headerWidthThird {
+        width: 204px;
+    }
+
+    .headerPart1 {
+        color: var(--text-primary);
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .headerDisabled {
+        color: var(--text-disabled);
+        cursor: not-allowed;
+    }
+
+    .active {
+        border-bottom: 2px solid var(--text-button-primary);
+    }
+
+    .activeText {
+        color: var(--text-button-primary);
+    }
+}

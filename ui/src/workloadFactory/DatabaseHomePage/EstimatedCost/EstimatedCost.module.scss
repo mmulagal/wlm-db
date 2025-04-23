@@ -13,6 +13,12 @@
             gap: 8px;
         }
 
+        .rightTopValue {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
         [class*='TooltipInfo-module_tooltip-base'] {
             max-width: 480px !important;
             padding: 0 !important;
@@ -73,7 +79,6 @@
         margin-top: 24px;
         display: flex;
         gap: 21px;
-        max-width: 435px;
         overflow-x: auto;
 
         .storageSeparator {

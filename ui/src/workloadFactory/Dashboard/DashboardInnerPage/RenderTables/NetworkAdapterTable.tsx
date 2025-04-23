@@ -6,16 +6,17 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
-import BulkActionContainer from './BulkActionContainer';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
-import FirstColumnComponent from './FirstColumnCoponent';
+import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { RSSConfigAdapterInterface } from '../../../../utils/types/getWellTypes';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -27,29 +28,60 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
-        allmssqlHostAssessmentData.map((hostData: any) => {
+        let rssConfigAssessmentData: any = [];
+        let uniqueResourceList: Array<string> = [];
+        allmssqlHostAssessmentData?.map((hostData: any) => {
+            if (
+                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                uniqueResourceList.includes(hostData?.databaseHostId)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(hostData?.databaseHostId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
-                        (item: any) => item.name === 'performance-tier'
-                    );
-                    const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
+                    const rssConfigObj = instanceData?.assessments?.rssConfig;
+                    const rssConfigStateObj = instanceData?.assessments?.dismissedConfigurations?.rssConfig;
+                    const isStorageTierOptimized = isOptimized(rssConfigObj?.status, rssConfigStateObj?.state);
+                    let nonOptimizedAdapters = 0;
+                    rssConfigObj?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
+                        if (!adapter?.rssEnabled) {
+                            nonOptimizedAdapters++;
+                        } else {
+                            if (
+                                adapter?.rssProfile !==
+                                    rssConfigObj?.recommendedAdapterSettings?.recommendedRssProfile ||
+                                adapter?.baseProcessorNumber !==
+                                    rssConfigObj?.recommendedAdapterSettings?.recommendedBaseProcessorNumber ||
+                                adapter?.numberOfReceiveQueues !==
+                                    rssConfigObj?.recommendedAdapterSettings?.recommendedReceiveQueues
+                            ) {
+                                nonOptimizedAdapters++;
+                            }
+                        }
+                    });
                     if (!isStorageTierOptimized) {
-                        storageTierAssessmentData.push({
+                        rssConfigAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
-                            performanceTier: performanceTierObj?.current,
-                            totalObjectsAssessed: performanceTierObj?.totalObjectsAssessed,
-                            totalObjectsInViolation: performanceTierObj?.totalObjectsInViolation,
+                            performanceTier: rssConfigObj?.current,
+                            totalObjectsAssessed: rssConfigObj?.rssAdapters?.length || 0,
+                            totalObjectsInViolation: nonOptimizedAdapters,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
-                            data: instanceData
+                            assessmentStatus: GETWELL_VALUES[rssConfigObj?.status],
+                            data: instanceData,
+                            networkAdapters: rssConfigObj?.rssAdapters?.map((adapter: any) => adapter?.adapterName),
+                            configObj: rssConfigStateObj
                         });
                     }
                 }
@@ -57,21 +89,27 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
         });
         return mapHostStatusToAssessmentData(
             inventoryTableData,
-            storageTierAssessmentData,
+            rssConfigAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+    }, [
+        allmssqlHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
-        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length) {
             return disableOptimizeCheckBoxForOptimizeCase(
                 tableData,
-                ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+                ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
                 selectedRowsForOptimize
             );
         } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
+            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION);
         }
     }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
 
@@ -92,7 +130,7 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {
@@ -105,7 +143,7 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
                 return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
             }
         },
-        lastColDetails(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, {}, inProgressOptimizationData, inProgressHostData)
+        lastColDetails(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION, {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({
@@ -125,13 +163,13 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
 
         disptach(setSelectedRowsForOptimize(rowsData));
 
-        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData, disptach);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION, selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>
@@ -141,7 +179,9 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

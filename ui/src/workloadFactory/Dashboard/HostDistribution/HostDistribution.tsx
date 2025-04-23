@@ -15,6 +15,7 @@ const HostDistribution = () => {
     const pgsqlDatabaseHostsLoading = useAppSelector(
         state => state.inventoryV2.getPgSqlDatabaseHosts.databaseHostsLoading
     );
+    const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const ChartComponent = useMemo(() => {
         return () => (
@@ -25,9 +26,10 @@ const HostDistribution = () => {
                 data2={pgsqlHostData?.totalHosts || 0}
                 centerText={'Total hosts'}
                 centerValue={((mssqlHostData?.totalHosts || 0) + (pgsqlHostData?.totalHosts || 0)).toString()}
+                loading={multiDataLoading}
             />
         );
-    }, [mssqlHostData, pgsqlHostData]);
+    }, [mssqlHostData, pgsqlHostData, multiDataLoading]);
 
     return (
         <div className={styles.hostDistribution}>
@@ -36,7 +38,7 @@ const HostDistribution = () => {
                     Host distribution
                 </DsTypography>
 
-                {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading) && <FlashingDotsLoader />}
+                {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading || multiDataLoading) && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>
@@ -48,7 +50,7 @@ const HostDistribution = () => {
                             value={String(mssqlHostData?.totalHosts || 0)}
                             color="var(--chart-3)"
                             text={windowSize.width > 1700 ? 'Microsoft SQL Server hosts' : 'Microsoft SQL Server'}
-                            loadingInFirstRow={mssqlDatabaseHostsLoading}
+                            loadingInFirstRow={mssqlDatabaseHostsLoading || multiDataLoading}
                         />
                     </div>
 
@@ -59,7 +61,7 @@ const HostDistribution = () => {
                             value={String(pgsqlHostData?.totalHosts || 0)}
                             color="var(--chart-9)"
                             text={windowSize.width > 1700 ? 'PostgreSQL hosts' : 'PostgreSQL'}
-                            loadingInFirstRow={pgsqlDatabaseHostsLoading}
+                            loadingInFirstRow={pgsqlDatabaseHostsLoading || multiDataLoading}
                         />
                     </div>
                 </div>

@@ -17,13 +17,8 @@ import {
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import { useDispatch } from 'react-redux';
-import {
-    setGwDatabaseInstance,
-    setGwDatabaseInstanceName,
-    setGwHostname,
-    setGwResourceId
-} from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import FirstColumnComponent from './FirstColumnCoponent';
+import { setGwPageLoadInstanceData } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import FirstColumnComponent from './FirstColumnComponent';
 
 const OntapConfig = () => {
     const dispatch = useDispatch();
@@ -31,10 +26,21 @@ const OntapConfig = () => {
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
 
     const tableData = useMemo(() => {
         let ontapConfigAssessmentData: any = [];
-        allmssqlHostAssessmentData.map((hostData: any) => {
+        let uniqueResourceList: Array<string> = [];
+        allmssqlHostAssessmentData?.map((hostData: any) => {
+            if (
+                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                uniqueResourceList.includes(hostData?.databaseHostId)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(hostData?.databaseHostId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const lunsData = instanceData?.assessments?.storage?.configuration?.luns;
@@ -56,6 +62,8 @@ const OntapConfig = () => {
 
                     if (notOptimized.length > 0 || errorCase) {
                         ontapConfigAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
@@ -75,7 +83,13 @@ const OntapConfig = () => {
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
         return disableOfflineRows(tableRows);
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+    }, [
+        allmssqlHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
 
     const lastColDetails = () => {
         return {
@@ -134,7 +148,7 @@ const OntapConfig = () => {
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {
@@ -150,10 +164,17 @@ const OntapConfig = () => {
         lastColDetails()
     ];
     const ExpandedRow = useCallback(({ rowData }: any) => {
-        dispatch(setGwHostname(rowData?.hostName));
-        dispatch(setGwResourceId(rowData?.databaseHostId));
-        dispatch(setGwDatabaseInstance(rowData?.instanceId));
-        dispatch(setGwDatabaseInstanceName(rowData?.serverInstanceName));
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: rowData?.hostName,
+                resourceId: rowData?.databaseHostId,
+                instanceId: rowData?.instanceId,
+                instanceName: rowData?.serverInstanceName,
+                credId: rowData?.credentialId,
+                regionId: rowData?.regionId,
+                storageType: rowData?.sqlServerDeploymentType
+            })
+        );
         return (
             <RecommendationTable
                 tableData={rowData?.fullData}

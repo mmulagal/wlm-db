@@ -9,7 +9,7 @@ const InternalUpdateInstRecQueryString = Type.Object({
 const StorageSavingsRequestParams = Type.Composite([
     CredentialsIdParams,
     Type.Object({
-        instanceId: Type.String()
+        instanceId: Type.String({ description: 'AWS EC2 instance ID' })
     })
 ]);
 

@@ -3,16 +3,18 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useMemo } from 'react';
-import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
 import { useState } from 'react';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 
 const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
+    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
 
     const [colName, setColName] = useState('Volume name');
     const [tableHeader, setTableHeader] = useState('Volume');
@@ -29,8 +31,7 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
         return data?.violationDetails?.map((row: any) => ({
             ...row,
             id: String(id++),
-            name: row?.objectName,
-            cellProps: { ...row.cellProps, isDisabled: true }
+            name: row?.objectName
         }));
     }, [data]);
 
@@ -59,9 +60,8 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        // selectionType: 'multiple',
-        selectionType: 'none',
-        defaultSelectedRows: tableData.map((item: any) => item.id)
+        selectionType: 'multiple',
+        defaultSelectedRows: []
     });
 
     useEffect(() => {
@@ -69,9 +69,9 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
 
-        // if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
-        //     checkBoxHandle(tableProps.selectionState, rowsData, disptach);
-        // }
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.ONTAP]?.length) {
+            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
+        }
     }, [tableProps.selectionState]);
 
     return (
@@ -81,15 +81,10 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
                 tableProps={tableProps}
                 pluralTitle={`Impacted ${tableHeader}s`}
                 singularTitle={`Impacted ${tableHeader}`}
-                actionsRight={
-                    <div className={styles.optimizeButton}>
-                        <DsButton onClick={handleBulkAction} isThin variant="primary">
-                            Optimize
-                        </DsButton>
-                    </div>
-                }
             />
-            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />} */}
+            {selectedRowsForOptimizeInnerPage.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

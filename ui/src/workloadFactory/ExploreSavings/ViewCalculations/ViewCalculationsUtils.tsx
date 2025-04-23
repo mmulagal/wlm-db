@@ -47,7 +47,7 @@ export const TableLayout = ({ data }: any) => {
                 paddingTop: 15
             };
         } else {
-            return { backgroundColor: 'var(--main-background)', minHeight: 64, height: 64, marginBottom: 2 };
+            return { backgroundColor: 'var(--main-background)', minHeight: 'auto', height: 'auto', marginBottom: 2 };
         }
     };
     return (

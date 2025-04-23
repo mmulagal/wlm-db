@@ -34,3 +34,14 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .optimizationBreakdown {
+        max-width: unset;
+        [class*='optimizeComponent'] {
+            [class*='rightSection'] {
+                width: 82.59%;
+            }
+        }
+    }
+}

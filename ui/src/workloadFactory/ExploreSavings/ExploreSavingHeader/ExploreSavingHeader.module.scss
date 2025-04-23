@@ -241,3 +241,17 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .exploreSavingsHeader {
+        width: 87.3%;
+        max-width: unset;
+
+        [class*='on-premise-table'] {
+            max-width: unset;
+        }
+        [class*='exploreSavingTable'] {
+            max-width: unset;
+        }
+    }
+}

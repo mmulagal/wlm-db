@@ -10,14 +10,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
 import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { getAssessmentHostListGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import {
-    setGwDatabaseInstance,
-    setGwDatabaseInstanceName,
-    setGwDatabaseStorageType,
-    setGwHostname,
-    setGwResourceId,
-    setLandingFrom
-} from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { setGwPageLoadInstanceData, setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection, setSelectedAssessmentRow } from '../../../store/workloadFactory/databaseHomeSlice';
 import { sortListOfDict } from '../../../utils/utilityFunctions';
@@ -27,7 +20,6 @@ import store from '../../../store/store';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import CategoryDialogComponent from '../ManagedInstanceOptimizationBreakdownByCategory/CategoryDialogComponent/CategoryDialogComponent';
-import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();
@@ -36,6 +28,11 @@ const OptimizeByCategory = () => {
     const categoryData = useMemo(() => {
         return getAssessmentGroupedByCategory(allmssqlHostAssessmentData);
     }, [allmssqlHostAssessmentData]);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
+
+    const loading = useMemo(() => {
+        return allmssqlHostAssessmentLoading || multiDataLoading;
+    }, [allmssqlHostAssessmentLoading, multiDataLoading]);
 
     const redirectToGetWellPage = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
@@ -44,13 +41,18 @@ const OptimizeByCategory = () => {
 
         const updatedState = store.getState();
         const { selectedAssessmentRow }: any = updatedState.databaseHome;
-
-        dispatch(setGwHostname(selectedAssessmentRow?.hostName));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(setGwResourceId(selectedAssessmentRow?.databaseHostId));
-        dispatch(setGwDatabaseInstance(selectedAssessmentRow?.instanceId));
-        dispatch(setGwDatabaseInstanceName(selectedAssessmentRow?.databaseInstanceName));
-        dispatch(setGwDatabaseStorageType(selectedAssessmentRow?.sqlServerDeploymentType));
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: selectedAssessmentRow?.hostName,
+                resourceId: selectedAssessmentRow?.databaseHostId,
+                instanceId: selectedAssessmentRow?.instanceId,
+                instanceName: selectedAssessmentRow?.databaseInstanceName,
+                credId: selectedAssessmentRow?.credentialId,
+                regionId: selectedAssessmentRow?.regionId,
+                storageType: selectedAssessmentRow?.sqlServerDeploymentType
+            })
+        );
         setTimeout(() => {
             dispatch(setSelectedAssessmentRow(null));
         }, 5);
@@ -90,12 +92,12 @@ const OptimizeByCategory = () => {
                 </DsTypography>
 
                 <div className={styles.rightSection}>
-                    {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                    {loading && <DsFlashingDotsLoader />}
                     <DsButton
                         variant="secondary"
                         isThin={true}
                         onClick={() => handleClick()}
-                        isDisabled={allmssqlHostAssessmentLoading}
+                        isDisabled={loading}
                         data-testid="wlm-db-optimize-instances-by-category"
                     >
                         Optimize
@@ -114,7 +116,7 @@ const OptimizeByCategory = () => {
                                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                     {Math.round(((categoryData.storage || 0) / (categoryData.total || 1)) * 100)}%
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
 
                             <DsTypography variant="Semibold_14">Storage</DsTypography>
@@ -130,7 +132,7 @@ const OptimizeByCategory = () => {
                                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                     {Math.round(((categoryData.compute || 0) / (categoryData.total || 1)) * 100)}%
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Semibold_14">Compute</DsTypography>
                         </div>
@@ -145,7 +147,7 @@ const OptimizeByCategory = () => {
                                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                     {Math.round(((categoryData.application || 0) / (categoryData.total || 1)) * 100)}%
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Semibold_14">{GENERAL.APPLICATION}</DsTypography>
                         </div>
@@ -164,7 +166,7 @@ const OptimizeByCategory = () => {
                                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                     {Math.round(((categoryData.resiliency || 0) / (categoryData.total || 1)) * 100)}%
                                 </DsTypography>
-                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Semibold_14">{GENERAL.RESILIENCY}</DsTypography>
                         </div>
@@ -175,8 +177,11 @@ const OptimizeByCategory = () => {
                             <Cloning />
                         </div>
                         <div className={styles.section2}>
-                            <div>
-                                <ComingSoon2 />
+                            <div className={styles.valueArea}>
+                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                    {Math.round(((categoryData.cloning || 0) / (categoryData.total || 1)) * 100)}%
+                                </DsTypography>
+                                {loading && <DsFlashingDotsLoader />}
                             </div>
                             <DsTypography variant="Semibold_14">Cloning</DsTypography>
                         </div>

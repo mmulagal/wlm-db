@@ -260,7 +260,7 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode:
         databaseType === DatabaseTypes.PG_SQL && (sqlDeploymentMode === HA || sqlDeploymentMode === FCI);
     if (databaseType === DatabaseTypes.PG_SQL) {
         FSxDataVolumeSize = FSxDataLunSizeInMib; // Absolute value of database size, as there won't be any LUN incase of NFS mounts
-        FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+        FSxLogVolumeSize = Math.ceil(0.75 * FSxDataVolumeSize); // 75% of FSxDataVolumeSize
         FSxTempDbVolumeSize = 0; // No TempDB volume for PostgreSQL
         FSxQuorumVolumeSize = 0; // No Quorum volume for PostgreSQL
     }
@@ -574,7 +574,11 @@ function getArtifactsRegionBucketName(region: string) {
 function sqlResponseParsing(response: string) {
     try {
         // Some responses have \\r\\n in them, so repeating this step twice to remove all of them
-        const cleanResponse = response.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
+        const cleanResponse = response
+            .replaceAll('\r\n', '')
+            ?.replaceAll('\\r\\n', '')
+            ?.replaceAll('\n', '')
+            ?.replaceAll('\\n', '');
         const jsonResponse = JSON.parse(cleanResponse);
         return jsonResponse;
     } catch (error) {
@@ -746,6 +750,10 @@ async function decompressSSMResponse(response: string) {
         const result = await inflateRawPromise(buffer);
         return result.toString();
     } catch (err) {
+        if (err instanceof Error && err?.message?.toLowerCase()?.includes('invalid block type')) {
+            logger.error('Trying to decompress response that is not base64 encoded', response);
+            return response;
+        }
         logger.error('Error decompressing SSM response', err);
         throw createError('Error decompressing SSM response');
     }
@@ -813,9 +821,18 @@ function extractKbNumber(displayName: string): string | null {
     return match ? match[1] : null;
 }
 
-function extractVersionYear(sqlVersion: string) {
-    const match = sqlVersion.match(/Microsoft SQL Server (\d{4})/);
-    return match ? match[1] : 'Unknown';
+function extractVersionDetails(sqlVersion: string) {
+    const normalizedSqlVersion = sqlVersion.trim();
+
+    const match = normalizedSqlVersion.match(/Microsoft SQL Server (\d{4})/);
+
+    const dateMatch = normalizedSqlVersion.match(/(\w{3}\s+\d{1,2}\s+\d{4})/);
+    const releaseDate = dateMatch ? dateMatch[1] : 'Unknown';
+
+    return {
+        version: match ? match[1] : 'Unknown',
+        releaseDate
+    };
 }
 
 function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: string) {
@@ -860,6 +877,8 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
             'Creating network interfaces for the EC2 instance in standby subnet',
         'NetworkInterface1(AWS::EC2::NetworkInterface)':
             'Creating network interfaces for the EC2 instance in primary subnet',
+        'NetworkInterface3(AWS::EC2::NetworkInterface)':
+            'Creating network interface for PgPool instance in primary subnet',
         'ValidationNode2(AWS::EC2::Instance)':
             'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
         'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
@@ -885,7 +904,8 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
         'SqlNode1(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ${
             stackSqlDeploymentType === 'Standalone' ? 'standalone on an' : 'ha on primary'
         } EC2 instance`,
-        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`
+        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`,
+        'PgPoolNode(AWS::EC2::Instance)': 'Configuring PgPool instance'
     };
 
     if (dbEngineType === RESOURCESTYPE.PGSQL) {
@@ -930,6 +950,53 @@ function parseMultipleCommandResponse(response: string) {
     const jsonObjects = response.match(/(\{.*?\})(?=\{|\s*$)/g);
 
     return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
+}
+
+function divideArrayIntoChunks(array: any[], chunkSize: number) {
+    const chunksArray = array.reduce((resultArray: any[][], item, index) => {
+        const chunkIndex = Math.floor(index / chunkSize);
+
+        if (!resultArray[chunkIndex]) {
+            resultArray[chunkIndex] = []; // start a new chunk
+        }
+
+        resultArray[chunkIndex].push(item);
+
+        return resultArray;
+    }, []);
+    return chunksArray;
+}
+
+function isValidProp(propName: string) {
+    return propName && propName !== 'undefined' && propName !== 'null';
+}
+
+/**
+ * Calculates the number of days between two dates.
+ * @param startDate - The start date.
+ * @param endDate - The end date. Defaults to the current date if not provided.
+ * @returns The number of days between the two dates.
+ */
+function calculateDaysSince(startDate: string | Date, endDate: string | Date = new Date()): number {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const timeDifference = end.getTime() - start.getTime();
+    return Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+}
+
+function determineVolumeType(cloneVolumeName: string): 'log' | 'data' | 'unknown' {
+    if (cloneVolumeName.includes('sqllog')) {
+        return 'log';
+    }
+    if (cloneVolumeName.includes('sqldata')) {
+        return 'data';
+    }
+    return 'unknown'; // Default case if neither 'sqllog' nor 'sqldata' is found
+}
+
+function generateSqlResourceId(node1InstanceId: string, node2InstanceId?: string): string {
+    const sortedInstanceIds = [node1InstanceId, node2InstanceId].sort();
+    return node2InstanceId ? generateHash(sortedInstanceIds.join('')) : generateHash(node1InstanceId);
 }
 
 export {
@@ -981,10 +1048,15 @@ export {
     parsePgSqlInstanceInfo,
     getServerNameWithHostname,
     extractKbNumber,
-    extractVersionYear,
+    extractVersionDetails,
     isMssql,
     isPgsql,
     isValidEmail,
     isRateLimited,
-    parseMultipleCommandResponse
+    parseMultipleCommandResponse,
+    divideArrayIntoChunks,
+    isValidProp,
+    calculateDaysSince,
+    determineVolumeType,
+    generateSqlResourceId
 };

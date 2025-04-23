@@ -15,38 +15,46 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, StorageSavings);
-        }, 5000);
+        }, 100);
     }
 );
 
 router.get(`${BASE_URL}/v1/mssql/onprem-tco/resources`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, ExploreSavingsOnPrem);
-    }, 1000);
+    }, 100);
 });
 
 router.post(`${BASE_URL}/v1/mssql/onprem-tco/resources/:resourceId/explore-savings`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, OnPremCalculations);
-    }, 1000);
+    }, 100);
 });
 
 router.post(`${BASE_URL}/v1/mssql/regions/:region/manual-storage-savings/ebs`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, StorageSavings);
-    }, 5000);
+    }, 50);
 });
 
 router.post(`${BASE_URL}/v1/mssql/onprem/upload`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, UploadScript);
-    }, 5000);
+    }, 50);
 });
 
 router.post(`${BASE_URL}/v1/notification/email?emailType=savings-calculations`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, SendEmail);
-    }, 5000);
+    }, 50);
+});
+
+router.delete(`${BASE_URL}/v1/mssql/onprem-tco/resources/:resourceId`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            count: 1
+        });
+    }, 50);
 });
 
 router.post(
@@ -54,7 +62,7 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, ViewCalculations);
-        }, 5000);
+        }, 50);
     }
 );
 
@@ -64,7 +72,7 @@ router.post(
         setTimeout(() => {
             // generateResponse(res, 200, ViewCalculations);
             generateResponse(res, 200, ViewCalculations);
-        }, 5000);
+        }, 50);
     }
 );
 
@@ -73,14 +81,14 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, StorageSavingsFsxw);
-        }, 5000);
+        }, 50);
     }
 );
 
 router.post(`${BASE_URL}/v1/mssql/regions/:region/manual-storage-savings/fsxw`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, StorageSavingsFsxw);
-    }, 5000);
+    }, 50);
 });
 
 router.post(
@@ -88,7 +96,7 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, ViewCalculationsFsxw);
-        }, 5000);
+        }, 50);
     }
 );
 
@@ -98,7 +106,7 @@ router.post(
         setTimeout(() => {
             // generateResponse(res, 200, ViewCalculations);
             generateResponse(res, 200, ViewCalculationsFsxw);
-        }, 5000);
+        }, 50);
     }
 );
 

@@ -22,6 +22,11 @@ export interface CreateSandboxEntities {
         dbMountPointsData: any;
         dbMountPointsLoading: boolean;
     };
+    selectedCs: {
+        selectedDatabaseHost: any;
+        selectedDatabaseInstance: any;
+        selectedDatabase: any;
+    };
     source: {
         selectedDatabaseHost: any;
         selectedDatabaseInstance: any;
@@ -44,6 +49,8 @@ export interface CreateSandboxEntities {
     showError: boolean;
     dataFilePath: string;
     logFilePath: string;
+    selectedSandboxCredId: string | null;
+    selectedSandboxRegionId: string | null;
 }
 
 export interface CreateSandboxPayloadEntities {
@@ -107,6 +114,7 @@ export interface SandboxEntities {
     rollbackSnapshotList: any;
     isRollbackSelected: boolean;
     selectedRollbackSnapshot: any;
+    isRefreshedSandbox: boolean;
 }
 
 export type SandboxActions = 'delete' | 'refresh' | 'rebaseline' | 'split' | 'integrityCheck';

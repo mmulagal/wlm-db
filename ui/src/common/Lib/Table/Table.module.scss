@@ -1,0 +1,227 @@
+@use './mixins.scss';
+
+.table-wrapper {
+    font-family: var(--default_font);
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    box-shadow: 2px 2px 6px var(--drop-shadow);
+    width: 100%;
+    background-color: var(--content-background);
+    &.innerTable {
+        box-shadow: none;
+        .table {
+            .header-row .header-cell {
+                top: var(--table-top-fixed, 0px); // Table top doesnt exist
+                background-color: var(--content-background);
+            }
+            .body .row .cell {
+                background-color: var(--main-background);
+                border-bottom: 1px solid var(--content-background);
+                &.col-0 {
+                    border-left: 0;
+                }
+                &.last-col {
+                    border-right: 0;
+                }
+            }
+        }
+    }
+
+    .table {
+        flex: 1;
+        font-size: 14px;
+        display: grid;
+        grid-auto-rows: auto;
+        box-sizing: border-box;
+        overflow: visible;
+
+        &.fixed-cell-width {
+            display: flex;
+            flex-direction: column;
+
+            .header-row {
+                position: sticky;
+                top: var(--table-top-fixed, 68px); // Table top bar is 68px
+                display: grid;
+                grid-auto-rows: auto;
+                overflow: hidden;
+                z-index: 2;
+            }
+
+            .body {
+                display: grid;
+                grid-auto-rows: auto;
+                overflow: hidden;
+            }
+        }
+
+        .header-row {
+            display: contents;
+
+            .header-cell {
+                background-color: var(--table-header-background);
+                padding-left: 24px;
+                display: flex;
+                align-items: center;
+                box-sizing: border-box;
+                height: 56px;
+                color: var(--text-primary);
+                font-weight: bold;
+                position: sticky;
+                top: var(--table-top-fixed, 68px); // Table top bar is 68px
+                gap: 8px;
+                z-index: 2;
+                overflow: hidden;
+                box-shadow: none;
+
+                &.sticky {
+                    position: sticky;
+                    z-index: 3;
+                }
+
+                .header-name {
+                    flex: 1;
+                }
+
+                .filter-sort-wrapper {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 4px;
+
+                    .sort-button {
+                        svg {
+                            width: 14px;
+                            height: 14px;
+                            --icon-primary-color: var(--icon-secondary);
+                        }
+                        &:hover:not(:disabled) {
+                            svg {
+                                --icon-primary-color: var(--icon-secondary-hover);
+                            }
+                        }
+                        &:disabled {
+                            svg {
+                                --icon-primary-color: var(--icon-secondary-disabled);
+                            }
+                        }
+                    }
+                }
+
+                .right-border {
+                    border-right: 1px solid var(--icon-secondary);
+                    display: var(--display-cell-right-border, block);
+                    height: 17px;
+                    opacity: 0.5;
+                    cursor: col-resize;
+                    padding-left: 3px;
+                    box-sizing: content-box;
+                    margin-right: 1px;
+                }
+
+                &.last-col .right-border {
+                    opacity: 0;
+                }
+                &.col-0 {
+                    border-left: 1px solid transparent;
+                }
+            }
+        }
+
+        .body {
+            display: contents;
+
+            > .row {
+                display: contents;
+
+                &:not(.disabled-row):hover,
+                &.highlighted-row {
+                    .cell {
+                        background-color: var(--hover-background);
+                    }
+                }
+
+                &.disabled-row {
+                    .cell {
+                        cursor: auto;
+                        color: var(--text-disabled);
+                    }
+                }
+
+                .cell {
+                    display: flex;
+                    align-items: center;
+                    padding: 0 5px 0 24px;
+                    border-bottom: 1px solid var(--border);
+                    box-sizing: border-box;
+                    border-top: none;
+                    height: 56px;
+                    text-overflow: ellipsis;
+                    background-color: var(--content-background);
+                    min-width: 0;
+                    overflow: hidden;
+                    color: var(--text-primary);
+
+                    &.high-row {
+                        height: 72px;
+                    }
+
+                    &.col-0 {
+                        border-left: 1px solid var(--border);
+                    }
+
+                    &.last-col {
+                        border-right: 1px solid var(--border);
+                    }
+
+                    &.sticky {
+                        position: sticky;
+                        z-index: 1;
+                    }
+
+                    .skeleton {
+                        height: 15px;
+                        background-color: var(--border);
+                        @include mixins.loading-mask();
+                    }
+                }
+
+                .expanded-row-section {
+                    border-right: 1px solid var(--border);
+                    border-left: 1px solid var(--border);
+                    box-shadow: inset 0px -1px 0px var(--border);
+                }
+            }
+        }
+    }
+
+    .empty-table {
+        height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        background-color: var(--content-background);
+        color: var(--text-secondary);
+        &.smaller-table {
+            height: 183px;
+        }
+    }
+
+    .horizontal-scroll {
+        @include mixins.standard-horizontal-scroll();
+        z-index: 2;
+        height: 16px;
+        background-color: var(--content-background);
+        border-top: 1px solid var(--border);
+        position: sticky;
+        bottom: var(--horizontal-scroll-bottom, 0);
+        overflow-x: auto;
+
+        .scroll {
+            height: 1px;
+        }
+    }
+}

@@ -157,11 +157,11 @@
                     gap: 52px;
                     flex-wrap: wrap;
                     .dropDown {
-                        width: 264px;
+                        width: 220px;
 
                         [class*='dsTextFieldFrame'] {
-                            max-width: 264px !important;
-                            width: 264px;
+                            max-width: 220px !important;
+                            width: 220px;
                         }
 
                         .not-optimized-tooltip {
@@ -270,6 +270,20 @@
         }
     }
 
+    .storageConfig {
+        [class*='_storageCardComponent'] {
+            [class*='commonSection'] {
+                width: 210px;
+            }
+        }
+
+        [class*='_storageCardComponent'] {
+            [class*='_firstSection'] {
+                width: 233px;
+            }
+        }
+    }
+
     [class*='isExpanded'] {
         max-height: 2500px !important;
         overflow: hidden;
@@ -292,6 +306,35 @@
                         max-width: 216px !important;
                         width: 216px !important;
                     }
+                }
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .getWell {
+        .header {
+            width: 87.3%;
+            max-width: unset;
+
+            div:nth-child(2) {
+                margin-right: calc(2% + 20px);
+            }
+        }
+        .sectionTwo {
+            width: 87.3%;
+            max-width: unset;
+
+            [class*='storageCardComponent'] {
+                [class*='commonSection'] {
+                    width: 15.43%;
+                }
+                [class*='thirdSection'] {
+                    width: 13.93% !important;
+                }
+                [class*='fourthSection'] {
+                    width: 10.57%;
                 }
             }
         }

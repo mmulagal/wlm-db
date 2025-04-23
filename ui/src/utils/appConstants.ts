@@ -28,6 +28,21 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    ACTIVATING_MESSAGE: 'Active. Will be analyzed in the next analysis.',
+    DISMISSED_MESSAGE: 'This issue is dismissed.',
+    CLONE_MANAGEMENT_REFRESH: 'Clone cleanup Refresh',
+    CLONE_MANAGEMENT_DELETE: 'Clone cleanup Delete',
+    ALL_CRED_SELECTED: 'All credentials selected',
+    NO_CRED_SELECTED: 'No credentials selected',
+    ALL_REGIONS_SELECTED: 'All regions selected',
+    NO_REGIONS_SELECTED: 'No regions selected',
+    ASSESSMENT_PERFORMED: 'Automatic daily analysis',
+    LAST_UPDATE: 'Last update:',
+    ASSESS_NOW: 'Analyze now',
+    MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',
+    POSTGRESQL_TYPE: 'PostgreSQL',
+    USER_DATABASE: 'User Database',
+    SYSTEM_DATABASE: 'System Database',
     MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Optimize',
     REBASE_LINE: 'Re-baseline',
@@ -188,7 +203,7 @@ export const GENERAL = {
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
-    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across multiple Availability Zones',
+    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Failover Cluster Instance across multiple Availability Zones',
     PGSQL_STANDALONE: 'Deploy your PostgreSQL Server on a single node',
     PGSQL_HA:
         'Deploy your PostgreSQL Server across multiple Availability Zones for high availability and data redundancy',
@@ -282,6 +297,7 @@ export const GENERAL = {
     PASSWORD_FSX_1: 'The password must be at least eight characters long.',
     PASSWORD_FSX_2: 'The password must contain at least one letter and one number.',
     PASSWORD_FSX_3: 'The password cannot contain the user name.',
+    PASSWORD_FSX_4: 'The password cannot contain the word "admin".',
     //Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
@@ -850,6 +866,12 @@ export const GENERAL = {
         'Job monitoring',
         ' to see when the modules have been installed.'
     ],
+    PREPARE_BULK_INSTANCES_INFO: [
+        'Few instances ',
+        'are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
     PREPARE_HOST_INFO_TAB3: [
         'Host ',
         ' is now an unmanaged host. It failed to become a managed host because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
@@ -858,6 +880,7 @@ export const GENERAL = {
     ],
     FCI: 'FCI',
     AOAG: 'Always on availability group',
+    HA: 'High availability',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
     PERMISSIONS: 'Permissions',
@@ -1111,8 +1134,11 @@ export const GENERAL = {
     REFRESH_SNAPSHOT_RADIO: 'Refresh to point in time',
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
+    PGSQL_CTA_NA: 'Coming soon',
+    DATABASE_AVAILABLE_MSG: 'Databases are available for managed instances only.',
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
+    PGSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
@@ -1138,20 +1164,22 @@ export const GENERAL = {
     MANAGE_DISABLE_FOR_UNDETECTED:
         'This instance is currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     NO_UNMANAGED_TO_MANAGE:
-        'All SQL Server instances on this host are either managed or undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are either managed or undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
-        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
     ALL_FSXN_MANAGED_TEXT:
-        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
     ALL_UNDETECT_TEXT:
-        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
-        'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently undetected. To explore savings on this instance first click on view instance, and then select "detect" from the menu.',
     ALL_ES_FSXW_AOAG_ROWS:
         'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
     NON_SSD_FSXW_MSG:
         'Explore Savings for FSx for Windows File Server is only supported for SSD file system storage type.',
+    MANAGED_SUPPORT_FOR_EBS_FSXW:
+        'Manage instance is not supported for EBS and FSx for Windows File Server storage type.',
     MIXED_STORAGE_ES_MSG: 'Explore Savings for mixed storage type is not supported.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
@@ -1226,7 +1254,7 @@ export const GENERAL = {
     SQL_COLLATION_NOTE:
         'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You/’ll be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You will be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:
         'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
@@ -1241,8 +1269,22 @@ export const GENERAL = {
     APPLICATION: 'Application (SQL Server)',
     RESILIENCY: 'Resiliency',
     SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
+    SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
+    CRR: 'Cross-Region Replication (CRR)',
+    CLONING: 'Cloning',
+    CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
+        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
+    CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
+    CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
+    MANAGED_INSTANCE_DISMISS_INFO:
+        'You postponed the analysis for some instances in your database configurations. Instances with postponed analysis do not affect the optimization score.',
+    MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.',
+    DISMISS_MIX_CASE_TOOLTIP: 'This configurations analysis is dismissed or postponed for some of the instances.',
+    DISMISS_PAGE_MSG: [
+        'You can postpone or dismiss the analysis of a specific configuration for your SQL Server instances. Postponing delays the analysis for 30 days and dismissing the analysis stops',
+        "the analysis until you reactivate it manually. Postponed or dismissed configuration analyses won't affect the total optimization score."
+    ]
 };
 
 export const CODE_VIEWER = {

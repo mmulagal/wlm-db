@@ -25,7 +25,8 @@ export const initialSandboxState: SandboxEntities = {
     rollbackSnapshotsLoading: false,
     rollbackSnapshotList: [],
     isRollbackSelected: false,
-    selectedRollbackSnapshot: null
+    selectedRollbackSnapshot: null,
+    isRefreshedSandbox: false
 };
 
 const sandboxSlice = createSlice({
@@ -70,6 +71,9 @@ const sandboxSlice = createSlice({
             state.rollbackSnapshotList = [];
             state.isRollbackSelected = false;
             state.selectedRollbackSnapshot = null;
+        },
+        setIsRefreshedSandbox: (state, action: PayloadAction<any>) => {
+            state.isRefreshedSandbox = action.payload;
         }
     }
 });
@@ -86,7 +90,8 @@ export const {
     updateRollbackSnapshotList,
     updateIsRollbackSelected,
     updateSelectedRollbackSnapshot,
-    resetRefreshDialog
+    resetRefreshDialog,
+    setIsRefreshedSandbox
 } = sandboxSlice.actions;
 
 export default sandboxSlice;

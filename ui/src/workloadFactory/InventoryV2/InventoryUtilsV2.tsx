@@ -3,16 +3,21 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../s
 import store from '../../store/store';
 import {
     setFsxCredentialStatus,
+    setInProgressInstances,
+    setInventoryTableData,
     setManagedAssessmentHostIdsList,
     setSelectedHeaderTab,
+    setSelectedRowsForManage,
     setUnManagedPerfInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
+    DBType,
     DETECT_HOST_VAR,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
     PARTNER_NODE,
+    PREPARE_API_ENDPOINT,
     PROTECTION_TEXT_STATUS,
     SQL_DEPLOYMENT_MODE,
     WLF_TABS
@@ -47,13 +52,23 @@ import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUti
 import { HostAssessmentResponseInterface } from '../../utils/types/getWellTypes';
 import CopyToClipboardCommon from '../../common/CopyToClipboard/copyToClipboard';
 
+export const uniqueHostRow = (id: string, cred: string, region: string) => {
+    return id + '_' + cred + '_' + region;
+};
+
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
     if (!managedData) {
         return result;
     }
+    let state = store.getState();
+    const { credentialMapping, regionMapping } = state?.headers;
     Object.keys(managedData).map((key: string) => {
-        result = { ...result, ...{ [key]: formatManagedRows(managedData[key]) } };
+        let awsKeys = key.split('_');
+        result = {
+            ...result,
+            ...{ [key]: formatManagedRows(managedData[key], awsKeys, credentialMapping, regionMapping) }
+        };
     });
     return result;
 };
@@ -94,13 +109,19 @@ export const getInventoryDataCount = (data: { [key: string]: InventoryTableData 
     return result;
 };
 
-export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
+export const formatManagedRows = (
+    managedRow: ManagedHostsRowInterface,
+    keys: Array<string>,
+    credentialMapping: any,
+    regionMapping: any
+) => {
     let managedInstanceCount = managedInstancesCount(managedRow);
     let totalInstanceCount = managedRow?.databaseInstanceDetails?.length || 0;
     let ssmState = getSsmState(managedRow);
     let allocatedCapacity = getAllocatedCapacity(managedRow);
 
     const result = {
+        hostType: managedRow?.hostType,
         id: managedRow?.id,
         ec2InstanceId: managedRow?.nodeTopology?.ec2Details?.[0]?.id,
         ec2InstanceName: managedRow?.nodeTopology?.ec2Details?.[0]?.name,
@@ -119,6 +140,7 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         actionDisable: totalInstanceCount === managedInstanceCount,
         isManagedHost: true,
         loading: managedRow?.loading,
+        fullManagedInstanceLoading: managedRow?.loading, // This loading is specific to database-hosts api if loaded fully for a host or not
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
         totalCost: getTotalCost(managedRow?.estimatedUsageCost || {}),
@@ -126,7 +148,12 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
         storageType: GENERAL.FSX_FOR_ONTAP,
         isDetected: true,
-        sqlServerInstances: formatInstanceData(managedRow)
+        sqlServerInstances: formatInstanceData(managedRow),
+        credentialId: keys?.[1],
+        regionId: keys?.[2],
+        credentialName: credentialMapping?.[keys?.[1]]?.name,
+        accountId: credentialMapping?.[keys?.[1]]?.providerAccountId,
+        regionName: regionMapping?.[keys?.[2]]?.regionName
     };
     return result;
 };
@@ -198,6 +225,8 @@ export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) =
             installationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
         } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
             installationMode = GENERAL.AOAG;
+        } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+            installationMode = GENERAL.HA;
         }
         return installationMode;
     } else {
@@ -223,6 +252,8 @@ export const getAllInstallationMode = (row: ManagedHostsRowInterface | undefined
                 perInstallationMode = GENERAL.AOAG;
             } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
                 perInstallationMode = GENERAL.STANDALONE;
+            } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+                perInstallationMode = GENERAL.HA;
             }
             if (!installationMode.includes(perInstallationMode)) {
                 installationMode.push(perInstallationMode);
@@ -295,9 +326,6 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
     }
 
     if (fsxType) {
-        if (fsxType === 'fsxw') {
-            let a = 1;
-        }
         let fsxTypeValue = val?.storage?.[fsxType] || {};
         storagePercent = fsxTypeValue ? (Number(fsxTypeValue?.spaceSavings) / Number(fsxTypeValue?.used)) * 100 : 0;
         if (val?.storage?.[fsxType]?.spaceSavings && val?.storage?.[fsxType]?.used) {
@@ -394,7 +422,10 @@ export const getFsxIdsFromdiscover = (data: Array<DiscoverHostInterface>) => {
         instances?.sqlServerInstances?.map((inst: SQLServerInstancesDiscovered) => {
             inst?.storage?.map((storageObj: DiscoveredStorageObj) => {
                 if (storageObj.type === DETECT_HOST_VAR.FSXN) {
-                    fsxIds.push(storageObj.id || '');
+                    let fsxId = storageObj?.id || '';
+                    if (!fsxIds.includes(fsxId)) {
+                        fsxIds.push(fsxId);
+                    }
                 }
             });
         });
@@ -423,7 +454,9 @@ export const getPrimaryClusterNode = (
                     return (
                         perHost?.ec2InstanceId !== host?.ec2InstanceId &&
                         perHost?.nodesList &&
-                        perHost.nodesList.includes(val)
+                        perHost.nodesList.includes(val) &&
+                        perHost?.credentialId === host?.credentialId &&
+                        perHost?.regionId === host?.regionId
                     );
                 });
                 // checking same vpc or not
@@ -449,16 +482,26 @@ export const getPrimaryClusterNode = (
 
                 if (isManagedNode1 || isManagedNode2) {
                     if (partnerNode?.ec2InstanceId) {
-                        removeRows.push(partnerNode?.ec2InstanceId);
+                        removeRows.push(
+                            uniqueHostRow(
+                                partnerNode?.ec2InstanceId,
+                                partnerNode?.credentialId || '',
+                                partnerNode?.regionId || ''
+                            )
+                        );
                     }
                     if (host?.ec2InstanceId) {
-                        removeRows.push(host?.ec2InstanceId);
+                        removeRows.push(
+                            uniqueHostRow(host?.ec2InstanceId, host?.credentialId || '', host?.regionId || '')
+                        );
                     }
                     return;
                 } else {
                     let combinedData = combineClusterData(host, partnerNode, removeRows);
                     if (combinedData) {
-                        clusterDiscoveredHost[combinedData?.key] = combinedData?.data;
+                        clusterDiscoveredHost[
+                            uniqueHostRow(combinedData?.key, host?.credentialId || '', host?.regionId || '')
+                        ] = combinedData?.data;
                         // clusterDiscoveredHost = {...clusterDiscoveredHost, [combinedData?.key] : combinedData?.data};
                     }
                 }
@@ -472,7 +515,9 @@ export const getPrimaryClusterNode = (
 
                 if (isManagedNode1) {
                     if (host?.ec2InstanceId) {
-                        removeRows.push(host?.ec2InstanceId);
+                        removeRows.push(
+                            uniqueHostRow(host?.ec2InstanceId, host?.credentialId || '', host?.regionId || '')
+                        );
                     }
                     return;
                 }
@@ -514,7 +559,9 @@ export const combineClusterData = (
     });
     if (primaryNode === node?.ec2InstanceId) {
         if (partner?.ec2InstanceId) {
-            removeRows.push(partner?.ec2InstanceId);
+            removeRows.push(
+                uniqueHostRow(partner?.ec2InstanceId, partner?.credentialId || '', partner?.regionId || '')
+            );
         }
         result = {
             key: primaryNode,
@@ -526,7 +573,7 @@ export const combineClusterData = (
         };
     } else {
         if (node?.ec2InstanceId) {
-            removeRows.push(node?.ec2InstanceId);
+            removeRows.push(uniqueHostRow(node?.ec2InstanceId, node?.credentialId || '', node?.regionId || ''));
         }
         result = {
             key: primaryNode,
@@ -587,23 +634,50 @@ export const formatDiscoveredInventoryData = (
     if (!discoveredData) {
         return result;
     }
+    let state = store.getState();
+    const { credentialMapping, regionMapping } = state?.headers;
     discoveredData?.map((perRow: DiscoverHostInterface) => {
-        if (removeRows.includes(perRow.ec2InstanceId)) {
+        if (
+            removeRows.includes(uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || ''))
+        ) {
             return;
         }
-        if (clusterDiscoveredHost?.[perRow.ec2InstanceId]) {
+        if (
+            clusterDiscoveredHost?.[
+                uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')
+            ]
+        ) {
             result = {
                 ...result,
-                ...{ [perRow.ec2InstanceId]: formatDiscoveredRows(clusterDiscoveredHost[perRow.ec2InstanceId]) }
+                ...{
+                    [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
+                        formatDiscoveredRows(
+                            clusterDiscoveredHost[
+                                uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')
+                            ],
+                            credentialMapping,
+                            regionMapping
+                        )
+                }
             };
         } else {
-            result = { ...result, ...{ [perRow.ec2InstanceId]: formatDiscoveredRows(perRow) } };
+            result = {
+                ...result,
+                ...{
+                    [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
+                        formatDiscoveredRows(perRow, credentialMapping, regionMapping)
+                }
+            };
         }
     });
     return result;
 };
 
-export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
+export const formatDiscoveredRows = (
+    discoveredRow: DiscoverHostInterface,
+    credentialMapping: any,
+    regionMapping: any
+) => {
     let totalInstanceCount = discoveredRow?.sqlServerInstances?.length || 0;
     let ssmState = getDiscoverSsmState(discoveredRow);
     let perInstanceStatus = getDiscoveredPerInstanceStatus(discoveredRow, ssmState);
@@ -637,11 +711,17 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
         ec2Details: ec2Details,
+        hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE,
         // **** Below values will get from Instances API *****
         // estimatedUsageCost: {}, // Initially it will be blank
         // totalCost: '',
         // allocatedCapacity: '',
-        sqlServerInstances: formatDiscoverInstanceData(discoveredRow, perInstanceStatus)
+        sqlServerInstances: formatDiscoverInstanceData(discoveredRow, perInstanceStatus),
+        credentialId: discoveredRow?.credentialId,
+        regionId: discoveredRow?.regionId,
+        credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
+        accountId: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.providerAccountId,
+        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName
     };
     return result;
 };
@@ -686,6 +766,8 @@ export const getDiscoverInstallationMode = (row: DiscoverHostInterface) => {
             installationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
         } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
             installationMode = GENERAL.AOAG;
+        } else if (installationMode.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+            installationMode = GENERAL.HA;
         }
         return installationMode;
     } else {
@@ -705,6 +787,8 @@ export const getAllDiscoverInstallationMode = (row: DiscoverHostInterface) => {
                 perInstallationMode = GENERAL.AOAG;
             } else if (perInstallationMode === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
                 perInstallationMode = GENERAL.STANDALONE;
+            } else if (perInstallationMode === SQL_DEPLOYMENT_MODE.HA) {
+                perInstallationMode = GENERAL.HA;
             }
             if (perInstallationMode && !installationMode.includes(perInstallationMode)) {
                 installationMode.push(perInstallationMode);
@@ -929,6 +1013,12 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
         return data;
     }
 
+    const databasesWeights: any = {
+        [DBType.MSSQL]: 30000,
+        [DBType.ORACLE]: 20000,
+        [DBType.POSTGRESQL]: 10000
+    };
+
     const statusWeights: any = {
         [INVENTORY_STATUS.ONLINE]: 3000,
         [INVENTORY_STATUS.OFFLINE]: 2000,
@@ -959,15 +1049,89 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
             bManageWeight = 5;
         }
         const weightA =
+            databasesWeights[a?.hostType || ''] +
             statusWeights[a.status || ''] +
             actionWeights[a?.storageType || ''] +
             aManageWeight +
             isDetectedWeights[a?.isDetected?.toString() || ''];
         const weightB =
+            databasesWeights[b?.hostType || ''] +
             statusWeights[b.status || ''] +
             actionWeights[b?.storageType || ''] +
             bManageWeight +
             isDetectedWeights[b?.isDetected?.toString() || ''];
+
+        return weightB - weightA;
+    });
+
+    return result;
+};
+
+export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
+    if (!data || data.length < 2) {
+        return data;
+    }
+
+    const databasesWeights: any = {
+        [DBType.MSSQL]: 30000,
+        [DBType.ORACLE]: 20000,
+        [DBType.POSTGRESQL]: 10000
+    };
+
+    const statusWeights: any = {
+        [INVENTORY_STATUS.CASE_SENSITIVE_UP]: 3000,
+        [INVENTORY_STATUS.RUNNING]: 3000,
+        [INVENTORY_STATUS.CASE_SENSITIVE_DOWN]: 2000,
+        [INVENTORY_STATUS.STOPPED]: 2000,
+        [INVENTORY_STATUS.UNKNOWN]: 1000,
+        '': 0
+    };
+
+    const isManagedWeights: any = {
+        [INVENTORY_STATUS.MANAGED]: 300,
+        [INVENTORY_STATUS.UNMANAGED]: 200,
+        [INVENTORY_STATUS.IN_PROGRESS]: 200,
+        [INVENTORY_STATUS.UNDETECTED]: 100,
+        '': 0
+    };
+
+    const result = data.slice().sort((a, b) => {
+        const weightA =
+            databasesWeights[a?.hostType || ''] +
+            statusWeights[a.status || ''] +
+            isManagedWeights[a?.statusColText || ''];
+        const weightB =
+            databasesWeights[b?.hostType || ''] +
+            statusWeights[b.status || ''] +
+            isManagedWeights[b?.statusColText || ''];
+
+        return weightB - weightA;
+    });
+
+    return result;
+};
+
+export const sortDatabaseTableData = (data: Array<InventoryTableData>) => {
+    if (!data || data.length < 2) {
+        return data;
+    }
+    // Sorting based on database type and status
+    const databasesWeights: any = {
+        [DBType.MSSQL]: 30000,
+        [DBType.ORACLE]: 20000,
+        [DBType.POSTGRESQL]: 10000
+    };
+
+    const statusWeights: any = {
+        ONLINE: 3000,
+        OFFLINE: 2000,
+        UNKNOWN: 1000
+    };
+
+    const result = data.slice().sort((a, b) => {
+        const weightA = databasesWeights[a?.hostType || ''] + statusWeights[a.status || ''];
+
+        const weightB = databasesWeights[b?.hostType || ''] + statusWeights[b.status || ''];
 
         return weightB - weightA;
     });
@@ -980,12 +1144,28 @@ export const getMhUnmanagedInstances = (
     runningInstanceList: Array<string>
 ) => {
     let instanceList: Array<string> = [];
+    let updatedState = store.getState();
+    let { headerSelectedCred, headerSelectedRegion }: any = updatedState?.headers;
     Object.keys(databaseHostsData).map((key: string) => {
-        if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId || '')) {
+        if (
+            runningInstanceList.includes(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            )
+        ) {
             return;
         }
         if (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) {
-            instanceList.push(databaseHostsData[key]?.ec2InstanceId || '');
+            instanceList.push(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            );
         }
     });
     return instanceList;
@@ -997,14 +1177,28 @@ export const getUnmanagedHostInstances = (
 ) => {
     let instanceList: Array<string> = [];
     Object.keys(databaseHostsData).map((key: string) => {
-        if (runningInstanceList.includes(databaseHostsData[key]?.ec2InstanceId || '')) {
+        if (
+            runningInstanceList.includes(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            )
+        ) {
             return;
         }
         if (
             (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) ||
             (databaseHostsData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && databaseHostsData[key]?.isDetected)
         ) {
-            instanceList.push(databaseHostsData[key]?.ec2InstanceId || '');
+            instanceList.push(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            );
         }
     });
     return instanceList;
@@ -1026,7 +1220,13 @@ export const updateInstancesApiResponse = (
             let inventoryRow;
             let resourceId = '';
             Object.keys(inventoryTableData).map((inst: string) => {
-                if (inventoryTableData[inst]?.ec2InstanceId === key) {
+                let currInst = inventoryTableData[inst];
+                if (
+                    currInst?.ec2InstanceId &&
+                    currInst?.credentialId &&
+                    currInst?.regionId &&
+                    uniqueHostRow(currInst?.ec2InstanceId, currInst?.credentialId, currInst?.regionId) === key
+                ) {
                     inventoryRow = inventoryTableData[inst];
                     resourceId = inst;
                 }
@@ -1372,7 +1572,13 @@ export const updateSqlServerInstancesForBothNodes = (
                     (perRow?.storage?.fsxw?.size || 0) +
                     (perRow?.storage?.ebs?.size || 0);
             }
-            const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow, partnerData?.id);
+            const perfData = getPerfUnmanagedData(
+                existingInstanceRow?.ec2InstanceId || '',
+                existingInstanceRow?.credentialId || '',
+                existingInstanceRow?.regionId || '',
+                instRow,
+                partnerData?.id
+            );
             return {
                 ...instRow,
                 loading: perfData?.loading,
@@ -1429,7 +1635,12 @@ export const updateSqlServerInstancesForUnmanaged = (
                     : (perRow?.storage?.fsxn?.size || 0) +
                       (perRow?.storage?.fsxw?.size || 0) +
                       (perRow?.storage?.ebs?.size || 0);
-                const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
+                const perfData = getPerfUnmanagedData(
+                    existingInstanceRow?.ec2InstanceId || '',
+                    existingInstanceRow?.credentialId || '',
+                    existingInstanceRow?.regionId || '',
+                    instRow
+                );
                 return {
                     ...instRow,
                     databaseCount: perRow?.databaseCount,
@@ -1447,10 +1658,16 @@ export const updateSqlServerInstancesForUnmanaged = (
                         isManagedHost && statusObj?.[0]?.status ? statusObj?.[0]?.status : instRow?.statusColText,
                     fileSystemDeploymentMode:
                         instRow?.fileSystemDeploymentMode ||
-                        getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode)
+                        getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
+                    sqlServerDeploymentType: instRow?.sqlServerDeploymentType || perRow?.sqlServerDeploymentType
                 };
             } else {
-                const perfData = getPerfUnmanagedData(existingInstanceRow?.ec2InstanceId || '', instRow);
+                const perfData = getPerfUnmanagedData(
+                    existingInstanceRow?.ec2InstanceId || '',
+                    existingInstanceRow?.credentialId || '',
+                    existingInstanceRow?.regionId || '',
+                    instRow
+                );
                 return {
                     ...instRow,
                     loading: false,
@@ -1463,12 +1680,20 @@ export const updateSqlServerInstancesForUnmanaged = (
     return instanceRows;
 };
 
-export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId?: string) => {
+export const getPerfUnmanagedData = (
+    instanceId: string,
+    credentialId: string,
+    regionId: string,
+    instRow: any,
+    partnerId?: string
+) => {
     const updatedState = store.getState();
     const perfMssqlInstancesData = updatedState.inventoryV2.perfMssqlInstancesData;
-    if (perfMssqlInstancesData?.[instanceId] && partnerId && perfMssqlInstancesData?.[partnerId]) {
-        let perfData1 = perfMssqlInstancesData?.[instanceId];
-        let perfData2 = perfMssqlInstancesData?.[partnerId];
+    let uniqueInstanceId = uniqueHostRow(instanceId, credentialId, regionId);
+    let uniquePartnerId = uniqueHostRow(partnerId || '', credentialId, regionId);
+    if (perfMssqlInstancesData?.[uniqueInstanceId] && partnerId && perfMssqlInstancesData?.[uniquePartnerId]) {
+        let perfData1 = perfMssqlInstancesData?.[uniqueInstanceId];
+        let perfData2 = perfMssqlInstancesData?.[uniquePartnerId];
         const perRow1 = perfData1?.data?.databaseInstancesSummary?.find(
             (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
         );
@@ -1494,8 +1719,8 @@ export const getPerfUnmanagedData = (instanceId: string, instRow: any, partnerId
                 performance: null
             };
         }
-    } else if (perfMssqlInstancesData?.[instanceId]) {
-        let perfData = perfMssqlInstancesData?.[instanceId];
+    } else if (perfMssqlInstancesData?.[uniqueInstanceId]) {
+        let perfData = perfMssqlInstancesData?.[uniqueInstanceId];
         if (perfData?.loading) {
             return {
                 loading: true,
@@ -1531,7 +1756,7 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
         }
-        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && item?.isDetected) {
+        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
             if (!checkForMixedStorageType(item)) {
                 if (item?.storageType === GENERAL.FSX_FOR_WINDOWS) {
                     if (checkForAnySSD(item) && !checkForAnyAOAG(item)) {
@@ -1555,7 +1780,29 @@ export const updateInstanceStatus = (
 ) => {
     let updatedState = store.getState();
     let { inventoryTableData }: any = updatedState?.inventoryV2;
-    const targettedHostId = inventoryTableData?.[hostData?.resourceId] ? hostData?.resourceId : hostData?.ec2InstanceId;
+
+    let targettedHostIdVal = inventoryTableData?.[
+        uniqueHostRow(hostData?.resourceId, hostData?.credentialId, hostData?.regionId)
+    ]
+        ? hostData?.resourceId
+        : inventoryTableData?.[uniqueHostRow(hostData?.ec2InstanceId, hostData?.credentialId, hostData?.regionId)]
+        ? hostData?.ec2InstanceId
+        : '';
+    if (!targettedHostIdVal) {
+        Object.keys(inventoryTableData).map((perObj: any) => {
+            let item = inventoryTableData[perObj];
+            if (
+                item?.ec2InstanceId === hostData?.ec2InstanceId &&
+                item?.credentialId === hostData?.credentialId &&
+                item?.regionId === hostData?.regionId
+            ) {
+                targettedHostIdVal = item?.resourceId || item?.ec2InstanceId;
+            }
+        });
+    }
+
+    const targettedHostId = uniqueHostRow(targettedHostIdVal, hostData?.credentialId, hostData?.regionId);
+
     const updatedInventoryTableData = { ...inventoryTableData };
     if (action === 'unmanage') {
         updatedInventoryTableData[targettedHostId] = {
@@ -1617,6 +1864,72 @@ export const updateInstanceStatus = (
     return updatedInventoryTableData;
 };
 
+export const updateInstanceBulkStatus = (action: InstanceActions, response: any) => {
+    let updatedState = store.getState();
+    let { inventoryTableData }: any = updatedState?.inventoryV2;
+    const updatedInventoryTableData = { ...inventoryTableData };
+
+    response?.map((hostData: any) => {
+        let successFullInstances: any = [];
+        let failedInstances = [];
+        hostData?.instances?.map((item: any) => {
+            if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                successFullInstances.push(item);
+            } else {
+                failedInstances.push(item);
+            }
+        });
+        let targettedHostIdVal = inventoryTableData?.[
+            uniqueHostRow(hostData?.resourceId, hostData?.credentialsId, hostData?.region)
+        ]
+            ? hostData?.resourceId
+            : inventoryTableData?.[uniqueHostRow(hostData?.ec2InstanceId, hostData?.credentialsId, hostData?.region)]
+            ? hostData?.ec2InstanceId
+            : '';
+        if (!targettedHostIdVal) {
+            Object.keys(inventoryTableData).map((perObj: any) => {
+                let item = inventoryTableData[perObj];
+                if (
+                    item?.ec2InstanceId === hostData?.ec2InstanceId &&
+                    item?.credentialId === hostData?.credentialsId &&
+                    item?.regionId === hostData?.region
+                ) {
+                    targettedHostIdVal = item?.resourceId || item?.ec2InstanceId;
+                }
+            });
+        }
+
+        const targettedHostId = uniqueHostRow(targettedHostIdVal, hostData?.credentialsId, hostData?.region);
+
+        if (action === 'manage') {
+            updatedInventoryTableData[targettedHostId] = {
+                ...inventoryTableData[targettedHostId],
+                managedInstance:
+                    inventoryTableData[targettedHostId]?.managedInstance + successFullInstances?.length || 0,
+                action: INVENTORY_ACTIONS.MANAGE,
+                actionDisable:
+                    inventoryTableData[targettedHostId]?.totalInstance ===
+                        inventoryTableData[targettedHostId]?.managedInstance + successFullInstances?.length || 0,
+                sqlServerInstances: inventoryTableData[targettedHostId]?.sqlServerInstances.map((instanceItem: any) => {
+                    const instanceInRes = successFullInstances.find(
+                        (item: any) => item?.databaseInstanceName === instanceItem?.databaseInstanceName
+                    );
+                    if (instanceInRes?.databaseInstanceName) {
+                        return {
+                            ...instanceItem,
+                            databaseInstanceId: instanceInRes.databaseInstanceGuid,
+                            statusColText: INVENTORY_STATUS.MANAGED
+                        };
+                    }
+                    return instanceItem;
+                })
+            };
+        }
+    });
+
+    return updatedInventoryTableData;
+};
+
 export const detectFieldsValidation = (entryData: any) => {
     const state = store.getState();
     const { detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword } = state.inventoryV2;
@@ -1657,6 +1970,8 @@ export const getDiscoveredHostDeploymentV2 = (host: any) => {
         type = GENERAL.FAILOVER_CLUSTER_INSTANCES;
     } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
         type = GENERAL.STANDALONE;
+    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+        type = GENERAL.HA;
     } else {
         type = sqlServerDeploymentType;
     }
@@ -1808,9 +2123,9 @@ export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
     let awsProtection = val?.protection?.isAwsBackupEnabled;
     let protectionText: any = '';
     if (fsxType) {
-        if (awsProtection?.[fsxType] && awsProtection?.[fsxType] !== GENERAL.NOT_AVAILABLE) {
+        if (awsProtection?.[fsxType] && String(awsProtection?.[fsxType])?.toLowerCase() !== GENERAL.NOT_AVAILABLE) {
             protectionText = true;
-        } else if (awsProtection?.[fsxType] === GENERAL.NOT_AVAILABLE) {
+        } else if (String(awsProtection?.[fsxType])?.toLowerCase() === GENERAL.NOT_AVAILABLE) {
             protectionText = GENERAL.NOT_AVAILABLE;
         } else if (!awsProtection?.[fsxType]) {
             protectionText = false;
@@ -1819,15 +2134,15 @@ export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
         }
     } else {
         if (
-            (awsProtection?.fsxn && awsProtection?.fsxn !== GENERAL.NOT_AVAILABLE) ||
-            (awsProtection?.fsxw && awsProtection?.fsxw !== GENERAL.NOT_AVAILABLE) ||
-            (awsProtection?.ebs && awsProtection?.ebs !== GENERAL.NOT_AVAILABLE)
+            (awsProtection?.fsxn && String(awsProtection?.fsxn)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.fsxw && String(awsProtection?.fsxw)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.ebs && String(awsProtection?.ebs)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
         ) {
             protectionText = true;
         } else if (
-            awsProtection?.fsxn === GENERAL.NOT_AVAILABLE ||
-            awsProtection?.fsxw === GENERAL.NOT_AVAILABLE ||
-            awsProtection?.ebs === GENERAL.NOT_AVAILABLE
+            String(awsProtection?.fsxn)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(awsProtection?.fsxw)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(awsProtection?.ebs)?.toLowerCase() === GENERAL.NOT_AVAILABLE
         ) {
             protectionText = GENERAL.NOT_AVAILABLE;
         } else if (awsProtection) {
@@ -1858,11 +2173,14 @@ export const getProtectionText = (data: any) => {
 
     if (fsxType === 'ebs' || fsxType === 'fsxw') {
         if (
-            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
-            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+            (awsBackupEnabled && String(awsBackupEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && String(sqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
         ) {
             protectionText = PROTECTION_TEXT_STATUS.YES;
-        } else if (awsBackupEnabled === GENERAL.NOT_AVAILABLE || sqlNativeEnabled === GENERAL.NOT_AVAILABLE) {
+        } else if (
+            String(awsBackupEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(sqlNativeEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE
+        ) {
             protectionText = '';
         } else if (data?.protection) {
             protectionText = PROTECTION_TEXT_STATUS.NO;
@@ -1871,15 +2189,15 @@ export const getProtectionText = (data: any) => {
         }
     } else {
         if (
-            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
-            (fsxOntapEnabled && fsxOntapEnabled !== GENERAL.NOT_AVAILABLE) ||
-            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+            (awsBackupEnabled && String(awsBackupEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (fsxOntapEnabled && String(fsxOntapEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && String(sqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
         ) {
             protectionText = PROTECTION_TEXT_STATUS.YES;
         } else if (
-            awsBackupEnabled === GENERAL.NOT_AVAILABLE ||
-            fsxOntapEnabled === GENERAL.NOT_AVAILABLE ||
-            sqlNativeEnabled === GENERAL.NOT_AVAILABLE
+            String(awsBackupEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(fsxOntapEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(sqlNativeEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE
         ) {
             protectionText = '';
         } else if (data?.protection) {
@@ -1931,17 +2249,21 @@ export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
     // First check if this is already opened or closed. If this data is already available or not.
     const state = store.getState();
     const unManagedPerfInstanceIdsList = state.inventoryV2.unManagedPerfInstanceIdsList;
-    if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
+    if (
+        !unManagedPerfInstanceIdsList.includes(
+            uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId)
+        )
+    ) {
         // If this has unmanaged rows or not ?
         let unmanagedRows = rowData?.sqlServerInstances?.filter(
             (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
         );
         if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
             let instanceList = [];
-            instanceList.push(rowData?.ec2InstanceId);
+            instanceList.push(uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId));
             const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
             if (partnerData && partnerData?.length > 0) {
-                instanceList.push(partnerData?.[0]?.id);
+                instanceList.push(uniqueHostRow(partnerData?.[0]?.id, rowData?.credentialId, rowData?.regionId));
             }
             dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
         }
@@ -2099,11 +2421,11 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
     );
 };
 
-export const installModuleNotification = (styles: any, hostname: string, dispatch: any, initialMsg: any) => {
+export const installModuleNotification = (styles: any, dispatch: any, initialMsg: any, hostname?: string) => {
     const prepareHostMsg = (
         <div className={styles.notification}>
             {initialMsg[0]}
-            <span className={styles.bold}>{hostname}</span>
+            {hostname && <span className={styles.bold}>{hostname}</span>}
             {initialMsg[1]}
             {
                 <>
@@ -2199,4 +2521,298 @@ export const renderAllocatedCapacity = (cellData: any, rowData: any) => {
             {rowData?.loading && <DsFlashingDotsLoader />}
         </>
     );
+};
+
+export const handleManageInstances = (
+    rowData: any,
+    instances: any,
+    dispatch: any,
+    styles: any,
+    manageBulkInstanceApi: any,
+    prepareHostApi: any,
+    isDetected?: boolean | undefined
+) => {
+    const updatedState = store.getState();
+    const { inProgressInstances } = updatedState.inventoryV2;
+    const { isDemoMode } = updatedState.auth;
+    const inProgressIds = instances.map((instance: any) =>
+        uniqueHostRow(`${rowData?.ec2InstanceId}_${instance}`, rowData?.credentialId, rowData?.regionId)
+    );
+    dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
+    handleManageTriggerNotification(instances, dispatch, styles);
+    let payloadItem: any = {
+        ec2InstanceId: rowData?.ec2InstanceId,
+        databaseInstanceNames: instances,
+        credentialsId: rowData?.credentialId,
+        region: rowData?.regionId
+    };
+    if (rowData?.resourceId && isDemoMode) {
+        payloadItem.databaseHostId = rowData.resourceId;
+    }
+
+    let payload = {
+        items: [payloadItem]
+    };
+
+    manageBulkInstanceApi({
+        payload
+    }).then((res: any) => {
+        const updatedState = store.getState();
+        const { inProgressInstances } = updatedState?.inventoryV2;
+        let updatedInProgressInstances = new Set([...inProgressInstances]);
+        inProgressIds.map((inProgressId: any) => {
+            updatedInProgressInstances.delete(inProgressId);
+        });
+        dispatch(setInProgressInstances(updatedInProgressInstances));
+
+        if (res?.data) {
+            let successFullInstances: any = [];
+            let failedInstances: any = [];
+            res?.data?.hosts?.map((resource: any) => {
+                resource?.instances.map((item: any) => {
+                    if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                        successFullInstances.push(item);
+                    } else {
+                        failedInstances.push(item);
+                    }
+                });
+            });
+
+            if (successFullInstances.length > 0) {
+                handleManageNotification(instances, successFullInstances, '', isDetected, dispatch, styles);
+                const updatedInventoryTableData = updateInstanceStatus(
+                    'manage',
+                    rowData,
+                    instances,
+                    successFullInstances,
+                    res?.data?.hosts?.[0]?.resourceId
+                );
+                dispatch(setInventoryTableData(updatedInventoryTableData));
+            } else {
+                // handle prepare API
+                let errorList = res?.data?.hosts?.[0]?.hostErrorMessage?.split('\n');
+                let prepareApiRequired = false;
+                let sourceNodePrepareRequired = false;
+                let partnerNodeEc2Id;
+                errorList?.map((errorItem: any) => {
+                    if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                        prepareApiRequired = true;
+                        if (errorItem.includes(PARTNER_NODE)) {
+                            partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
+                        } else {
+                            sourceNodePrepareRequired = true;
+                        }
+                    }
+                });
+                if (prepareApiRequired) {
+                    if (sourceNodePrepareRequired) {
+                        prepareHostApi({
+                            credentialId: rowData?.credentialId,
+                            regionId: rowData?.regionId,
+                            instanceId: rowData?.ec2InstanceId
+                        }).then((prepareRes: any) => {
+                            if (prepareRes && !prepareRes?.error) {
+                                const msgObj =
+                                    instances.length === 1
+                                        ? isDetected
+                                            ? GENERAL.PREPARE_DETECTED_INSTANCE_INFO
+                                            : GENERAL.PREPARE_INSTANCE_INFO
+                                        : isDetected
+                                        ? GENERAL.PREPARE_DETECTED_INSTANCES_INFO
+                                        : GENERAL.PREPARE_INSTANCES_INFO;
+                                installModuleNotification(
+                                    styles,
+                                    dispatch,
+                                    msgObj,
+                                    instances.length === 1 ? instances[0] : ''
+                                );
+                            } else {
+                                handleManageNotification(instances, [], '', isDetected, dispatch, styles);
+                            }
+                        });
+                    }
+                    if (partnerNodeEc2Id) {
+                        prepareHostApi({
+                            credentialId: rowData?.credentialId,
+                            regionId: rowData?.regionId,
+                            instanceId: partnerNodeEc2Id
+                        }).then((prepareRes: any) => {
+                            if (prepareRes && !prepareRes?.error) {
+                                const msgObj =
+                                    instances.length === 1
+                                        ? isDetected
+                                            ? GENERAL.PREPARE_DETECTED_INSTANCE_INFO
+                                            : GENERAL.PREPARE_INSTANCE_INFO
+                                        : isDetected
+                                        ? GENERAL.PREPARE_DETECTED_INSTANCES_INFO
+                                        : GENERAL.PREPARE_INSTANCES_INFO;
+                                installModuleNotification(
+                                    styles,
+                                    dispatch,
+                                    msgObj,
+                                    instances.length === 1 ? instances[0] : ''
+                                );
+                            } else {
+                                handleManageNotification(instances, [], '', isDetected, dispatch, styles);
+                            }
+                        });
+                    }
+                } else {
+                    let otherErrorList: any = null;
+                    res?.data?.hosts?.[0]?.instances?.map((item: any) => {
+                        otherErrorList = item?.errorMessage?.split('\n') || otherErrorList;
+                    });
+                    handleManageNotification(instances, [], otherErrorList[0], isDetected, dispatch, styles);
+                }
+            }
+        } else if (res?.error) {
+            handleManageNotification(instances, [], '', isDetected, dispatch, styles);
+        }
+    });
+};
+
+export const handleManageInstancesBulk = (
+    selectedRowsForManage: any,
+    dispatch: any,
+    styles: any,
+    manageBulkInstanceApi: any,
+    prepareHostApi: any,
+    isDetected?: boolean | undefined
+) => {
+    const updatedState = store.getState();
+    const { inProgressInstances } = updatedState.inventoryV2;
+    const { isDemoMode } = updatedState.auth;
+    const inProgressIds = selectedRowsForManage.map((instance: any) =>
+        uniqueHostRow(
+            `${instance?.ec2InstanceId}_${instance?.databaseInstanceName}`,
+            instance?.credentialId,
+            instance?.regionId
+        )
+    );
+    dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
+    let instancesList = selectedRowsForManage.map((instance: any) => instance?.databaseInstanceName);
+    handleManageTriggerNotification(instancesList, dispatch, styles);
+
+    let payloadList: any = [];
+    let hostInstanceMapping: any = {};
+    let resourceInstanceMapping: any = {};
+    selectedRowsForManage?.map((rowData: any) => {
+        let uniqueRow = uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId);
+        if (hostInstanceMapping?.[uniqueRow]) {
+            hostInstanceMapping[uniqueRow].push(rowData?.databaseInstanceName);
+        } else {
+            hostInstanceMapping[uniqueRow] = [rowData?.databaseInstanceName];
+        }
+        resourceInstanceMapping[uniqueRow] = rowData?.resourceId;
+    });
+
+    Object.keys(hostInstanceMapping).map((key: any) => {
+        let itemArray: any = key.split('_');
+        let perItem: any = {
+            ec2InstanceId: itemArray[0],
+            credentialsId: itemArray[1],
+            region: itemArray[2],
+            databaseInstanceNames: hostInstanceMapping[key]
+        };
+        if (resourceInstanceMapping?.[key] && isDemoMode) {
+            perItem.databaseHostId = resourceInstanceMapping[key];
+        }
+        payloadList.push(perItem);
+    });
+
+    let payload = {
+        items: payloadList
+    };
+
+    manageBulkInstanceApi({
+        payload
+    }).then((res: any) => {
+        const updatedState = store.getState();
+        const { inProgressInstances } = updatedState?.inventoryV2;
+        let updatedInProgressInstances = new Set([...inProgressInstances]);
+        inProgressIds.map((inProgressId: any) => {
+            updatedInProgressInstances.delete(inProgressId);
+        });
+        dispatch(setInProgressInstances(updatedInProgressInstances));
+        if (res?.data) {
+            let successFullInstances: any = [];
+            let failedInstances: any = [];
+            res?.data?.hosts?.map((resource: any) => {
+                resource?.instances.map((item: any) => {
+                    if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                        successFullInstances.push(item);
+                    } else {
+                        failedInstances.push(item);
+                    }
+                });
+            });
+            if (successFullInstances?.length) {
+                handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
+            }
+
+            const updatedInventoryTableData = updateInstanceBulkStatus('manage', res?.data?.hosts);
+            dispatch(setInventoryTableData(updatedInventoryTableData));
+
+            let triggeredPrepare = handleBulkPrepareCall(res?.data?.hosts, dispatch, styles, prepareHostApi);
+            if (triggeredPrepare) {
+                const msgObj = GENERAL.PREPARE_BULK_INSTANCES_INFO;
+                installModuleNotification(styles, dispatch, msgObj);
+            } else if (!successFullInstances?.length && failedInstances?.length) {
+                handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
+            }
+
+            dispatch(setSelectedRowsForManage([]));
+        } else {
+            dispatch(setSelectedRowsForManage([]));
+        }
+    });
+};
+
+export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any, prepareHostApi: any) => {
+    let triggeredPrepare = false;
+    response?.map((resource: any) => {
+        let errorList = resource?.hostErrorMessage?.split('\n');
+        let prepareApiRequired = false;
+        let sourceNodePrepareRequired = false;
+        let partnerNodeEc2Id;
+        errorList?.map((errorItem: any) => {
+            if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                prepareApiRequired = true;
+                if (errorItem.includes(PARTNER_NODE)) {
+                    partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
+                } else {
+                    sourceNodePrepareRequired = true;
+                }
+            }
+        });
+
+        if (prepareApiRequired) {
+            if (sourceNodePrepareRequired) {
+                triggeredPrepare = true;
+                prepareHostApi({
+                    credentialId: resource?.credentialsId,
+                    regionId: resource?.region,
+                    instanceId: resource?.ec2InstanceId
+                }).then((prepareRes: any) => {
+                    if (prepareRes && !prepareRes?.error) {
+                        triggeredPrepare = true;
+                    }
+                });
+            }
+            if (partnerNodeEc2Id) {
+                triggeredPrepare = true;
+                prepareHostApi({
+                    credentialId: resource?.credentialsId,
+                    regionId: resource?.region,
+                    instanceId: partnerNodeEc2Id
+                }).then((prepareRes: any) => {
+                    if (prepareRes && !prepareRes?.error) {
+                        triggeredPrepare = true;
+                    }
+                });
+            }
+        }
+    });
+
+    return triggeredPrepare;
 };

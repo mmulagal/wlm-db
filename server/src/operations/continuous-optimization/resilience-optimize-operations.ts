@@ -5,16 +5,20 @@ import getLogger from '../../utils/logger';
 import {
     AvailableSnapshotPoliciesResponseType,
     BulkOptimizeSnapshotPolicyRequestBody,
+    OntapVolumeType,
     OptimizeResiliencyBodyType,
-    SnapshotPolicyType
+    SnapshotPolicyDetailsType,
+    SnapshotPolicyType,
+    SnapshotScheduleType,
+    BulkOptimizeSnapshotPolicyParamsType
 } from '../../routes/types/continuous-optimization.types';
 import {
-    BulkOptimizeSnapshotPolicyParamsType,
-    databaseInstanceMetadata,
+    DatabaseInstanceMetadata,
     Metadata,
-    WorkloadInstance
+    WorkloadInstance,
+    MappedOnTapVolumeResponse
 } from '../../utils/common-types';
-import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
+import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
 import {
     GET_CLUSTER_SNAPSHOT_POLICIES,
@@ -23,7 +27,6 @@ import {
 import { callSsmExecution } from '../aws/ssm-operations';
 import { isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
-import { MappedOnTapVolumeResponse } from '../database-hosts-operations';
 import { getMappedOntapVolumes } from '../aws/fsx-operations';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { updateJobDetails } from '../database/job-operations';
@@ -38,6 +41,7 @@ import {
     OptimizeStorageConfigs
 } from '../../utils/continous-optimization-consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../demo-operations';
+import { resetCache } from '../../utils/cache';
 
 const logger = getLogger();
 
@@ -128,11 +132,9 @@ async function getAvailableSnapshotPolicyList(
         );
 
         const fsxId = fsxnIds?.split(',')[0];
-        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
-            credentialsId,
-            region,
+        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
             fsxId
-        );
+        ]);
         const svmIdAssignedToInstance = svms.find(svm => {
             if (isDemo()) {
                 return svm;
@@ -140,15 +142,12 @@ async function getAvailableSnapshotPolicyList(
             return svm?.StorageVirtualMachineId === (svmRecord as Record<string, string>)[fsxId];
         });
         if (!svmIdAssignedToInstance) {
-            throw createError(
-                HttpErrorCodes.NOT_FOUND,
-                `No SVM found for the given host ${databaseHostId} and instance ${databaseInstanceId}`
-            );
+            throw Error(`No SVM found for the given host ${databaseHostId} and instance ${databaseInstanceId}`);
         }
 
         const command = [GET_CLUSTER_SNAPSHOT_POLICIES(fsxId, region)];
         const ssmComment = 'Get available snapshot policies';
-        const ssmResponse = await callSsmExecution(
+        const rawResponse = await callSsmExecution(
             credentialsId,
             region,
             command,
@@ -157,23 +156,48 @@ async function getAvailableSnapshotPolicyList(
             accountId,
             true
         );
-        const { records, error } = sqlResponseParsing(ssmResponse) || {};
-        logger.info('Parsed SSM response', records);
-
-        if (!isEmpty(error)) {
-            logger.error('Error executing SSM command while getting snaphot policy list', error);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, error);
+        const {
+            response: { snapshotSchedules, snapshotPolicies },
+            errors: { snapshotSchedules: snapshotSchedulesError, snapshotPolicies: snapshotPoliciesError }
+        } = sqlResponseParsing(rawResponse) || {};
+        if (!isEmpty(snapshotSchedulesError) || !isEmpty(snapshotPoliciesError)) {
+            const errMsg = 'Error executing SSM command while getting snapshot policy list';
+            logger.error(errMsg, { snapshotPoliciesError, snapshotSchedulesError });
+            throw Error(errMsg);
         }
 
-        response.snapshotPolicies = records
+        const eligiblePolicies = snapshotPolicies?.records
             ?.filter(
                 (record: { scope: string; svm: { uuid: string | undefined } }) =>
                     record.scope === 'cluster' || record.svm.uuid === svmIdAssignedToInstance?.UUID
             )
-            .map(({ name, uuid }: SnapshotPolicyType) => ({ name, uuid }));
+            .map((record: { name: string; uuid: string; copies: any }) => record);
+        const eligibleSchedules = snapshotSchedules?.records?.reduce((mp: any, record: Record<string, string>) => {
+            mp[record.uuid] = record;
+            return mp;
+        }, {});
+
+        eligiblePolicies?.forEach((policy: { name: string; uuid: string; copies: any }) => {
+            const policyObj: SnapshotPolicyDetailsType = {
+                uuid: policy?.uuid,
+                name: policy?.name,
+                schedules: []
+            };
+            policy?.copies?.forEach((copyDetails: any) => {
+                const scheduleDetails = eligibleSchedules?.[copyDetails?.schedule?.uuid];
+                const scheduleObj: SnapshotScheduleType = {
+                    uuid: scheduleDetails?.uuid,
+                    name: scheduleDetails?.name,
+                    cron: scheduleDetails?.cron,
+                    retention: copyDetails?.retention_period
+                };
+                policyObj.schedules?.push(scheduleObj);
+            });
+            response.snapshotPolicies?.push(policyObj);
+        });
     } catch (error) {
-        logger.error('Error getting available snapshot policy list', JSON.stringify(error));
-        response.errorMessage = JSON.stringify(error);
+        logger.error('Error getting available snapshot policy list', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, error as Error);
     }
     return response;
 }
@@ -185,7 +209,8 @@ async function setSnapshotPolicyForVolumes(
     region: string,
     snapshotPolicy: SnapshotPolicyType,
     parentJobId?: string,
-    instanceMetadata?: databaseInstanceMetadata
+    instanceMetadata?: DatabaseInstanceMetadata,
+    volumesToOptimize?: OntapVolumeType[]
 ) {
     logger.info('Setting snapshot policy for volumes of instace: ', { instanceRecord, snapshotPolicy });
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
@@ -213,12 +238,17 @@ async function setSnapshotPolicyForVolumes(
             parentJobId,
             jobMetadata
         );
-        const instanceVolumeMapping = await getMappedVolumeDetails(credentialsId, region, instanceRecord);
-        const volumeRecords =
-            Object.values(instanceVolumeMapping)
-                ?.map(i => i?.volumeRecords)
-                .flat() || [];
-        const volumeUuids = volumeRecords.map(volume => volume.uuid as string);
+        let volumeUuids = [];
+        if (volumesToOptimize && !isEmpty(volumesToOptimize)) {
+            volumeUuids = volumesToOptimize.map(volume => volume.ontapVolumeUuid as string);
+        } else {
+            const instanceVolumeMapping = await getMappedVolumeDetails(credentialsId, region, instanceRecord);
+            const volumeRecords =
+                Object.values(instanceVolumeMapping)
+                    ?.map(i => i?.volumeRecords)
+                    .flat() || [];
+            volumeUuids = volumeRecords.map(volume => volume.uuid as string);
+        }
 
         const params: BulkOptimizeSnapshotPolicyParamsType = {
             fsxId: instanceRecord.fsxFileSystem,
@@ -250,7 +280,7 @@ async function setSnapshotPolicyForVolumes(
             jobStatus = JOBSTATUS.FAILED;
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, ssmError);
         }
-        if (ssmResponse.length !== volumeUuids.length) {
+        if (!isDemo() && ssmResponse.length !== volumeUuids.length) {
             logger.error('Error setting snapshot policy for volumes. ONTAP job IDs:', ssmResponse, volumeUuids);
             jobError = `Failed to set snapshot policy for some volumes: ONTAP job IDs:', ${ssmResponse}`;
             jobStatus = JOBSTATUS.WARNING;
@@ -262,7 +292,7 @@ async function setSnapshotPolicyForVolumes(
                 instanceRecord.id,
                 [OptimizeStorageConfigs.SNAPSHOT_POLICY],
                 'STORAGE',
-                instanceMetadata || ({} as databaseInstanceMetadata)
+                instanceMetadata || ({} as DatabaseInstanceMetadata)
             );
         }
         jobStatus = JOBSTATUS.COMPLETED;
@@ -309,8 +339,8 @@ async function handleResiliecyOptimize(
         databaseHostId,
         request
     });
-    const shouldOptimizeSnapshotPolicy = !!request.type.filter(
-        type => type === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
+    const shouldOptimizeSnapshotPolicy = !!request.configurationName.filter(
+        configurationName => configurationName === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
     ).length;
     const params = request.params!;
     const { instanceRecord, instanceMetadata } = await getActiveNodeInfo(
@@ -343,9 +373,10 @@ async function handleResiliecyOptimize(
         jobMetadata
     );
     if (shouldOptimizeSnapshotPolicy) {
-        const [{ snapshotPolicy }] = params.filter(
+        const [{ snapshotPolicy, volumes }] = params.filter(
             param => typeof param === typeof BulkOptimizeSnapshotPolicyRequestBody
         );
+
         setSnapshotPolicyForVolumes(
             instanceRecord,
             accountId,
@@ -353,9 +384,12 @@ async function handleResiliecyOptimize(
             region,
             snapshotPolicy,
             jobId,
-            (instanceMetadata ?? {}) as databaseInstanceMetadata
+            (instanceMetadata ?? {}) as DatabaseInstanceMetadata,
+            volumes
         );
 
+        // clearning all the ssm command cache so that we will get the fresh data in assessment
+        resetCache(SSM_COMMAND_CACHE_TYPE);
         // trigger assesment to update the assessment config data
         onDemandTriggerDriftAssessmentDataCollection(
             accountId,
@@ -364,7 +398,8 @@ async function handleResiliecyOptimize(
             databaseHostId,
             databaseInstanceId,
             AssessmentTriggeredBy.SYSTEM,
-            AssessmentCategories.RESILIENCY
+            AssessmentCategories.SNAPSHOT_POLICY,
+            jobId
         );
     }
     return { jobId };

@@ -3,7 +3,21 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, SQL_CASE_INSENSITIV
 /* eslint-disable no-useless-escape */
 
 import { GOOGLE_DNS, SCRIPT_VERSON_FILE } from './const';
-import { compressResponse, ontapRestRequest } from './common-templates';
+import {
+    compressResponse,
+    invokeOntapRequestTemplate,
+    ontapRestRequest,
+    ontapRestRequestBootstrap
+} from './common-templates';
+
+const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
+  'C:\\SSM\\Cleanup-ONTAP.ps1',
+  'C:\\SSM\\Configure-LUNs.ps1',
+  'C:\\SSM\\Create-Database.ps1',
+  'C:\\SSM\\Invoke-virtualmount.ps1',
+  'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1',
+  'C:\\SSM\\Script-Version.txt'
+`;
 
 const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string, instanceName: string = DEFAULT_INSTANCE_NAME) => ` 
 #Get ACTIVE NODE DRIVE INFO
@@ -480,7 +494,8 @@ const getMappedOntapVolumesScript = (
     sqlAuthEnabled: boolean = false,
     fields: string = '',
     includeLogVolumes: boolean = false,
-    svmOntapUuid: string = ''
+    svmOntapUuid: string = '',
+    instanceLevelFsxnIds: Record<string, object> = {}
 ) => `
     #Get Mapped Ontap Volumes
     $WarningPreference = 'SilentlyContinue';
@@ -506,6 +521,7 @@ const getMappedOntapVolumesScript = (
         $instances = '${JSON.stringify(instances)}' | ConvertFrom-Json
         $additionalFields = '${fields}'
         $svmOntapUuid = '${svmOntapUuid}'
+        $instanceLevelFsxnIds = '${JSON.stringify(instanceLevelFsxnIds)}' | ConvertFrom-Json
         ${getSqlCredentials(sqlAuthEnabled)}
         $sqlInstances = $instances | ForEach-Object {
             $serverInstanceName = $_
@@ -521,14 +537,30 @@ const getMappedOntapVolumesScript = (
             }
         }
 
-        ${ontapRestRequest}
+        ${invokeOntapRequestTemplate}
 
+        $visitedFileSystems = @{}
         $instanceRespones = @{}
         $sqlInstances | ForEach-Object {
             try {
                 $sqlCredential = $_.sqlCredential
                 $executableInstance = $_.executableInstance
                 $serverInstanceName = $_.serverInstanceName
+
+                ${ontapRestRequestBootstrap}
+
+                $instanceLevelFsxnId = $($instanceLevelFsxnIds.$serverInstanceName.fsxId)
+                Write-Debug "Instance Level FSxN Id: $instanceLevelFsxnId"
+                if ([string]::IsNullOrEmpty($instanceLevelFsxnId)) {
+                    $instanceLevelFsxnId = $FSxID
+                }
+                if ($instanceLevelFsxnId -ne $null -and -not $visitedFileSystems.ContainsKey($instanceLevelFsxnId)) {
+                    $FSxNDetails = Get-FSxNDetails -fsxId $instanceLevelFsxnId
+                    $visitedFileSystems += @{$instanceLevelFsxnId = @{
+                        FSxCredentialsInBase64 = $FSxNDetails.FSxCredentialsInBase64
+                        FSxHostName = $FSxNDetails.FSxHostName
+                    }}
+                }
 
                 if (${isSystemDatabase}) {
                     $sqlquery = @"
@@ -639,17 +671,16 @@ const getMappedOntapVolumesScript = (
                 }
 
                 if ($sqlCredential.useSqlAuth -eq $True) {
-                    $sqlqueryresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2> $MappedVolumesErrorFile;
+                    $sqlqueryresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2>&1
                 } else {
-                    $sqlqueryresponse =  sqlcmd -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2> $MappedVolumesErrorFile;
+                    $sqlqueryresponse =  sqlcmd -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2>&1
                 }
                 
-                
-                if (Get-Content $MappedVolumesErrorFile) { 
-                  $errorContent = Get-Content $MappedVolumesErrorFile
-                  throw $errorContent
-                 }
-
+                if ($LASTEXITCODE -ne 0) {
+                    $sqlqueryresponse | Out-File -FilePath $MappedVolumesErrorFile
+                    throw $sqlqueryresponse
+                }
+            
                 Function Get-VolumeIdsList($sqlqueryresponse) {        
                     $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
                 
@@ -720,7 +751,12 @@ const getMappedOntapVolumesScript = (
                             $QueryFilter += [System.Web.HttpUtility]::UrlEncode($SerialNumber) + '|'
                         }
                     }
+                    
                     $QueryFilter = $QueryFilter.TrimEnd('|')
+
+                    if ($svmOntapUuid -ne '') {
+                        $QueryFilter += "&svm.uuid=$svmOntapUuid"
+                    }
 
                     $Params = @{
                         "ApiEndPoint" = "/storage/luns"
@@ -730,7 +766,10 @@ const getMappedOntapVolumesScript = (
                     $VolumeLunMapping = @{}
                     if ($QueryFilter -ne '') {
                         $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
-                    
+                        $Params += @{
+                            "FSxCredentialsInBase64" = $($visitedFilesystems.$instanceLevelFsxnId.FSxCredentialsInBase64);
+                            "FSxHostName" = $($visitedFilesystems.$instanceLevelFsxnId.FSxHostName);
+                        }
                         $Response = Invoke-ONTAPRequest @Params
 
                         $LunRecords = $Response.records
@@ -765,8 +804,10 @@ const getMappedOntapVolumesScript = (
                         }
                     }
                     $QueryFilter = $QueryFilter.TrimEnd('|')
-
-                    if ($svmOntapUuid -ne '') {
+                    
+                    if (-not [string]::IsNullOrEmpty($($instanceLevelFsxnIds.$serverInstanceName.svmUuid))) {
+                        $QueryFilter += "&svm.uuid=$($instanceLevelFsxnIds.$serverInstanceName.svmUuid)"
+                    } elseif ($svmOntapUuid -ne '') {
                         $QueryFilter += "&svm.uuid=$svmOntapUuid"
                     }
 
@@ -776,7 +817,10 @@ const getMappedOntapVolumesScript = (
 
                     if ($QueryFilter -ne '') {
                         $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count,$additionalFields"}
-                    
+                        $Params += @{
+                            "FSxCredentialsInBase64" = $($visitedFilesystems.$instanceLevelFsxnId.FSxCredentialsInBase64);
+                            "FSxHostName" = $($visitedFilesystems.$instanceLevelFsxnId.FSxHostName);
+                        }
 
                         $Response = Invoke-ONTAPRequest @Params
 
@@ -823,7 +867,10 @@ const getMappedOntapVolumesScript = (
                     $volumeIds = @()
                     if ($QueryFilter -ne '') {
                         $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=volume"}
-                    
+                        $Params += @{
+                            "FSxCredentialsInBase64" = $($visitedFilesystems.$instanceLevelFsxnId.FSxCredentialsInBase64);
+                            "FSxHostName" = $($visitedFilesystems.$instanceLevelFsxnId.FSxHostName);
+                        }
                     
                         $cifsShares = Invoke-ONTAPRequest @Params
                         $cifsRecords = $cifsShares.records
@@ -1181,12 +1228,32 @@ Function Call-SqlCmd {
 }
 `;
 
-const READ_SCRIPT_VERSION = `
-$file = "${SCRIPT_VERSON_FILE}"
-if (Test-Path $file -PathType Leaf) {
-    # File exists
-    Get-Content $file
-} 
+const CHECK_SCRIPT_AVAILABILITY_AND_VERSION = `
+    $result = @{};
+    $result['isCreatePossible'] = $False;
+    $result['scriptVersion'] = $Null;
+
+    try {
+        $databaseCreateFileList = @(${REQUIRED_DATABASE_CREATE_FILE_LIST})
+        $isDatabaseCreatePossible = If ((Test-path -path $databaseCreateFileList -PathType Leaf) -contains $False) { $False } Else { $True }
+    } catch {
+        Write_Error -Message $_.Exception.Message
+        $isDatabaseCreatePossible = $False
+        $result['isCreatePossible'] = $False;
+        $result['scriptVersion'] = $Null;
+    }
+    
+    if($isDatabaseCreatePossible -eq $True) {
+        $result['isCreatePossible'] = $True;
+        $file = @(${SCRIPT_VERSON_FILE})
+        if (Test-Path $file -PathType Leaf) {
+            # File exists
+            $val = Get-Content $file | ConvertFrom-Json
+            $result['scriptVersion'] = $val.scriptVersion
+        }     
+    }
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult  
 `;
 
 // {
@@ -1323,7 +1390,7 @@ export {
     sqlQueryExecution,
     readSsmParameter,
     slqcmdExecutionTemplate,
-    READ_SCRIPT_VERSION,
+    CHECK_SCRIPT_AVAILABILITY_AND_VERSION,
     sqlQueryExecutionWithAuth,
     compressResponse,
     GET_FCI_NAME

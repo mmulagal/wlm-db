@@ -1,0 +1,95 @@
+@use './mixins.scss';
+
+.filter-trigger-button {
+    .filter-button {
+        svg {
+            --icon-primary-color: var(--icon-secondary);
+        }
+        &:hover:not(:disabled) {
+            svg {
+                --icon-primary-color: var(--icon-secondary-hover);
+            }
+        }
+        &:disabled {
+            svg {
+                --icon-primary-color: var(--icon-secondary-disabled);
+            }
+        }
+    }
+    &.opened .filter-button {
+        svg {
+            --icon-primary-color: var(--icon-secondary-hover);
+        }
+    }
+
+    svg {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+div.filter-panel-wrapper {
+    padding: 0;
+
+    .filter-panel {
+        min-width: 176px;
+        max-width: 500px;
+
+        .filter-content {
+            max-height: 310px;
+            padding: 4px 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            @include mixins.standard-scroll();
+            display: flex;
+            flex-direction: column;
+
+            .checkbox-container {
+                height: 48px;
+                display: flex;
+                align-items: center;
+                padding: 0 16px;
+                gap: 15px;
+                cursor: pointer;
+
+                &:hover {
+                    background-color: var(--hover-background);
+                }
+            }
+
+            span {
+                display: inline-block;
+                max-width: 250px;
+            }
+
+            .drop-down-label {
+                font-size: 14px;
+            }
+        }
+
+        .buttons-row {
+            background-color: var(--content-background);
+            height: 41px;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            border-top: solid 1px var(--border);
+
+            button {
+                font-size: 14px;
+                color: var(--text-button-primary);
+                cursor: pointer;
+                flex: 1;
+                height: 100%;
+
+                &:first-child {
+                    border-right: solid 1px var(--border);
+                }
+
+                &:hover {
+                    background-color: var(--hover-background);
+                }
+            }
+        }
+    }
+}

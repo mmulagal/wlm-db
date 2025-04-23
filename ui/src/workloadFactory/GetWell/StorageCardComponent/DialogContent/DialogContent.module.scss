@@ -8,11 +8,40 @@
             width: 384px;
         }
 
+        .keyField {
+            width: 100px;
+        }
+
+        .keyFieldDays {
+            width: 200px;
+        }
+
         .first-section {
             display: flex;
             flex-direction: column;
             gap: 8px;
             max-width: 712px;
+
+            .ribbon {
+                max-width: 712px;
+                width: 712px;
+                height: auto;
+                background: var(--main-background);
+                padding: 16px 40px;
+                display: flex;
+                gap: 40px;
+
+                .rightSide {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+
+                    .row {
+                        display: flex;
+                        gap: 16px;
+                    }
+                }
+            }
 
             .content {
                 display: flex;

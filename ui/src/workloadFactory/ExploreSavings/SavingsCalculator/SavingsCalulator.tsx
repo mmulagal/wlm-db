@@ -135,6 +135,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             formData.append('userEmail', userMetadata?.email);
             formData.append('emailType', 'savings-calculations');
             formData.append('storageType', setEmailSubject());
+            if (selectedServerName) {
+                formData.append('hostName', selectedServerName);
+            }
             getSendEmail({ payload: formData })
                 .then(resp => {
                     if (!resp.error) {

@@ -80,3 +80,11 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .sandboxHeader {
+        max-width: unset;
+        padding: 32px 70px 32px 56px;
+        justify-content: space-between;
+    }
+}

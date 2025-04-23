@@ -1,4 +1,5 @@
 export interface GetWellSliceInterface {
+    selectedCloneTab: string;
     optimizePageLoading: boolean;
     driftAssessmentData: AssessmentResponseInterface | null;
     isAssessmentAvailable: boolean;
@@ -6,7 +7,10 @@ export interface GetWellSliceInterface {
     selectedResourceId: string;
     selectedDatabaseInstance: string;
     selectedDatabaseInstanceName: string;
+    selectedGwInstanceCredId: string;
+    selectedGwInstanceRegionId: string;
     selectedDatabaseStorageType: string;
+    selectedRowFsxId: string;
     cardData: any;
     osConfigTableData: PerConfigInterface[] | null;
     ontapConfigTableData: PerConfigInterface[] | null;
@@ -15,22 +19,32 @@ export interface GetWellSliceInterface {
         compute?: CountBreakDown;
         application?: CountBreakDown;
         resiliency?: CountBreakDown;
+        cloning?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
     gwTimestamp: string;
+    gwRefreshTimestamp: string;
     optimizingData: any;
     optimizingInstanceData: boolean;
     selectedRecommendedInstance: any;
+    selectedSnapshotPolicy: any;
+    selectedSnapshot: any;
+    selectedAWSBackup: any;
     credIdFromJM: string;
     regionFromJM: string;
     landingFrom: string;
     inProgressOptimizationData: any;
+    inProgressResourceOptimizeData: any;
     inProgressHostData: any;
     jobToInstanceMap: any;
     jobToInstanceMapForBulk: any;
     recommendedInstanceInBulk?: any;
     landingFromInnerPage?: boolean;
+    isInnerPageOptimize?: boolean;
+    gwAdhocError?: string;
+    cloneDashboardData: any;
+    cloneIsOptimizedRows: any;
 }
 
 interface CountBreakDown {
@@ -41,6 +55,8 @@ interface CountBreakDown {
 }
 
 export interface AssessmentResponseInterface {
+    dismissedConfigurations?: any;
+    lastAssessmentTimestamp?: string;
     storage?: {
         timestamp?: string;
         optimisedCount?: {
@@ -61,9 +77,10 @@ export interface AssessmentResponseInterface {
     hostOsPatch?: PerConfigInterface;
     mssqlPatch?: PerConfigInterface;
     maxDOP?: PerConfigInterface;
-    resiliency?: {
-        snapshotPolicy?: PerConfigInterface;
-    };
+    snapshotPolicy?: PerConfigInterface;
+    awsBackup?: PerConfigInterface;
+    crr?: PerConfigInterface;
+    clone?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {

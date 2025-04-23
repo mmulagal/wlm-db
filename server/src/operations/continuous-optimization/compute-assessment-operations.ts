@@ -10,14 +10,16 @@ import { translateFindingReasonCode } from '../aws/compute-optimizer-operations'
 import { getEc2Arn } from '../../utils/utils';
 import {
     ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
 } from '../../utils/continous-optimization-consts';
 import { ComputeAssessment, Metadata } from '../../utils/common-types';
-import { getInstanceDetails } from '../database-hosts-operations';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
+import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -53,7 +55,7 @@ async function runComputeAssessment(
                 }
             }
         );
-        const {
+        let {
             instanceRecommendations: [
                 {
                     currentInstanceType = '',
@@ -79,6 +81,10 @@ async function runComputeAssessment(
                     platformDifferences
                 }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
             );
+
+        if (filteredRecommendationOptions.length > 0) {
+            finding = 'NOT_OPTIMIZED';
+        }
 
         return {
             currentInstanceType,
@@ -114,52 +120,33 @@ async function calculateComputeDrift(
     }
 
     try {
-        let finding;
-        let findingReasonCodes;
-        let currentInstanceType;
-        let recommendationOptions;
-        const { assessment: { compute } = {} } = metadata as unknown as Metadata;
+        const { assessment: { compute, errors } = {} } = metadata as unknown as Metadata;
 
-        if (!isEmpty(compute)) {
-            ({ finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
-                compute as ComputeAssessment);
-        } else {
-            const { activeNodeInstanceId, cloudProviderAccountId, resourceName } = await getInstanceDetails(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId
-            );
-            ({ finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
-                (await runComputeAssessment(
-                    cloudProviderAccountId!,
-                    accountId,
-                    credentialsId,
-                    region,
-                    activeNodeInstanceId,
-                    resourceName!
-                )) || {});
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            (metadata as unknown as Metadata).assessment = {
-                ...existingAssessmentData,
-                compute: { finding, findingReasonCodes, currentInstanceType, recommendationOptions },
-                lastAssessedDate: new Date().getTime().toString()
-            };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        if (isEmpty(compute)) {
+            errorMessage = errors?.compute
+                ? errors?.compute
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.COMPUTE);
+
+            logger.error({ errorMessage });
+            return { errorMessage };
         }
 
-        let recommendationMessage =
-            'Your current instance is being analyzed for rightsizing. Please check back later for recommendations.';
+        let { finding, findingReasonCodes, currentInstanceType, recommendationOptions } = compute as ComputeAssessment;
+
+        let recommendationMessage = 'Analyzing instance for rightsizing. Check later for recommendations.';
         let findingValue = AssessmentStatus.ANALYZING;
         let objectsInViolation: string[] = [];
+
+        if (!isEmpty(recommendationOptions)) {
+            finding = 'NOT_OPTIMIZED';
+        }
 
         if (finding) {
             findingValue = getMatchingAssessmentStatus(finding);
             const underProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is under-provisioned. We recommend upgrading it to meet your workload demands. This will provide additional CPU, memory, and I/O capacity, ensuring better performance for your SQL Server DB.`;
             const overProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses.`;
 
-            if (findingValue.includes('provisioned')) {
+            if (findingValue.includes('provisioned') || findingValue === AssessmentStatus.NOT_OPTIMIZED) {
                 // under_provisioned or over_provisioned
                 const genericRecommendationMessage =
                     'Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.';
@@ -169,7 +156,7 @@ async function calculateComputeDrift(
                         : overProvisionedRecommendationMessage;
                 recommendationMessage += ` ${genericRecommendationMessage}`;
             } else {
-                recommendationMessage = 'Your current instance is optimized for your workload.';
+                recommendationMessage = 'Optimized instance for your workload.';
             }
 
             objectsInViolation = findingReasonCodes?.map(code => translateFindingReasonCode(code));
@@ -208,11 +195,12 @@ async function managedHostsComputeAssessment(
     awsAccountId: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    parentJobId: string
+    parentJobId: string,
+    databaseHostId: string
 ) {
     const { id: computeAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server compute assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server compute assessment for ${resourceName}`,
+        name: `Microsoft SQL Server compute assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL Server compute assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -243,6 +231,16 @@ async function managedHostsComputeAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+        if (errorMessage) {
+            await updateAsssementErrorInResourceMetadata(
+                accountId,
+                databaseHostId,
+                credentialsId,
+                region,
+                errorMessage,
+                'compute'
+            );
+        }
     }
     return computeAssessment;
 }

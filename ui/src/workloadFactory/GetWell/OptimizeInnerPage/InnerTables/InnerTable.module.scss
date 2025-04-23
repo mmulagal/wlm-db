@@ -5,6 +5,52 @@
         color: var(--text-primary) !important;
     }
 
+    .buttonContainer {
+        display: flex;
+        justify-content: space-between;
+        width: 92%;
+
+        [class*='dsButtons'] {
+            border-radius: 20px !important;
+            width: 117px !important;
+            min-width: 117px !important;
+        }
+    }
+
+    .optimize-in-progress {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .actionContainer {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        .actionText {
+            color: var(--button-secondary);
+        }
+    }
+
+    .actionDisabled {
+        .actionText {
+            color: var(--text-disabled);
+        }
+
+        button {
+            span {
+                svg {
+                    path {
+                        fill: var(--text-disabled);
+                    }
+                }
+            }
+        }
+    }
+
     .statusContainer {
         display: flex;
         gap: 8px;
@@ -92,5 +138,20 @@
 .colorSet {
     div {
         color: var(--text-primary);
+    }
+}
+
+.log-drive-size-popover {
+    max-height: 400px !important;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .inner-table {
+        width: 73.22%;
     }
 }

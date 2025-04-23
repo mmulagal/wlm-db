@@ -385,9 +385,6 @@ export const databaseHomeApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getJobsSummary: builder.query({
-                query: ({ startTime, endTime }) => `v1/jobs/summary?startTime=${startTime}&endTime=${endTime}`
-            }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/mssql/cloudformation/template`,
@@ -525,6 +522,9 @@ export const headersApi = createApi({
             getHeadersRegions: builder.query({
                 query: ({ credentialId }) => ({ url: `v1/credentials/${credentialId}/fsx/regions` })
             }),
+            getHeadersRegionsWithoutCred: builder.query({
+                query: () => ({ url: `v1/fsx/regions` })
+            }),
             getStatus: builder.query({
                 query: () => `v1/status`
             })
@@ -585,9 +585,9 @@ export const inventoryApi = createApi({
             getManagedHostData: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/resources/managed-hosts?nextToken=${nextToken}`;
+                        return `v1/managed-hosts?credentialsIds=${credentialId}&regions=${regionId}&databaseTypes=MSSQL,PGSQL&nextToken=${nextToken}`;
                     } else {
-                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/resources/managed-hosts`;
+                        return `v1/managed-hosts?credentialsIds=${credentialId}&regions=${regionId}&databaseTypes=MSSQL,PGSQL`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -624,7 +624,17 @@ export const inventoryApi = createApi({
             getFsxCredentialStatus: builder.query({
                 query: ({ regionId, credentialsId, fsxIds }) => ({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/resources/file-systems/credentials-status?fsxids=${fsxIds}`
-                })
+                }),
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialsId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
             }),
             registerResourceCredentials: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload }) => ({
@@ -661,15 +671,15 @@ export const inventoryApiV2 = createApi({
                 query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
                     if (isDemoMode) {
                         if (nextToken) {
-                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&nextToken=${nextToken}`;
                         } else {
-                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection`;
                         }
                     } else {
                         if (nextToken) {
-                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2&nextToken=${nextToken}`;
                         } else {
-                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2`;
                         }
                     }
                 },
@@ -688,15 +698,15 @@ export const inventoryApiV2 = createApi({
                 query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
                     if (isDemoMode) {
                         if (nextToken) {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&nextToken=${nextToken}`;
                         } else {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection`;
                         }
                     } else {
                         if (nextToken) {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2&nextToken=${nextToken}`;
                         } else {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2`;
                         }
                     }
                 },
@@ -763,9 +773,9 @@ export const inventoryApiV2 = createApi({
                     method: 'DELETE'
                 })
             }),
-            manageMssqlInstance: builder.mutation({
-                query: ({ credentialsId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/manage`,
+            manageBulkMssqlInstance: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/manage`,
                     method: 'POST',
                     body: payload
                 })
@@ -910,6 +920,12 @@ export const exploreSavingsApi = createApi({
                     body: payload
                 })
             }),
+            deleteOnPremTco: builder.mutation({
+                query: ({ resourceId }) => ({
+                    url: `v1/mssql/onprem-tco/resources/${resourceId}`,
+                    method: 'DELETE'
+                })
+            }),
             getSendEmail: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/notification/email?emailType=savings-calculations`,
@@ -969,18 +985,25 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,resiliency`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,clone,snapshot-policy,aws-backup,crr`
                 })
             }),
             getMssqlAssessmentDataForHost: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,resiliency`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,clone,snapshot-policy,aws-backup,crr`
                 })
             }),
             triggerInstanceAssessment: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`,
                     method: 'POST'
+                })
+            }),
+            dismissMssqlAssessment: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/assessment/dismiss`,
+                    method: 'POST',
+                    body: payload
                 })
             }),
             optimizeStorageSizing: builder.mutation({
@@ -991,8 +1014,8 @@ export const getWellApi = createApi({
                 })
             }),
             optimizeStorageSizingForBulk: builder.mutation({
-                query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/storage-sizing`,
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/storage-sizing`,
                     method: 'POST',
                     body: payload
                 })
@@ -1021,26 +1044,53 @@ export const getWellApi = createApi({
             optimizeStorageTier: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-tier`,
-                    method: 'POST'
+                    method: 'POST',
+                    body: payload
                 })
             }),
             optimizeStorageTierForBulk: builder.mutation({
-                query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/storage-tier`,
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/storage-tier`,
                     method: 'POST',
                     body: payload
                 })
             }),
             optimizeComputeConfigForBulk: builder.mutation({
-                query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/compute`,
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/compute`,
                     method: 'POST',
                     body: payload
                 })
             }),
             optimizeMaxdopConfigForBulk: builder.mutation({
-                query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/max-dop`,
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/max-dop`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            getSnapshotPolicies: builder.query({
+                query: ({ credentialId, region, databaseHostId, instanceId }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${instanceId}/snapshot-policies`
+                })
+            }),
+            optimizeResiliency: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/resiliency`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            optimizeAwsBackup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/resiliency/aws-backup`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            optimizeCloneCleanup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/database-hosts/optimize/clone`,
                     method: 'POST',
                     body: payload
                 })
@@ -1092,8 +1142,6 @@ export const {
 } = configApi;
 
 export const {
-    useGetJobsSummaryQuery,
-    useLazyGetJobsSummaryQuery,
     useGetTemplatesMutation,
     useGetTerraformSetupMutation,
     useGetPgsqlTemplatesMutation,
@@ -1113,7 +1161,12 @@ export const {
 
 export const { useSendMsgMutation } = chatbotApi;
 
-export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } = headersApi;
+export const {
+    useGetHeadersCredentialsQuery,
+    useGetHeadersRegionsQuery,
+    useGetHeadersRegionsWithoutCredQuery,
+    useGetStatusQuery
+} = headersApi;
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
@@ -1135,13 +1188,14 @@ export const {
     useLazyGetPgSqlDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
     useUnmanageMssqlInstanceMutation,
-    useManageMssqlInstanceMutation,
+    useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,
     useLazyGetAllMssqlHostsAssessmentDataQuery
 } = inventoryApiV2;
 
 export const {
     useGetSandboxListQuery,
+    useLazyGetSandboxListQuery,
     useGetSandboxSavingsQuery,
     useLazyGetSandboxSavingsQuery,
     useCreateSandboxMutation,
@@ -1159,6 +1213,7 @@ export const {
 export const {
     useGetSendEmailMutation,
     useGetUploadScriptMutation,
+    useDeleteOnPremTcoMutation,
     useGetOnPremSavingsMutation,
     useGetOnPremCalculationsMutation,
     useGetStorageSavingsMutation,
@@ -1179,5 +1234,10 @@ export const {
     useOptimizeStorageTierForBulkMutation,
     useTriggerInstanceAssessmentMutation,
     useOptimizeComputeConfigForBulkMutation,
-    useOptimizeMaxdopConfigForBulkMutation
+    useOptimizeMaxdopConfigForBulkMutation,
+    useLazyGetSnapshotPoliciesQuery,
+    useOptimizeResiliencyMutation,
+    useOptimizeAwsBackupMutation,
+    useOptimizeCloneCleanupMutation,
+    useDismissMssqlAssessmentMutation
 } = getWellApi;

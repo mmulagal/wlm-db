@@ -12,6 +12,7 @@ import PotentialSavings from './PotentialSavings/PotentialSavings';
 import Sandboxes from './Sandboxes/Sandboxes';
 import { getTotalManagedAggrStorageSavings } from '../DatabaseHomePage/DatabaseHomeUtils';
 import OptimizeByCategory from './OptimizeByCategory/OptimizeByCategory';
+import NewPotentialSavings from './PotentialSavings/NewPotentialSavings';
 
 const Dashboard = () => {
     const mssqlHostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlStorageSavings);
@@ -20,6 +21,8 @@ const Dashboard = () => {
     const [openAccordion, setOpenAccordion] = useState(false);
     const mssqlHostDataLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
     const pgsqlHostDataLoading = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts.fullHostDataLoading);
+    const savingsDataLoading = useAppSelector(state => state.inventoryV2.dashSandboxSavings.loading);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const hostStorageSavingsData = useMemo(() => {
         return getTotalManagedAggrStorageSavings(mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData);
@@ -43,7 +46,9 @@ const Dashboard = () => {
             </div>
 
             <div className={styles.firstSection}>
-                <PotentialSavings />
+                {/* <PotentialSavings /> */}
+                {/* To enable the new potential savings widget */}
+                <NewPotentialSavings />
                 <Sandboxes />
             </div>
 
@@ -53,14 +58,16 @@ const Dashboard = () => {
                     <div className={styles.commonContainer}>
                         <StorageSavings
                             hostData={hostStorageSavingsData}
-                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading}
+                            hostsLoading={
+                                mssqlHostDataLoading || pgsqlHostDataLoading || savingsDataLoading || multiDataLoading
+                            }
                         />
                     </div>
 
                     <div className={styles.commonContainer}>
                         <EstimatedCost
                             hostData={hostCostData}
-                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading}
+                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading || multiDataLoading}
                         />
                     </div>
                 </div>

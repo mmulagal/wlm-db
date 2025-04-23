@@ -2,16 +2,23 @@ import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
+import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
+import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../../store/storeHooks';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 const ScheduledLocalSnapshotOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+    const dispatch = useDispatch();
+    const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let id = 0;
-        return data?.violations?.map((row: any) => ({
-            volumeName: row,
-            id: String(id++),
-            cellProps: { ...row.cellProps, isDisabled: true }
+        return data?.objectsInViolation?.map((row: any) => ({
+            volumeName: row?.ontapVolumeName,
+            ontapVolumeUuid: row?.ontapVolumeUuid,
+            id: String(id++)
         }));
     }, [data]);
 
@@ -23,7 +30,7 @@ const ScheduledLocalSnapshotOptimizeTable = ({ type, data, lastColDetails, handl
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '1106px',
+            width: 'auto',
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -40,9 +47,19 @@ const ScheduledLocalSnapshotOptimizeTable = ({ type, data, lastColDetails, handl
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: 'none',
-        defaultSelectedRows: tableData.map((item: any) => item.id)
+        selectionType: 'multiple'
+        // defaultSelectedRows: tableData.map((item: any) => item.id)
     });
+
+    useEffect(() => {
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+
+        dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
+
+        // if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        //     checkBoxHandle(tableProps.selectionState, rowsData, disptach);
+        // }
+    }, [tableProps.selectionState]);
 
     return (
         <div className={styles['inner-table']}>
@@ -52,7 +69,9 @@ const ScheduledLocalSnapshotOptimizeTable = ({ type, data, lastColDetails, handl
                 pluralTitle={`Impacted volumes`}
                 singularTitle={'Impacted volume'}
             />
-
+            {selectedRowsForOptimizeInnerPage.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

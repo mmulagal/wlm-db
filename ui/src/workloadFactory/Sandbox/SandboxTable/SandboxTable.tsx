@@ -47,15 +47,18 @@ import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
 import { formatDateWithTime, getFilterOptions, getTimeDifferenceInDays } from '../../../utils/utilityFunctions';
 import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedSandboxHeaderValue } from '../../../store/workloadFactory/createSandboxSlice';
+import useResize from '../../../common/hooks/useResize';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const windowSize = useResize();
     const { aggregatedSandboxList, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
         state => state.sandbox
     );
     const { sandboxAgeRange } = useAppSelector(state => state.databaseHome);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -213,8 +216,8 @@ const SandboxTable = () => {
                                   });
                         dispatch(setAggregatedSandboxList(output));
                         getSandboxSavingsApi({
-                            credentialId: headerSelectedCred?.data?.credentialsId,
-                            region: headerSelectedRegion?.label2
+                            credentialId: headerSelectedCredSandbox?.data?.credentialsId,
+                            region: headerSelectedRegionSandbox?.label2
                         }).then((savingsRes: any) => {
                             if (savingsRes?.data) {
                                 dispatch(
@@ -293,8 +296,8 @@ const SandboxTable = () => {
                     });
                     dispatch(setAggregatedSandboxList(output));
                     updateSandboxApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
-                        regionId: headerSelectedRegion?.label2,
+                        credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                        regionId: headerSelectedRegionSandbox?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name,
@@ -338,8 +341,8 @@ const SandboxTable = () => {
                     const { isRollbackSelected, selectedRollbackSnapshot } = updatedState?.sandbox;
 
                     updateSandboxApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
-                        regionId: headerSelectedRegion?.label2,
+                        credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                        regionId: headerSelectedRegionSandbox?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name,
@@ -380,8 +383,8 @@ const SandboxTable = () => {
                     });
                     dispatch(setAggregatedSandboxList(output));
                     deleteSandboxApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
-                        regionId: headerSelectedRegion?.label2,
+                        credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                        regionId: headerSelectedRegionSandbox?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name
@@ -401,8 +404,8 @@ const SandboxTable = () => {
         dispatch(updateSplitEstimateLoading(true));
         const { databaseHostId, name, instanceId } = rowData;
         getSplitEstimateApi({
-            credentialsId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+            regionId: headerSelectedRegionSandbox?.label2,
             databaseHostId: databaseHostId,
             instanceId,
             sandboxName: name
@@ -436,8 +439,8 @@ const SandboxTable = () => {
                             });
                             dispatch(setAggregatedSandboxList(output));
                             splitSandboxApi({
-                                credentialsId: headerSelectedCred?.data?.credentialsId,
-                                regionId: headerSelectedRegion?.label2,
+                                credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                                regionId: headerSelectedRegionSandbox?.label2,
                                 databaseHostId: rowData?.databaseHostId,
                                 instanceId: rowData?.instanceId,
                                 sandboxName: rowData?.name
@@ -457,8 +460,8 @@ const SandboxTable = () => {
 
     const handleConnectToTools = (rowData: any) => {
         const baseUrl = getBaseUrl();
-        const credID = headerSelectedCred?.data?.credentialsId;
-        const region = headerSelectedRegion?.label2;
+        const credID = headerSelectedCredSandbox?.data?.credentialsId;
+        const region = headerSelectedRegionSandbox?.label2;
         const copyResponseData = () => {
             const payload = { action: 'REFRESH' };
             const baseUrl = getBaseUrl();
@@ -557,8 +560,8 @@ const SandboxTable = () => {
                     });
                     dispatch(setAggregatedSandboxList(output));
                     checkIntegrityApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
-                        regionId: headerSelectedRegion?.label2,
+                        credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                        regionId: headerSelectedRegionSandbox?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name
@@ -576,10 +579,10 @@ const SandboxTable = () => {
 
     const lastColDetails = () => {
         return {
-            id: '8',
+            id: '9',
             Header: '',
             accessor: '',
-            width: '56px',
+            width: windowSize.width >= 1920 ? '3.48%' : '56px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.jobMenuPopover}>
@@ -653,34 +656,34 @@ const SandboxTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '200px'
+            width: windowSize.width >= 1920 ? '12.44%' : '200px'
         },
         {
             Header: GENERAL.SANDBOX_DB_INSTANCE_NAME,
             accessor: 'instanceName',
             id: '2',
-            width: '220px',
+            width: windowSize.width >= 1920 ? '13.69%' : '220px',
             filterOptions: 'auto'
         },
         {
             Header: GENERAL.SANDBOX_SOURCE_DB_NAME,
             accessor: 'source',
             id: '3',
-            width: '220px',
+            width: windowSize.width >= 1920 ? '13.69%' : '220px',
             isSortable: true
         },
         {
             Header: GENERAL.SANDBOX_SOURCE_DB_INSTANCE_NAME,
             accessor: 'sourceInstanceName',
             id: '4',
-            width: '276px',
+            width: windowSize.width >= 1920 ? '17.17%' : '276px',
             filterOptions: 'auto'
         },
         {
             Header: GENERAL.SANDBOX_LAST_UPDATED,
             accessor: 'actualUpdated',
             id: '5',
-            width: '200px',
+            width: windowSize.width >= 1920 ? '12.44%' : '200px',
             isSortable: true,
             renderCell: (cellData: any) => {
                 return <DsTypography variant="Regular_14">{formatDateWithTime(cellData)}</DsTypography>;
@@ -690,7 +693,7 @@ const SandboxTable = () => {
             Header: GENERAL.AGE,
             accessor: 'ageByRange',
             id: '6',
-            width: '128px',
+            width: windowSize.width >= 1920 ? '7.96%' : '128px',
             isSortable: false,
             filterOptions: [
                 { label: GENERAL.ONE_THIRTY_DAYS, value: GENERAL.ONE_THIRTY_DAYS },
@@ -706,14 +709,14 @@ const SandboxTable = () => {
             Header: GENERAL.SANDBOX_TAG,
             accessor: 'tag',
             id: '7',
-            width: '128px',
+            width: windowSize.width >= 1920 ? '7.96%' : '128px',
             filterOptions: 'auto'
         },
         {
             Header: GENERAL.SB_STATUS,
             accessor: 'status',
-            id: '7',
-            width: '180px',
+            id: '8',
+            width: windowSize.width >= 1920 ? '11.20%' : '180px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
                 return (
@@ -786,7 +789,15 @@ const SandboxTable = () => {
                             variant={'primary'}
                             className={'continue-button'}
                             isThin={true}
-                            onClick={() => navigate('../create-new-sandbox')}
+                            onClick={() => {
+                                dispatch(
+                                    setSelectedSandboxHeaderValue({
+                                        credId: headerSelectedCredSandbox?.data?.credentialsId,
+                                        regionId: headerSelectedRegionSandbox?.label2
+                                    })
+                                );
+                                navigate('../create-new-sandbox');
+                            }}
                             id="create-sandbox"
                         >
                             {GENERAL.CREATE_SANDBOX}

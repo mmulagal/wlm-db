@@ -67,7 +67,10 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         optimizationScore: '',
         optimizedInstances: 0,
         notOptimizedInstances: 0,
-        severity: ''
+        severity: '',
+        configState: '',
+        totalInstances: 0,
+        tooltipText: ''
     },
     selectedAssessmentRow: null,
     sandboxAgeRange: {
@@ -75,6 +78,7 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         range: ''
     },
     selectedRowsForOptimize: [],
+    selectedRowsForDismiss: [],
     selectedRowsForOptimizeInnerPage: [],
     enableFilter: true,
     potentialSavingsValues: {
@@ -82,6 +86,8 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         ebsCost: 0,
         fsxwCost: 0,
         fsxnCost: 0,
+        fsxnCostForEbsHost: 0,
+        fsxnCostForFsxwHost: 0,
         savings: 0,
         savingsPercent: 0,
         noSavings: false
@@ -94,6 +100,9 @@ const databaseHomeSlice = createSlice({
     reducers: {
         setSelectedRowsForOptimizeInnerPage: (state, action: PayloadAction<any>) => {
             state.selectedRowsForOptimizeInnerPage = action.payload;
+        },
+        setSelectedRowsForDismiss: (state, action: PayloadAction<any>) => {
+            state.selectedRowsForDismiss = action.payload;
         },
         setEnableFilter: (state, action: PayloadAction<any>) => {
             state.enableFilter = action.payload;
@@ -167,7 +176,8 @@ export const {
     setSelectedAssessmentRow,
     setSandboxAgeRange,
     setSelectedConfigSummary,
-    setPotentialSavingsValues
+    setPotentialSavingsValues,
+    setSelectedRowsForDismiss
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;

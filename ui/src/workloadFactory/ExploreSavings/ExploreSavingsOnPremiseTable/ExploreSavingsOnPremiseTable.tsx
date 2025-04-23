@@ -14,13 +14,17 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatDateWithTime, getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/SQLServerDataCollector.ps1?raw';
 
 import FileUpload from './FileUpload';
-import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
+import {
+    useDeleteOnPremTcoMutation,
+    useGetUploadScriptMutation,
+    useLazyGetSubTaskListQuery
+} from '../../../utils/apiService';
 
 import { compressSync } from 'fflate';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
@@ -28,19 +32,35 @@ import { addNotification, NOTIFICATION_TYPES } from '../../../store/notification
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 
 import { useOnPremData } from './useOnPremData';
+import useResize from '../../../common/hooks/useResize';
+import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 
 const ExploreSavingsOnPremiseTable = () => {
     const dispatch = useDispatch();
     const { fetchOnPremData, error } = useOnPremData();
+    const windowSize = useResize();
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const { onPremiseData, onPremiseDataLoading } = useAppSelector(state => state.exploreSavings);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const [getUploadScript] = useGetUploadScriptMutation();
+    const [deleteOnPremTco] = useDeleteOnPremTcoMutation();
 
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
+    const [menuOpenedRow, setOpenedRow] = useState(null);
+    const menuOpenedRowDetail: any = useRef(null);
+
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
+
+    const menuItems = (row: any) => {
+        return [
+            {
+                id: 'delete',
+                displayName: 'Delete'
+            }
+        ];
+    };
 
     useEffect(() => {
         if (onPremiseData) {
@@ -215,25 +235,98 @@ const ExploreSavingsOnPremiseTable = () => {
         }
     };
 
+    //Delete function
+    const handleDelete = (rowData: any) => {
+        deleteOnPremTco({ resourceId: rowData.resourceId })
+            .then((res: any) => {
+                if (res && res?.data?.count === 1) {
+                    const updatedTableData = tableData.filter((item: any) => item.uniqueId !== rowData.uniqueId);
+                    setTableData(updatedTableData);
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: 'Deleted successfully.'
+                        })
+                    );
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: res?.error?.message || res?.data?.message
+                        })
+                    );
+                }
+            })
+            .catch((err: any) => {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: err || 'Error deleting the resource.'
+                    })
+                );
+            });
+    };
+
     const lastColDetails = () => {
         return {
             id: '9',
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '225px',
+            width: windowSize.width >= 1920 ? '14.001%' : '225px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
-                    <div
-                        className={styles.detectManage}
-                        onClick={() => {
-                            onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory);
-                        }}
-                        id="explore-savings-table-button"
-                    >
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {GENERAL.ES_SAVINGS}
-                        </Typography>
+                    <div className={styles.lasColContainer}>
+                        <div
+                            className={styles.detectManage}
+                            onClick={() => {
+                                onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory);
+                            }}
+                            id="explore-savings-table-button"
+                        >
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                {GENERAL.ES_SAVINGS}
+                            </Typography>
+                        </div>
+
+                        <div className={styles.deleteMenu}>
+                            {!isDemoMode && (
+                                <MenuPopover
+                                    isMenuOpen={
+                                        menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id
+                                    }
+                                    menuItems={menuItems(rowData)}
+                                    toggleMenu={(toggleType: string, menuId: string) => {
+                                        if (toggleType === 'close') {
+                                            menuOpenedRowDetail.current = null;
+                                            setOpenedRow(null);
+                                        } else if (toggleType === 'open') {
+                                            menuOpenedRowDetail.current = null;
+                                            setOpenedRow(rowData.id);
+                                            menuOpenedRowDetail.current = rowData.id;
+                                        } else if (toggleType === 'selectedOption') {
+                                            menuOpenedRowDetail.current = null;
+                                            setOpenedRow(null);
+
+                                            switch (menuId) {
+                                                case 'delete':
+                                                    handleDelete(rowData);
+                                                    break;
+                                            }
+                                        }
+                                    }}
+                                    isDisabled={rowData?.menuDisable}
+                                    CustomMenu={undefined}
+                                    disabledText={undefined}
+                                />
+                            )}
+
+                            {isDemoMode && (
+                                <div className={styles.menuPointerDisabled}>
+                                    <span className={styles.menuPointer}>...</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 );
             }
@@ -247,7 +340,7 @@ const ExploreSavingsOnPremiseTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '245px',
+            width: windowSize.width >= 1920 ? '15.24%' : '245px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.resourceName;
                 return (
@@ -261,7 +354,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'deploymentModel',
             id: '2',
-            width: '245px',
+            width: windowSize.width >= 1920 ? '15.24%' : '245px',
             filterOptions: getFilterOptions(tableData, 'deploymentModel'),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -272,7 +365,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: 'SQL server instances',
             accessor: 'instanceNameList',
             id: '4',
-            width: '345px',
+            width: windowSize.width >= 1920 ? '21.46%' : '345px',
             isSortable: true,
             renderCell: (cellData: string, rowData: any) => {
                 const truncatedItems = getTruncatedItems(cellData);
@@ -319,7 +412,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: 'On-premises nodes',
             accessor: 'onPremisesNodes',
             id: '5',
-            width: '347px',
+            width: windowSize.width >= 1920 ? '21.59%' : '347px',
             isSortable: true,
             accessorForTextFilter: 'onPremNode',
             renderCell: (cellData: any, rowData: any) => {
@@ -367,7 +460,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: 'Data collection time',
             accessor: 'creationTime',
             id: '6',
-            width: '200px',
+            width: windowSize.width >= 1920 ? '12.44%' : '200px',
             renderCell: (cellData: string) => {
                 return <div>{cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE}</div>;
             }

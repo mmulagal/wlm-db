@@ -1,0 +1,104 @@
+@use './mixins.scss';
+
+.base {
+    height: 24px;
+    display: block;
+    .button {
+        width: 24px;
+        height: 24px;
+
+        --icon-primary-color: var(--main-background);
+
+        svg {
+            path {
+                fill: var(--icon-primary);
+            }
+        }
+    }
+}
+
+.manage-columns-panel {
+    padding: 0 !important;
+
+    .manage-column-panel {
+        min-width: 176px;
+        max-width: 500px;
+
+        .select-all-container {
+            position: sticky;
+            top: 0;
+            background: var(--content-background);
+            z-index: 10;
+            border-bottom: 1px solid var(--border);
+            height: 42px;
+            padding: 0 16px;
+            display: flex;
+        }
+
+        .manage-content-content {
+            max-height: 384px;
+            overflow: auto;
+            @include mixins.standard-scroll();
+            display: flex;
+            flex-direction: column;
+
+            .checkbox-container {
+                height: 41px;
+                display: flex;
+                align-items: center;
+                padding: 0 16px;
+                gap: 16px;
+                cursor: pointer;
+
+                &:hover {
+                    background-color: var(--hover-background);
+                }
+            }
+
+            span {
+                display: inline-block;
+                max-width: 250px;
+            }
+
+            .drop-down-label {
+                font-size: 14px;
+            }
+        }
+
+        .buttons-row {
+            background-color: var(--content-background);
+            height: 41px;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            border-top: solid 1px var(--border);
+
+            .action-button-wrapper {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-right: solid 1px var(--border);
+                height: 100%;
+            }
+
+            .action-button {
+                font-size: 14px;
+                color: var(--text-button-primary);
+                cursor: pointer;
+                flex: 1;
+                height: 100%;
+                width: 100%;
+
+                &:disabled {
+                    cursor: auto;
+                    color: var(--text-button-disabled);
+                }
+
+                &:not(:disabled):hover {
+                    background-color: var(--hover-background);
+                }
+            }
+        }
+    }
+}

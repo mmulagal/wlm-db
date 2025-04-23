@@ -29,3 +29,15 @@ resource "aws_network_interface" "pgsql_node_ni_2" {
     SQLServerName = var.sql_server_name
   }
 }
+
+resource "aws_network_interface" "pgpool_node_ni_3" {
+  count             = local.is_standalone ? 0 : 1
+  subnet_id         = var.private_subnet1_id
+  private_ips_count = 2
+  security_groups   = local.group_set
+
+
+  tags = {
+    Name = "PgPoolServerNode"
+  }
+}

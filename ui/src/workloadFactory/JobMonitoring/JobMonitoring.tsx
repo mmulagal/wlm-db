@@ -7,14 +7,17 @@ import JobMonitoringTable from './JobMonitoringTable/JobMonitoringTable';
 import JobDistribution from './JobDistribution/JobDistribution';
 import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
+import JobMonitoringApi from './JobMonitoringApi';
 
 const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownValue }: any) => {
     const dispatch = useAppDispatch();
 
     const timelineData = useAppSelector(state => state.jobMonitoring.jobsSummaryTimeline);
     const timelineLoading = useAppSelector(state => state.jobMonitoring.jobsSummaryTimelineLoading);
-    const refreshTime = useAppSelector(state => state.headers.refreshTime);
+    const refreshTimeJobMonitor = useAppSelector(state => state.headers.refreshTimeJobMonitor);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+
+    JobMonitoringApi();
 
     const dispatchTimeInterval = (days: number) => {
         const toDate = Date.now();
@@ -28,12 +31,12 @@ const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownV
         setDropdownValue(isDemoMode ? generateSelectFieldOptions[1] : generateSelectFieldOptions[0]);
 
         dispatchTimeInterval(isDemoMode ? 7 : 1);
-    }, [refreshTime]);
+    }, [refreshTimeJobMonitor]);
 
     return (
         <div className={styles.jobMonitoring}>
             <div className={styles.chartContainer}>
-                <div style={{ width: '49.8%', maxWidth: '790px' }}>
+                <div className={styles.chartSection}>
                     <JobDistribution />
                 </div>
 

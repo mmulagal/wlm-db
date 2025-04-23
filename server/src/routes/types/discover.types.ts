@@ -1,8 +1,8 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
+import { PGSQL_DEFAULT_INSTANCE_NAME, RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
 
-const DiscoverMsSqlQuery = Type.Object({
+const DiscoverQuery = Type.Object({
     pageSize: Type.Number({
         description: 'Number of EC2 instances to discover per call of the API.',
         minimum: 5,
@@ -163,29 +163,43 @@ const MultiInstanceUnmanageResponseBody = Type.Object({
     )
 });
 
-const MultiInstanceManageMsSqlRequestBody = Type.Object({
+const BulkManageMsSqlRequestBody = Type.Object({
+    credentialsId: Type.String({ description: 'Credentials ID' }),
+    region: Type.String({ description: 'AWS region' }),
     ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
     databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' })),
     databaseHostId: Type.Optional(Type.String({ description: 'Database host ID' }))
 });
-
-const MultiInstanceManageResponseBody = Type.Object({
-    resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
-    items: Type.Array(
-        Type.Object({
-            databaseInstanceName: Type.String({ description: 'SQL Server database instance name.' }),
-            databaseInstanceGuid: Type.Optional(Type.String({ description: 'SQL Server database instance GUID.' })),
-            status: Type.String({ description: 'Status of database instance unmanage operation.' }),
-            errorMessage: Type.Optional(
-                Type.String({ description: 'Error details, if any, of a failed database instance management.' })
-            )
-        })
-    )
+const MultiInstanceManageMsSqlRequestBody = Type.Object({
+    items: Type.Array(BulkManageMsSqlRequestBody)
 });
 
-// const ManageMsSqlResponseBody = Type.Object({
-//     resourceId: Type.String({ description: 'ID of the managed resource' })
-// });
+type MultiInstanceManageMsSqlRequestBodyType = Static<typeof BulkManageMsSqlRequestBody>;
+const MultiInstanceManageResponseBody = Type.Array(
+    Type.Object({
+        resourceId: Type.Optional(Type.String({ description: 'Workload Factory resource ID.' })),
+        ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
+        region: Type.String({ description: 'AWS region' }),
+        credentialsId: Type.String({ description: 'Credentials ID' }),
+        hostErrorMessage: Type.Optional(
+            Type.String({ description: 'Error details, if any, of a failed host management.' })
+        ),
+        instances: Type.Array(
+            Type.Object({
+                databaseInstanceName: Type.String({ description: 'SQL Server database instance name.' }),
+                databaseInstanceGuid: Type.Optional(Type.String({ description: 'SQL Server database instance GUID.' })),
+                status: Type.Optional(Type.String({ description: 'Status of database instance unmanage operation.' })),
+                errorMessage: Type.Optional(
+                    Type.String({ description: 'Error details, if any, of a failed database instance management.' })
+                )
+            })
+        )
+    })
+);
+
+const MultiHostManageResponseBody = Type.Object({ hosts: MultiInstanceManageResponseBody });
+
+type MultiInstanceManageResponseBodyType = Static<typeof MultiInstanceManageResponseBody>;
 
 const PrepareResourceResponseBody = Type.Object({
     jobId: Type.String({ description: 'Resource preparation job ID' })
@@ -238,15 +252,89 @@ const DatabaseInstanceQueryString = Type.Object({
     )
 });
 
-const MsSqlInstancesRequestQuery = Type.Object({
+const SqlInstancesRequestQuery = Type.Object({
     instances: Type.String({
         description: 'Comma separated Ec2 instance ID associated with the MS SQL Server instance.'
     }),
     fields: Type.Optional(Type.String())
 });
 
+const pgSqlServerNode = Type.Object({
+    ec2InstanceName: Type.Optional(Type.String({ description: 'Primary node name' })),
+    ec2InstanceId: Type.String({ description: 'Primary node ID' }),
+    ec2InstancePrivateIpAddress: Type.String({ description: 'Primary node IP address' }),
+    ec2InstanceType: Type.String({ description: 'Primary node type' }),
+    ec2UsageOperation: Type.Optional(Type.String({ description: 'EC2 usage operation details' }))
+});
+
+const DiscoverPgSqlResponseInfo = Type.Intersect([
+    Type.Omit(DiscoverResponseInfo, ['sqlServerInstances']),
+    Type.Object({
+        pgsqlServerInstance: Type.Optional(
+            Type.String({ description: 'PostgreSQL instance name', default: PGSQL_DEFAULT_INSTANCE_NAME })
+        ),
+        pgsqlServerState: Type.Optional(
+            Type.String({
+                description: 'PostgreSQL server state',
+                enum: ['running', 'stopped']
+            })
+        ),
+        pgsqlServerVersion: Type.Optional(Type.String({ description: 'PostgreSQL version' })),
+        pgsqlServerName: Type.Optional(Type.String({ description: 'PostgreSQL server name' })),
+        pgsqlServerDeploymentType: Type.Optional(
+            Type.String({
+                description: 'PostgreSQL deployment architecture.',
+                enum: ['standalone', 'ha']
+            })
+        ),
+        pgsqlServerInstanceId: Type.Optional(Type.String({ description: 'PostgreSQL instance ID' })),
+        databaseCount: Type.Optional(Type.Number({ description: 'Number of databases in the PostgreSQL instance.' })),
+        isPrimary: Type.Optional(Type.Boolean({ description: 'Is this primary PostgreSQL instance' })),
+        nodes: Type.Optional(Type.Array(pgSqlServerNode)),
+        primaryNode: Type.Optional(pgSqlServerNode),
+        defaultAuth: Type.Optional(Type.Boolean()),
+        storage: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    type: Type.String({ description: 'Underlying storage types of the PostgreSQL instance' }),
+                    id: Type.String({ description: 'ID of the storage' }),
+                    svmId: Type.Optional(
+                        Type.String({
+                            description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP'
+                        })
+                    ),
+                    protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' })),
+                    fileSystemStorageType: Type.Optional(
+                        Type.String({ description: 'File system storage type, SSD or HDD' })
+                    ),
+                    deploymentType: Type.Optional(Type.String({ description: 'Deployment type of storage' })),
+                    zones: Type.Optional(
+                        Type.Array(Type.Optional(Type.String({ description: 'Availability zones of storage' })))
+                    ),
+                    nfsMountPoint: Type.Optional(Type.String({ description: 'Mount point of storage' }))
+                })
+            )
+        ),
+        error: Type.Optional(Type.String({ description: 'Error details, if any.' }))
+    })
+]);
+
+const DiscoverPgSqlResponseBody = Type.Object({
+    count: Type.Number({ description: 'Number of discovered items' }),
+    items: Type.Array(DiscoverPgSqlResponseInfo),
+    nextToken: Type.Optional(
+        Type.String({
+            description: 'Pagination token for each page.  A non-empty token indicates more more results are available.'
+        })
+    )
+});
+
+type DiscoverPgSqlResponseBodyType = Static<typeof DiscoverPgSqlResponseBody>;
+type DiscoverPgSqlResponseType = Static<typeof DiscoverPgSqlResponseInfo>;
+type pgsqlNodeDetailsType = Static<typeof pgSqlServerNode>;
+
 export {
-    DiscoverMsSqlQuery,
+    DiscoverQuery,
     DiscoverMsSqlResponseBody,
     DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
@@ -254,12 +342,19 @@ export {
     DiscoverCredentialsRequestBody,
     DiscoverInstanceParams,
     DiscoverCredentialsType,
-    MsSqlInstancesRequestQuery,
+    SqlInstancesRequestQuery,
     DiscoverCredentialsResponse,
     PrepareResourceResponseBody,
     UnmanageInstanceParams,
     MultiInstanceUnmanageResponseBody,
     MultiInstanceManageResponseBody,
     DatabaseInstanceQueryString,
-    MultiInstanceManageMsSqlRequestBody
+    MultiInstanceManageMsSqlRequestBody,
+    MultiInstanceManageMsSqlRequestBodyType,
+    MultiInstanceManageResponseBodyType,
+    DiscoverPgSqlResponseBody,
+    DiscoverPgSqlResponseBodyType,
+    DiscoverPgSqlResponseType,
+    pgsqlNodeDetailsType,
+    MultiHostManageResponseBody
 };

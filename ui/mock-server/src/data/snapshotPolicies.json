@@ -1,0 +1,91 @@
+{
+    "snapshotPolicies": [
+        {
+            "uuid": "1",
+            "name": "Daily",
+            "schedules": []
+        },
+        {
+            "uuid": "2",
+            "name": "Weekly",
+            "schedules": [
+                {
+                    "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
+                    "name": "daily",
+                    "cron": {
+                        "hours": [0],
+                        "minutes": [10]
+                    },
+                    "retention": "PT0S"
+                }
+            ]
+        },
+        {
+            "uuid": "3",
+            "name": "Monthly",
+            "schedules": [
+                {
+                    "uuid": "61883224-34d3-11ee-9989-a51720c855dc",
+                    "name": "hourly",
+                    "cron": {
+                        "minutes": [5]
+                    },
+                    "retention": "PT0S"
+                },
+                {
+                    "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
+                    "name": "daily",
+                    "cron": {
+                        "hours": [0],
+                        "minutes": [10]
+                    },
+                    "retention": "PT0S"
+                },
+                {
+                    "uuid": "61943e47-34d3-11ee-9989-a51720c855dc",
+                    "name": "weekly",
+                    "cron": {
+                        "minutes": [30],
+                        "hours": [14, 16],
+                        "days": [1, 15],
+                        "months": [1, 7]
+                    },
+                    "retention": "PT0S"
+                }
+            ]
+        },
+        {
+            "uuid": "4",
+            "name": "Yearly",
+            "schedules": [
+                {
+                    "uuid": "61883224-34d3-11ee-9989-a51720c855dc",
+                    "name": "hourly",
+                    "cron": {
+                        "minutes": [5]
+                    },
+                    "retention": "PT0S"
+                },
+                {
+                    "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
+                    "name": "daily",
+                    "cron": {
+                        "hours": [0],
+                        "minutes": [10]
+                    },
+                    "retention": "PT0S"
+                },
+                {
+                    "uuid": "61943e47-34d3-11ee-9989-a51720c855dc",
+                    "name": "weekly",
+                    "cron": {
+                        "hours": [0],
+                        "minutes": [15],
+                        "weekdays": [0]
+                    },
+                    "retention": "PT0S"
+                }
+            ]
+        }
+    ]
+}

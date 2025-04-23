@@ -6,12 +6,22 @@ interface StorageSummary {
     total: number;
     clones: number;
 }
-interface EbsCostCalculation {
-    storageVolumeType: string;
+interface AutomaticModeEbsCostCalculation {
     storageAmountPerVol: {
         size: number;
         unit: string;
     };
+}
+
+interface ManualModeEbsCostCalculation {
+    storageAmount: {
+        size: number;
+        unit: string;
+    };
+}
+
+interface EbsCostCalculation extends AutomaticModeEbsCostCalculation, ManualModeEbsCostCalculation {
+    storageVolumeType: string;
     totalInstanceHours: number;
     numberOfVolumes: number;
     instanceAvgDuration: number;
@@ -254,7 +264,8 @@ interface FsxCostCalculations {
     fsx_clone_cost_calculation: FsxCloneCalculation;
     fsxw_cost_calculation?: FsxwCostCalculation;
 }
-interface CalculateEbsComparisonResponse {
+
+interface EbsVolumeTypesCalculation {
     gp2?: {
         ebs: StorageSummary;
         ebs_cost_calculation: EbsCostCalculation;
@@ -274,58 +285,19 @@ interface CalculateEbsComparisonResponse {
     st1?: {
         ebs: StorageSummary;
         ebs_cost_calculation: EbsCostCalculation;
-    };
-    ebs?: {
-        capacity: number;
-        iops: number;
-        throughput: number;
-        snapshots: number;
-        total: number;
-        clones: number;
-    };
-    fsx: {
-        capacity: number;
-        iops: number;
-        throughput: number;
-        snapshots: number;
-        clones: number;
-        total: number;
-    };
-    single?: FsxCostCalculations;
-    multi?: FsxCostCalculations;
-    fsxw?: {
-        capacity: number;
-        iops: number;
-        throughput: number;
-        snapshots: number;
-        clones: number;
-        total: number;
     };
 }
+interface CalculateEbsComparisonResponse extends EbsVolumeTypesCalculation {
+    ebs?: StorageSummary;
+    fsx: StorageSummary;
+    single?: FsxCostCalculations;
+    multi?: FsxCostCalculations;
+    fsxw?: StorageSummary;
+}
 
-interface InstanceEbsData {
+interface InstanceEbsData extends EbsVolumeTypesCalculation {
     instanceName?: string;
     isPrimary: boolean;
-    gp2?: {
-        ebs: StorageSummary;
-        ebs_cost_calculation: EbsCostCalculation;
-    };
-    gp3?: {
-        ebs: StorageSummary;
-        ebs_cost_calculation: EbsCostCalculation;
-    };
-    io1?: {
-        ebs: StorageSummary;
-        ebs_cost_calculation: EbsCostCalculation;
-    };
-    io2?: {
-        ebs: StorageSummary;
-        ebs_cost_calculation: EbsCostCalculation;
-    };
-    st1?: {
-        ebs: StorageSummary;
-        ebs_cost_calculation: EbsCostCalculation;
-    };
 }
 
 interface ManualModeEbsComparisonResponse {

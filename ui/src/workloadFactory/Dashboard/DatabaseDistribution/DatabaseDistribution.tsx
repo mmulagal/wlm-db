@@ -10,9 +10,10 @@ import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 const DatabaseDistribution = () => {
     const { aggregatedHostsCount, aggregatedPgSqlHostsCount } = useAppSelector(state => state.databaseHome);
     const { getDatabaseHosts, getPgSqlDatabaseHosts } = useAppSelector(state => state.inventoryV2);
+    const { multiDataLoading } = useAppSelector(state => state.headers);
     const loading = useMemo(() => {
-        return getDatabaseHosts.fullHostDataLoading || getPgSqlDatabaseHosts.fullHostDataLoading;
-    }, [getDatabaseHosts, getPgSqlDatabaseHosts]);
+        return getDatabaseHosts.fullHostDataLoading || getPgSqlDatabaseHosts.fullHostDataLoading || multiDataLoading;
+    }, [getDatabaseHosts, getPgSqlDatabaseHosts, multiDataLoading]);
 
     return (
         <div className={styles.databaseDistribution}>
@@ -36,10 +37,8 @@ const DatabaseDistribution = () => {
                                 variant="Regular_32"
                                 style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}
                             >
-                                {!loading
-                                    ? (aggregatedHostsCount?.totalDatabases || 0) +
-                                      (aggregatedPgSqlHostsCount?.totalDatabases || 0)
-                                    : ''}
+                                {(aggregatedHostsCount?.totalDatabases || 0) +
+                                    (aggregatedPgSqlHostsCount?.totalDatabases || 0)}
                                 {loading && <DsFlashingDotsLoader />}
                             </DsTypography>
                             <DsTypography variant="Regular_14">Total databases</DsTypography>
@@ -50,10 +49,8 @@ const DatabaseDistribution = () => {
 
                     <div className={styles.valueSection}>
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}>
-                            {!loading
-                                ? (aggregatedHostsCount?.managedDatabases || 0) +
-                                  (aggregatedPgSqlHostsCount?.managedDatabases || 0)
-                                : ''}
+                            {(aggregatedHostsCount?.managedDatabases || 0) +
+                                (aggregatedPgSqlHostsCount?.managedDatabases || 0)}
                             {loading && <DsFlashingDotsLoader />}
                         </DsTypography>
 
@@ -76,6 +73,7 @@ const DatabaseDistribution = () => {
                         afterOutOf={aggregatedHostsCount?.totalDatabases || 0}
                         bottomText="Managed databases:"
                         width="440px"
+                        loading={loading}
                     />
                     <BarComponent
                         color="var(--chart-9)"
@@ -90,6 +88,7 @@ const DatabaseDistribution = () => {
                         afterOutOf={aggregatedPgSqlHostsCount?.totalDatabases || 0}
                         bottomText="Managed databases:"
                         width="440px"
+                        loading={loading}
                     />
                 </div>
             </div>

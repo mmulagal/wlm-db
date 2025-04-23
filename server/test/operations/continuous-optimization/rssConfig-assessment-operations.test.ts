@@ -25,7 +25,14 @@ beforeAll(async () => {
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI'
+            sqlDeploymentType: 'FCI',
+            assessment: {
+                rssConfig: {
+                    rssAdapters: [],
+                    tcpOffloadState: 'Disabled',
+                    rssConfigFinding: 'optimized'
+                }
+            }
         }
     });
 
@@ -69,7 +76,9 @@ describe('calculateRssConfigDrift', () => {
                 recommendedBaseProcessorNumber: 2,
                 recommendedReceiveQueues: 4
             },
-            tcpOffloadState: 'Disabled'
+            tcpOffloadState: 'Disabled',
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: 1
         });
     });
 
@@ -90,6 +99,7 @@ describe('calculateRssConfigDrift', () => {
             DEFAULT_AWS_REGION,
             activeNodeInstanceId,
             'test-resource',
+            RESOURCE_ID,
             'test-job-id'
         );
         expect(response?.rssConfigFinding).toBeDefined();

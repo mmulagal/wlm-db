@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { cardDataDefault } from '../../workloadFactory/GetWell/GetWellUtils';
 import { GetWellSliceInterface } from '../../utils/types/getWellTypes';
+import { GENERAL } from '../../utils/appConstants';
 
 const initialState: GetWellSliceInterface = {
     optimizePageLoading: false,
@@ -10,31 +11,60 @@ const initialState: GetWellSliceInterface = {
     selectedResourceId: '',
     selectedDatabaseInstance: '',
     selectedDatabaseInstanceName: '',
+    selectedGwInstanceCredId: '',
+    selectedGwInstanceRegionId: '',
     selectedDatabaseStorageType: '',
+    selectedRowFsxId: '',
     cardData: cardDataDefault,
     osConfigTableData: null,
     ontapConfigTableData: null,
     optimizationBreakDown: null,
     gwRefreshPage: false,
+    gwRefreshTimestamp: '',
     gwTimestamp: '',
     optimizingData: {},
     optimizingInstanceData: false,
     selectedRecommendedInstance: null,
+    selectedSnapshotPolicy: null,
+    selectedSnapshot: null,
+    selectedAWSBackup: {
+        numberOfDays: 30,
+        hour: '01',
+        minute: '00'
+    },
     credIdFromJM: '',
     regionFromJM: '',
     landingFrom: '',
     inProgressOptimizationData: {},
+    inProgressResourceOptimizeData: {}, // To maintain the in progress data for resource optimization like clone database
     inProgressHostData: {},
     jobToInstanceMap: {},
     jobToInstanceMapForBulk: [],
     recommendedInstanceInBulk: {},
-    landingFromInnerPage: false
+    landingFromInnerPage: false,
+    isInnerPageOptimize: false,
+    gwAdhocError: '',
+    selectedCloneTab: GENERAL.CLONE_MANAGEMENT_TAB1,
+    cloneDashboardData: [], // Data stored for clone in inner page
+    cloneIsOptimizedRows: {} // To maintain optimized rows in clone assessment (resourceId + instanceId + cloneDatabasename)
 };
 
 const getWellOptimizeSlice = createSlice({
     name: 'getWellOptimize',
     initialState,
     reducers: {
+        setSelectedCloneTab: (state, action: PayloadAction<string>) => {
+            state.selectedCloneTab = action.payload;
+        },
+        setSelectedSnapshot: (state, action: PayloadAction<any>) => {
+            state.selectedSnapshot = action.payload;
+        },
+        setSelectedSnapshotPolicy: (state, action: PayloadAction<any>) => {
+            state.selectedSnapshotPolicy = action.payload;
+        },
+        setSelectedAWSBackup: (state, action: PayloadAction<any>) => {
+            state.selectedAWSBackup = action.payload;
+        },
         setOptimizePageLoading: (state, action: PayloadAction<any>) => {
             state.optimizePageLoading = action.payload;
         },
@@ -50,11 +80,20 @@ const getWellOptimizeSlice = createSlice({
         setGwResourceId: (state, action: PayloadAction<any>) => {
             state.selectedResourceId = action.payload;
         },
+        setGwSelectedRowFsxId: (state, action: PayloadAction<any>) => {
+            state.selectedRowFsxId = action.payload;
+        },
         setGwDatabaseInstance: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseInstance = action.payload;
         },
         setGwDatabaseInstanceName: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseInstanceName = action.payload;
+        },
+        setSelectedGwInstanceCredId: (state, action: PayloadAction<any>) => {
+            state.selectedGwInstanceCredId = action.payload;
+        },
+        setSelectedGwInstanceRegionId: (state, action: PayloadAction<any>) => {
+            state.selectedGwInstanceRegionId = action.payload;
         },
         setGwDatabaseStorageType: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseStorageType = action.payload;
@@ -77,6 +116,9 @@ const getWellOptimizeSlice = createSlice({
         setGwTimestamp: (state, action: PayloadAction<any>) => {
             state.gwTimestamp = action.payload;
         },
+        setGwRefreshTimestamp: (state, action: PayloadAction<any>) => {
+            state.gwRefreshTimestamp = action.payload;
+        },
         resetGwData: (state, action: PayloadAction<any>) => {
             state.optimizePageLoading = false;
             state.driftAssessmentData = null;
@@ -86,14 +128,18 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseInstance = '';
             state.selectedDatabaseInstanceName = '';
             state.selectedDatabaseStorageType = '';
+            state.selectedRowFsxId = '';
             state.cardData = cardDataDefault;
             state.osConfigTableData = null;
             state.ontapConfigTableData = null;
             state.optimizationBreakDown = null;
             state.optimizingData = null;
             state.optimizingInstanceData = false;
+            state.selectedSnapshotPolicy = null;
             state.selectedRecommendedInstance = null;
             state.recommendedInstanceInBulk = {};
+            state.selectedGwInstanceCredId = '';
+            state.selectedGwInstanceRegionId = '';
         },
         setOptimizingData: (state, action: PayloadAction<any>) => {
             state.optimizingData = action.payload;
@@ -116,6 +162,9 @@ const getWellOptimizeSlice = createSlice({
         setInProgressOptimizationData: (state, action: PayloadAction<any>) => {
             state.inProgressOptimizationData = action.payload;
         },
+        setInProgressResourceOptimizeData: (state, action: PayloadAction<any>) => {
+            state.inProgressResourceOptimizeData = action.payload;
+        },
         setInProgressHostData: (state, action: PayloadAction<any>) => {
             state.inProgressHostData = action.payload;
         },
@@ -131,13 +180,38 @@ const getWellOptimizeSlice = createSlice({
             }
             state.recommendedInstanceInBulk[action.payload.type] = action.payload.value;
         },
+        setGwPageLoadInstanceData: (state, action: PayloadAction<any>) => {
+            state.selectedHostname = action.payload.hostname;
+            state.selectedResourceId = action.payload.resourceId;
+            state.selectedDatabaseInstance = action.payload.instanceId;
+            state.selectedDatabaseInstanceName = action.payload.instanceName;
+            state.selectedGwInstanceCredId = action.payload.credId;
+            state.selectedGwInstanceRegionId = action.payload.regionId;
+            state.selectedDatabaseStorageType = action.payload.storageType;
+        },
         setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
             state.landingFromInnerPage = action.payload;
+        },
+        setIsInnerPageOptimize: (state, action: PayloadAction<any>) => {
+            state.isInnerPageOptimize = action.payload;
+        },
+        setGwAdhocError: (state, action: PayloadAction<any>) => {
+            state.gwAdhocError = action.payload;
+        },
+        setCloneDashboardData: (state, action: PayloadAction<any>) => {
+            state.cloneDashboardData = action.payload;
+        },
+        setCloneIsOptimizedRows: (state, action: PayloadAction<any>) => {
+            state.cloneIsOptimizedRows = action.payload;
         }
     }
 });
 
 export const {
+    setSelectedCloneTab,
+    setSelectedSnapshot,
+    setSelectedSnapshotPolicy,
+    setSelectedAWSBackup,
     setJobToInstanceMapForBulk,
     setLandingFrom,
     setCredIdFromJM,
@@ -156,15 +230,25 @@ export const {
     setOptimizationBreakDown,
     setGwRefreshPage,
     setGwTimestamp,
+    setGwRefreshTimestamp,
     resetGwData,
     setOptimizingData,
     setOptimizingInstanceData,
     setSelectedRecommendedInstance,
     setInProgressOptimizationData,
+    setInProgressResourceOptimizeData,
     setInProgressHostData,
     setJobToInstanceMap,
     setRecommendedInstanceInBulk,
-    setLandingFromInnerPage
+    setSelectedGwInstanceCredId,
+    setSelectedGwInstanceRegionId,
+    setGwPageLoadInstanceData,
+    setLandingFromInnerPage,
+    setGwSelectedRowFsxId,
+    setIsInnerPageOptimize,
+    setGwAdhocError,
+    setCloneDashboardData,
+    setCloneIsOptimizedRows
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

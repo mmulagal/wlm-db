@@ -9,6 +9,7 @@ import {
 import {
     AssessmentTriggeredBy,
     OPTIMIZATION_CATEGORIES,
+    OPTIMIZE_RESILIENCY_CONFIGS,
     OptimizeStorageParams
 } from '../utils/continous-optimization-consts';
 import {
@@ -27,7 +28,9 @@ import {
     BulkOptimizeComputeSchema,
     AvailableSnapshotPolicies,
     BulkOptimizeMaxDopSchema,
-    OptimizeResilienceSchema
+    OptimizeResilienceSchema,
+    BulkOptimizeAwsBackupSchema,
+    BulkDismissConfigurationSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -43,8 +46,10 @@ import {
     handleResiliecyOptimize
 } from '../operations/continuous-optimization/resilience-optimize-operations';
 import { OptimizeResiliencyBodyType } from './types/continuous-optimization.types';
+import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-utils';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
+const MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/mssql';
 
 export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -115,7 +120,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
-                    body: { type }
+                    body: { configurationName, objectsToOptimize }
                 } = castRequest(request);
 
                 const response = await optimizeSizing(
@@ -124,7 +129,9 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    type
+                    [configurationName],
+                    undefined,
+                    objectsToOptimize
                 );
                 return reply.send(response);
             }
@@ -194,7 +201,8 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             { schema: OptimizeStorageTierSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    body: { objectsToOptimize }
                 } = castRequest(request);
 
                 const response = await optimizeStorageTier(
@@ -202,7 +210,8 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     region,
                     databaseHostId,
-                    databaseInstanceId
+                    databaseInstanceId,
+                    objectsToOptimize
                 );
                 return reply.send(response);
             }
@@ -224,18 +233,16 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/storage-sizing`,
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/storage-sizing`,
             { schema: BulkOptimizeStorageSizingSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region },
+                    params: { accountId },
                     body: { hostsToOptimize }
                 } = castRequest(request);
 
                 const response = await bulkOptimization(
                     accountId,
-                    credentialsId,
-                    region,
                     OPTIMIZATION_CATEGORIES.STORAGE_SIZING,
                     hostsToOptimize
                 );
@@ -243,18 +250,16 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/storage-operating-system`,
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/storage-operating-system`,
             { schema: BulkOptimizeOperatingSystemSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region },
+                    params: { accountId },
                     body: { hostsToOptimize }
                 } = castRequest(request);
 
                 const response = await bulkOptimization(
                     accountId,
-                    credentialsId,
-                    region,
                     OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM,
                     hostsToOptimize
                 );
@@ -262,18 +267,16 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/storage-tier`,
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/storage-tier`,
             { schema: BulkOptimizeStorageTierSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region },
+                    params: { accountId },
                     body: { hostsToOptimize }
                 } = castRequest(request);
 
                 const response = await bulkOptimization(
                     accountId,
-                    credentialsId,
-                    region,
                     OPTIMIZATION_CATEGORIES.STORAGE_TIER,
                     hostsToOptimize
                 );
@@ -281,15 +284,15 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/compute`,
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/compute`,
             { schema: BulkOptimizeComputeSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region },
+                    params: { accountId },
                     body: { hostsToOptimize }
                 } = castRequest(request);
 
-                const response = await bulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize);
+                const response = await bulkComputeOptimization(accountId, hostsToOptimize);
                 return reply.send(response);
             }
         )
@@ -315,36 +318,59 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             { schema: OptimizeResilienceSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    body
                 } = castRequest(request);
-                const requestBody: OptimizeResiliencyBodyType = request.body;
                 const response = await handleResiliecyOptimize(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    requestBody
+                    body as OptimizeResiliencyBodyType
                 );
                 return reply.send(response);
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/max-dop`,
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/max-dop`,
             { schema: BulkOptimizeMaxDopSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region },
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(accountId, OPTIMIZATION_CATEGORIES.MAXDOP, hostsToOptimize);
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/resiliency/aws-backup`,
+            { schema: BulkOptimizeAwsBackupSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
                     body: { hostsToOptimize }
                 } = castRequest(request);
 
                 const response = await bulkOptimization(
                     accountId,
-                    credentialsId,
-                    region,
-                    OPTIMIZATION_CATEGORIES.MAXDOP,
+                    OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP,
                     hostsToOptimize
                 );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/assessment/dismiss`,
+            { schema: BulkDismissConfigurationSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { configurationsToDismiss }
+                } = castRequest(request);
+                const response = await updateDismissConfigurations(accountId, configurationsToDismiss);
                 return reply.send(response);
             }
         );

@@ -6,6 +6,7 @@ import getLogger from '../../utils/logger';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
 import {
     ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
@@ -14,9 +15,11 @@ import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/common-types';
-import { extractKbNumber } from '../../utils/utils';
-import { HttpErrorCodes } from '../../utils/consts';
-import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
+import { extractKbNumber, extractVersionDetails, sqlResponseParsing } from '../../utils/utils';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
+import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
+import { GET_INSTALLED_MSSQL_VERSION } from '../workloads/mssql/continuous-optimization-scripts';
+import { callSsmExecution } from '../aws/ssm-operations';
 
 const logger = getLogger();
 
@@ -50,43 +53,18 @@ async function calculateMSSQLPatchDrift(
     }
     try {
         const metadataObject = metadata as unknown as Metadata;
-        const { assessment: { mssqlPatch } = {} } = metadataObject;
+        const { assessment: { mssqlPatch, errors } = {} } = metadataObject;
         logger.info('MSSQL patch assessment from metadata', mssqlPatch);
 
-        if (!isEmpty(mssqlPatch)) {
-            patchAssessment = mssqlPatch as MSSQLPatchAssessmentObject[];
-        } else {
-            const { node1InstanceId, node2InstanceId } = metadataObject;
-            const { activeNodeInstanceId } = await getActiveSqlNode(
-                credentialsId,
-                region,
-                node1InstanceId,
-                node2InstanceId
-            );
-
-            if (!activeNodeInstanceId) {
-                logger.error('Active node instance id not found');
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Active node instance id not found');
-            }
-
-            patchAssessment = await runMSSQLPatchAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                node1InstanceId,
-                !!node2InstanceId, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
-                activeNodeInstanceId
-            );
-            logger.info('Patch assessment result while calculating', patchAssessment);
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            (metadata as unknown as Metadata).assessment = {
-                ...existingAssessmentData,
-                mssqlPatch: patchAssessment,
-                lastAssessedDate: new Date().getTime().toString()
-            };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        if (isEmpty(mssqlPatch)) {
+            errorMessage = errors?.mssqlPatch
+                ? errors?.mssqlPatch
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.MSSQL_PATCH);
+            logger.error({ errorMessage });
+            return { errorMessage };
         }
+
+        patchAssessment = mssqlPatch as MSSQLPatchAssessmentObject[];
 
         // Find unique missing patches by KbNumber with Critical and Important patch counts
         const { uniqueMissingPatches, criticalPatchesCount, importantPatchesCount } =
@@ -156,8 +134,8 @@ async function managedHostMSSQLPatchAssessment(
     });
 
     const { id: patchAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server patch assessment for ${resourceName}`,
-        description: `Microsoft SQL server patch assessment for ${resourceName}`,
+        name: `Microsoft SQL Server patch assessment for ${resourceName}`,
+        description: `Microsoft SQL Server patch assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -190,9 +168,36 @@ async function managedHostMSSQLPatchAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+        if (errorMessage) {
+            await updateAsssementErrorInResourceMetadata(
+                accountId,
+                databaseHostId,
+                credentialsId,
+                region,
+                errorMessage,
+                'mssqlPatch'
+            );
+        }
     }
 
     return patchAssessment;
+}
+
+async function getTheMSSqlversion(credentialsId: string, region: string, instanceId: string) {
+    const ssmCommand = GET_INSTALLED_MSSQL_VERSION();
+
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        [ssmCommand],
+        instanceId,
+        'Get Installed SQL version'
+    );
+    const [parsedResponse] = sqlResponseParsing(response);
+    const { version } = parsedResponse;
+    const { version: versionYear, releaseDate } = extractVersionDetails(version);
+
+    return { version, versionYear, releaseDate };
 }
 
 async function runMSSQLPatchAssessment(
@@ -220,12 +225,17 @@ async function runMSSQLPatchAssessment(
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
 
     if (!isEmpty(clusterNodeInstanceIds)) {
+        const { releaseDate: currentVersionReleaseDate, versionYear: sqlServerYear } = await getTheMSSqlversion(
+            credentialsId,
+            region,
+            activeNodeInstanceId
+        );
+
         const [availableCriticalSQLPatches, instanceInstalledPatchDetails] = await Promise.all([
-            getAvailablePatches(credentialsId, region, activeNodeInstanceId),
+            getAvailablePatches(credentialsId, region, activeNodeInstanceId, sqlServerYear),
             getInstalledSQLPatchDetails(credentialsId, region, clusterNodeInstanceIds)
         ]);
 
-        const availableCriticalSQLPatchesList = availableCriticalSQLPatches || [];
         const instanceInstalledPatchDetailsList = instanceInstalledPatchDetails || [];
 
         // Create the MSSQLPatchAssessmentObject structure
@@ -241,8 +251,12 @@ async function runMSSQLPatchAssessment(
                 let criticalMissingPatchesCount = 0;
                 let importantMissingPatchesCount = 0;
 
-                for (const availablePatch of availableCriticalSQLPatchesList) {
-                    if (!installedPatchKbNumbers.has(availablePatch.KbNumber)) {
+                for (const availablePatch of availableCriticalSQLPatches) {
+                    if (
+                        !installedPatchKbNumbers.has(availablePatch.KbNumber) &&
+                        availablePatch.ReleaseDate &&
+                        new Date(availablePatch.ReleaseDate) >= new Date(currentVersionReleaseDate)
+                    ) {
                         const {
                             Classification: classification = '',
                             MsrcSeverity: severity = '',
@@ -315,4 +329,4 @@ function getUniqueMissingPatchesAndCountSeverities(patchAssessment: MSSQLPatchAs
     return { uniqueMissingPatches, criticalPatchesCount, importantPatchesCount };
 }
 
-export { managedHostMSSQLPatchAssessment, calculateMSSQLPatchDrift, runMSSQLPatchAssessment };
+export { managedHostMSSQLPatchAssessment, calculateMSSQLPatchDrift, runMSSQLPatchAssessment, getTheMSSqlversion };

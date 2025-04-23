@@ -6,13 +6,16 @@ import getLogger from '../utils/logger';
 import { isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
-import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
+import { getInstanceDetails } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import {
     DatabaseInstance,
-    databaseInstanceMetadata,
+    DatabaseInstanceConfigurations,
+    DatabaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
+    MappedOnTapVolumeResponse,
     Metadata,
+    ResourceDetails,
     StorageAssessment,
     WorkloadInstance
 } from '../utils/common-types';
@@ -30,17 +33,18 @@ import {
     listAllManagedInstances,
     listDatabaseInstances,
     listResources,
+    updateInstanceMetadata,
     updateResourceMetaData
 } from '../lib/database/db';
 import { AssessmentCategories, AssessmentStatus, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import {
+    CloneDriftResponseType,
     ComputeDriftResponseType,
     DriftAssessmentResponseType,
     HostOsPatchDriftResponseType,
     LicenseDriftResponseType,
     MSSQLPatchDriftResponseType,
     ParameterDriftResponseType,
-    ResilienceDriftAssessmentResponseType,
     RssConfigDriftResponseType
 } from '../routes/types/continuous-optimization.types';
 import { getInstanceInfo } from './database/database-operations';
@@ -73,12 +77,89 @@ import {
     calculateMSSQLPatchDrift,
     managedHostMSSQLPatchAssessment
 } from './continuous-optimization/mssqlPatch-assessment-operations';
-import { getResilienceDriftAssessment } from './continuous-optimization/resilience-assessment-operation';
+import {
+    getResilienceDriftAssessment,
+    initiateCrossRegionResiliencyAssessment,
+    collectSnapshotCopyData,
+    initiateAWSBackupAssessment
+} from './continuous-optimization/resilience-assessment-operation';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
+import {
+    calculateCloneDrift,
+    managedHostsCloneAssessment
+} from './continuous-optimization/clone-assessment-operations';
+import { getLastAssessedTime } from './continuous-optimization/assessment-utils';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
 
+async function updateAssessmentResultsInHostMetadata(
+    driftAssessmentData: DriftAssessmentResponseType,
+    resourceDetails: ResourceDetails
+) {
+    const {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        resource_id: databaseHostId,
+        metadata
+    } = resourceDetails as unknown as ResourceDetails;
+    (metadata as unknown as Metadata).assessmentResults = {
+        license: driftAssessmentData.license || undefined,
+        compute: driftAssessmentData.compute || undefined,
+        hostOsPatch: driftAssessmentData.hostOsPatch || undefined,
+        rssConfig: driftAssessmentData.rssConfig || undefined,
+        mssqlPatch: driftAssessmentData.mssqlPatch || undefined
+    };
+    try {
+        await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+    } catch (error) {
+        logger.error('Error while updating assessment results in resource metadata', {
+            accountId,
+            databaseHostId,
+            error
+        });
+    }
+}
+async function updateAssesmentResultsInInstanceMetadata(
+    managedInstance: DatabaseInstancesIncludingResource,
+    updateInHost?: boolean
+) {
+    const {
+        account_id: accountId,
+        region,
+        credentials_id: credentialsId,
+        resource_id: databaseHostId,
+        database_instance_id: databaseInstanceId
+    } = managedInstance;
+    logger.info('Update assessment results in instance metadata', {
+        accountId,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId,
+        updateInHost
+    });
+    const [driftAssessmentData, instanceDetails, [resourceDetails]] = await Promise.all([
+        fetchDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
+        getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId),
+        updateInHost ? listResources(accountId, databaseHostId, credentialsId, region) : Promise.resolve({})
+    ]);
+    const { metadata } = instanceDetails as unknown as DatabaseInstance;
+
+    (metadata as unknown as DatabaseInstanceMetadata).assessmentResults = driftAssessmentData;
+    try {
+        await updateInstanceMetadata(accountId, databaseInstanceId, metadata);
+    } catch (error) {
+        logger.error('Error while updating assessment results in instance metadata', {
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            error
+        });
+    }
+    if (updateInHost) {
+        await updateAssessmentResultsInHostMetadata(driftAssessmentData, resourceDetails);
+    }
+}
 async function initiateComputeLicenseAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -123,6 +204,7 @@ async function initiateComputeLicenseAssessmentCollection(
         let rssConfigAssessment;
         let maxDOPAssessment;
         let mssqlPatchAssessment;
+        let cloneAssessment;
 
         if (fields?.includes(AssessmentCategories.LICENSE)) {
             licenseAssessment = await managedHostsLicenseAssessment(
@@ -131,7 +213,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                jobId,
+                databaseHostId
             );
         }
         if (fields?.includes(AssessmentCategories.COMPUTE)) {
@@ -142,7 +225,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 awsAccountId!,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                jobId,
+                databaseHostId
             );
             if (computeAssessment) {
                 // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
@@ -200,7 +284,9 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                databaseHostId,
+                jobId,
+                metadata as unknown as Metadata
             );
         }
         if (fields?.includes(AssessmentCategories.MAXDOP)) {
@@ -244,6 +330,34 @@ async function initiateComputeLicenseAssessmentCollection(
                 jobId
             );
         }
+        if (fields?.includes(AssessmentCategories.CLONE)) {
+            // This will run instance level clone assessment
+            cloneAssessment = await managedHostsCloneAssessment(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                resourceName,
+                databaseHostId,
+                databaseInstanceId as string,
+                jobId
+            );
+            if (!isEmpty(cloneAssessment)) {
+                await createDatabaseInstanceConfigData([
+                    {
+                        account_id: accountId,
+                        credentials_id: credentialsId,
+                        region,
+                        resource_id: databaseHostId,
+                        database_instance_id: databaseInstanceId as string,
+                        creation_time: new Date(Date.now()),
+                        config_data_type: AssessmentCategories.CLONE,
+                        config_data: cloneAssessment
+                    }
+                ]);
+            }
+        }
+
         if (
             !isEmpty(licenseAssessment) ||
             !isEmpty(computeAssessment) ||
@@ -259,7 +373,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 mssqlPatch: mssqlPatchAssessment || undefined,
                 lastAssessedDate: new Date().getTime().toString()
             };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+
+            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
         if (!isEmpty(hostOsPatchAssessment)) {
             updatePatchBaselineStatusForHost(accountId, databaseHostId, hostOsPatchAssessment);
@@ -274,8 +389,9 @@ async function initiateStorageAssessmentCollection(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    jobId: string,
+    parentJobId: string,
     instanceRecord: WorkloadInstance,
+    instanceVolumeMapping: MappedOnTapVolumeResponse[],
     jobTriggers: STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES = STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
 ) {
     logger.info('Initiating storage assessment data collection', {
@@ -283,138 +399,149 @@ async function initiateStorageAssessmentCollection(
         credentialsId,
         region,
         databaseHostId,
-        jobId,
+        parentJobId,
         instanceRecord
     });
 
-    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
-        credentialsId,
-        region,
-        instanceRecord.fsxFileSystem
-    );
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
+    let snapshotPolicyAssessmentJobId = '';
 
-    instanceRecord.svmOntapUuid = svms.find(svm =>
-        isDemoFlow ? svm : svm?.StorageVirtualMachineId === instanceRecord.svmId
-    )?.UUID;
-
-    const instanceVolumeMapping = (await getMappedOntapVolumes(
-        credentialsId,
-        region,
-        instanceRecord.fsxFileSystem,
-        false,
-        instanceRecord.activeNodeInstanceid,
-        [instanceRecord.name],
-        instanceRecord.sqlAuthEnabled,
-        true,
-        accountId,
-        ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
-        instanceRecord.svmOntapUuid
-    )) as MappedOnTapVolumeResponse[];
-
-    if (isEmpty(instanceVolumeMapping)) {
-        const errorMessage = `No ONTAP volumes found for the instance ${instanceRecord.name}.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    }
-    const volumeRecords =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeRecords)
-            .flat() || [];
-    instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
-    instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
-
-    instanceRecord.mappedLunNames =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i.lunNames)
-            .flat() || [];
-
-    const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
-    const ssmComment = 'Get Storage Configuration Assessment';
-
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        command,
-        instanceRecord.activeNodeInstanceid,
-        ssmComment,
-        accountId,
-        false,
-        ASSESSMENT_SSM_EXECUTION_TIMEOUT
-    );
-
-    const parsedResponse = response ? sqlResponseParsing(response) : {};
-    await createDatabaseInstanceConfigData([
-        {
-            account_id: accountId,
-            credentials_id: credentialsId,
-            region,
-            resource_id: databaseHostId,
-            database_instance_id: instanceRecord.id,
-            creation_time: new Date(Date.now()),
-            config_data_type: AssessmentCategories.STORAGE,
-            config_data: parsedResponse
+    const { resourceName, name: databaseInstanceName } = instanceRecord;
+    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+    try {
+        if (isEmpty(instanceVolumeMapping)) {
+            errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
-    ]);
+        const volumeRecords =
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i?.volumeRecords)
+                .flat() || [];
+        instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
+        instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
 
-    const resourceWithInstanceName = `${instanceRecord.resourceName}\\${instanceRecord.name}`;
-    const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
-    const configJobStatus = isDemo()
-        ? JOBSTATUS.COMPLETED
-        : isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
-        ? JOBSTATUS.FAILED
-        : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
-        ? JOBSTATUS.COMPLETED
-        : JOBSTATUS.WARNING;
-    if (
-        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
-        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE.valueOf()
-    ) {
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage configuration assessment',
-            description: 'Storage configuration assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: configJobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId: jobId
-        });
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage layout assessment',
-            description: 'Storage layout assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId: jobId
-        });
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage sizing assessment',
-            description: 'Storage sizing assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId: jobId
-        });
-    }
+        instanceRecord.mappedLunNames =
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i.lunNames)
+                .flat() || [];
 
-    if (
-        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
-        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY.valueOf()
-    ) {
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Resiliency assessment',
-            description: 'Snapshot policy assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: configJobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId: jobId
+        const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
+        const ssmComment = 'Get Storage Configuration Assessment';
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            instanceRecord.activeNodeInstanceid,
+            ssmComment,
+            accountId,
+            false,
+            ASSESSMENT_SSM_EXECUTION_TIMEOUT
+        );
+
+        const parsedResponse = response ? sqlResponseParsing(response) : {};
+        const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
+        if (!isDemo()) {
+            // add snapshot copy details to volumes
+            parsedResponse.volumes = await collectSnapshotCopyData(accountId, credentialsId, instanceRecord, volumes);
+        }
+        await createDatabaseInstanceConfigData([
+            {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource_id: databaseHostId,
+                database_instance_id: instanceRecord.id,
+                creation_time: new Date(Date.now()),
+                config_data_type: AssessmentCategories.STORAGE,
+                config_data: parsedResponse
+            }
+        ]);
+
+        const configJobStatus = isDemo()
+            ? JOBSTATUS.COMPLETED
+            : isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
+            ? JOBSTATUS.FAILED
+            : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
+            ? JOBSTATUS.COMPLETED
+            : JOBSTATUS.WARNING;
+        if (
+            jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+            jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE.valueOf()
+        ) {
+            await registerJob(accountId, credentialsId, region, {
+                name: 'Storage configuration assessment',
+                description: 'Storage configuration assessment',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: configJobStatus,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            });
+            await registerJob(accountId, credentialsId, region, {
+                name: 'Storage layout assessment',
+                description: 'Storage layout assessment',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            });
+            await registerJob(accountId, credentialsId, region, {
+                name: 'Storage sizing assessment',
+                description: 'Storage sizing assessment',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            });
+        }
+
+        if (
+            jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+            jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY.valueOf()
+        ) {
+            ({ id: snapshotPolicyAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+                name: 'Snapshot policy assessment ',
+                description: 'Snapshot policy assessment ',
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: configJobStatus,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId
+            }));
+        }
+    } catch (error) {
+        logger.error('Error while initiating storage assessment collection', {
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            instanceRecord,
+            error
         });
+        errorMessage = `Error while initiating storage assessment collection. ${error}`;
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, parentJobId, {
+            endTime: Date.now(),
+            status: jobStatus,
+            error: errorMessage
+        });
+        if (snapshotPolicyAssessmentJobId) {
+            await updateJobDetails(accountId, snapshotPolicyAssessmentJobId, {
+                endTime: Date.now(),
+                status: jobStatus,
+                error: errorMessage
+            });
+        }
     }
 }
 
@@ -444,7 +571,11 @@ async function driftAssessmentDataCollection(
     let shouldRunRssConfigAssessment = false;
     let shouldRunMAXDOPAssessment = false;
     let shouldRunMSSQLPatchAssessment = false;
-    let shouldRunResilienceAssessment = false;
+    let shouldRunSnapshotPolicyAssessment = false;
+    let shouldRunAwsBackupAssessment = false;
+    let shouldRunCrrAssessment = false;
+    let shouldRunCloneAssessment = false;
+
     let fieldsValues: string | string[] = [];
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
@@ -456,7 +587,13 @@ async function driftAssessmentDataCollection(
         shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
         shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
         shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
-        shouldRunResilienceAssessment = fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase());
+        shouldRunSnapshotPolicyAssessment = fieldsValues?.includes(
+            AssessmentCategories.SNAPSHOT_POLICY.toLocaleLowerCase()
+        );
+        shouldRunAwsBackupAssessment = fieldsValues?.includes(AssessmentCategories.AWS_BACKUP.toLocaleLowerCase());
+        shouldRunCrrAssessment = fieldsValues?.includes(AssessmentCategories.CRR.toLocaleLowerCase());
+
+        shouldRunCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
     } else {
         fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
         shouldRunStorageAssessment = true;
@@ -466,23 +603,120 @@ async function driftAssessmentDataCollection(
         shouldRunRssConfigAssessment = true;
         shouldRunMAXDOPAssessment = true;
         shouldRunMSSQLPatchAssessment = true;
-        shouldRunResilienceAssessment = true;
+        shouldRunSnapshotPolicyAssessment = true;
+        shouldRunAwsBackupAssessment = true;
+        shouldRunCrrAssessment = true;
+        shouldRunCloneAssessment = true;
     }
 
-    if (shouldRunStorageAssessment || shouldRunResilienceAssessment) {
+    if (shouldRunStorageAssessment || shouldRunSnapshotPolicyAssessment) {
+        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
+            databaseInstanceRecord.fsxFileSystem
+        ]);
+
+        databaseInstanceRecord.svmOntapUuid = svms.find(svm =>
+            isDemoFlow ? svm : svm?.StorageVirtualMachineId === databaseInstanceRecord.svmId
+        )?.UUID;
+
+        const instanceVolumeMapping = (await getMappedOntapVolumes(
+            credentialsId,
+            region,
+            databaseInstanceRecord.fsxFileSystem,
+            false,
+            databaseInstanceRecord.activeNodeInstanceid,
+            [databaseInstanceRecord.name],
+            databaseInstanceRecord.sqlAuthEnabled,
+            true,
+            accountId,
+            ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+            databaseInstanceRecord.svmOntapUuid
+        )) as MappedOnTapVolumeResponse[];
+
+        try {
+            await createDatabaseInstanceConfigData([
+                {
+                    account_id: accountId,
+                    credentials_id: credentialsId,
+                    region,
+                    resource_id: databaseHostId,
+                    database_instance_id: databaseInstanceRecord.id,
+                    creation_time: new Date(Date.now()),
+                    config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
+                    config_data: instanceVolumeMapping
+                }
+            ]);
+        } catch (error) {
+            const databaseInstanceId = databaseInstanceRecord.id;
+            logger.error('Error while persisting mapped ontap volumes data', {
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                error
+            });
+        }
+
+        const { resourceName, name: databaseInstanceName, id: databaseInstanceId } = databaseInstanceRecord;
+        const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+        const instanceDetailsForJob = JSON.stringify({
+            hostName: resourceName,
+            resourceId: databaseHostId,
+            databaseInstanceId,
+            databaseInstanceName,
+            sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+        });
+
+        const jobName = `Microsoft SQL Server assessment for instance ${resourceWithInstanceName}`;
+        const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+
+        const { id: instanceLevelAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+            name: jobName,
+            description: jobDescription,
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+
         await initiateStorageAssessmentCollection(
             accountId,
             credentialsId,
             region,
             databaseHostId,
-            jobId,
+            instanceLevelAssessmentJobId,
             databaseInstanceRecord,
-            !shouldRunResilienceAssessment
+            instanceVolumeMapping,
+            !shouldRunSnapshotPolicyAssessment
                 ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE
                 : shouldRunStorageAssessment
                 ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
                 : STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY
         );
+
+        if (shouldRunCrrAssessment) {
+            await initiateCrossRegionResiliencyAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord,
+                instanceVolumeMapping
+            );
+        }
+        if (shouldRunAwsBackupAssessment) {
+            await initiateAWSBackupAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord,
+                instanceVolumeMapping
+            );
+        }
     }
 
     if (
@@ -491,7 +725,8 @@ async function driftAssessmentDataCollection(
         shouldRunHostOsPatchAssessment ||
         shouldRunRssConfigAssessment ||
         shouldRunMAXDOPAssessment ||
-        shouldRunMSSQLPatchAssessment
+        shouldRunMSSQLPatchAssessment ||
+        shouldRunCloneAssessment
     ) {
         await initiateComputeLicenseAssessmentCollection(
             accountId,
@@ -509,12 +744,10 @@ async function driftAssessmentDataCollection(
 async function triggerAssessment(
     managedInstance: DatabaseInstancesIncludingResource,
     parentJobId: string,
-    fields?: string,
-    skipInstanceLevelJobCreation: boolean = false
+    fields?: string
 ) {
     logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
 
-    let jobStatus: string = JOBSTATUS.COMPLETED;
     let errorMessage = '';
     const {
         account_id: accountId,
@@ -522,19 +755,8 @@ async function triggerAssessment(
         region,
         resource_id: databaseHostId,
         database_instance_id: databaseInstanceId,
-        database_instance_name: databaseInstanceName,
         resource
     } = managedInstance;
-
-    const { resource_name: resourceName } = resource;
-    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const instanceDetailsForJob = JSON.stringify({
-        hostName: resourceName,
-        resourceId: databaseHostId,
-        databaseInstanceId,
-        databaseInstanceName,
-        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
-    });
 
     let activeNodeInstanceId;
     let newDatabaseInstanceDetails;
@@ -557,21 +779,6 @@ async function triggerAssessment(
         errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
-    }
-
-    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceWithInstanceName}`;
-    const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
-    if (!skipInstanceLevelJobCreation) {
-        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: jobName,
-            description: jobDescription,
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId
-        });
-        parentJobId = jobId;
     }
 
     try {
@@ -606,13 +813,7 @@ async function triggerAssessment(
     } catch (error: any) {
         logger.error(error);
         errorMessage = error.message || 'Internal Server Error';
-        jobStatus = JOBSTATUS.FAILED;
-    } finally {
-        await updateJobDetails(accountId, parentJobId, {
-            error: errorMessage,
-            status: jobStatus,
-            endTime: Date.now()
-        });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 }
 
@@ -671,7 +872,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     );
 
                     if (assessmentErrors.length === managedInstances.length) {
-                        const errorMessage = `No managed instance is up and running in account ${accountId}.`;
+                        const errorMessage = `No managed instances are online and running in account ${accountId}.`;
                         logger.info(errorMessage);
                         await updateJobDetails(accountId, parentJobId, {
                             status: JOBSTATUS.WARNING,
@@ -728,6 +929,14 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     if (parentJobStatus !== JOBSTATUS.FAILED) {
                         await updateParentJobStatus(accountId, parentJobId);
                     }
+
+                    // Lets update assessment result in instance metadata
+                    // Host level assessments are run for all the instances in the account. So we will update the results from one of the instance
+                    await Promise.all(
+                        managedInstances.map(async (managedInstance, index) => {
+                            await updateAssesmentResultsInInstanceMetadata(managedInstance, index === 0);
+                        })
+                    );
                 }
             }
         })
@@ -829,6 +1038,9 @@ async function fetchDriftAssessment(
         fields
     });
 
+    const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    const { configurations } = instanceDetail as unknown as DatabaseInstance;
+
     let shouldCalculateStorageAssessment = false;
     let shouldCalculateComputeAssessment = false;
     let shouldCalculateLicenseAssessment = false;
@@ -837,6 +1049,7 @@ async function fetchDriftAssessment(
     let shouldCalculateMaxDOPAssessment = false;
     let shouldCalculateMSSQLPatchAssessment = false;
     let shouldCalculateResilienceAssessment = false;
+    let shouldCalculateCloneAssessment = false;
 
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
@@ -855,9 +1068,11 @@ async function fetchDriftAssessment(
         shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
             AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
         );
-        shouldCalculateResilienceAssessment = fieldsValues?.includes(
-            AssessmentCategories.RESILIENCY.toLocaleLowerCase()
-        );
+        shouldCalculateResilienceAssessment =
+            fieldsValues?.includes(AssessmentCategories.SNAPSHOT_POLICY.toLocaleLowerCase()) ||
+            fieldsValues?.includes(AssessmentCategories.AWS_BACKUP.toLocaleLowerCase()) ||
+            fieldsValues?.includes(AssessmentCategories.CRR.toLocaleLowerCase());
+        shouldCalculateCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
     } else {
         shouldCalculateStorageAssessment = true;
         shouldCalculateComputeAssessment = true;
@@ -867,12 +1082,14 @@ async function fetchDriftAssessment(
         shouldCalculateMaxDOPAssessment = true;
         shouldCalculateMSSQLPatchAssessment = true;
         shouldCalculateResilienceAssessment = true;
+        shouldCalculateCloneAssessment = true;
     }
-    const driftAssessmentData: DriftAssessmentResponseType = {};
+    let driftAssessmentData: DriftAssessmentResponseType = {};
 
     const [
         storageAssessmentResponse,
         maxDOPResponse,
+        cloneResponse,
         {
             computeAssessmentResponse,
             licenseAssessmentResponse,
@@ -888,6 +1105,9 @@ async function fetchDriftAssessment(
         shouldCalculateMaxDOPAssessment
             ? calculateMaxDOPDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
             : Promise.resolve({}),
+        shouldCalculateCloneAssessment
+            ? calculateCloneDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve({}),
         shouldCalculateComputeAssessment ||
         shouldCalculateLicenseAssessment ||
         shouldCalculateHostOsPatchAssessment ||
@@ -896,19 +1116,18 @@ async function fetchDriftAssessment(
             ? hostLevelDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
             : Promise.resolve({}),
         shouldCalculateResilienceAssessment
-            ? getResilienceDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? getResilienceDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
             : Promise.resolve({})
     ]);
 
-    if (!isEmpty(storageAssessmentResponse)) {
+    if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
         if (isDemoFlow) {
-            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
             const storageConfigsOptimized =
-                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
-            const osConfigsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.OS || [];
+                (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+            const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
             const sizingConfigsOptimized =
-                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+                (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
 
             if (storageConfigsOptimized.length > 0) {
                 const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
@@ -964,7 +1183,7 @@ async function fetchDriftAssessment(
             const computeConfigsOptimized = (metadata as unknown as Metadata).isComputeOptimized;
             if (computeConfigsOptimized) {
                 computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
-                computeAssessmentResponse.recommendation = 'Your current instance is optimized for your workload.';
+                computeAssessmentResponse.recommendation = 'Optimized instance for your workload.';
                 driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
             }
         }
@@ -1010,9 +1229,31 @@ async function fetchDriftAssessment(
     }
 
     if (!isEmpty(resilienceAssessmentResponse)) {
-        driftAssessmentData.resiliency = resilienceAssessmentResponse as ResilienceDriftAssessmentResponseType;
+        driftAssessmentData = { ...driftAssessmentData, ...resilienceAssessmentResponse };
     }
 
+    if (!isEmpty(cloneResponse)) {
+        driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
+    }
+
+    if (configurations) {
+        const { dismissedConfigurations = {} } = configurations as DatabaseInstanceConfigurations;
+        driftAssessmentData.dismissedConfigurations = dismissedConfigurations;
+        logger.debug('Configurations successfully added to driftAssessmentData:', configurations);
+    }
+
+    // Get last assessed timestamp
+    try {
+        driftAssessmentData.lastAssessmentTimestamp = await getLastAssessedTime(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+    } catch (error) {
+        logger.error('Error while fetching last assessment timestamp:', error);
+    }
     return driftAssessmentData;
 }
 
@@ -1120,7 +1361,14 @@ async function fetchDriftAssessmentPerHost(
                 managedInstance;
 
             try {
-                const instanceFieldsToQuery = [AssessmentCategories.STORAGE, AssessmentCategories.MAXDOP];
+                // For instance level assessments
+                const instanceFieldsToQuery = [
+                    AssessmentCategories.STORAGE,
+                    AssessmentCategories.MAXDOP,
+                    AssessmentCategories.SNAPSHOT_POLICY,
+                    AssessmentCategories.AWS_BACKUP,
+                    AssessmentCategories.CRR
+                ];
 
                 const driftAssessment = await fetchDriftAssessment(
                     accountId,
@@ -1178,20 +1426,16 @@ async function handleAssessment(
 ) {
     let jobStatus = '';
     try {
-        await triggerAssessment(managedInstance, masterAssessmentJobId, fields, true);
+        await triggerAssessment(managedInstance, masterAssessmentJobId, fields);
     } catch (error) {
         jobStatus = JOBSTATUS.FAILED;
-        await updateJobDetails(accountId, masterAssessmentJobId, {
-            status: jobStatus,
-            endTime: Date.now()
-        });
         logger.error(`Error while fetching database instance details ${accountId}, ${error}`);
     } finally {
         jobStatus = jobStatus || JOBSTATUS.COMPLETED;
-        if (jobStatus !== JOBSTATUS.FAILED) {
-            // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
-            await updateParentJobStatus(accountId, masterAssessmentJobId);
-        }
+        // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
+        await updateParentJobStatus(accountId, masterAssessmentJobId);
+        // Lets update assessment result in instance metadata
+        await updateAssesmentResultsInInstanceMetadata(managedInstance, true);
     }
     if (initiatedBy === AssessmentTriggeredBy.USER) {
         const auditStatus = jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED;
@@ -1236,16 +1480,9 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         database_instance_name: instanceName
     } = managedInstance;
     try {
-        const instanceDetailsForJob = JSON.stringify({
-            hostName: resourceName,
-            resourceId: databaseHostId,
-            databaseInstanceId,
-            databaseInstanceName: instanceName,
-            sqlServerDeploymentType: RESOURCESTYPE.MSSQL
-        });
         const savedInstanceName = `${resourceName}\\${instanceName}`;
-        const jobName = `Microsoft SQL Server storage assessment for instance ${savedInstanceName}`;
-        const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+        const jobName = `Microsoft SQL Server assessment for instance ${savedInstanceName}`;
+        const jobDescription = `${jobName}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobName,
             description: jobDescription,

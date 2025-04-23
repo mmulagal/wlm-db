@@ -60,3 +60,9 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .sandboxTable {
+        max-width: unset;
+    }
+}

@@ -7,7 +7,8 @@ import {
     Popover,
     DsButton,
     useDialog,
-    TooltipInfo
+    TooltipInfo,
+    Button
 } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
@@ -24,9 +25,11 @@ import { ReactComponent as Union } from '../../assets/Union.svg';
 import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { useDispatch } from 'react-redux';
+import { clearNotifications } from '../../store/notificationSlice';
 
 import {
     ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
     WLF_TABS
@@ -51,7 +54,12 @@ import {
 import { useAppSelector } from '../../store/storeHooks';
 import { useState, useEffect, useMemo } from 'react';
 import GetWellApi from './GetWellApi';
-import { resetGwData, setGwRefreshPage } from '../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    resetGwData,
+    setGwAdhocError,
+    setGwRefreshPage,
+    setIsInnerPageOptimize
+} from '../../store/workloadFactory/getWellOptimizeSlice';
 //@ts-ignore
 //import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
@@ -60,6 +68,7 @@ import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
 import downloadPdf from '../../common/pdfGenerator';
 import { useLazyGetSubTaskListQuery, useTriggerInstanceAssessmentMutation } from '../../utils/apiService';
+import AssessmentContainer from './AssessmentContainer/AssessmentContainer';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -74,12 +83,14 @@ const GetWell = () => {
         osConfigTableData,
         selectedHostname,
         selectedDatabaseInstanceName,
-        gwTimestamp,
+        gwRefreshTimestamp,
         isAssessmentAvailable,
         selectedResourceId,
-        selectedDatabaseInstance
+        selectedDatabaseInstance,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        isInnerPageOptimize
     } = useAppSelector(state => state.getWellOptimize);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
@@ -94,48 +105,33 @@ const GetWell = () => {
 
     useEffect(() => {
         handleFilterClearAll();
-    },[]);
+        dispatch(setGwAdhocError(''));
+    }, []);
 
     const handleSelect = (filters: any, filterLabel: any) => {
         let updatedFilters = [...optimizeFilterTags];
 
-        if (defaultFilterOptions[filterLabel] && defaultFilterOptions[filterLabel]?.length > filters?.length) {
-            const idArray = filters.map((item: any) => item.id);
+        const selectedIds = new Set(filters.map((filter: any) => filter.id));
 
-            const findRemovedElement = defaultFilterOptions[filterLabel].filter((item: any) => !idArray.includes(item));
+        updatedFilters = updatedFilters.filter(
+            (filter: any) => !(filter.type === filterLabel && !selectedIds.has(filter.id))
+        );
 
-            const typeToRemove = filterLabel;
-            const idsToRemove = findRemovedElement;
-
-            const filteredArray = updatedFilters.filter(
-                (item: any) => !(idsToRemove.includes(item.id) && item.type === typeToRemove)
+        filters.forEach((filter: any) => {
+            const existingFilterIndex = updatedFilters.findIndex(
+                (selectedFilter: any) => selectedFilter.value === filter.value && selectedFilter.type === filterLabel
             );
 
-            const reArrange = groupByType(filteredArray);
-            dispatch(setOptimizeFilterTags(filteredArray));
-            dispatch(setDefaultFilterOptions(reArrange));
-        } else {
-            filters.forEach((filter: any) => {
-                const isSelected = optimizeFilterTags.some(
-                    (selectedFilter: any) => selectedFilter.value === filter.value
-                );
+            if (existingFilterIndex === -1) {
+                updatedFilters.push({ ...filter, type: filterLabel });
+            }
+        });
 
-                if (isSelected) {
-                    // Remove the filter if it is already selected
-                    updatedFilters = updatedFilters.filter(selectedFilter => selectedFilter.label !== filter.label);
-                } else {
-                    // Add the filter if it is not selected
-                    updatedFilters.push({ ...filter, type: filterLabel });
-                }
-            });
+        const uniqueArray = getUniqueEntries([updatedFilters]);
+        const reArrange = groupByType(uniqueArray);
 
-            const uniqueArray = getUniqueEntries([optimizeFilterTags, updatedFilters]);
-
-            const reArrange = groupByType(uniqueArray);
-
-            dispatch(setOptimizeFilterTags(uniqueArray));
-            dispatch(setDefaultFilterOptions(reArrange));
-        }
+        dispatch(setOptimizeFilterTags(uniqueArray));
+        dispatch(setDefaultFilterOptions(reArrange));
     };
 
     const handleCancelFilter = (option: any) => {
@@ -148,17 +144,31 @@ const GetWell = () => {
     const handleTriggerAssessment = () => {
         setTriggerAssessmentInProgress(true);
         triggerAssessmentApi({
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance
         }).then((res: any) => {
-            const { jobId } = res?.data;
+            const jobId = res?.data?.jobId;
             if (jobId) {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
-                        message: 'Assessment triggered successfully'
+                        message: (
+                            <div>
+                                {`Assessment process initiated. Track progress in `}
+                                <Button
+                                    Component="button"
+                                    variant="text"
+                                    onClick={() => {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                        dispatch(clearNotifications());
+                                    }}
+                                >
+                                    {GENERAL.JOB_MONITORING}.
+                                </Button>
+                            </div>
+                        )
                     })
                 );
                 const jobInterval = setInterval(() => {
@@ -184,6 +194,24 @@ const GetWell = () => {
                                     message: 'Assessment failed'
                                 })
                             );
+                            refreshGetWellPage();
+                            dispatch(setGwAdhocError(jobRes?.data?.error));
+                            clearInterval(jobInterval);
+                        } else if (status === JOB_MONITORING_STATUS.WARNING) {
+                            setTriggerAssessmentInProgress(false);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.WARNING,
+                                    message: 'Assessment completed with warnings'
+                                })
+                            );
+                            refreshGetWellPage();
+                            jobRes?.data?.subJobs?.forEach((job: { error?: string }) => {
+                                const errorMessage = job?.error;
+                                if (errorMessage) {
+                                    dispatch(setGwAdhocError(errorMessage));
+                                }
+                            });
                             clearInterval(jobInterval);
                         }
                     });
@@ -195,6 +223,8 @@ const GetWell = () => {
                         message: 'Error in triggering assessment'
                     })
                 );
+                setTriggerAssessmentInProgress(false);
+                dispatch(setGwAdhocError(res?.error?.data?.message));
             }
         });
     };
@@ -233,6 +263,13 @@ const GetWell = () => {
         resetGwValuesOnRefresh(dispatch);
         dispatch(setGwRefreshPage(true));
     };
+
+    useEffect(() => {
+        if (isInnerPageOptimize) {
+            refreshGetWellPage();
+            dispatch(setIsInnerPageOptimize(false));
+        }
+    }, [isInnerPageOptimize]);
 
     const handleFilterClearAll = () => {
         dispatch(setOptimizeFilterTags([]));
@@ -279,6 +316,12 @@ const GetWell = () => {
                 label: 'Protection',
                 value: 'Protection',
                 category: GENERAL.RESILIENCY
+            },
+            {
+                id: 6,
+                label: 'Cloning',
+                value: 'Cloning',
+                category: GENERAL.CLONING
             }
         ];
         const filteredOptions = selectedCategories.length
@@ -370,22 +413,20 @@ const GetWell = () => {
                         >
                             Optimize instance
                         </DsTypography>
-                        {localStorage.getItem('adhocAssessment') === 'true' && (
-                            <div className={styles.triggerAssessment}>
-                                <DsButton onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress}>
-                                    Trigger Assessment
-                                </DsButton>
-                            </div>
-                        )}
+
                         {!optimizePrintState &&
                             (loading || triggerAssessmentInProgress ? (
-                                <div className={styles.refreshIconDisable} id={'assessment-refresh'}>
+                                <div
+                                    className={styles.refreshIconDisable}
+                                    style={{ marginRight: '0px' }}
+                                    id={'assessment-refresh'}
+                                >
                                     <RefreshIcon />
                                 </div>
                             ) : (
                                 <Popover
                                     popoverClass={styles['copy-popover']}
-                                    children={`Last update: ${gwTimestamp || GENERAL.NOT_AVAILABLE}`}
+                                    children={`Last update: ${gwRefreshTimestamp || GENERAL.NOT_AVAILABLE}`}
                                     trigger="hover"
                                     container={
                                         <div
@@ -423,6 +464,10 @@ const GetWell = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Assessment Section here */}
+                <AssessmentContainer onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress} />
+
                 <div className={styles.getWellSecondLevel}>
                     <TotalOptimizationScore />
                     <OptimizationBreakdown />
@@ -526,7 +571,7 @@ const GetWell = () => {
                                                         }(${
                                                             defaultFilterOptions['all-catagories']?.length > 0
                                                                 ? defaultFilterOptions['all-catagories']?.length
-                                                                : 4
+                                                                : 5
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -550,6 +595,11 @@ const GetWell = () => {
                                                             id: 3,
                                                             label: GENERAL.RESILIENCY,
                                                             value: 'Resiliency'
+                                                        },
+                                                        {
+                                                            id: 4,
+                                                            label: GENERAL.CLONING,
+                                                            value: 'Cloning'
                                                         }
                                                     ]}
                                                     selectionType="multi"
@@ -698,13 +748,13 @@ const GetWell = () => {
                                                     formatLabel={() =>
                                                         `Tags: ${
                                                             !defaultFilterOptions['tags']?.length ||
-                                                            defaultFilterOptions['tags'].length === 5
+                                                            defaultFilterOptions['tags'].length === 6
                                                                 ? 'All'
                                                                 : ''
                                                         }(${
                                                             defaultFilterOptions['tags']?.length > 0
                                                                 ? defaultFilterOptions['tags']?.length
-                                                                : 5
+                                                                : 6
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -716,21 +766,26 @@ const GetWell = () => {
                                                         },
                                                         {
                                                             id: 1,
+                                                            label: 'Cost efficiency',
+                                                            value: 'Cost efficiency'
+                                                        },
+                                                        {
+                                                            id: 2,
                                                             label: 'Performance efficiency',
                                                             value: 'Performance efficiency'
                                                         },
                                                         {
-                                                            id: 2,
+                                                            id: 3,
                                                             label: 'Operational excellence',
                                                             value: 'Operational excellence'
                                                         },
                                                         {
-                                                            id: 3,
+                                                            id: 4,
                                                             label: 'Reliability',
                                                             value: 'Reliability'
                                                         },
                                                         {
-                                                            id: 4,
+                                                            id: 5,
                                                             label: 'Security',
                                                             value: 'Security'
                                                         }
@@ -738,6 +793,52 @@ const GetWell = () => {
                                                     selectionType="multi"
                                                     isWithActions={true}
                                                     onSelect={(option: any) => handleSelect(option, 'tags')}
+                                                    variant="underline"
+                                                />
+                                            </div>
+                                            <div className={styles.dropDown}>
+                                                <DsSelect
+                                                    title=""
+                                                    selectedOptionIds={
+                                                        defaultFilterOptions['configState']
+                                                            ? defaultFilterOptions['configState']
+                                                            : []
+                                                    }
+                                                    isExpanded={isAccordionOpen ? undefined : false}
+                                                    isCleanable={false}
+                                                    formatLabel={() =>
+                                                        `Configuration state: ${
+                                                            !defaultFilterOptions['configState']?.length ||
+                                                            defaultFilterOptions['configState'].length === 3
+                                                                ? 'All'
+                                                                : ''
+                                                        }(${
+                                                            defaultFilterOptions['configState']?.length > 0
+                                                                ? defaultFilterOptions['configState']?.length
+                                                                : 3
+                                                        })`
+                                                    }
+                                                    placeholder="Placeholder text"
+                                                    options={[
+                                                        {
+                                                            id: 0,
+                                                            label: 'Active',
+                                                            value: CONFIG_STATES.ACTIVE
+                                                        },
+                                                        {
+                                                            id: 1,
+                                                            label: 'Postponed',
+                                                            value: CONFIG_STATES.POSTPONED
+                                                        },
+                                                        {
+                                                            id: 2,
+                                                            label: 'Dismissed',
+                                                            value: CONFIG_STATES.DISMISSED
+                                                        }
+                                                    ]}
+                                                    selectionType="multi"
+                                                    isWithActions={true}
+                                                    onSelect={(option: any) => handleSelect(option, 'configState')}
                                                     variant="underline"
                                                 />
                                             </div>
@@ -801,9 +902,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['all-catagories']?.length ||
-                                                defaultFilterOptions['all-catagories']?.length === 4
-                                                    ? 'All(4)'
-                                                    : `${defaultFilterOptions['all-catagories']?.length}/4`}
+                                                defaultFilterOptions['all-catagories']?.length === 5
+                                                    ? 'All(5)'
+                                                    : `${defaultFilterOptions['all-catagories']?.length}/5`}
                                             </DsTypography>
                                         </div>
 
@@ -914,9 +1015,37 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['tags']?.length ||
-                                                defaultFilterOptions['tags']?.length === 5
-                                                    ? 'All(5)'
-                                                    : `${defaultFilterOptions['tags']?.length}/5`}
+                                                defaultFilterOptions['tags']?.length === 6
+                                                    ? 'All(6)'
+                                                    : `${defaultFilterOptions['tags']?.length}/6`}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={styles.items}>
+                                            <DsTypography
+                                                style={{
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
+                                                }}
+                                                variant="Regular_14"
+                                            >
+                                                Configuration state:
+                                            </DsTypography>
+                                            <DsTypography
+                                                style={{
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
+                                                }}
+                                                variant="Semibold_14"
+                                            >
+                                                {!defaultFilterOptions['configState']?.length ||
+                                                defaultFilterOptions['configState']?.length === 3
+                                                    ? 'All(3)'
+                                                    : `${defaultFilterOptions['configState']?.length}/3`}
                                             </DsTypography>
                                         </div>
                                     </div>
@@ -1434,7 +1563,7 @@ const GetWell = () => {
 
                             <div className={styles.accordionGroups}>
                                 {filteredCardData?.ontap_configuration && (
-                                    <div className={styles.combineComponent}>
+                                    <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
                                         <StorageCardComponent
                                             cardData={filteredCardData?.ontap_configuration}
                                             optimizePrintState={optimizePrintState}
@@ -1483,7 +1612,7 @@ const GetWell = () => {
                                                                     : 'var(--text-button-primary)'
                                                         }}
                                                     >
-                                                        View recommendation & optimization
+                                                        View recommendations & optimizations
                                                     </div>
                                                 </div>
                                             ]}
@@ -1500,7 +1629,7 @@ const GetWell = () => {
                                 )}
 
                                 {filteredCardData?.os_configuration && (
-                                    <div className={styles.combineComponent}>
+                                    <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
                                         <StorageCardComponent
                                             cardData={filteredCardData?.os_configuration}
                                             optimizePrintState={optimizePrintState}
@@ -1548,7 +1677,7 @@ const GetWell = () => {
                                                                     : 'var(--text-button-primary)'
                                                         }}
                                                     >
-                                                        View recommendation & optimization
+                                                        View recommendations & optimizations
                                                     </div>
                                                 </div>
                                             ]}
@@ -2019,7 +2148,7 @@ const GetWell = () => {
                     )}
 
                     {/* Section six */}
-                    {filteredCardData?.scheduled_local_snapshot && (
+                    {(filteredCardData?.scheduled_local_snapshot || filteredCardData?.crr) && (
                         <div className={styles.sectionClass}>
                             <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                 <DsTypography
@@ -2094,6 +2223,219 @@ const GetWell = () => {
                                             children={
                                                 <RecommendationText
                                                     data={filteredCardData?.scheduled_local_snapshot?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.crr && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.crr}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.CRR}
+                                        />
+                                        <DsAccordion
+                                            id="18"
+                                            variant="Default"
+                                            isDisabled={loading || !cardData?.crr?.block_two?.value}
+                                            isExpanded={isAccordionExpanded('18', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('18', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('18')}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.crr?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.crr?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading || !cardData?.crr?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText data={filteredCardData?.crr?.recommendation} />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.scheduled_FSx_for_ONTAP_backups && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.scheduled_FSx_for_ONTAP_backups}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
+                                        />
+                                        <DsAccordion
+                                            id="19"
+                                            variant="Default"
+                                            isDisabled={
+                                                loading || !cardData?.scheduled_FSx_for_ONTAP_backups?.block_two?.value
+                                            }
+                                            isExpanded={isAccordionExpanded('19', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('19', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('19')}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.scheduled_FSx_for_ONTAP_backups?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ||
+                                                        !cardData?.scheduled_FSx_for_ONTAP_backups?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.scheduled_FSx_for_ONTAP_backups?.block_two
+                                                                    ?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={
+                                                        filteredCardData?.scheduled_FSx_for_ONTAP_backups
+                                                            ?.recommendation
+                                                    }
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Section seven */}
+                    {filteredCardData?.clone_management && (
+                        <div className={styles.sectionClass}>
+                            <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <DsTypography
+                                    style={{
+                                        padding: '0 0 8px'
+                                    }}
+                                    variant="Semibold_16"
+                                >
+                                    {GENERAL.CLONING}
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.accordionGroups}>
+                                {filteredCardData?.clone_management && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.clone_management}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.CLONE_MANAGEMENT}
+                                        />
+                                        <DsAccordion
+                                            id="20"
+                                            variant="Default"
+                                            isDisabled={loading || !cardData?.clone_management?.block_two?.value}
+                                            isExpanded={isAccordionExpanded('20', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('20', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('20')}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.clone_management?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.clone_management?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading || !cardData?.clone_management?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.clone_management?.recommendation}
                                                 />
                                             }
                                         />

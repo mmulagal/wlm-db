@@ -9,7 +9,11 @@ enum AssessmentCategories {
     RSS_CONFIG = 'rss-config',
     MAXDOP = 'maxdop',
     MSSQL_PATCH = 'mssql-patch',
-    RESILIENCY = 'resiliency'
+    MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes',
+    CLONE = 'clone',
+    SNAPSHOT_POLICY = 'snapshot-policy',
+    AWS_BACKUP = 'aws-backup',
+    CRR = 'crr'
 }
 
 enum AssessmentTriggeredBy {
@@ -30,7 +34,8 @@ enum AwsWellArchitecturedPillars {
     RELIABILITY = 'Reliability',
     COST_OPTIMIZATION = 'Cost optimization',
     OPERATIONAL_EXCELLENCE = 'Operational excellence',
-    SECURITY = 'Security'
+    SECURITY = 'Security',
+    COST_EFFICIENCY = 'Cost efficiency'
 }
 
 const VOLUME = 'volume';
@@ -53,7 +58,8 @@ enum OptimizeStorageConfigs {
     TIERING_MINIMUM_COOLING_DAYS = 'tiering-min-cooling-days',
     TIERING_POLICY = 'tiering-policy',
     SPACE_RESERVATION = 'space-reservation-enabled',
-    SPACE_ALLOCATION = 'space-allocation-allocated'
+    SPACE_ALLOCATION = 'space-allocation-allocated',
+    MOST_RECENT_SNAPSHOT_TIMESTAMP = 'most-recent-snapshot-timestamp'
 }
 
 enum OptimizeStorageConfigsJobNames {
@@ -81,7 +87,13 @@ enum OptimizeStorageTierParams {
 }
 
 enum OptimizeComputeParams {
-    COMPUTE = 'compute'
+    COMPUTE = 'compute',
+    RSS_CONFIG = 'rss-config'
+}
+
+enum OptimizeComputeJobNames {
+    'rss-config' = 'Network adapter configuration',
+    compute = 'Compute'
 }
 
 enum OPTIMIZE_SIZING_CONFIGS {
@@ -91,7 +103,8 @@ enum OPTIMIZE_SIZING_CONFIGS {
 }
 
 enum OPTIMIZE_RESILIENCY_CONFIGS {
-    SNAPSHOT_POLICY = 'snapshot-policy'
+    SNAPSHOT_POLICY = 'snapshot-policy',
+    AWS_BACKUP = 'aws-backup'
 }
 
 enum OptimizeMaxDopParams {
@@ -103,7 +116,8 @@ enum OPTIMIZATION_CATEGORIES {
     STORAGE_SIZING = 'storage-sizing',
     OPERATING_SYSTEM = 'operating-system',
     COMPUTE = 'compute',
-    MAXDOP = 'max-dop'
+    MAXDOP = 'max-dop',
+    RSS_CONFIG = 'rss-config'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -217,6 +231,57 @@ const ASSESSMENT_RESOURCE_TYPE = {
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
 
+const STORAGE_ASSESMENT_CONFIGS_MAP = {
+    storage: {
+        configuration: {
+            volumes: [
+                'thin-provision',
+                'autosize',
+                'autosize-mode',
+                'fractional-reserve',
+                'snapshot-copy-reserve',
+                'snapshot-autodelete',
+                'space-mgmt-try-first',
+                'tiering-policy',
+                'tiering-min-cooling-days'
+            ],
+            luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
+            os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size']
+        },
+        sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size'],
+        layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
+    }
+};
+
+const ASSESSMENT_CONFIGS = {
+    compute: 'compute-rightsizing',
+    license: 'sql-license',
+    hostOsPatch: 'host-os-patch',
+    maxDOP: 'maxdop',
+    mssqlPatch: 'mssql-patch',
+    rssConfig: 'rss-config',
+    snapshotPolicy: 'snapshot-policy',
+    crr: 'crr',
+    awsBackup: 'scheduled-fsx-for-ontap-backups'
+};
+
+const DISMISS_STATUS = {
+    DISMISSED: 'DISMISSED',
+    POSTPONED: 'POSTPONED',
+    ACTIVE: 'ACTIVE'
+};
+
+const DISMISS_DEACTIVATION_REASON = {
+    USER: 'USER',
+    EXPIRED: 'EXPIRED'
+};
+
+const DISMISS_UPDATE_STATUS = {
+    SUCCESS: 'SUCCESS',
+    FAILED: 'FAILED',
+    PARTIAL: 'PARTIAL'
+};
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -248,5 +313,11 @@ export {
     OptimizeMaxDopParams,
     ASSESSMENT_RESOURCE_TYPE,
     OPTIMIZE_RESILIENCY_CONFIGS,
-    VALID_MPIO_LB_POLICIES
+    VALID_MPIO_LB_POLICIES,
+    OptimizeComputeJobNames,
+    ASSESSMENT_CONFIGS,
+    STORAGE_ASSESMENT_CONFIGS_MAP,
+    DISMISS_DEACTIVATION_REASON,
+    DISMISS_STATUS,
+    DISMISS_UPDATE_STATUS
 };

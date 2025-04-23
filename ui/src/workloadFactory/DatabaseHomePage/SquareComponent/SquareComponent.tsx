@@ -9,9 +9,18 @@ type SC = {
     boldValue?: boolean;
     isLoading?: boolean;
     loadingInFirstRow?: boolean;
+    isSmall?: boolean;
 };
 
-const SquareComponent = ({ value, color, text, boldValue, loadingInFirstRow = false, isLoading = false }: SC) => {
+const SquareComponent = ({
+    value,
+    color,
+    text,
+    boldValue,
+    loadingInFirstRow = false,
+    isLoading = false,
+    isSmall = false
+}: SC) => {
     return (
         <div className={styles.container}>
             {!boldValue && (
@@ -20,8 +29,14 @@ const SquareComponent = ({ value, color, text, boldValue, loadingInFirstRow = fa
                         {value}
                     </Typography>
 
-                    {loadingInFirstRow && (
+                    {loadingInFirstRow && !isSmall && (
                         <div className={styles.loadingClass}>
+                            <DsFlashingDotsLoader />
+                        </div>
+                    )}
+
+                    {loadingInFirstRow && isSmall && (
+                        <div className={styles.loadingClassSmall}>
                             <DsFlashingDotsLoader />
                         </div>
                     )}

@@ -16,6 +16,14 @@
         border-bottom: 1px solid var(--border);
     }
 
+    .linkMessage {
+        [class*='Button-module_link'] {
+            svg {
+                display: none !important;
+            }
+        }
+    }
+
     .table {
         display: flex;
         padding: 40px 56px 40px 0;
@@ -95,6 +103,14 @@
     [class*='SubJobTable_table'] {
         [class*='Table-module_cell'] {
             background-color: var(--main-background) !important;
+        }
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .subJobTable {
+        .table {
+            width: 100% !important;
         }
     }
 }

@@ -87,3 +87,9 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .totalOptimizationScore {
+        max-width: unset;
+    }
+}

@@ -10,16 +10,17 @@ import {
 
 import getLogger from '../../utils/logger';
 import { LicenseAssessment, Metadata } from '../../utils/common-types';
-import { getInstanceDetails } from '../database-hosts-operations';
-import { ENT_ENGINE_EDITION, FINDING, SQL_STD } from '../../utils/consts';
+import { ENT_ENGINE_EDITION, FINDING, GENERIC_ASSESSMENT_ERROR_MESSAGE, SQL_STD } from '../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY
 } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
+import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 
 const logger = getLogger();
 
@@ -43,26 +44,17 @@ async function calculateLicenseDrift(
         return { errorMessage };
     }
     try {
-        const { assessment: { license } = {} } = metadata as unknown as Metadata;
-        if (!isEmpty(license)) {
-            licenseAssessment = license as LicenseAssessment;
-        } else {
-            const { activeNodeInstanceId } = await getInstanceDetails(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId
-            );
-            licenseAssessment = await runLicenseAssessment(accountId, credentialsId, region, activeNodeInstanceId);
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            (metadata as unknown as Metadata).assessment = {
-                ...existingAssessmentData,
-                license: licenseAssessment,
-                lastAssessedDate: new Date().getTime().toString()
-            };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        const { assessment: { license, errors } = {} } = metadata as unknown as Metadata;
+
+        if (isEmpty(license)) {
+            errorMessage = errors?.license
+                ? errors?.license
+                : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.LICENSE);
+            logger.error({ errorMessage });
+            return { errorMessage };
         }
+
+        licenseAssessment = license as LicenseAssessment;
 
         const { licenseFinding, sqlServerInstances } = licenseAssessment;
         const matchingLicenseAssessmentStatus = getMatchingAssessmentStatus(licenseFinding);
@@ -102,7 +94,8 @@ async function managedHostsLicenseAssessment(
     region: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    parentJobId?: string
+    parentJobId?: string,
+    databaseHostId?: string
 ) {
     logger.info('Managed hosts license assessment', {
         accountId,
@@ -114,8 +107,8 @@ async function managedHostsLicenseAssessment(
     });
 
     const { id: licenseAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL server license assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL server license assessment for ${resourceName}`,
+        name: `Microsoft SQL Server license assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL Server license assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -139,6 +132,16 @@ async function managedHostsLicenseAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+        if (errorMessage) {
+            await updateAsssementErrorInResourceMetadata(
+                accountId,
+                databaseHostId!,
+                credentialsId,
+                region,
+                errorMessage,
+                'license'
+            );
+        }
     }
 
     return licenseAssessment;

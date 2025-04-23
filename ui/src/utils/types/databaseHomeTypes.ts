@@ -155,6 +155,7 @@ export interface AggregatedCostsRes {
 export interface DatabaseHostsEntities {
     enableFilter: boolean;
     selectedRowsForOptimize: Array<string> | any;
+    selectedRowsForDismiss: Array<string> | any;
     selectedRowsForOptimizeInnerPage: Array<string> | any;
     selectedTab: string;
     getJobsSummary: {
@@ -174,6 +175,9 @@ export interface DatabaseHostsEntities {
         optimizedInstances: number;
         notOptimizedInstances: number;
         severity: string;
+        configState: string;
+        totalInstances: number;
+        tooltipText: string;
     };
     selectedAssessmentRow: any;
     sandboxAgeRange: {
@@ -185,6 +189,8 @@ export interface DatabaseHostsEntities {
         ebsCost: number;
         fsxwCost: number;
         fsxnCost: number;
+        fsxnCostForEbsHost: number;
+        fsxnCostForFsxwHost: number;
         savings: number;
         savingsPercent: any;
         noSavings: boolean;

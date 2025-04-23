@@ -24,17 +24,15 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 import {
     setCredIdFromJM,
-    setGwDatabaseInstance,
-    setGwDatabaseInstanceName,
-    setGwDatabaseStorageType,
-    setGwHostname,
-    setGwResourceId,
+    setGwPageLoadInstanceData,
     setLandingFrom,
     setRegionFromJM
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import useResize from '../../../common/hooks/useResize';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
     const [subTaskList, setSubTaskList] = useState<any>({});
+    const windowSize = useResize();
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const subJobsDataLoading = useAppSelector(state => state.jobMonitoring.subJobsDataLoading);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -80,12 +78,17 @@ const SubJobTable = ({ jobId, statusType }: any) => {
 
         dispatch(setLandingFrom(WLF_TABS.JOB_MONITORING));
 
-        dispatch(setGwHostname(hostName));
-
-        dispatch(setGwResourceId(resourceId));
-        dispatch(setGwDatabaseInstance(databaseInstanceId));
-        dispatch(setGwDatabaseInstanceName(databaseInstanceName));
-        dispatch(setGwDatabaseStorageType(sqlServerDeploymentType));
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: hostName,
+                resourceId: resourceId,
+                instanceId: databaseInstanceId,
+                instanceName: databaseInstanceName,
+                credId: rowData?.credentialsId,
+                regionId: rowData?.region?.code,
+                storageType: sqlServerDeploymentType
+            })
+        );
     };
 
     const JobsColDefs: ColumnProps[] = [
@@ -93,7 +96,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             id: '0',
             Header: '',
             accessor: 'name',
-            width: '56px',
+            width: windowSize.width >= 1920 ? '3.73%' : '56px',
             isSticky: true,
             className: styles.firstCol,
             renderCell: (value: any, rowData: any, { updateRowState, rowsState }: any) => {
@@ -125,7 +128,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             Header: 'Name',
             accessor: 'description',
             isSortable: true,
-            width: '676px',
+            width: windowSize.width >= 1920 ? '45.12%' : '676px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
                 if (cellData.includes('databaseInstanceId') && cellData.includes('resourceId')) {
@@ -176,7 +179,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            width: '230px',
+            width: windowSize.width >= 1920 ? '15.35%' : '230px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -226,7 +229,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             Header: 'Start time',
             accessor: 'startTime',
             isSortable: true,
-            width: '240px',
+            width: windowSize.width >= 1920 ? '16.02%' : '240px',
             renderCell: (cellData: any) => {
                 const formatDate = cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE;
                 return (
@@ -241,7 +244,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             Header: 'End time',
             accessor: 'endTime',
             isSortable: true,
-            width: '240px',
+            width: windowSize.width >= 1920 ? '16.02%' : '240px',
             renderCell: (cellData: any) => {
                 const formatDate = cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE;
                 return (
@@ -255,7 +258,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             id: '6',
             Header: '',
             accessor: '',
-            width: '56px'
+            width: windowSize.width >= 1920 ? '3.73%' : '56px'
         }
     ];
 

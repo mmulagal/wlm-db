@@ -29,8 +29,29 @@
             }
         }
 
+        // .tableSection {
+        //     margin-top: 44px;
+        //     display: flex;
+        //     justify-content: center;
+        // }
         .tableSection {
             margin-top: 44px;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+
+            .buttonContainer {
+                display: flex;
+                justify-content: space-between;
+                width: 92%;
+
+                [class*='dsButtons'] {
+                    border-radius: 20px !important;
+                }
+            }
+        }
+
+        .contentSection {
             display: flex;
             justify-content: center;
         }
@@ -48,6 +69,16 @@
             align-items: center;
             justify-content: center;
             width: 152px;
+        }
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .dashboardInnerPage {
+        .mainSection {
+            .recommendation {
+                width: calc(926px + ((100vw - 1920px) * 0.6941)) !important;
+            }
         }
     }
 }

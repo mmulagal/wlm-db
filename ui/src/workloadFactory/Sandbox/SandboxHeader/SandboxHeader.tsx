@@ -8,11 +8,15 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../utils/appConstants';
 import { setShowBanner } from '../../../store/workloadFactory/sandboxSlice';
+import { setSelectedSandboxHeaderValue } from '../../../store/workloadFactory/createSandboxSlice';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const SandboxHeader = () => {
     const windowSize = useResize();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+
+    const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
 
     const handleBanner = () => {
         localStorage.setItem('hideBanner', JSON.stringify(true));
@@ -35,6 +39,12 @@ const SandboxHeader = () => {
                         <Button
                             variant="primary"
                             onClick={() => {
+                                dispatch(
+                                    setSelectedSandboxHeaderValue({
+                                        credId: headerSelectedCredSandbox?.data?.credentialsId,
+                                        regionId: headerSelectedRegionSandbox?.label2
+                                    })
+                                );
                                 navigate('../create-new-sandbox');
                             }}
                         >
@@ -65,6 +75,12 @@ const SandboxHeader = () => {
                                 variant="primary"
                                 style={{ height: '32px' }}
                                 onClick={() => {
+                                    dispatch(
+                                        setSelectedSandboxHeaderValue({
+                                            credId: headerSelectedCredSandbox?.data?.credentialsId,
+                                            regionId: headerSelectedRegionSandbox?.label2
+                                        })
+                                    );
                                     navigate('../create-new-sandbox');
                                 }}
                             >
@@ -96,6 +112,12 @@ const SandboxHeader = () => {
                                 variant="primary"
                                 style={{ height: '32px' }}
                                 onClick={() => {
+                                    dispatch(
+                                        setSelectedSandboxHeaderValue({
+                                            credId: headerSelectedCredSandbox?.data?.credentialsId,
+                                            regionId: headerSelectedRegionSandbox?.label2
+                                        })
+                                    );
                                     navigate('../create-new-sandbox');
                                 }}
                             >

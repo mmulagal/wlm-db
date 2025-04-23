@@ -205,7 +205,7 @@ describe('onPrem TCO operations', () => {
             reportData.windowsConfig,
             'Enterprise Edition'
         );
-        expect(instanceType).toEqual('m7i - flex.large');
+        expect(instanceType).toEqual('m7i-flex.large');
     });
 
     it('should group SQL Server instances by deployment type', () => {
@@ -236,7 +236,7 @@ describe('onPrem TCO operations', () => {
             reportData.sqlServerInfo,
             'Enterprise Edition'
         );
-        expect(instanceType).toEqual('m7i - flex.large');
+        expect(instanceType).toEqual('m7i-flex.large');
     });
 
     it('should return false if any SQL instance is not using enterprise features', () => {

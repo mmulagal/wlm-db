@@ -8,6 +8,14 @@
     gap: 24px;
     border-bottom: 1px solid var(--border);
 
+    .actionMenu {
+        svg {
+            path {
+                fill: var(--text-disabled);
+            }
+        }
+    }
+
     .commonSection {
         display: flex;
         flex-direction: column;
@@ -30,6 +38,7 @@
 
     .firstSection {
         width: 248px;
+        min-width: 180px;
     }
 
     .thirdSection {
@@ -39,6 +48,19 @@
         height: 64px;
         width: 224px;
         border-right: 1px solid var(--border);
+    }
+
+    .dismissSection {
+        width: 224px;
+        min-width: 170px;
+        .dismissContainer {
+            display: flex;
+            gap: 8px;
+            svg {
+                position: relative;
+                top: 2px;
+            }
+        }
     }
 
     .tooltipContainer {
@@ -162,7 +184,7 @@
     // }
 
     .fourthSection {
-        width: 330px;
+        width: 170px;
     }
 
     .separator {

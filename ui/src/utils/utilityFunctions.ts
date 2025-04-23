@@ -1,6 +1,7 @@
-import { optionType } from '@netapp/design-system/dist/components/Select';
+import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import { get, sortBy, compact, uniqBy, map } from 'lodash';
+import { css } from '@emotion/css';
 import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
@@ -9,6 +10,7 @@ import {
     CREATE_DATABASE_YAML,
     CREDENTIAL_PROD_LINK,
     CREDENTIAL_STAGE_LINK,
+    DBType,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DETECT_HOST_VAR,
@@ -46,9 +48,14 @@ import {
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
+import { setSelectedRowsForManage } from '../store/workloadFactory/inventoryV2Slice';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
+    data?: Object;
+}
+
+export interface OptionsWitMultipleData extends optionTypeMulti {
     data?: Object;
 }
 
@@ -64,6 +71,25 @@ export const generateOptionType = (
         value: value,
         label: label,
         label2: label2,
+        isDisabled: isDisabled,
+        disabledTitle: disabledTitle,
+        data: data
+    };
+    return option;
+};
+
+export const generateMultipleOptionType = (
+    value: string | any,
+    label: string | any,
+    id: string | number,
+    isDisabled: boolean,
+    disabledTitle: string,
+    data?: Object
+) => {
+    const option: OptionsWitMultipleData = {
+        value: value,
+        label: label,
+        id: id,
         isDisabled: isDisabled,
         disabledTitle: disabledTitle,
         data: data
@@ -147,6 +173,48 @@ export const getFilterOptions = (data: any[], propName: string, renderLabel?: (v
 
 export const formatSize = (value: number, passedformat?: string) => {
     return numeral(getByteVal(value, passedformat)).format('0.[00] ib');
+};
+
+export const categorizeStorageSize = (value: string): string => {
+    // Convert value string to bytes for comparison
+    const sizeInBytes = convertToBytes(value);
+
+    if (sizeInBytes >= 0 && sizeInBytes < 100 * 1024 ** 2) {
+        return '0 - 100 MiB';
+    } else if (sizeInBytes >= 100 * 1024 ** 2 && sizeInBytes < 1024 ** 3) {
+        return '100 MiB - 1 GiB';
+    } else if (sizeInBytes >= 1024 ** 3 && sizeInBytes < 10 * 1024 ** 3) {
+        return '1 GiB - 10 GiB';
+    } else if (sizeInBytes >= 10 * 1024 ** 3 && sizeInBytes < 5 * 1024 ** 4) {
+        return '10 GiB - 5 TiB';
+    } else {
+        return '5 TiB+';
+    }
+};
+
+export const backupStartTime = (selectedAWSBackup: any) => {
+    return `${selectedAWSBackup?.hour}:${selectedAWSBackup?.minute}`;
+};
+
+// Helper function to convert "GiB" into bytes
+const convertToBytes = (sizeStr: string): number => {
+    const units: { [key: string]: number } = {
+        B: 1,
+        KiB: 1024,
+        MiB: 1024 ** 2,
+        GiB: 1024 ** 3,
+        TiB: 1024 ** 4
+    };
+
+    const match = sizeStr.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB)$/);
+    if (!match) {
+        throw new Error(`Invalid size format: ${sizeStr}`);
+    }
+
+    const value = parseFloat(match[1]);
+    const unit = match[2];
+
+    return value * units[unit];
 };
 
 export const getByteVal = (value: number, passedformat?: string) => {
@@ -248,7 +316,13 @@ export const fsxPassVal = (password: string) => {
         const hasAtLeastOneNumber = /[0-9]/.test(password);
         const hasAtLeastOneAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 1;
 
-        if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName)) {
+        if (
+            isAtLeastEightChars &&
+            hasAtLeastOneNumber &&
+            hasAtLeastOneAlphabetic &&
+            !password.includes(fsxUserName) &&
+            !password.includes('admin')
+        ) {
             return '';
         } else {
             return GENERAL.PASSWORD_ERROR_CHECK;
@@ -309,6 +383,12 @@ export const customErrorMessages = (inputString: string, endpoint: string) => {
 
 export const getCssVariableValue = (variableName: string) =>
     getComputedStyle(document.body).getPropertyValue(variableName);
+
+export const formatDateAssess = (date: string | number) => {
+    const dateStr = date.toString();
+    const timeStamp = dateStr.substring(6, dateStr.length - 2);
+    return moment(new Date(parseInt(timeStamp))).format('DD MMMM YYYY');
+};
 
 export const formatDate = (date: string | number) => {
     const dateStr = date.toString();
@@ -1093,6 +1173,21 @@ export const checkBoxHandle = (tableData: any, rowsData: any, dispatch: any) => 
     dispatch(setSelectedRowsForOptimize([]));
 };
 
+export const checkBoxHandleManage = (tableData: any, rowsData: any, dispatch: any) => {
+    if (!rowsData || rowsData.length === 0) return;
+
+    rowsData.forEach((row: any) => {
+        //@ts-ignore
+        tableData.rows[row.id] = false;
+    });
+
+    //@ts-ignore
+    tableData.count = 0;
+    //@ts-ignore
+    tableData.allSelected = false;
+    dispatch(setSelectedRowsForManage([]));
+};
+
 // Getting the last 7 days
 export const lastSevenDays = getLastXDays(7).reverse();
 
@@ -1433,14 +1528,58 @@ export const removePasswordInConfig = (payload: any) => {
     return payload;
 };
 
+const isLastSticky = (columns: any[], columnIndex: number) => {
+    if (columnIndex < 0 || columnIndex >= columns.length) {
+        return false; // Prevent out-of-bounds errors
+    }
+
+    return (
+        columns.every((column, index) => column.isSticky || index > columnIndex) &&
+        (columns[columnIndex + 1]?.isSticky === false || columns[columnIndex + 1] === undefined)
+    );
+};
+
+export const convertPxStringToNumber = (pxWidth: string): number => +pxWidth.slice(0, -2);
+
+const getLeft = (columns: any[], columnIndex: number) => {
+    const left = columns.reduce((acc, column, index) => {
+        if (index < columnIndex) {
+            acc += convertPxStringToNumber(column.width || '0px');
+        }
+        return acc;
+    }, 0);
+    return `${left}px`;
+};
+
+export const getStickyClass = (columns: any, columnIndex: number) => {
+    const column = columns[columnIndex];
+
+    if (!column.isSticky) {
+        return null;
+    }
+    const isStickyLeft = columnIndex < columns?.length / 2;
+    const isLast = isLastSticky(columns, columnIndex);
+    const stickyStyling = isStickyLeft
+        ? {
+              left: getLeft(columns, columnIndex),
+              ...(isLast && { boxShadow: '4px 0 4px 0 var(--Grey200)' })
+          }
+        : {
+              right: getLeft(columns.slice().reverse(), columns.length - columnIndex - 1)
+          };
+    return css({
+        '&': stickyStyling
+    });
+};
+
 export const removeOldApisError = (data: any) => {
     const state = store.getState();
-    const credId = state.headers.headerSelectedCred?.data?.credentialsId;
-    const regionId = state.headers.headerSelectedRegion?.label2;
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
     if (data?.endpointName === 'getDatabaseHosts') {
         if (
             data?.originalArgs &&
-            (data?.originalArgs?.credentialId !== credId || data?.originalArgs?.region !== regionId)
+            (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(data?.originalArgs?.region))
         ) {
             return true;
         } else {
@@ -1449,7 +1588,8 @@ export const removeOldApisError = (data: any) => {
     } else if (data?.endpointName === 'discoverHosts') {
         if (
             data?.originalArgs &&
-            (data?.originalArgs?.credentialsId !== credId || data?.originalArgs?.regionId !== regionId)
+            (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialsId) ||
+                !headerSelectedMultiRegionIdsList.includes(data?.originalArgs?.regionId))
         ) {
             return true;
         } else {
@@ -1853,4 +1993,24 @@ export const setExploreSavingsSubTab = (tabValue: string, dispatch: Dispatch): v
     } else {
         dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ON_PREMISES));
     }
+};
+
+export const makeCredMapping = (data: any) => {
+    let credMapping: HashTable<string> = {};
+    data?.map((cred: any) => {
+        if (cred?.credentialsId) {
+            credMapping[cred.credentialsId] = cred;
+        }
+    });
+    return credMapping;
+};
+
+export const makeRegionMapping = (data: any) => {
+    let regionMapping: HashTable<string> = {};
+    data?.map((region: any) => {
+        if (region?.regionCode) {
+            regionMapping[region.regionCode] = region;
+        }
+    });
+    return regionMapping;
 };

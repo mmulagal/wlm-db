@@ -1,13 +1,4 @@
-import {
-    Button,
-    DsTypography,
-    Popover,
-    Table,
-    TableTopBar,
-    Typography,
-    useDialog,
-    useTable
-} from '@netapp/design-system';
+import { Button, Popover, Typography, useDialog } from '@netapp/design-system';
 import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -46,6 +37,9 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
 import { initialJobMonitorColState } from '../../../utils/manageColumnUtils';
+import { useTable } from '../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../common/Lib/Table/Table';
 
 const JobMonitoringTable = React.memo(() => {
     const { setDialog } = useDialog();
@@ -425,9 +419,14 @@ const JobMonitoringTable = React.memo(() => {
             renderCell: (cellData: any) => {
                 let jobName = cellData ? cellData.split(';href')[0] : '';
                 return (
-                    <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
-                        {jobName}
-                    </div>
+                    <CopyToClipboardCommon
+                        value={jobName}
+                        iconProvided={
+                            <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
+                                {jobName}
+                            </div>
+                        }
+                    />
                 );
             }
         },

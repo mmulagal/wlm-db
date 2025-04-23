@@ -1,23 +1,25 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import styles from './HeaderComponent.module.scss';
 
 import {
     BlueXPListeners,
-    DsBlueXpMenu,
     DsButton,
+    DsSelect,
     DsTypography,
     Popover,
     SelectField,
     Typography,
     postBlueXPMessage
 } from '@netapp/design-system';
-import { optionType } from '@netapp/design-system/dist/components/Select';
+//@ts-ignore
+import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
 import {
     apiDOCURL,
     checkValueSavedForCred,
     checkValueSavedForRegion,
+    generateMultipleOptionType,
     generateOptionType,
     getCurrentDateTime,
     handleURL,
@@ -35,8 +37,17 @@ import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
     setHeaderSelectedCred,
+    setHeaderSelectedCredSandbox,
+    setHeaderSelectedMultiCred,
+    setHeaderSelectedMultiRegion,
     setHeaderSelectedRegion,
-    setRefreshTime
+    setHeaderSelectedRegionSandbox,
+    setMultiDataLoading,
+    setMultiDataStatus,
+    setRefreshTime,
+    setRefreshTimeJobMonitor,
+    setRefreshTimeSandbox,
+    setSingleComboCredAndRegion
 } from '../../../store/workloadFactory/headersSlice';
 import {
     inventoryApi,
@@ -70,11 +81,10 @@ import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/Savings
 import {
     addExploreSavingsInitialData,
     setSavingsCalculatorFrom,
-    setSavingsCalculatorRefresh
+    setSavingsCalculatorRefresh,
+    setUnmanagedExploreSavingsHost
 } from '../../../store/workloadFactory/exploreSavingsSlice';
-import SandboxApis from '../../Sandbox/SandboxApis';
 import InventoryV2 from '../../InventoryV2/InventoryV2';
-import InventoryApisV2 from '../../InventoryV2/InventoryApisV2';
 import DatabaseHostOverviewV2 from '../../ResourcePage/ResourceHomePage/DatabaseHostOverviewV2';
 import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { updateRefreshBlocked } from '../../../store/authSlice';
@@ -85,18 +95,31 @@ import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
 import {
-    addAllMssqlHostAssessmentData,
+    resetInventoryLoading,
+    resetRefreshData,
     setIsRefreshed,
     setSelectedHeaderTab
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
-import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
+import {
+    addInitialData,
+    initialDBHomepageState,
+    setPotentialSavingsValues,
+    setSandboxAgeRange
+} from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
+import FetchingDataNotification from '../FetchingDataNotification/FetchingDataNotification';
 import OptimizeInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeInnerPage';
 import OptimizeOntapInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeOntapInnerPage';
 import Marketing from '../../../Marketing/Marketing';
+import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
+import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSlice';
+import store from '../../../store/store';
+import DashboardDismissPage from '../../Dashboard/DashboardInnerPage/DashboardDismissPage';
+import DashboardOptimizeInnerPage from '../../Dashboard/DashboardInnerPage/DashboardOptimizeInnerPage';
+import { DsBlueXpMenu } from '../../../common/DsMenuBlueXP/DsBlueXpMenu';
 
 type Tab = {
     tab: string;
@@ -106,6 +129,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
+    const [pendingQueriesCounter, setPendingQueriesCounter] = useState(0);
     const { fetchOnPremData } = useOnPremData();
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -117,24 +141,57 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData, regionsLoading } = useAppSelector(state => state.headers.getRegions);
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
-    const refreshTime = useAppSelector(state => state.headers.refreshTime);
+    const {
+        headerSelectedCred,
+        headerSelectedMultiCred,
+        headerSelectedMultiRegion,
+        headerSelectedRegion,
+        headerSelectedCredSandbox,
+        headerSelectedRegionSandbox,
+        multiDataStatus,
+        multiDataLoading
+    } = useAppSelector(state => state.headers);
+    const {
+        isManagedHostListLoading,
+        allmssqlHostAssessmentLoading,
+        fsxCredentialStatusLoading,
+        mssqlInstancesData,
+        perfMssqlInstancesData,
+        potentialSavingsHostData,
+        createResourceApiLoading
+    } = useAppSelector(state => state.inventoryV2);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
+        useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
+    const { loading: dashSandboxListLoading } = useAppSelector(state => state.inventoryV2.dashSandboxList);
+    const { loading: dashSandboxSavingsLoading } = useAppSelector(state => state.inventoryV2.dashSandboxSavings);
+    const { discoverHostLoading } = useAppSelector(state => state.inventoryV2.discoveredHosts);
+    //Added for widget
+    const [currentCred, setCurrentCred] = useState<string | null>(null);
+    const [currentRegion, setCurrentRegion] = useState<string | null>(null);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [queue, setQueue] = useState<any>([]);
+    // const [multiDataStatus, setMultiDataStatus] = useState<any>({});
+
+    const { refreshTime, refreshTimeSandbox } = useAppSelector(state => state.headers);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
-    const newDashboardItem = localStorage.getItem('newDashboard');
-    const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
+    const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
+    const multiDataStatusRef: any = useRef(null);
+
+    useEffect(() => {
+        multiDataStatusRef.current = multiDataStatus;
+    }, [multiDataStatus]);
+
     HeaderComponentApi();
-    InventoryApisV2();
+    InventoryApisV3();
     DatabaseHomeApis();
-    JobMonitoringApi();
     SavingsCalculatorApi();
     SavingsCalculatorManualApi();
-    SandboxApis();
 
     useEffect(() => {
         let tabValue = setTabValue(tab, selectedHeaderTab);
@@ -199,7 +256,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             replace: true
                         }
                     });
-                    console.log('coming here inside if else in header');
+
                     dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM));
                     setExploreSavingsSubTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM, dispatch);
                 }
@@ -223,7 +280,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     }, [statusData, tabInfo]);
 
     //Function to generate the options for Select Field
-    const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
+    const generateSandboxAWSAccounts = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         credentialData?.map((val: any, idx: number) => {
             const credValue = `${val.name} | ${GENERAL.HEADER_ACCOUNT_ID}: ${val.providerAccountId}`;
@@ -231,24 +288,78 @@ const HeaderComponent = ({ tab }: Tab) => {
             const option = generateOptionType(credValue, credValue, label2, false, '', val);
             options.push(option);
         });
-        if (options.length > 0 && !headerSelectedCred) {
-            if (localStorage.getItem('selectedCred')) {
+        if (options.length > 0 && !headerSelectedCredSandbox) {
+            if (localStorage.getItem('selectedSandboxCred')) {
                 //@ts-ignore
-                const value = JSON.parse(localStorage.getItem('selectedCred'));
+                const value = JSON.parse(localStorage.getItem('selectedSandboxCred'));
 
                 if (checkValueSavedForCred(options, value)) {
-                    dispatch(setHeaderSelectedCred(value));
+                    dispatch(setHeaderSelectedCredSandbox(value));
                 } else {
-                    dispatch(setHeaderSelectedCred(options[0]));
+                    dispatch(setHeaderSelectedCredSandbox(options[0]));
                 }
             } else {
-                dispatch(setHeaderSelectedCred(options[0]));
+                dispatch(setHeaderSelectedCredSandbox(options[0]));
             }
         }
         return options;
     }, [credentialData]);
 
-    const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
+    //Function to generate the options for Multi Select Field
+    const generateAccountsForMultiSelect = useMemo<optionTypeMulti[]>((): optionTypeMulti[] => {
+        const options: optionTypeMulti[] = [];
+        credentialData?.map((val: any, idx: number) => {
+            const credValue = `${val.name} | ${GENERAL.HEADER_ACCOUNT_ID}: ${val.providerAccountId}`;
+            const label2 = `${GENERAL.HEADER_ACCOUNT_ID}: ${val.providerAccountId}`;
+            const option = generateMultipleOptionType(credValue, credValue, val?.credentialsId, false, '', val);
+            options.push(option);
+        });
+        if (options.length > 0 && !headerSelectedMultiCred) {
+            if (localStorage.getItem('selectedCred')) {
+                //@ts-ignore
+                const value = JSON.parse(localStorage.getItem('selectedCred'));
+
+                if (checkValueSavedForCred(options, value)) {
+                    dispatch(setHeaderSelectedMultiCred([value]));
+                } else {
+                    dispatch(setHeaderSelectedMultiCred([options[0]]));
+                }
+            } else {
+                dispatch(setHeaderSelectedMultiCred([options[0]]));
+            }
+        }
+        return options;
+    }, [credentialData]);
+
+    //Function to generate the options for Multi Select Field
+    const generateRegionsForMultiSelect = useMemo<optionTypeMulti[]>((): optionTypeMulti[] => {
+        const options: optionTypeMulti[] = [];
+        const sortedRegionsData = regionsSort(regionsData?.regions || []);
+        sortedRegionsData?.map((val: any, idx: number) => {
+            const regionValue = `${val.regionName} | ${val.regionCode}`;
+            const label2 = val.regionCode;
+            const option = generateMultipleOptionType(regionValue, regionValue, label2, false, '', val);
+            options.push(option);
+        });
+        if (options.length > 0 && !headerSelectedMultiRegion) {
+            const defaultOption: any = options[0];
+            if (localStorage.getItem('selectedRegion')) {
+                //@ts-ignore
+                const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
+
+                if (checkValueSavedForRegion(options, regionValue)) {
+                    dispatch(setHeaderSelectedMultiRegion([regionValue]));
+                } else {
+                    dispatch(setHeaderSelectedMultiRegion([defaultOption]));
+                }
+            } else {
+                dispatch(setHeaderSelectedMultiRegion([defaultOption]));
+            }
+        }
+        return options;
+    }, [regionsData]);
+
+    const generateSandboxRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         const sortedRegionsData = regionsSort(regionsData?.regions || []);
         sortedRegionsData?.map((val: any, idx: number) => {
@@ -257,45 +368,45 @@ const HeaderComponent = ({ tab }: Tab) => {
             const option = generateOptionType(regionValue, regionValue, label2, false, '', val);
             options.push(option);
         });
-        if (options.length > 0 && !headerSelectedRegion) {
+        if (options.length > 0 && !headerSelectedRegionSandbox) {
             const defaultOption: any = options[0];
-            if (localStorage.getItem('selectedRegion')) {
+            if (localStorage.getItem('selectedSandboxRegion')) {
                 //@ts-ignore
-                const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
+                const regionValue = JSON.parse(localStorage.getItem('selectedSandboxRegion'));
 
                 if (checkValueSavedForRegion(options, regionValue)) {
                     if (isDemoMode) {
                         createDemoResourcesApi({
-                            credentialsId: headerSelectedCred?.data?.credentialsId,
+                            credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
                             regionId: regionValue?.data?.regionCode
                         }).then(() => {
-                            dispatch(setHeaderSelectedRegion(regionValue));
+                            dispatch(setHeaderSelectedRegionSandbox(regionValue));
                         });
                     } else {
-                        dispatch(setHeaderSelectedRegion(regionValue));
+                        dispatch(setHeaderSelectedRegionSandbox(regionValue));
                     }
                 } else {
                     if (isDemoMode) {
                         createDemoResourcesApi({
-                            credentialsId: headerSelectedCred?.data?.credentialsId,
+                            credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
                             regionId: defaultOption?.data?.regionCode
                         }).then(() => {
-                            dispatch(setHeaderSelectedRegion(defaultOption));
+                            dispatch(setHeaderSelectedRegionSandbox(defaultOption));
                         });
                     } else {
-                        dispatch(setHeaderSelectedRegion(defaultOption));
+                        dispatch(setHeaderSelectedRegionSandbox(defaultOption));
                     }
                 }
             } else {
                 if (isDemoMode) {
                     createDemoResourcesApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
                         regionId: defaultOption?.data?.regionCode
                     }).then(() => {
-                        dispatch(setHeaderSelectedRegion(defaultOption));
+                        dispatch(setHeaderSelectedRegionSandbox(defaultOption));
                     });
                 } else {
-                    dispatch(setHeaderSelectedRegion(defaultOption));
+                    dispatch(setHeaderSelectedRegionSandbox(defaultOption));
                 }
             }
         }
@@ -303,16 +414,349 @@ const HeaderComponent = ({ tab }: Tab) => {
     }, [regionsData]);
 
     useEffect(() => {
-        const credValue = headerSelectedCred?.data?.name + ' | Account: ' + headerSelectedCred?.data?.providerAccountId;
-        const option = generateOptionType(credValue, credValue, '', false, '', headerSelectedCred?.data);
-        dispatch(setSelectedCredentials(option));
-    }, [headerSelectedCred]);
+        if (headerSelectedMultiCred?.length > 0) {
+            const credValue =
+                headerSelectedMultiCred?.[0]?.data?.name +
+                ' | Account: ' +
+                headerSelectedMultiCred?.[0]?.data?.providerAccountId;
+            const option = generateOptionType(credValue, credValue, '', false, '', headerSelectedMultiCred?.[0]?.data);
+            dispatch(setSelectedCredentials(option));
+
+            if (localStorage.getItem('selectedCred')) {
+                localStorage.removeItem('selectedCred');
+            }
+            localStorage.setItem('selectedCred', JSON.stringify(option));
+        }
+    }, [headerSelectedMultiCred]);
 
     useEffect(() => {
-        const regionValue = headerSelectedRegion?.data?.regionCode + ' | ' + headerSelectedRegion?.data?.regionName;
-        const option = generateOptionType(regionValue, regionValue, '', false, '', headerSelectedRegion?.data);
-        dispatch(setSelectedRegionData(option));
-    }, [headerSelectedRegion]);
+        if (headerSelectedMultiRegion?.length > 0) {
+            const regionValue =
+                headerSelectedMultiRegion?.[0]?.data?.regionCode +
+                ' | ' +
+                headerSelectedMultiRegion?.[0]?.data?.regionName;
+            const option = generateOptionType(
+                regionValue,
+                regionValue,
+                '',
+                false,
+                '',
+                headerSelectedMultiRegion?.[0]?.data
+            );
+            dispatch(setSelectedRegionData(option));
+
+            if (localStorage.getItem('selectedRegion')) {
+                localStorage.removeItem('selectedRegion');
+            }
+            localStorage.setItem('selectedRegion', JSON.stringify(option));
+        }
+    }, [headerSelectedMultiRegion]);
+
+    useEffect(() => {
+        if (
+            headerSelectedCred &&
+            headerSelectedRegion &&
+            !createResourceApiLoading &&
+            !isManagedHostListLoading &&
+            !databaseHostsLoading &&
+            !fullHostDataLoading &&
+            !pgsqlDatabaseHostsLoading &&
+            !pgsqlFullHostDataLoading &&
+            !allmssqlHostAssessmentLoading &&
+            !dashSandboxListLoading &&
+            !dashSandboxSavingsLoading &&
+            !discoverHostLoading &&
+            !fsxCredentialStatusLoading
+        ) {
+            let currentCredId = headerSelectedCred?.data?.credentialsId;
+            let currentRegionId = headerSelectedRegion?.data?.regionCode;
+
+            const state = store.getState();
+            const {
+                mssqlInstancesData: mssqlInstancesDataLatest,
+                perfMssqlInstancesData: perfMssqlInstancesDataLatest,
+                potentialSavingsHostData: potentialSavingsHostDataLatest
+            } = state.inventoryV2;
+
+            let isMssqlInstanceDataLoading = false;
+            if (mssqlInstancesDataLatest) {
+                Object.keys(mssqlInstancesDataLatest)?.map((key: any) => {
+                    let keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[1] === currentCredId &&
+                        keyList[2] === currentRegionId &&
+                        mssqlInstancesDataLatest?.[key]?.loading
+                    ) {
+                        isMssqlInstanceDataLoading = true;
+                    }
+                });
+            }
+
+            let perfMssqlInstancesDataLoading = false;
+            if (perfMssqlInstancesDataLatest) {
+                Object.keys(perfMssqlInstancesDataLatest)?.map((key: any) => {
+                    let keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[1] === currentCredId &&
+                        keyList[2] === currentRegionId &&
+                        perfMssqlInstancesDataLatest?.[key]?.loading
+                    ) {
+                        perfMssqlInstancesDataLoading = true;
+                    }
+                });
+            }
+
+            let potentialSavingsHostDataLoading = false;
+            if (potentialSavingsHostDataLatest) {
+                Object.keys(potentialSavingsHostDataLatest)?.map((key: any) => {
+                    let keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[1] === currentCredId &&
+                        keyList[2] === currentRegionId &&
+                        potentialSavingsHostDataLatest?.[key]?.loading
+                    ) {
+                        potentialSavingsHostDataLoading = true;
+                    }
+                });
+            }
+
+            if (!isMssqlInstanceDataLoading && !perfMssqlInstancesDataLoading && !potentialSavingsHostDataLoading) {
+                let newStatus = { ...multiDataStatusRef.current };
+                newStatus[currentCredId + '_' + currentRegionId] = true;
+                dispatch(setMultiDataStatus(newStatus));
+            }
+        }
+    }, [
+        createResourceApiLoading,
+        isManagedHostListLoading,
+        databaseHostsLoading,
+        fullHostDataLoading,
+        pgsqlDatabaseHostsLoading,
+        pgsqlFullHostDataLoading,
+        allmssqlHostAssessmentLoading,
+        dashSandboxListLoading,
+        dashSandboxSavingsLoading,
+        discoverHostLoading,
+        fsxCredentialStatusLoading,
+        mssqlInstancesData,
+        perfMssqlInstancesData,
+        potentialSavingsHostData
+    ]);
+
+    // Function to check if all APIs are completed for a cred-region set
+    const isApiCompletedForSet = (cred: string, region: string) => {
+        if (multiDataStatusRef.current) {
+            return multiDataStatusRef.current[cred + '_' + region];
+        } else {
+            return false;
+        }
+    };
+
+    useEffect(() => {
+        if (isRefreshed) {
+            dispatch(resetRefreshData(null));
+            // Explore savings data
+            dispatch(setUnmanagedExploreSavingsHost([]));
+            dispatch(setPotentialSavingsValues(null));
+            dispatch(addInitialData(initialDBHomepageState));
+            dispatch(setIsRefreshed(false));
+
+            dispatch(setMultiDataStatus({}));
+            const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
+            setPendingQueriesCounter(total);
+            dispatch(
+                setSingleComboCredAndRegion({
+                    cred: null,
+                    region: null
+                })
+            );
+            setCurrentIndex(0);
+            setTimeout(() => {
+                initialMultiCall();
+            }, 10);
+        }
+    }, [isRefreshed]);
+
+    const initialMultiCall = () => {
+        if (
+            headerSelectedMultiCred &&
+            headerSelectedMultiCred.length > 0 &&
+            headerSelectedMultiRegion &&
+            headerSelectedMultiRegion.length > 0
+        ) {
+            if (headerSelectedMultiCred[0] !== undefined && headerSelectedMultiRegion[0] !== undefined) {
+                const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
+                setPendingQueriesCounter(total);
+                let queueLength = queue?.length;
+                let newQueue: any = [...queue];
+                let newQueueForLoop: any = [...newQueue];
+                let newMultiDataStatus: any = { ...multiDataStatusRef.current };
+                // using diff queue variable for loop as we update newQueue in the loop
+                newQueueForLoop?.forEach((item: any, index: number) => {
+                    let isPresent = false;
+                    for (let cred of headerSelectedMultiCred) {
+                        for (let region of headerSelectedMultiRegion) {
+                            if (
+                                item.cred?.data?.credentialsId === cred?.data?.credentialsId &&
+                                item.region?.data?.regionCode === region?.data?.regionCode
+                            ) {
+                                isPresent = true;
+                            }
+                        }
+                    }
+                    if (!isPresent) {
+                        // If any combo is removed and added back again than not calling apis again
+                        // const key = `${newQueue[index]?.cred?.data?.credentialsId}_${newQueue[index]?.region?.data?.regionCode}`;
+                        // delete newMultiDataStatus[key];
+                        let index = newQueue?.findIndex(
+                            (perItem: any) =>
+                                item.cred?.data?.credentialsId === perItem.cred?.data?.credentialsId &&
+                                item.region?.data?.regionCode === perItem.region?.data?.regionCode
+                        );
+                        newQueue.splice(index, 1);
+                    }
+                });
+                for (let cred of headerSelectedMultiCred) {
+                    for (let region of headerSelectedMultiRegion) {
+                        let isAlreadyInQueue = newQueue?.filter((item: any) => {
+                            return (
+                                item.cred?.data?.credentialsId === cred?.data?.credentialsId &&
+                                item.region?.data?.regionCode === region?.data?.regionCode
+                            );
+                        });
+                        if (isAlreadyInQueue?.length === 0) {
+                            newQueue.push({ cred, region });
+                            // If any combo is removed and added back again than not calling apis again
+                            if (!newMultiDataStatus?.[cred?.data?.credentialsId + '_' + region?.data?.regionCode]) {
+                                newMultiDataStatus[cred?.data?.credentialsId + '_' + region?.data?.regionCode] = false;
+                            }
+                        }
+                    }
+                }
+                setQueue(newQueue);
+                dispatch(setMultiDataStatus(newMultiDataStatus));
+                if (queueLength === 0 || !headerSelectedCred || !headerSelectedRegion) {
+                    setCurrentIndex(0);
+                } else {
+                    let isPresentVal = false;
+                    newQueue?.forEach((item: any, index: number) => {
+                        if (
+                            item.cred?.data?.credentialsId === headerSelectedCred?.data?.credentialsId &&
+                            item.region?.data?.regionCode === headerSelectedRegion?.data?.regionCode
+                        ) {
+                            isPresentVal = true;
+                            setCurrentIndex(index);
+                        }
+                    });
+                    if (!isPresentVal) {
+                        setCurrentIndex(0);
+                    }
+                }
+            }
+        } else {
+            setQueue([]);
+            setCurrentIndex(0);
+            setPendingQueriesCounter(0);
+            dispatch(resetInventoryLoading(null));
+            dispatch(
+                setSingleComboCredAndRegion({
+                    cred: null,
+                    region: null
+                })
+            );
+        }
+    };
+
+    // Compute total queries count and initialize queue
+    useEffect(() => {
+        initialMultiCall();
+    }, [headerSelectedMultiCred, headerSelectedMultiRegion]);
+
+    const isItemCompleted = (item: any): boolean => {
+        const { cred, region } = item;
+        return isApiCompletedForSet(cred?.data?.credentialsId, region?.data?.regionCode);
+    };
+
+    const updateCurrentItem = (item: any): void => {
+        const { cred, region } = item;
+        setCurrentCred(cred?.data?.name || '');
+        setCurrentRegion(region?.value);
+        dispatch(
+            setSingleComboCredAndRegion({
+                cred: cred,
+                region: region
+            })
+        );
+    };
+
+    const processNextIncompleteItem = (): boolean => {
+        let nextIndex = currentIndex + 1;
+
+        while (nextIndex < queue.length) {
+            const nextItem = queue[nextIndex];
+            if (nextItem && nextItem.cred && nextItem.region) {
+                if (isItemCompleted(nextItem)) {
+                    // Advance if the item is complete.
+                    setCurrentIndex(prev => prev + 1);
+                } else {
+                    // Found an incomplete item: update the current item and exit.
+                    setCurrentIndex(prev => prev + 1);
+                    updateCurrentItem(nextItem);
+                    return true;
+                }
+            }
+            nextIndex++;
+        }
+        return false;
+    };
+
+    const queueProcess = () => {
+        if (!queue.length || currentIndex >= queue.length) {
+            // No more items to process: reset pending queries counter.
+            setPendingQueriesCounter(0);
+            return;
+        }
+
+        // Handle the current item.
+        const currentItem = queue[currentIndex];
+        const completed = isItemCompleted(currentItem);
+
+        if (currentIndex === 0 && !completed) {
+            // For the very first item that is not complete, update state and initiate API call.
+            updateCurrentItem(currentItem);
+            return;
+        }
+
+        if (completed) {
+            // If the current item is complete, check and process the next incomplete item.
+            const foundNext = processNextIncompleteItem();
+            if (!foundNext) {
+                // No incomplete item was found: reset the pending queries.
+                setPendingQueriesCounter(0);
+                dispatch(
+                    setSingleComboCredAndRegion({
+                        cred: null,
+                        region: null
+                    })
+                );
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (pendingQueriesCounter > 0 && !multiDataLoading) {
+            dispatch(setMultiDataLoading(true));
+        } else if (pendingQueriesCounter === 0 && multiDataLoading) {
+            dispatch(setMultiDataLoading(false));
+        }
+    }, [pendingQueriesCounter]);
+
+    useEffect(() => {
+        queueProcess();
+    }, [currentIndex, queue, multiDataStatus]);
 
     const handleClick = (value: string) => {
         setSelectedTab(value);
@@ -323,38 +767,43 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     useEffect(() => {
         dispatch(setRefreshTime(getCurrentDateTime()));
+        dispatch(setRefreshTimeSandbox(getCurrentDateTime()));
     }, []);
 
     const refreshPage = () => {
         dispatch(updateRefreshBlocked(false));
-        dispatch(setRefreshTime(getCurrentDateTime()));
         if (selectedHeaderTab === WLF_TABS.DASHBOARD) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
             resetDBHomePageState(dispatch);
             dispatch(setDashboardRefresh(true));
             dispatch(inventoryApi.util.resetApiState());
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
             resetDBHomePageState(dispatch);
             dispatch(inventoryApi.util.resetApiState());
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
+            fetchOnPremData(true);
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(workloadFactoryResourceApiV2.util.resetApiState());
             dispatch(setIsResourceRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
+            dispatch(setRefreshTimeJobMonitor(getCurrentDateTime()));
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
-            dispatch(setIsRefreshed(true));
         } else if (
             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
         ) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(setSavingsCalculatorRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.SANDBOXES) {
-            dispatch(setIsRefreshed(true));
+            dispatch(setRefreshTimeSandbox(getCurrentDateTime()));
+            dispatch(setIsRefreshedSandbox(true));
         }
-        fetchOnPremData(true);
     };
 
     const refreshComponent = () => {
@@ -374,25 +823,160 @@ const HeaderComponent = ({ tab }: Tab) => {
         );
     };
 
-    const selectComponents = () => {
+    const refreshComponentSandbox = () => {
+        return (
+            <div className={styles.refresh}>
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    children={`Last update: ${refreshTimeSandbox}`}
+                    trigger="hover"
+                    container={
+                        <div className={styles.refreshIcon} onClick={refreshPage}>
+                            <RefreshIcon />
+                        </div>
+                    }
+                />
+            </div>
+        );
+    };
+
+    const labelForMultiSelectCred = () => {
+        if (headerSelectedMultiCred && headerSelectedMultiCred.length === 1) {
+            const credValue = headerSelectedMultiCred[0]?.value;
+            return credValue;
+        } else if (headerSelectedMultiCred && headerSelectedMultiCred?.length === credentialData?.length) {
+            return GENERAL.ALL_CRED_SELECTED;
+        } else if (headerSelectedMultiCred && headerSelectedMultiCred.length >= 1) {
+            return `${headerSelectedMultiCred.length} credentials selected`;
+        } else {
+            return GENERAL.NO_CRED_SELECTED;
+        }
+    };
+
+    const labelForMultiSelectRegion = () => {
+        if (headerSelectedMultiRegion && headerSelectedMultiRegion.length === 1) {
+            const regionValue = headerSelectedMultiRegion[0]?.value;
+            return regionValue;
+        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion?.length === regionsData?.regions?.length) {
+            return GENERAL.ALL_REGIONS_SELECTED;
+        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion.length >= 1) {
+            return `${headerSelectedMultiRegion.length} regions selected`;
+        } else {
+            return GENERAL.NO_REGIONS_SELECTED;
+        }
+    };
+
+    const selectMultipleComponents = () => {
         return (
             <div className={styles.content}>
-                <div className={styles.firstSelect} title={headerSelectedCred?.label}>
+                <div className={styles.firstSelect}>
+                    <DsSelect
+                        isLoading={credentialLoading}
+                        title=""
+                        formatLabel={() => labelForMultiSelectCred()}
+                        selectedOptionIds={
+                            headerSelectedMultiCred && headerSelectedMultiCred.length > 0
+                                ? headerSelectedMultiCred.map((cred: any) => cred?.data?.credentialsId)
+                                : []
+                        }
+                        className={styles.multiSelect}
+                        //@ts-ignore
+                        options={generateAccountsForMultiSelect}
+                        selectionType="multi"
+                        isWithActions={true}
+                        variant="underline"
+                        onSelect={(option: any) => {
+                            dispatch(setHeaderSelectedMultiCred(option));
+                        }}
+                        placeholder="No credentials selected"
+                        isCleanable={false}
+                        isSelectAll={true}
+                        dropDown={{
+                            isCloseOnClickOutside: true
+                        }}
+                        searchMethod={{
+                            method: 'smart'
+                        }}
+                        isReadOnly={
+                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                        }
+                        isDisabled={
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                        }
+                    />
+                </div>
+
+                <div className={styles.secondSelect}>
+                    <DsSelect
+                        isLoading={credentialLoading || regionsLoading}
+                        title=""
+                        className={styles.multiSelect}
+                        formatLabel={() => labelForMultiSelectRegion()}
+                        //@ts-ignore
+                        options={generateRegionsForMultiSelect}
+                        selectedOptionIds={
+                            headerSelectedMultiRegion && headerSelectedMultiRegion.length > 0
+                                ? headerSelectedMultiRegion.map((region: any) => region?.data?.regionCode)
+                                : []
+                        }
+                        searchMethod={{
+                            method: 'smart'
+                        }}
+                        selectionType="multi"
+                        isWithActions={true}
+                        placeholder="No regions selected"
+                        variant="underline"
+                        onSelect={(option: any) => {
+                            dispatch(setHeaderSelectedMultiRegion(option));
+                        }}
+                        isCleanable={false}
+                        isSelectAll={true}
+                        dropDown={{
+                            isCloseOnClickOutside: true
+                        }}
+                        isReadOnly={
+                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                        }
+                        isDisabled={
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                        }
+                    />
+                </div>
+            </div>
+        );
+    };
+
+    const selectSandboxComponents = () => {
+        return (
+            <div className={styles.content}>
+                <div className={styles.firstSelect} title={headerSelectedCredSandbox?.label}>
                     <SelectField
                         isLoading={credentialLoading}
                         isClearable={false}
-                        value={headerSelectedCred ? [headerSelectedCred] : [generateAWSAccounts[0]]}
+                        value={
+                            headerSelectedCredSandbox ? [headerSelectedCredSandbox] : [generateSandboxAWSAccounts[0]]
+                        }
                         onChange={(selectedOptions: any): void => {
-                            if (localStorage.getItem('selectedCred')) {
-                                localStorage.removeItem('selectedCred');
+                            if (localStorage.getItem('selectedSandboxCred')) {
+                                localStorage.removeItem('selectedSandboxCred');
                             }
-                            localStorage.setItem('selectedCred', JSON.stringify(selectedOptions));
+                            localStorage.setItem('selectedSandboxCred', JSON.stringify(selectedOptions));
                             dispatch(updateRefreshBlocked(false));
-                            dispatch(setHeaderSelectedCred(selectedOptions));
+                            dispatch(setHeaderSelectedCredSandbox(selectedOptions));
                         }}
                         placeholder="Select a Credential"
-                        isSearchable={generateAWSAccounts.length > 5}
-                        options={generateAWSAccounts}
+                        isSearchable={generateSandboxAWSAccounts.length > 5}
+                        options={generateSandboxAWSAccounts}
                         className={
                             (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
@@ -417,21 +1001,25 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 <div className={styles.secondSelect}>
                     <SelectField
-                        isLoading={regionsLoading}
+                        isLoading={credentialLoading || regionsLoading}
                         isClearable={false}
-                        value={headerSelectedRegion ? [headerSelectedRegion] : [generateRegionsData[0]]}
+                        value={
+                            headerSelectedRegionSandbox
+                                ? [headerSelectedRegionSandbox]
+                                : [generateSandboxRegionsData[0]]
+                        }
                         onChange={(selectedOptions: any): void => {
                             function updateRegion() {
-                                if (localStorage.getItem('selectedRegion')) {
-                                    localStorage.removeItem('selectedRegion');
+                                if (localStorage.getItem('selectedSandboxRegion')) {
+                                    localStorage.removeItem('selectedSandboxRegion');
                                 }
-                                localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
+                                localStorage.setItem('selectedSandboxRegion', JSON.stringify(selectedOptions));
                                 dispatch(updateRefreshBlocked(false));
-                                dispatch(setHeaderSelectedRegion(selectedOptions));
+                                dispatch(setHeaderSelectedRegionSandbox(selectedOptions));
                             }
                             if (isDemoMode) {
                                 createDemoResourcesApi({
-                                    credentialsId: headerSelectedCred?.data?.credentialsId,
+                                    credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
                                     regionId: selectedOptions?.data?.regionCode
                                 }).then(() => {
                                     updateRegion();
@@ -441,8 +1029,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                             }
                         }}
                         placeholder="Select a Region"
-                        isSearchable={generateRegionsData.length > 5}
-                        options={generateRegionsData}
+                        isSearchable={generateSandboxRegionsData.length > 5}
+                        options={generateSandboxRegionsData}
                         className={
                             (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
@@ -574,7 +1162,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     variant="Regular_14"
                                     className={
                                         selectedHeaderTab === WLF_TABS.DASHBOARD ||
-                                        selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE
+                                        selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE ||
+                                        selectedHeaderTab === WLF_TABS.DASHBOARD_DISMISS_PAGE
                                             ? `${
                                                   isWorkloadFactory
                                                       ? styles.headerPart1
@@ -728,9 +1317,9 @@ const HeaderComponent = ({ tab }: Tab) => {
             <div className={styles.selectedTabSection}>
                 {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                     <div className={styles.dashboardSection}>
-                        <div className={!setFlagForNewDashboard ? styles.spaceAreaTemp : styles.spaceArea}>
-                            <div className={!setFlagForNewDashboard ? styles.contentAreaTemp : styles.contentArea}>
-                                {selectComponents()}
+                        <div className={styles.spaceAreaTemp}>
+                            <div className={styles.contentAreaTemp}>
+                                {selectMultipleComponents()}
                                 <div className={styles.content}>
                                     <>
                                         <DsButton
@@ -815,7 +1404,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     <>
                         <div className={styles.inventoryHeaderSection}>
                             <div className={styles.contentArea}>
-                                {selectComponents()}
+                                {selectMultipleComponents()}
                                 <div className={styles.content}>{refreshComponent()}</div>
                             </div>
                         </div>
@@ -868,15 +1457,18 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 {selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE && <DashboardInnerPage />}
 
+                {selectedHeaderTab === WLF_TABS.DASHBOARD_DISMISS_PAGE && <DashboardDismissPage />}
+
                 {selectedHeaderTab === WLF_TABS.OPTIMIZE_INNER_PAGE && <OptimizeInnerPage />}
+                {selectedHeaderTab === WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE && <DashboardOptimizeInnerPage />}
                 {selectedHeaderTab === WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE && <OptimizeOntapInnerPage />}
 
                 {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                     <>
                         <div className={styles.sandboxSection}>
                             <div className={styles.contentArea}>
-                                {selectComponents()}
-                                <div className={styles.content}>{refreshComponent()}</div>
+                                {selectSandboxComponents()}
+                                <div className={styles.content}>{refreshComponentSandbox()}</div>
                             </div>
                         </div>
                         <Sandbox />
@@ -889,7 +1481,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     <>
                         <div className={styles.exploreSavingSection}>
                             <div className={styles.contentArea}>
-                                {selectComponents()}
+                                {selectMultipleComponents()}
                                 <div className={styles.content}>{refreshComponent()}</div>
                             </div>
                         </div>
@@ -900,6 +1492,22 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations statusCheck={statusChk} />}
             </div>
+            {/* Will enable this once multi cred and region is ready
+             */}
+
+            {pendingQueriesCounter > 0 &&
+                (selectedHeaderTab === WLF_TABS.INVENTORY ||
+                    selectedHeaderTab === WLF_TABS.DASHBOARD ||
+                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
+                    <FetchingDataNotification
+                        pendingQueriesCounter={pendingQueriesCounter}
+                        completedTask={currentIndex}
+                        regions={currentRegion}
+                        credentials={currentCred}
+                    />
+                )}
         </div>
     ) : (
         <Marketing />

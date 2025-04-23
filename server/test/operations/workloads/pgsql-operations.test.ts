@@ -1,7 +1,10 @@
 import {
     getPgSqlDatabaseCount,
     getPgSqlDatabaseInstancesDetails,
+    getPgSqlDatabasesList,
     getPgSqlInstanceInfo,
+    getPgSqlPerformaceMetrics,
+    getPgSqlProtectionStatus,
     getPgSqlStorageSavingsVolumeData
 } from '../../../src/operations/workloads/pgsql/pgsql-operations';
 import { DatabaseInstance, PgSqlInstanceDetails } from '../../../src/utils/common-types';
@@ -10,6 +13,7 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import { parsePgSqlInstanceInfo } from '../../../src/utils/utils';
+import '../../simulator/scopes/aws/fsx-scope';
 
 describe('PgSql Database Operations', () => {
     const credentialsId = 'test-credentials-id';
@@ -142,17 +146,55 @@ describe('PgSql Database Operations', () => {
     });
 
     it('should return the instance info when executeBashSsmCommand is successful', async () => {
-        const instanceInfo = await getPgSqlInstanceInfo(
-            accountId,
-            credentialsId,
-            region,
-            'test-instance',
-            ['test-node-id'],
-            'wlmdb-data-1234'
-        );
+        const instanceInfo = await getPgSqlInstanceInfo(accountId, credentialsId, region, ['test-node-id']);
         const { dbInstanceId, dbClusterState } = parsePgSqlInstanceInfo(instanceInfo!);
 
         expect(dbInstanceId).toEqual('7450008296037943418');
         expect(dbClusterState).toEqual('in production');
+    });
+
+    it('should return the list of databases', async () => {
+        const result = await getPgSqlDatabasesList(accountId, credentialsId, region, node1InstanceId);
+
+        expect(result).toEqual([
+            {
+                name: 'postgres',
+                size: 8106467,
+                status: 'ONLINE',
+                collation: 'C.UTF-8',
+                type: 'System Database'
+            }
+        ]);
+    });
+
+    it('should return the performance metrics', async () => {
+        const result = await getPgSqlPerformaceMetrics(accountId, credentialsId, region, node1InstanceId);
+
+        expect(result).toEqual({
+            assessment: 'Excellent ( <=1 ms )',
+            latency: {
+                read: 0,
+                write: 0,
+                serverIo: 0
+            },
+            iops: {
+                read: 0.08,
+                write: 66.59
+            },
+            throughput: {
+                read: 0.001,
+                write: 0.545
+            }
+        });
+    });
+    it('should return the protection status for a given PGSQL instance', async () => {
+        const result = await getPgSqlProtectionStatus(accountId, credentialsId, region, node1InstanceId, fsxNId);
+
+        expect(result).toEqual({
+            isAwsBackupEnabled: {
+                fsxn: true
+            },
+            isFsxOntapSnapshotsEnabled: true
+        });
     });
 });

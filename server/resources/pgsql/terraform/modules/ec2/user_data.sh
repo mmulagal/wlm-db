@@ -69,6 +69,10 @@ get_instance_private_ip() {
         # Save the secondary private IP address with CIDR to an SSM parameter
         aws ssm put-parameter --name "/netapp/wlmdb/${deployment_name}_secondary" --value "{private_ip: '$privateIPWithCidr'}" --type String --region "$aws_region" --overwrite
         echo "SSM parameter created with secondary private IP: $privateIPWithCidr"
+    elif [ "$node_type" = "pgpool" ]; then
+        # Save the pgpool private IP address to an SSM parameter (same as primary)
+        aws ssm put-parameter --name "/netapp/wlmdb/${deployment_name}_pgpool" --value "{private_ip: '$privateIP'}" --type String --region "$aws_region" --overwrite
+        echo "SSM parameter created with pgpool private IP: $privateIP"
     fi
 }
 
@@ -89,6 +93,9 @@ if [ "${is_ha}" = "true" ] && [ "${node_name}" = "PGSQL-Node-1" ]; then
 elif [ "${is_ha}" = "true" ] && [ "${node_name}" = "PGSQL-Node-2" ]; then
     echo "Getting the private IP of the instance Secondary"
     get_instance_private_ip "$deployment_name" "$aws_region" "secondary"
+elif [ "${is_ha}" = "true" ] && [ "${node_name}" = "PgPoolNode" ]; then
+    echo "Getting the private IP of the pgpool instance"
+    get_instance_private_ip "$deployment_name" "$aws_region" "pgpool"
 fi
 
 # Download the initialization script

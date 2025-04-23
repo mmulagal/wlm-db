@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTableV2.module.scss';
@@ -8,12 +8,19 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHost } from '../ExploreSavingsUtils';
 import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
-import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../InventoryV2/InventoryUtilsV2';
+import {
+    renderAllocatedCapacity,
+    renderCellData,
+    renderInstanceListText,
+    renderUnmanagedAZ,
+    uniqueHostRow
+} from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
+import useResize from '../../../common/hooks/useResize';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
-
+    const windowSize = useResize();
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -22,6 +29,9 @@ const ExploreSavingsTableV2 = () => {
     // const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
+        state => state.headers
+    );
 
     // const getInitialFilter = () => {
     //     if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
@@ -49,6 +59,12 @@ const ExploreSavingsTableV2 = () => {
         if (unManagedHostFormatedList) {
             let result: any = [];
             unManagedHostFormatedList?.map((perRow: any) => {
+                if (
+                    !headerSelectedMultiCredIdsList.includes(perRow?.credentialId) ||
+                    !headerSelectedMultiRegionIdsList.includes(perRow?.regionId)
+                ) {
+                    return;
+                }
                 let instanceList: any = [];
                 let instanceNameList: any = [];
                 perRow?.ec2Details?.map((row: any) => {
@@ -63,6 +79,7 @@ const ExploreSavingsTableV2 = () => {
                 });
                 const rowData = {
                     ...perRow,
+                    id: uniqueHostRow(perRow?.id, perRow?.credentialId, perRow?.regionId),
                     instanceListText: instanceList.join(','),
                     instanceNameListText: instanceNameList.join(', '),
                     nameForSorting: perRow?.name?.toLowerCase()
@@ -85,17 +102,35 @@ const ExploreSavingsTableV2 = () => {
             setEBSTableData([]);
             setFSXWTableData([]);
         }
-    }, [unManagedHostFormatedList]);
+    }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     const lastColDetails = () => {
         return {
-            id: '9',
+            id: '11',
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '247px',
+            width: windowSize.width >= 1920 ? '15.37%' : '247px',
             renderCell: (cellData: any, rowData: any) => {
-                return (
+                return !rowData?.isDetected ? (
+                    <Popover
+                        popoverClass={styles['copy-popover']}
+                        children={'To explore savings on this host first detect the instances.'}
+                        trigger="hover"
+                        isAppendedToBody={true}
+                        container={
+                            <div
+                                className={styles.detectManageDisable}
+                                onClick={() => {}}
+                                id="explore-savings-table-button"
+                            >
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {GENERAL.ES_SAVINGS}
+                                </Typography>
+                            </div>
+                        }
+                    />
+                ) : (
                     <div
                         className={styles.detectManage}
                         onClick={() => {
@@ -119,7 +154,7 @@ const ExploreSavingsTableV2 = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '228px',
+            width: windowSize.width >= 1920 ? '14.18%' : '228px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.name;
                 return (
@@ -133,7 +168,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'serverInstallationMode',
             id: '2',
-            width: '228px',
+            width: windowSize.width >= 1920 ? '14.18%' : '228px',
             filterOptions: getFilterOptions(
                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData,
                 'serverInstallationMode'
@@ -159,7 +194,7 @@ const ExploreSavingsTableV2 = () => {
             Header: 'SQL server instances',
             accessor: 'totalInstance',
             id: '4',
-            width: '216px',
+            width: windowSize.width >= 1920 ? '13.44%' : '216px',
             filterOptions: getFilterOptions(
                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData,
                 'totalInstance'
@@ -185,7 +220,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_INSTANCE,
             accessor: 'instanceListText',
             id: '5',
-            width: '243px',
+            width: windowSize.width >= 1920 ? '15.12%' : '243px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
@@ -196,7 +231,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
             accessor: 'allocatedCapacityText',
             id: '6',
-            width: '202px',
+            width: windowSize.width >= 1920 ? '12.57%' : '202px',
             isSortable: true,
             accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
@@ -207,13 +242,46 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'azType',
             id: '7',
-            width: '243px',
+            width: windowSize.width >= 1920 ? '15.12%' : '243px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
             renderCell: (cellData: any, rowData: any) => {
                 return renderUnmanagedAZ(cellData, rowData, styles);
+            }
+        },
+        {
+            id: '8',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            isSortable: true,
+            filterOptions: 'auto',
+            width: '254px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
+            }
+        },
+        {
+            id: '9',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            isSortable: true,
+            filterOptions: 'auto',
+            width: '254px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
+            }
+        },
+        {
+            id: '10',
+            Header: 'Region',
+            accessor: 'regionName',
+            isSortable: true,
+            filterOptions: 'auto',
+            width: '254px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderCellData(cellData, rowData, styles);
             }
         },
         lastColDetails()
@@ -229,7 +297,7 @@ const ExploreSavingsTableV2 = () => {
         columns: ExploreSavingsColDefs,
         rows: selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData || [],
         pageSize: 50,
-        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || multiDataLoading
     });
 
     return (

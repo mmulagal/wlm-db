@@ -1,17 +1,28 @@
-import { Button, DsButton, DsFlashingDotsLoader, DsTypography, Popover } from '@netapp/design-system';
+import {
+    Button,
+    ButtonWithDropdown,
+    DsButton,
+    DsFlashingDotsLoader,
+    DsTypography,
+    Popover
+} from '@netapp/design-system';
 import { useDialog } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../assets/under-provisioned.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
+import { ReactComponent as ActionMenu } from '../../../assets/ic_actions_menu_circle.svg';
+import { ReactComponent as Warning } from '../../../assets/warning.svg';
+import { ReactComponent as InfoIcon } from '../../../assets/info.svg';
 import styles from './StorageCardComponent.module.scss';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
+
 import { GENERAL } from '../../../utils/appConstants';
-import DialogContent from './DialogContent/DialogContent';
+
 import {
     ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
@@ -21,18 +32,21 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
+    setCardData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
-    setLandingFrom,
+    setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import { formatGetWellData, formatOptimizationBreakDown, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
+    useDismissMssqlAssessmentMutation,
     useLazyGetSubTaskListQuery,
+    useOptimizeAwsBackupMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useOptimizeStorageConfigMutation,
@@ -45,15 +59,23 @@ import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDi
 import store from '../../../store/store';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { handleDialog } from './optimizeUtils';
+import { backupStartTime } from '../../../utils/utilityFunctions';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const [dismissAction, setDismissAction] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
-    const { isAssessmentAvailable, selectedResourceId, selectedDatabaseInstance, optimizingInstanceData } =
-        useAppSelector(state => state.getWellOptimize);
+    const {
+        isAssessmentAvailable,
+        selectedResourceId,
+        selectedDatabaseInstance,
+        optimizingInstanceData,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        cardData: cardDataFromStore
+    } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
@@ -62,8 +84,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
+    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
 
     const [disableText, setDisableText] = useState(false);
 
@@ -227,6 +251,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsFlashingDotsLoader />
                 </div>
             );
+        } else if (cardData?.dismissedObj?.state && cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
+            //Condition to show n/a if state is not active
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            );
         } else {
             return (
                 <div className={styles.tooltipContainer}>
@@ -236,7 +267,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 <div className={styles.svgSection}>
                                     {setImage(cardData?.block_two?.value || GENERAL.UNAVAILABLE)}
                                 </div>
-                                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                                <DsTypography
+                                    style={{ whiteSpace: 'nowrap' }}
+                                    variant="Semibold_14"
+                                    isDisabled={disableText}
+                                >
                                     {cardData?.block_two?.value || GENERAL.UNAVAILABLE}
                                 </DsTypography>
                             </>
@@ -284,7 +319,18 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         }
     };
 
-    const sectionFourContent = (cardData: any) => {
+    const calculateDays = (time: string | any) => {
+        const endTime = time;
+        const now = Date.now();
+
+        const millisecondsPerDay = 1000 * 60 * 60 * 24;
+        const diffInDays = Math.ceil((endTime - now) / millisecondsPerDay);
+
+        return diffInDays;
+    };
+
+    //Dismiss section content
+    const sectionSevenContent = (cardData: any) => {
         if (loading) {
             return (
                 <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
@@ -293,9 +339,23 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             );
         } else {
             return (
-                <div className={styles.warningMsg}>
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {GENERAL.NOT_AVAILABLE}
+                <div className={styles.dismissContainer}>
+                    <div>
+                        {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && (
+                            <div style={{ position: 'relative', top: '2px' }}>
+                                <InfoIcon />
+                            </div>
+                        )}
+                        {cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVATING && <Warning />}
+                    </div>
+
+                    <DsTypography variant="Regular_14" style={{ minWidth: '160px' }}>
+                        {cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED && GENERAL.DISMISSED_MESSAGE}{' '}
+                        {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && GENERAL.ACTIVATING_MESSAGE}{' '}
+                        {cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED &&
+                            `This issue is postponed until the next ${calculateDays(
+                                cardData?.dismissedObj?.endTime
+                            )} days. `}{' '}
                     </DsTypography>
                 </div>
             );
@@ -344,6 +404,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
                     <DsFlashingDotsLoader />
                 </div>
+            );
+        } else if (cardData?.dismissedObj?.state && cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
+            //Condition to show n/a if state is not active
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {GENERAL.NOT_AVAILABLE}
+                </DsTypography>
             );
         } else if (cardData?.block_six?.count) {
             return (
@@ -463,148 +530,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         }
     };
 
-    const sectionThreeContent = (cardData: any) => {
-        if (loading) {
-            return (
-                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
-                    <DsFlashingDotsLoader />
-                </div>
-            );
-        } else if (cardData?.block_three?.list) {
-            let listObj: any = [];
-            cardData?.block_three?.list?.map((item: any) => {
-                const parts = item.split(' ');
-                const value = parts.pop() || ''; // Take the last element as value
-                const key = parts.join(' '); // Join the rest as key
-                listObj.push({ key, value });
-            });
-            return (
-                <div className={styles.tooltipContainer}>
-                    {cardData?.block_three?.list?.length > 0 && (
-                        <div className={styles.tooltip}>
-                            <Popover
-                                popoverClass={''}
-                                children={tooltipListSection(listObj, '120px')}
-                                trigger="hover"
-                                isAppendedToBody={false}
-                                container={<TooltipIcon />}
-                                placement="bottom"
-                            />
-                        </div>
-                    )}
-                    {cardData?.block_three?.list?.length === 0 && (
-                        <div>
-                            <DisabledTooltipIcon />
-                        </div>
-                    )}
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {cardData?.block_three?.list?.length + ' values'}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.isMissingPermissions && cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING) {
-            return (
-                <div className={styles.warningMsg}>
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
-            let listObj = [
-                { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
-                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security },
-                { key: 'Other ', value: cardData?.osPatchMissingPatches?.other }
-            ];
-            return (
-                <div className={styles.tooltipContainer}>
-                    {cardData?.block_three?.value > 0 && (
-                        <div className={styles.tooltip}>
-                            <Popover
-                                popoverClass={''}
-                                children={tooltipListSection(listObj, '30px')}
-                                trigger="hover"
-                                isAppendedToBody={false}
-                                container={<TooltipIcon />}
-                                placement="bottom"
-                            />
-                        </div>
-                    )}
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.sqlPatchMissingPatches && cardData?.block_one?.value === GENERAL.MICROSOFT_SQL_PATCH) {
-            let listObj = [
-                { key: 'Critical ', value: cardData?.sqlPatchMissingPatches?.critical },
-                { key: 'Important ', value: cardData?.sqlPatchMissingPatches?.important }
-            ];
-            return (
-                <div className={styles.tooltipContainer}>
-                    {cardData?.block_three?.value > 0 && (
-                        <div className={styles.tooltip}>
-                            <Popover
-                                popoverClass={''}
-                                children={tooltipListSection(listObj, '30px')}
-                                trigger="hover"
-                                isAppendedToBody={false}
-                                container={<TooltipIcon />}
-                                placement="bottom"
-                            />
-                        </div>
-                    )}
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.block_one?.value === GENERAL.RSS_CONFIGURATION) {
-            let listObj: any = [];
-            let secListObj: any = [];
-            Object.keys(cardData?.rssOptimizedRows).forEach((key: any) => {
-                listObj.push({ key: GW_TOOLTIP_KEYS_MAPPING[key], value: cardData?.rssOptimizedRows?.[key] });
-                secListObj.push({ key: GW_TOOLTIP_KEYS_MAPPING[key], value: cardData?.rssOptimizedValues?.[key] });
-            });
-            let value = '';
-            if (cardData?.block_three?.value && cardData?.block_three?.value === 1) {
-                value = '1 Finding';
-            } else {
-                value = (cardData?.block_three?.value || 0) + ' Findings';
-            }
-            return (
-                <div className={styles.tooltipContainer}>
-                    {cardData?.block_three?.value > 0 && (
-                        <div className={styles.tooltip}>
-                            <Popover
-                                popoverClass={''}
-                                children={tooltipRssListSection(listObj, secListObj)}
-                                trigger="hover"
-                                isAppendedToBody={false}
-                                container={<TooltipIcon />}
-                                placement="bottom"
-                            />
-                        </div>
-                    )}
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {value}
-                    </DsTypography>
-                </div>
-            );
-        } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
-            return (
-                <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            );
-        } else {
-            return (
-                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} isDisabled={disableText}>
-                    {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            );
-        }
-    };
     const windowSize = useResize();
 
     // This is the function that will be called when the optimize button is clicked from main cards
@@ -625,7 +550,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         ) {
             apiCall = optimizeStorageSizing;
             payload = {
-                type: [cardData?.id]
+                configurationName: [cardData?.id]
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
@@ -635,11 +560,35 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 hostsToOptimize: [
                     {
-                        type: 'max-dop',
+                        configurationName: 'max-dop',
                         databaseHosts: [
                             {
                                 id: selectedResourceId,
-                                sqlServerInstances: [selectedDatabaseInstance]
+                                sqlServerInstances: [selectedDatabaseInstance],
+                                credentialsId: selectedGwInstanceCredId,
+                                region: selectedGwInstanceRegionId
+                            }
+                        ]
+                    }
+                ]
+            };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+            apiCall = optimizeAwsBackup;
+            const state = store.getState();
+            const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
+            payload = {
+                hostsToOptimize: [
+                    {
+                        configurationName: ['aws-backup'],
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                sqlServerInstances: [selectedDatabaseInstance],
+                                fsxFileSystemId: selectedRowFsxId,
+                                backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                                backupStartTime: backupStartTime(selectedAWSBackup),
+                                credentialsId: selectedGwInstanceCredId,
+                                region: selectedGwInstanceRegionId
                             }
                         ]
                     }
@@ -706,16 +655,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         let apiCallObj = {};
         if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
             apiCallObj = {
-                credentialId:
-                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 payload: payload
             };
         } else {
             apiCallObj = {
-                credentialId:
-                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 databaseHostId: selectedResourceId,
                 instanceId: selectedDatabaseInstance,
                 payload: payload
@@ -748,7 +695,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             }
             handleOptimizeStorageJob(
                 res,
-                { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
+                {
+                    id: cardData?.id,
+                    name: type,
+                    hostId: selectedResourceId,
+                    instanceId: selectedDatabaseInstance,
+                    credentialId: selectedGwInstanceCredId,
+                    regionId: selectedGwInstanceRegionId
+                },
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
@@ -770,7 +724,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Data files' ||
             type === 'Log files' ||
             type === GENERAL.RSS_CONFIGURATION ||
-            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
+            type === GENERAL.CRR ||
+            type === GENERAL.CLONE_MANAGEMENT
         ) {
             handleNavigateToOptimizePage(type);
         } else {
@@ -784,20 +740,112 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
 
     const setButtonText = () => {
-        if (type === 'Storage tier' || type === 'Log drive size') {
+        if (
+            type === 'Storage tier' ||
+            type === 'Log drive size' ||
+            type === GENERAL.RSS_CONFIGURATION ||
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
+            type === GENERAL.CLONE_MANAGEMENT
+        ) {
             return 'View & optimize';
         } else if (
             type === 'Data files' ||
             type === 'Log files' ||
-            type === GENERAL.RSS_CONFIGURATION ||
-            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === GENERAL.OPERATING_SYSTEM_PATCH ||
-            type === GENERAL.MICROSOFT_SQL_PATCH
+            type === GENERAL.MICROSOFT_SQL_PATCH ||
+            type === GENERAL.CRR
         ) {
             return 'View';
         } else {
             return GENERAL.OPTIMIZE;
         }
+    };
+
+    //Function For Dismiss
+    const handleSingleAction = (action: string) => {
+        setDismissAction(true);
+        const payload = {
+            configurationsToDismiss: [
+                {
+                    name: cardData?.dismissedObj?.name,
+                    configState: action,
+                    databaseHosts: [
+                        {
+                            id: selectedResourceId,
+                            sqlServerInstances: [selectedDatabaseInstance],
+                            credentialsId: selectedGwInstanceCredId,
+                            region: selectedGwInstanceRegionId
+                        }
+                    ]
+                }
+            ]
+        };
+        dismissMssqlAssessment({ payload: payload })
+            .then((res: any) => {
+                setDismissAction(false);
+                let updatedState = '';
+                if (action === 'active' && res?.data?.configurationsDismissed[0]?.configState === 'active') {
+                    updatedState = CONFIG_STATES.ACTIVATING;
+                } else {
+                    updatedState = res?.data?.configurationsDismissed[0]?.configState;
+                    updatedState = updatedState?.toUpperCase();
+                }
+
+                const targetId = cardData?.id;
+
+                if (!targetId || !updatedState) return;
+
+                const updatedCardData = { ...cardDataFromStore };
+
+                for (const [key, value] of Object.entries(updatedCardData)) {
+                    //@ts-ignore
+                    if (value && value?.id === targetId) {
+                        updatedCardData[key] = {
+                            ...value,
+                            dismissedObj: {
+                                //@ts-ignore
+                                ...value.dismissedObj,
+                                state: updatedState,
+                                endTime: res?.data?.configurationsDismissed[0]?.endTime
+                            }
+                        };
+                        break;
+                    }
+                }
+
+                dispatch(setCardData(updatedCardData));
+
+                //To setup optimization var values
+                let optBreakDown = formatOptimizationBreakDown(updatedCardData);
+                dispatch(setOptimizationBreakDown(optBreakDown));
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: `Configuration successfully ${action}`
+                    })
+                );
+            })
+            .catch(err => {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: err
+                    })
+                );
+
+                setDismissAction(false);
+            });
+    };
+
+    const dismissDisableButton = () => {
+        if (
+            cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED ||
+            cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED ||
+            cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING
+        ) {
+            return true;
+        }
+        return false;
     };
 
     return (
@@ -809,7 +857,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             </div>
 
             {/* Section Two */}
-            <div className={styles.commonSection}>
+            <div className={styles.commonSection} style={{ minWidth: '160px' }}>
                 {sectionTwoContent(cardData)}
 
                 <DsTypography variant="Regular_14" isDisabled={disableText}>
@@ -817,17 +865,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </DsTypography>
             </div>
 
-            {/* Section three */}
-            {/* <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
-                {sectionThreeContent(cardData)}
-
-                <DsTypography variant="Regular_14" isDisabled={disableText}>
-                    {cardData?.block_three?.type}
-                </DsTypography>
-            </div> */}
-
-            {/* Section 4 */}
-            <div className={styles.commonSection}>
+            {/* Section 3 */}
+            <div className={styles.commonSection} style={{ minWidth: '80px' }}>
                 {loading && (
                     <div style={{ height: '22px', display: 'flex', alignItems: 'center' }}>
                         <DsFlashingDotsLoader />
@@ -843,12 +882,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </DsTypography>
             </div>
 
-            {/* Section Next */}
+            {/* Section Resource Type - 4 */}
             <div
                 className={styles.thirdSection}
                 style={{
                     height: cardData?.block_three?.smallFont ? '56px' : '64px',
-                    minWidth: '200px',
+                    minWidth: cardData?.block_five?.minWidth ? cardData?.block_five?.minWidth : '165px',
                     width: 'fit-content',
                     position: 'relative',
                     top: '3px'
@@ -861,11 +900,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </DsTypography>
             </div>
 
-            {/* Section Next 2 */}
+            {/* impacted volume section - 5 */}
             {cardData?.block_six && (
                 <div
                     className={styles.thirdSection}
-                    style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}
+                    style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px', minWidth: '143px' }}
                 >
                     {sectionSixContent(cardData)}
 
@@ -875,14 +914,19 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </div>
             )}
 
-            {/* 5 Section */}
-            {windowSize.width >= 1770 && (
-                <div className={styles.fourthSection}>
-                    {/* <GetWellChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" /> */}
-                </div>
+            {/* Dismiss section code */}
+            {(cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED ||
+                cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED ||
+                cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING) && (
+                <div className={styles.dismissSection}>{sectionSevenContent(cardData)}</div>
             )}
 
             {/* <div className={styles.separator} /> */}
+
+            {/* extra Section */}
+            {windowSize.width >= 1770 &&
+                (cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
+                    cardData?.dismissedObj?.state === undefined) && <div className={styles.fourthSection}></div>}
 
             {/* 6 section */}
             {!optimizePrintState &&
@@ -957,12 +1001,54 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         <DsButton
                             variant="secondary"
                             onClick={() => handleDifferentNavigation()}
-                            isDisabled={loading || disableOptimizeButton}
+                            isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
                         >
                             {setButtonText()}
                         </DsButton>
                     </div>
                 ))}
+
+            {/* Section 7 */}
+            {cardData?.block_one?.value !== 'ONTAP' && cardData?.block_one?.value !== 'Operating system' && (
+                <>
+                    <ButtonWithDropdown
+                        variant="icon"
+                        isDisabled={loading || dismissAction}
+                        items={[
+                            {
+                                id: 'activate',
+                                children: 'Activate',
+                                isDisabled:
+                                    cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
+                                    !cardData?.dismissedObj?.state,
+                                onClick: () => {
+                                    handleSingleAction('active');
+                                }
+                            },
+                            {
+                                id: 'postponeFor30Days',
+                                children: 'Postpone for 30 days',
+                                isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED,
+                                onClick: () => {
+                                    handleSingleAction('postponed');
+                                }
+                            },
+                            {
+                                id: 'dismiss',
+                                children: 'Dismiss',
+                                isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED,
+                                onClick: () => {
+                                    handleSingleAction('dismiss');
+                                }
+                            }
+                        ]}
+                    >
+                        <div className={loading || dismissAction ? styles.actionMenu : ''}>
+                            <ActionMenu />
+                        </div>
+                    </ButtonWithDropdown>
+                </>
+            )}
         </div>
     );
 };

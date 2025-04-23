@@ -1,0 +1,181 @@
+import { Table, useTable, TableTopBar } from '@netapp/design-system';
+import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+
+import styles from './RenderTables.module.scss';
+import { GENERAL } from '../../../../utils/appConstants';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useEffect, useMemo } from 'react';
+import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
+import FirstColumnComponent from './FirstColumnComponent';
+import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
+import {
+    disableOptimizeCheckBoxForErrCase,
+    disableOptimizeCheckBoxForOptimizeCase
+} from '../../../GetWell/GetWellUtils';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+
+interface StorageTierTableProps {
+    lastColDetails: any;
+    handleBulkAction: any;
+}
+
+const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps) => {
+    const disptach = useDispatch();
+    const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
+        state => state.inventoryV2
+    );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+    const tableData = useMemo(() => {
+        let cloneAssessmentData: any = [];
+        let uniqueResourceList: Array<string> = [];
+        allmssqlHostAssessmentData.map((hostData: any) => {
+            if (
+                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                uniqueResourceList.includes(hostData?.databaseHostId)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(hostData?.databaseHostId);
+
+            hostData?.instancesAssessment?.map((instanceData: any) => {
+                if (!instanceData?.error) {
+                    const cloneObj = instanceData?.assessments?.clone;
+                    const cloneStateObj = instanceData?.assessments?.dismissedConfigurations?.clone;
+                    const isCloneOptimized = isOptimized(cloneObj?.status, cloneStateObj?.state);
+                    if (!isCloneOptimized) {
+                        cloneAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
+                            databaseHostId: hostData?.databaseHostId,
+                            instanceId: instanceData?.databaseInstanceId,
+                            serverInstanceName: instanceData?.databaseInstanceName,
+                            performanceTier: cloneObj?.current,
+                            totalObjectsAssessed: cloneObj?.totalObjectsAssessed,
+                            totalObjectsInViolation: cloneObj?.totalObjectsInViolation,
+                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
+                            hostName: hostData?.databaseHostName,
+                            assessmentStatus: GETWELL_VALUES[cloneObj?.status],
+                            data: instanceData,
+                            violations: cloneObj?.violations,
+                            cloneDetails: cloneObj?.cloneDetails,
+                            objectsInViolation: cloneObj?.objectsInViolation,
+                            tags: cloneObj?.tags,
+                            severity: cloneObj?.severity,
+                            configObj: cloneStateObj
+                        });
+                    }
+                }
+            });
+        });
+        return mapHostStatusToAssessmentData(
+            inventoryTableData,
+            cloneAssessmentData,
+            getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
+        );
+    }, [
+        allmssqlHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList
+    ]);
+
+    // Update tableData when selection changes
+    const updatedTableData = useMemo(() => {
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length) {
+            return disableOptimizeCheckBoxForOptimizeCase(
+                tableData,
+                ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                selectedRowsForOptimize
+            );
+        } else {
+            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
+        }
+    }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
+
+    const TableColDefs: ColumnProps[] = [
+        {
+            Header: 'SQL Server instance name ',
+            accessor: 'serverInstanceName',
+            id: '1',
+            isSortable: false,
+            filterOptions: 'auto',
+            isSticky: true,
+            width: '310px',
+            renderCell: (cellData: any, rowData: any) => {
+                return <FirstColumnComponent rowData={rowData} />;
+            }
+        },
+        {
+            Header: 'Host name',
+            accessor: 'hostName',
+            id: '2',
+            width: 'auto',
+            filterOptions: 'auto'
+        },
+        {
+            Header: 'Impacted database',
+            accessor: 'totalObjectsInViolation',
+            id: '3',
+            width: '320px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
+            }
+        },
+        lastColDetails(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT, {}, inProgressOptimizationData, inProgressHostData)
+    ];
+
+    const tableProps = useTable({
+        //@ts-ignore
+        manageColumnsProps: false,
+        isHorizontalScroll: false,
+        isSorting: false,
+        columns: TableColDefs,
+        rows: updatedTableData || [],
+        pageSize: 50,
+        selectionType: 'multiple',
+        defaultSelectedRows: []
+    });
+
+    useEffect(() => {
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
+
+        disptach(setSelectedRowsForOptimize(rowsData));
+
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length) {
+            checkBoxHandle(tableProps.selectionState, rowsData, disptach);
+        }
+    }, [tableProps.selectionState, inProgressOptimizationData]);
+
+    const handleBulkOperation = () => {
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT, selectedRowsForOptimize);
+    };
+    return (
+        <div className={styles.renderTable}>
+            <TableTopBar
+                //@ts-ignore
+                tableProps={tableProps}
+                pluralTitle={`Not-optimized instances`}
+                singularTitle={'Not-optimized instance'}
+            />
+            {selectedRowsForOptimize.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
+            )}
+            <Table
+                //@ts-ignore
+                tableProps={tableProps}
+                isDoubleRow={true}
+                key={Date.now()}
+            />
+        </div>
+    );
+};
+
+export default CloneManagementTable;

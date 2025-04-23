@@ -6,6 +6,21 @@ const EmailRequestParams = Type.Object({
 const EmailResponse = Type.Object({
     message: Type.String()
 });
+
+const EmailRequestBody = Type.Object({
+    file: Type.String({ format: 'binary', description: 'File to attach to the email' }),
+    userEmail: Type.String({
+        format: 'email',
+        description: 'Email address to send the report to',
+        examples: ['user@myname.com']
+    }),
+    storageType: Type.String({
+        description: 'Type of storage to calculate savings for',
+        enum: ['ebs', 'fsxw', 'onprem']
+    }),
+    hostName: Type.Optional(Type.String({}))
+});
+
 type EmailResponseType = Static<typeof EmailResponse>;
 
-export { EmailRequestParams, EmailResponse, EmailResponseType };
+export { EmailRequestParams, EmailResponse, EmailResponseType, EmailRequestBody };

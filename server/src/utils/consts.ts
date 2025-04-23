@@ -255,7 +255,8 @@ const SECRET_WORDS = [
     'fsxNPassword',
     'fsxSecret',
     'domainAdminSecret',
-    'sqlServiceAccountSecret'
+    'sqlServiceAccountSecret',
+    'file'
 ];
 
 const SECRET_STRING_WORDS = [
@@ -544,6 +545,7 @@ const AWS_REGIONS = new Map<string, string>([
     ['ca-west-1', 'Canada (Calgary)'],
     ['ap-southeast-5', 'Asia Pacific (Malaysia)']
 ]);
+const AWS_REGION_KEYS = Array.from(AWS_REGIONS.keys());
 
 const IO2_AVAILABLE_REGIONS = [
     'us-east-2',
@@ -1191,7 +1193,7 @@ const CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING: {
     SQLDeploymentMode: { name: 'sql_deployment_mode', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer }
 };
 
-const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
+const MSSQL_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     0: 'serverDetails',
     1: 'databaseInstancetopologyData',
     2: 'performance',
@@ -1201,6 +1203,15 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     6: 'databasesCount',
     7: 'nodeTopology',
     8: 'storageSavingsFromOntap'
+};
+
+const PGSQL_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
+    0: 'storage',
+    1: 'databaseInstancetopologyData',
+    2: 'databasesCount',
+    3: 'databases',
+    4: 'performance',
+    5: 'protection'
 };
 
 enum DATABASE_METRIC_TYPE {
@@ -1293,7 +1304,9 @@ enum DatabaseHostsQueryFields {
     SERVER_DETAILS = 'serverDetails',
     NODE_TOPOLOGY = 'nodeTopology',
     INSTANCE_DETAILS = 'instanceDetails',
-    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology'
+    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology',
+    DATABASES_WITH_PROTECTION = 'databasesWithProtection',
+    DATABASES = 'databases'
 }
 
 enum ServerState {
@@ -1363,6 +1376,8 @@ const MSSQL_SYSTEM_DATABASES = [
     'msdb'
 ];
 
+const PGSQL_SYSTEM_DATABASES = ['postgres', 'template0', 'template1'];
+
 const MSSQL_DATABASE_TYPES = {
     SYSTEM: 'System Database',
     USER: 'User Database'
@@ -1397,7 +1412,7 @@ const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
 const ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT = '300';
-const ASSESSMENT_SSM_EXECUTION_TIMEOUT = '600';
+const ASSESSMENT_SSM_EXECUTION_TIMEOUT = '1800';
 
 const VALIDATION_NODE_INSTANCETYPE = 'm5.xlarge';
 
@@ -1485,7 +1500,8 @@ const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const PGSQL_VERSION = 'pgsql-version';
-const AL2023_AMI_NAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
+const AMAZON_LINUX_AMI_PATH = '/aws/service/ami-amazon-linux-latest';
+const AL2023_AMI_NAME = `${AMAZON_LINUX_AMI_PATH}/al2023-ami-kernel-6.1-x86_64`;
 
 const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -1578,6 +1594,10 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'PGSQLPackages',
         url: `${WLMDB}/pgsql/packages/pgvector.zip`
+    },
+    {
+        name: 'PGPOOLPackage',
+        url: `${WLMDB}/pgsql/packages/pgpool.zip`
     }
 ];
 
@@ -1607,18 +1627,6 @@ const PGSQL_TEMPLATES_ASSETS = [
 const PGSQL_MASTER_TEMPLATE_DISTRIBUTION = {
     name: TEMPLATE_TYPES.MASTER,
     location: './resources/pgsql/templates/wlm-master.yaml'
-};
-
-const PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
-    s3: TEMPLATE_S3_ENDPOINT,
-    cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
-    ssm: TEMPLATE_SSM_ENDPOINT,
-    sqs: TEMPLATE_SQS_ENDPOINT,
-    logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
-    fsx: TEMPLATE_FSX_ENDPOINT,
-    ec2: TEMPLATE_EC2_ENDPOINT,
-    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT,
-    ssmmessages: TEMPLATE_SSMMESSAGES_ENDPOINT
 };
 
 const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -1704,6 +1712,15 @@ const PRICING_LICENSE_KEYS = {
 };
 
 const GERERIC_JOB_ERROR_MESSAGE = 'Examine the subjobs for comprehensive error messages.';
+const PGSQL_DEFAULT_INSTANCE_NAME = 'postgresql';
+
+const GENERIC_ASSESSMENT_ERROR_MESSAGE = (category: string) =>
+    `No ${category} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try after running adhoc assessment.`;
+
+const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
+
+const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
+const CLONE_AGE = 0; // It has to be changed to 60 after testing
 
 export {
     WLMDB,
@@ -1997,7 +2014,6 @@ export {
     PGSQL_RESOURCE_ASSETS,
     PGSQL_TEMPLATES_ASSETS,
     PGSQL_MASTER_TEMPLATE_DISTRIBUTION,
-    PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
     PG_TEMPLATE_OPTIONAL_PARAMETERS,
     TCO_FEATURE,
     CONTINUOUS_ASSESSMENT_FEATURE,
@@ -2027,7 +2043,8 @@ export {
     STD_ENGINE_EDITION,
     AWS_ERROR_CODES,
     CF_STACK_COUNT_QUOTACODE,
-    DATABASE_INSTANCE_INDEX_MAPPING,
+    MSSQL_DATABASE_INSTANCE_INDEX_MAPPING,
+    PGSQL_DATABASE_INSTANCE_INDEX_MAPPING,
     PGSQL_CW_CONFIG,
     SQL_CASE_INSENSITIVE,
     MAX_EMAIL_ATTACHMENT_SIZE,
@@ -2044,5 +2061,13 @@ export {
     PGSQL,
     GERERIC_JOB_ERROR_MESSAGE,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
-    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT
+    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+    PGSQL_SYSTEM_DATABASES,
+    AWS_REGION_KEYS,
+    AMAZON_LINUX_AMI_PATH,
+    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+    GENERIC_ASSESSMENT_ERROR_MESSAGE,
+    RESTRICTED_FSX_REGIONS,
+    CLONE_AGE,
+    PGSQL_DEFAULT_INSTANCE_NAME
 };

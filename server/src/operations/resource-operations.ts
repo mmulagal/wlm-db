@@ -6,7 +6,6 @@ import {
     DBCREATE_RELATIVE_PATH,
     DEMO_AWS_ACCOUNT_ID,
     HttpErrorCodes,
-    RESOURCESTYPE,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES
 } from '../utils/consts';
 import { listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
@@ -18,7 +17,7 @@ import { COPY_SCIRPTS_TO_MANAGE_RESOURCE } from './workloads/mssql/discover-cons
 import { getArtifactsRegionBucketName, isDemo, retryWithDelay, sqlResponseParsing } from '../utils/utils';
 import { preSignedUrl } from '../lib/aws/s3';
 import { callSsmExecution } from './aws/ssm-operations';
-import { READ_SCRIPT_VERSION } from './workloads/mssql/ssm-script-utils';
+import { CHECK_SCRIPT_AVAILABILITY_AND_VERSION } from './workloads/mssql/ssm-script-utils';
 import { createDemoResourcesPerRegion } from '../utils/demo-utils/demoDefaultUtils';
 
 const logger = getLogger();
@@ -56,7 +55,7 @@ async function getFileSystemCredentialsStatus(accountId: string, fsxId: string) 
 async function getFileSystemsCredentialsStatus(accountId: string, fsxids: string) {
     logger.info('Getting file systems Credentials Status', { accountId, fsxids });
 
-    const fsxIds = fsxids.split(',');
+    const fsxIds = [...new Set(fsxids.split(','))];
 
     const fileSystems = await Promise.all(
         fsxIds.map(throat(10, (fsxId: string) => getFileSystemCredentialsStatus(accountId, fsxId)))
@@ -67,37 +66,54 @@ async function getFileSystemsCredentialsStatus(accountId: string, fsxids: string
 
 async function getManagedResources(
     accountId: string,
-    credentialsId: string,
-    region: string,
+    credentialsIds?: string,
+    regions?: string,
+    databaseTypes?: string,
     pageSize?: number,
     clientNextToken?: string
 ): Promise<ManageResourcesResponseType> {
-    logger.info('Fetching managed resources for account', {
+    logger.info('Fetching managed resources for multiple parameters', {
         accountId,
-        credentialsId,
-        region,
+        credentialsIds,
+        regions,
+        databaseTypes,
         pageSize,
         clientNextToken
     });
 
+    const credentialIdsList = credentialsIds?.split(',');
+    const regionsList = regions?.split(',');
+    const databaseTypesList = databaseTypes?.split(',');
+
     const { items, nextToken, count } = await getResources(
         accountId,
         undefined,
-        credentialsId,
-        region,
-        RESOURCESTYPE.MSSQL,
+        credentialIdsList,
+        regionsList,
+        databaseTypesList,
         pageSize,
         clientNextToken
     );
 
     return {
-        items: items.map(({ resource_id: resourceId, metadata }) => ({
-            resourceId,
-            instances: compact([
-                (metadata as unknown as Metadata)?.node1InstanceId,
-                (metadata as unknown as Metadata)?.node2InstanceId
-            ])
-        })),
+        items: items.map(
+            ({
+                resource_id: resourceId,
+                credentials_id: credentialId,
+                region,
+                resource_type: databaseType,
+                metadata
+            }) => ({
+                resourceId,
+                instances: compact([
+                    (metadata as unknown as Metadata)?.node1InstanceId,
+                    (metadata as unknown as Metadata)?.node2InstanceId
+                ]),
+                credentialId,
+                region: region || '',
+                databaseType
+            })
+        ),
         count,
         nextToken
     };
@@ -109,15 +125,15 @@ async function checkScriptNeedsUpdate(accountId: string, credentialsId: string, 
         const resp = await callSsmExecution(
             credentialsId,
             region,
-            [READ_SCRIPT_VERSION],
+            [CHECK_SCRIPT_AVAILABILITY_AND_VERSION],
             nodeId,
             'Get script version',
             accountId,
             false
         );
         if (resp) {
-            const newresp = sqlResponseParsing(resp);
-            if (newresp.scriptVersion === CURRENT_SCRIPT_VERSION) {
+            const { scriptVersion } = sqlResponseParsing(resp);
+            if (scriptVersion === CURRENT_SCRIPT_VERSION) {
                 return false;
             }
         }

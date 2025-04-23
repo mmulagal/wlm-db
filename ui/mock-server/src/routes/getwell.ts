@@ -1,6 +1,7 @@
 import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 import GetWellJson from '../data/getWell.json';
 import GetWellHostJson from '../data/getWellHost.json';
+import SnapshotPolicies from '../data/snapshotPolicies.json';
 import GetWellAccJson from '../data/getWellAcc.json';
 
 const router = require('express').Router();
@@ -11,11 +12,30 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/asse
     }, 20);
 });
 
+router.post(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, { jobId: '1234' });
+            // generateResponse(res, 404, { message: 'No data found' });
+        }, 20);
+    }
+);
+
 router.get(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/assessment`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, GetWellHostJson);
+        }, 20);
+    }
+);
+
+router.get(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/snapshot-policies`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, SnapshotPolicies);
         }, 20);
     }
 );
@@ -39,7 +59,7 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
@@ -48,25 +68,47 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
-router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/storage-sizing`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
-    }
-);
+router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/storage-sizing`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, { jobId: '1234' });
+    }, 100);
+});
+
+router.post(`${BASE_URL}/v1/mssql/assessment/dismiss`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, {
+            configurationsDismissed: [
+                {
+                    name: 'performance-tier',
+                    configState: 'dismissed',
+                    startTime: 1744588921000,
+                    endTime: 1744588921000,
+                    databaseHosts: [
+                        {
+                            id: 'string',
+                            sqlServerInstances: ['string'],
+                            credentialsId: 'string',
+                            region: 'string',
+                            status: 'Success', // If only some instances are updated successfully, the status will be marked as 'partial', and the error message will indicate how many instances succeeded versus failed.
+                            failedInstances: { instanceId: 'error' }
+                        }
+                    ]
+                }
+            ]
+        });
+    }, 1000);
+});
 
 router.post(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-operating-system`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
@@ -75,43 +117,58 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
-router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/compute`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
-    }
-);
+router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/compute`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, { jobId: '1234' });
+    }, 20);
+});
 
 router.post(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-tier`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/storage-tier`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/resiliency`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 
+router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/storage-tier`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, { jobId: '1234' });
+    }, 20);
+});
+
+router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/max-dop`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, { jobId: '1234' });
+    }, 20);
+});
+
+router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/resiliency/aws-backup`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, { jobId: '1234' });
+    }, 20);
+});
+
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/max-dop`,
+    `${BASE_URL}/v1/mssql/database-hosts/optimize/clone`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
-        }, 2000);
+        }, 20);
     }
 );
 

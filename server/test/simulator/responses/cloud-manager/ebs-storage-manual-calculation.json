@@ -13,7 +13,7 @@
                 },
                 "ebs_cost_calculation": {
                     "storageVolumeType": "io2",
-                    "storageAmountPerVol": {
+                    "storageAmount": {
                         "size": 10240,
                         "unit": "GiB"
                     },
