@@ -12,6 +12,7 @@ function App() {
     const readyNotifiedRef = useRef(false);
 
     useInitialize();
+    console.log("Test Branch");
 
     useEffect(() => {
         if (!readyNotifiedRef.current && accessToken) {
