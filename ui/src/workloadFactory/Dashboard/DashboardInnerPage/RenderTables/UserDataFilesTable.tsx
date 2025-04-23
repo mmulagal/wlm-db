@@ -44,7 +44,11 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                     const userDataFilesObj = instanceData?.assessments?.storage?.layout?.find(
                         (item: any) => item.name === 'data-files-location'
                     );
-                    const isStorageTierOptimized = isOptimized(userDataFilesObj?.status);
+                    const userDataFilesStateObj =
+                        instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
+                            (item: any) => item.name === 'data-files-location'
+                        );
+                    const isStorageTierOptimized = isOptimized(userDataFilesObj?.status, userDataFilesStateObj?.state);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -58,7 +62,8 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[userDataFilesObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: userDataFilesStateObj
                         });
                     }
                 }
@@ -106,7 +111,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {

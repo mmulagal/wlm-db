@@ -34,6 +34,7 @@
         "@aws-sdk/client-bedrock-runtime": "^3.779.0",
         "@aws-sdk/client-cloudformation": "^3.777.0",
         "@aws-sdk/client-cloudwatch": "^3.777.0",
+        "@aws-sdk/client-cloudwatch-logs": "^3.787.0",
         "@aws-sdk/client-compute-optimizer": "^3.777.0",
         "@aws-sdk/client-cost-explorer": "^3.777.0",
         "@aws-sdk/client-directory-service": "^3.777.0",

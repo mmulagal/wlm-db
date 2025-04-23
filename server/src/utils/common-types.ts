@@ -186,6 +186,10 @@ interface DatabaseInstanceMetadata {
     assessmentResults?: any;
 }
 
+interface DatabaseInstanceConfigurations {
+    dismissedConfigurations: DatabaseInstanceDismissConfigs;
+}
+
 interface CreateDbMetrics {
     numberofUserDbsCreated: number;
 }
@@ -352,6 +356,7 @@ interface DatabaseInstance {
     sqlAuthEnabled?: boolean;
     isManaged?: boolean;
     resource: ResourceDetails;
+    configurations?: DatabaseInstanceConfigurations | JsonValue;
 }
 
 interface InstanceDetails {
@@ -605,6 +610,32 @@ interface InstancesResponse {
     [key: string]: MappedOnTapVolumeResponse;
 }
 
+interface InstanceDismissParams {
+    name: string;
+    configState: string;
+    startTime: number;
+    endTime?: number;
+    deactivationReason?: string;
+}
+
+interface DatabaseInstanceDismissConfigs {
+    storage?: {
+        configuration?: {
+            volumes?: InstanceDismissParams[];
+            luns?: InstanceDismissParams[];
+            os?: InstanceDismissParams[];
+        };
+        sizing?: InstanceDismissParams[];
+        layout?: InstanceDismissParams[];
+    };
+    compute?: InstanceDismissParams;
+    license?: InstanceDismissParams;
+    hostOsPatch?: InstanceDismissParams;
+    rssConfig?: InstanceDismissParams;
+    maxDop?: InstanceDismissParams;
+    mssqlPatch?: InstanceDismissParams;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -655,5 +686,8 @@ export {
     InstancesResponse,
     VolumeDBMapEntry,
     AWSBackupAssessment,
-    ResourceAssessmentData
+    ResourceAssessmentData,
+    InstanceDismissParams,
+    DatabaseInstanceDismissConfigs,
+    DatabaseInstanceConfigurations
 };

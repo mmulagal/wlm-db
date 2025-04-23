@@ -667,12 +667,12 @@ async function fetchInstanceTypesByRetry(
             'No instance types matching initial requirements. Removing network bandwidth requirement and trying again.'
         );
         delete instanceRequirements.InstanceRequirements.NetworkBandwidthGbps;
-        ({ InstanceTypes: instanceTypes } =
+        ({ InstanceTypes: instanceTypes = [] } =
             (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
     }
 
     if (
-        !instanceTypes &&
+        isEmpty(instanceTypes) &&
         instanceRequirements.InstanceRequirements?.MemoryMiB &&
         Number.isInteger(instanceRequirements.InstanceRequirements.MemoryMiB.Min)
     ) {
@@ -680,12 +680,12 @@ async function fetchInstanceTypesByRetry(
             'No instance types matching requirements after removing network bandwidth. Resetting minimum memory to minimum possible and trying again.'
         );
         instanceRequirements.InstanceRequirements.MemoryMiB.Min = 1024; // 1 GiB
-        ({ InstanceTypes: instanceTypes } =
+        ({ InstanceTypes: instanceTypes = [] } =
             (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
     }
 
     if (
-        !instanceTypes &&
+        isEmpty(instanceTypes) &&
         instanceRequirements.InstanceRequirements?.VCpuCount &&
         Number.isInteger(instanceRequirements.InstanceRequirements.VCpuCount.Max)
     ) {
@@ -693,7 +693,7 @@ async function fetchInstanceTypesByRetry(
             'No instance types matching requirements after resetting minimum memory. Removing maximum CPU criteria and trying again.'
         );
         delete instanceRequirements.InstanceRequirements.VCpuCount.Max;
-        ({ InstanceTypes: instanceTypes } =
+        ({ InstanceTypes: instanceTypes = [] } =
             (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
     }
 

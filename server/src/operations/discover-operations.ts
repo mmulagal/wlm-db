@@ -2177,7 +2177,8 @@ async function discoverPgSqlResources(
                         replica_info: replicaInfo,
                         replica_type: replicaType,
                         primary_host: primaryHostIp,
-                        server_instance_id: serverInstanceId
+                        server_instance_id: serverInstanceId,
+                        default_auth: defaultAuth
                     } = parsedResponse;
 
                     ec2Instance = {
@@ -2188,6 +2189,7 @@ async function discoverPgSqlResources(
                         pgsqlServerDeploymentType: isValidProp(deploymentType) ? deploymentType : undefined,
                         databaseCount: isValidProp(databaseCount) ? databaseCount : 0,
                         pgsqlServerInstanceId: isValidProp(serverInstanceId) ? serverInstanceId : undefined,
+                        defaultAuth: isValidProp(defaultAuth) ? !defaultAuth : false,
                         ...(deploymentType === HA && {
                             isPrimary: replicaType === 'primary',
                             primaryNode: await getPrimaryHostDetails(credentialsId, region, primaryHostIp),

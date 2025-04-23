@@ -46,7 +46,8 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const licenseObj = instanceData?.assessments?.license;
-                    const isStorageTierOptimized = isOptimized(licenseObj?.status);
+                    const licenseStateObj = instanceData?.assessments?.dismissedConfigurations?.license;
+                    const isStorageTierOptimized = isOptimized(licenseObj?.status, licenseStateObj?.state);
                     if (!isStorageTierOptimized) {
                         licenseAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -58,7 +59,8 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[licenseObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            configObj: licenseStateObj
                         });
                     }
                 }
@@ -107,7 +109,7 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {

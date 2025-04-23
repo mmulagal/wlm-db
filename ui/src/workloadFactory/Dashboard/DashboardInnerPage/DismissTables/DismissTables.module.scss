@@ -93,3 +93,9 @@
         color: var(--text-primary);
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .dismissTables {
+        width: calc(1334px + ((100vw - 1920px)));
+    }
+}

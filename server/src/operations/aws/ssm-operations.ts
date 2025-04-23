@@ -23,13 +23,20 @@ import {
     describeInstanceInformation
 } from '../../lib/aws/ssm';
 import { decompressSSMResponse, generateHash, sleep } from '../../utils/utils';
-import { AWS_REGION_KEYS, AWS_REGIONS, RESTRICTED_FSX_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
+import {
+    AWS_REGION_KEYS,
+    AWS_REGIONS,
+    RESTRICTED_FSX_REGIONS,
+    SSM_COMMAND_CACHE_TYPE,
+    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE
+} from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParamterObject, MultipleCommandSsmResponse } from '../../utils/common-types';
 import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
+import { getLogs } from './cloud-watch-operations';
 
 const logger = getLogger();
 
@@ -200,8 +207,8 @@ async function executeSSMDocument(
     await sleep(1000);
     try {
         const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
-        logger.debug('SSM command Response:', response);
-        return response;
+        logger.debug('SSM command commandId, Response:', commandId, response);
+        return { response };
     } catch (error) {
         const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
         logger.error(errorMessage);
@@ -249,14 +256,30 @@ async function callSsmExecution(
     const params = {
         ...defaultParams,
         InstanceIds: [activeNodeInstanceId],
-        ...(comment && { Comment: comment?.substring(0, 100) })
+        ...(comment && { Comment: comment?.substring(0, 100) }),
+        CloudWatchOutputConfig: {
+            CloudWatchLogGroupName: CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+            CloudWatchOutputEnabled: true
+        }
     };
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
         const response = await executeSSMDocument(credentialsId, region, params, accountId);
-        const { error, output = '' } = await extractSsmResponse({ response });
+        let { error, output = '' } = await extractSsmResponse(response);
         if (error) {
             throw createError(error);
+        }
+        if (output.endsWith('--output truncated--')) {
+            if (!response?.response?.CommandId) {
+                throw createError('Command Id not found');
+            }
+            const responses = await getSsmResponseFromCloudWatch(
+                credentialsId,
+                region,
+                response?.response?.CommandId,
+                activeNodeInstanceId
+            );
+            output = responses.join('');
         }
         if (cacheData) {
             logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
@@ -265,6 +288,26 @@ async function callSsmExecution(
         return output;
     } catch (error: any) {
         throw createError(error);
+    }
+}
+
+async function getSsmResponseFromCloudWatch(
+    credentialId: string,
+    region: string,
+    commandId: string,
+    instanceId: string
+) {
+    logger.info('Getting SSM response from CloudWatch', { credentialId, region, commandId, instanceId });
+    const logGroupName = CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE;
+    const logStreamSuffix = 'aws-runPowerShellScript/stdout';
+    const logStreamName = `${commandId}/${instanceId}/${logStreamSuffix}`;
+
+    try {
+        const logs = await getLogs(credentialId, region, logGroupName, logStreamName);
+        return logs;
+    } catch (error) {
+        logger.error('Error getting logs from CloudWatch', error);
+        throw createError('Error getting logs from CloudWatch');
     }
 }
 

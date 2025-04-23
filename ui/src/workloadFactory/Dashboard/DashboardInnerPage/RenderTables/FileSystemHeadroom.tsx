@@ -47,7 +47,10 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                     const headroomObj = instanceData?.assessments?.storage?.sizing?.find(
                         (item: any) => item.name === 'headroom'
                     );
-                    const isStorageTierOptimized = isOptimized(headroomObj?.status);
+                    const headroomStateObj = instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
+                        (item: any) => item.name === 'headroom'
+                    );
+                    const isStorageTierOptimized = isOptimized(headroomObj?.status, headroomStateObj?.state);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -62,7 +65,8 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             sizingViolations: headroomObj?.sizingViolations,
                             recommendedSizeInGib: headroomObj?.recommendedSizeInGib,
                             missingPermissions: headroomObj?.missingPermissions,
-                            data: instanceData
+                            data: instanceData,
+                            configObj: headroomStateObj
                         });
                     }
                 }
@@ -111,7 +115,7 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '320px',
+            width: 'auto',
             filterOptions: 'auto'
         },
         {

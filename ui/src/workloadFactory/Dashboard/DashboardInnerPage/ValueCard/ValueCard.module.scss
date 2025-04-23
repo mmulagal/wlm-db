@@ -22,3 +22,13 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .valueCard {
+        width: calc(926px + ((100vw - 1920px) * 0.6941));
+
+        .block {
+            width: calc(200px + ((100vw - 1920px) * 0.2159));
+        }
+    }
+}

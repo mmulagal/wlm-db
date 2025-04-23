@@ -292,6 +292,7 @@ const DiscoverPgSqlResponseInfo = Type.Intersect([
         isPrimary: Type.Optional(Type.Boolean({ description: 'Is this primary PostgreSQL instance' })),
         nodes: Type.Optional(Type.Array(pgSqlServerNode)),
         primaryNode: Type.Optional(pgSqlServerNode),
+        defaultAuth: Type.Optional(Type.Boolean()),
         storage: Type.Optional(
             Type.Array(
                 Type.Object({

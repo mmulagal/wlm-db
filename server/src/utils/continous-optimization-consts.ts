@@ -231,6 +231,57 @@ const ASSESSMENT_RESOURCE_TYPE = {
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
 
+const STORAGE_ASSESMENT_CONFIGS_MAP = {
+    storage: {
+        configuration: {
+            volumes: [
+                'thin-provision',
+                'autosize',
+                'autosize-mode',
+                'fractional-reserve',
+                'snapshot-copy-reserve',
+                'snapshot-autodelete',
+                'space-mgmt-try-first',
+                'tiering-policy',
+                'tiering-min-cooling-days'
+            ],
+            luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
+            os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size']
+        },
+        sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size'],
+        layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
+    }
+};
+
+const ASSESSMENT_CONFIGS = {
+    compute: 'compute-rightsizing',
+    license: 'sql-license',
+    hostOsPatch: 'host-os-patch',
+    maxDOP: 'maxdop',
+    mssqlPatch: 'mssql-patch',
+    rssConfig: 'rss-config',
+    snapshotPolicy: 'snapshot-policy',
+    crr: 'crr',
+    awsBackup: 'scheduled-fsx-for-ontap-backups'
+};
+
+const DISMISS_STATUS = {
+    DISMISSED: 'DISMISSED',
+    POSTPONED: 'POSTPONED',
+    ACTIVE: 'ACTIVE'
+};
+
+const DISMISS_DEACTIVATION_REASON = {
+    USER: 'USER',
+    EXPIRED: 'EXPIRED'
+};
+
+const DISMISS_UPDATE_STATUS = {
+    SUCCESS: 'SUCCESS',
+    FAILED: 'FAILED',
+    PARTIAL: 'PARTIAL'
+};
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -263,5 +314,10 @@ export {
     ASSESSMENT_RESOURCE_TYPE,
     OPTIMIZE_RESILIENCY_CONFIGS,
     VALID_MPIO_LB_POLICIES,
-    OptimizeComputeJobNames
+    OptimizeComputeJobNames,
+    ASSESSMENT_CONFIGS,
+    STORAGE_ASSESMENT_CONFIGS_MAP,
+    DISMISS_DEACTIVATION_REASON,
+    DISMISS_STATUS,
+    DISMISS_UPDATE_STATUS
 };
