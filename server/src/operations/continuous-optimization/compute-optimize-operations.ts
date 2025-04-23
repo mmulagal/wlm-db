@@ -1,18 +1,25 @@
 import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
 import { cloneDeep, compact, isEmpty } from 'lodash-es';
-import { DatabaseInstance, Metadata, NodeDetails } from '../../utils/common-types';
+import { DatabaseInstance, Metadata, NodeDetails, SsmSqlServerRunningStatus } from '../../utils/common-types';
 import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_CLUSTER_NODE_NAMES,
+    GET_RUNNING_SQL_SERVERS,
     MOVE_ALL_CLUSTER_GROUPS
 } from '../workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { updateJobDetails } from '../database/job-operations';
-import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
+import {
+    formatSsmArrayResponse,
+    getServerNameWithHostname,
+    isDemo,
+    retryWithDelay,
+    sqlResponseParsing
+} from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 import getLogger from '../../utils/logger';
@@ -78,6 +85,8 @@ async function handleComputeRemediation(
     let formattedInstanceName = getServerNameWithHostname(resourceDetails[0]?.resource_name || undefined);
     const modifiedInstancesNodeDetails: ModifiedInstancesNodeDetails[] = [];
     let storageDetails = { svmId: '', fsxId: '' };
+    let runningSqlServerNames: string[] | undefined;
+    let completedWithError = false;
 
     try {
         const [{ resource_id: databaseHostId, metadata }] = resourceDetails;
@@ -244,6 +253,13 @@ async function handleComputeRemediation(
                 }
             } else {
                 // single node cluster/standalone
+                runningSqlServerNames = await getRunningSqlServices(
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId
+                );
+
                 const preReqJobId = await handleOptimizeJobCreation(
                     accountId,
                     credentialsId,
@@ -358,20 +374,21 @@ async function handleComputeRemediation(
                 }
             }
 
-            // const checkRunningResponse = await checkRunningStatus(
-            //     accountId,
-            //     jobId,
-            //     region,
-            //     credentialsId,
-            //     activeNodeInstanceId,
-            //     formattedInstanceName
-            // );
+            const checkRunningResponse = await checkRunningStatus(
+                accountId,
+                jobId,
+                region,
+                credentialsId,
+                activeNodeInstanceId,
+                formattedInstanceName,
+                runningSqlServerNames || []
+            );
 
-            // if (!checkRunningResponse.running) {
-            //     subJobErrorMessage = checkRunningResponse.error;
-            //     anySubJobFailed = true;
-            //     throw checkRunningResponse.error;
-            // }
+            if (checkRunningResponse.status !== JOBSTATUS.COMPLETED) {
+                subJobErrorMessage = checkRunningResponse.error;
+                completedWithError = true;
+                throw checkRunningResponse.error;
+            }
 
             // update metadata after successful optimization
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
@@ -429,7 +446,12 @@ async function handleComputeRemediation(
         }
     } finally {
         if (!isJobStatusUpdated) {
-            const parentJobStatus = anySubJobFailed ? JOBSTATUS.FAILED : jobStatus || JOBSTATUS.COMPLETED;
+            const parentJobStatus = completedWithError
+                ? JOBSTATUS.WARNING
+                : anySubJobFailed
+                ? JOBSTATUS.FAILED
+                : jobStatus || JOBSTATUS.COMPLETED;
+
             await updateJobDetails(accountId, jobId, {
                 status: parentJobStatus,
                 endTime: Date.now(),
@@ -439,13 +461,45 @@ async function handleComputeRemediation(
     }
 }
 
+async function getRunningSqlServices(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('Getting running services before optimization', {
+        accountId,
+        credentialsId,
+        region
+    });
+
+    try {
+        const rawResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            [GET_RUNNING_SQL_SERVERS()],
+            activeNodeInstanceId,
+            'Getting running SQL server names',
+            accountId,
+            false
+        );
+
+        const sqlServers: string | string[] = sqlResponseParsing(rawResponse);
+        return formatSsmArrayResponse<string>(sqlServers);
+    } catch (error) {
+        logger.error('Error while fetching running sql servers:', error);
+        return [];
+    }
+}
+
 async function checkRunningStatus(
     accountId: string,
     parentJobId: string,
     region: string,
     credentialsId: string,
     activeNodeInstanceId: string,
-    formattedInstanceName: string
+    formattedInstanceName: string,
+    sqlServerNames: string[]
 ) {
     logger.info('Checking running status', {
         accountId,
@@ -454,7 +508,6 @@ async function checkRunningStatus(
         parentJobId,
         activeNodeInstanceId
     });
-
     const checkRunningJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -466,52 +519,48 @@ async function checkRunningStatus(
         parentJobId
     );
 
+    // worst 40secs needed for one sql server to start; 10secs buffer
+    const timeRequired = 40 * sqlServerNames.length + 10;
+
     const rawStatusResponse = await callSsmExecution(
         credentialsId,
         region,
-        [CHECK_RUNNING_STATUS_WITH_RESTART('MSSQLSERVER')],
+        [CHECK_RUNNING_STATUS_WITH_RESTART(sqlServerNames)],
         activeNodeInstanceId,
         'Checking running status of the service',
         accountId,
-        undefined,
-        COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+        false,
+        timeRequired.toString()
     );
 
-    let outStatus: { running: boolean; error?: string } = {
-        running: true
-    };
     let jobDetails: { status: string; error?: string } = {
         status: JOBSTATUS.COMPLETED,
         error: ''
     };
-    let statusResponse: { status: string; error?: string } = { status: '', error: '' };
 
     try {
-        statusResponse = sqlResponseParsing(rawStatusResponse);
-        jobDetails = {
-            status: statusResponse.status === 'Running' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
-            error: statusResponse.status !== 'Running' ? statusResponse.error : undefined
-        };
+        const cleanResponse = sqlResponseParsing(rawStatusResponse);
+        const statuses: SsmSqlServerRunningStatus[] = formatSsmArrayResponse<SsmSqlServerRunningStatus>(cleanResponse);
 
-        outStatus = { running: statusResponse.status === 'Running', error: statusResponse.error || '' };
+        const faultyServers = statuses.filter(({ status }) => status !== 'Running').map(({ name }) => name);
+
+        jobDetails = {
+            status: faultyServers.length === 0 ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
+            error: faultyServers.length === 0 ? '' : `Some SQL servers (${faultyServers}) are not running.`
+        };
     } catch (error) {
-        logger.error('Error parsing query response:', rawStatusResponse);
+        logger.error('Error while fetching sql service running status:', rawStatusResponse);
         jobDetails = {
             status: JOBSTATUS.FAILED,
-            error: statusResponse.error
+            error: typeof error === 'string' ? error : JSON.stringify(error)
         };
-
-        outStatus = {
-            running: false,
-            error: statusResponse.error
-        };
+    } finally {
+        await updateJobDetails(accountId, checkRunningJobId, {
+            ...jobDetails,
+            endTime: Date.now()
+        });
     }
-    await updateJobDetails(accountId, checkRunningJobId, {
-        ...jobDetails,
-        endTime: Date.now()
-    });
-
-    return outStatus;
+    return jobDetails;
 }
 
 export default async function optimizeCompute(

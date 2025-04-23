@@ -87,6 +87,7 @@ import {
     ENABLE_MPIO_AND_CONFIGURE
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import {
+    GET_RUNNING_SQL_SERVERS,
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_RSS_CONFIG_DETAILS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
@@ -554,7 +555,11 @@ const rssConfigAssessmentSsm = {
 };
 
 const checkRunningStatus = {
-    commands: [CHECK_RUNNING_STATUS_WITH_RESTART('MSSQLSERVER')]
+    commands: [CHECK_RUNNING_STATUS_WITH_RESTART(['SQL Server (SQLSTD1)', 'SQL Server (MSSQLSERVER)'])]
+};
+
+const getRunningSqlServers = {
+    commands: [GET_RUNNING_SQL_SERVERS()]
 };
 
 const getInstalledSQLVersion = {
@@ -790,6 +795,8 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getRssConfigAssessmentCommand)
     .on(SendCommandCommand, { Parameters: checkRunningStatus })
     .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
+    .on(SendCommandCommand, { Parameters: getRunningSqlServers })
+    .resolves(listSendCommandCommandResponse.getRunningSqlServersCommand)
     .on(SendCommandCommand, { Parameters: getInstalledSQLVersion })
     .resolves(listSendCommandCommandResponse.getInstalledSQLVersionCommand)
     .on(SendCommandCommand, { Parameters: getInstalledSQLPatches })
@@ -1069,6 +1076,10 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkRunningStatusCommand'
     })
     .resolves(getCommandInvocationResponse.checkRunningStatusCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getRunningSqlServersCommand'
+    })
+    .resolves(getCommandInvocationResponse.getRunningSqlServersCommandResponse)
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installedSQLPatchesCommand'
     })
