@@ -253,7 +253,7 @@ async function handleComputeRemediation(
                 }
             } else {
                 // single node cluster/standalone
-                runningSqlServerNames = await getRunningSqlServers(
+                runningSqlServerNames = await getRunningSqlServices(
                     accountId,
                     credentialsId,
                     region,
@@ -461,7 +461,7 @@ async function handleComputeRemediation(
     }
 }
 
-async function getRunningSqlServers(
+async function getRunningSqlServices(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -481,8 +481,7 @@ async function getRunningSqlServers(
             activeNodeInstanceId,
             'Getting running SQL server names',
             accountId,
-            false,
-            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+            false
         );
 
         const sqlServers: string | string[] = sqlResponseParsing(rawResponse);
@@ -520,6 +519,9 @@ async function checkRunningStatus(
         parentJobId
     );
 
+    // worst 40secs needed for one sql server to start; 10secs buffer
+    const timeRequired = 40 * sqlServerNames.length + 10;
+
     const rawStatusResponse = await callSsmExecution(
         credentialsId,
         region,
@@ -528,7 +530,7 @@ async function checkRunningStatus(
         'Checking running status of the service',
         accountId,
         false,
-        COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+        timeRequired.toString()
     );
 
     let jobDetails: { status: string; error?: string } = {
@@ -540,21 +542,14 @@ async function checkRunningStatus(
         const cleanResponse = sqlResponseParsing(rawStatusResponse);
         const statuses: SsmSqlServerRunningStatus[] = formatSsmArrayResponse<SsmSqlServerRunningStatus>(cleanResponse);
 
-        let allRunning = true;
-        const faultyServers: string[] = [];
-        statuses.forEach(({ name, status }) => {
-            if (status !== 'Running') {
-                allRunning = false;
-                faultyServers.push(name);
-            }
-        });
+        const faultyServers = statuses.filter(({ status }) => status !== 'Running').map(({ name }) => name);
 
         jobDetails = {
-            status: allRunning ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
-            error: allRunning ? '' : `Some SQL servers (${faultyServers}) are not running.`
+            status: faultyServers.length === 0 ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED,
+            error: faultyServers.length === 0 ? '' : `Some SQL servers (${faultyServers}) are not running.`
         };
     } catch (error) {
-        logger.error('Error in ssm call for running status:', rawStatusResponse);
+        logger.error('Error in ssm call for sql service running status:', rawStatusResponse);
         jobDetails = {
             status: JOBSTATUS.FAILED,
             error: typeof error === 'string' ? error : JSON.stringify(error)
