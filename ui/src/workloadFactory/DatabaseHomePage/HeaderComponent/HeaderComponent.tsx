@@ -36,11 +36,9 @@ import { useDispatch } from 'react-redux';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
-    setHeaderSelectedCred,
     setHeaderSelectedCredSandbox,
     setHeaderSelectedMultiCred,
     setHeaderSelectedMultiRegion,
-    setHeaderSelectedRegion,
     setHeaderSelectedRegionSandbox,
     setMultiDataLoading,
     setMultiDataStatus,
