@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { handleURL } from '../../../../utils/utilityFunctions';
+import { setMultiDataStatus } from '../../../../store/workloadFactory/headersSlice';
 
 const MSSqlFooter = () => {
     const state = useAppSelector(state => state);
@@ -33,6 +34,7 @@ const MSSqlFooter = () => {
         const payload = handleCreateSQLServer(state, dispatch);
         if (payload) {
             dispatch(setIsLoading(true));
+            dispatch(setMultiDataStatus({}));
             dispatch(setDeployRedirectToCfLink(null));
             deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
                 .then((data: any) => {

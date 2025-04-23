@@ -17,6 +17,7 @@ import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFac
 import { FORM_TO_WLF_NAVIGATE, FORM_TO_WLF_NAVIGATE_BLUEXP, WLF_TABS } from '../../../utils/consts';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { handleURL } from '../../../utils/utilityFunctions';
+import { setMultiDataStatus } from '../../../store/workloadFactory/headersSlice';
 
 function PostgressFooter() {
     const state = useAppSelector(state => state);
@@ -34,6 +35,7 @@ function PostgressFooter() {
         const payload = handleCreatePgsql(state, dispatch);
         if (payload) {
             dispatch(setIsLoading(true));
+            dispatch(setMultiDataStatus({}));
             dispatch(setDeployRedirectToCfLink(null));
             deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
                 .then((data: any) => {
