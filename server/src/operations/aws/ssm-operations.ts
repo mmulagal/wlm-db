@@ -208,7 +208,7 @@ async function executeSSMDocument(
     try {
         const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
         logger.debug('SSM command commandId, Response:', commandId, response);
-        return { response };
+        return response;
     } catch (error) {
         const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
         logger.error(errorMessage);
@@ -265,18 +265,18 @@ async function callSsmExecution(
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
         const response = await executeSSMDocument(credentialsId, region, params, accountId);
-        let { error, output = '' } = await extractSsmResponse(response);
+        let { error, output = '' } = await extractSsmResponse({ response });
         if (error) {
             throw createError(error);
         }
         if (output.endsWith('--output truncated--')) {
-            if (!response?.response?.CommandId) {
+            if (!response?.CommandId) {
                 throw createError('Command Id not found');
             }
             const responses = await getSsmResponseFromCloudWatch(
                 credentialsId,
                 region,
-                response?.response?.CommandId,
+                response?.CommandId,
                 activeNodeInstanceId
             );
             output = responses.join('');

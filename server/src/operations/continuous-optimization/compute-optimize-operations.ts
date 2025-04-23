@@ -447,7 +447,7 @@ async function handleComputeRemediation(
     } finally {
         if (!isJobStatusUpdated) {
             const parentJobStatus = completedWithError
-                ? JOBSTATUS.COMPLETED_WITH_ERRORS
+                ? JOBSTATUS.WARNING
                 : anySubJobFailed
                 ? JOBSTATUS.FAILED
                 : jobStatus || JOBSTATUS.COMPLETED;
