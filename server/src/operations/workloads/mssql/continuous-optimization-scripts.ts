@@ -1179,18 +1179,18 @@ const CHECK_RUNNING_STATUS_WITH_RESTART = (serverNames: string[]) => `
         Write-Output '[]'
         return
     }
-    foreach ($SqlService in $sqlServices) {
+    foreach ($sqlService in $sqlServices) {
         $serviceResult = @{}
-        if ($SqlService.Status -eq 'Running') {
-            $serviceResult = @{ name = $SqlService.DisplayName; status = 'Running' }
+        if ($sqlService.Status -eq 'Running') {
+            $serviceResult = @{ name = $sqlService.DisplayName; status = 'Running' }
         } else {
-            try { $SqlService.WaitForStatus('Running', '00:00:20')} catch {}
-            $SqlService = Get-Service | Where-Object { $_.DisplayName -eq $SqlService.DisplayName }
-            if ($SqlService.Status -ne 'Running') {
-                $SqlService.Start()
-                try { $SqlService.WaitForStatus('Running', '00:00:20')} catch {}
+            try { $sqlService.WaitForStatus('Running', '00:00:20')} catch {}
+            $sqlService = Get-Service | Where-Object { $_.DisplayName -eq $sqlService.DisplayName }
+            if ($sqlService.Status -ne 'Running') {
+                Start-Service -DisplayName $sqlService.DisplayName
+                try { $sqlService.WaitForStatus('Running', '00:00:20')} catch {}
             }
-            $serviceResult = @{ name = $SqlService.DisplayName; status = $SqlService.Status.ToString() }
+            $serviceResult = @{ name = $sqlService.DisplayName; status = $sqlService.Status.ToString() }
         }
         $resObj = New-Object PSObject -Property $serviceResult
         $results += $resObj
