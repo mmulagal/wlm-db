@@ -439,9 +439,12 @@ const InstancesTable = () => {
     const disableManageCheck = (rowData: any) => {
         let errorMessage = '';
         let isDisabled = false;
-        if (rowData?.statusColText !== INVENTORY_STATUS.UNMANAGED) {
+        if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
             isDisabled = true;
-            errorMessage = 'Only unmanaged instances can be managed';
+            errorMessage = 'The instance is already managed by Workload Factory.';
+        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+            isDisabled = true;
+            errorMessage = 'The instance is not detected.';
         } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
             isDisabled = true;
             errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
