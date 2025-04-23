@@ -869,9 +869,17 @@ async function getMappings(
     region: string,
     parentJobId: string,
     srcDetails: HostAndDbInfo,
-    sandboxName: string
+    sandboxName: string,
+    isSandboxOptimizeFlow: boolean = false
 ) {
-    logger.info('Get volume mappings', { accountId, credentialsId, region, parentJobId, srcDetails });
+    logger.info('Get volume mappings', {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        srcDetails,
+        isSandboxOptimizeFlow
+    });
 
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
@@ -881,7 +889,7 @@ async function getMappings(
         description: `Get the volume LUN mapping for the source database ${srcDetails.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
         startTime: Date.now(),
         status,
-        type: JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
         parentJobId
     });
@@ -1480,7 +1488,9 @@ async function startCleanup(
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
     volumeIds: Array<string>,
-    filePaths: Array<string>
+    filePaths: Array<string>,
+    isOptimizeFlow: boolean = false,
+    isSandboxOptimizeFlow: boolean = false
 ) {
     logger.info('Start cleanup', {
         accountId,
@@ -1490,18 +1500,22 @@ async function startCleanup(
         srcDetails,
         destDetails,
         volumeIds,
-        filePaths
+        filePaths,
+        isOptimizeFlow,
+        isSandboxOptimizeFlow
     });
 
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
+    const name = isOptimizeFlow ? 'Clone' : 'sandbox';
+    const jobType = isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX;
 
     const cleanupJob = await registerJob(accountId, credentialsId, region, {
-        description: `Clean up resources for sandbox ${destDetails.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
+        description: `Clean up resources for ${name} ${destDetails.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         startTime: Date.now(),
-        name: `Clean up resources for sandbox ${destDetails.database}`, // This exact name is used to mark the parent job status as failed if any of the child job fails
+        name: `Clean up resources for ${name} ${destDetails.database}`, // This exact name is used to mark the parent job status as failed if any of the child job fails
         status,
-        type: JOBTYPE.SANDBOX,
+        type: jobType,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1547,7 +1561,7 @@ async function startCleanup(
                 region,
                 command,
                 destDetails.activeNodeInstanceId,
-                'Cleanup sandbox resources',
+                `Cleanup ${name} resources`,
                 accountId,
                 false,
                 CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -1569,7 +1583,7 @@ async function startCleanup(
         status = JOBSTATUS.COMPLETED;
         return jsonResp;
     } catch (e: any) {
-        logger.error(`Failed to perform cleanup for sandbox ${destDetails.database}`);
+        logger.error(`Failed to perform cleanup for ${name} ${destDetails.database}`);
         status = JOBSTATUS.FAILED;
         errorMsg = `Failed to clean up ${e.message}`;
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
@@ -1867,13 +1881,25 @@ async function performSandboxDeletion(
     region: string,
     credentialsId: string,
     parentJobId: string,
-    resDetails: HostAndDbInfo
+    resDetails: HostAndDbInfo,
+    isOptimizeFlow: boolean = false,
+    isSandboxOptimizeFlow: boolean = false
 ) {
     let errorMsg;
     let status: string = JOBSTATUS.IN_PROGRESS;
+    const name = isOptimizeFlow ? 'Clone' : 'sandbox';
+
     try {
         // Creating a validation job to accomodate more validations in the future in one job
-        await validateDeleteSandboxParams(accountId, credentialsId, region, parentJobId, resDetails);
+        await validateDeleteSandboxParams(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resDetails,
+            isOptimizeFlow,
+            isSandboxOptimizeFlow
+        );
 
         const mappings = (await getMappings(
             accountId,
@@ -1881,7 +1907,8 @@ async function performSandboxDeletion(
             region,
             parentJobId,
             resDetails,
-            resDetails.database
+            resDetails.database,
+            isSandboxOptimizeFlow
         )) as VolumeLunMapping;
 
         await startCleanup(
@@ -1892,12 +1919,14 @@ async function performSandboxDeletion(
             resDetails,
             resDetails,
             uniq([...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)]),
-            uniq([...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)])
+            uniq([...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)]),
+            isOptimizeFlow,
+            isSandboxOptimizeFlow
         );
         status = JOBSTATUS.COMPLETED;
         updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (e: any) {
-        logger.error('Failed to delete the sandbox', e);
+        logger.error(`Failed to delete the ${name}`, e);
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
@@ -1918,19 +1947,31 @@ async function validateDeleteSandboxParams(
     credentialsId: string,
     region: string,
     parentJobId: string,
-    resourceDetails: HostAndDbInfo
+    resourceDetails: HostAndDbInfo,
+    isOptimizeFlow: boolean = false,
+    isSandboxOptimizeFlow: boolean = false
 ) {
-    logger.info('Validate delete sandbox params', { accountId, credentialsId, region, parentJobId, resourceDetails });
+    const name = isOptimizeFlow ? 'Clone' : 'sandbox';
+    const jobType = isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX;
+
+    logger.info(`Validate delete ${name} params`, {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        resourceDetails,
+        isOptimizeFlow
+    });
 
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
 
     const validationJob = await registerJob(accountId, credentialsId, region, {
-        name: `Validate if sandbox ${resourceDetails.database} exists`,
-        description: `Validate if the sandbox ${resourceDetails.database} exists in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
+        name: `Validate if ${name} ${resourceDetails.database} exists`,
+        description: `Validate if the ${name} ${resourceDetails.database} exists in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
         startTime: Date.now(),
         status,
-        type: JOBTYPE.SANDBOX,
+        type: jobType,
         resourceName: resourceDetails.database,
         parentJobId
     });

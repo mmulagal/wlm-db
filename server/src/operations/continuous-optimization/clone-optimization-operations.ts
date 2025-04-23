@@ -4,7 +4,6 @@ import createError from 'http-errors';
 import { CloneDetailType } from '../../routes/types/continuous-optimization.types';
 import {
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
-    CUSTOM_SSM_EXECUTION_TIMEOUT,
     HttpErrorCodes,
     SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
     SandboxLifecycleAction
@@ -29,19 +28,9 @@ import { getMappedOntapVolumes } from '../aws/fsx-operations';
 import { listResources } from '../../lib/database/db';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { getInstanceDetails, getInstanceOntapDetails } from '../database-hosts-operations';
-import { callSsmExecution } from '../aws/ssm-operations';
-import { DELETE_CLONE_VOLUMES } from '../workloads/mssql/continuous-optimization-scripts';
-import { retryWithDelay, sqlResponseParsing } from '../../utils/utils';
 // const isDemoFlow = isDemo();
 
 const logger = getLogger();
-
-interface DeleteVolumeResult {
-    volumeUuid: string;
-    status: 'success' | 'failed';
-    jobUuid?: string;
-    error?: string;
-}
 
 async function handleCloneRemediation(
     accountId: string,
@@ -93,7 +82,10 @@ async function handleCloneRemediation(
                         databaseHostId,
                         databaseInstanceId,
                         cloneDatabaseName,
-                        childCloneJobId
+                        serverNameWithHostName,
+                        childCloneJobId,
+                        true,
+                        false
                     );
                     break;
                 default:
@@ -112,16 +104,17 @@ async function handleCloneRemediation(
                 volumeMapping as MappedVolumeResponseForClone
             );
             if (result !== false) {
-                await deleteCloneForOthers(
+                await deleteClone(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
                     databaseInstanceId,
                     cloneDatabaseName,
-                    result,
                     serverNameWithHostName,
-                    childCloneJobId
+                    childCloneJobId,
+                    true,
+                    true
                 );
                 logger.debug(`Successfully handled clone remediation for ${cloneDatabaseName}`);
             } else {
@@ -144,7 +137,10 @@ async function deleteClone(
     databaseHostId: string,
     databaseInstanceId: string,
     cloneDatabaseName: string,
-    jobId: string
+    serverNameWithHostName: string,
+    parentJobId: string,
+    isSandboxOptimizeFlow: boolean = false,
+    isOtherOptimizeFlow: boolean = false
 ) {
     logger.info(`Deleting clone ${cloneDatabaseName} in database host ${databaseHostId}`, {
         accountId,
@@ -152,25 +148,38 @@ async function deleteClone(
         region,
         databaseHostId,
         databaseInstanceId,
-        cloneDatabaseName
+        cloneDatabaseName,
+        serverNameWithHostName,
+        parentJobId,
+        isSandboxOptimizeFlow,
+        isOtherOptimizeFlow
     });
 
     let deleteJobId = '';
     try {
         const { id } = await registerJob(accountId, credentialsId, region, {
             name: `Delete clone ${cloneDatabaseName}`,
-            description: `Delete clone ${cloneDatabaseName} in database host ${databaseHostId}`,
+            description: `Delete clone ${cloneDatabaseName} for ${serverNameWithHostName}`,
             resourceName: cloneDatabaseName,
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
             type: JOBTYPE.OPTIMIZATION,
-            parentJobId: jobId
+            parentJobId
         });
         deleteJobId = id;
+
         const source = { host: databaseHostId, instance: databaseInstanceId, database: cloneDatabaseName };
         const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
         logger.debug(`Executing delete operation for clone ${cloneDatabaseName}`);
-        await performSandboxDeletion(accountId, region, credentialsId, deleteJobId, srcDetails);
+        await performSandboxDeletion(
+            accountId,
+            region,
+            credentialsId,
+            deleteJobId,
+            srcDetails,
+            isOtherOptimizeFlow,
+            isSandboxOptimizeFlow
+        );
         logger.debug(`Successfully deleted clone ${cloneDatabaseName}`);
 
         await updateJobDetails(accountId, deleteJobId, {
@@ -279,108 +288,6 @@ async function refreshClone(
     }
 }
 
-async function deleteCloneForOthers(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    cloneDatabaseName: string,
-    params: {
-        fsxId: string;
-        activeNodeInstanceId: string;
-        volumeUuids: string[];
-        volumeNames: string;
-        volumeUuidToNameMap: Map<string, string>;
-    },
-    serverNameWithHostName: string,
-    parentJobId: string
-) {
-    logger.info(`Deleting clone ${cloneDatabaseName} in database host ${databaseHostId}`, {
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceId,
-        cloneDatabaseName,
-        params,
-        serverNameWithHostName,
-        parentJobId
-    });
-
-    const { fsxId, activeNodeInstanceId, volumeUuids, volumeNames, volumeUuidToNameMap } = params;
-    let deleteChildJobId = '';
-    let jobStatus = '';
-    let jobError = '';
-
-    try {
-        const { id } = await registerJob(accountId, credentialsId, region, {
-            type: JOBTYPE.OPTIMIZATION,
-            status: JOBSTATUS.IN_PROGRESS,
-            resourceName: serverNameWithHostName as string,
-            name: `Delete cloned volumes ${volumeNames} for ${serverNameWithHostName}`,
-            startTime: Date.now(),
-            description: `Delete cloned volumes ${volumeNames} for ${serverNameWithHostName}`,
-            ...(parentJobId && { parentJobId })
-        });
-        deleteChildJobId = id;
-        const ssmParams = {
-            fsxId,
-            region,
-            volUuids: JSON.stringify(volumeUuids)
-        };
-
-        const command = [DELETE_CLONE_VOLUMES(ssmParams)];
-        const ssmComment = 'Delete clone volumes';
-
-        const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
-                credentialsId,
-                region,
-                command,
-                activeNodeInstanceId,
-                ssmComment,
-                accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            )
-        );
-        const { volumes } = sqlResponseParsing(response);
-        logger.debug(`Successfully deleted clone volumes: ${volumes}`);
-
-        const failedVolumes = volumes.filter((v: DeleteVolumeResult) => v.status === 'failed');
-
-        if (failedVolumes.length === 0) {
-            jobStatus = JOBSTATUS.COMPLETED;
-            await updateJobDetails(accountId, deleteChildJobId, {
-                status: jobStatus,
-                endTime: Date.now()
-            });
-        } else {
-            // TODO check if any one clone failed means can we update that as warning or failed
-            jobStatus = JOBSTATUS.FAILED;
-            jobError = `Failed to delete volumes: ${failedVolumes
-                .map((v: DeleteVolumeResult) => {
-                    // Retrieve the volume name from the map; fallback to UUID if name not found.
-                    const volName = volumeUuidToNameMap.get(v.volumeUuid) || v.volumeUuid;
-                    return `${volName} (${v.error})`;
-                })
-                .join(', ')}`;
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, jobError);
-        }
-    } catch (error: any) {
-        const errorMsg = `Error while deleting cloned volumes for ${serverNameWithHostName}: ${error.message}`;
-        logger.error(errorMsg, error);
-        await updateJobDetails(accountId, deleteChildJobId, {
-            status: jobStatus,
-            endTime: Date.now(),
-            error: jobError
-        });
-        throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
-    }
-}
-
 async function extractVolumeDetailsForClonesInInstance(
     accountId: string,
     credentialsId: string,
@@ -433,7 +340,7 @@ async function extractVolumeDetailsForClonesInInstance(
             return false;
         }
         return {
-            volumeUuids: result.volumeUuids,
+            volumeUuids: result.volumeUuids, // May need this infos later on
             volumeNames: result.volumeNames,
             volumeUuidToNameMap: result.volumeUuidToNameMap,
             fsxId,

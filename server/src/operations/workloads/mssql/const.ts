@@ -18,7 +18,6 @@ const STORAGE_ASSESSMENT_LOG_PATH = 'C:\\cfn\\log\\storage-assessment.log.txt';
 const RESILIENCY_OPTIMIZE_LOG_PATH = 'C:\\cfn\\log\\resiliency-optimize.log.txt';
 const RSS_OPTIMIZE_LOG_PATH = 'C:\\cfn\\log\\rss-optimize.log.txt';
 const CRR_ASSESSMENT_LOG_PATH = 'C:\\cfn\\log\\crr-assessment.log.txt';
-const DELETE_CLONE_VOLUME_LOG_PATH = 'C:\\cfn\\log\\delete-clone-volume.log.txt';
 
 export {
     DB_ROWS_COUNT,
@@ -40,6 +39,5 @@ export {
     STORAGE_ASSESSMENT_LOG_PATH,
     RESILIENCY_OPTIMIZE_LOG_PATH,
     RSS_OPTIMIZE_LOG_PATH,
-    CRR_ASSESSMENT_LOG_PATH,
-    DELETE_CLONE_VOLUME_LOG_PATH
+    CRR_ASSESSMENT_LOG_PATH
 };
