@@ -962,7 +962,8 @@ async function createVolumeClone(
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
     mapping: VolumeLunMapping,
-    snapshot?: string
+    snapshot?: string,
+    isSandboxOptimizeFlow: boolean = false
 ) {
     logger.info('Create volume clone', {
         accountId,
@@ -981,7 +982,7 @@ async function createVolumeClone(
         startTime: Date.now(),
         name: 'Create ONTAP FlexClone volumes',
         status,
-        type: JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1078,7 +1079,8 @@ async function invokeVirtualMount(
     destDetails: HostAndDbInfo,
     mappings: VolumeLunMapping,
     clonedVolumes: ClonedVolumes,
-    mountPoints: MountPoints
+    mountPoints: MountPoints,
+    isSandboxOptimizeFlow: boolean = false
 ) {
     logger.info('Invoke virtual mount', {
         accountId,
@@ -1101,7 +1103,7 @@ async function invokeVirtualMount(
         description: `Discover cloned LUNs and create virtual mount points in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         startTime: Date.now(),
         status,
-        type: JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1243,7 +1245,8 @@ async function createCloneDb(
     destDetails: HostAndDbInfo,
     mountPaths: { dataPath: Array<string>; logPath: Array<string> },
     collation?: string,
-    fileSuffix = ''
+    fileSuffix = '',
+    isSandboxOptimizeFlow: boolean = false
 ) {
     logger.info(
         'Create database clone',
@@ -1266,7 +1269,7 @@ async function createCloneDb(
         startTime: Date.now(),
 
         status,
-        type: JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1350,7 +1353,8 @@ async function createExtendedProperties(
     parentJobId: string,
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
-    extendedProps: { [x: string]: number | string | boolean }
+    extendedProps: { [x: string]: number | string | boolean },
+    isSandboxOptimizeFlow: boolean = false
 ) {
     logger.info('Create extended properties', {
         accountId,
@@ -1370,7 +1374,7 @@ async function createExtendedProperties(
         startTime: Date.now(),
         name: `Add extended properties to sandbox ${destDetails.database}`,
         status,
-        type: JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -2160,7 +2164,8 @@ async function performLifecycleUpdate(
     parentJobId: string,
     resourceDetails: HostAndDbInfo,
     action: string,
-    snapshot?: string
+    snapshot?: string,
+    isSandboxOptimizeFlow: boolean = false
 ) {
     let errorMsg;
     let mappings: undefined | VolumeLunMapping;
@@ -2170,7 +2175,15 @@ async function performLifecycleUpdate(
     let sandboxDetached = false;
     const fileSuffix = '-sandbox';
     try {
-        await validateLifeCycleParams(accountId, credentialsId, region, parentJobId, resourceDetails, action);
+        await validateLifeCycleParams(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resourceDetails,
+            action,
+            isSandboxOptimizeFlow
+        );
 
         mappings = (await getMappings(
             accountId,
@@ -2178,7 +2191,8 @@ async function performLifecycleUpdate(
             region,
             parentJobId,
             resourceDetails,
-            resourceDetails.database
+            resourceDetails.database,
+            isSandboxOptimizeFlow
         )) as VolumeLunMapping;
 
         const mappingData = [...mappings.data, ...mappings.log];
@@ -2201,7 +2215,8 @@ async function performLifecycleUpdate(
                 data: mappings.data.map(vol => ({ ...vol, volumeName: vol.parentVolume!, svm: vol.parentSvm! })),
                 log: mappings.log.map(vol => ({ ...vol, volumeName: vol.parentVolume!, svm: vol.parentSvm! }))
             },
-            action === SANDBOX_LIFECYCLE_REFRESH ? snapshot : mappings.data[0]?.parentSnapshot
+            action === SANDBOX_LIFECYCLE_REFRESH ? snapshot : mappings.data[0]?.parentSnapshot,
+            isSandboxOptimizeFlow
         )) as ClonedVolumes;
 
         let extendedProps = (await detachSandboxAndAccessPath(
@@ -2210,7 +2225,8 @@ async function performLifecycleUpdate(
             region,
             parentJobId,
             resourceDetails,
-            mappings
+            mappings,
+            isSandboxOptimizeFlow
         )) as Sandbox;
 
         sandboxDetached = true;
@@ -2240,7 +2256,8 @@ async function performLifecycleUpdate(
             {
                 dataDrive: mappings.data[0].fileName.split(':')[0],
                 logDrive: mappings.log[0].fileName.split(':')[0]
-            }
+            },
+            isSandboxOptimizeFlow
         )) as { files: Array<string> };
 
         const fileDataArr = mountPaths.files.map(path => {
@@ -2278,7 +2295,8 @@ async function performLifecycleUpdate(
                     .map(pathObj => pathObj.filePath)
             },
             undefined,
-            fileSuffix
+            fileSuffix,
+            isSandboxOptimizeFlow
         );
 
         if (isDemoFlow) {
@@ -2300,7 +2318,8 @@ async function performLifecycleUpdate(
             {
                 ...extendedProps,
                 updatedAt: Date.now()
-            }
+            },
+            isSandboxOptimizeFlow
         );
 
         sandboxUpdated = true;
@@ -2364,15 +2383,24 @@ async function validateLifeCycleParams(
     region: string,
     parentJobId: string,
     resourceDetails: HostAndDbInfo,
-    action: string
+    action: string,
+    isSandboxOptimizeFlow: boolean = false
 ) {
-    logger.info('Validate lifecycle parameters', accountId, credentialsId, region, parentJobId, resourceDetails);
+    logger.info(
+        'Validate lifecycle parameters',
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        resourceDetails,
+        isSandboxOptimizeFlow
+    );
 
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errMsg;
 
     const validationJob = await registerJob(accountId, credentialsId, region, {
-        type: JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
         status,
         name: `Validate ${
             action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
@@ -2438,7 +2466,8 @@ async function detachSandboxAndAccessPath(
     region: string,
     parentJobId: string,
     resourceDetails: HostAndDbInfo,
-    mappings: VolumeLunMapping
+    mappings: VolumeLunMapping,
+    isSandboxOptimizeFlow: boolean = false
 ) {
     logger.info('Detach sandbox and access path', {
         accountId,
@@ -2457,7 +2486,7 @@ async function detachSandboxAndAccessPath(
         startTime: Date.now(),
         description: `Detach sandbox and access path for ${resourceDetails.database} in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
         status,
-        type: JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
         resourceName: resourceDetails.database,
         parentJobId
     });

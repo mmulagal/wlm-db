@@ -69,7 +69,8 @@ async function handleCloneRemediation(
                         databaseHostId,
                         databaseInstanceId,
                         cloneDatabaseName,
-                        childCloneJobId
+                        childCloneJobId,
+                        true
                     );
                     break;
 
@@ -207,7 +208,8 @@ async function refreshClone(
     databaseHostId: string,
     databaseInstanceId: string,
     cloneDatabaseName: string,
-    jobId: string
+    jobId: string,
+    isSandboxOptimizeFlow: boolean = false
 ) {
     logger.info(`Refreshing clone ${cloneDatabaseName} in database host ${databaseHostId}`, {
         accountId,
@@ -268,7 +270,8 @@ async function refreshClone(
             refreshJobId,
             srcDetails,
             SandboxLifecycleAction.REFRESH,
-            latestSnapshot.name
+            latestSnapshot.name,
+            isSandboxOptimizeFlow
         );
 
         logger.debug(`Successfully refreshed sandbox ${cloneDatabaseName} to the latest snapshot`);
