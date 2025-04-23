@@ -381,7 +381,7 @@ const oracleDatabaseInstance = Type.Object({
                         description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP'
                     })
                 ),
-                protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' })),
+                protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or NFS' })),
                 fileSystemStorageType: Type.Optional(
                     Type.String({ description: 'File system storage type, SSD or HDD' })
                 ),
