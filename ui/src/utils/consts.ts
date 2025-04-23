@@ -826,10 +826,45 @@ export const CONFIG_STATE_ACTIONS = {
 };
 
 export const CONFIG_NAME_TO_ID_MAPPING = {
-    storageSizingMap: {
+    STORAGE_SIZING_MAP: {
         'Log drive size': 'log-drive-size',
         'Storage tier': 'performance-tier',
         'File system headroom': 'headroom',
         'TempDB drive size': 'tempdb-drive-size'
+    },
+    STORAGE_CONFIG_MAP: {
+        'os-type': 'luns',
+        'space-reservation-enabled': 'luns',
+        'space-allocation-allocated': 'luns',
+        'mpio-enabled': 'os',
+        'mpio-iscsi-count': 'os',
+        'ntfs-allocation-unit-size': 'os',
+        'mpio-load-balance-policy': 'os',
+        'thin-provision': 'volumes',
+        autosize: 'volumes',
+        'autosize-mode': 'volumes',
+        'fractional-reserve': 'volumes',
+        'snapshot-copy-reserve': 'volumes',
+        'snapshot-autodelete': 'volumes',
+        'space-mgmt-try-first': 'volumes',
+        'tiering-policy': 'volumes',
+        'tiering-min-cooling-days': 'volumes'
+    },
+    STORAGE_LAYOUT_MAP: {
+        [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: 'data-files-location',
+        [ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]: 'log-files-location',
+        [ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]: 'tempdb-files-location'
+    },
+    NON_STORAGE_CONFIG_MAP: {
+        [ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]: 'compute',
+        [ASSESSMENT_CONFIG_NAMES.MAXDOP]: 'max-dop',
+        [ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]: 'clone',
+        [ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]: 'rss-config',
+        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]: 'snapshot-policy',
+        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'aws-backup',
+        [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'mssql-patch',
+        [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'host-os-patch',
+        [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
+        [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     }
 };
