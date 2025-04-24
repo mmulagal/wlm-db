@@ -94,36 +94,39 @@ async function handleCloneRemediation(
                     logger.error(`Unsupported action: ${action}`);
             }
         } else if (clonedBy.toLowerCase() === 'other') {
-            logger.info(`Deleting clone ${cloneDatabaseName} created by other source.`);
-            // To Check a cloned volume is mapped to any other database while doing deletion
-            const result = await extractVolumeDetailsForClonesInInstance(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId,
-                cloneDetail,
-                volumeMapping as MappedVolumeResponseForClone
-            );
-            if (result !== false) {
-                await deleteClone(
+            if (action === CLONE_ACTION.DELETE) {
+                logger.info(`Deleting clone ${cloneDatabaseName} created by other source.`);
+                // To Check a cloned volume is mapped to any other database while doing deletion
+                const result = await extractVolumeDetailsForClonesInInstance(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    cloneDatabaseName,
-                    serverNameWithHostName,
-                    childCloneJobId,
-                    true,
-                    true
+                    cloneDetail,
+                    volumeMapping as MappedVolumeResponseForClone
                 );
-                logger.debug(`Successfully handled clone remediation for ${cloneDatabaseName}`);
-            } else {
-                const errMsg = `The clone ${cloneDatabaseName} volume is associated with multiple databases. Hence it cannot be deleted.`;
-                logger.error(errMsg);
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
+                if (result) {
+                    await deleteClone(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        databaseInstanceId,
+                        cloneDatabaseName,
+                        serverNameWithHostName,
+                        childCloneJobId,
+                        true,
+                        true
+                    );
+                    logger.debug(`Successfully handled clone remediation for ${cloneDatabaseName}`);
+                } else {
+                    const errMsg = `The clone ${cloneDatabaseName} volume is associated with multiple databases. Hence it cannot be deleted.`;
+                    logger.error(errMsg);
+                    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
+                }
             }
+            throw createError(HttpErrorCodes.BAD_REQUEST, `Unsupported action: ${action}`);
         }
     } catch (error: any) {
         const errMsg = `Error while handling clone remediation: ${error}`;
@@ -320,7 +323,7 @@ async function extractVolumeDetailsForClonesInInstance(
 
         // Check if volumeDBMap is empty or undefined
         if (!volumeDBMap || volumeDBMap.length === 0) {
-            const errorMsg = `volumeDBMap is empty or undefined for database instance ${databaseInstanceId}`;
+            const errorMsg = `Volume details for the ${cloneDatabaseName} is empty for database instance ${databaseInstanceId}`;
             logger.error(errorMsg);
             throw createError(HttpErrorCodes.NOT_FOUND, errorMsg);
         }
@@ -340,8 +343,8 @@ async function extractVolumeDetailsForClonesInInstance(
             clonedVolumeDetails,
             volumeUUIDToDatabaseNameMap
         );
-        if (result === false) {
-            return false;
+        if (!result) {
+            return null;
         }
         return {
             volumeUuids: result.volumeUuids, // May need this infos later on
@@ -361,9 +364,9 @@ function validateAndExtractClonedVolumeUuids(
     cloneDatabaseName: string | undefined,
     clonedVolumeDetails: ClonedVolumeDetail[] | undefined,
     volumeUUIDToDatabaseNameMap: Map<string, string[]>
-): { volumeUuids: string[]; volumeNames: string; volumeUuidToNameMap: Map<string, string> } | false {
+): { volumeUuids: string[]; volumeNames: string; volumeUuidToNameMap: Map<string, string> } | null {
     if (!cloneDatabaseName || !clonedVolumeDetails) {
-        return false;
+        return null;
     }
 
     const volumeUuids: string[] = [];
@@ -372,11 +375,11 @@ function validateAndExtractClonedVolumeUuids(
 
     for (const { cloneVolumeUuid, cloneVolumeName } of clonedVolumeDetails) {
         if (!cloneVolumeUuid) {
-            return false;
+            return null;
         }
         const dbNames = volumeUUIDToDatabaseNameMap.get(cloneVolumeUuid);
         if (!dbNames || dbNames.length !== 1 || dbNames[0] !== cloneDatabaseName) {
-            return false;
+            return null;
         }
         volumeUuids.push(cloneVolumeUuid);
         volumeNames.push(cloneVolumeName || '');

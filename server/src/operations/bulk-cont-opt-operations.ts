@@ -69,16 +69,18 @@ async function bulkOptimization(
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
     }
 
     // Validate the account id, credentials id, region is valid details in the DB and filter databaseHosts for each host
-    for (const host of hostsToOptimize) {
-        host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizePerHostRequestBodyType>(
-            accountId,
-            host.databaseHosts
-        );
-    }
+    await Promise.all(
+        hostsToOptimize.map(async host => {
+            host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizePerHostRequestBodyType>(
+                accountId,
+                host.databaseHosts
+            );
+        })
+    );
 
     const jobMetadata: JobMetadata = {
         hostsToOptimize: await formatJobMetadata(hostsToOptimize)
@@ -117,16 +119,18 @@ async function bulkCloneOptimization(accountId: string, hostsToOptimize: BulkOpt
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
     }
 
     // Validate the account id, credentials id, region is valid details in the DB and filter databaseHosts for each host
-    for (const host of hostsToOptimize) {
-        host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeClonesPerHostRequestBodyType>(
-            accountId,
-            host.databaseHosts
-        );
-    }
+    await Promise.all(
+        hostsToOptimize.map(async host => {
+            host.databaseHosts = await validateAndFilterDatabaseHosts<OptimizeClonesPerHostRequestBodyType>(
+                accountId,
+                host.databaseHosts
+            );
+        })
+    );
 
     const jobMetadata: JobMetadata = {
         hostsToOptimize: await formatJobMetadata(hostsToOptimize)
@@ -558,14 +562,14 @@ async function fetchInstanceConfigurationAndVolumeMapping(
 
 // Flattens hostsToOptimize to extract SQL Server instances and their metadata.
 function extractInstancesToOptimize(hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[]) {
-    return hostsToOptimize.flatMap(host =>
-        host.databaseHosts.flatMap(databaseHost =>
-            databaseHost.sqlServerInstances.map(sqlServerInstance => ({
-                instanceId: sqlServerInstance.instanceId,
-                clones: sqlServerInstance.clones,
-                region: databaseHost.region,
-                credentialsId: databaseHost.credentialsId,
-                databaseHostId: databaseHost.id
+    return hostsToOptimize.flatMap(({ databaseHosts }) =>
+        databaseHosts.flatMap(({ sqlServerInstances, region, credentialsId, id: databaseHostId }) =>
+            sqlServerInstances.map(({ instanceId, clones }) => ({
+                instanceId,
+                clones,
+                region,
+                credentialsId,
+                databaseHostId
             }))
         )
     );
