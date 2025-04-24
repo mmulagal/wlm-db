@@ -360,7 +360,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         {cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED && GENERAL.DISMISSED_MESSAGE}{' '}
                         {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && GENERAL.ACTIVATING_MESSAGE}{' '}
                         {cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED &&
-                            `This issue is postponed until ${formatDateAssess(cardData?.dismissedObj?.endTime)}`}{' '}
+                            `This configuration is postponed until ${formatDateAssess(
+                                cardData?.dismissedObj?.endTime
+                            )}`}{' '}
                     </DsTypography>
                 </div>
             );
@@ -815,7 +817,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: `Analysis state was changed.`
+                        message: GENERAL.ANALYSIS_STATE_CHANGE_SUCCESS
                     })
                 );
             })
@@ -1011,7 +1013,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         items={[
                             {
                                 id: 'activate',
-                                children: 'Activate',
+                                children: GENERAL.REACTIVATE,
                                 isDisabled:
                                     cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
                                     !cardData?.dismissedObj?.state,
@@ -1021,7 +1023,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             },
                             {
                                 id: 'postponeFor30Days',
-                                children: 'Postpone for 30 days',
+                                children: GENERAL.POSTPONE_FOR_30_DAYS,
                                 isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED,
                                 onClick: () => {
                                     handleSingleAction(CONFIG_STATE_ACTIONS.POSTPONED);
@@ -1029,7 +1031,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             },
                             {
                                 id: 'dismiss',
-                                children: 'Dismiss',
+                                children: GENERAL.DISMISS,
                                 isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED,
                                 onClick: () => {
                                     handleSingleAction(CONFIG_STATE_ACTIONS.DISMISS);

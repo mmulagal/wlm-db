@@ -148,7 +148,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -198,7 +198,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -248,7 +248,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -298,7 +298,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -347,7 +347,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -392,7 +392,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -441,7 +441,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -558,7 +558,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -607,7 +607,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -657,7 +657,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -705,7 +705,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -754,7 +754,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -804,7 +804,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -854,7 +854,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -894,7 +894,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -945,7 +945,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -1024,7 +1024,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div

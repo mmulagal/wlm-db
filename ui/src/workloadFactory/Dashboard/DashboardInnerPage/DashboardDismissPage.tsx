@@ -205,7 +205,7 @@ const DashboardDismissPage = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.SUCCESS,
-                            message: `Analysis state was changed.`
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_SUCCESS
                         })
                     );
                 } else {
@@ -220,7 +220,7 @@ const DashboardDismissPage = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: `Failed to change analysis state.`
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_FAILED
                         })
                     );
                 }
@@ -548,21 +548,21 @@ const DashboardDismissPage = () => {
         let setContent: Array<string> = [];
         let setPrimaryButton = '';
         if (dialogCheck && action === CONFIG_STATE_ACTIONS.ACTIVE) {
-            setHeader = `Activate SQL Server instance analysis`;
+            setHeader = `Reactivate ${type} analysis`;
             setContent = [
                 'Are you ready to re-activate the analysis for the selected SQL Server instances?',
                 'Select "Activate" to continue.'
             ];
             setPrimaryButton = 'Activate';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.POSTPONED) {
-            setHeader = `Postpone SQL Server instance analysis`;
+            setHeader = `Postpone ${type} analysis`;
             setContent = [
-                'Are you ready to re-postpone the analysis for the selected SQL Server instances?',
+                'Are you ready to postpone the analysis for the selected SQL Server instances?',
                 'Select "Postpone" to continue.'
             ];
             setPrimaryButton = 'Postpone';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.DISMISS) {
-            setHeader = `Dismiss SQL Server instance analysis`;
+            setHeader = `Dismiss ${type} analysis`;
             setContent = [
                 'Are you ready to dismiss the analysis for the selected SQL Server instances?',
                 'Select "Dismiss" to continue.'
@@ -717,7 +717,7 @@ const DashboardDismissPage = () => {
                                 }
                             },
                             {
-                                title: `Manage configuration state for ${selectedConfig}`,
+                                title: `Update scan frequency for ${selectedConfig}`,
                                 dataTestId: 'wlm-db-dismiss-configuration'
                             }
                         ]}
@@ -729,7 +729,7 @@ const DashboardDismissPage = () => {
                         data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
                         variant="Semibold_20"
                     >
-                        Manage configuration state for {selectedConfig}
+                        Update scan frequency for {selectedConfig}
                     </DsTypography>
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-heading1-for-${selectedConfig

@@ -1,5 +1,6 @@
 import { DsTypography, TooltipInfo } from '@netapp/design-system';
 import styles from './ValueCard.module.scss';
+import { ReactComponent as Edit } from '../../../../assets/ic_edit.svg';
 
 type ValueCardProps = {
     optimizationScore?: string;
@@ -10,6 +11,8 @@ type ValueCardProps = {
     configurationState?: string;
     from?: string;
     tooltipText?: string;
+    type?: string;
+    handleEdit?: any;
 };
 
 const ValueCard = ({
@@ -19,7 +22,9 @@ const ValueCard = ({
     instances,
     configurationState,
     from = 'innerPage',
-    tooltipText
+    tooltipText,
+    type,
+    handleEdit
 }: ValueCardProps) => {
     return (
         <>
@@ -39,9 +44,19 @@ const ValueCard = ({
                         <DsTypography variant="Regular_14">Not-optimized instances</DsTypography>
                     </div>
 
-                    <div className={styles.block}>
+                    <div className={styles.block} style={{ borderRight: '1px solid var(--border' }}>
                         <DsTypography variant="Semibold_14">{severity}</DsTypography>
                         <DsTypography variant="Regular_14">Severity</DsTypography>
+                    </div>
+
+                    <div className={styles.block}>
+                        <div className={styles.configState}>
+                            <DsTypography variant="Semibold_14">{configurationState}</DsTypography>
+                            <div onClick={() => handleEdit(type)}>
+                                <Edit />
+                            </div>
+                        </div>
+                        <DsTypography variant="Regular_14">Ananlysis state</DsTypography>
                     </div>
                 </div>
             )}
