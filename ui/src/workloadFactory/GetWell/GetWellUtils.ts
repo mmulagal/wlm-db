@@ -641,7 +641,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'MAXDOP assessment recommendation',
+            title: 'MAXDOP recommendation',
             descriptionRssConfig: {
                 first: 'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nAccurate MAXDOP configuration enhances performance and efficiency. Setting MAXDOP to 4, 8, or 16 generally \nprovides the best results in most use cases. We recommend that you test your workload and monitor for any \nparallelism-related wait types such as CXPACKET.'
             }
@@ -678,7 +678,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'Scheduled local snapshot assessment recommendation',
+            title: 'Scheduled local snapshot recommendation',
             description:
                 'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.\nUse local snapshots as an additional backup mechanism for quick restores or for testing.'
         },
@@ -714,7 +714,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'Cross-Region Replication (CRR) assessment recommendation',
+            title: 'Cross-Region Replication (CRR) recommendation',
             description:
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.'
         },
