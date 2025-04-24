@@ -1165,12 +1165,14 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
 `;
 
 const GET_RUNNING_SQL_SERVERS = () => `
+    # Get running SQL Server instances
     $sqlServices = Get-Service | Where-Object { $_.DisplayName -like "*SQL Server (*)" -and $_.Status -eq 'Running' } | Select-Object -ExpandProperty DisplayName
     $jsonArray = @($sqlServices) | ConvertTo-Json
     Write-Output $jsonArray
 `;
 
 const CHECK_RUNNING_STATUS_WITH_RESTART = (serverNames: string[]) => `
+    # Check running status and restart if not running
     Start-Transcript -Path ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
     $serverNames = @(${serverNames.map(name => `'${name}'`).join(', ')})
     $sqlServices = Get-Service | Where-Object { $_.DisplayName -in $serverNames }

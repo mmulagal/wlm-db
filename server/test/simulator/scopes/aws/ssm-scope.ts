@@ -846,7 +846,15 @@ ssmMock
     .on(SendCommandCommand, params => {
         return /#Get sandbox Details/.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getSandboxDetails'));
+    .resolves(getSampleCommandResponse('getSandboxDetails'))
+    .on(SendCommandCommand, params => {
+        return /# Get running SQL Server instances/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getRunningSqlServersCommand)
+    .on(SendCommandCommand, params => {
+        return /# Check running status and restart if not running/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.checkRunningStatusCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)

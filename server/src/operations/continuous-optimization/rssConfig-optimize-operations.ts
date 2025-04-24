@@ -337,6 +337,12 @@ async function handleOptimizeRssOptimization(
                 resourceMeta.isRssConfigOptimized = optimizedAdapters;
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
+
+            if (!isDemo()) {
+                // Wait for 3 minutes
+                await sleep(3 * 60 * 1000);
+            }
+
             const checkRunningResponse = await checkRunningStatus(
                 accountId,
                 jobId,
@@ -346,26 +352,30 @@ async function handleOptimizeRssOptimization(
                 formattedInstanceName,
                 runningSqlServerNames || []
             );
+            let canRunAssessment = false;
 
             if (checkRunningResponse.status !== JOBSTATUS.COMPLETED) {
                 isAnySubjobFailed = true;
                 throw Error(checkRunningResponse.error);
+            } else {
+                canRunAssessment = true;
             }
-            // Wait for 3 minutes
-            await sleep(3 * 60 * 1000);
-            // clearning all the ssm command cache so that we will get the fresh data in assessment
-            resetCache(SSM_COMMAND_CACHE_TYPE);
-            // Trigger assessment after optimize
-            await onDemandTriggerDriftAssessmentDataCollection(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceId,
-                AssessmentTriggeredBy.SYSTEM,
-                AssessmentCategories.RSS_CONFIG,
-                masterOptimizeJobParentId
-            );
+
+            if (canRunAssessment) {
+                // clearning all the ssm command cache so that we will get the fresh data in assessment
+                resetCache(SSM_COMMAND_CACHE_TYPE);
+                // Trigger assessment after optimize
+                await onDemandTriggerDriftAssessmentDataCollection(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    AssessmentTriggeredBy.SYSTEM,
+                    AssessmentCategories.RSS_CONFIG,
+                    masterOptimizeJobParentId
+                );
+            }
         }
     } catch (error) {
         errorMessage = (error as Error).message;
