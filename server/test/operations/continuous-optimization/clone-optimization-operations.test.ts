@@ -105,4 +105,82 @@ describe('Clone remediation operations', () => {
 
         expect(response).toBeUndefined();
     });
+    it('Should handle clone remediation for clonedBy: "others" with delete action', async () => {
+        const response = await handleCloneRemediation(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            databaseInstanceId,
+            optimizeParentId,
+            {
+                cloneDatabaseName: 'sandbox_clonecleanup07',
+                clonedBy: 'others',
+                action: 'delete'
+            },
+            {
+                databaseHostName: 'FCIVY2219J0F',
+                databaseHostId: RESOURCE_ID,
+                databaseInstanceName: 'MSSQLSERVER',
+                sourceDatabaseHostName: 'FCIVY2219J0F',
+                sourceDatabaseInstanceName: 'MSSQLSERVER',
+                sourceDatabaseName: 'sandbox_clonecleanup04',
+                cloneDatabaseName: 'sandbox_clonecleanup07',
+                cloneAge: 3,
+                clonedBy: 'others',
+                clonedVolumeDetails: [
+                    {
+                        cloneVolumeUuid: 'dce1918f-2017-11f0-b53e-f9f6737b2b33',
+                        cloneVolumeName: 'wlmdb_sqldata_1745247374_clone_1745393830_clone_1745394304_clone_1745394700',
+                        cloneVolumeCreateTime: '2025-04-23T08:00:00+00:00',
+                        sourceVolumeName: 'wlmdb_sqldata_1745247374_clone_1745393830_clone_1745394304',
+                        cloneDatabaseName: 'sandbox_clonecleanup07',
+                        cloneVolumeType: 'data'
+                    }
+                ]
+            },
+            'FCIVY2219J0F\\MSSQLSERVER'
+        );
+
+        expect(response).toBeUndefined();
+    });
+    it('Should handle clone remediation for clonedBy: "netapp_wf" with refresh action', async () => {
+        const response = await handleCloneRemediation(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            databaseInstanceId,
+            optimizeParentId,
+            {
+                cloneDatabaseName: 'sandbox_clonecleanup08',
+                clonedBy: 'netapp_wf',
+                action: 'refresh'
+            },
+            {
+                databaseHostName: 'FCIVY2219J0F',
+                databaseHostId: RESOURCE_ID,
+                databaseInstanceName: 'MSSQLSERVER',
+                sourceDatabaseHostName: 'FCIVY2219J0F',
+                sourceDatabaseInstanceName: 'MSSQLSERVER',
+                sourceDatabaseName: 'sandbox_clonecleanup04',
+                cloneDatabaseName: 'sandbox_clonecleanup08',
+                cloneAge: 1,
+                clonedBy: 'netapp_wf',
+                clonedVolumeDetails: [
+                    {
+                        cloneVolumeUuid: 'ece1918f-2017-11f0-b53e-f9f6737b2b34',
+                        cloneVolumeName: 'wlmdb_sqldata_1745247374_clone_1745393830_clone_1745394304_clone_1745394710',
+                        cloneVolumeCreateTime: '2025-04-23T08:10:00+00:00',
+                        sourceVolumeName: 'wlmdb_sqldata_1745247374_clone_1745393830_clone_1745394304',
+                        cloneDatabaseName: 'sandbox_clonecleanup08',
+                        cloneVolumeType: 'data'
+                    }
+                ]
+            },
+            'FCIVY2219J0F\\MSSQLSERVER'
+        );
+
+        expect(response).toBeUndefined();
+    }, 30000);
 });
