@@ -134,9 +134,9 @@ async function formatInstanceDismissConfigurations(
     newConfigs: InstanceDismissParams
 ) {
     logger.info('Formatting instance dismiss configurations', { currentConfigs, newConfigs });
-    const { name, startTime, configState } = newConfigs;
+    const { configurationName, startTime, configState } = newConfigs;
     const matchingKey = Object.keys(ASSESSMENT_CONFIGS).find(
-        key => ASSESSMENT_CONFIGS[key as keyof typeof ASSESSMENT_CONFIGS] === name
+        key => ASSESSMENT_CONFIGS[key as keyof typeof ASSESSMENT_CONFIGS] === configurationName
     );
 
     if (matchingKey) {
@@ -145,7 +145,7 @@ async function formatInstanceDismissConfigurations(
             ...currentConfigs,
             [matchingKey]: {
                 ...existingConfig,
-                name,
+                configurationName,
                 startTime,
                 configState,
                 ...(configState === DISMISS_STATUS.POSTPONED && {
@@ -161,8 +161,11 @@ async function formatInstanceDismissConfigurations(
         };
         return updatedConfigs;
     }
-    logger.error('No matching key found for the configuration name:', name);
-    throw createError(HttpErrorCodes.NOT_FOUND, `No matching key found for the configuration name:, ${name}`);
+    logger.error('No matching key found for the configuration name:', configurationName);
+    throw createError(
+        HttpErrorCodes.NOT_FOUND,
+        `No matching key found for the configuration name:, ${configurationName}`
+    );
 }
 
 async function updateDismissConfigurations(accountId: string, configurations: BulkDismissConfigurationType[]) {
@@ -244,7 +247,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
             const currentConfigs = resourceDetails.configurations as unknown as DatabaseHostConfigurations;
             const dismissedConfigs = currentConfigs?.dismissedConfigurations || {};
             const updatedConfigs = await formatInstanceDismissConfigurations(dismissedConfigs, {
-                name: configName,
+                configurationName: configName,
                 startTime,
                 configState
             });
@@ -289,7 +292,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
                 const currentConfigs = instance.configurations as unknown as DatabaseInstanceConfigurations;
                 const dismissedConfigs = currentConfigs?.dismissedConfigurations || {};
                 const updatedConfigs = await formatInstanceDismissConfigurations(dismissedConfigs, {
-                    name: configName,
+                    configurationName: configName,
                     startTime,
                     configState
                 });

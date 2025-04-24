@@ -611,7 +611,7 @@ interface InstancesResponse {
 }
 
 interface InstanceDismissParams {
-    name: string;
+    configurationName: string;
     configState: string;
     startTime: number;
     endTime?: number;

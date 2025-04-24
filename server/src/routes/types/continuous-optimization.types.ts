@@ -255,7 +255,7 @@ const StorageParameterDriftResponse = Type.Object({
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 
 const instanceDismissResponse = Type.Object({
-    name: Type.String(),
+    configurationName: Type.String(),
     configState: Type.String(),
     endTime: Type.Optional(Type.Number())
 });

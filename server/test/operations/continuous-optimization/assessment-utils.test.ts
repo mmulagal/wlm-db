@@ -41,7 +41,7 @@ describe('Assessment utils', () => {
         const fieldsValues = ['crr', 'maxdop', 'compute', 'storage', 'license'];
         const dismissedConfigurations = {
             crr: {
-                name: 'crr',
+                configurationName: 'crr',
                 endTime: 1747502704221,
                 startTime: 1744910704221,
                 configState: 'POSTPONED'
