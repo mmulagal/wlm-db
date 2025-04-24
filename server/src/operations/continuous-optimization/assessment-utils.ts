@@ -1,6 +1,5 @@
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
-// import throat from 'throat';
 import moment from 'moment';
 import { getJobs, registerJob } from '../database/job-operations';
 import { getTimeDifferenceInMinutes } from '../../utils/utils';
@@ -33,6 +32,17 @@ import { HttpErrorCodes } from '../../utils/consts';
 
 const logger = getLogger();
 
+interface configurationRecord {
+    configName: string;
+    startTime: number;
+    configState: string;
+    databaseHostId: string;
+    credentialsId: string;
+    region: string;
+    response: BulkDismissConfigurationType;
+    hostIndex: number;
+    sqlServerInstances?: string[];
+}
 interface PerHostJobMetadata {
     optimizationType: string;
     resourceId: string;
@@ -187,7 +197,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
                 const hostIndex = response.databaseHosts.findIndex(hostId => hostId.id === databaseHostId);
 
                 if (HOST_LEVEL_CONFIGURATIONS.includes(configName)) {
-                    await handleHostLevelConfigurations(
+                    const record = {
                         configName,
                         startTime,
                         configState,
@@ -196,19 +206,21 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
                         region,
                         response,
                         hostIndex
-                    );
+                    };
+                    await handleHostLevelConfigurations(record);
                 } else {
-                    await handleInstanceLevelConfigurations(
+                    const record = {
                         configName,
                         startTime,
                         configState,
                         databaseHostId,
-                        sqlServerInstances,
                         credentialsId,
                         region,
                         response,
-                        hostIndex
-                    );
+                        hostIndex,
+                        sqlServerInstances
+                    };
+                    await handleInstanceLevelConfigurations(record);
                 }
             })
         );
@@ -218,17 +230,10 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
 
     return { dismisssedConfigurations: finalResponse };
 
-    async function handleHostLevelConfigurations(
-        configName: string,
-        startTime: number,
-        configState: string,
-        databaseHostId: string,
-        credentialsId: string,
-        region: string,
-        response: BulkDismissConfigurationType,
-        hostIndex: number
-    ) {
-        logger.debug('Handling host level configurations', { configName, startTime, configState, databaseHostId });
+    async function handleHostLevelConfigurations(record: configurationRecord) {
+        logger.debug('Handling host level configurations', { record });
+        const { configName, startTime, configState, databaseHostId, credentialsId, region, response, hostIndex } =
+            record;
         let resourceDetails;
         let updatedStatus = DISMISS_UPDATE_STATUS.SUCCESS;
 
@@ -266,18 +271,19 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         response.databaseHosts[hostIndex].status = updatedStatus;
     }
 
-    async function handleInstanceLevelConfigurations(
-        configName: string,
-        startTime: number,
-        configState: string,
-        databaseHostId: string,
-        sqlServerInstances: string[],
-        credentialsId: string,
-        region: string,
-        response: BulkDismissConfigurationType,
-        hostIndex: number
-    ) {
-        logger.debug('Handling instance level configurations', { configName, startTime, configState, databaseHostId });
+    async function handleInstanceLevelConfigurations(record: configurationRecord) {
+        logger.debug('Handling instance level configurations', { record });
+        const {
+            configName,
+            startTime,
+            configState,
+            databaseHostId,
+            credentialsId,
+            region,
+            response,
+            hostIndex,
+            sqlServerInstances = []
+        } = record;
         for (const sqlServerInstanceId of sqlServerInstances) {
             let instance;
             try {
@@ -340,12 +346,14 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         logger.debug('Updating host status', { hostIndex, sqlServerInstances });
         const updatedInstancesCount =
             sqlServerInstances.length - (response.databaseHosts[hostIndex]?.failedInstances?.length || 0);
-        const updatedStatus =
-            updatedInstancesCount === 0
-                ? DISMISS_UPDATE_STATUS.FAILED
-                : updatedInstancesCount === sqlServerInstances.length
-                ? DISMISS_UPDATE_STATUS.SUCCESS
-                : DISMISS_UPDATE_STATUS.PARTIAL;
+        let updatedStatus: string;
+        if (updatedInstancesCount === 0) {
+            updatedStatus = DISMISS_UPDATE_STATUS.FAILED;
+        } else if (updatedInstancesCount === sqlServerInstances.length) {
+            updatedStatus = DISMISS_UPDATE_STATUS.SUCCESS;
+        } else {
+            updatedStatus = DISMISS_UPDATE_STATUS.PARTIAL;
+        }
 
         response.databaseHosts[hostIndex].status = updatedStatus;
     }
