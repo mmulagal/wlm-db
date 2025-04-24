@@ -16,7 +16,7 @@ import {
     StorageTierParams,
     MaxDOPAssesment,
     AwsFsxNBackupConfig,
-    CloneAssesment,
+    CloneAssessment,
     CloneDetail,
     MappedVolumeResponseForClone
 } from '../utils/common-types';
@@ -2797,7 +2797,7 @@ async function optimizeClone(
     databaseHostId: string,
     databaseInstanceId: string,
     clone: CloneDetailType,
-    configData: CloneAssesment,
+    configData: CloneAssessment,
     sqlServerName: string,
     instanceName: string,
     parentJobId: string,
@@ -2822,7 +2822,7 @@ async function optimizeClone(
 
     const { cloneDatabaseName, clonedBy } = clone;
     try {
-        const { oldCloneDetails } = configData as unknown as CloneAssesment;
+        const { oldCloneDetails } = configData as unknown as CloneAssessment;
         logger.debug(`Clones data ${JSON.stringify(oldCloneDetails)}`);
 
         const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, cloneDatabaseName);

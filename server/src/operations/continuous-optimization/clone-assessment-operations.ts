@@ -4,7 +4,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import {
-    CloneAssesment,
+    CloneAssessment,
     CloneDetail,
     InstancesResponse,
     VolumeDBMapEntry,
@@ -60,7 +60,7 @@ async function calculateCloneDrift(
         );
 
         logger.debug('Persisted Clone configuration data from DB', persistedConfigurationData);
-        const cloneAssessment = persistedConfigurationData?.config_data as unknown as CloneAssesment;
+        const cloneAssessment = persistedConfigurationData?.config_data as unknown as CloneAssessment;
 
         if (isEmpty(cloneAssessment)) {
             errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CLONE);
@@ -68,7 +68,7 @@ async function calculateCloneDrift(
             return { errorMessage };
         }
         const { cloneDetails, status, oldClones, oldCloneDetails, oldCloneDatabaseNames } =
-            cloneAssessment as CloneAssesment;
+            cloneAssessment as CloneAssessment;
         logger.debug('Clone assessment result', cloneDetails);
 
         const recommendationMessage =

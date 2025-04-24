@@ -118,7 +118,7 @@ interface ClonedVolumeDetail {
     cloneVolumeType?: string;
 }
 
-interface CloneAssesment {
+interface CloneAssessment {
     status: string;
     cloneDetails?: CloneDetail[];
     oldClones?: number;
@@ -132,7 +132,7 @@ interface ResourceAssessmentData {
     hostOsPatch?: HostOsPatchAssessmentObject[];
     rssConfig?: RssConfigAssesment;
     maxDOP?: MaxDOPAssesment;
-    clone?: CloneAssesment;
+    clone?: CloneAssessment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
     lastAssessedDate?: string;
     errors?: {
@@ -685,7 +685,7 @@ export {
     AwsFsxNBackupConfig,
     MultipleCommandSsmResponse,
     SsmSqlServerRunningStatus,
-    CloneAssesment,
+    CloneAssessment,
     CloneDetail,
     VolumeRecord,
     MappedOnTapVolumeResponse,

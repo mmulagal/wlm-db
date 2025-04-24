@@ -38,7 +38,7 @@ import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { resetCache } from '../utils/cache';
 import { getServerNameWithHostname } from '../utils/utils';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
-import { CloneAssesment, MappedVolumeResponseForClone } from '../utils/common-types';
+import { CloneAssessment, MappedVolumeResponseForClone } from '../utils/common-types';
 import { getMappedVolumeDetailForInstance } from './continuous-optimization/clone-optimization-operations';
 
 const logger = getLogger();
@@ -196,7 +196,7 @@ async function handleBulkCloneOptimization(
                                         databaseHostId,
                                         instanceId,
                                         clone,
-                                        configData as unknown as CloneAssesment,
+                                        configData as unknown as CloneAssessment,
                                         sqlServerName,
                                         instanceName,
                                         parentJobId,
@@ -507,7 +507,7 @@ async function fetchInstanceConfigurationAndVolumeMapping(
     instanceId: string,
     clones: CloneDetailType[]
 ): Promise<{
-    configData: CloneAssesment;
+    configData: CloneAssessment;
     instanceName: string;
     sqlServerName: string;
     serverNameWithHostName: string;
@@ -552,7 +552,7 @@ async function fetchInstanceConfigurationAndVolumeMapping(
     }
 
     return {
-        configData: configData as unknown as CloneAssesment,
+        configData: configData as unknown as CloneAssessment,
         instanceName,
         sqlServerName,
         serverNameWithHostName,
