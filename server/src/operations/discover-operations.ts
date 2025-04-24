@@ -2491,8 +2491,7 @@ async function discoverOracleResources(
         await Promise.all(
             ssmConnectedEc2Instances.map(async ec2Instance => {
                 const ssmResponse = ssmResponseMap.get(ec2Instance.ec2InstanceId);
-                const output = ssmResponse?.output;
-                const error = ssmResponse?.error;
+                const { output, error } = ssmResponse || {};
                 if (error) {
                     ec2Instance.error = error;
                     return instancesWithSsmResponse.push(ec2Instance);
@@ -2511,17 +2510,19 @@ async function discoverOracleResources(
                     // Parsed Response : an array of objects for each database Instance
                     for (const dbInstance of parsedResponse) {
                         const {
-                            instance_id: instanceId,
-                            instance_name: instanceName,
-                            version,
-                            instance_state: instanceState
-                        } = dbInstance.instance_details;
-                        const {
-                            database_id: databaseId,
-                            name: databaseName,
-                            open_mode: openMode,
-                            is_cdb: isCDB
-                        } = dbInstance.database_details;
+                            instance_details: {
+                                instance_id: instanceId,
+                                instance_name: instanceName,
+                                version,
+                                instance_state: instanceState
+                            },
+                            database_details: {
+                                database_id: databaseId,
+                                name: databaseName,
+                                open_mode: openMode,
+                                is_cdb: isCDB
+                            }
+                        } = dbInstance;
 
                         const pluggableDatabases = [];
                         const isContainerDbInstance = isCDB === 'YES';

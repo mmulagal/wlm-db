@@ -127,20 +127,25 @@ EOF
             continue
         fi
 
-        INSTANCE_DETAILS=$(get_instance_details)
-        DATABASE_DETAILS=$(get_database_details)
-        
-        is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
+        {
+            INSTANCE_DETAILS=$(get_instance_details)
+            DATABASE_DETAILS=$(get_database_details)
+            
+            is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
 
-        if [ "$is_cdb" == "YES" ]; then
-            PDB_DATABASE_DETAILS=$(get_pdb_databases_details)
-        else
-            PDB_DATABASE_DETAILS="null"
-        fi
+            if [ "$is_cdb" == "YES" ]; then
+                PDB_DATABASE_DETAILS=$(get_pdb_databases_details)
+            else
+                PDB_DATABASE_DETAILS="null"
+            fi
 
-        mount_details=${getStorageDetails}
-        nfs_ip_address=$(echo "$mount_details" | cut -d',' -f1)
-        nfs_mount_point=$(echo "$mount_details" | cut -d',' -f2)
+            mount_details=${getStorageDetails}
+            nfs_ip_address=$(echo "$mount_details" | cut -d',' -f1)
+            nfs_mount_point=$(echo "$mount_details" | cut -d',' -f2)
+        } || {
+            echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
+            continue
+        }
 
         JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"nfs_ip_address\\": \\"$nfs_ip_address\\", \\"nfs_mount_point\\": \\"$nfs_mount_point\\"}"
 
