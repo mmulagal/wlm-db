@@ -4,6 +4,7 @@ import createError from 'http-errors';
 import { CloneDetailType } from '../../routes/types/continuous-optimization.types';
 import {
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+    CLONE_ACTION,
     HttpErrorCodes,
     SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
     SandboxLifecycleAction
@@ -60,7 +61,7 @@ async function handleCloneRemediation(
     try {
         if (clonedBy.toLowerCase() === SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE) {
             switch (action) {
-                case 'refresh':
+                case CLONE_ACTION.REFRESH:
                     logger.info(`Refreshing clone ${cloneDatabaseName} created by netapp_wf.`);
                     await refreshClone(
                         accountId,
@@ -74,7 +75,7 @@ async function handleCloneRemediation(
                     );
                     break;
 
-                case 'delete':
+                case CLONE_ACTION.DELETE:
                     logger.info(`Deleting clone ${cloneDatabaseName} created by netapp_wf.`);
                     await deleteClone(
                         accountId,
