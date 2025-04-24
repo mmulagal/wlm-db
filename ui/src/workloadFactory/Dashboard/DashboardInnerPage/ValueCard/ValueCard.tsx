@@ -1,5 +1,6 @@
 import { DsTypography, TooltipInfo } from '@netapp/design-system';
 import styles from './ValueCard.module.scss';
+import { ReactComponent as Edit } from '../../../../assets/ic_edit.svg';
 
 type ValueCardProps = {
     optimizationScore?: string;
@@ -10,6 +11,8 @@ type ValueCardProps = {
     configurationState?: string;
     from?: string;
     tooltipText?: string;
+    type?: string;
+    handleEdit?: any;
 };
 
 const ValueCard = ({
@@ -19,42 +22,54 @@ const ValueCard = ({
     instances,
     configurationState,
     from = 'innerPage',
-    tooltipText
+    tooltipText,
+    type,
+    handleEdit
 }: ValueCardProps) => {
     return (
         <>
             {from === 'innerPage' && (
                 <div className={styles.valueCard}>
-                    <div className={styles.block} style={{ borderRight: '1px solid var(--border' }}>
+                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
                         <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                             {optimizedInstances}
                         </DsTypography>
                         <DsTypography variant="Regular_14">Optimized instances</DsTypography>
                     </div>
 
-                    <div className={styles.block} style={{ borderRight: '1px solid var(--border' }}>
+                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
                         <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                             {notOptimizedInstances}
                         </DsTypography>
                         <DsTypography variant="Regular_14">Not-optimized instances</DsTypography>
                     </div>
 
-                    <div className={styles.block}>
+                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
                         <DsTypography variant="Semibold_14">{severity}</DsTypography>
                         <DsTypography variant="Regular_14">Severity</DsTypography>
+                    </div>
+
+                    <div className={styles.block}>
+                        <div className={styles.configState}>
+                            <DsTypography variant="Semibold_14">{configurationState}</DsTypography>
+                            <div onClick={() => handleEdit(type)}>
+                                <Edit />
+                            </div>
+                        </div>
+                        <DsTypography variant="Regular_14">Analysis state</DsTypography>
                     </div>
                 </div>
             )}
             {from === 'dismissPage' && (
                 <div className={styles.valueCard}>
-                    <div className={styles.block} style={{ borderRight: '1px solid var(--border' }}>
+                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
                         <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                             {instances}
                         </DsTypography>
                         <DsTypography variant="Regular_14">Instances</DsTypography>
                     </div>
 
-                    <div className={styles.block} style={{ borderRight: '1px solid var(--border' }}>
+                    <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>
                         <div className={styles.configContainer}>
                             {tooltipText && <TooltipInfo>{tooltipText}</TooltipInfo>}
                             <DsTypography variant="Semibold_14">{configurationState}</DsTypography>

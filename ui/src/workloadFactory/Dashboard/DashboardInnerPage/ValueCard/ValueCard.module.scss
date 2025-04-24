@@ -20,6 +20,18 @@
             gap: 8px;
             align-items: center;
         }
+
+        .configState {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            svg {
+                cursor: pointer;
+                path {
+                    fill: var(--grey-50);
+                }
+            }
+        }
     }
 }
 
