@@ -8,7 +8,8 @@ import {
     UnManageMsSqlSchema,
     ManageMsSqlSchemaV2,
     DiscoverPgSqlSchema,
-    PgSqlResourceDetailsSchema
+    PgSqlResourceDetailsSchema,
+    DiscoverOracleSchema
 } from './schemas/discover-schemas';
 import {
     getHostAndSqlServerInfo,
@@ -18,7 +19,8 @@ import {
     fetchUnmanagedHostsInformationV2,
     unmanageDatabaseInstance,
     discoverPgSqlResources,
-    getPgSqlResourceDetails
+    getPgSqlResourceDetails,
+    discoverOracleResources
 } from '../operations/discover-operations';
 
 import getLogger from '../utils/logger';
@@ -28,6 +30,7 @@ const logger = getLogger();
 
 const DISCOVER_MSSQL_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const DISCOVER_PGSQL_API_PATH: string = '/v1/pgsql/credentials/:credentialsId/regions/:region';
+const DISCOVER_ORACLE_API_PATH: string = '/v1/oracle/credentials/:credentialsId/regions/:region';
 
 export default function discoverRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -140,4 +143,14 @@ export default function discoverRoutes(fastify: FastifyInstance) {
             return reply.send(apiInfo);
         }
     );
+
+    // Oracle
+    server.get(`${DISCOVER_ORACLE_API_PATH}/discover`, { schema: DiscoverOracleSchema }, async request => {
+        const {
+            params: { accountId, credentialsId, region },
+            query: { pageSize, nextToken }
+        } = castRequest(request);
+        const apiInfo = await discoverOracleResources(accountId, credentialsId, region, pageSize, nextToken);
+        return apiInfo;
+    });
 }

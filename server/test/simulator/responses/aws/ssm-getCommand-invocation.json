@@ -2182,12 +2182,8 @@
                         "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
                         "name": "daily",
                         "cron": {
-                            "minutes": [
-                                10
-                            ],
-                            "hours": [
-                                0
-                            ]
+                            "minutes": [10],
+                            "hours": [0]
                         },
                         "_links": {
                             "self": {
@@ -2309,5 +2305,36 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
-    }
+    },
+    "discoverOracleServer": [
+        {
+            "sid": "oradb1san",
+            "instance_details": {
+                "instance_name": "oradb1san",
+                "host_name": "ip-172-31-48-50.ap-southeast-1.compute.internal",
+                "version": "19.0.0.0.0",
+                "instance_state": "OPEN"
+            },
+            "database_details": {
+                "name": "ORADB1SA",
+                "database_id": "28096904",
+                "open_mode": "READ WRITE",
+                "is_cdb": "YES"
+            },
+            "pdb_database_details": [
+                {
+                    "pdb_id": 3,
+                    "pdb_name": "ORCLPDB",
+                    "status": "NORMAL"
+                },
+                {
+                    "pdb_id": 2,
+                    "pdb_name": "PDB$SEED",
+                    "status": "NORMAL"
+                }
+            ],
+            "nfs_ip_address": "172.31.255.207",
+            "nfs_mount_point": "/ORADATA1"
+        }
+    ]
 }

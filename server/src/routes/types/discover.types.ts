@@ -329,9 +329,102 @@ const DiscoverPgSqlResponseBody = Type.Object({
     )
 });
 
+const oracleDatabaseInstance = Type.Object({
+    instanceName: Type.String({ description: 'Oracle instance name' }),
+    instanceId: Type.String({ description: 'Oracle instance ID' }),
+    instanceState: Type.String({
+        description: 'Oracle instance state',
+        enum: ['STARTED', 'MOUNTED', 'OPEN', 'OPEN MIGRATE']
+    }),
+    version: Type.String({ description: 'Oracle instance version' }),
+    instanceType: Type.String({
+        description: 'database type',
+        enum: ['SINGLE_TENANT', 'MULTI_TENANT']
+    }),
+    databaseCount: Type.Number({ description: 'Number of databases in the Oracle instance.' }),
+    databaseDetails: Type.Object({
+        databaseName: Type.String({ description: 'Oracle database name' }),
+        databaseId: Type.String({ description: 'Oracle database ID' }),
+        openMode: Type.String({
+            description: 'database open mode',
+            enum: ['READ WRITE', 'READ', 'MOUNTED']
+        })
+    }),
+    pluggableDatabases: Type.Optional(
+        Type.Array(
+            Type.Object({
+                pdbName: Type.String({ description: 'Oracle pluggable database name' }),
+                pdbId: Type.String({ description: 'Oracle pluggable database ID' }),
+                pdbStatus: Type.String({
+                    enum: [
+                        'NEW',
+                        'NORMAL',
+                        'UNPLUGGED',
+                        'RELOCATED',
+                        'RELOCATING',
+                        'REFRESHING',
+                        'UNDEFINED',
+                        'UNUSABLE'
+                    ],
+                    description: 'Oracle pluggable database status'
+                })
+            })
+        )
+    ),
+    storage: Type.Optional(
+        Type.Array(
+            Type.Object({
+                type: Type.String({ description: 'Underlying storage types of the Oracle instance' }),
+                id: Type.String({ description: 'ID of the storage' }),
+                svmId: Type.Optional(
+                    Type.String({
+                        description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP'
+                    })
+                ),
+                protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or NFS' })),
+                fileSystemStorageType: Type.Optional(
+                    Type.String({ description: 'File system storage type, SSD or HDD' })
+                ),
+                deploymentType: Type.Optional(Type.String({ description: 'Deployment type of storage' })),
+                zones: Type.Optional(
+                    Type.Array(Type.Optional(Type.String({ description: 'Availability zones of storage' })))
+                ),
+                nfsMountPoint: Type.Optional(Type.String({ description: 'Mount point of storage' }))
+            })
+        )
+    )
+});
+
+const DiscoverOracleResponseInfo = Type.Intersect([
+    Type.Omit(DiscoverResponseInfo, ['sqlServerInstances']),
+    Type.Object({
+        oracleServerDeploymentType: Type.Optional(
+            Type.String({
+                description: 'Oracle deployment architecture.',
+                enum: ['Standalone', 'HA']
+            })
+        ),
+        databaseInstanceDetails: Type.Optional(Type.Array(oracleDatabaseInstance)),
+        error: Type.Optional(Type.String({ description: 'Error details, if any.' }))
+    })
+]);
+
+const DiscoverOracleResponseBody = Type.Object({
+    count: Type.Number({ description: 'Number of discovered items' }),
+    items: Type.Array(DiscoverOracleResponseInfo),
+    nextToken: Type.Optional(
+        Type.String({
+            description: 'Pagination token for each page.  A non-empty token indicates more more results are available.'
+        })
+    )
+});
+
 type DiscoverPgSqlResponseBodyType = Static<typeof DiscoverPgSqlResponseBody>;
 type DiscoverPgSqlResponseType = Static<typeof DiscoverPgSqlResponseInfo>;
 type pgsqlNodeDetailsType = Static<typeof pgSqlServerNode>;
+type DiscoverOracleInstanceType = Static<typeof oracleDatabaseInstance>;
+type DiscoverOracleResponseBodyType = Static<typeof DiscoverOracleResponseBody>;
+type DiscoverOracleResponseType = Static<typeof DiscoverOracleResponseInfo>;
 
 export {
     DiscoverQuery,
@@ -356,5 +449,9 @@ export {
     DiscoverPgSqlResponseBodyType,
     DiscoverPgSqlResponseType,
     pgsqlNodeDetailsType,
-    MultiHostManageResponseBody
+    MultiHostManageResponseBody,
+    DiscoverOracleResponseBody,
+    DiscoverOracleInstanceType,
+    DiscoverOracleResponseBodyType,
+    DiscoverOracleResponseType
 };
