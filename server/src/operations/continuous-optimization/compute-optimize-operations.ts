@@ -1225,6 +1225,7 @@ async function rollbackComputeOptimize(
 export {
     handleComputeRemediation,
     checkRunningStatus,
+    getRunningSqlServices,
     getClusterNodeInstanceIds,
     transferClusterOwnershipToStandbyNode,
     moveClusterGroupOwnership,

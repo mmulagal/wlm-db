@@ -17,7 +17,9 @@ import { updateJobDetails } from '../database/job-operations';
 import { getInstanceInfo } from '../database/database-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
+    checkRunningStatus,
     getClusterNodeInstanceIds,
+    getRunningSqlServices,
     handleRollbackClusterOwnership,
     moveClusterGroupOwnership,
     transferClusterOwnershipToStandbyNode
@@ -120,6 +122,13 @@ async function handleOptimizeRssOptimization(
 
     try {
         if (activeNodeInstanceId) {
+            // single node cluster/standalone
+            const runningSqlServerNames = await getRunningSqlServices(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId
+            );
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             formattedInstanceName = getServerNameWithHostname(resourceName!, instanceDetail?.database_instance_name);
             await updateLongRunningAuditGroup(undefined, undefined, formattedInstanceName);
@@ -328,7 +337,20 @@ async function handleOptimizeRssOptimization(
                 resourceMeta.isRssConfigOptimized = optimizedAdapters;
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
+            const checkRunningResponse = await checkRunningStatus(
+                accountId,
+                jobId,
+                region,
+                credentialsId,
+                activeNodeInstanceId,
+                formattedInstanceName,
+                runningSqlServerNames || []
+            );
 
+            if (checkRunningResponse.status !== JOBSTATUS.COMPLETED) {
+                isAnySubjobFailed = true;
+                throw Error(checkRunningResponse.error);
+            }
             // Wait for 3 minutes
             await sleep(3 * 60 * 1000);
             // clearning all the ssm command cache so that we will get the fresh data in assessment
