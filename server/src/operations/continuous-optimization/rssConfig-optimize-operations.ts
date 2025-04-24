@@ -329,6 +329,8 @@ async function handleOptimizeRssOptimization(
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
 
+            // Wait for 3 minutes
+            await sleep(3 * 60 * 1000);
             // clearning all the ssm command cache so that we will get the fresh data in assessment
             resetCache(SSM_COMMAND_CACHE_TYPE);
             // Trigger assessment after optimize
