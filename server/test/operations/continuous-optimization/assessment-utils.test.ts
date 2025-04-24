@@ -10,7 +10,9 @@ import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/aws/compute-optimizer-scope';
 import {
     getMatchingAssessmentStatus,
-    handleOptimizeJobCreation
+    handleOptimizeJobCreation,
+    updateFieldsBasedOnDismissedConfigurations
+    // updateFieldsBasedOnDismissedConfigurations
 } from '../../../src/operations/continuous-optimization/assessment-utils';
 import { FINDING } from '../../../src/utils/consts';
 import { AssessmentStatus } from '../../../src/utils/continous-optimization-consts';
@@ -33,5 +35,21 @@ describe('Assessment utils', () => {
             'test-job'
         );
         expect(response).toBeDefined();
+    });
+
+    it('Should filter out fields based on dismissed configurations', () => {
+        const fieldsValues = ['crr', 'maxdop', 'compute', 'storage', 'license'];
+        const dismissedConfigurations = {
+            crr: {
+                name: 'crr',
+                endTime: 1747502704221,
+                startTime: 1744910704221,
+                configState: 'POSTPONED'
+            }
+        };
+
+        const result = updateFieldsBasedOnDismissedConfigurations(fieldsValues, dismissedConfigurations);
+
+        expect(result).toEqual(['maxdop', 'compute', 'storage', 'license']);
     });
 });

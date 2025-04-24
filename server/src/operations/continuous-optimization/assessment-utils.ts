@@ -1,6 +1,6 @@
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
-import throat from 'throat';
+// import throat from 'throat';
 import moment from 'moment';
 import { getJobs, registerJob } from '../database/job-operations';
 import { getTimeDifferenceInMinutes } from '../../utils/utils';
@@ -10,7 +10,8 @@ import {
     AssessmentStatus,
     DISMISS_DEACTIVATION_REASON,
     DISMISS_STATUS,
-    DISMISS_UPDATE_STATUS
+    DISMISS_UPDATE_STATUS,
+    HOST_LEVEL_CONFIGURATIONS
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import { getInstanceInfo } from '../database/database-operations';
@@ -19,10 +20,16 @@ import {
     DatabaseInstanceDismissConfigs,
     DatabaseInstanceConfigurations,
     InstanceDismissParams,
-    Metadata
+    Metadata,
+    DatabaseHostConfigurations
 } from '../../utils/common-types';
-import { listResources, updateDatabaseInstanceConfigurations } from '../../lib/database/db';
+import {
+    listResources,
+    updateDatabaseHostConfigurations,
+    updateDatabaseInstanceConfigurations
+} from '../../lib/database/db';
 import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
+import { HttpErrorCodes } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -134,87 +141,107 @@ async function formatInstanceDismissConfigurations(
 
     if (matchingKey) {
         const existingConfig = currentConfigs[matchingKey as keyof typeof currentConfigs] || {};
-        currentConfigs[matchingKey as keyof typeof currentConfigs] = {
-            ...existingConfig,
-            name,
-            startTime,
-            configState,
-            ...(configState === DISMISS_STATUS.POSTPONED && {
-                endTime: new Date(startTime).getTime() + 30 * 24 * 60 * 60 * 1000,
-                deactivationReason: undefined
-            }),
-            ...(configState === DISMISS_STATUS.DISMISSED && { endTime: undefined, deactivationReason: undefined }),
-            ...(configState === DISMISS_STATUS.ACTIVE && {
-                deactivationReason: DISMISS_DEACTIVATION_REASON.USER,
-                endTime: undefined
-            })
+        const updatedConfigs = {
+            ...currentConfigs,
+            [matchingKey]: {
+                ...existingConfig,
+                name,
+                startTime,
+                configState,
+                ...(configState === DISMISS_STATUS.POSTPONED && {
+                    endTime: new Date(startTime).getTime() + 30 * 24 * 60 * 60 * 1000,
+                    deactivationReason: undefined
+                }),
+                ...(configState === DISMISS_STATUS.DISMISSED && { endTime: undefined, deactivationReason: undefined }),
+                ...(configState === DISMISS_STATUS.ACTIVE && {
+                    deactivationReason: DISMISS_DEACTIVATION_REASON.USER,
+                    endTime: undefined
+                })
+            }
         };
+        return updatedConfigs;
     }
-
-    return currentConfigs;
+    logger.error('No matching key found for the configuration name:', name);
+    throw createError(HttpErrorCodes.NOT_FOUND, `No matching key found for the configuration name:, ${name}`);
 }
 
 async function updateDismissConfigurations(accountId: string, configurations: BulkDismissConfigurationType[]) {
     logger.info('Updating dismiss configurations for account:', { accountId, configurations });
     const finalResponse = [];
     for (const config of configurations) {
-        const { name: configName, configState, databaseHosts: hostsToDismiss } = config;
+        const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
         const startTime = Date.now();
         const response = {
-            name: configName,
+            configurationName: configName,
             startTime,
             configState,
             databaseHosts: hostsToDismiss
         };
 
         await Promise.all(
-            hostsToDismiss.map(
-                throat(3, async host => {
-                    const { id: databaseHostId, sqlServerInstances, credentialsId } = host;
-                    const hostIndex = response.databaseHosts.findIndex(hostId => hostId.id === databaseHostId);
+            hostsToDismiss.map(async host => {
+                const { id: databaseHostId, sqlServerInstances, credentialsId, region } = host;
+                const hostIndex = response.databaseHosts.findIndex(hostId => hostId.id === databaseHostId);
 
-                    for (const sqlServerInstanceId of sqlServerInstances) {
-                        await processInstance(
-                            credentialsId,
-                            databaseHostId,
-                            sqlServerInstanceId,
-                            configName,
-                            startTime,
-                            configState,
-                            response,
-                            hostIndex
-                        );
-                    }
-
-                    updateHostStatus(response, hostIndex, sqlServerInstances.length);
-                })
-            )
+                if (HOST_LEVEL_CONFIGURATIONS.includes(configName)) {
+                    await handleHostLevelConfigurations(
+                        configName,
+                        startTime,
+                        configState,
+                        databaseHostId,
+                        credentialsId,
+                        region,
+                        response,
+                        hostIndex
+                    );
+                } else {
+                    await handleInstanceLevelConfigurations(
+                        configName,
+                        startTime,
+                        configState,
+                        databaseHostId,
+                        sqlServerInstances,
+                        credentialsId,
+                        region,
+                        response,
+                        hostIndex
+                    );
+                }
+            })
         );
 
         finalResponse.push(response);
     }
 
-    async function processInstance(
-        credentialsId: string,
-        databaseHostId: string,
-        sqlServerInstanceId: string,
+    return { dismisssedConfigurations: finalResponse };
+
+    async function handleHostLevelConfigurations(
         configName: string,
         startTime: number,
         configState: string,
-        response: any,
+        databaseHostId: string,
+        credentialsId: string,
+        region: string,
+        response: BulkDismissConfigurationType,
         hostIndex: number
     ) {
-        let instance;
+        logger.debug('Handling host level configurations', { configName, startTime, configState, databaseHostId });
+        let resourceDetails;
+        let updatedStatus = DISMISS_UPDATE_STATUS.SUCCESS;
+
         try {
-            instance = await getInstanceInfo(accountId, credentialsId, databaseHostId, sqlServerInstanceId);
+            [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
         } catch (error) {
-            instance = undefined;
+            logger.error('Error fetching resource details:', error);
         }
 
-        if (!instance) {
-            addFailedInstance(response, hostIndex, sqlServerInstanceId, 'Database instance not found');
+        if (!resourceDetails) {
+            response.databaseHosts[hostIndex].failedInstances = [
+                { databaseHostId, errorMessage: 'Database host not found' }
+            ];
+            updatedStatus = DISMISS_UPDATE_STATUS.FAILED;
         } else {
-            const currentConfigs = instance.configurations as unknown as DatabaseInstanceConfigurations;
+            const currentConfigs = resourceDetails.configurations as unknown as DatabaseHostConfigurations;
             const dismissedConfigs = currentConfigs?.dismissedConfigurations || {};
             const updatedConfigs = await formatInstanceDismissConfigurations(dismissedConfigs, {
                 name: configName,
@@ -223,40 +250,121 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
             });
 
             try {
-                await updateDatabaseInstanceConfigurations(
-                    accountId,
-                    credentialsId,
-                    databaseHostId,
-                    sqlServerInstanceId,
-                    { dismissedConfigurations: updatedConfigs }
-                );
+                await updateDatabaseHostConfigurations(accountId, credentialsId, region, databaseHostId, {
+                    dismissedConfigurations: updatedConfigs
+                });
             } catch (error) {
                 logger.error('Error updating dismiss configurations:', error);
-                addFailedInstance(response, hostIndex, sqlServerInstanceId, `Failed to update config details ${error}`);
+                updatedStatus = DISMISS_UPDATE_STATUS.FAILED;
+            }
+
+            logger.info('Updating host level configurations', { configurations: updatedConfigs });
+        }
+        response.databaseHosts[hostIndex].status = updatedStatus;
+    }
+
+    async function handleInstanceLevelConfigurations(
+        configName: string,
+        startTime: number,
+        configState: string,
+        databaseHostId: string,
+        sqlServerInstances: string[],
+        credentialsId: string,
+        region: string,
+        response: BulkDismissConfigurationType,
+        hostIndex: number
+    ) {
+        logger.debug('Handling instance level configurations', { configName, startTime, configState, databaseHostId });
+        for (const sqlServerInstanceId of sqlServerInstances) {
+            let instance;
+            try {
+                instance = await getInstanceInfo(accountId, credentialsId, databaseHostId, sqlServerInstanceId);
+            } catch (error) {
+                instance = undefined;
+            }
+
+            if (!instance) {
+                addFailedInstance(response, hostIndex, sqlServerInstanceId, 'Database instance not found');
+            } else {
+                const currentConfigs = instance.configurations as unknown as DatabaseInstanceConfigurations;
+                const dismissedConfigs = currentConfigs?.dismissedConfigurations || {};
+                const updatedConfigs = await formatInstanceDismissConfigurations(dismissedConfigs, {
+                    name: configName,
+                    startTime,
+                    configState
+                });
+
+                try {
+                    await updateDatabaseInstanceConfigurations(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        sqlServerInstanceId,
+                        { dismissedConfigurations: updatedConfigs }
+                    );
+                } catch (error) {
+                    logger.error('Error updating dismiss configurations:', error);
+                    addFailedInstance(
+                        response,
+                        hostIndex,
+                        sqlServerInstanceId,
+                        `Failed to update config details ${error}`
+                    );
+                }
             }
         }
+
+        updateHostStatus(response, hostIndex, sqlServerInstances);
     }
 
     function addFailedInstance(response: any, hostIndex: number, instanceId: string, errorMessage: string) {
+        logger.debug('Adding failed instance', { hostIndex, instanceId, errorMessage });
         if (!response.databaseHosts[hostIndex]?.failedInstances) {
-            response.databaseHosts[hostIndex].failedInstances = [{ instanceId, errorMessage }];
+            response.databaseHosts[hostIndex].failedInstances = [
+                { databaseHostId: response.databaseHosts[hostIndex].id, instanceId, errorMessage }
+            ];
         } else {
-            response.databaseHosts[hostIndex].failedInstances.push({ instanceId, errorMessage });
+            response.databaseHosts[hostIndex].failedInstances.push({
+                databaseHostId: response.databaseHosts[hostIndex].databaseHostId,
+                instanceId,
+                errorMessage
+            });
         }
     }
 
-    function updateHostStatus(response: any, hostIndex: number, totalInstances: number) {
-        const failedInstancesCount = response.databaseHosts[hostIndex]?.failedInstances?.length || 0;
-        const updatedInstancesCount = totalInstances - failedInstancesCount;
-
-        response.databaseHosts[hostIndex].status =
+    function updateHostStatus(response: any, hostIndex: number, sqlServerInstances: string[]) {
+        logger.debug('Updating host status', { hostIndex, sqlServerInstances });
+        const updatedInstancesCount =
+            sqlServerInstances.length - (response.databaseHosts[hostIndex]?.failedInstances?.length || 0);
+        const updatedStatus =
             updatedInstancesCount === 0
                 ? DISMISS_UPDATE_STATUS.FAILED
-                : updatedInstancesCount === totalInstances
+                : updatedInstancesCount === sqlServerInstances.length
                 ? DISMISS_UPDATE_STATUS.SUCCESS
                 : DISMISS_UPDATE_STATUS.PARTIAL;
+
+        response.databaseHosts[hostIndex].status = updatedStatus;
     }
-    return { dismisssedConfigurations: finalResponse };
+}
+
+function updateFieldsBasedOnDismissedConfigurations(
+    fieldsValues: string[],
+    dismissedConfigurations: DatabaseInstanceDismissConfigs
+) {
+    logger.info('Updating fields based on dismissed configurations', { fieldsValues, dismissedConfigurations });
+
+    const updatedFieldsValues = fieldsValues.filter(
+        fieldValue =>
+            !Object.entries(dismissedConfigurations).some(
+                ([keyName, config]) =>
+                    keyName === fieldValue &&
+                    ((config as { configState: string }).configState === DISMISS_STATUS.POSTPONED ||
+                        (config as { configState: string }).configState === DISMISS_STATUS.DISMISSED)
+            )
+    );
+
+    return updatedFieldsValues;
 }
 
 export {
@@ -265,5 +373,6 @@ export {
     JobMetadata,
     updateDismissConfigurations,
     formatInstanceDismissConfigurations,
-    getLastAssessedTime
+    getLastAssessedTime,
+    updateFieldsBasedOnDismissedConfigurations
 };

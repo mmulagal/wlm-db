@@ -816,11 +816,18 @@ async function updateTrackedEc2Record(
 async function updateDatabaseInstanceConfigurations(
     accountId: string,
     credentialsId: string,
+    region: string,
     databaseHostId: string,
     databaseInstanceId: string,
     updatedConfigs: any
 ) {
-    logger.info('Updating resource metadata', { accountId, databaseInstanceId, updatedConfigs });
+    logger.info('Updating resource metadata', {
+        accountId,
+        databaseInstanceId,
+        credentialsId,
+        region,
+        updatedConfigs
+    });
     accountId = checkAccount(accountId);
 
     // Update the database instance with the new configurations array.
@@ -829,7 +836,38 @@ async function updateDatabaseInstanceConfigurations(
             account_id: accountId,
             resource_id: databaseHostId,
             credentials_id: credentialsId,
-            database_instance_id: databaseInstanceId
+            database_instance_id: databaseInstanceId,
+            region
+        },
+        data: {
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
+        }
+    });
+}
+
+async function updateDatabaseHostConfigurations(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    updatedConfigs: any
+) {
+    logger.info('Updating database host configurations', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        updatedConfigs
+    });
+    accountId = checkAccount(accountId);
+
+    // Update the database instance with the new configurations array.
+    return prisma.client.resource.updateMany({
+        where: {
+            account_id: accountId,
+            resource_id: databaseHostId,
+            credentials_id: credentialsId,
+            region
         },
         data: {
             ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
@@ -870,5 +908,6 @@ export {
     removeTrackedEc2Record,
     updateTrackedEc2Record,
     listAllManagedInstances,
-    updateDatabaseInstanceConfigurations
+    updateDatabaseInstanceConfigurations,
+    updateDatabaseHostConfigurations
 };

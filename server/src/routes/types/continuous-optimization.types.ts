@@ -505,7 +505,8 @@ const DatabaseHostsWithInstances = Type.Intersect([
         failedInstances: Type.Optional(
             Type.Array(
                 Type.Object({
-                    instanceId: Type.String(),
+                    databaseHostId: Type.String(),
+                    instanceId: Type.Optional(Type.String()),
                     errorMessage: Type.String()
                 })
             )
@@ -514,7 +515,7 @@ const DatabaseHostsWithInstances = Type.Intersect([
 ]);
 
 const BulkDismissConfiguration = Type.Object({
-    name: Type.String(),
+    configurationName: Type.String(),
     configState: Type.String(),
     databaseHosts: Type.Array(DatabaseHostsWithInstances)
 });
@@ -522,7 +523,7 @@ const BulkDismissConfiguration = Type.Object({
 type BulkDismissConfigurationType = Static<typeof BulkDismissConfiguration>;
 
 const BulkDismissConfigurationBody = Type.Object({
-    name: Type.String(),
+    configurationName: Type.String(),
     configState: Type.String(),
     databaseHosts: Type.Array(DatabaseHostsWithInstancesBody)
 });
@@ -538,7 +539,7 @@ type BulkDismissConfigurationRequestBodyType = Static<typeof BulkDismissConfigur
 const BulkDismissConfigurationResponse = Type.Object({
     dismisssedConfigurations: Type.Array(
         Type.Object({
-            name: Type.String(),
+            configurationName: Type.String(),
             configState: Type.String(),
             startTime: Type.Number(),
             endTime: Type.Optional(Type.Number()),

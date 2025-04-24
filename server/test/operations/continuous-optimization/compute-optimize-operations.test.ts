@@ -89,7 +89,8 @@ describe('Compute remediation operations', () => {
                     credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                     storage_type: 'FSXN',
                     co_relation_id: 'fs-f6082f35c1db',
-                    resource_name: 'test-resource'
+                    resource_name: 'test-resource',
+                    configurations: {}
                 }
             ],
             optimizeParentId,
@@ -120,7 +121,8 @@ describe('Compute remediation operations', () => {
                     credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                     storage_type: 'FSXN',
                     co_relation_id: 'fs-f6082f35c1db',
-                    resource_name: 'test-resource'
+                    resource_name: 'test-resource',
+                    configurations: null
                 }
             ],
             optimizeParentId,

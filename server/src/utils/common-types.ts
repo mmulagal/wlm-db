@@ -190,6 +190,10 @@ interface DatabaseInstanceConfigurations {
     dismissedConfigurations: DatabaseInstanceDismissConfigs;
 }
 
+interface DatabaseHostConfigurations {
+    dismissedConfigurations: DatabaseInstanceDismissConfigs;
+}
+
 interface CreateDbMetrics {
     numberofUserDbsCreated: number;
 }
@@ -245,6 +249,7 @@ interface ResourceDetails {
     clusterNodeDetails?: NodeDetails[];
     databaseInstanceDetails?: DatabaseInstance[];
     ec2UsageOperation?: string; // internal field used to store the ec2 usage operation for the unmanaged MSSQL resource
+    configurations?: DatabaseInstanceConfigurations | JsonValue;
 }
 
 interface DeploymentDetails {
@@ -623,12 +628,16 @@ interface DatabaseInstanceDismissConfigs {
         sizing?: InstanceDismissParams[];
         layout?: InstanceDismissParams[];
     };
-    compute?: InstanceDismissParams;
-    license?: InstanceDismissParams;
-    hostOsPatch?: InstanceDismissParams;
     rssConfig?: InstanceDismissParams;
     maxDop?: InstanceDismissParams;
     mssqlPatch?: InstanceDismissParams;
+    crr?: InstanceDismissParams;
+    snapshotPolicy?: InstanceDismissParams;
+    awsBackup?: InstanceDismissParams;
+    clone?: InstanceDismissParams;
+    compute?: InstanceDismissParams;
+    license?: InstanceDismissParams;
+    hostOsPatch?: InstanceDismissParams;
 }
 
 export {
@@ -683,5 +692,6 @@ export {
     ResourceAssessmentData,
     InstanceDismissParams,
     DatabaseInstanceDismissConfigs,
-    DatabaseInstanceConfigurations
+    DatabaseInstanceConfigurations,
+    DatabaseHostConfigurations
 };

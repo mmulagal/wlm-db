@@ -11,6 +11,7 @@ import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-o
 import {
     DatabaseInstance,
     DatabaseInstanceConfigurations,
+    DatabaseInstanceDismissConfigs,
     DatabaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     MappedOnTapVolumeResponse,
@@ -88,7 +89,10 @@ import {
     calculateCloneDrift,
     managedHostsCloneAssessment
 } from './continuous-optimization/clone-assessment-operations';
-import { getLastAssessedTime } from './continuous-optimization/assessment-utils';
+import {
+    getLastAssessedTime,
+    updateFieldsBasedOnDismissedConfigurations
+} from './continuous-optimization/assessment-utils';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -552,7 +556,8 @@ async function driftAssessmentDataCollection(
     jobId: string,
     databaseHostId: string,
     databaseInstanceRecord: WorkloadInstance,
-    fields?: string
+    fields?: string,
+    dismissedConfigurations?: DatabaseInstanceDismissConfigs
 ) {
     logger.info('Drift assessment data collection', {
         accountId,
@@ -561,7 +566,8 @@ async function driftAssessmentDataCollection(
         jobId,
         databaseHostId,
         databaseInstanceRecord,
-        fields
+        fields,
+        dismissedConfigurations
     });
 
     let shouldRunStorageAssessment = false;
@@ -577,37 +583,30 @@ async function driftAssessmentDataCollection(
     let shouldRunCloneAssessment = false;
 
     let fieldsValues: string | string[] = [];
-    if (fields) {
-        // remove the empty spaces in the string & split the fields by comma separated array values
-        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-        shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
-        shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-        shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
-        shouldRunHostOsPatchAssessment = fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase());
-        shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
-        shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
-        shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
-        shouldRunSnapshotPolicyAssessment = fieldsValues?.includes(
-            AssessmentCategories.SNAPSHOT_POLICY.toLocaleLowerCase()
-        );
-        shouldRunAwsBackupAssessment = fieldsValues?.includes(AssessmentCategories.AWS_BACKUP.toLocaleLowerCase());
-        shouldRunCrrAssessment = fieldsValues?.includes(AssessmentCategories.CRR.toLocaleLowerCase());
 
-        shouldRunCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
+    if (fields) {
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     } else {
         fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
-        shouldRunStorageAssessment = true;
-        shouldRunComputeAssessment = true;
-        shouldRunLicenseAssessment = true;
-        shouldRunHostOsPatchAssessment = true;
-        shouldRunRssConfigAssessment = true;
-        shouldRunMAXDOPAssessment = true;
-        shouldRunMSSQLPatchAssessment = true;
-        shouldRunSnapshotPolicyAssessment = true;
-        shouldRunAwsBackupAssessment = true;
-        shouldRunCrrAssessment = true;
-        shouldRunCloneAssessment = true;
     }
+    if (!isEmpty(dismissedConfigurations)) {
+        fieldsValues = updateFieldsBasedOnDismissedConfigurations(fieldsValues, dismissedConfigurations);
+    }
+
+    shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+    shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
+    shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
+    shouldRunHostOsPatchAssessment = fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase());
+    shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
+    shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
+    shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
+    shouldRunSnapshotPolicyAssessment = fieldsValues?.includes(
+        AssessmentCategories.SNAPSHOT_POLICY.toLocaleLowerCase()
+    );
+    shouldRunAwsBackupAssessment = fieldsValues?.includes(AssessmentCategories.AWS_BACKUP.toLocaleLowerCase());
+    shouldRunCrrAssessment = fieldsValues?.includes(AssessmentCategories.CRR.toLocaleLowerCase());
+
+    shouldRunCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
 
     if (shouldRunStorageAssessment || shouldRunSnapshotPolicyAssessment) {
         const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
@@ -762,6 +761,7 @@ async function triggerAssessment(
     let newDatabaseInstanceDetails;
     let cloudProviderAccountId;
     let instanceDetails;
+    let dismissedConfigurations;
 
     try {
         instanceDetails = await getInstanceDetails(
@@ -775,6 +775,13 @@ async function triggerAssessment(
         activeNodeInstanceId = instanceDetails.activeNodeInstanceId;
         newDatabaseInstanceDetails = instanceDetails.newDatabaseInstanceDetails;
         cloudProviderAccountId = instanceDetails.cloudProviderAccountId;
+        const { configurations: instanceConfigurations, resource: resourceDetail } =
+            newDatabaseInstanceDetails as unknown as DatabaseInstance;
+        const { configurations: hostConfigurations } = resourceDetail as unknown as ResourceDetails;
+        dismissedConfigurations = {
+            ...(instanceConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations,
+            ...(hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations
+        };
     } catch (error) {
         errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
         logger.error(errorMessage);
@@ -808,7 +815,8 @@ async function triggerAssessment(
             parentJobId,
             databaseHostId,
             instanceRecord,
-            fields
+            fields,
+            dismissedConfigurations || {}
         );
     } catch (error: any) {
         logger.error(error);
@@ -949,7 +957,8 @@ async function hostLevelDriftData(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    fields?: string
+    fields?: string,
+    dismissedConfigurations?: any
 ) {
     logger.info('Fetching host level drift data', {
         accountId,
@@ -957,7 +966,8 @@ async function hostLevelDriftData(
         region,
         databaseHostId,
         databaseInstanceId,
-        fields
+        fields,
+        dismissedConfigurations
     });
 
     let shouldCalculateComputeAssessment = false;
@@ -965,28 +975,25 @@ async function hostLevelDriftData(
     let shouldCalculateHostOsPatchAssessment = false;
     let shouldCalculateRssConfigAssessment = false;
     let shouldCalculateMSSQLPatchAssessment = false;
+    let fieldsValues: string | string[] = [];
 
     if (fields) {
-        // remove the empty spaces in the string & split the fields by comma separated array values
-        const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-        shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-        shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
-        shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
-            AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
-        );
-        shouldCalculateRssConfigAssessment = fieldsValues?.includes(
-            AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
-        );
-        shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
-            AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
-        );
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     } else {
-        shouldCalculateComputeAssessment = true;
-        shouldCalculateLicenseAssessment = true;
-        shouldCalculateHostOsPatchAssessment = true;
-        shouldCalculateRssConfigAssessment = true;
-        shouldCalculateMSSQLPatchAssessment = true;
+        fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
     }
+
+    if (!isEmpty(dismissedConfigurations)) {
+        updateFieldsBasedOnDismissedConfigurations(fieldsValues, dismissedConfigurations);
+    }
+
+    shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
+    shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
+    shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
+        AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
+    );
+    shouldCalculateRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
+    shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
 
     const [
         computeAssessmentResponse,
@@ -1039,7 +1046,9 @@ async function fetchDriftAssessment(
     });
 
     const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-    const { configurations } = instanceDetail as unknown as DatabaseInstance;
+    const { configurations: instanceConfigurations, resource } = instanceDetail as unknown as DatabaseInstance;
+
+    const { configurations: hostConfigurations } = resource as unknown as DatabaseInstance;
 
     let shouldCalculateStorageAssessment = false;
     let shouldCalculateComputeAssessment = false;
@@ -1236,10 +1245,12 @@ async function fetchDriftAssessment(
         driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
     }
 
-    if (configurations) {
-        const { dismissedConfigurations = {} } = configurations as DatabaseInstanceConfigurations;
+    if (!isEmpty(instanceConfigurations) || !isEmpty(hostConfigurations)) {
+        const dismissedConfigurations = {
+            ...(instanceConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations,
+            ...(hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations
+        };
         driftAssessmentData.dismissedConfigurations = dismissedConfigurations;
-        logger.debug('Configurations successfully added to driftAssessmentData:', configurations);
     }
 
     // Get last assessed timestamp
