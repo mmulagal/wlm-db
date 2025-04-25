@@ -77,7 +77,7 @@ async function calculateCloneDrift(
                 : 'All clones are proper and up-to-date with the source.';
 
         return {
-            name: 'Clone Management',
+            name: 'clone-management',
             status: status as AssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
             severity: SEVERITY.WARNING,

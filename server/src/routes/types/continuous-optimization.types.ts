@@ -528,7 +528,7 @@ const BulkDismissConfigurationBody = Type.Object({
     databaseHosts: Type.Array(DatabaseHostsWithInstancesBody)
 });
 
-type BulkDismissConfigurationBodyType = Static<typeof BulkDismissConfiguration>;
+type BulkDismissConfigurationBodyType = Static<typeof BulkDismissConfigurationBody>;
 
 const BulkDismissConfigurationRequestBody = Type.Object({
     configurationsToDismiss: Type.Array(BulkDismissConfigurationBody)

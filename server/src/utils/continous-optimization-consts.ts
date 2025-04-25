@@ -262,7 +262,8 @@ const ASSESSMENT_CONFIGS = {
     rssConfig: 'rss-config',
     snapshotPolicy: 'snapshot-policy',
     crr: 'crr',
-    awsBackup: 'scheduled-fsx-for-ontap-backups'
+    awsBackup: 'scheduled-fsx-for-ontap-backups',
+    clone: 'clone-management'
 };
 
 const DISMISS_STATUS = {

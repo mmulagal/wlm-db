@@ -91,6 +91,7 @@ import {
 } from './continuous-optimization/clone-assessment-operations';
 import {
     getLastAssessedTime,
+    checkAndUpdatePostponedEndTime,
     updateFieldsBasedOnDismissedConfigurations
 } from './continuous-optimization/assessment-utils';
 
@@ -868,6 +869,51 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         managedInstances.map(
                             async managedInstance => {
                                 try {
+                                    const { configurations: instanceConfigurations, resource } = managedInstance;
+                                    const instanceConfiguration = (
+                                        instanceConfigurations as unknown as DatabaseInstanceConfigurations
+                                    )?.dismissedConfigurations;
+                                    const hostDismissedConfigurations = (
+                                        resource?.configurations as unknown as DatabaseInstanceConfigurations
+                                    )?.dismissedConfigurations;
+                                    try {
+                                        await checkAndUpdatePostponedEndTime(
+                                            managedInstance.account_id,
+                                            managedInstance.credentials_id,
+                                            managedInstance.region,
+                                            managedInstance.resource_id,
+                                            instanceConfiguration,
+                                            managedInstance.database_instance_id
+                                        );
+                                    } catch (error) {
+                                        logger.error('Error while updating instance postponed end time', {
+                                            accountId: managedInstance.account_id,
+                                            credentialsId: managedInstance.credentials_id,
+                                            region: managedInstance.region,
+                                            databaseHostId: managedInstance.resource_id,
+                                            databaseInstanceId: managedInstance.database_instance_id,
+                                            error
+                                        });
+                                    }
+
+                                    try {
+                                        await checkAndUpdatePostponedEndTime(
+                                            managedInstance.account_id,
+                                            managedInstance.credentials_id,
+                                            managedInstance.region,
+                                            managedInstance.resource_id,
+                                            hostDismissedConfigurations
+                                        );
+                                    } catch (error) {
+                                        logger.error('Error while updating instance postponed end time', {
+                                            accountId: managedInstance.account_id,
+                                            credentialsId: managedInstance.credentials_id,
+                                            region: managedInstance.region,
+                                            databaseHostId: managedInstance.resource_id,
+                                            error
+                                        });
+                                    }
+
                                     await triggerAssessment(managedInstance, parentJobId, fields);
                                 } catch (error) {
                                     assessmentErrors.push(error);

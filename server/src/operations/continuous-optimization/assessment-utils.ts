@@ -151,6 +151,8 @@ async function formatInstanceDismissConfigurations(
 
     if (matchingKey) {
         const existingConfig = currentConfigs[matchingKey as keyof typeof currentConfigs] || {};
+        const thirtyDaysInMs = moment.duration(4, 'hours').asMilliseconds(); // Updated to 4 hours for testing
+
         const updatedConfigs = {
             ...currentConfigs,
             [matchingKey]: {
@@ -158,15 +160,27 @@ async function formatInstanceDismissConfigurations(
                 configurationName,
                 startTime,
                 configState,
-                ...(configState === DISMISS_STATUS.POSTPONED && {
-                    endTime: new Date(startTime).getTime() + 30 * 24 * 60 * 60 * 1000,
-                    deactivationReason: undefined
-                }),
-                ...(configState === DISMISS_STATUS.DISMISSED && { endTime: undefined, deactivationReason: undefined }),
-                ...(configState === DISMISS_STATUS.ACTIVE && {
-                    deactivationReason: DISMISS_DEACTIVATION_REASON.USER,
-                    endTime: undefined
-                })
+                ...(() => {
+                    switch (configState) {
+                        case DISMISS_STATUS.POSTPONED:
+                            return {
+                                endTime: startTime + thirtyDaysInMs,
+                                deactivationReason: undefined
+                            };
+                        case DISMISS_STATUS.DISMISSED:
+                            return {
+                                endTime: undefined,
+                                deactivationReason: undefined
+                            };
+                        case DISMISS_STATUS.ACTIVE:
+                            return {
+                                deactivationReason: DISMISS_DEACTIVATION_REASON.USER,
+                                endTime: undefined
+                            };
+                        default:
+                            return {};
+                    }
+                })()
             }
         };
         return updatedConfigs;
@@ -174,59 +188,60 @@ async function formatInstanceDismissConfigurations(
     logger.error('No matching key found for the configuration name:', configurationName);
     throw createError(
         HttpErrorCodes.NOT_FOUND,
-        `No matching key found for the configuration name:, ${configurationName}`
+        `No matching key found for the configuration name: ${configurationName}`
     );
 }
 
 async function updateDismissConfigurations(accountId: string, configurations: BulkDismissConfigurationType[]) {
     logger.info('Updating dismiss configurations for account:', { accountId, configurations });
-    const finalResponse = [];
-    for (const config of configurations) {
-        const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
-        const startTime = Date.now();
-        const response = {
-            configurationName: configName,
-            startTime,
-            configState,
-            databaseHosts: hostsToDismiss
-        };
+    const finalResponse = await Promise.all(
+        configurations.map(async config => {
+            const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
+            const startTime = Date.now();
+            const response = {
+                configurationName: configName,
+                startTime,
+                configState,
+                databaseHosts: hostsToDismiss
+            };
 
-        await Promise.all(
-            hostsToDismiss.map(async host => {
-                const { id: databaseHostId, sqlServerInstances, credentialsId, region } = host;
-                const hostIndex = response.databaseHosts.findIndex(hostId => hostId.id === databaseHostId);
+            await Promise.all(
+                hostsToDismiss.map(async host => {
+                    const { id: databaseHostId, sqlServerInstances, credentialsId, region } = host;
+                    const hostIndex = response.databaseHosts.findIndex(hostId => hostId.id === databaseHostId);
 
-                if (HOST_LEVEL_CONFIGURATIONS.includes(configName)) {
-                    const record = {
-                        configName,
-                        startTime,
-                        configState,
-                        databaseHostId,
-                        credentialsId,
-                        region,
-                        response,
-                        hostIndex
-                    };
-                    await handleHostLevelConfigurations(record);
-                } else {
-                    const record = {
-                        configName,
-                        startTime,
-                        configState,
-                        databaseHostId,
-                        credentialsId,
-                        region,
-                        response,
-                        hostIndex,
-                        sqlServerInstances
-                    };
-                    await handleInstanceLevelConfigurations(record);
-                }
-            })
-        );
+                    if (HOST_LEVEL_CONFIGURATIONS.includes(configName)) {
+                        const record = {
+                            configName,
+                            startTime,
+                            configState,
+                            databaseHostId,
+                            credentialsId,
+                            region,
+                            response,
+                            hostIndex
+                        };
+                        await handleHostLevelConfigurations(record);
+                    } else {
+                        const record = {
+                            configName,
+                            startTime,
+                            configState,
+                            databaseHostId,
+                            credentialsId,
+                            region,
+                            response,
+                            hostIndex,
+                            sqlServerInstances
+                        };
+                        await handleInstanceLevelConfigurations(record);
+                    }
+                })
+            );
 
-        finalResponse.push(response);
-    }
+            return response;
+        })
+    );
 
     return { dismisssedConfigurations: finalResponse };
 
@@ -378,6 +393,60 @@ function updateFieldsBasedOnDismissedConfigurations(
     return updatedFieldsValues;
 }
 
+async function checkAndUpdatePostponedEndTime(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    dismissedConfigs: DatabaseInstanceDismissConfigs,
+    databaseInstanceId?: string
+) {
+    logger.info('Check and update postponed config for end time', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        dismissedConfigs,
+        databaseInstanceId
+    });
+    const updatedConfigs = { ...dismissedConfigs };
+    let isConfigUpdated = false;
+
+    for (const [key, config] of Object.entries(dismissedConfigs)) {
+        if (config.configState === DISMISS_STATUS.POSTPONED) {
+            logger.debug(`Checking postponed configuration ${key}`, { config });
+            const currentTime = Date.now();
+            const { endTime } = config;
+            if (currentTime > endTime) {
+                logger.info(`Configuration ${key} has expired and will be activated`, { config });
+                updatedConfigs[key as keyof typeof dismissedConfigs] = {
+                    ...config,
+                    configState: DISMISS_STATUS.ACTIVE,
+                    deactivationReason: DISMISS_DEACTIVATION_REASON.EXPIRED,
+                    endTime: undefined
+                };
+                isConfigUpdated = true;
+            }
+        }
+    }
+    if (isConfigUpdated) {
+        if (databaseInstanceId) {
+            await updateDatabaseInstanceConfigurations(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                { dismissedConfigurations: updatedConfigs }
+            );
+        } else {
+            await updateDatabaseHostConfigurations(accountId, credentialsId, region, databaseHostId, {
+                dismissedConfigurations: updatedConfigs
+            });
+        }
+    }
+}
+
 export {
     getMatchingAssessmentStatus,
     handleOptimizeJobCreation,
@@ -385,5 +454,6 @@ export {
     updateDismissConfigurations,
     formatInstanceDismissConfigurations,
     getLastAssessedTime,
-    updateFieldsBasedOnDismissedConfigurations
+    updateFieldsBasedOnDismissedConfigurations,
+    checkAndUpdatePostponedEndTime
 };
