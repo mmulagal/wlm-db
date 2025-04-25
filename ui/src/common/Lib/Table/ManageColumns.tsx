@@ -71,29 +71,31 @@ export const ManageColumnsPanel = ({
                 </Checkbox>
             </div>
             <div className={styles['manage-content-content']}>
-                {allColumns.map(({ id, Header }) => {
-                    const isChecked = !(internalState[String(id)] && internalState[String(id)].isHidden);
-                    const singleColumnState = internalState[String(id)];
-                    return (
-                        <Checkbox
-                            key={id}
-                            isChecked={isChecked}
-                            isDisabled={singleColumnState?.isRemovalDisabled}
-                            className={styles['checkbox-container']}
-                            onChange={() =>
-                                setInternalState({
-                                    ...internalState,
-                                    [String(id)]: {
-                                        ...singleColumnState,
-                                        isHidden: !singleColumnState?.isHidden
-                                    }
-                                })
-                            }
-                        >
-                            <span>{typeof Header === 'function' ? <Header /> : Header}</span>
-                        </Checkbox>
-                    );
-                })}
+                {allColumns
+                    .filter(({ Header }: any) => Header !== undefined && Header !== null && Header !== '')
+                    .map(({ id, Header }) => {
+                        const isChecked = !(internalState[String(id)] && internalState[String(id)].isHidden);
+                        const singleColumnState = internalState[String(id)];
+                        return (
+                            <Checkbox
+                                key={id}
+                                isChecked={isChecked}
+                                isDisabled={singleColumnState?.isRemovalDisabled}
+                                className={styles['checkbox-container']}
+                                onChange={() =>
+                                    setInternalState({
+                                        ...internalState,
+                                        [String(id)]: {
+                                            ...singleColumnState,
+                                            isHidden: !singleColumnState?.isHidden
+                                        }
+                                    })
+                                }
+                            >
+                                <span>{typeof Header === 'function' ? <Header /> : Header}</span>
+                            </Checkbox>
+                        );
+                    })}
             </div>
             <div className={styles['buttons-row']}>
                 <Popover

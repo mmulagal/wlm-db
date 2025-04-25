@@ -1,6 +1,13 @@
 .renderTable {
     width: 1334px;
 
+    [class*='header-row'] {
+        [class*='header-cell']:nth-last-child(2) {
+            [class*='right-border'] {
+                display: none !important;
+            }
+        }
+    }
     .statusContainer {
         display: flex;
         gap: 8px;

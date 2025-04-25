@@ -1,4 +1,3 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
@@ -16,6 +15,10 @@ import {
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
+import { useTable } from '../../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../../common/Lib/Table/Table';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -30,6 +33,8 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+    const { credentialData } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const tableData = useMemo(() => {
         let cloneAssessmentData: any = [];
         let uniqueResourceList: Array<string> = [];
@@ -42,6 +47,12 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                 return;
             }
             uniqueResourceList.push(hostData?.databaseHostId);
+
+            const matchingCredEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
@@ -67,7 +78,10 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                             objectsInViolation: cloneObj?.objectsInViolation,
                             tags: cloneObj?.tags,
                             severity: cloneObj?.severity,
-                            configObj: cloneStateObj
+                            configObj: cloneStateObj,
+                            credentialName: matchingCredEntry?.name,
+                            regionName: matchingRegionEntry?.regionName,
+                            accountId: matchingCredEntry?.providerAccountId
                         });
                     }
                 }
@@ -116,18 +130,39 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: 'auto',
+            width: '200px',
             filterOptions: 'auto'
         },
         {
             Header: 'Impacted database',
             accessor: 'totalObjectsInViolation',
             id: '3',
-            width: '320px',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
             }
+        },
+        {
+            id: '4',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '5',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '6',
+            Header: 'Region',
+            accessor: 'regionName',
+            filterOptions: 'auto',
+            width: '180px'
         },
         lastColDetails(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT, {}, inProgressOptimizationData, inProgressHostData)
     ];
@@ -135,13 +170,15 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
     const tableProps = useTable({
         //@ts-ignore
         manageColumnsProps: false,
-        isHorizontalScroll: false,
+        isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
         rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: []
+        defaultSelectedRows: [],
+        isManagedColumns: true,
+        initialColumnState: initialDashboardInnerPageOptimizeColState
     });
 
     useEffect(() => {

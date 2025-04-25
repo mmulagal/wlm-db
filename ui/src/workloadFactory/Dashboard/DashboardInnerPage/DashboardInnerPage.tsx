@@ -1101,11 +1101,11 @@ const DashboardInnerPage = () => {
 
     const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
         return {
-            id: '4',
+            id: '7',
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '318px',
+            width: '220px',
             renderCell: (cellData: any, rowData: any) => {
                 let { isDisabled, errorMessage } = checkIfDisableForOptimize(
                     inProgressHostData,

@@ -1,4 +1,3 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
@@ -16,6 +15,10 @@ import {
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
+import { useTable } from '../../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../../common/Lib/Table/Table';
 
 const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -25,6 +28,9 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
+    const { credentialData } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
+
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         let uniqueResourceList: Array<string> = [];
@@ -37,6 +43,12 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                 return;
             }
             uniqueResourceList.push(hostData?.databaseHostId);
+
+            const matchingCredEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
@@ -62,7 +74,10 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[logDataFilesObj?.status],
                             data: instanceData,
-                            configObj: logDataFilesStateObj
+                            configObj: logDataFilesStateObj,
+                            credentialName: matchingCredEntry?.name,
+                            regionName: matchingRegionEntry?.regionName,
+                            accountId: matchingCredEntry?.providerAccountId
                         });
                     }
                 }
@@ -111,18 +126,39 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: 'auto',
+            width: '200px',
             filterOptions: 'auto'
         },
         {
             Header: 'Impacted databases',
             accessor: 'totalObjectsInViolation',
             id: '3',
-            width: '320px',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
             }
+        },
+        {
+            id: '4',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '5',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '6',
+            Header: 'Region',
+            accessor: 'regionName',
+            filterOptions: 'auto',
+            width: '180px'
         },
         lastColDetails(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF, {}, inProgressOptimizationData, inProgressHostData)
     ];
@@ -132,13 +168,15 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
-        isHorizontalScroll: false,
+        isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
         rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: []
+        defaultSelectedRows: [],
+        isManagedColumns: true,
+        initialColumnState: initialDashboardInnerPageOptimizeColState
     });
     useEffect(() => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
