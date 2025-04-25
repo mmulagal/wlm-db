@@ -267,7 +267,8 @@ const ASSESSMENT_CONFIGS = {
     rssConfig: 'rss-config',
     snapshotPolicy: 'snapshot-policy',
     crr: 'crr',
-    awsBackup: 'scheduled-fsx-for-ontap-backups'
+    awsBackup: 'scheduled-fsx-for-ontap-backups',
+    clone: 'clone-management'
 };
 
 const DISMISS_STATUS = {
@@ -286,6 +287,24 @@ const DISMISS_UPDATE_STATUS = {
     FAILED: 'FAILED',
     PARTIAL: 'PARTIAL'
 };
+
+const INSTANCE_LEVEL_CONFIGURATIONS = [
+    'storage',
+    'maxdop',
+    'mssql-patch',
+    'mapped-ontap-volumes',
+    'clone',
+    'snapshot-policy',
+    'crr'
+];
+
+const HOST_LEVEL_CONFIGURATIONS = [
+    'license',
+    'host-os-patch',
+    'rss-config',
+    'compute-rightsizing',
+    'scheduled-fsx-for-ontap-backups'
+];
 
 export {
     AssessmentCategories,
@@ -325,5 +344,7 @@ export {
     STORAGE_ASSESMENT_CONFIGS_MAP,
     DISMISS_DEACTIVATION_REASON,
     DISMISS_STATUS,
-    DISMISS_UPDATE_STATUS
+    DISMISS_UPDATE_STATUS,
+    INSTANCE_LEVEL_CONFIGURATIONS,
+    HOST_LEVEL_CONFIGURATIONS
 };

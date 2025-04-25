@@ -66,6 +66,7 @@ model resource {
   cloud_provider_name       String? @db.VarChar(30)
   region                    String? @db.VarChar(30)
   metadata                  Json?   @default("{}")
+  configurations            Json?   @default("{}")
   database_instances        database_instances[]
   database_instance_config_data database_instance_config_data[]
 
