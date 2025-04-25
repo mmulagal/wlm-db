@@ -2832,7 +2832,7 @@ async function optimizeClone(
             resourceName: serverNameWithHostName as string,
             name: `Optimize clone for ${serverNameWithHostName}`,
             startTime: Date.now(),
-            description: `Optimize clone for ${serverNameWithHostName}, clone database ${cloneDatabaseName}`,
+            description: `Optimize clone for ${serverNameWithHostName}`,
             parentJobId
         });
         childCloneJobId = id;
