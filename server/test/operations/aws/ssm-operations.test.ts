@@ -1,13 +1,15 @@
 import { faker } from '@faker-js/faker';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import {
     executeSSMDocument,
     getFSxOntapRegionsList,
     ssmPutParameters,
     getEc2SqlParameters,
     getGenericFSxOntapRegionsList,
-    pollCommandStatusForAllInstances
+    pollCommandStatusForAllInstances,
+    pollSSMConnectionStatus
 } from '../../../src/operations/aws/ssm-operations';
-import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/aws/ec2-scope';
@@ -16,6 +18,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import { SSMParamterObject } from '../../../src/utils/common-types';
 import getParameterResponse from '../../simulator/responses/aws/ssm-get-parameter.json';
+import { ACCOUNTID } from '../../../src/utils/consts';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
@@ -213,5 +216,10 @@ describe('executeSsmDocument', () => {
         );
 
         expect(response.length).toEqual(instanceIds.length);
+    });
+
+    it('should poll ssm connection status', async () => {
+        const connStatus = await pollSSMConnectionStatus(ACCOUNTID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'i-test-ec2');
+        expect(connStatus.Status).toBe(ConnectionStatus.CONNECTED);
     });
 });

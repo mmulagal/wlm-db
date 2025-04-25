@@ -10,7 +10,7 @@ import {
     OPTIMIZATION_CATEGORIES
 } from '../../utils/continous-optimization-consts';
 import { getServerNameWithHostname, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../../utils/utils';
-import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
+import { callSsmExecution, getSSMConnectionStatus, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { OPTIMIZE_NETWORK_ADAPTERS } from '../workloads/mssql/continuous-optimization-scripts';
 import { updateJobDetails } from '../database/job-operations';
@@ -338,11 +338,15 @@ async function handleOptimizeRssOptimization(
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
 
-            if (!isDemo()) {
-                // Wait for 3 minutes
-                await sleep(3 * 60 * 1000);
+            try {
+                // check for an active SSM connection before running the assessment
+                // poll duration = 5 minutes, poll interval = 20 seconds.
+                await pollSSMConnectionStatus(accountId, credentialsId, region, activeNodeInstanceId);
+            } catch (error) {
+                logger.error((error as Error).message);
+                throw error;
             }
-
+            // check if the sql server is running before running the assessment
             const checkRunningResponse = await checkRunningStatus(
                 accountId,
                 jobId,

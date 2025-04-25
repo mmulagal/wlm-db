@@ -65,7 +65,8 @@
     },
     "ssm": {
         "poll-interval": "1s",
-        "execution-timeout": "45"
+        "execution-timeout": "45",
+        "connection-poll-interval": "20s"
     },
     "auth": {
         "wlmdb": {
