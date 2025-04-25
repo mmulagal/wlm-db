@@ -265,21 +265,12 @@ async function callSsmExecution(
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
         const response = await executeSSMDocument(credentialsId, region, params, accountId);
-        let { error, output = '' } = await extractSsmResponse({ response });
+        const { error, output = '' } = await extractSsmResponse({
+            response,
+            cloudWatchParams: { credentialsId, region, activeNodeInstanceId }
+        });
         if (error) {
             throw createError(error);
-        }
-        if (output.endsWith('--output truncated--')) {
-            if (!response?.CommandId) {
-                throw createError('Command Id not found');
-            }
-            const responses = await getSsmResponseFromCloudWatch(
-                credentialsId,
-                region,
-                response?.CommandId,
-                activeNodeInstanceId
-            );
-            output = responses.join('');
         }
         if (cacheData) {
             logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
@@ -474,8 +465,13 @@ async function extractSsmResponse(ssmResponse: {
     instanceId?: string;
     response?: GetCommandInvocationCommandOutput;
     error?: string;
+    cloudWatchParams: {
+        credentialsId: string;
+        region: string;
+        activeNodeInstanceId: string;
+    };
 }) {
-    const { commandId, instanceId, response, error } = ssmResponse;
+    const { commandId, instanceId, response, error, cloudWatchParams } = ssmResponse;
     logger.info(`Extract SSM response from instance ${instanceId} for command with id: ${commandId}`, { response });
 
     if (error) {
@@ -497,7 +493,22 @@ async function extractSsmResponse(ssmResponse: {
         return { error: errorMessage };
     }
 
-    const output = await decompressSSMResponse(response?.StandardOutputContent || '');
+    const rawOutput = response?.StandardOutputContent || '';
+    let combinedOutput = rawOutput;
+    if (rawOutput.endsWith('--output truncated--')) {
+        if (!response?.CommandId) {
+            throw createError('Command Id not found');
+        }
+        const responses = await getSsmResponseFromCloudWatch(
+            cloudWatchParams.credentialsId,
+            cloudWatchParams.region,
+            response?.CommandId,
+            cloudWatchParams.activeNodeInstanceId
+        );
+        combinedOutput = responses.join('');
+    }
+
+    const output = await decompressSSMResponse(combinedOutput);
     return { output };
 }
 
