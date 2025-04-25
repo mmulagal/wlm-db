@@ -348,12 +348,35 @@ async function handleOptimizeRssOptimization(
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
 
+            jobDescription = `Validating SSM connectivity to the instance: ${activeNodeInstanceId}`;
+            const ssmConnectionCheckJobId = await handleOptimizeJobCreation(
+                accountId,
+                credentialsId,
+                region,
+                formattedInstanceName,
+                JOBTYPE.OPTIMIZATION,
+                jobDescription,
+                jobDescription,
+                parentJobId
+            );
+            let ssmConnectionCheckJobStatus;
+            let ssmConnectionCheckJobError;
             try {
                 // check for an active SSM connection before running the assessment
                 await pollSSMConnectionStatus(accountId, credentialsId, region, activeNodeInstanceId);
+                ssmConnectionCheckJobStatus = JOBSTATUS.COMPLETED;
             } catch (error) {
-                logger.error((error as Error).message);
+                isAnySubjobFailed = true;
+                ssmConnectionCheckJobStatus = JOBSTATUS.FAILED;
+                ssmConnectionCheckJobError = (error as Error).message;
+                logger.error(ssmConnectionCheckJobError);
                 throw error;
+            } finally {
+                updateJobDetails(accountId, ssmConnectionCheckJobId, {
+                    status: ssmConnectionCheckJobStatus ?? JOBSTATUS.FAILED,
+                    endTime: Date.now(),
+                    error: ssmConnectionCheckJobError
+                });
             }
             // check if the sql server is running before running the assessment
             const checkRunningResponse = await checkRunningStatus(

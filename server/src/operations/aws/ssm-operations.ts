@@ -411,7 +411,7 @@ async function pollSSMConnectionStatus(
     credentialId: string,
     region: string,
     instanceId: string,
-    retryCount: number = 15,
+    retryCount: number = 1,
     pollInterval: number = ms(config.get<string>('ssm.connection-poll-interval'))
 ) {
     logger.info('Polling SSM connection status', {
