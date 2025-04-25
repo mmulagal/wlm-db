@@ -17,7 +17,10 @@ import { GET_VCPU_AND_MAXDOP_DETAILS } from '../workloads/mssql/continuous-optim
 import { callSsmExecution } from '../aws/ssm-operations';
 import { sqlResponseParsing } from '../../utils/utils';
 import { ParameterDriftResponseType } from '../../routes/types/continuous-optimization.types';
-import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
+import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData
+} from '../../lib/database/database-instance-config';
 
 const logger = getLogger();
 
@@ -97,8 +100,8 @@ async function managedHostsMaxDOPAssessment(
     });
 
     const { id: maxDopAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL Server MaxDOP assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL Server MaxDOP assessment for ${resourceName}`,
+        name: 'MaxDOP assessment ',
+        description: 'MaxDOP assessment',
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -132,6 +135,21 @@ async function managedHostsMaxDOPAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+    }
+
+    if (!isEmpty(maxDOPAssessment)) {
+        await createDatabaseInstanceConfigData([
+            {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource_id: databaseHostId,
+                database_instance_id: databaseInstanceId as string,
+                creation_time: new Date(Date.now()),
+                config_data_type: AssessmentCategories.MAXDOP,
+                config_data: maxDOPAssessment
+            }
+        ]);
     }
 
     return maxDOPAssessment;

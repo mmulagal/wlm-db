@@ -28,7 +28,10 @@ import { registerJob, updateJobDetails } from '../database/job-operations';
 import { GET_SANDBOX_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { calculateDaysSince, determineVolumeType, sqlResponseParsing } from '../../utils/utils';
-import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
+import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData
+} from '../../lib/database/database-instance-config';
 import { GET_SANDBOXES } from '../workloads/mssql/queries';
 import { getProperty, getSourceDetails } from '../sandbox-operations';
 import { getMappedOntapVolumes } from '../aws/fsx-operations';
@@ -120,8 +123,8 @@ async function managedHostsCloneAssessment(
     });
 
     const { id: cloneAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL Server Clone assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
-        description: `Microsoft SQL Server Clone assessment for ${resourceName}`,
+        name: 'Clone assessment',
+        description: 'Clone assessment',
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -173,6 +176,21 @@ async function managedHostsCloneAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
+    }
+
+    if (!isEmpty(cloneAssessment)) {
+        await createDatabaseInstanceConfigData([
+            {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource_id: databaseHostId,
+                database_instance_id: databaseInstanceId as string,
+                creation_time: new Date(Date.now()),
+                config_data_type: AssessmentCategories.CLONE,
+                config_data: cloneAssessment
+            }
+        ]);
     }
 
     return cloneAssessment;
