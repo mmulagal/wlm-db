@@ -15,7 +15,10 @@ import {
     OptimizeMpioIscsiSessionsParams,
     StorageTierParams,
     MaxDOPAssesment,
-    AwsFsxNBackupConfig
+    AwsFsxNBackupConfig,
+    CloneAssessment,
+    CloneDetail,
+    MappedVolumeResponseForClone
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -63,6 +66,7 @@ import {
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import {
+    CloneDetailType,
     OptimizePerHostRequestBodyType,
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
@@ -94,6 +98,7 @@ import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimizatio
 import { onDemandTriggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { listJobs } from '../lib/database/job';
 import { resetCache } from '../utils/cache';
+import { handleCloneRemediation } from './continuous-optimization/clone-optimization-operations';
 
 const isDemoFlow = isDemo();
 
@@ -2721,7 +2726,7 @@ async function triggerAssessmentAfterOptimization(
     databaseHostId: string,
     serverNameWithHostName: string,
     parentJobId: string,
-    instanceToAssess: WorkloadInstance,
+    instanceToAssess: { id: string },
     fields?: string
 ) {
     logger.info('Triggering assessment after optimization', {
@@ -2785,6 +2790,90 @@ async function triggerAssessmentAfterOptimization(
     updateLongRunningAuditGroup(AuditStatus.SUCCESS);
 }
 
+async function optimizeClone(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    clone: CloneDetailType,
+    configData: CloneAssessment,
+    sqlServerName: string,
+    instanceName: string,
+    parentJobId: string,
+    volumeMapping?: MappedVolumeResponseForClone
+) {
+    // 2nd Level Job having master parent job id
+    logger.info('Optimizing clone', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        clone,
+        configData,
+        sqlServerName,
+        instanceName,
+        volumeMapping,
+        parentJobId
+    });
+
+    let childCloneJobId = '';
+
+    const { cloneDatabaseName, clonedBy } = clone;
+    try {
+        const { oldCloneDetails } = configData as unknown as CloneAssessment;
+        logger.debug(`Clones data ${JSON.stringify(oldCloneDetails)}`);
+
+        const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, cloneDatabaseName);
+        const { id } = await registerJob(accountId, credentialsId, region, {
+            type: JOBTYPE.OPTIMIZATION,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: serverNameWithHostName as string,
+            name: `Optimize clone for ${serverNameWithHostName}`,
+            startTime: Date.now(),
+            description: `Optimize clone for ${serverNameWithHostName}`,
+            parentJobId
+        });
+        childCloneJobId = id;
+
+        const matchingClone: CloneDetail | undefined = oldCloneDetails?.find(
+            ({ cloneDatabaseName: databaseName, clonedBy: owner }) =>
+                databaseName === cloneDatabaseName && owner === clonedBy?.toLowerCase()
+        );
+
+        if (!matchingClone) {
+            throw createError(HttpErrorCodes.NOT_FOUND, `Clone ${cloneDatabaseName} not found for ${clonedBy}`);
+        }
+        await handleCloneRemediation(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            childCloneJobId,
+            clone,
+            matchingClone,
+            serverNameWithHostName,
+            volumeMapping
+        );
+        // can update once the job is success for this newly created child job one
+        await updateJobDetails(accountId, childCloneJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
+    } catch (err) {
+        const errorMessage = `Error while optimizing clone ${clone.cloneDatabaseName} ${err}`;
+        logger.error(errorMessage);
+        await updateJobDetails(accountId, childCloneJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+}
+
 function isDatabaseInstanceMetadata(value: any): value is DatabaseInstanceMetadata {
     return value && typeof value === 'object' && 'configsOptimized' in value;
 }
@@ -2796,5 +2885,7 @@ export {
     optimizeStorageTier,
     activeSqlNodeDetails,
     optimizeMaxDop,
-    handleUpdateAwsBackup
+    handleUpdateAwsBackup,
+    optimizeClone,
+    triggerAssessmentAfterOptimization
 };

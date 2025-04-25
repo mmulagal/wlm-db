@@ -553,9 +553,18 @@ async function getMappedOntapVolumes(
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
                 const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
+                const normalizedVolumeDBMap = Array.isArray(volumeDBMap)
+                    ? volumeDBMap
+                    : volumeDBMap
+                    ? [volumeDBMap]
+                    : [];
                 iName = originalInstanceName;
                 if (volumes && !isEmpty(volumes?.records)) {
-                    instancesResponse[iName] = { volumeRecords: volumes.records, volumeDBMap, lunNames };
+                    instancesResponse[iName] = {
+                        volumeRecords: volumes.records,
+                        volumeDBMap: normalizedVolumeDBMap,
+                        lunNames
+                    };
                 } else {
                     instancesResponse[iName] = { volumeRecords: [], volumeDBMap: [], lunNames: [] };
                 }

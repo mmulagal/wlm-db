@@ -4,12 +4,14 @@ import {
     AwsWellArchitecturedPillars,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
+    OptimizeCloneParams,
     OptimizeComputeParams,
     OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigs,
     OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
+import { CLONE_ACTION } from '../../utils/consts';
 
 const SizingViolationResponse = Type.Object({
     databases: Type.Optional(Type.Array(Type.String())),
@@ -549,6 +551,40 @@ const BulkDismissConfigurationResponse = Type.Object({
 
 type BulkDismissConfigurationResponseType = Static<typeof BulkDismissConfigurationResponse>;
 
+const CloneDetail = Type.Object({
+    cloneDatabaseName: Type.String(),
+    clonedBy: Type.String(),
+    action: Type.String({ enum: [CLONE_ACTION.REFRESH, CLONE_ACTION.DELETE] })
+});
+
+const OptimizeClonesPerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    region: Type.String(),
+    credentialsId: Type.String(),
+    sqlServerInstances: Type.Array(
+        Type.Object({
+            instanceId: Type.String(),
+            clones: Type.Array(CloneDetail)
+        })
+    )
+});
+
+type OptimizeClonesPerHostRequestBodyType = Static<typeof OptimizeClonesPerHostRequestBody>;
+type CloneDetailType = Static<typeof CloneDetail>;
+
+const BulkOptimizeCloneInHostRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OptimizeCloneParams
+    }),
+    databaseHosts: Type.Array(OptimizeClonesPerHostRequestBody)
+});
+type BulkOptimizeCloneInHostRequestBodyType = Static<typeof BulkOptimizeCloneInHostRequestBody>;
+
+const BulkOptimizeCloneBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeCloneInHostRequestBody)
+});
+type BulkOptimizeCloneBodyType = Static<typeof BulkOptimizeCloneBody>;
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -601,6 +637,11 @@ export {
     CloneDriftResponseType,
     GenericAssessmentResponse,
     GenericAssessmentResponseType,
+    BulkOptimizeCloneBodyType,
+    BulkOptimizeCloneInHostRequestBodyType,
+    BulkOptimizeCloneBody,
+    OptimizeClonesPerHostRequestBodyType,
+    CloneDetailType,
     BulkDismissConfigurationType,
     BulkDismissConfigurationRequestBodyType,
     BulkDismissConfigurationResponseType,

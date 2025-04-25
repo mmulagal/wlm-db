@@ -1367,7 +1367,8 @@ async function fetchDriftAssessmentPerHost(
                     AssessmentCategories.MAXDOP,
                     AssessmentCategories.SNAPSHOT_POLICY,
                     AssessmentCategories.AWS_BACKUP,
-                    AssessmentCategories.CRR
+                    AssessmentCategories.CRR,
+                    AssessmentCategories.CLONE
                 ];
 
                 const driftAssessment = await fetchDriftAssessment(
