@@ -55,7 +55,7 @@ async function runComputeAssessment(
                 }
             }
         );
-        const {
+        let {
             instanceRecommendations: [
                 {
                     currentInstanceType = '',
@@ -81,6 +81,10 @@ async function runComputeAssessment(
                     platformDifferences
                 }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
             );
+
+        if (filteredRecommendationOptions.length > 0) {
+            finding = 'NOT_OPTIMIZED';
+        }
 
         return {
             currentInstanceType,
@@ -127,19 +131,22 @@ async function calculateComputeDrift(
             return { errorMessage };
         }
 
-        const { finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
-            compute as ComputeAssessment;
+        let { finding, findingReasonCodes, currentInstanceType, recommendationOptions } = compute as ComputeAssessment;
 
         let recommendationMessage = 'Analyzing instance for rightsizing. Check later for recommendations.';
         let findingValue = AssessmentStatus.ANALYZING;
         let objectsInViolation: string[] = [];
+
+        if (!isEmpty(recommendationOptions)) {
+            finding = 'NOT_OPTIMIZED';
+        }
 
         if (finding) {
             findingValue = getMatchingAssessmentStatus(finding);
             const underProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is under-provisioned. We recommend upgrading it to meet your workload demands. This will provide additional CPU, memory, and I/O capacity, ensuring better performance for your SQL Server DB.`;
             const overProvisionedRecommendationMessage = `Your current instance ${currentInstanceType} is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses.`;
 
-            if (findingValue.includes('provisioned')) {
+            if (findingValue.includes('provisioned') || findingValue === AssessmentStatus.NOT_OPTIMIZED) {
                 // under_provisioned or over_provisioned
                 const genericRecommendationMessage =
                     'Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.';
