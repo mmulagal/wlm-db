@@ -547,24 +547,28 @@ const DashboardDismissPage = () => {
         let setHeader = '';
         let setContent: Array<string> = [];
         let setPrimaryButton = '';
+        let typeText = type?.toLowerCase() || '';
         if (dialogCheck && action === CONFIG_STATE_ACTIONS.ACTIVE) {
-            setHeader = `Reactivate ${type} analysis`;
+            setHeader = `Reactivate ${typeText} analysis`;
             setContent = [
-                'Are you ready to re-activate the analysis for the selected SQL Server instances?',
-                'Select "Activate" to continue.'
+                'Selected instances that are active will continue to get analyzed.',
+                'Are you ready to reactivate the analysis for the selected SQL Server instances?',
+                'Select "Reactivate" to continue.'
             ];
-            setPrimaryButton = 'Activate';
+            setPrimaryButton = 'Reactivate';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.POSTPONED) {
-            setHeader = `Postpone ${type} analysis`;
+            setHeader = `Postpone ${typeText} analysis`;
             setContent = [
-                'Are you ready to postpone the analysis for the selected SQL Server instances?',
-                'Select "Postpone" to continue.'
+                "Selected instances that are postponed won't get analyzed for 30 days.",
+                `Are you ready to postpone the ${typeText} analysis of the selected SQL Server instances?`,
+                'Select "Postpone for 30 days" to continue.'
             ];
-            setPrimaryButton = 'Postpone';
+            setPrimaryButton = 'Postpone for 30 days';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.DISMISS) {
-            setHeader = `Dismiss ${type} analysis`;
+            setHeader = `Dismiss ${typeText} analysis`;
             setContent = [
-                'Are you ready to dismiss the analysis for the selected SQL Server instances?',
+                "Selected instances that you dismiss won't get analyzed.",
+                `Are you ready to dismiss the ${typeText} analysis for the selected SQL Server instances?`,
                 'Select "Dismiss" to continue.'
             ];
             setPrimaryButton = 'Dismiss';
@@ -577,7 +581,12 @@ const DashboardDismissPage = () => {
                     content={
                         <>
                             <DsTypography variant="Regular_14">{setContent[0]}</DsTypography>
-                            <DsTypography variant="Regular_14">{setContent[1]}</DsTypography>
+                            <DsTypography variant="Regular_14" style={{ marginTop: '24px' }}>
+                                {setContent[1]}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" style={{ marginTop: '24px' }}>
+                                {setContent[2]}
+                            </DsTypography>
                         </>
                     }
                     primaryButton={setPrimaryButton}
