@@ -30,6 +30,7 @@ import {
     BulkOptimizeMaxDopSchema,
     OptimizeResilienceSchema,
     BulkOptimizeAwsBackupSchema,
+    BulkOptimizeCloneSchema,
     BulkDismissConfigurationSchema
 } from './schemas/continuous-optimization-schema';
 import {
@@ -40,12 +41,19 @@ import {
 } from '../operations/cont-opt-optimize-operations';
 import optimizeCompute from '../operations/continuous-optimization/compute-optimize-operations';
 import castRequest from './utils';
-import { bulkComputeOptimization, bulkOptimization } from '../operations/bulk-cont-opt-operations';
+import {
+    bulkCloneOptimization,
+    bulkComputeOptimization,
+    bulkOptimization
+} from '../operations/bulk-cont-opt-operations';
 import {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize
 } from '../operations/continuous-optimization/resilience-optimize-operations';
-import { OptimizeResiliencyBodyType } from './types/continuous-optimization.types';
+import {
+    OptimizeResiliencyBodyType,
+    BulkOptimizeCloneInHostRequestBodyType
+} from './types/continuous-optimization.types';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-utils';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -371,6 +379,21 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     body: { configurationsToDismiss }
                 } = castRequest(request);
                 const response = await updateDismissConfigurations(accountId, configurationsToDismiss);
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/clone`,
+            { schema: BulkOptimizeCloneSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+                const response = await bulkCloneOptimization(
+                    accountId,
+                    hostsToOptimize as BulkOptimizeCloneInHostRequestBodyType[]
+                );
                 return reply.send(response);
             }
         );

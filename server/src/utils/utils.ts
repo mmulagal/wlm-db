@@ -716,15 +716,19 @@ function getOriginalDatabaseInstanceName(instanceName: string | undefined): stri
 /**
  * Returns formatted instance name with hostname for MSSQL
  */
-function getServerNameWithHostname(sqlServerName?: string, instanceName?: string) {
+function getServerNameWithHostname(sqlServerName?: string, instanceName?: string, databaseName?: string) {
     if (isDemo()) {
         // In ssm-scope, the instance name is appended with the hostname. (like below)
         // instanceName: "MSSQL$SQL-Managed-Host-ProdPROD-MarketingCampaigns"
+        // check this
         if (sqlServerName && instanceName && instanceName !== DEFAULT_INSTANCE_NAME) {
             instanceName = instanceName.replace(sqlServerName, '');
         }
     }
 
+    if (instanceName && sqlServerName && databaseName) {
+        return `${sqlServerName}\\${instanceName}\\${databaseName}`;
+    }
     if (instanceName && sqlServerName) {
         return `${sqlServerName}\\${instanceName}`;
     }

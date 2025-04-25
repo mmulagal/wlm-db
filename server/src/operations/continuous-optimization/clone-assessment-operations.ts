@@ -4,7 +4,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import {
-    CloneAssesment,
+    CloneAssessment,
     CloneDetail,
     InstancesResponse,
     VolumeDBMapEntry,
@@ -60,7 +60,7 @@ async function calculateCloneDrift(
         );
 
         logger.debug('Persisted Clone configuration data from DB', persistedConfigurationData);
-        const cloneAssessment = persistedConfigurationData?.config_data as unknown as CloneAssesment;
+        const cloneAssessment = persistedConfigurationData?.config_data as unknown as CloneAssessment;
 
         if (isEmpty(cloneAssessment)) {
             errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CLONE);
@@ -68,7 +68,7 @@ async function calculateCloneDrift(
             return { errorMessage };
         }
         const { cloneDetails, status, oldClones, oldCloneDetails, oldCloneDatabaseNames } =
-            cloneAssessment as CloneAssesment;
+            cloneAssessment as CloneAssessment;
         logger.debug('Clone assessment result', cloneDetails);
 
         const recommendationMessage =
@@ -364,6 +364,8 @@ async function runCloneAssessment(
         }
     });
 
+    const databaseMap = new Map<string, CloneDetail>(); // Map to store CloneDetail by cloneDatabaseName
+
     filteredVolumeRecords.forEach((record: VolumeRecord) => {
         const {
             uuid: cloneVolumeUuid,
@@ -376,47 +378,69 @@ async function runCloneAssessment(
         const createdDate = cloneVolumeCreateTime ? new Date(cloneVolumeCreateTime) : new Date();
         const cloneAge = calculateDaysSince(createdDate);
 
-        const clonedVolumeInfo = {
-            sourceVolumeName: cloneParentVolumeName,
-            cloneVolumeName,
-            cloneVolumeUuid,
-            cloneVolumeCreateTime
-        };
-
         const clonedDatabaseNames = volumeUUIDToDatabaseNameMap.get(cloneVolumeUuid);
 
         clonedDatabaseNames?.forEach(clonedDatabaseName => {
+            const clonedVolumeInfo = {
+                sourceVolumeName: cloneParentVolumeName,
+                cloneVolumeName,
+                cloneVolumeUuid,
+                cloneVolumeCreateTime,
+                cloneDatabaseName: clonedDatabaseName
+            };
             // Check if the sandboxName is already processed by netapp_wf
             if (!processedSandboxNames.has(clonedDatabaseName)) {
-                const databaseObject = {
-                    cloneDatabaseName: clonedDatabaseName,
-                    databaseHostName: resourceName,
-                    databaseHostId: resourceId,
-                    databaseInstanceName,
-                    clonedBy: 'other',
-                    cloneAge,
-                    clonedVolumeDetails: [
-                        {
-                            ...clonedVolumeInfo
-                        }
-                    ]
-                };
+                // Check if the database already exists in the map
+                if (databaseMap.has(clonedDatabaseName)) {
+                    // Append the volume details to the existing record
+                    const existingRecord = databaseMap.get(clonedDatabaseName)!;
+                    existingRecord.clonedVolumeDetails?.push(clonedVolumeInfo);
 
-                if (cloneAge !== undefined && cloneAge > CLONE_AGE) {
-                    oldClones += 1;
-                    oldCloneDetails.push(databaseObject);
-                    oldCloneDatabaseNames.push(clonedDatabaseName);
+                    // Update cloneAge if the new volume has a higher age
+                    if (
+                        cloneAge !== undefined &&
+                        (existingRecord.cloneAge === undefined || cloneAge > existingRecord.cloneAge)
+                    ) {
+                        existingRecord.cloneAge = cloneAge;
+                    }
+
+                    // If the clone is old, ensure it's added to oldCloneDetails and oldCloneDatabaseNames
+                    if (cloneAge > CLONE_AGE && !oldCloneDatabaseNames.includes(clonedDatabaseName)) {
+                        oldClones += 1;
+                        oldCloneDetails.push(existingRecord);
+                        oldCloneDatabaseNames.push(clonedDatabaseName);
+                    }
+                } else {
+                    // Create a new record for the database
+                    const databaseObject: CloneDetail = {
+                        cloneDatabaseName: clonedDatabaseName,
+                        databaseHostName: resourceName,
+                        databaseHostId: resourceId,
+                        databaseInstanceName,
+                        clonedBy: 'other',
+                        cloneAge,
+                        clonedVolumeDetails: [clonedVolumeInfo]
+                    };
+
+                    // Add to oldCloneDetails and oldCloneDatabaseNames if it's an old clone
+                    if (cloneAge !== undefined && cloneAge > CLONE_AGE) {
+                        oldClones += 1;
+                        oldCloneDetails.push(databaseObject);
+                        oldCloneDatabaseNames.push(clonedDatabaseName);
+                    }
+                    databaseMap.set(clonedDatabaseName, databaseObject);
                 }
-                sandboxInfo.push(databaseObject);
             }
         });
     });
+
+    const otherClones = Array.from(databaseMap.values());
 
     const isOptimized = oldClones === 0;
     const optimizationStatus = isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 
     return {
-        cloneDetails: sandboxInfo,
+        cloneDetails: [...sandboxInfo, ...otherClones],
         status: optimizationStatus,
         oldClones,
         oldCloneDetails,

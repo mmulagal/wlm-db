@@ -109,6 +109,15 @@ const ontapRestRequestBootstrap = `
             $FSxCredentials = New-Object System.Management.Automation.PSCredential($FSxUserName, $FSxPasswordSecureString)
             $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
             $FSxHostName = "management.$fsxId.fsx.$FSxRegion.amazonaws.com"
+            $IsFSxNManagementDomainResolved = Test-Connection -ComputerName $FSxHostName -Quiet -Count 1
+            if ($IsFSxNManagementDomainResolved -eq $False) {
+                Write-Information "FSxN Management domain $FSxHostName is not resolved. Switching to management IP."
+                $FileSystemDetails = Get-FSXFileSystem -FileSystemId $fsxId
+                $FSxHostName = $FileSystemDetails.ontapconfiguration.Endpoints.Management.IpAddresses
+                if ($FSxHostName -is [array]) {
+                    $FSxHostName = $FSxHostName[0]
+                }
+            }
             return @{
                 FSxCredentialsInBase64 = $FSxCredentialsInBase64
                 FSxHostName = $FSxHostName
@@ -166,6 +175,9 @@ const compressResponse = `
         $bytes = $memoryStream.ToArray()
         $encodedString = [Convert]::ToBase64String($bytes)
 
+        if ($encodedString.length -ge 24000) {
+            return $stringToCompress
+        }
         return $encodedString
     }
 `;

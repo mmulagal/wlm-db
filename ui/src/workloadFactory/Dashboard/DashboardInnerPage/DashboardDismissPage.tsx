@@ -30,6 +30,8 @@ const DashboardDismissPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const { credentialData } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
@@ -205,7 +207,7 @@ const DashboardDismissPage = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.SUCCESS,
-                            message: `Analysis state was changed.`
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_SUCCESS
                         })
                     );
                 } else {
@@ -220,7 +222,7 @@ const DashboardDismissPage = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: `Failed to change analysis state.`
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_FAILED
                         })
                     );
                 }
@@ -547,24 +549,28 @@ const DashboardDismissPage = () => {
         let setHeader = '';
         let setContent: Array<string> = [];
         let setPrimaryButton = '';
+        let typeText = type?.toLowerCase() || '';
         if (dialogCheck && action === CONFIG_STATE_ACTIONS.ACTIVE) {
-            setHeader = `Activate SQL Server instance analysis`;
+            setHeader = `Reactivate ${typeText} analysis`;
             setContent = [
-                'Are you ready to re-activate the analysis for the selected SQL Server instances?',
-                'Select "Activate" to continue.'
+                'Selected instances that are active will continue to get analyzed.',
+                'Are you ready to reactivate the analysis for the selected SQL Server instances?',
+                'Select "Reactivate" to continue.'
             ];
-            setPrimaryButton = 'Activate';
+            setPrimaryButton = 'Reactivate';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.POSTPONED) {
-            setHeader = `Postpone SQL Server instance analysis`;
+            setHeader = `Postpone ${typeText} analysis`;
             setContent = [
-                'Are you ready to re-postpone the analysis for the selected SQL Server instances?',
-                'Select "Postpone" to continue.'
+                "Selected instances that are postponed won't get analyzed for 30 days.",
+                `Are you ready to postpone the ${typeText} analysis of the selected SQL Server instances?`,
+                'Select "Postpone for 30 days" to continue.'
             ];
-            setPrimaryButton = 'Postpone';
+            setPrimaryButton = 'Postpone for 30 days';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.DISMISS) {
-            setHeader = `Dismiss SQL Server instance analysis`;
+            setHeader = `Dismiss ${typeText} analysis`;
             setContent = [
-                'Are you ready to dismiss the analysis for the selected SQL Server instances?',
+                "Selected instances that you dismiss won't get analyzed.",
+                `Are you ready to dismiss the ${typeText} analysis for the selected SQL Server instances?`,
                 'Select "Dismiss" to continue.'
             ];
             setPrimaryButton = 'Dismiss';
@@ -577,7 +583,12 @@ const DashboardDismissPage = () => {
                     content={
                         <>
                             <DsTypography variant="Regular_14">{setContent[0]}</DsTypography>
-                            <DsTypography variant="Regular_14">{setContent[1]}</DsTypography>
+                            <DsTypography variant="Regular_14" style={{ marginTop: '24px' }}>
+                                {setContent[1]}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" style={{ marginTop: '24px' }}>
+                                {setContent[2]}
+                            </DsTypography>
                         </>
                     }
                     primaryButton={setPrimaryButton}
@@ -661,6 +672,12 @@ const DashboardDismissPage = () => {
             }
             uniqueResourceList.push(hostData?.databaseHostId);
 
+            const matchingCredEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     let configObj: any = getConfigObj(type, instanceData);
@@ -674,7 +691,10 @@ const DashboardDismissPage = () => {
                         id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                         hostName: hostData?.databaseHostName,
                         configObj: configObj,
-                        configState: configObj?.state || CONFIG_STATES.ACTIVE
+                        configState: configObj?.state || CONFIG_STATES.ACTIVE,
+                        credentialName: matchingCredEntry?.name,
+                        regionName: matchingRegionEntry?.regionName,
+                        accountId: matchingCredEntry?.providerAccountId
                     });
                 }
             });
@@ -717,7 +737,7 @@ const DashboardDismissPage = () => {
                                 }
                             },
                             {
-                                title: `Manage configuration state for ${selectedConfig}`,
+                                title: `Update scan frequency for ${selectedConfig}`,
                                 dataTestId: 'wlm-db-dismiss-configuration'
                             }
                         ]}
@@ -729,7 +749,7 @@ const DashboardDismissPage = () => {
                         data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
                         variant="Semibold_20"
                     >
-                        Manage configuration state for {selectedConfig}
+                        Update scan frequency for {selectedConfig}
                     </DsTypography>
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-heading1-for-${selectedConfig

@@ -807,7 +807,7 @@ const GetWell = () => {
                                                     isExpanded={isAccordionOpen ? undefined : false}
                                                     isCleanable={false}
                                                     formatLabel={() =>
-                                                        `Configuration state: ${
+                                                        `Analysis state: ${
                                                             !defaultFilterOptions['configState']?.length ||
                                                             defaultFilterOptions['configState'].length === 3
                                                                 ? 'All'
@@ -1031,7 +1031,7 @@ const GetWell = () => {
                                                 }}
                                                 variant="Regular_14"
                                             >
-                                                Configuration state:
+                                                Analysis state:
                                             </DsTypography>
                                             <DsTypography
                                                 style={{

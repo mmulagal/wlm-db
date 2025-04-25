@@ -111,13 +111,18 @@ enum OptimizeMaxDopParams {
     MAX_DOP = 'max-dop'
 }
 
+enum OptimizeCloneParams {
+    CLONE = 'clone'
+}
+
 enum OPTIMIZATION_CATEGORIES {
     STORAGE_TIER = 'storage-tier',
     STORAGE_SIZING = 'storage-sizing',
     OPERATING_SYSTEM = 'operating-system',
     COMPUTE = 'compute',
     MAXDOP = 'max-dop',
-    RSS_CONFIG = 'rss-config'
+    RSS_CONFIG = 'rss-config',
+    CLONE = 'clone'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -315,6 +320,7 @@ export {
     OPTIMIZE_RESILIENCY_CONFIGS,
     VALID_MPIO_LB_POLICIES,
     OptimizeComputeJobNames,
+    OptimizeCloneParams,
     ASSESSMENT_CONFIGS,
     STORAGE_ASSESMENT_CONFIGS_MAP,
     DISMISS_DEACTIVATION_REASON,

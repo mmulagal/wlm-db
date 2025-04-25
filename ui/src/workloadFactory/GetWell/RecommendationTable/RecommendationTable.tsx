@@ -364,8 +364,6 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                             children={cellData && <RecommendationTooltip data={cellData} />}
                                             trigger="hover"
                                             delayHide={200}
-                                            interactive={true}
-                                            isAppendedToBody={false}
                                             container={<TooltipIcon />}
                                             placement="bottom"
                                         />
