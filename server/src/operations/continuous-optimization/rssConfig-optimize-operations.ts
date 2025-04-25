@@ -10,14 +10,16 @@ import {
     OPTIMIZATION_CATEGORIES
 } from '../../utils/continous-optimization-consts';
 import { getServerNameWithHostname, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../../utils/utils';
-import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
+import { callSsmExecution, getSSMConnectionStatus, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { OPTIMIZE_NETWORK_ADAPTERS } from '../workloads/mssql/continuous-optimization-scripts';
 import { updateJobDetails } from '../database/job-operations';
 import { getInstanceInfo } from '../database/database-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
+    checkRunningStatus,
     getClusterNodeInstanceIds,
+    getRunningSqlServices,
     handleRollbackClusterOwnership,
     moveClusterGroupOwnership,
     transferClusterOwnershipToStandbyNode
@@ -120,6 +122,13 @@ async function handleOptimizeRssOptimization(
 
     try {
         if (activeNodeInstanceId) {
+            // single node cluster/standalone
+            const runningSqlServerNames = await getRunningSqlServices(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId
+            );
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             formattedInstanceName = getServerNameWithHostname(resourceName!, instanceDetail?.database_instance_name);
             await updateLongRunningAuditGroup(undefined, undefined, formattedInstanceName);
@@ -329,19 +338,48 @@ async function handleOptimizeRssOptimization(
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
 
-            // clearning all the ssm command cache so that we will get the fresh data in assessment
-            resetCache(SSM_COMMAND_CACHE_TYPE);
-            // Trigger assessment after optimize
-            await onDemandTriggerDriftAssessmentDataCollection(
+            try {
+                // check for an active SSM connection before running the assessment
+                // poll duration = 5 minutes, poll interval = 20 seconds.
+                await pollSSMConnectionStatus(accountId, credentialsId, region, activeNodeInstanceId);
+            } catch (error) {
+                logger.error((error as Error).message);
+                throw error;
+            }
+            // check if the sql server is running before running the assessment
+            const checkRunningResponse = await checkRunningStatus(
                 accountId,
-                credentialsId,
+                jobId,
                 region,
-                databaseHostId,
-                databaseInstanceId,
-                AssessmentTriggeredBy.SYSTEM,
-                AssessmentCategories.RSS_CONFIG,
-                masterOptimizeJobParentId
+                credentialsId,
+                activeNodeInstanceId,
+                formattedInstanceName,
+                runningSqlServerNames || []
             );
+            let canRunAssessment = false;
+
+            if (checkRunningResponse.status !== JOBSTATUS.COMPLETED) {
+                isAnySubjobFailed = true;
+                throw Error(checkRunningResponse.error);
+            } else {
+                canRunAssessment = true;
+            }
+
+            if (canRunAssessment) {
+                // clearning all the ssm command cache so that we will get the fresh data in assessment
+                resetCache(SSM_COMMAND_CACHE_TYPE);
+                // Trigger assessment after optimize
+                await onDemandTriggerDriftAssessmentDataCollection(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    AssessmentTriggeredBy.SYSTEM,
+                    AssessmentCategories.RSS_CONFIG,
+                    masterOptimizeJobParentId
+                );
+            }
         }
     } catch (error) {
         errorMessage = (error as Error).message;

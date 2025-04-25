@@ -1192,18 +1192,21 @@ async function rollbackComputeOptimize(
                 );
             }
 
+            // rollback secondary nodes instance type change
             const modifiedSecondaryNodeDetails = modifiedInstancesNodeDetails.filter(
                 instanceDetails => !instanceDetails.isPrimaryNode
-            ); // rollback secondary nodes instance type change
-            await handleRollbackInstanceTypeChange(
-                accountId,
-                credentialsId,
-                region,
-                storageDetails,
-                modifiedSecondaryNodeDetails,
-                formattedInstanceName,
-                rollbackComputeOptimizeJobId
             );
+            if (!isEmpty(modifiedSecondaryNodeDetails)) {
+                await handleRollbackInstanceTypeChange(
+                    accountId,
+                    credentialsId,
+                    region,
+                    storageDetails,
+                    modifiedSecondaryNodeDetails,
+                    formattedInstanceName,
+                    rollbackComputeOptimizeJobId
+                );
+            }
         }
     } catch (error) {
         errorMessage = `Failed to rollback compute optimization ${error}`;
@@ -1222,6 +1225,7 @@ async function rollbackComputeOptimize(
 export {
     handleComputeRemediation,
     checkRunningStatus,
+    getRunningSqlServices,
     getClusterNodeInstanceIds,
     transferClusterOwnershipToStandbyNode,
     moveClusterGroupOwnership,

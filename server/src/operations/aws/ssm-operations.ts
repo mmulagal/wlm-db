@@ -4,6 +4,7 @@ import createError from 'http-errors';
 import throat from 'throat';
 import {
     CommandInvocationStatus,
+    ConnectionStatus,
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
@@ -405,6 +406,39 @@ async function getSSMConnectionStatus(credentialId: string, region: string, inst
     );
 }
 
+async function pollSSMConnectionStatus(
+    accountId: string,
+    credentialId: string,
+    region: string,
+    instanceId: string,
+    retryCount: number = 15,
+    pollInterval: number = ms(config.get<string>('ssm.connection-poll-interval'))
+) {
+    logger.info('Polling SSM connection status', {
+        accountId,
+        credentialId,
+        region,
+        instanceId,
+        pollInterval,
+        retryCount
+    });
+    if (retryCount > 15) {
+        throw new Error(`SSM connection failure for instance: ${instanceId}`);
+    }
+
+    try {
+        const response = await getSSMConnectionStatus(credentialId, region, instanceId, accountId);
+        if (response?.Status === ConnectionStatus.CONNECTED) {
+            return response;
+        }
+        await sleep(pollInterval);
+    } catch (error) {
+        // not throwing error here as we want to retry
+        logger.error('Error polling SSM connection status', instanceId, error);
+    }
+    return pollSSMConnectionStatus(accountId, credentialId, region, instanceId, retryCount + 1, pollInterval);
+}
+
 async function ssmPutParameters(credentialsId: string, region: string, credentials: SSMParamterObject[]) {
     logger.info('Put SSM parameters', { credentialsId, region });
 
@@ -513,5 +547,6 @@ export {
     getEc2SqlParameters,
     executeSSMDocumentMultipleInstances,
     getSSMConnectionStatusByInstanceIds,
-    extractSsmResponse
+    extractSsmResponse,
+    pollSSMConnectionStatus
 };
