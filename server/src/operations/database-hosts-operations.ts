@@ -1828,8 +1828,7 @@ async function getDatabaseInstancesSummary(
         const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
             databaseInstanceId,
             databaseInstanceName: savedDatabaseInstanceName,
-            status: '',
-            databaseCount: 0
+            status: ''
         };
 
         databaseInstanceDetails.status = ServerState.UP;

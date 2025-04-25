@@ -175,6 +175,9 @@ const compressResponse = `
         $bytes = $memoryStream.ToArray()
         $encodedString = [Convert]::ToBase64String($bytes)
 
+        if ($encodedString.length -ge 24000) {
+            return $stringToCompress
+        }
         return $encodedString
     }
 `;
