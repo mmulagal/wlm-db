@@ -72,6 +72,24 @@
             width: 100%;
             justify-content: center;
             margin-top: 80px;
+
+            .potentialSavingsSwitch {
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+
+                .potentialSavingsSwitchText {
+                    .firstTile {
+                        position: relative;
+                        left: -20px;
+                    }
+
+                    .secondTile {
+                        position: relative;
+                        left: -25px;
+                    }
+                }
+            }
         }
 
         .newValueSection {
