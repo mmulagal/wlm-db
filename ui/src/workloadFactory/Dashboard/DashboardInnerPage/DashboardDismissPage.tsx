@@ -30,6 +30,8 @@ const DashboardDismissPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const { credentialData } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
@@ -670,6 +672,12 @@ const DashboardDismissPage = () => {
             }
             uniqueResourceList.push(hostData?.databaseHostId);
 
+            const matchingCredEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     let configObj: any = getConfigObj(type, instanceData);
@@ -683,7 +691,10 @@ const DashboardDismissPage = () => {
                         id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                         hostName: hostData?.databaseHostName,
                         configObj: configObj,
-                        configState: configObj?.state || CONFIG_STATES.ACTIVE
+                        configState: configObj?.state || CONFIG_STATES.ACTIVE,
+                        credentialName: matchingCredEntry?.name,
+                        regionName: matchingRegionEntry?.regionName,
+                        accountId: matchingCredEntry?.providerAccountId
                     });
                 }
             });

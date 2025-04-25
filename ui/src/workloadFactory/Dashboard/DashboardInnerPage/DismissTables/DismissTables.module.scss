@@ -1,6 +1,14 @@
 .dismissTables {
     width: 1334px;
 
+    [class*='header-row'] {
+        [class*='header-cell']:nth-last-child(2) {
+            [class*='right-border'] {
+                display: none !important;
+            }
+        }
+    }
+
     .actionContainer {
         display: flex;
         gap: 16px;
@@ -92,6 +100,10 @@
     div {
         color: var(--text-primary);
     }
+}
+
+[class*='ButtonWithDropdown-module_dropdown-container'] {
+    z-index: 1;
 }
 
 @media screen and (min-width: 1920px) {
