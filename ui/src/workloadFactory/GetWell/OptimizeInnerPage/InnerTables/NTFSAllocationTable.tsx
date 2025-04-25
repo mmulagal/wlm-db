@@ -42,7 +42,7 @@ const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: a
             Header: 'NTFS allocation unit size',
             accessor: 'value',
             id: '3',
-            width: '481px',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;

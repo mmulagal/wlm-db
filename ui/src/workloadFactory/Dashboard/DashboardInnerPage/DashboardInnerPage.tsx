@@ -9,7 +9,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
     cardDataDefault,
     checkIfDisableForOptimize,
@@ -70,6 +70,7 @@ import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { backupStartTime } from '../../../utils/utilityFunctions';
 import CloneManagementTable from './RenderTables/CloneManagementTable';
+import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -85,6 +86,7 @@ const DashboardInnerPage = () => {
         optimizedInstances: '',
         notOptimizedInstances: '',
         severity: '',
+        analysisState: '',
         cardHeight: '',
         tagHeight: '',
         data: {
@@ -818,6 +820,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -833,6 +836,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '184px',
                     tagHeight: '281px',
                     data: {
@@ -849,6 +853,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '208px',
                     tagHeight: '305px',
                     data: {
@@ -866,6 +871,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '232px',
                     tagHeight: '329px',
                     data: {
@@ -882,6 +888,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -896,6 +903,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -910,6 +918,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '160px',
                     tagHeight: '257px',
                     data: {
@@ -925,6 +934,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
@@ -940,6 +950,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
@@ -954,6 +965,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '204px',
                     tagHeight: '301px',
                     data: {
@@ -969,6 +981,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -983,6 +996,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '450px',
                     tagHeight: '547px',
                     data: {
@@ -997,6 +1011,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '228px',
                     tagHeight: '325px',
                     data: cardDataDefault?.sql_licenses?.recommendation
@@ -1008,6 +1023,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '160px',
                     tagHeight: '257px',
                     data: {
@@ -1022,6 +1038,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '216px',
                     tagHeight: '313px',
                     data: {
@@ -1037,6 +1054,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -1053,6 +1071,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -1068,6 +1087,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -1081,11 +1101,11 @@ const DashboardInnerPage = () => {
 
     const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
         return {
-            id: '4',
+            id: '7',
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '318px',
+            width: '220px',
             renderCell: (cellData: any, rowData: any) => {
                 let { isDisabled, errorMessage } = checkIfDisableForOptimize(
                     inProgressHostData,
@@ -1183,6 +1203,17 @@ const DashboardInnerPage = () => {
         }
     };
 
+    const handleEditAnanlysis = (type: string) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
+        dispatch(setLandingFrom(WLF_TABS.DASHBOARD));
+        dispatch(setSelectedConfig(type));
+        setOptimizeInnerpageSummary(type, configData, dispatch);
+    };
+
+    const configData = useMemo(() => {
+        return getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
+    }, [allmssqlHostAssessmentData]);
+
     return (
         <div className={styles.dashboardInnerPage}>
             <div className={styles.innerPage}>
@@ -1227,6 +1258,9 @@ const DashboardInnerPage = () => {
                             optimizedInstances={valueCardData.optimizedInstances}
                             notOptimizedInstances={valueCardData.notOptimizedInstances}
                             severity={valueCardData.severity}
+                            configurationState={valueCardData.configurationState}
+                            type={selectedConfig}
+                            handleEdit={handleEditAnanlysis}
                         />
 
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>

@@ -82,7 +82,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
             filterOptions: 'auto'
         },
         {
-            Header: 'Configuration state',
+            Header: 'Analysis state',
             accessor: 'configState',
             id: '3',
             width: 'auto',
@@ -113,7 +113,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                         }
                     >
                         <DsTypography variant="Regular_14" className={styles.actionText}>
-                            Set status
+                            Update state
                         </DsTypography>
                         <ButtonWithDropdown
                             variant="icon"
@@ -121,7 +121,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                             items={[
                                 {
                                     id: 'activate',
-                                    children: 'Activate',
+                                    children: GENERAL.REACTIVATE,
                                     isDisabled:
                                         rowData?.configState === CONFIG_STATES.ACTIVE ||
                                         rowData?.configState === CONFIG_STATES.ACTIVATING,
@@ -131,7 +131,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                                 },
                                 {
                                     id: 'postponeFor30Days',
-                                    children: 'Postpone for 30 days',
+                                    children: GENERAL.POSTPONE_FOR_30_DAYS,
                                     isDisabled: rowData?.configState.includes(CONFIG_STATES.POSTPONED),
                                     onClick: () => {
                                         handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.POSTPONED);
@@ -139,7 +139,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                                 },
                                 {
                                     id: 'dismiss',
-                                    children: 'Dismiss',
+                                    children: GENERAL.DISMISS,
                                     isDisabled: rowData?.configState === CONFIG_STATES.DISMISSED,
                                     onClick: () => {
                                         handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.DISMISS);

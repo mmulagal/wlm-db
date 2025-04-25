@@ -29,7 +29,7 @@ export const SELECT_CONFIG = {
 
 export const GENERAL = {
     ACTIVATING_MESSAGE: 'Active. Will be analyzed in the next analysis.',
-    DISMISSED_MESSAGE: 'This issue is dismissed.',
+    DISMISSED_MESSAGE: 'This configuration analysis is dismissed.',
     CLONE_MANAGEMENT_REFRESH: 'Clone cleanup Refresh',
     CLONE_MANAGEMENT_DELETE: 'Clone cleanup Delete',
     ALL_CRED_SELECTED: 'All credentials selected',
@@ -1282,9 +1282,15 @@ export const GENERAL = {
     MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.',
     DISMISS_MIX_CASE_TOOLTIP: 'This configurations analysis is dismissed or postponed for some of the instances.',
     DISMISS_PAGE_MSG: [
-        'You can postpone or dismiss the analysis of a specific configuration for your SQL Server instances. Postponing delays the analysis for 30 days and dismissing the analysis stops',
-        "the analysis until you reactivate it manually. Postponed or dismissed configuration analyses won't affect the total optimization score."
-    ]
+        "Postpone the scan for 30 days or indefinitely. If you postpone the scan indefinitely, you'll need to manually restart the scan. You can postpone scans for specific instances or for",
+        "all instances. Configurations that have postponed scans won't affect the total well-architected score."
+    ],
+    MANAGE_ANALYSIS_STATE: 'Manage analysis state',
+    REACTIVATE: 'Reactivate',
+    POSTPONE_FOR_30_DAYS: 'Postpone for 30 days',
+    DISMISS: 'Dismiss',
+    ANALYSIS_STATE_CHANGE_SUCCESS: 'Changed analysis state.',
+    ANALYSIS_STATE_CHANGE_FAILED: 'Failed to change analysis state.'
 };
 
 export const CODE_VIEWER = {

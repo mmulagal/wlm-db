@@ -1,4 +1,3 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
@@ -16,6 +15,10 @@ import {
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { useTable } from '../../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../../common/Lib/Table/Table';
+import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -30,6 +33,8 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { selectedRowsForOptimize, enableFilter } = useAppSelector(state => state.databaseHome);
+    const { credentialData } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         let uniqueResourceList: Array<string> = [];
@@ -42,6 +47,11 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 return;
             }
             uniqueResourceList.push(hostData?.databaseHostId);
+            const matchingCredEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
@@ -72,7 +82,10 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             recommendationOptions: computeRightSizingObj?.recommendationOptions,
                             isMissingPermissions: computeMissingPermissions,
                             data: instanceData,
-                            configObj: computeRightSizingStateObj
+                            configObj: computeRightSizingStateObj,
+                            credentialName: matchingCredEntry?.name,
+                            regionName: matchingRegionEntry?.regionName,
+                            accountId: matchingCredEntry?.providerAccountId
                         });
                     }
                 }
@@ -147,18 +160,39 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: 'auto',
+            width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'hostName')
         },
         {
             Header: 'Finding reasons',
             accessor: 'findingReasons',
             id: '3',
-            width: '320px',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
+        },
+        {
+            id: '4',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '5',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '6',
+            Header: 'Region',
+            accessor: 'regionName',
+            filterOptions: 'auto',
+            width: '180px'
         },
         lastColDetails(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING, {}, inProgressOptimizationData, inProgressHostData)
     ];
@@ -173,13 +207,15 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
         },
         //@ts-ignore
         manageColumnsProps: false,
-        isHorizontalScroll: false,
+        isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
         rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: []
+        defaultSelectedRows: [],
+        isManagedColumns: true,
+        initialColumnState: initialDashboardInnerPageOptimizeColState
     });
 
     useEffect(() => {

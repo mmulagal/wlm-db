@@ -118,7 +118,7 @@ interface ClonedVolumeDetail {
     cloneVolumeType?: string;
 }
 
-interface CloneAssesment {
+interface CloneAssessment {
     status: string;
     cloneDetails?: CloneDetail[];
     oldClones?: number;
@@ -132,7 +132,7 @@ interface ResourceAssessmentData {
     hostOsPatch?: HostOsPatchAssessmentObject[];
     rssConfig?: RssConfigAssesment;
     maxDOP?: MaxDOPAssesment;
-    clone?: CloneAssesment;
+    clone?: CloneAssessment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
     lastAssessedDate?: string;
     errors?: {
@@ -636,6 +636,12 @@ interface DatabaseInstanceDismissConfigs {
     mssqlPatch?: InstanceDismissParams;
 }
 
+interface MappedVolumeResponseForClone {
+    volumeMapping: MappedOnTapVolumeResponse;
+    fsxId: string;
+    activeNodeInstanceId: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -679,7 +685,7 @@ export {
     AwsFsxNBackupConfig,
     MultipleCommandSsmResponse,
     SsmSqlServerRunningStatus,
-    CloneAssesment,
+    CloneAssessment,
     CloneDetail,
     VolumeRecord,
     MappedOnTapVolumeResponse,
@@ -687,6 +693,8 @@ export {
     VolumeDBMapEntry,
     AWSBackupAssessment,
     ResourceAssessmentData,
+    ClonedVolumeDetail,
+    MappedVolumeResponseForClone,
     InstanceDismissParams,
     DatabaseInstanceDismissConfigs,
     DatabaseInstanceConfigurations
