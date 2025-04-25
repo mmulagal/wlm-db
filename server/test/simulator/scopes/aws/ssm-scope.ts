@@ -855,6 +855,14 @@ ssmMock
         return /# Check running status and restart if not running/.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
+    .on(SendCommandCommand, params => {
+        return /# Get running SQL Server instances/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getRunningSqlServersCommand)
+    .on(SendCommandCommand, params => {
+        return /# Check running status and restart if not running/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
     .on(SendCommandCommand, params => params.Comment === 'Discover Oracle resources')
     .resolves(getSampleCommandResponse('getOracleDiscoveryCommand'));
 
