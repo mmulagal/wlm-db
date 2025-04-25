@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import { cloneDeep, compact, isEmpty } from 'lodash-es';
 import { DatabaseInstance, Metadata, NodeDetails, SsmSqlServerRunningStatus } from '../../utils/common-types';
 import { AuditStatus } from '../../utils/consts';
-import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
+import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
     CHECK_RUNNING_STATUS_WITH_RESTART,
@@ -112,11 +112,16 @@ async function handleComputeRemediation(
             storageDetails = { svmId, fsxId };
             if (node2InstanceId) {
                 // more than one node in the cluster
-                const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
-                if (!connectionStatus) {
-                    throw createError(500, 'SSM connection is not available for the selected instance');
+                try {
+                    // check for an active SSM connection on standby node
+                    await pollSSMConnectionStatus(accountId, credentialsId, region, activeNodeInstanceId);
+                } catch (error) {
+                    const errorMsg = `SSM connection is not available for the selected instance: ${
+                        (error as Error).message
+                    }`;
+                    logger.error(errorMsg);
+                    throw createError(500, errorMsg);
                 }
-
                 const { clusterNodeDetails, clusterNodeInstanceIds } = await getClusterNodeInstanceIds(
                     accountId,
                     credentialsId,
@@ -438,7 +443,7 @@ async function handleComputeRemediation(
                 shouldRollbackClusterOwnership,
                 activeNodeInstanceId,
                 oldClusterOwnerNode,
-                formattedInstanceName
+                resourceDetails[0]?.resource_name ?? formattedInstanceName
             ).catch(rollbackError => {
                 errorMessage = `Error while reverting instance type change ${rollbackError}`;
                 logger.error(errorMessage);
@@ -771,6 +776,7 @@ async function updateDnsSettings(
 }
 
 async function handleEc2InstanceTypeChange(
+    accountId: string,
     credentialsId: string,
     region: string,
     instanceId: string,
@@ -782,6 +788,14 @@ async function handleEc2InstanceTypeChange(
         await modifyInstanceType(credentialsId, region, instanceId, instanceType);
         await startInstance(credentialsId, region, instanceId);
         await waitForInstanceOk(credentialsId, region, instanceId);
+        try {
+            // check for an active SSM connection on standby node
+            await pollSSMConnectionStatus(accountId, credentialsId, region, instanceId);
+        } catch (error) {
+            const errorMsg = `SSM connection is not available for the selected instance: ${(error as Error).message}`;
+            logger.error(errorMsg);
+            throw createError(500, errorMsg);
+        }
     } catch (error) {
         const errorMessage = `Failed to update instance type for ${instanceId} to ${instanceType}. ${error}`;
         logger.error(errorMessage);
@@ -883,7 +897,7 @@ async function updateNodeInstanceType(
                 await waitForInstanceToBeStopped(credentialsId, region, ec2InstanceId);
             }
 
-            await handleEc2InstanceTypeChange(credentialsId, region, ec2InstanceId, instanceType);
+            await handleEc2InstanceTypeChange(accountId, credentialsId, region, ec2InstanceId, instanceType);
             const newDnsAddresses = await getCurrentDnsSettings(credentialsId, region, ec2InstanceId);
             if (isEmpty(newDnsAddresses) || newDnsAddresses !== oldDnsAddresses) {
                 await updateDnsSettings(

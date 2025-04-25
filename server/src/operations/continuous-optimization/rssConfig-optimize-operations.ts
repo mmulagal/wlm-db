@@ -10,7 +10,7 @@ import {
     OPTIMIZATION_CATEGORIES
 } from '../../utils/continous-optimization-consts';
 import { getServerNameWithHostname, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../../utils/utils';
-import { callSsmExecution, getSSMConnectionStatus, pollSSMConnectionStatus } from '../aws/ssm-operations';
+import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { OPTIMIZE_NETWORK_ADAPTERS } from '../workloads/mssql/continuous-optimization-scripts';
 import { updateJobDetails } from '../database/job-operations';
@@ -68,6 +68,13 @@ async function optimizeNetworkAdapters(
         if (!isDemo()) {
             // Wait for 30 seconds to allow FCI setup to come online after ec2 is online
             await sleep(30000);
+        }
+        try {
+            // check for an active SSM connection to standy instance node
+            await pollSSMConnectionStatus(accountId, credentialsId, region, instanceId);
+        } catch (error) {
+            logger.error('SSM connection error', (error as Error).message);
+            throw error;
         }
     } catch (error) {
         errMsg = (error as Error).message;
@@ -144,9 +151,12 @@ async function handleOptimizeRssOptimization(
                 );
             }
             if (node2InstanceId) {
-                const connectionStatus = await getSSMConnectionStatus(credentialsId, region, node2InstanceId);
-                if (!connectionStatus) {
-                    throw Error('SSM connection is not available for the selected instance');
+                try {
+                    // check for an active SSM connection to standy instance node
+                    await pollSSMConnectionStatus(accountId, credentialsId, region, activeNodeInstanceId);
+                } catch (error) {
+                    logger.error('SSM connection error', (error as Error).message);
+                    throw error;
                 }
                 const { clusterNodeInstanceIds } = await getClusterNodeInstanceIds(
                     accountId,
@@ -340,7 +350,6 @@ async function handleOptimizeRssOptimization(
 
             try {
                 // check for an active SSM connection before running the assessment
-                // poll duration = 5 minutes, poll interval = 20 seconds.
                 await pollSSMConnectionStatus(accountId, credentialsId, region, activeNodeInstanceId);
             } catch (error) {
                 logger.error((error as Error).message);
