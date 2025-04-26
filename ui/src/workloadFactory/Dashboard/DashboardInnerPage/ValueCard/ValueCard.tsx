@@ -1,6 +1,7 @@
-import { DsTypography, TooltipInfo } from '@netapp/design-system';
+import { DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
 import styles from './ValueCard.module.scss';
 import { ReactComponent as Edit } from '../../../../assets/ic_edit.svg';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type ValueCardProps = {
     optimizationScore?: string;
@@ -52,9 +53,15 @@ const ValueCard = ({
                     <div className={styles.block}>
                         <div className={styles.configState}>
                             <DsTypography variant="Semibold_14">{configurationState}</DsTypography>
-                            <div onClick={() => handleEdit(type)}>
-                                <Edit />
-                            </div>
+                            <Popover
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
+                                trigger="hover"
+                                container={
+                                    <div onClick={() => handleEdit(type)}>
+                                        <Edit />
+                                    </div>
+                                }
+                            />
                         </div>
                         <DsTypography variant="Regular_14">Analysis state</DsTypography>
                     </div>
