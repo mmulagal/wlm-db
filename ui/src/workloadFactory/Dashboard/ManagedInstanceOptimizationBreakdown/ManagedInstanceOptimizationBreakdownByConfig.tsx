@@ -484,9 +484,15 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <div className={styles.editDisableIcon}>
-                            <Edit />
-                        </div>
+                        <Popover
+                            children={GENERAL.COMING_SOON}
+                            trigger="hover"
+                            container={
+                                <div className={styles.editDisableIcon}>
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -518,9 +524,15 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             Optimize
                         </DsButton>
 
-                        <div className={styles.editDisableIcon}>
-                            <Edit />
-                        </div>
+                        <Popover
+                            children={GENERAL.COMING_SOON}
+                            trigger="hover"
+                            container={
+                                <div className={styles.editDisableIcon}>
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
