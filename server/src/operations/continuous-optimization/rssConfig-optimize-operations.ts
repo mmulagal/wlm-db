@@ -381,7 +381,7 @@ async function handleOptimizeRssOptimization(
             // check if the sql server is running before running the assessment
             const checkRunningResponse = await checkRunningStatus(
                 accountId,
-                jobId,
+                parentJobId,
                 region,
                 credentialsId,
                 activeNodeInstanceId,

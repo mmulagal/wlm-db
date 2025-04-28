@@ -1186,11 +1186,11 @@ const CHECK_RUNNING_STATUS_WITH_RESTART = (serverNames: string[]) => `
         if ($sqlService.Status -eq 'Running') {
             $serviceResult = @{ name = $sqlService.Name; status = 'Running' }
         } else {
-            try { $sqlService.WaitForStatus('Running', '00:00:20')} catch {}
+            try { $sqlService.WaitForStatus('Running', '00:00:20') | Out-Null } catch {}
             $sqlService = Get-Service | Where-Object { $_.Name -eq $sqlService.Name }
             if ($sqlService.Status -ne 'Running') {
-                Start-Service -Name $sqlService.Name
-                try { $sqlService.WaitForStatus('Running', '00:00:20')} catch {}
+                Start-Service -Name $sqlService.Name | Out-Null
+                try { $sqlService.WaitForStatus('Running', '00:00:20') | Out-Null } catch {}
             }
             $serviceResult = @{ name = $sqlService.Name; status = $sqlService.Status.ToString() }
         }
