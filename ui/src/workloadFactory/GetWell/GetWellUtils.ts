@@ -2676,13 +2676,16 @@ export const handleOptimizeResourceJob = (
             }
 
             dispatch(
-                inProgressResourceOptimizeData({
+                setInProgressResourceOptimizeData({
                     ...inProgressResourceOptimizeData,
                     [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
                         const jobResource =
-                            bulkRowData?.map(
+                            bulkRowData?.flatMap(
                                 (instance: any) =>
-                                    `${instance?.hostId}_${instance?.instanceId}_${instance?.cloneDatabaseName}`
+                                    instance?.clones?.map(
+                                        (clone: any) =>
+                                            `${instance?.hostId}_${instance?.instanceId}_${clone?.cloneDatabaseName}`
+                                    ) || []
                             ) || [];
                         return !jobResource.includes(instanceId);
                     })

@@ -80,7 +80,8 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                         hostId: host.id,
                         instanceId: instance?.instanceId,
                         credentialId: host?.credentialsId,
-                        regionId: host?.region
+                        regionId: host?.region,
+                        clones: instance?.clones
                     });
                 });
             });
@@ -208,7 +209,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
         );
 
         // Call the API with the payload
-        cloneCleanupOptimizeApi(payload).then((res: any) => {
+        cloneCleanupOptimizeApi({ payload }).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
                     {ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT} failed to optimize.
