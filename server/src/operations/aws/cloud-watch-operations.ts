@@ -277,7 +277,8 @@ async function getLogs(credentialsId: string, region: string, logGroupName: stri
 
     const input = {
         logGroupName,
-        logStreamName
+        logStreamName,
+        startFromHead: true // Ensures fetching starts from the oldest events
     };
 
     try {
