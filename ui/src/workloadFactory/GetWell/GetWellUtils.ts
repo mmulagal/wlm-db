@@ -852,7 +852,7 @@ export const formatApplicationCardMainConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'sql-license',
             category: categoryVal,
             recommendationText: item?.recommendation,
             dismissedObj: data?.dismissedConfigurations?.license
@@ -914,7 +914,7 @@ export const formatMicrosoftSqlPatchCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'mssql-patch',
             category: categoryVal,
             sqlPatchMissingPatches: {
                 critical: criticalPatches,
@@ -969,7 +969,7 @@ export const formatMaxdopPatchCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'maxdop',
             category: categoryVal,
             recommendationText: item?.recommendation,
             dismissedObj: data?.dismissedConfigurations?.maxDOP
@@ -1023,7 +1023,7 @@ export const formatSnapshotPolicyCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'snapshot-policy',
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             objectsInViolation: item?.objectsInViolation,
@@ -1078,7 +1078,7 @@ export const formatAWSBackUpPolicyCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'aws-backup-policy',
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             objectsInViolation: item?.objectsInViolation,
@@ -1133,7 +1133,7 @@ export const formatCRRCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'crr',
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             violations: item?.violations,
@@ -1151,7 +1151,7 @@ export const formatCloneCardConfig = (
 ) => {
     let item: any = data?.clone;
     let categoryVal = 'cloning';
-    let itemName = item?.name || 'clone';
+    let itemName = item?.name || 'clone-management';
     let status = item?.status || '';
     let severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
@@ -1189,7 +1189,7 @@ export const formatCloneCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'clone-management',
             category: categoryVal,
             recommendationText: item?.recommendation,
             cloneDetails: item?.cloneDetails,
@@ -1255,7 +1255,7 @@ export const formatOsPatchCardConfig = (
                 value: String(totalViolations)
             },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,
-            id: item?.name,
+            id: item?.name || 'host-os-patch',
             category: categoryVal,
             errorMessage: item?.errorMessage,
             osPatchMissingPatches: {
@@ -1423,7 +1423,7 @@ export const formatRssConfigCardConfig = (
                 }
             },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,
-            id: item?.name,
+            id: item?.name || 'rss-config',
             category: categoryVal,
             errorMessage: item?.errorMessage,
             rssAdapters: item?.rssAdapters,
@@ -1446,7 +1446,7 @@ const mapDismissedValues = (data: any, itemName: string | any) => {
         if (Array.isArray(section)) {
             //For sizing and layout
             for (const item of section) {
-                if (item.name === itemName) {
+                if (item?.configurationName === itemName) {
                     return item;
                 }
             }
@@ -1456,7 +1456,7 @@ const mapDismissedValues = (data: any, itemName: string | any) => {
                 const subSection = section[subKey];
                 if (Array.isArray(subSection)) {
                     for (const item of subSection) {
-                        if (item.name === itemName) {
+                        if (item?.configurationName === itemName) {
                             return item;
                         }
                     }
@@ -1766,7 +1766,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
 
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
-        const dismissedState = nestedObject?.dismissedObj?.state;
+        const dismissedState = nestedObject?.dismissedObj?.configState;
         const isOptimizedViaDismissal =
             dismissedState === CONFIG_STATES.DISMISSED || dismissedState === CONFIG_STATES.POSTPONED;
         if (nestedObject?.category === 'storage') {
@@ -2172,8 +2172,8 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
 
         const checkConfigState =
             !filters.configState ||
-            (!cardData[key]['dismissedObj']?.state && filters.configState.includes(CONFIG_STATES.ACTIVE)) ||
-            filters.configState?.includes(cardData[key]['dismissedObj']?.state);
+            (!cardData[key]['dismissedObj']?.configState && filters.configState.includes(CONFIG_STATES.ACTIVE)) ||
+            filters.configState?.includes(cardData[key]['dismissedObj']?.configState);
 
         if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags && checkConfigState) {
             filteredCardData[key] = cardData[key];
@@ -2998,10 +2998,10 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
                                         sizing: instance?.assessments?.dismissedConfigurations?.storage?.sizing
                                             ? instance?.assessments?.dismissedConfigurations?.storage?.sizing.map(
                                                   (item: any) => {
-                                                      if (item?.name === storageSizingMap[rowData?.name]) {
+                                                      if (item?.configurationName === storageSizingMap[rowData?.name]) {
                                                           return {
                                                               ...item,
-                                                              state: setAction,
+                                                              configState: setAction,
                                                               endTime: rowData?.endTime
                                                           };
                                                       } else {
@@ -3011,8 +3011,8 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
                                               )
                                             : [
                                                   {
-                                                      name: storageSizingMap[rowData?.name],
-                                                      state: setAction,
+                                                      configurationName: storageSizingMap[rowData?.name],
+                                                      configState: setAction,
                                                       endTime: rowData?.endTime
                                                   }
                                               ]
@@ -3021,8 +3021,8 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
                                     storage: {
                                         sizing: [
                                             {
-                                                name: storageSizingMap[rowData?.name],
-                                                state: setAction,
+                                                configurationName: storageSizingMap[rowData?.name],
+                                                configState: setAction,
                                                 endTime: rowData?.endTime
                                             }
                                         ]
@@ -3042,10 +3042,10 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
                                         layout: instance?.assessments?.dismissedConfigurations?.storage?.layout
                                             ? instance?.assessments?.dismissedConfigurations?.storage?.layout.map(
                                                   (item: any) => {
-                                                      if (item?.name === storageLayoutMap[rowData?.name]) {
+                                                      if (item?.configurationName === storageLayoutMap[rowData?.name]) {
                                                           return {
                                                               ...item,
-                                                              state: setAction,
+                                                              configState: setAction,
                                                               endTime: rowData?.endTime
                                                           };
                                                       } else {
@@ -3055,8 +3055,8 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
                                               )
                                             : [
                                                   {
-                                                      name: storageLayoutMap[rowData?.name],
-                                                      state: setAction,
+                                                      configurationName: storageLayoutMap[rowData?.name],
+                                                      configState: setAction,
                                                       endTime: rowData?.endTime
                                                   }
                                               ]
@@ -3065,8 +3065,8 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
                                     storage: {
                                         layout: [
                                             {
-                                                name: storageLayoutMap[rowData?.name],
-                                                state: setAction,
+                                                configurationName: storageLayoutMap[rowData?.name],
+                                                configState: setAction,
                                                 endTime: rowData?.endTime
                                             }
                                         ]
@@ -3091,10 +3091,10 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
                                                 ? instance?.assessments?.dismissedConfigurations?.storage?.configuration?.[
                                                       key
                                                   ].map((item: any) => {
-                                                      if (item.name === rowData?.id) {
+                                                      if (item?.configurationName === rowData?.id) {
                                                           return {
                                                               ...item,
-                                                              state: setAction,
+                                                              configState: setAction,
                                                               endTime: rowData?.endTime
                                                           };
                                                       } else {
@@ -3103,8 +3103,8 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
                                                   })
                                                 : [
                                                       {
-                                                          name: rowData?.id,
-                                                          state: setAction,
+                                                          configurationName: rowData?.id,
+                                                          configState: setAction,
                                                           endTime: rowData?.endTime
                                                       }
                                                   ]
@@ -3124,12 +3124,12 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
                                     [name]: instance?.assessments?.dismissedConfigurations?.[name]
                                         ? {
                                               ...instance?.assessments?.dismissedConfigurations?.[name],
-                                              state: setAction,
+                                              configState: setAction,
                                               endTime: rowData?.endTime
                                           }
                                         : {
-                                              name: name,
-                                              state: setAction,
+                                              configurationName: rowData?.id,
+                                              configState: setAction,
                                               endTime: rowData?.endTime
                                           }
                                 }
@@ -3156,18 +3156,18 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
     const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size'];
     const storageLayoutMap: any = ['data-files-location', 'log-files-location', 'tempdb-files-location'];
     const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
-    const otherConfigMap: any = [
-        'compute',
-        'max-dop',
-        'clone',
-        'rss-config',
-        'snapshot-policy',
-        'aws-backup',
-        'mssql-patch',
-        'host-os-patch',
-        'crr',
-        'license'
-    ];
+    const otherConfigMap: any = {
+        'compute-rightsizing': 'compute',
+        maxdop: 'maxDOP',
+        'clone-management': 'clone',
+        'rss-config': 'rssConfig',
+        'snapshot-policy': 'snapshotPolicy',
+        'scheduled-fsx-for-ontap-backups': 'awsBackup',
+        'mssql-patch': 'mssqlPatch',
+        'host-os-patch': 'hostOsPatch',
+        crr: 'crr',
+        'sql-license': 'license'
+    };
     if (storageSizingMap.includes(name)) {
         return {
             ...driftAssessmentData,
@@ -3177,10 +3177,10 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                     ...driftAssessmentData?.dismissedConfigurations?.storage,
                     sizing: driftAssessmentData?.dismissedConfigurations?.storage?.sizing
                         ? driftAssessmentData?.dismissedConfigurations?.storage?.sizing.map((item: any) => {
-                              if (item?.name === name) {
+                              if (item?.configurationName === name) {
                                   return {
                                       ...item,
-                                      state: setAction,
+                                      configState: setAction,
                                       endTime: endTime
                                   };
                               } else {
@@ -3189,8 +3189,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                           })
                         : [
                               {
-                                  name: name,
-                                  state: setAction,
+                                  configurationName: name,
+                                  configState: setAction,
                                   endTime: endTime
                               }
                           ]
@@ -3199,8 +3199,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 storage: {
                     sizing: [
                         {
-                            name: name,
-                            state: setAction,
+                            configurationName: name,
+                            configState: setAction,
                             endTime: endTime
                         }
                     ]
@@ -3216,10 +3216,10 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                     ...driftAssessmentData?.dismissedConfigurations?.storage,
                     layout: driftAssessmentData?.dismissedConfigurations?.storage?.layout
                         ? driftAssessmentData?.dismissedConfigurations?.storage?.layout.map((item: any) => {
-                              if (item?.name === name) {
+                              if (item?.configurationName === name) {
                                   return {
                                       ...item,
-                                      state: setAction,
+                                      configState: setAction,
                                       endTime: endTime
                                   };
                               } else {
@@ -3228,8 +3228,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                           })
                         : [
                               {
-                                  name: name,
-                                  state: setAction,
+                                  configurationName: name,
+                                  configState: setAction,
                                   endTime: endTime
                               }
                           ]
@@ -3238,8 +3238,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 storage: {
                     layout: [
                         {
-                            name: name,
-                            state: setAction,
+                            configurationName: name,
+                            configState: setAction,
                             endTime: endTime
                         }
                     ]
@@ -3259,8 +3259,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                         [key]: driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key]
                             ? driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key].map(
                                   (item: any) => {
-                                      if (item.name === key) {
-                                          return { ...item, state: setAction, endTime: endTime };
+                                      if (item?.configurationName === key) {
+                                          return { ...item, configState: setAction, endTime: endTime };
                                       } else {
                                           return item;
                                       }
@@ -3268,8 +3268,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                               )
                             : [
                                   {
-                                      name: key,
-                                      state: setAction,
+                                      configurationName: key,
+                                      configState: setAction,
                                       endTime: endTime
                                   }
                               ]
@@ -3277,20 +3277,21 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 }
             }
         };
-    } else if (otherConfigMap.includes(name)) {
+    } else if (otherConfigMap[name]) {
+        let key = otherConfigMap[name];
         return {
             ...driftAssessmentData,
             dismissedConfigurations: {
                 ...driftAssessmentData?.dismissedConfigurations,
-                [name]: driftAssessmentData?.dismissedConfigurations?.[name]
+                [key]: driftAssessmentData?.dismissedConfigurations?.[key]
                     ? {
-                          ...driftAssessmentData?.dismissedConfigurations?.[name],
-                          state: setAction,
+                          ...driftAssessmentData?.dismissedConfigurations?.[key],
+                          configState: setAction,
                           endTime: endTime
                       }
                     : {
-                          name: name,
-                          state: setAction,
+                          configurationName: name,
+                          configState: setAction,
                           endTime: endTime
                       }
             }

@@ -58,7 +58,7 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
                 if (!instanceData?.error) {
                     const maxdopObj = instanceData?.assessments?.maxDOP;
                     const maxdopStateObj = instanceData?.assessments?.dismissedConfigurations?.maxDOP;
-                    const isMaxdopOptimized = isOptimized(maxdopObj?.status, maxdopStateObj?.state);
+                    const isMaxdopOptimized = isOptimized(maxdopObj?.status, maxdopStateObj?.configState);
                     if (!isMaxdopOptimized) {
                         maxdopAssessmentData.push({
                             credentialId: hostData?.credentialId,

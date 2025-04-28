@@ -61,7 +61,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                         );
                     const isStorageTierOptimized = isOptimized(
                         tempDbPlacementObj?.status,
-                        tempDbPlacementStateObj?.state
+                        tempDbPlacementStateObj?.configState
                     );
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({

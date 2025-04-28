@@ -59,7 +59,7 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
                 if (!instanceData?.error) {
                     const licenseObj = instanceData?.assessments?.license;
                     const licenseStateObj = instanceData?.assessments?.dismissedConfigurations?.license;
-                    const isStorageTierOptimized = isOptimized(licenseObj?.status, licenseStateObj?.state);
+                    const isStorageTierOptimized = isOptimized(licenseObj?.status, licenseStateObj?.configState);
                     if (!isStorageTierOptimized) {
                         licenseAssessmentData.push({
                             credentialId: hostData?.credentialId,

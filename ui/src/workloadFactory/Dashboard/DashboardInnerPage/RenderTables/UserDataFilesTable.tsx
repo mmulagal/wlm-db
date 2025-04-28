@@ -59,7 +59,10 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                         instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
                             (item: any) => item.name === 'data-files-location'
                         );
-                    const isStorageTierOptimized = isOptimized(userDataFilesObj?.status, userDataFilesStateObj?.state);
+                    const isStorageTierOptimized = isOptimized(
+                        userDataFilesObj?.status,
+                        userDataFilesStateObj?.configState
+                    );
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
                             credentialId: hostData?.credentialId,

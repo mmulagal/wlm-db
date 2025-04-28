@@ -59,7 +59,7 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
                 if (!instanceData?.error) {
                     const rssConfigObj = instanceData?.assessments?.rssConfig;
                     const rssConfigStateObj = instanceData?.assessments?.dismissedConfigurations?.rssConfig;
-                    const isStorageTierOptimized = isOptimized(rssConfigObj?.status, rssConfigStateObj?.state);
+                    const isStorageTierOptimized = isOptimized(rssConfigObj?.status, rssConfigStateObj?.configState);
                     let nonOptimizedAdapters = 0;
                     rssConfigObj?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
                         if (!adapter?.rssEnabled) {

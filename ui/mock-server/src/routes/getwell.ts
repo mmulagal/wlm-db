@@ -81,9 +81,9 @@ router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/storage-sizing`, async
 router.post(`${BASE_URL}/v1/mssql/assessment/dismiss`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 202, {
-            configurationsDismissed: [
+            dismissedConfigurations: [
                 {
-                    name: 'clone',
+                    configurationName: 'clone-management',
                     configState: 'active',
                     startTime: 1744588921000,
                     endTime: 1744588921000,
