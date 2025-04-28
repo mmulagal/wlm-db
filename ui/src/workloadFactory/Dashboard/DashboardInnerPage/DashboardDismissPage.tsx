@@ -28,7 +28,7 @@ import { NOTIFICATION_TYPES, addNotification } from '../../../store/notification
 
 const DashboardDismissPage = () => {
     const dispatch = useDispatch();
-    const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
+    const { selectedConfig, selectedConfigSummary, dismissPageLanding } = useAppSelector(state => state.databaseHome);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { credentialData } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
@@ -726,25 +726,55 @@ const DashboardDismissPage = () => {
         headerSelectedMultiRegionIdsList
     ]);
 
+    const setBreadcrumbs = () => {
+        if (dismissPageLanding === WLF_TABS.DASHBOARD) {
+            return (
+                <BreadCrumbs
+                    items={[
+                        {
+                            title: 'Dashboard',
+                            onClick: () => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                            }
+                        },
+                        {
+                            title: `Update scan frequency for ${selectedConfig}`,
+                            dataTestId: 'wlm-db-dismiss-configuration'
+                        }
+                    ]}
+                />
+            );
+        } else {
+            return (
+                <BreadCrumbs
+                    items={[
+                        {
+                            title: 'Dashboard',
+                            onClick: () => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                            }
+                        },
+                        {
+                            title: `Optimize configuration (${selectedConfig})`,
+                            onClick: () => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
+                            }
+                        },
+
+                        {
+                            title: `Update scan frequency for ${selectedConfig}`,
+                            dataTestId: 'wlm-db-dismiss-configuration'
+                        }
+                    ]}
+                />
+            );
+        }
+    };
+
     return (
         <div className={styles.dashboardInnerPage}>
             <div className={styles.innerPage}>
-                <div className={commonStyles.commonBreadCrumb}>
-                    <BreadCrumbs
-                        items={[
-                            {
-                                title: 'Dashboard',
-                                onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
-                                }
-                            },
-                            {
-                                title: `Update scan frequency for ${selectedConfig}`,
-                                dataTestId: 'wlm-db-dismiss-configuration'
-                            }
-                        ]}
-                    />
-                </div>
+                <div className={commonStyles.commonBreadCrumb}>{setBreadcrumbs()}</div>
 
                 <div className={styles.headingSection}>
                     <DsTypography
@@ -754,20 +784,13 @@ const DashboardDismissPage = () => {
                         Update scan frequency for {selectedConfig}
                     </DsTypography>
                     <DsTypography
+                        className={styles.dismissPageMessage}
                         data-testid={`wlm-db-manage-instance-heading1-for-${selectedConfig
                             .toLowerCase()
                             .replace(/ /g, '-')}`}
                         variant="Regular_16"
                     >
-                        {GENERAL.DISMISS_PAGE_MSG[0]}
-                    </DsTypography>
-                    <DsTypography
-                        data-testid={`wlm-db-manage-dismiss-heading2-for-${selectedConfig
-                            .toLowerCase()
-                            .replace(/ /g, '-')}`}
-                        variant="Regular_16"
-                    >
-                        {GENERAL.DISMISS_PAGE_MSG[1]}
+                        {GENERAL.DISMISS_PAGE_MESSAGE}
                     </DsTypography>
                 </div>
 

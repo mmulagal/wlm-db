@@ -38,13 +38,29 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
 
     const setStatusIcon = (value: string) => {
         if (value === CONFIG_STATES.ACTIVE) {
-            return <Success />;
+            return (
+                <div>
+                    <Success />
+                </div>
+            );
         } else if (value === CONFIG_STATES.ACTIVATING) {
-            return <Info />;
+            return (
+                <div>
+                    <Info />
+                </div>
+            );
         } else if (value.includes(CONFIG_STATES.POSTPONED)) {
-            return <Warning />;
+            return (
+                <div>
+                    <Warning />
+                </div>
+            );
         } else {
-            return <Warning />;
+            return (
+                <div>
+                    <Warning />
+                </div>
+            );
         }
     };
 
@@ -153,6 +169,10 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                                         rowData?.configState === CONFIG_STATES.ACTIVATING,
                                     onClick: () => {
                                         handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.ACTIVE);
+                                    },
+                                    title: GENERAL.REACTIVATE_TOOLTIP,
+                                    titleProps: {
+                                        placement: 'left'
                                     }
                                 },
                                 {
@@ -161,6 +181,10 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                                     isDisabled: rowData?.configState.includes(CONFIG_STATES.POSTPONED),
                                     onClick: () => {
                                         handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.POSTPONED);
+                                    },
+                                    title: GENERAL.POSTPONED_TOOLTIP,
+                                    titleProps: {
+                                        placement: 'left'
                                     }
                                 },
                                 {
@@ -169,6 +193,10 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                                     isDisabled: rowData?.configState === CONFIG_STATES.DISMISSED,
                                     onClick: () => {
                                         handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.DISMISS);
+                                    },
+                                    title: GENERAL.DISMISS_TOOLTIP,
+                                    titleProps: {
+                                        placement: 'left'
                                     }
                                 }
                             ]}

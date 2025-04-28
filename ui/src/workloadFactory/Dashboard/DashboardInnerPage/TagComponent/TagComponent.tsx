@@ -10,19 +10,33 @@ import { GENERAL } from '../../../../utils/appConstants';
 
 type TagComponentProps = {
     tagHeight: string;
+    type?: string;
 };
 
-const TagComponent = ({ tagHeight }: TagComponentProps) => {
+const TagComponent = ({ tagHeight, type }: TagComponentProps) => {
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const [tagData, setTagData] = useState<any>([]);
 
     useEffect(() => {
-        switch (selectedConfig) {
+        switch (selectedConfig || type) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
             case 'MAXDOP':
             case GENERAL.RSS_CONFIGURATION:
+            case 'NTFS allocation unit size':
+            case 'OS type':
+            case 'Tiering policy':
                 setTagData(['Performance efficiency']);
+                break;
+
+            case 'Thin provisioning':
+            case 'Autosize':
+            case 'Autosize-mode':
+            case 'Fractional reserve':
+            case 'Snapshot copy reserve':
+            case 'Snapshot autodelete':
+            case 'Space management':
+                setTagData(['Cost optimization', 'Operational excellence']);
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
@@ -31,6 +45,8 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+            case 'Space allocation':
+            case 'Space reservation':
                 setTagData(['Reliability']);
                 break;
 
@@ -46,9 +62,15 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 setTagData(['Security']);
                 break;
 
+            case 'Multipath I/O Policy':
+                setTagData(['Performance efficiency', 'Reliability']);
+                break;
+
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
+            case 'Data files':
+            case 'Log files':
                 setTagData(['Performance efficiency', 'Operational excellence']);
                 break;
 
@@ -57,9 +79,11 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 break;
 
             case GENERAL.LICENSE_SQL_SERVER:
+            case 'Tiering minimum cooling days':
                 setTagData(['Cost optimization']);
                 break;
             case ASSESSMENT_CONFIG_NAMES.CRR:
+            case 'Cross-Region Replication (CRR)':
                 setTagData(['Reliability']);
                 break;
 

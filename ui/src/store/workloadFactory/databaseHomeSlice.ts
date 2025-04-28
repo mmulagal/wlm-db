@@ -91,13 +91,17 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         savings: 0,
         savingsPercent: 0,
         noSavings: false
-    }
+    },
+    dismissPageLanding: ''
 };
 
 const databaseHomeSlice = createSlice({
     name: 'databaseHome',
     initialState: initialDBHomepageState,
     reducers: {
+        setDismissPageLanding: (state, action: PayloadAction<any>) => {
+            state.dismissPageLanding = action.payload;
+        },
         setSelectedRowsForOptimizeInnerPage: (state, action: PayloadAction<any>) => {
             state.selectedRowsForOptimizeInnerPage = action.payload;
         },
@@ -159,6 +163,7 @@ const databaseHomeSlice = createSlice({
 });
 
 export const {
+    setDismissPageLanding,
     setSelectedRowsForOptimizeInnerPage,
     setEnableFilter,
     setSelectedRowsForOptimize,

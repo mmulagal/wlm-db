@@ -1284,10 +1284,9 @@ export const GENERAL = {
         'You postponed the analysis for some instances in your database configurations. Instances with postponed analysis do not affect the optimization score.',
     MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.',
     DISMISS_MIX_CASE_TOOLTIP: 'This configurations analysis is dismissed or postponed for some of the instances.',
-    DISMISS_PAGE_MSG: [
-        "Postpone the scan for 30 days or indefinitely. If you postpone the scan indefinitely, you'll need to manually restart the scan. You can postpone scans for specific instances or for",
-        "all instances. Configurations that have postponed scans won't affect the total well-architected score."
-    ],
+
+    DISMISS_PAGE_MESSAGE:
+        "Postpone the scan for 30 days or indefinitely. If you postpone the scan indefinitely, you'll need to manually restart the scan. You can postpone scans for specific instances or for all instances. Configurations that have postponed scans won't affect the total well-architected score.",
     MANAGE_ANALYSIS_STATE: 'Manage analysis state',
     REACTIVATE: 'Reactivate',
     POSTPONE_FOR_30_DAYS: 'Postpone for 30 days',

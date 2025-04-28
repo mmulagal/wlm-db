@@ -70,7 +70,7 @@ import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { backupStartTime } from '../../../utils/utilityFunctions';
 import CloneManagementTable from './RenderTables/CloneManagementTable';
-import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import { setDismissPageLanding, setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -1205,7 +1205,7 @@ const DashboardInnerPage = () => {
 
     const handleEditAnanlysis = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
-        dispatch(setLandingFrom(WLF_TABS.DASHBOARD));
+        dispatch(setDismissPageLanding(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setSelectedConfig(type));
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };
