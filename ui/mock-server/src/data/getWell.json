@@ -1210,7 +1210,7 @@
         "resourceType": "Filesystem"
     },
     "clone": {
-        "name": "Clone Management",
+        "name": "clone-management",
         "status": "not-optimized",
         "recommended": "optimized",
         "severity": "warning",
@@ -1279,10 +1279,7 @@
                 ]
             }
         ],
-        "objectsInViolation": [
-            "sandbox_1744017481447",
-            "sandbox_17440174814471"
-        ],
+        "objectsInViolation": ["sandbox_1744017481447", "sandbox_17440174814471"],
         "impactedDatabases": "0 out of 1 clones are old and divergent"
     },
     "dismissedConfigurations": {
@@ -1433,7 +1430,7 @@
             "deactivationReason": "USER"
         },
         "clone": {
-            "name": "Clone Management",
+            "name": "clone-management",
             "state": "POSTPONED",
             "endTime": 1739934199000,
             "startTime": 1739934199000
