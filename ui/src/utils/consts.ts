@@ -763,7 +763,6 @@ export const GETWELL_CONFIG: any = {
     'aws-backup-policy': 'scheduled_FSx_for_ONTAP_backups',
     crr: 'crr',
     clone: 'clone_management',
-    'Clone Management': 'clone_management',
     'clone-management': 'clone_management'
 };
 

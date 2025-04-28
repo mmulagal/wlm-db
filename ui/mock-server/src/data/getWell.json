@@ -1279,10 +1279,7 @@
                 ]
             }
         ],
-        "objectsInViolation": [
-            "sandbox_1744017481447",
-            "sandbox_17440174814471"
-        ],
+        "objectsInViolation": ["sandbox_1744017481447", "sandbox_17440174814471"],
         "impactedDatabases": "0 out of 1 clones are old and divergent"
     },
     "dismissedConfigurations": {

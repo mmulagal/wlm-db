@@ -526,24 +526,23 @@ async function checkRunningStatus(
 
     // worst 40secs needed for one sql server to start; 10secs buffer
     const timeRequired = 40 * sqlServerNames.length + 10;
-
-    const rawStatusResponse = await callSsmExecution(
-        credentialsId,
-        region,
-        [CHECK_RUNNING_STATUS_WITH_RESTART(sqlServerNames)],
-        activeNodeInstanceId,
-        'Checking running status of the service',
-        accountId,
-        false,
-        timeRequired.toString()
-    );
-
     let jobDetails: { status: string; error?: string } = {
         status: JOBSTATUS.COMPLETED,
         error: ''
     };
+    let rawStatusResponse;
 
     try {
+        rawStatusResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            [CHECK_RUNNING_STATUS_WITH_RESTART(sqlServerNames)],
+            activeNodeInstanceId,
+            'Checking running status of the service',
+            accountId,
+            false,
+            timeRequired.toString()
+        );
         const cleanResponse = sqlResponseParsing(rawStatusResponse);
         const statuses: SsmSqlServerRunningStatus[] = formatSsmArrayResponse<SsmSqlServerRunningStatus>(cleanResponse);
 
