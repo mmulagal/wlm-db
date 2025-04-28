@@ -304,7 +304,7 @@ async function initiateAWSBackupAssessment(
     instanceRecord: WorkloadInstance,
     instanceVolumeMapping: MappedOnTapVolumeResponse[]
 ) {
-    logger.info('Initiating AWS Backup assessment for:', {
+    logger.info('Initiating Scheduled FSx for ONTAP backup assessment for:', {
         accountId,
         credentialsId,
         region,
@@ -319,7 +319,7 @@ async function initiateAWSBackupAssessment(
         fsxFileSystem: fileSystemId
     } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const jobName = 'AWS backup assessment';
+    const jobName = 'Scheduled FSx for ONTAP backup assessment';
     const jobDescription = `${jobName}`;
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
@@ -337,7 +337,7 @@ async function initiateAWSBackupAssessment(
     try {
         const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
         isAWSBackupEnabled = fsxnInfo?.FileSystems?.[0]?.OntapConfiguration?.AutomaticBackupRetentionDays !== undefined;
-        logger.debug('Is AWS Backup enabled:', isAWSBackupEnabled);
+        logger.debug('Is Scheduled FSx for ONTAP backup enabled:', isAWSBackupEnabled);
         if (!isAWSBackupEnabled) {
             if (isEmpty(instanceVolumeMapping)) {
                 errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
@@ -361,7 +361,7 @@ async function initiateAWSBackupAssessment(
             }
         }
     } catch (error) {
-        errorMessage = `Error while assessing aws backup: ${error}.`;
+        errorMessage = `Error while assessing Scheduled FSx for ONTAP backup: ${error}.`;
         logger.error(errorMessage);
         jobStatus = JOBSTATUS.FAILED;
     } finally {
@@ -392,7 +392,7 @@ async function getAwsBackupDriftData(
     databaseHostId: string,
     databaseInstanceId: string
 ) {
-    logger.info('Get AWS Backup assessment data', {
+    logger.info('Get Scheduled FSx for ONTAP backup assessment data', {
         accountId,
         credentialsId,
         region,
