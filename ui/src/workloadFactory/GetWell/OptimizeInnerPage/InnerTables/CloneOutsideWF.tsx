@@ -101,7 +101,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                         {isInProgress ? (
                             <div className={styles['optimize-in-progress']}>
                                 <SmallLoader />
-                                <DsTypography variant="Semibold_14">Optimizing</DsTypography>
+                                <DsTypography variant="Semibold_14">Fixing</DsTypography>
                             </div>
                         ) : (
                             <div className={styles.buttonContainer}>
