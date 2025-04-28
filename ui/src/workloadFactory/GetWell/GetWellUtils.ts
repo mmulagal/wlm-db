@@ -788,7 +788,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: `${GENERAL.CLONE_MANAGEMENT} recommendation`,
             description:
-                'Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
+                'Old clones can incur significant costs.\nConsider deleting or refreshing these clones to optimize your storage expenses.'
         },
         tags: ['Cost Efficiency']
     }
