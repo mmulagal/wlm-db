@@ -308,7 +308,7 @@ async function handleOptimizeRssOptimization(
             }
             if (shouldRollbackClusterOwnership) {
                 // Transfer cluster ownership back to primary node instance
-                jobDescription = 'Transfer cluster node ownership from primary to another node in the cluster';
+                jobDescription = 'Transfer cluster node ownership from standby node in the cluster to primary node';
                 const transferOwnershipJobId = await handleOptimizeJobCreation(
                     accountId,
                     credentialsId,
