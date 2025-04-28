@@ -1683,7 +1683,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
 
                     for (const dbInst of databaseInstanceNameList) {
                         const sqlInstanceInfo = sqlServerInstances?.find(
-                            sqlInst => sqlInst.sqlServerInstance === dbInst
+                            (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
                         );
 
                         if (alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
@@ -1703,10 +1703,12 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                             try {
                                 const { windowsAuthentication, sqlServerAuthentication, serverGuid, storage } =
                                     sqlInstanceInfo;
-                                const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+                                const storageInfo = storage?.find(
+                                    (elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN
+                                );
                                 const storageProtocols = storage
-                                    ?.filter(elem => elem.type === STORAGE_TYPE.FSXN)
-                                    .map(elem => elem.protocol);
+                                    ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
+                                    .map((elem: any) => elem.protocol);
 
                                 if (windowsAuthentication === false && sqlServerAuthentication === false) {
                                     throw Error(
@@ -2625,7 +2627,7 @@ async function fetchFsxResourceMappings(
 
     logger.debug({ fsxList, svmList, subnetList, ebsVolumeList });
     const extractedSsmResponseList = await Promise.all(
-        ssmResponseList.map(async ssmResponse => extractSsmResponse(ssmResponse))
+        ssmResponseList.map(async ssmResponse => extractSsmResponse(credentialsId, region, ssmResponse))
     );
     const ssmResponseMap = new Map(
         extractedSsmResponseList.map((response, index) => [ssmResponseList[index].instanceId, response])

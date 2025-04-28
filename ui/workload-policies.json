@@ -258,7 +258,8 @@
                 "Sid": "SSMResponseCloudWatch",
                 "Effect": "Allow",
                 "Action": [
-                    "logs:GetLogEvents"
+                    "logs:GetLogEvents",
+                    "logs:PutRetentionPolicy"
                 ],
                 "Resource": "arn:aws:logs:*:*:log-group:netapp/wlmdb/*"
             }
