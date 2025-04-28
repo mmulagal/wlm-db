@@ -1019,6 +1019,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                     !cardData?.dismissedObj?.state,
                                 onClick: () => {
                                     handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
+                                },
+                                title: GENERAL.REACTIVATE_TOOLTIP,
+                                titleProps: {
+                                    placement: 'left'
                                 }
                             },
                             {
@@ -1027,6 +1031,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED,
                                 onClick: () => {
                                     handleSingleAction(CONFIG_STATE_ACTIONS.POSTPONED);
+                                },
+                                title: GENERAL.POSTPONED_TOOLTIP,
+                                titleProps: {
+                                    placement: 'left'
                                 }
                             },
                             {
@@ -1035,6 +1043,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED,
                                 onClick: () => {
                                     handleSingleAction(CONFIG_STATE_ACTIONS.DISMISS);
+                                },
+                                title: GENERAL.DISMISS_TOOLTIP,
+                                titleProps: {
+                                    placement: 'left'
                                 }
                             }
                         ]}

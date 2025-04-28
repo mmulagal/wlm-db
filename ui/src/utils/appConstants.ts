@@ -28,6 +28,9 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    REACTIVATE_TOOLTIP: 'Restart the analysis for a postponed or dismissed configuration.',
+    POSTPONED_TOOLTIP: 'Postpone the analysis for 30 days.',
+    DISMISS_TOOLTIP: 'Stop the analysis.',
     ACTIVATING_MESSAGE: 'Active. Will be analyzed in the next analysis.',
     DISMISSED_MESSAGE: 'This configuration analysis is dismissed.',
     CLONE_MANAGEMENT_REFRESH: 'Clone cleanup Refresh',
