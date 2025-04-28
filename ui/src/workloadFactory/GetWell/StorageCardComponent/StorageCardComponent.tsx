@@ -4,7 +4,8 @@ import {
     DsButton,
     DsFlashingDotsLoader,
     DsTypography,
-    Popover
+    Popover,
+    TooltipInfo
 } from '@netapp/design-system';
 import { useDialog } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
@@ -352,7 +353,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 <div className={styles.dismissContainer}>
                     <div>
                         {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && (
-                            <div style={{ position: 'relative', top: '2px' }}>
+                            <div>
                                 <InfoIcon />
                             </div>
                         )}
@@ -361,11 +362,30 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
                     <DsTypography variant="Regular_14" style={{ minWidth: '160px' }}>
                         {cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED && GENERAL.DISMISSED_MESSAGE}{' '}
-                        {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && GENERAL.ACTIVATING_MESSAGE}{' '}
-                        {cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED &&
-                            `This configuration is postponed until ${formatDateAssess(
-                                cardData?.dismissedObj?.endTime
-                            )}`}{' '}
+                        {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <DsTypography
+                                    variant="Regular_14"
+                                    style={{ whiteSpace: 'nowrap', position: 'relative', top: '2px' }}
+                                >
+                                    Active
+                                </DsTypography>
+                                <TooltipInfo>{GENERAL.ACTIVATING_MESSAGE}</TooltipInfo>
+                            </div>
+                        )}
+                        {cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <DsTypography
+                                    variant="Regular_14"
+                                    style={{ whiteSpace: 'nowrap', position: 'relative', top: '2px' }}
+                                >
+                                    Analysis is postponed
+                                </DsTypography>
+                                <TooltipInfo>
+                                    {`until ${formatDateAssess(cardData?.dismissedObj?.endTime)}`}
+                                </TooltipInfo>
+                            </div>
+                        )}
                     </DsTypography>
                 </div>
             );
