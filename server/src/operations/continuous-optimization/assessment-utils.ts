@@ -41,6 +41,7 @@ interface configurationRecord {
     region: string;
     response: BulkDismissConfigurationType;
     hostIndex: number;
+    endTime: number;
     sqlServerInstances?: string[];
 }
 interface PerHostJobMetadata {
@@ -144,14 +145,13 @@ async function formatInstanceDismissConfigurations(
     newConfigs: InstanceDismissParams
 ) {
     logger.info('Formatting instance dismiss configurations', { currentConfigs, newConfigs });
-    const { configurationName, startTime, configState } = newConfigs;
+    const { configurationName, startTime, configState, endTime } = newConfigs;
     const matchingKey = Object.keys(ASSESSMENT_CONFIGS).find(
         key => ASSESSMENT_CONFIGS[key as keyof typeof ASSESSMENT_CONFIGS] === configurationName
     );
 
     if (matchingKey) {
         const existingConfig = currentConfigs[matchingKey as keyof typeof currentConfigs] || {};
-        const thirtyDaysInMs = moment.duration(4, 'hours').asMilliseconds(); // Updated to 4 hours for testing
 
         const updatedConfigs = {
             ...currentConfigs,
@@ -164,7 +164,7 @@ async function formatInstanceDismissConfigurations(
                     switch (configState) {
                         case DISMISS_STATUS.POSTPONED:
                             return {
-                                endTime: startTime + thirtyDaysInMs,
+                                endTime,
                                 deactivationReason: undefined
                             };
                         case DISMISS_STATUS.DISMISSED:
@@ -198,11 +198,14 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         configurations.map(async config => {
             const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
             const startTime = Date.now();
+            const thirtyDaysInMs = moment.duration(4, 'hours').asMilliseconds(); // Updated to 4 hours for testing
+            const endTime = startTime + thirtyDaysInMs;
             const response = {
                 configurationName: configName,
                 startTime,
                 configState,
-                databaseHosts: hostsToDismiss
+                databaseHosts: hostsToDismiss,
+                endTime: configState === DISMISS_STATUS.POSTPONED ? endTime : undefined
             };
 
             await Promise.all(
@@ -219,7 +222,8 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
                             credentialsId,
                             region,
                             response,
-                            hostIndex
+                            hostIndex,
+                            endTime
                         };
                         await handleHostLevelConfigurations(record);
                     } else {
@@ -232,6 +236,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
                             region,
                             response,
                             hostIndex,
+                            endTime,
                             sqlServerInstances
                         };
                         await handleInstanceLevelConfigurations(record);
@@ -243,12 +248,21 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         })
     );
 
-    return { dismisssedConfigurations: finalResponse };
+    return { dismissedConfigurations: finalResponse };
 
     async function handleHostLevelConfigurations(record: configurationRecord) {
         logger.debug('Handling host level configurations', { record });
-        const { configName, startTime, configState, databaseHostId, credentialsId, region, response, hostIndex } =
-            record;
+        const {
+            configName,
+            startTime,
+            configState,
+            databaseHostId,
+            credentialsId,
+            region,
+            response,
+            hostIndex,
+            endTime
+        } = record;
         let resourceDetails;
         let updatedStatus = DISMISS_UPDATE_STATUS.SUCCESS;
 
@@ -269,6 +283,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
             const updatedConfigs = await formatInstanceDismissConfigurations(dismissedConfigs, {
                 configurationName: configName,
                 startTime,
+                endTime,
                 configState
             });
 
@@ -297,6 +312,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
             region,
             response,
             hostIndex,
+            endTime,
             sqlServerInstances = []
         } = record;
         for (const sqlServerInstanceId of sqlServerInstances) {
@@ -315,7 +331,8 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
                 const updatedConfigs = await formatInstanceDismissConfigurations(dismissedConfigs, {
                     configurationName: configName,
                     startTime,
-                    configState
+                    configState,
+                    endTime
                 });
 
                 try {

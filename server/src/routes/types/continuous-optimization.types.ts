@@ -539,7 +539,7 @@ const BulkDismissConfigurationRequestBody = Type.Object({
 type BulkDismissConfigurationRequestBodyType = Static<typeof BulkDismissConfigurationRequestBody>;
 
 const BulkDismissConfigurationResponse = Type.Object({
-    dismisssedConfigurations: Type.Array(
+    dismissedConfigurations: Type.Array(
         Type.Object({
             configurationName: Type.String(),
             configState: Type.String(),
