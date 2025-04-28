@@ -763,7 +763,8 @@ export const GETWELL_CONFIG: any = {
     'aws-backup-policy': 'scheduled_FSx_for_ONTAP_backups',
     crr: 'crr',
     clone: 'clone_management',
-    'Clone Management': 'clone_management'
+    'Clone Management': 'clone_management',
+    'clone-management': 'clone_management'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
@@ -857,13 +858,13 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
     },
     NON_STORAGE_CONFIG_MAP: {
         [ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]: 'compute',
-        [ASSESSMENT_CONFIG_NAMES.MAXDOP]: 'max-dop',
+        [ASSESSMENT_CONFIG_NAMES.MAXDOP]: 'maxDOP',
         [ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]: 'clone',
-        [ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]: 'rss-config',
-        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]: 'snapshot-policy',
-        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'aws-backup',
-        [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'mssql-patch',
-        [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'host-os-patch',
+        [ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]: 'rssConfig',
+        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]: 'snapshotPolicy',
+        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'awsBackup',
+        [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'mssqlPatch',
+        [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'hostOsPatch',
         [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     }

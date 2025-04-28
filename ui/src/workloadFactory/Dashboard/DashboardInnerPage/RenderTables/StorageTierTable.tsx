@@ -59,7 +59,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                         );
                     const isStorageTierOptimized = isOptimized(
                         performanceTierObj?.status,
-                        performanceTierStateObj?.state
+                        performanceTierStateObj?.configState
                     );
                     const matchingCredEntry =
                         credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);

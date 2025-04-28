@@ -58,7 +58,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                 if (!instanceData?.error) {
                     const cloneObj = instanceData?.assessments?.clone;
                     const cloneStateObj = instanceData?.assessments?.dismissedConfigurations?.clone;
-                    const isCloneOptimized = isOptimized(cloneObj?.status, cloneStateObj?.state);
+                    const isCloneOptimized = isOptimized(cloneObj?.status, cloneStateObj?.configState);
                     if (!isCloneOptimized) {
                         cloneAssessmentData.push({
                             credentialId: hostData?.credentialId,

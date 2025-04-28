@@ -1106,7 +1106,7 @@
                             "resourceType": "Filesystem"
                         },
                         "clone": {
-                            "name": "Clone Management",
+                            "name": "clone-management",
                             "status": "not-optimized",
                             "recommended": "optimized",
                             "severity": "warning",
@@ -1185,97 +1185,97 @@
                             "storage": {
                                 "sizing": [
                                     {
-                                        "name": "performance-tier",
-                                        "state": "ACTIVE",
+                                        "configurationName": "performance-tier",
+                                        "configState": "ACTIVE",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "tempdb-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "headroom",
-                                        "state": "DISMISSED",
+                                        "configurationName": "headroom",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ],
                                 "layout": [
                                     {
-                                        "name": "tempdb-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "data-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "data-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ]
                             },
                             "maxDOP": {
-                                "name": "max-dop",
-                                "state": "DISMISSED",
+                                "configurationName": "max-dop",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "mssqlPatch": {
-                                "name": "mssql-patch",
-                                "state": "POSTPONED",
+                                "configurationName": "mssql-patch",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "hostOsPatch": {
-                                "name": "host-os-patch",
-                                "state": "ACTIVE",
+                                "configurationName": "host-os-patch",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "clone": {
-                                "name": "Clone Management",
-                                "state": "POSTPONED",
+                                "configurationName": "clone-management",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "state": "ACTIVE",
+                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "crr": {
-                                "name": "crr",
-                                "state": "POSTPONED",
+                                "configurationName": "crr",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "snapshotPolicy": {
-                                "name": "snapshot-policy",
-                                "state": "DISMISSED",
+                                "configurationName": "snapshot-policy",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "license": {
-                                "name": "sql-license",
-                                "state": "DISMISSED",
+                                "configurationName": "sql-license",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "rssConfig": {
-                                "name": "rss-config",
-                                "state": "ACTIVE",
+                                "configurationName": "rss-config",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000
                             },
                             "compute": {
-                                "name": "compute-rightsizing",
-                                "state": "DISMISSED",
+                                "configurationName": "compute-rightsizing",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             }
                         }
@@ -2409,7 +2409,7 @@
                             "resourceType": "Filesystem"
                         },
                         "clone": {
-                            "name": "Clone Management",
+                            "name": "clone-management",
                             "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
@@ -2488,97 +2488,97 @@
                             "storage": {
                                 "sizing": [
                                     {
-                                        "name": "performance-tier",
-                                        "state": "ACTIVE",
+                                        "configurationName": "performance-tier",
+                                        "configState": "ACTIVE",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "tempdb-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "headroom",
-                                        "state": "DISMISSED",
+                                        "configurationName": "headroom",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ],
                                 "layout": [
                                     {
-                                        "name": "tempdb-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "data-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "data-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ]
                             },
                             "maxDOP": {
-                                "name": "max-dop",
-                                "state": "DISMISSED",
+                                "configurationName": "max-dop",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "mssqlPatch": {
-                                "name": "mssql-patch",
-                                "state": "POSTPONED",
+                                "configurationName": "mssql-patch",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "hostOsPatch": {
-                                "name": "host-os-patch",
-                                "state": "ACTIVE",
+                                "configurationName": "host-os-patch",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "clone": {
-                                "name": "Clone Management",
-                                "state": "POSTPONED",
+                                "configurationName": "clone-management",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "state": "DISMISSED",
+                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "crr": {
-                                "name": "crr",
-                                "state": "POSTPONED",
+                                "configurationName": "crr",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "snapshotPolicy": {
-                                "name": "snapshot-policy",
-                                "state": "DISMISSED",
+                                "configurationName": "snapshot-policy",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "license": {
-                                "name": "sql-license",
-                                "state": "DISMISSED",
+                                "configurationName": "sql-license",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "rssConfig": {
-                                "name": "rss-config",
-                                "state": "ACTIVE",
+                                "configurationName": "rss-config",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000
                             },
                             "compute": {
-                                "name": "compute-rightsizing",
-                                "state": "DISMISSED",
+                                "configurationName": "compute-rightsizing",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             }
                         }
@@ -3712,7 +3712,7 @@
                             "resourceType": "Filesystem"
                         },
                         "clone": {
-                            "name": "Clone Management",
+                            "name": "clone-management",
                             "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
@@ -3791,98 +3791,98 @@
                             "storage": {
                                 "sizing": [
                                     {
-                                        "name": "performance-tier",
-                                        "state": "ACTIVE",
+                                        "configurationName": "performance-tier",
+                                        "configState": "ACTIVE",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "tempdb-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "headroom",
-                                        "state": "DISMISSED",
+                                        "configurationName": "headroom",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ],
                                 "layout": [
                                     {
-                                        "name": "tempdb-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "data-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "data-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ]
                             },
                             "maxDOP": {
-                                "name": "max-dop",
-                                "state": "DISMISSED",
+                                "configurationName": "max-dop",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "mssqlPatch": {
-                                "name": "mssql-patch",
-                                "state": "POSTPONED",
+                                "configurationName": "mssql-patch",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "hostOsPatch": {
-                                "name": "host-os-patch",
-                                "state": "ACTIVE",
+                                "configurationName": "host-os-patch",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "clone": {
-                                "name": "Clone Management",
-                                "state": "POSTPONED",
+                                "configurationName": "clone-management",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "state": "POSTPONED",
+                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configState": "POSTPONED",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER",
                                 "endTime": 1739934199000
                             },
                             "crr": {
-                                "name": "crr",
-                                "state": "POSTPONED",
+                                "configurationName": "crr",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "snapshotPolicy": {
-                                "name": "snapshot-policy",
-                                "state": "DISMISSED",
+                                "configurationName": "snapshot-policy",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "license": {
-                                "name": "sql-license",
-                                "state": "DISMISSED",
+                                "configurationName": "sql-license",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "rssConfig": {
-                                "name": "rss-config",
-                                "state": "ACTIVE",
+                                "configurationName": "rss-config",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000
                             },
                             "compute": {
-                                "name": "compute-rightsizing",
-                                "state": "DISMISSED",
+                                "configurationName": "compute-rightsizing",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             }
                         }
@@ -5026,7 +5026,7 @@
                             "resourceType": "Filesystem"
                         },
                         "clone": {
-                            "name": "Clone Management",
+                            "name": "clone-management",
                             "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
@@ -5105,97 +5105,97 @@
                             "storage": {
                                 "sizing": [
                                     {
-                                        "name": "performance-tier",
-                                        "state": "ACTIVE",
+                                        "configurationName": "performance-tier",
+                                        "configState": "ACTIVE",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "tempdb-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "headroom",
-                                        "state": "DISMISSED",
+                                        "configurationName": "headroom",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ],
                                 "layout": [
                                     {
-                                        "name": "tempdb-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "data-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "data-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ]
                             },
                             "maxDOP": {
-                                "name": "max-dop",
-                                "state": "DISMISSED",
+                                "configurationName": "max-dop",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "mssqlPatch": {
-                                "name": "mssql-patch",
-                                "state": "POSTPONED",
+                                "configurationName": "mssql-patch",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "hostOsPatch": {
-                                "name": "host-os-patch",
-                                "state": "ACTIVE",
+                                "configurationName": "host-os-patch",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "clone": {
-                                "name": "Clone Management",
-                                "state": "POSTPONED",
+                                "configurationName": "clone-management",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "state": "ACTIVE",
+                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "crr": {
-                                "name": "crr",
-                                "state": "POSTPONED",
+                                "configurationName": "crr",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "snapshotPolicy": {
-                                "name": "snapshot-policy",
-                                "state": "DISMISSED",
+                                "configurationName": "snapshot-policy",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "license": {
-                                "name": "sql-license",
-                                "state": "DISMISSED",
+                                "configurationName": "sql-license",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "rssConfig": {
-                                "name": "rss-config",
-                                "state": "ACTIVE",
+                                "configurationName": "rss-config",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000
                             },
                             "compute": {
-                                "name": "compute-rightsizing",
-                                "state": "DISMISSED",
+                                "configurationName": "compute-rightsizing",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             }
                         }
@@ -6329,7 +6329,7 @@
                             "resourceType": "Filesystem"
                         },
                         "clone": {
-                            "name": "Clone Management",
+                            "name": "clone-management",
                             "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
@@ -6408,97 +6408,97 @@
                             "storage": {
                                 "sizing": [
                                     {
-                                        "name": "performance-tier",
-                                        "state": "ACTIVE",
+                                        "configurationName": "performance-tier",
+                                        "configState": "ACTIVE",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "tempdb-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "headroom",
-                                        "state": "DISMISSED",
+                                        "configurationName": "headroom",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ],
                                 "layout": [
                                     {
-                                        "name": "tempdb-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "data-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "data-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ]
                             },
                             "maxDOP": {
-                                "name": "max-dop",
-                                "state": "DISMISSED",
+                                "configurationName": "max-dop",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "mssqlPatch": {
-                                "name": "mssql-patch",
-                                "state": "POSTPONED",
+                                "configurationName": "mssql-patch",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "hostOsPatch": {
-                                "name": "host-os-patch",
-                                "state": "ACTIVE",
+                                "configurationName": "host-os-patch",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "clone": {
-                                "name": "Clone Management",
-                                "state": "POSTPONED",
+                                "configurationName": "clone-management",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "state": "ACTIVE",
+                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "crr": {
-                                "name": "crr",
-                                "state": "POSTPONED",
+                                "configurationName": "crr",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "snapshotPolicy": {
-                                "name": "snapshot-policy",
-                                "state": "DISMISSED",
+                                "configurationName": "snapshot-policy",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "license": {
-                                "name": "sql-license",
-                                "state": "DISMISSED",
+                                "configurationName": "sql-license",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "rssConfig": {
-                                "name": "rss-config",
-                                "state": "ACTIVE",
+                                "configurationName": "rss-config",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000
                             },
                             "compute": {
-                                "name": "compute-rightsizing",
-                                "state": "DISMISSED",
+                                "configurationName": "compute-rightsizing",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             }
                         }
@@ -7632,7 +7632,7 @@
                             "resourceType": "Filesystem"
                         },
                         "clone": {
-                            "name": "Clone Management",
+                            "name": "clone-management",
                             "status": "not-optimized",
                             "recommended": "optimized",
                             "severity": "warning",
@@ -7711,97 +7711,97 @@
                             "storage": {
                                 "sizing": [
                                     {
-                                        "name": "performance-tier",
-                                        "state": "ACTIVE",
+                                        "configurationName": "performance-tier",
+                                        "configState": "ACTIVE",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "tempdb-drive-size",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-drive-size",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "headroom",
-                                        "state": "DISMISSED",
+                                        "configurationName": "headroom",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ],
                                 "layout": [
                                     {
-                                        "name": "tempdb-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "tempdb-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "log-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "log-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     },
                                     {
-                                        "name": "data-files-location",
-                                        "state": "DISMISSED",
+                                        "configurationName": "data-files-location",
+                                        "configState": "DISMISSED",
                                         "startTime": 1739934199000
                                     }
                                 ]
                             },
                             "maxDOP": {
-                                "name": "max-dop",
-                                "state": "DISMISSED",
+                                "configurationName": "max-dop",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "mssqlPatch": {
-                                "name": "mssql-patch",
-                                "state": "POSTPONED",
+                                "configurationName": "mssql-patch",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "hostOsPatch": {
-                                "name": "host-os-patch",
-                                "state": "ACTIVE",
+                                "configurationName": "host-os-patch",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "clone": {
-                                "name": "Clone Management",
-                                "state": "POSTPONED",
+                                "configurationName": "clone-management",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "awsBackup": {
-                                "name": "scheduled-fsx-for-ontap-backups",
-                                "state": "ACTIVE",
+                                "configurationName": "scheduled-fsx-for-ontap-backups",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000,
                                 "deactivationReason": "USER"
                             },
                             "crr": {
-                                "name": "crr",
-                                "state": "POSTPONED",
+                                "configurationName": "crr",
+                                "configState": "POSTPONED",
                                 "endTime": 1739934199000,
                                 "startTime": 1739934199000
                             },
                             "snapshotPolicy": {
-                                "name": "snapshot-policy",
-                                "state": "DISMISSED",
+                                "configurationName": "snapshot-policy",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "license": {
-                                "name": "sql-license",
-                                "state": "DISMISSED",
+                                "configurationName": "sql-license",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             },
                             "rssConfig": {
-                                "name": "rss-config",
-                                "state": "ACTIVE",
+                                "configurationName": "rss-config",
+                                "configState": "ACTIVE",
                                 "startTime": 1739934199000
                             },
                             "compute": {
-                                "name": "compute-rightsizing",
-                                "state": "DISMISSED",
+                                "configurationName": "compute-rightsizing",
+                                "configState": "DISMISSED",
                                 "startTime": 1739934199000
                             }
                         }

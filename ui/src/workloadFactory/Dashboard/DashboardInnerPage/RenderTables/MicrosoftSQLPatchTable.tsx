@@ -59,7 +59,7 @@ const MicrosoftSQLPatchTable = ({ lastColDetails, handleBulkAction }: StorageTie
                 if (!instanceData?.error) {
                     const mssqlPatchObj = instanceData?.assessments?.mssqlPatch;
                     const mssqlPatchStateObj = instanceData?.assessments?.dismissedConfigurations?.mssqlPatch;
-                    const isStorageTierOptimized = isOptimized(mssqlPatchObj?.status, mssqlPatchStateObj?.state);
+                    const isStorageTierOptimized = isOptimized(mssqlPatchObj?.status, mssqlPatchStateObj?.configState);
                     if (!isStorageTierOptimized) {
                         mssqlPatchAssessmentData.push({
                             credentialId: hostData?.credentialId,

@@ -78,7 +78,7 @@ const DashboardDismissPage = () => {
                 type = 'tempdb-files-location';
                 break;
             case GENERAL.COMPUTE_RIGHTSIZING:
-                type = 'compute';
+                type = 'compute-rightsizing';
                 break;
             case GENERAL.RSS_CONFIGURATION:
                 type = 'rss-config';
@@ -87,10 +87,10 @@ const DashboardDismissPage = () => {
                 type = 'snapshot-policy';
                 break;
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                type = 'aws-backup';
+                type = 'scheduled-fsx-for-ontap-backups';
                 break;
             case ASSESSMENT_CONFIG_NAMES.MAXDOP:
-                type = 'max-dop';
+                type = 'maxdop';
                 break;
             case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH:
                 type = 'mssql-patch';
@@ -99,13 +99,13 @@ const DashboardDismissPage = () => {
                 type = 'host-os-patch';
                 break;
             case ASSESSMENT_CONFIG_NAMES.LICENSE:
-                type = 'license';
+                type = 'sql-license';
                 break;
             case ASSESSMENT_CONFIG_NAMES.CRR:
                 type = 'crr';
                 break;
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-                type = 'clone';
+                type = 'clone-management';
                 break;
             default:
                 break;
@@ -654,6 +654,8 @@ const DashboardDismissPage = () => {
                 return instanceData?.assessments?.dismissedConfigurations?.awsBackup;
             case GENERAL.CLONE_MANAGEMENT:
                 return instanceData?.assessments?.dismissedConfigurations?.clone;
+            case ASSESSMENT_CONFIG_NAMES.CRR:
+                return instanceData?.assessments?.dismissedConfigurations?.crr;
             default:
                 return;
         }
@@ -691,7 +693,7 @@ const DashboardDismissPage = () => {
                         id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                         hostName: hostData?.databaseHostName,
                         configObj: configObj,
-                        configState: configObj?.state || CONFIG_STATES.ACTIVE,
+                        configState: configObj?.configState || CONFIG_STATES.ACTIVE,
                         credentialName: matchingCredEntry?.name,
                         regionName: matchingRegionEntry?.regionName,
                         accountId: matchingCredEntry?.providerAccountId

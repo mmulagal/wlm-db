@@ -57,7 +57,7 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
                 if (!instanceData?.error) {
                     const snapshotObj = instanceData?.assessments?.snapshotPolicy;
                     const snapshotStateObj = instanceData?.assessments?.dismissedConfigurations?.snapshotPolicy;
-                    const isStorageTierOptimized = isOptimized(snapshotObj?.status, snapshotStateObj?.state);
+                    const isStorageTierOptimized = isOptimized(snapshotObj?.status, snapshotStateObj?.configState);
                     if (!isStorageTierOptimized) {
                         snapshotAssessmentData.push({
                             credentialId: hostData?.credentialId,

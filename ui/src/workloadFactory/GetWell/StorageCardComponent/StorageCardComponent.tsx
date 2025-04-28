@@ -258,7 +258,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsFlashingDotsLoader />
                 </div>
             );
-        } else if (cardData?.dismissedObj?.state && cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
+        } else if (
+            cardData?.dismissedObj?.configState &&
+            cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE
+        ) {
             //Condition to show n/a if state is not active
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
@@ -348,18 +351,18 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             return (
                 <div className={styles.dismissContainer}>
                     <div>
-                        {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && (
+                        {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && (
                             <div style={{ position: 'relative', top: '2px' }}>
                                 <InfoIcon />
                             </div>
                         )}
-                        {cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVATING && <Warning />}
+                        {cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVATING && <Warning />}
                     </div>
 
                     <DsTypography variant="Regular_14" style={{ minWidth: '160px' }}>
-                        {cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED && GENERAL.DISMISSED_MESSAGE}{' '}
-                        {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && GENERAL.ACTIVATING_MESSAGE}{' '}
-                        {cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED &&
+                        {cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED && GENERAL.DISMISSED_MESSAGE}{' '}
+                        {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && GENERAL.ACTIVATING_MESSAGE}{' '}
+                        {cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED &&
                             `This configuration is postponed until ${formatDateAssess(
                                 cardData?.dismissedObj?.endTime
                             )}`}{' '}
@@ -412,7 +415,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsFlashingDotsLoader />
                 </div>
             );
-        } else if (cardData?.dismissedObj?.state && cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
+        } else if (
+            cardData?.dismissedObj?.configState &&
+            cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE
+        ) {
             //Condition to show n/a if state is not active
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
@@ -774,7 +780,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         const payload = {
             configurationsToDismiss: [
                 {
-                    name: cardData?.dismissedObj?.name,
+                    configurationName: cardData?.id,
                     configState: action,
                     databaseHosts: [
                         {
@@ -790,36 +796,45 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         dismissMssqlAssessment({ payload: payload })
             .then((res: any) => {
                 setDismissAction(false);
-                let updatedState = '';
-                if (
-                    action === CONFIG_STATE_ACTIONS.ACTIVE &&
-                    res?.data?.configurationsDismissed[0]?.configState === CONFIG_STATE_ACTIONS.ACTIVE
-                ) {
-                    updatedState = CONFIG_STATES.ACTIVATING;
+                if (!res.error) {
+                    let updatedState = '';
+                    if (
+                        action === CONFIG_STATE_ACTIONS.ACTIVE &&
+                        res?.data?.dismissedConfigurations?.[0]?.configState === CONFIG_STATE_ACTIONS.ACTIVE
+                    ) {
+                        updatedState = CONFIG_STATES.ACTIVATING;
+                    } else {
+                        updatedState = res?.data?.dismissedConfigurations?.[0]?.configState;
+                        updatedState = updatedState?.toUpperCase();
+                    }
+
+                    const targetId = cardData?.id;
+
+                    if (!targetId || !updatedState) return;
+
+                    let newData =
+                        updateConfigStatePerInstance(
+                            updatedState,
+                            targetId,
+                            res?.data?.dismissedConfigurations?.[0]?.endTime
+                        ) || {};
+                    dispatch(setDriftAssessmentData(newData));
+                    formatGetWellData(dispatch, newData);
+
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_SUCCESS
+                        })
+                    );
                 } else {
-                    updatedState = res?.data?.configurationsDismissed[0]?.configState;
-                    updatedState = updatedState?.toUpperCase();
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_FAILED
+                        })
+                    );
                 }
-
-                const targetId = cardData?.id;
-
-                if (!targetId || !updatedState) return;
-
-                let newData =
-                    updateConfigStatePerInstance(
-                        updatedState,
-                        targetId,
-                        res?.data?.configurationsDismissed[0]?.endTime
-                    ) || {};
-                dispatch(setDriftAssessmentData(newData));
-                formatGetWellData(dispatch, newData);
-
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: GENERAL.ANALYSIS_STATE_CHANGE_SUCCESS
-                    })
-                );
             })
             .catch(err => {
                 dispatch(
@@ -835,9 +850,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const dismissDisableButton = () => {
         if (
-            cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED ||
-            cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED ||
-            cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING
+            cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
+            cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING
         ) {
             return true;
         }
@@ -911,9 +926,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             )}
 
             {/* Dismiss section code */}
-            {(cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED ||
-                cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED ||
-                cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING) && (
+            {(cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+                cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
+                cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING) && (
                 <div className={styles.dismissSection}>{sectionSevenContent(cardData)}</div>
             )}
 
@@ -921,8 +936,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
             {/* extra Section */}
             {windowSize.width >= 1770 &&
-                (cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
-                    cardData?.dismissedObj?.state === undefined) && <div className={styles.fourthSection}></div>}
+                (cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVE ||
+                    cardData?.dismissedObj?.configState === undefined) && <div className={styles.fourthSection}></div>}
 
             {/* 6 section */}
             {!optimizePrintState &&
@@ -1015,8 +1030,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 id: 'activate',
                                 children: GENERAL.REACTIVATE,
                                 isDisabled:
-                                    cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
-                                    !cardData?.dismissedObj?.state,
+                                    cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVE ||
+                                    !cardData?.dismissedObj?.configState,
                                 onClick: () => {
                                     handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
                                 },
@@ -1028,7 +1043,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             {
                                 id: 'postponeFor30Days',
                                 children: GENERAL.POSTPONE_FOR_30_DAYS,
-                                isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED,
+                                isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED,
                                 onClick: () => {
                                     handleSingleAction(CONFIG_STATE_ACTIONS.POSTPONED);
                                 },
@@ -1040,7 +1055,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             {
                                 id: 'dismiss',
                                 children: GENERAL.DISMISS,
-                                isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED,
+                                isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED,
                                 onClick: () => {
                                     handleSingleAction(CONFIG_STATE_ACTIONS.DISMISS);
                                 },
