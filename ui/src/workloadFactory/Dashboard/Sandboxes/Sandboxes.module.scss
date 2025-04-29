@@ -88,20 +88,13 @@
 }
 
 @media screen and (min-width: 1920px) {
-    .sandboxes{
+    .sandboxes {
         width: 41.25%;
-        [class*='mainSection']{
-
-            [class*='_rightSide']{
+        [class*='mainSection'] {
+            [class*='_rightSide'] {
                 width: 74.75%;
-                .individualRow{
-                    width: 60.47%;
-                    [class*='squareSetup']{
-                        [class*='square_']{
-                            width: 3.35%;
-                        }
-                    
-                    }
+                .individualRow {
+                    width: calc(100% - 40px);
                 }
             }
         }

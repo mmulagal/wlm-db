@@ -246,30 +246,25 @@
 @media screen and (min-width: 1920px) {
     .potentialSavings {
         width: 41.25%;
-        
-        .mainSection{
-            .newValueSection{
 
-                .leftSide{
+        .mainSection {
+            .newValueSection {
+                .leftSide {
                     width: 100%;
-                    .topSection{
+                    .topSection {
                         width: 100%;
-                        .subContent{
+                        .subContent {
                             width: 33.33%;
                         }
                     }
                 }
-                
-                .chartContainer{
-                    gap: 200px;
-                    .newChartSection{
-                        width: 100%;
+
+                .chartContainer {
+                    .newChartSection {
+                        width: calc(100% - 40px);
                     }
                 }
-                
             }
         }
     }
-        
 }
-
