@@ -1279,7 +1279,7 @@ export const GENERAL = {
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "You postponed or dismissed  configuration analyses for some SQL Server instances. Configurations with postponed or dismissed analyses don't affect the optimization score.",
+        "You postponed or dismissed configuration analysis for some SQL Server instances. Configurations with postponed or dismissed analysis don't affect the optimization score.",
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:
