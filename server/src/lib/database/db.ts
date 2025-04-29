@@ -651,7 +651,7 @@ async function updateDatabaseInstanceMetadata(
     databaseInstanceId: string,
     metaData: any
 ) {
-    logger.info('Updating resource metadata', { accountId, databaseInstanceId, credentialsId });
+    logger.info('Updating database instance metadata', { accountId, databaseInstanceId, credentialsId });
 
     accountId = checkAccount(accountId);
 
@@ -821,7 +821,7 @@ async function updateDatabaseInstanceConfigurations(
     databaseInstanceId: string,
     updatedConfigs: any
 ) {
-    logger.info('Updating resource metadata', {
+    logger.info('Updating database instance configurations', {
         accountId,
         databaseInstanceId,
         credentialsId,

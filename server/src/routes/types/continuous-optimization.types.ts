@@ -2,6 +2,7 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
+    DISMISS_STATUS_ENUM,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeCloneParams,
@@ -256,7 +257,7 @@ const StorageParameterDriftResponse = Type.Object({
 
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 
-const instanceDismissResponse = Type.Object({
+const InstanceDismissResponse = Type.Object({
     configurationName: Type.String(),
     configState: Type.String(),
     endTime: Type.Optional(Type.Number())
@@ -267,25 +268,25 @@ const dismissedConfigurationsResponse = Type.Object({
         Type.Object({
             configuration: Type.Optional(
                 Type.Object({
-                    volumes: Type.Optional(Type.Array(instanceDismissResponse)),
-                    luns: Type.Optional(Type.Array(instanceDismissResponse)),
-                    os: Type.Optional(Type.Array(instanceDismissResponse))
+                    volumes: Type.Optional(Type.Array(InstanceDismissResponse)),
+                    luns: Type.Optional(Type.Array(InstanceDismissResponse)),
+                    os: Type.Optional(Type.Array(InstanceDismissResponse))
                 })
             ),
-            sizing: Type.Optional(Type.Array(instanceDismissResponse)),
-            layout: Type.Optional(Type.Array(instanceDismissResponse))
+            sizing: Type.Optional(Type.Array(InstanceDismissResponse)),
+            layout: Type.Optional(Type.Array(InstanceDismissResponse))
         })
     ),
-    compute: Type.Optional(instanceDismissResponse),
-    license: Type.Optional(instanceDismissResponse),
-    hostOsPatch: Type.Optional(instanceDismissResponse),
-    rssConfig: Type.Optional(instanceDismissResponse),
-    maxDOP: Type.Optional(instanceDismissResponse),
-    mssqlPatch: Type.Optional(instanceDismissResponse),
-    crr: Type.Optional(instanceDismissResponse),
-    clone: Type.Optional(instanceDismissResponse),
-    snapshotPolicy: Type.Optional(instanceDismissResponse),
-    awsBackup: Type.Optional(instanceDismissResponse)
+    compute: Type.Optional(InstanceDismissResponse),
+    license: Type.Optional(InstanceDismissResponse),
+    hostOsPatch: Type.Optional(InstanceDismissResponse),
+    rssConfig: Type.Optional(InstanceDismissResponse),
+    maxDOP: Type.Optional(InstanceDismissResponse),
+    mssqlPatch: Type.Optional(InstanceDismissResponse),
+    crr: Type.Optional(InstanceDismissResponse),
+    clone: Type.Optional(InstanceDismissResponse),
+    snapshotPolicy: Type.Optional(InstanceDismissResponse),
+    awsBackup: Type.Optional(InstanceDismissResponse)
 });
 type dismissedConfigurationsResponseType = Static<typeof dismissedConfigurationsResponse>;
 
@@ -526,8 +527,8 @@ type BulkDismissConfigurationType = Static<typeof BulkDismissConfiguration>;
 
 const BulkDismissConfigurationBody = Type.Object({
     configurationName: Type.String(),
-    configState: Type.String(),
-    databaseHosts: Type.Array(DatabaseHostsWithInstancesBody)
+    configState: Type.Enum(DISMISS_STATUS_ENUM),
+    databaseHosts: Type.Array(DatabaseHostsWithInstances)
 });
 
 type BulkDismissConfigurationBodyType = Static<typeof BulkDismissConfigurationBody>;

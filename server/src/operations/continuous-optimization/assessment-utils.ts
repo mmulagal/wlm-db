@@ -10,7 +10,9 @@ import {
     DISMISS_DEACTIVATION_REASON,
     DISMISS_STATUS,
     DISMISS_UPDATE_STATUS,
-    HOST_LEVEL_CONFIGURATIONS
+    HOST_LEVEL_CONFIGURATIONS,
+    STORAGE_ASSESMENT_CONFIGS_MAP,
+    STORAGE_CONFIGURATION_ASSESMENT_MAP
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import { getInstanceInfo } from '../database/database-operations';
@@ -32,7 +34,8 @@ import { HttpErrorCodes } from '../../utils/consts';
 
 const logger = getLogger();
 
-interface configurationRecord {
+interface ConfigurationRecord {
+    accountId: string;
     configName: string;
     startTime: number;
     configState: string;
@@ -140,51 +143,117 @@ async function getLastAssessedTime(
     return moment(Number(latestAssessmentTimestamp)).unix() * 1000;
 }
 
+function createNewConfig(configurationName: string, configState: string, startTime: number, endTime?: number) {
+    logger.debug('Creating new config for instance dismiss configurations', { configurationName });
+    return {
+        configurationName,
+        startTime,
+        configState,
+        ...(() => {
+            switch (configState) {
+                case DISMISS_STATUS.POSTPONED:
+                    return {
+                        endTime,
+                        deactivationReason: undefined
+                    };
+                case DISMISS_STATUS.DISMISSED:
+                    return {
+                        endTime: undefined,
+                        deactivationReason: undefined
+                    };
+                case DISMISS_STATUS.ACTIVE:
+                    return {
+                        deactivationReason: DISMISS_DEACTIVATION_REASON.USER,
+                        endTime: undefined
+                    };
+                default:
+                    return {};
+            }
+        })()
+    };
+}
+
+function updateConfigsArray(
+    configsArray: InstanceDismissParams[],
+    newConfig: InstanceDismissParams
+): InstanceDismissParams[] {
+    logger.debug('Updating configs array', { configsArray, newConfig });
+    const { configurationName } = newConfig;
+    const existingConfigIndex = configsArray.findIndex(
+        (config: InstanceDismissParams) => config.configurationName === configurationName
+    );
+
+    if (existingConfigIndex !== -1) {
+        configsArray[existingConfigIndex] = newConfig;
+    } else {
+        configsArray.push(newConfig);
+    }
+
+    return configsArray;
+}
+
 async function formatInstanceDismissConfigurations(
     currentConfigs: DatabaseInstanceDismissConfigs,
     newConfigs: InstanceDismissParams
 ) {
     logger.info('Formatting instance dismiss configurations', { currentConfigs, newConfigs });
     const { configurationName, startTime, configState, endTime } = newConfigs;
+
     const matchingKey = Object.keys(ASSESSMENT_CONFIGS).find(
         key => ASSESSMENT_CONFIGS[key as keyof typeof ASSESSMENT_CONFIGS] === configurationName
     );
 
     if (matchingKey) {
-        const existingConfig = currentConfigs[matchingKey as keyof typeof currentConfigs] || {};
-
+        const newConfig = createNewConfig(configurationName, configState, startTime, endTime);
         const updatedConfigs = {
             ...currentConfigs,
             [matchingKey]: {
-                ...existingConfig,
-                configurationName,
-                startTime,
-                configState,
-                ...(() => {
-                    switch (configState) {
-                        case DISMISS_STATUS.POSTPONED:
-                            return {
-                                endTime,
-                                deactivationReason: undefined
-                            };
-                        case DISMISS_STATUS.DISMISSED:
-                            return {
-                                endTime: undefined,
-                                deactivationReason: undefined
-                            };
-                        case DISMISS_STATUS.ACTIVE:
-                            return {
-                                deactivationReason: DISMISS_DEACTIVATION_REASON.USER,
-                                endTime: undefined
-                            };
-                        default:
-                            return {};
-                    }
-                })()
+                ...newConfig
             }
         };
         return updatedConfigs;
     }
+
+    const storageKey = Object.keys(STORAGE_ASSESMENT_CONFIGS_MAP).find(key =>
+        STORAGE_ASSESMENT_CONFIGS_MAP[key as keyof typeof STORAGE_ASSESMENT_CONFIGS_MAP].includes(configurationName)
+    );
+
+    if (storageKey) {
+        const updatedConfigs = { ...currentConfigs };
+        updatedConfigs.storage = updatedConfigs.storage || {};
+        const storageArray =
+            (updatedConfigs.storage[storageKey as keyof typeof updatedConfigs.storage] as InstanceDismissParams[]) ||
+            [];
+        const newConfig = createNewConfig(configurationName, configState, startTime, endTime);
+        updatedConfigs.storage[storageKey as keyof typeof updatedConfigs.storage] = updateConfigsArray(
+            storageArray,
+            newConfig
+        );
+
+        return updatedConfigs;
+    }
+
+    const storageConfigKey = Object.keys(STORAGE_CONFIGURATION_ASSESMENT_MAP).find(key =>
+        STORAGE_CONFIGURATION_ASSESMENT_MAP[key as keyof typeof STORAGE_CONFIGURATION_ASSESMENT_MAP].includes(
+            configurationName
+        )
+    );
+
+    if (storageConfigKey) {
+        const updatedConfigs = { ...currentConfigs };
+        updatedConfigs.storage = updatedConfigs.storage || {};
+        updatedConfigs.storage.configuration = updatedConfigs.storage.configuration || {};
+        const configArray =
+            updatedConfigs.storage.configuration[
+                storageConfigKey as keyof typeof updatedConfigs.storage.configuration
+            ] || [];
+        const newConfig = createNewConfig(configurationName, configState, startTime, endTime);
+        updatedConfigs.storage.configuration[storageConfigKey as keyof typeof updatedConfigs.storage.configuration] =
+            updateConfigsArray(configArray, newConfig);
+
+        return updatedConfigs;
+    }
+
     logger.error('No matching key found for the configuration name:', configurationName);
     throw createError(
         HttpErrorCodes.NOT_FOUND,
@@ -215,6 +284,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
 
                     if (HOST_LEVEL_CONFIGURATIONS.includes(configName)) {
                         const record = {
+                            accountId,
                             configName,
                             startTime,
                             configState,
@@ -228,6 +298,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
                         await handleHostLevelConfigurations(record);
                     } else {
                         const record = {
+                            accountId,
                             configName,
                             startTime,
                             configState,
@@ -249,76 +320,80 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
     );
 
     return { dismissedConfigurations: finalResponse };
+}
 
-    async function handleHostLevelConfigurations(record: configurationRecord) {
-        logger.debug('Handling host level configurations', { record });
-        const {
-            configName,
-            startTime,
-            configState,
-            databaseHostId,
-            credentialsId,
-            region,
-            response,
-            hostIndex,
-            endTime
-        } = record;
-        let resourceDetails;
-        let updatedStatus = DISMISS_UPDATE_STATUS.SUCCESS;
+async function handleHostLevelConfigurations(record: ConfigurationRecord) {
+    logger.debug('Handling host level configurations', { record });
+    const {
+        accountId,
+        configName,
+        startTime,
+        configState,
+        databaseHostId,
+        credentialsId,
+        region,
+        response,
+        hostIndex,
+        endTime
+    } = record;
+    let resourceDetails;
+    let updatedStatus = DISMISS_UPDATE_STATUS.SUCCESS;
 
-        try {
-            [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
-        } catch (error) {
-            logger.error('Error fetching resource details:', error);
-        }
-
-        if (!resourceDetails) {
-            response.databaseHosts[hostIndex].failedInstances = [
-                { databaseHostId, errorMessage: 'Database host not found' }
-            ];
-            updatedStatus = DISMISS_UPDATE_STATUS.FAILED;
-        } else {
-            const currentConfigs = resourceDetails.configurations as unknown as DatabaseHostConfigurations;
-            const dismissedConfigs = currentConfigs?.dismissedConfigurations || {};
-            const updatedConfigs = await formatInstanceDismissConfigurations(dismissedConfigs, {
-                configurationName: configName,
-                startTime,
-                endTime,
-                configState
-            });
-
-            try {
-                await updateDatabaseHostConfigurations(accountId, credentialsId, region, databaseHostId, {
-                    dismissedConfigurations: updatedConfigs
-                });
-            } catch (error) {
-                logger.error('Error updating dismiss configurations:', error);
-                updatedStatus = DISMISS_UPDATE_STATUS.FAILED;
-            }
-
-            logger.info('Updating host level configurations', { configurations: updatedConfigs });
-        }
-        response.databaseHosts[hostIndex].status = updatedStatus;
+    try {
+        [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+    } catch (error) {
+        logger.error('Error fetching resource details:', error);
     }
 
-    async function handleInstanceLevelConfigurations(record: configurationRecord) {
-        logger.debug('Handling instance level configurations', { record });
-        const {
-            configName,
+    if (!resourceDetails) {
+        response.databaseHosts[hostIndex].failedInstances = [
+            { databaseHostId, errorMessage: 'Database host not found' }
+        ];
+        updatedStatus = DISMISS_UPDATE_STATUS.FAILED;
+    } else {
+        const currentConfigs = resourceDetails.configurations as unknown as DatabaseHostConfigurations;
+        const dismissedConfigs = currentConfigs?.dismissedConfigurations || {};
+        const updatedConfigs = await formatInstanceDismissConfigurations(dismissedConfigs, {
+            configurationName: configName,
             startTime,
-            configState,
-            databaseHostId,
-            credentialsId,
-            region,
-            response,
-            hostIndex,
             endTime,
-            sqlServerInstances = []
-        } = record;
-        for (const sqlServerInstanceId of sqlServerInstances) {
+            configState
+        });
+
+        try {
+            await updateDatabaseHostConfigurations(accountId, credentialsId, region, databaseHostId, {
+                dismissedConfigurations: updatedConfigs
+            });
+        } catch (error) {
+            logger.error('Error updating dismiss configurations:', error);
+            updatedStatus = DISMISS_UPDATE_STATUS.FAILED;
+        }
+
+        logger.info('Updating host level configurations', { configurations: updatedConfigs });
+    }
+    response.databaseHosts[hostIndex].status = updatedStatus;
+}
+
+async function handleInstanceLevelConfigurations(record: ConfigurationRecord) {
+    logger.debug('Handling instance level configurations', { record });
+    const {
+        accountId,
+        configName,
+        startTime,
+        configState,
+        databaseHostId,
+        credentialsId,
+        region,
+        response,
+        hostIndex,
+        endTime,
+        sqlServerInstances = []
+    } = record;
+    await Promise.all(
+        sqlServerInstances.map(async sqlServerInstanceId => {
             let instance;
             try {
-                instance = await getInstanceInfo(accountId, credentialsId, databaseHostId, sqlServerInstanceId);
+                instance = await getInstanceInfo(accountId, credentialsId, databaseHostId, sqlServerInstanceId, region);
             } catch (error) {
                 instance = undefined;
             }
@@ -354,41 +429,46 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
                     );
                 }
             }
-        }
+        })
+    );
 
-        updateHostStatus(response, hostIndex, sqlServerInstances);
+    updateHostStatus(response, hostIndex, sqlServerInstances);
+}
+
+function addFailedInstance(
+    response: BulkDismissConfigurationType,
+    hostIndex: number,
+    instanceId: string,
+    errorMessage: string
+) {
+    logger.debug('Adding failed instance', { hostIndex, instanceId, errorMessage });
+    if (!response.databaseHosts[hostIndex]?.failedInstances) {
+        response.databaseHosts[hostIndex].failedInstances = [
+            { databaseHostId: response.databaseHosts[hostIndex].id, instanceId, errorMessage }
+        ];
+    } else {
+        response.databaseHosts[hostIndex].failedInstances.push({
+            databaseHostId: response.databaseHosts[hostIndex].id,
+            instanceId,
+            errorMessage
+        });
+    }
+}
+
+function updateHostStatus(response: BulkDismissConfigurationType, hostIndex: number, sqlServerInstances: string[]) {
+    logger.debug('Updating host status', { hostIndex, sqlServerInstances });
+    const updatedInstancesCount =
+        sqlServerInstances.length - (response.databaseHosts[hostIndex]?.failedInstances?.length || 0);
+    let updatedStatus: string;
+    if (updatedInstancesCount === 0) {
+        updatedStatus = DISMISS_UPDATE_STATUS.FAILED;
+    } else if (updatedInstancesCount === sqlServerInstances.length) {
+        updatedStatus = DISMISS_UPDATE_STATUS.SUCCESS;
+    } else {
+        updatedStatus = DISMISS_UPDATE_STATUS.PARTIAL;
     }
 
-    function addFailedInstance(response: any, hostIndex: number, instanceId: string, errorMessage: string) {
-        logger.debug('Adding failed instance', { hostIndex, instanceId, errorMessage });
-        if (!response.databaseHosts[hostIndex]?.failedInstances) {
-            response.databaseHosts[hostIndex].failedInstances = [
-                { databaseHostId: response.databaseHosts[hostIndex].id, instanceId, errorMessage }
-            ];
-        } else {
-            response.databaseHosts[hostIndex].failedInstances.push({
-                databaseHostId: response.databaseHosts[hostIndex].databaseHostId,
-                instanceId,
-                errorMessage
-            });
-        }
-    }
-
-    function updateHostStatus(response: any, hostIndex: number, sqlServerInstances: string[]) {
-        logger.debug('Updating host status', { hostIndex, sqlServerInstances });
-        const updatedInstancesCount =
-            sqlServerInstances.length - (response.databaseHosts[hostIndex]?.failedInstances?.length || 0);
-        let updatedStatus: string;
-        if (updatedInstancesCount === 0) {
-            updatedStatus = DISMISS_UPDATE_STATUS.FAILED;
-        } else if (updatedInstancesCount === sqlServerInstances.length) {
-            updatedStatus = DISMISS_UPDATE_STATUS.SUCCESS;
-        } else {
-            updatedStatus = DISMISS_UPDATE_STATUS.PARTIAL;
-        }
-
-        response.databaseHosts[hostIndex].status = updatedStatus;
-    }
+    response.databaseHosts[hostIndex].status = updatedStatus;
 }
 
 function updateFieldsBasedOnDismissedConfigurations(
@@ -399,11 +479,11 @@ function updateFieldsBasedOnDismissedConfigurations(
 
     const updatedFieldsValues = fieldsValues.filter(
         fieldValue =>
-            !Object.entries(dismissedConfigurations).some(
-                ([keyName, config]) =>
-                    keyName === fieldValue &&
-                    ((config as { configState: string }).configState === DISMISS_STATUS.POSTPONED ||
-                        (config as { configState: string }).configState === DISMISS_STATUS.DISMISSED)
+            !Object.values(dismissedConfigurations).some(
+                config =>
+                    config.configurationName === fieldValue &&
+                    [DISMISS_STATUS.POSTPONED, DISMISS_STATUS.DISMISSED].includes(config.configState) &&
+                    config.configurationType !== 'storage' // storage should be removed from field values only when all storage related values are dismissed
             )
     );
 

@@ -876,40 +876,46 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                                     const hostDismissedConfigurations = (
                                         resource?.configurations as unknown as DatabaseInstanceConfigurations
                                     )?.dismissedConfigurations;
+                                    const {
+                                        credentials_id: credentialsId,
+                                        region,
+                                        resource_id: resourceId,
+                                        database_instance_id: databaseInstanceId
+                                    } = managedInstance;
                                     try {
                                         await checkAndUpdatePostponedEndTime(
-                                            managedInstance.account_id,
-                                            managedInstance.credentials_id,
-                                            managedInstance.region,
-                                            managedInstance.resource_id,
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            resourceId,
                                             instanceConfiguration,
-                                            managedInstance.database_instance_id
+                                            databaseInstanceId
                                         );
                                     } catch (error) {
                                         logger.error('Error while updating instance postponed end time', {
-                                            accountId: managedInstance.account_id,
-                                            credentialsId: managedInstance.credentials_id,
-                                            region: managedInstance.region,
-                                            databaseHostId: managedInstance.resource_id,
-                                            databaseInstanceId: managedInstance.database_instance_id,
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            resourceId,
+                                            databaseInstanceId,
                                             error
                                         });
                                     }
 
                                     try {
                                         await checkAndUpdatePostponedEndTime(
-                                            managedInstance.account_id,
-                                            managedInstance.credentials_id,
-                                            managedInstance.region,
-                                            managedInstance.resource_id,
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            resourceId,
                                             hostDismissedConfigurations
                                         );
                                     } catch (error) {
                                         logger.error('Error while updating instance postponed end time', {
-                                            accountId: managedInstance.account_id,
-                                            credentialsId: managedInstance.credentials_id,
-                                            region: managedInstance.region,
-                                            databaseHostId: managedInstance.resource_id,
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            resourceId,
                                             error
                                         });
                                     }
@@ -1004,7 +1010,7 @@ async function hostLevelDriftData(
     databaseHostId: string,
     databaseInstanceId: string,
     fields?: string,
-    dismissedConfigurations?: any
+    dismissedConfigurations?: DatabaseInstanceDismissConfigs
 ) {
     logger.info('Fetching host level drift data', {
         accountId,
