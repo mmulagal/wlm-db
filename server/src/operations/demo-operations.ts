@@ -55,6 +55,7 @@ import { AssessmentCategories } from '../utils/continous-optimization-consts';
 import {
     ASSESMENT_CONFIG_DATA,
     ASSESSMENT_AWS_BACKUP_DATA,
+    ASSESSMENT_CLONE_CONFIG_DATA,
     ASSESSMENT_CRR_CONFIG_DATA,
     ASSESSMENT_MAXDOP_CONFIG_DATA
 } from '../utils/demo-utils/demoInventoryData';
@@ -951,11 +952,22 @@ async function createAssessmentData(
         config_data_type: AssessmentCategories.MAXDOP,
         config_data: ASSESSMENT_MAXDOP_CONFIG_DATA
     };
+    const instanceCloneConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.CLONE,
+        config_data: ASSESSMENT_CLONE_CONFIG_DATA
+    };
     await createDatabaseInstanceConfigData([
         instanceConfigDataRecord,
         instanceCRRConfigDataRecord,
         instanceAWSBackupConfigDataRecord,
-        instanceMaxdopConfigDataRecord
+        instanceMaxdopConfigDataRecord,
+        instanceCloneConfigDataRecord
     ]);
 }
 
