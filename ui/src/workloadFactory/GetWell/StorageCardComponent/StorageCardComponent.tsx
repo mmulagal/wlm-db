@@ -47,7 +47,8 @@ import {
     formatGetWellData,
     formatOptimizationBreakDown,
     handleOptimizeStorageJob,
-    updateConfigStatePerInstance
+    updateConfigStatePerInstance,
+    updateConfigStateStatus
 } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -840,6 +841,18 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         ) || {};
                     dispatch(setDriftAssessmentData(newData));
                     formatGetWellData(dispatch, newData);
+
+                    // Below code is to reset dashboard level assessment value also
+                    const perObj = {
+                        credentialId: selectedGwInstanceCredId,
+                        hostId: selectedResourceId,
+                        instanceId: selectedDatabaseInstance,
+                        regionId: selectedGwInstanceRegionId,
+                        state: updatedState,
+                        id: targetId,
+                        name: cardData?.block_one?.value
+                    };
+                    updateConfigStateStatus(perObj, dispatch, updatedState);
 
                     dispatch(
                         addNotification({

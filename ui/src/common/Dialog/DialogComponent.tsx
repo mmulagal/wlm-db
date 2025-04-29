@@ -111,7 +111,7 @@ const DialogComponent = ({
     const disabledCheck = () => {
         //Condition to disable primary button for AWS backup dialog
         if (
-            dialogFrom !== FROM_DIALOG.DISMISS &&
+            dialogFrom === FROM_DIALOG.OPTIMIZE &&
             (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
                 selectedConfig === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) &&
             dataCheckForAWSBackup()
@@ -119,7 +119,7 @@ const DialogComponent = ({
             return true;
         }
         if (
-            dialogFrom !== FROM_DIALOG.DISMISS &&
+            dialogFrom === FROM_DIALOG.OPTIMIZE &&
             (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
                 selectedConfig === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) &&
             (selectedSnapshotPolicy === null || selectedSnapshotPolicy?.length === 0)
