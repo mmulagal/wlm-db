@@ -501,7 +501,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
         uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (!instance?.error) {
+            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 totalInstances++;
                 const instanceAssessmentData = instance?.assessments;
                 const isComputeOptimized = isOptimized(
@@ -620,7 +620,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
         uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (!instance?.error) {
+            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 assessmentGroupedByCategory.total++;
                 const instanceAssessmentData = instance?.assessments;
                 const isComputeOptimized = isOptimized(
@@ -794,7 +794,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (!instance?.error) {
+            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 getAssessmentGroupedByConfigurations.total++;
                 const instanceAssessmentData = instance?.assessments;
 
@@ -1104,7 +1104,7 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
         uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (!instance?.error) {
+            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instance?.assessments, {});
                 let optBreakDown = formatOptimizationBreakDown(cardsData);
                 let score = '';

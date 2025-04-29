@@ -9,6 +9,7 @@
                     "databaseInstanceId": "41",
                     "databaseInstanceName": "MSSQLSERVER",
                     "assessments": {
+                        "lastAssessmentTimestamp": 1730074791000,
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -1282,6 +1283,7 @@
                     "databaseInstanceId": "42",
                     "databaseInstanceName": "MSSQLSERVER2",
                     "assessments": {
+                        "lastAssessmentTimestamp": 1730074791000,
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -2582,6 +2584,7 @@
                     "databaseInstanceId": "43",
                     "databaseInstanceName": "MSSQLSERVER3",
                     "assessments": {
+                        "lastAssessmentTimestamp": 1730074791000,
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -3893,6 +3896,7 @@
                     "databaseInstanceId": "31",
                     "databaseInstanceName": "MSSQLSERVER",
                     "assessments": {
+                        "lastAssessmentTimestamp": 1730074791000,
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -5193,6 +5197,7 @@
                     "databaseInstanceId": "32",
                     "databaseInstanceName": "MSSQLSERVER2",
                     "assessments": {
+                        "lastAssessmentTimestamp": 1730074791000,
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
@@ -6493,6 +6498,7 @@
                     "databaseInstanceId": "33",
                     "databaseInstanceName": "MSSQLSERVER3",
                     "assessments": {
+                        "lastAssessmentTimestamp": 1730074791000,
                         "storage": {
                             "timestamp": 1730074791000,
                             "optimisedCount": {
