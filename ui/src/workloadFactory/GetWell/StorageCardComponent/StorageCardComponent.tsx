@@ -370,7 +370,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 >
                                     Active
                                 </DsTypography>
-                                <TooltipInfo>{GENERAL.ACTIVATING_MESSAGE}</TooltipInfo>
+                                <TooltipInfo>{GENERAL.ACTIVATING_MESSAGE_TWO}</TooltipInfo>
                             </div>
                         )}
                         {cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED && (
@@ -1051,6 +1051,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 children: GENERAL.REACTIVATE,
                                 isDisabled:
                                     cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVE ||
+                                    cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING ||
                                     !cardData?.dismissedObj?.configState,
                                 onClick: () => {
                                     handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
