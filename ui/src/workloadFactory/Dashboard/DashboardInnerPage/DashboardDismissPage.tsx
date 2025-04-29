@@ -3,7 +3,7 @@ import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATE_ACTIONS, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATE_ACTIONS, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
@@ -593,7 +593,7 @@ const DashboardDismissPage = () => {
                     }
                     primaryButton={setPrimaryButton}
                     secondaryButton={GENERAL.CANCEL}
-                    dialogFrom={'dismiss'}
+                    dialogFrom={FROM_DIALOG.DISMISS}
                     callback={() => {
                         callDismissApi(type, rowData, action);
                     }}
