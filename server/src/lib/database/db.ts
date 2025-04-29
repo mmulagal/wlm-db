@@ -81,7 +81,7 @@ interface DatabaseInstanceRecord {
     metaData?: DatabaseInstanceMetadata;
     databaseType: string;
     storageType?: string;
-    configurations: DatabaseInstanceConfigurations
+    configurations?: DatabaseInstanceConfigurations;
 }
 
 async function listDeployments(
