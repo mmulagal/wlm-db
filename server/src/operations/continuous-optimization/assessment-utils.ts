@@ -479,11 +479,12 @@ function updateFieldsBasedOnDismissedConfigurations(
 
     const updatedFieldsValues = fieldsValues.filter(
         fieldValue =>
-            !Object.values(dismissedConfigurations).some(
-                config =>
-                    config.configurationName === fieldValue &&
+            !Object.entries(dismissedConfigurations).some(
+                ([keyName, config]) =>
+                    (keyName === fieldValue ||
+                        (config as { configurationName?: string }).configurationName === fieldValue) &&
                     [DISMISS_STATUS.POSTPONED, DISMISS_STATUS.DISMISSED].includes(config.configState) &&
-                    config.configurationType !== 'storage' // storage should be removed from field values only when all storage related values are dismissed
+                    config.configurationType !== 'storage'
             )
     );
 
