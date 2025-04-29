@@ -243,7 +243,7 @@ const ASSESSMENT_RESOURCE_TYPE = {
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
 
 const STORAGE_ASSESMENT_CONFIGS_MAP = {
-    sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size'],
+    sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size', 'headroom'],
     layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
 };
 
