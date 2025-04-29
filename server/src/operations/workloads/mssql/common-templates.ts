@@ -109,14 +109,22 @@ const ontapRestRequestBootstrap = `
             $FSxCredentials = New-Object System.Management.Automation.PSCredential($FSxUserName, $FSxPasswordSecureString)
             $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
             $FSxHostName = "management.$fsxId.fsx.$FSxRegion.amazonaws.com"
-            $IsFSxNManagementDomainResolved = Test-Connection -ComputerName $FSxHostName -Quiet -Count 1
-            if ($IsFSxNManagementDomainResolved -eq $False) {
+            try {
+                $FSxNHTTP_Request = [System.Net.WebRequest]::Create("https://$FSxHostName")
+                $FSxNHTTP_Response = $FSxNHTTP_Request.GetResponse()
+                $FSxNHTTP_Response.Close()
+            }
+            catch {
+                write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
                 Write-Information "FSxN Management domain $FSxHostName is not resolved. Switching to management IP."
                 $FileSystemDetails = Get-FSXFileSystem -FileSystemId $fsxId
                 $FSxHostName = $FileSystemDetails.ontapconfiguration.Endpoints.Management.IpAddresses
                 if ($FSxHostName -is [array]) {
                     $FSxHostName = $FSxHostName[0]
                 }
+                # Setting the privatesubnet flag to true for testing
+                $isprivatesubnet = $True
+                $regionCertificate = ''
             }
             return @{
                 FSxCredentialsInBase64 = $FSxCredentialsInBase64

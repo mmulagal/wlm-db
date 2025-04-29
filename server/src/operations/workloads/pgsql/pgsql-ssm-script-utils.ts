@@ -91,6 +91,11 @@ const ontapRestApi = `
  
     ontap_request () {
         management_ip=management.$filesystemid.fsx.$region.amazonaws.com
+        response=$(curl -s -o /dev/null -w "%{http_code}" "https://$management_ip")
+        if [[ $response -ne 200 ]]; then
+            # Get the IP address of the management endpoint
+            management_ip=$(aws fsx describe-file-systems --file-system-id $filesystemid --region $region --query "FileSystems[0].OntapConfiguration.Endpoints.Management.IpAddresses[0]" --output text)
+        fi
         auth=$(printf '%s:%s' $fsxusername $fsxpassword | base64)
         method=$1
         endpoint=$2

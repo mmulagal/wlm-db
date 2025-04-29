@@ -63,8 +63,13 @@ $password = $credobject.fsx.password
 ##Variables
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
-$IsFSxNManagementDomainResolved = Test-Connection -ComputerName $MgmtDNS -Quiet -Count 1
-if ($IsFSxNManagementDomainResolved -eq $False) {
+try {
+    $FSxNHTTP_Request = [System.Net.WebRequest]::Create("https://$MgmtDNS")
+    $FSxNHTTP_Response = $FSxNHTTP_Request.GetResponse()
+    $FSxNHTTP_Response.Close()
+}
+catch {
+    write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
     Write-Information "FSxN Management domain $MgmtDNS is not resolved. Switching to management IP."
     $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.IpAddresses
     if ($MgmtDNS -is [array]) {
