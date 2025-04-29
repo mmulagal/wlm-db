@@ -387,8 +387,7 @@ export const getCssVariableValue = (variableName: string) =>
 
 export const formatDateAssess = (date: string | number) => {
     const dateStr = date.toString();
-    const timeStamp = dateStr.substring(6, dateStr.length - 2);
-    return moment(new Date(parseInt(timeStamp))).format('DD MMMM YYYY');
+    return moment(new Date(parseInt(dateStr))).format('DD MMMM YYYY');
 };
 
 export const formatDate = (date: string | number) => {

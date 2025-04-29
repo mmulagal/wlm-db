@@ -593,6 +593,7 @@ const DashboardDismissPage = () => {
                     }
                     primaryButton={setPrimaryButton}
                     secondaryButton={GENERAL.CANCEL}
+                    dialogFrom={'dismiss'}
                     callback={() => {
                         callDismissApi(type, rowData, action);
                     }}
