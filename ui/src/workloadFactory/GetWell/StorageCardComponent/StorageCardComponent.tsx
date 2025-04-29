@@ -370,7 +370,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 >
                                     Active
                                 </DsTypography>
-                                <TooltipInfo>{GENERAL.ACTIVATING_MESSAGE}</TooltipInfo>
+                                <TooltipInfo>{GENERAL.ACTIVATING_MESSAGE_TWO}</TooltipInfo>
                             </div>
                         )}
                         {cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED && (
