@@ -1279,7 +1279,7 @@ export const GENERAL = {
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
+        "You postponed or dismissed  configuration analyses for some SQL Server instances. Configurations with postponed or dismissed analyses don't affect the optimization score.",
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:
@@ -1293,8 +1293,8 @@ export const GENERAL = {
     REACTIVATE: 'Reactivate',
     POSTPONE_FOR_30_DAYS: 'Postpone for 30 days',
     DISMISS: 'Dismiss',
-    ANALYSIS_STATE_CHANGE_SUCCESS: 'Changed analysis state.',
-    ANALYSIS_STATE_CHANGE_FAILED: 'Failed to change analysis state.'
+    ANALYSIS_STATE_CHANGE_SUCCESS: 'Updated analysis state.',
+    ANALYSIS_STATE_CHANGE_FAILED: 'Failed to update analysis state.'
 };
 
 export const CODE_VIEWER = {

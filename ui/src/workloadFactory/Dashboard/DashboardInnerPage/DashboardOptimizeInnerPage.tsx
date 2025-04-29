@@ -8,6 +8,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography } from '@netapp/design-system';
 import CloneTabs from '../../GetWell/OptimizeInnerPage/CloneTabs';
 import OptimizeCard from '../../GetWell/OptimizeInnerPage/OptimizeCard/OptimizeCard';
+import TagComponent from './TagComponent/TagComponent';
 
 const DashboardOptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -58,8 +59,14 @@ const DashboardOptimizeInnerPage = () => {
                         </DsTypography>
                     </div>
 
-                    <div className={styles.contentSection}>
-                        <OptimizeCard fromPage={WLF_TABS.DASHBOARD} />
+                    <div className={styles.mainSection}>
+                        <div className={styles.contentSection}>
+                            <OptimizeCard recommendationHeight={'auto'} />
+                        </div>
+
+                        <div className={styles.tagSection}>
+                            <TagComponent tagHeight={'236px'} type={selectedConfig} />
+                        </div>
                     </div>
 
                     {selectedConfig === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT && (
