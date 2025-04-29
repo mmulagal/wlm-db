@@ -57,7 +57,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                     );
                     const tempDbPlacementStateObj =
                         instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                            (item: any) => item.name === 'tempdb-files-location'
+                            (item: any) => item?.configurationName === 'tempdb-files-location'
                         );
                     const isStorageTierOptimized = isOptimized(
                         tempDbPlacementObj?.status,

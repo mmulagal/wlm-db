@@ -61,7 +61,7 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                     );
                     const logDriveSizeStateObj =
                         instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                            (item: any) => item.name === 'log-drive-size'
+                            (item: any) => item?.configurationName === 'log-drive-size'
                         );
                     const isStorageTierOptimized = isOptimized(
                         logDriveSizeObj?.status,

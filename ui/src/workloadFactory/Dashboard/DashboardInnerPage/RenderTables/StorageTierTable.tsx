@@ -55,7 +55,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                     );
                     const performanceTierStateObj =
                         instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                            (item: any) => item.name === 'performance-tier'
+                            (item: any) => item?.configurationName === 'performance-tier'
                         );
                     const isStorageTierOptimized = isOptimized(
                         performanceTierObj?.status,

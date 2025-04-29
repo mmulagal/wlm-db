@@ -62,7 +62,7 @@ const TempDBDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                     );
                     const tempdbDriveSizeStateObj =
                         instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                            (item: any) => item.name === 'tempdb-drive-size'
+                            (item: any) => item?.configurationName === 'tempdb-drive-size'
                         );
                     const isStorageTierOptimized = isOptimized(
                         tempdbDriveSizeObj?.status,

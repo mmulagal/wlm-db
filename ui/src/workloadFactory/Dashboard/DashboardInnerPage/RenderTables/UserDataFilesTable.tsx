@@ -57,7 +57,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                     );
                     const userDataFilesStateObj =
                         instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                            (item: any) => item.name === 'data-files-location'
+                            (item: any) => item?.configurationName === 'data-files-location'
                         );
                     const isStorageTierOptimized = isOptimized(
                         userDataFilesObj?.status,

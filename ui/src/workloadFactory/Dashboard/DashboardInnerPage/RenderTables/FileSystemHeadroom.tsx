@@ -59,7 +59,7 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                         (item: any) => item.name === 'headroom'
                     );
                     const headroomStateObj = instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                        (item: any) => item.name === 'headroom'
+                        (item: any) => item?.configurationName === 'headroom'
                     );
                     const isStorageTierOptimized = isOptimized(headroomObj?.status, headroomStateObj?.configState);
                     if (!isStorageTierOptimized) {

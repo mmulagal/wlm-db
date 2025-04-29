@@ -57,7 +57,7 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                     );
                     const logDataFilesStateObj =
                         instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                            (item: any) => item.name === 'log-files-location'
+                            (item: any) => item?.configurationName === 'log-files-location'
                         );
                     const isStorageTierOptimized = isOptimized(
                         logDataFilesObj?.status,
