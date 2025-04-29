@@ -2,6 +2,7 @@ import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
+import throat from 'throat';
 import getLogger from '../utils/logger';
 import { isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
@@ -867,7 +868,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                 try {
                     await Promise.all(
                         managedInstances.map(
-                            async managedInstance => {
+                            throat(3, async managedInstance => {
                                 try {
                                     const { configurations: instanceConfigurations, resource } = managedInstance;
                                     const instanceConfiguration = (
@@ -924,10 +925,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                                 } catch (error) {
                                     assessmentErrors.push(error);
                                 }
-                            },
-                            {
-                                concurrency: 1
-                            }
+                            })
                         )
                     );
 
