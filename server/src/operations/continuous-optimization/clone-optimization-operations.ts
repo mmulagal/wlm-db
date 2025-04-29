@@ -125,8 +125,9 @@ async function handleCloneRemediation(
                     logger.error(errMsg);
                     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
                 }
+            } else {
+                throw createError(HttpErrorCodes.BAD_REQUEST, `Unsupported action: ${action}`);
             }
-            throw createError(HttpErrorCodes.BAD_REQUEST, `Unsupported action: ${action}`);
         }
     } catch (error: any) {
         const errMsg = `Error while handling clone remediation: ${error}`;
