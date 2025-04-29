@@ -223,6 +223,21 @@ async function createDemoResourcesPerRegion(
             let instanceIds: string = '';
             for (const sqlInstance of sqlInstances) {
                 const { sqlInstanceId, sqlInstanceName } = sqlInstance;
+                const dismissedConfigurations = {
+                    crr: {
+                        configurationName: 'crr',
+                        configState: 'POSTPONED',
+                        startTime: Date.now(),
+                        endTime: Date.now() + 30 * 24 * 60 * 60 * 1000
+                    },
+                    maxDOP: {
+                        configurationName: 'maxdop',
+                        configState: 'POSTPONED',
+                        startTime: Date.now(),
+                        endTime: Date.now() + 30 * 24 * 60 * 60 * 1000
+                    }
+                };
+                const databaseConfigurationData = { dismissedConfigurations };
                 await createDatabaseInstances(
                     accountId,
                     resourceId,
@@ -233,7 +248,8 @@ async function createDemoResourcesPerRegion(
                     region,
                     `fs-${randomize('0', 8)}`,
                     protocol,
-                    {}
+                    {},
+                    databaseConfigurationData
                 );
                 const newInstanceName = sqlInstanceName.replace(hostName, '');
                 instanceNames.push(newInstanceName);
@@ -388,7 +404,8 @@ async function createDatabaseInstances(
     region: string,
     fsxId: string,
     storageProtocol: string,
-    databaseMetadata: any
+    databaseMetadata: any,
+    configurations: any
 ) {
     const instanceRecord = {
         resourceId,
@@ -405,7 +422,8 @@ async function createDatabaseInstances(
         sandboxCreated: true,
         storageProtocol,
         metaData: databaseMetadata,
-        databaseType: DatabaseTypes.MS_SQL_SERVER
+        databaseType: DatabaseTypes.MS_SQL_SERVER,
+        configurations
     };
 
     await upsertDatabaseInstance(accountId, instanceRecord);

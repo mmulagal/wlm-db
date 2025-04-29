@@ -5,7 +5,7 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATES_UI, WLF_TABS } from '../../../utils/consts';
-import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import { setDismissPageLanding, setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
@@ -33,7 +33,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     const handleEdit = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
-        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setDismissPageLanding(WLF_TABS.DASHBOARD));
         dispatch(setSelectedConfig(type));
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };

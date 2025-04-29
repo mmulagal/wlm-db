@@ -38,6 +38,7 @@ import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getLogs } from './cloud-watch-operations';
+import { setLogGroupRetentionPolicy } from '../../lib/aws/cloud-watch-logs';
 
 const logger = getLogger();
 
@@ -226,6 +227,7 @@ async function callSsmExecution(
     accountId?: string,
     cacheData: boolean = true,
     executionTimeout?: string,
+    shouldReadFromCloudWatchLogs: boolean = false,
     documentName: string = SSM_RUN_POWERSHELL_SCRIPT_DOC,
     documentVersion: string = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
 ) {
@@ -235,6 +237,11 @@ async function callSsmExecution(
         region,
         commands,
         activeNodeInstanceId,
+        comment,
+        accountId,
+        cacheData,
+        executionTimeout,
+        shouldReadFromCloudWatchLogs,
         documentName,
         documentVersion
     );
@@ -258,30 +265,29 @@ async function callSsmExecution(
         ...defaultParams,
         InstanceIds: [activeNodeInstanceId],
         ...(comment && { Comment: comment?.substring(0, 100) }),
-        CloudWatchOutputConfig: {
-            CloudWatchLogGroupName: CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
-            CloudWatchOutputEnabled: true
-        }
+        ...(shouldReadFromCloudWatchLogs && {
+            CloudWatchOutputConfig: {
+                CloudWatchLogGroupName: CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+                CloudWatchOutputEnabled: true
+            }
+        })
     };
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
         const response = await executeSSMDocument(credentialsId, region, params, accountId);
-        let { error, output = '' } = await extractSsmResponse({ response });
+
+        // Set the retention period for the log group to 1 day
+        // We don't want to await for this to complete, as it is not critical to the SSM command execution
+        if (shouldReadFromCloudWatchLogs) {
+            setLogGroupRetentionPolicy(credentialsId, region).catch((error: any) => {
+                logger.error('Error setting log group retention policy', error);
+            });
+        }
+        const { error, output = '' } = await extractSsmResponse(credentialsId, region, { response });
         if (error) {
             throw createError(error);
         }
-        if (output.endsWith('--output truncated--')) {
-            if (!response?.CommandId) {
-                throw createError('Command Id not found');
-            }
-            const responses = await getSsmResponseFromCloudWatch(
-                credentialsId,
-                region,
-                response?.CommandId,
-                activeNodeInstanceId
-            );
-            output = responses.join('');
-        }
+
         if (cacheData) {
             logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
             writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
@@ -503,12 +509,16 @@ async function getSSMConnectionStatusByInstanceIds(credentialsId: string, region
     );
 }
 
-async function extractSsmResponse(ssmResponse: {
-    commandId?: string;
-    instanceId?: string;
-    response?: GetCommandInvocationCommandOutput;
-    error?: string;
-}) {
+async function extractSsmResponse(
+    credentialsId: string,
+    region: string,
+    ssmResponse: {
+        commandId?: string;
+        instanceId?: string;
+        response?: GetCommandInvocationCommandOutput;
+        error?: string;
+    }
+) {
     const { commandId, instanceId, response, error } = ssmResponse;
     logger.info(`Extract SSM response from instance ${instanceId} for command with id: ${commandId}`, { response });
 
@@ -531,7 +541,21 @@ async function extractSsmResponse(ssmResponse: {
         return { error: errorMessage };
     }
 
-    const output = await decompressSSMResponse(response?.StandardOutputContent || '');
+    if (instanceId && (response?.StandardOutputContent ?? '').endsWith('--output truncated--')) {
+        if (!response?.CommandId) {
+            throw createError('Command Id not found');
+        }
+        const responses = await getSsmResponseFromCloudWatch(
+            credentialsId,
+            region,
+            response?.CommandId,
+            instanceId
+        );
+        return {
+            output: responses.join('')
+        };
+    }
+    const output = await decompressSSMResponse(response?.StandardOutputContent ?? '');
     return { output };
 }
 

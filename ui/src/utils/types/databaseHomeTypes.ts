@@ -153,6 +153,7 @@ export interface AggregatedCostsRes {
 }
 
 export interface DatabaseHostsEntities {
+    dismissPageLanding: string;
     enableFilter: boolean;
     selectedRowsForOptimize: Array<string> | any;
     selectedRowsForDismiss: Array<string> | any;

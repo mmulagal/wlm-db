@@ -45,9 +45,12 @@
             }
         }
 
-        .contentSection {
+        .mainSection {
             display: flex;
-            justify-content: center;
+            .contentSection {
+                display: flex;
+                justify-content: center;
+            }
         }
     }
 }

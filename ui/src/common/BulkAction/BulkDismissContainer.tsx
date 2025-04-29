@@ -37,7 +37,7 @@ const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) =>
                     onClick={() => onClick(CONFIG_STATE_ACTIONS.POSTPONED, hasSomePostponed)}
                     isDisabled={checkForOnlyPostponed}
                 >
-                    {'Postponed for 30 days'}
+                    {'Postpone for 30 days'}
                 </DsButton>
                 <SeparatorComponent variant="vertical" height="16px" />
                 <DsButton

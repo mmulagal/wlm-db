@@ -10,7 +10,7 @@ import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
-import { DatabaseInstanceMetadata } from '../../utils/common-types';
+import { DatabaseInstanceConfigurations, DatabaseInstanceMetadata } from '../../utils/common-types';
 import { TCO_FEATURE } from '../../utils/consts';
 
 const logger = getLogger();
@@ -81,6 +81,7 @@ interface DatabaseInstanceRecord {
     metaData?: DatabaseInstanceMetadata;
     databaseType: string;
     storageType?: string;
+    configurations?: DatabaseInstanceConfigurations;
 }
 
 async function listDeployments(
@@ -651,7 +652,7 @@ async function updateDatabaseInstanceMetadata(
     databaseInstanceId: string,
     metaData: any
 ) {
-    logger.info('Updating resource metadata', { accountId, databaseInstanceId, credentialsId });
+    logger.info('Updating database instance metadata', { accountId, databaseInstanceId, credentialsId });
 
     accountId = checkAccount(accountId);
 
@@ -821,7 +822,7 @@ async function updateDatabaseInstanceConfigurations(
     databaseInstanceId: string,
     updatedConfigs: any
 ) {
-    logger.info('Updating resource metadata', {
+    logger.info('Updating database instance configurations', {
         accountId,
         databaseInstanceId,
         credentialsId,

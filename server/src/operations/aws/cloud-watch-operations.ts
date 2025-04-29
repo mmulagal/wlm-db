@@ -3,7 +3,7 @@ import ms from 'ms';
 import getMetricStatistics from '../../lib/aws/cloud-watch';
 import getLogger from '../../utils/logger';
 import { describeFSx } from '../../lib/aws/fsx';
-import getPaginatedLogs from '../../lib/aws/cloud-watch-logs';
+import { getPaginatedCloudwatchLogs } from '../../lib/aws/cloud-watch-logs';
 
 const logger = getLogger();
 
@@ -282,7 +282,7 @@ async function getLogs(credentialsId: string, region: string, logGroupName: stri
     };
 
     try {
-        const logs = await getPaginatedLogs(credentialsId, region, input);
+        const logs = await getPaginatedCloudwatchLogs(credentialsId, region, input);
         return logs;
     } catch (error) {
         logger.error('Error reading log events from CloudWatch:', error);

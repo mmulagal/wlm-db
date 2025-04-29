@@ -52,7 +52,7 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
             id: 2,
             type: GENERAL.LOG_VOLUME,
             size: sizeData?.log,
-            calculation: `25% of ${GENERAL.DATA_SIZE}`
+            calculation: `${wizardType === WIZARD_TYPE.MSSQL ? '25%' : '75%'} of ${GENERAL.DATA_SIZE}`
         });
         if (wizardType === WIZARD_TYPE.MSSQL) {
             newList.push({

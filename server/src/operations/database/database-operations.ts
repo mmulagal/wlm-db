@@ -301,12 +301,14 @@ async function getInstanceInfo(
     accountId: string,
     credentialsId: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    region?: string
 ) {
     const [instanceDetail] = await listDatabaseInstances(accountId, {
         credentialsId,
         resourceId: databaseHostId,
-        sqlInstanceId: databaseInstanceId
+        sqlInstanceId: databaseInstanceId,
+        region
     });
 
     if (isEmpty(instanceDetail)) {

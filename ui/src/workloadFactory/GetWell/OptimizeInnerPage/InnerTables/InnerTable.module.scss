@@ -152,6 +152,6 @@
 
 @media screen and (min-width: 1920px) {
     .inner-table {
-        width: 73.22%;
+        width: calc(1334px + ((100vw - 1920px)));
     }
 }

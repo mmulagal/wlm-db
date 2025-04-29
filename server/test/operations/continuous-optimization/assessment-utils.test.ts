@@ -12,7 +12,6 @@ import {
     getMatchingAssessmentStatus,
     handleOptimizeJobCreation,
     updateFieldsBasedOnDismissedConfigurations
-    // updateFieldsBasedOnDismissedConfigurations
 } from '../../../src/operations/continuous-optimization/assessment-utils';
 import { FINDING } from '../../../src/utils/consts';
 import { AssessmentStatus } from '../../../src/utils/continous-optimization-consts';

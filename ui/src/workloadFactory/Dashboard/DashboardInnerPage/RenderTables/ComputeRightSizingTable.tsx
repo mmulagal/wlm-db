@@ -59,7 +59,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                     const computeRightSizingStateObj = instanceData?.assessments?.dismissedConfigurations?.compute;
                     const isStorageTierOptimized = isOptimized(
                         computeRightSizingObj?.status,
-                        computeRightSizingStateObj?.state
+                        computeRightSizingStateObj?.configState
                     );
                     if (!isStorageTierOptimized) {
                         let computeMissingPermissions = false;

@@ -72,7 +72,7 @@ const DatabaseDistribution = () => {
                         beforeOutOf={aggregatedHostsCount?.managedDatabases || 0}
                         afterOutOf={aggregatedHostsCount?.totalDatabases || 0}
                         bottomText="Managed databases:"
-                        width="440px"
+                        width="auto"
                         loading={loading}
                     />
                     <BarComponent
@@ -87,7 +87,7 @@ const DatabaseDistribution = () => {
                         beforeOutOf={aggregatedPgSqlHostsCount?.managedDatabases || 0}
                         afterOutOf={aggregatedPgSqlHostsCount?.totalDatabases || 0}
                         bottomText="Managed databases:"
-                        width="440px"
+                        width="auto"
                         loading={loading}
                     />
                 </div>

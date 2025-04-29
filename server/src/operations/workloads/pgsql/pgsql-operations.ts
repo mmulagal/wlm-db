@@ -21,8 +21,7 @@ import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/d
 import { DATABASES_COUNT, LIST_DATABASES, PERFORMANCE_METRICS } from './queries';
 import { getPgSqlProtection, getPgSqlStorageSavings, getPgsqlInstanceData } from './pgsql-ssm-script-utils';
 import getDatabaseInstanceTopology from '../../../utils/sql-utils';
-import { SSM_RUN_SHELL_SCRIPT_DOC } from './const';
-import { SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../mssql/const';
+import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './const';
 import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 
 const logger = getLogger();
@@ -78,8 +77,9 @@ async function getPgSqlInstanceInfo(accountId: string, credentialsId: string, re
                 accountId,
                 undefined,
                 undefined,
+                undefined,
                 SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
             );
             if (response) {
                 return response;
@@ -120,8 +120,9 @@ async function getPgSqlDatabaseCount(
             accountId,
             undefined,
             undefined,
+            undefined,
             SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         );
         if (response) {
             return response;
@@ -163,8 +164,9 @@ async function getPgSqlStorageSavingsVolumeData(
             accountId,
             undefined,
             undefined,
+            undefined,
             SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         );
         const {
             records: [volSavingsData]
@@ -409,8 +411,9 @@ async function getPgSqlDatabasesList(
             accountId,
             undefined,
             undefined,
+            true,
             SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         );
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
@@ -469,8 +472,9 @@ async function getPgSqlPerformaceMetrics(
             accountId,
             undefined,
             undefined,
+            undefined,
             SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         );
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
@@ -529,8 +533,9 @@ async function getPgSqlProtectionStatus(
         accountId,
         undefined,
         undefined,
+        undefined,
         SSM_RUN_SHELL_SCRIPT_DOC,
-        SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+        SSM_RUN_SHELL_SCRIPT_DOC_VERSION
     );
     if (response) {
         const parsedResponse = sqlResponseParsing(response);

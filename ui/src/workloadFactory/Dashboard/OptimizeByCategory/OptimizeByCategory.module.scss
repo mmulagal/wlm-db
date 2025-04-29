@@ -114,3 +114,38 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    
+    [class*='subSection'] {
+        width: 48.33%;
+
+        .optimizeByCategory{
+            width: 100%;
+
+            .mainSection{
+                width: 100%;
+                
+                .optimizeSeparator{
+                    width: 100%;
+                    
+                }
+                [class*='topSection']{
+                    width: 100%;
+                    .tile1{
+                        width: 25.9%;
+
+                        .section1{
+                            width: 23.33%;
+                        }
+
+                        .section2{
+                            width: 86.67%;
+                        }
+                    }
+                
+                }
+            }
+        }
+    }
+}

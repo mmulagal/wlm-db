@@ -8,7 +8,7 @@ import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { WLF_TABS } from '../../../../utils/consts';
 import RecommendationText from '../../RecommendationText/RecommendationText';
 
-const OptimizeCard = ({ fromPage = '' }: any) => {
+const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { cloneDashboardData } = useAppSelector(state => state.getWellOptimize);
     const [setCardData, setSetCardData] = useState<any>({});
@@ -215,70 +215,6 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
         }
     };
 
-    const displayRecommendations = () => {
-        if (selectedOptimizeConfig?.type === 'Log drive size') {
-            return (
-                <TooltipInfo>
-                    <div className={styles.tooltipContainer}>
-                        <DsTypography variant="Regular_14">{setCardData?.recommendationText?.value}</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {setCardData?.recommendationText?.valueHeading}
-                        </DsTypography>
-
-                        {setCardData?.recommendationText?.values.map((value: string, index: number) => (
-                            <div key={index}>
-                                <DsTypography variant="Regular_14">{value}</DsTypography>
-                            </div>
-                        ))}
-                    </div>
-                </TooltipInfo>
-            );
-        } else if (selectedOptimizeConfig?.type === 'Network adapter settings') {
-            return (
-                <TooltipInfo>
-                    <div
-                        className={styles.rssConfig}
-                        style={{
-                            //@ts-ignore
-                            whiteSpace: 'pre-wrap',
-                            width: 'unset'
-                        }}
-                    >
-                        <DsTypography variant="Regular_14">
-                            {setCardData?.recommendationText?.value?.first}
-                        </DsTypography>
-                        {setCardData?.recommendationText?.second && (
-                            <DsTypography variant="Regular_14">
-                                {setCardData?.recommendationText?.value?.second}
-                            </DsTypography>
-                        )}
-                        <div className={styles.bulletContainer}>
-                            {setCardData?.recommendationText?.value?.points?.map((perPoint: any, index: number) => {
-                                return (
-                                    <div
-                                        className={styles.points}
-                                        style={{ marginTop: index === 3 ? '-16px' : '' }}
-                                        key={index}
-                                    >
-                                        <div className={styles.bullet}>
-                                            <Bullet />
-                                        </div>
-                                        <DsTypography variant="Regular_14" style={{ position: 'relative', top: '5px' }}>
-                                            {perPoint}
-                                        </DsTypography>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <DsTypography variant="Regular_14">{setCardData?.recommendationText?.value?.last}</DsTypography>
-                    </div>
-                </TooltipInfo>
-            );
-        } else {
-            return <TooltipInfo>{setCardData?.recommendationText?.value}</TooltipInfo>;
-        }
-    };
-
     return (
         <div className={styles.optimizeCardContainer}>
             <div className={styles.optimizeCard}>
@@ -295,24 +231,11 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                             <DsTypography variant="Semibold_14">{setCardData?.block_two?.value}</DsTypography>
                             <DsTypography variant="Regular_14">{setCardData?.block_two?.type}</DsTypography>
                         </div>
-
-                        <div className={styles.tagRow}>
-                            <DsTypography variant="Semibold_14">{setCardData?.block_three?.type}</DsTypography>
-                            <div className={styles.tagContainer}>
-                                {setCardData?.block_three?.value.map((tag: string, index: number) => {
-                                    return (
-                                        <div key={index}>
-                                            <Tag text={tag} />
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className={styles.recommendation} style={{ height: 'auto' }}>
+            <div className={styles.recommendation} style={{ height: recommendationHeight }}>
                 <RecommendationText data={setCardData?.data} from={'dashboard'} cardName={setCardData?.cardName} />
             </div>
         </div>

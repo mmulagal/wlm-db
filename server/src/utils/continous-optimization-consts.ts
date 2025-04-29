@@ -125,6 +125,12 @@ enum OPTIMIZATION_CATEGORIES {
     CLONE = 'clone'
 }
 
+enum DISMISS_STATUS_ENUM {
+    DISMISSED = 'DISMISSED',
+    POSTPONED = 'POSTPONED',
+    ACTIVE = 'ACTIVE'
+}
+
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
 const SEVERITY = {
     CRITICAL: 'critical',
@@ -237,25 +243,24 @@ const ASSESSMENT_RESOURCE_TYPE = {
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
 
 const STORAGE_ASSESMENT_CONFIGS_MAP = {
-    storage: {
-        configuration: {
-            volumes: [
-                'thin-provision',
-                'autosize',
-                'autosize-mode',
-                'fractional-reserve',
-                'snapshot-copy-reserve',
-                'snapshot-autodelete',
-                'space-mgmt-try-first',
-                'tiering-policy',
-                'tiering-min-cooling-days'
-            ],
-            luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
-            os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size']
-        },
-        sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size'],
-        layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
-    }
+    sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size', 'headroom'],
+    layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
+};
+
+const STORAGE_CONFIGURATION_ASSESMENT_MAP = {
+    volumes: [
+        'thin-provision',
+        'autosize',
+        'autosize-mode',
+        'fractional-reserve',
+        'snapshot-copy-reserve',
+        'snapshot-autodelete',
+        'space-mgmt-try-first',
+        'tiering-policy',
+        'tiering-min-cooling-days'
+    ],
+    luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
+    os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size']
 };
 
 const ASSESSMENT_CONFIGS = {
@@ -346,5 +351,7 @@ export {
     DISMISS_STATUS,
     DISMISS_UPDATE_STATUS,
     INSTANCE_LEVEL_CONFIGURATIONS,
-    HOST_LEVEL_CONFIGURATIONS
+    HOST_LEVEL_CONFIGURATIONS,
+    STORAGE_CONFIGURATION_ASSESMENT_MAP,
+    DISMISS_STATUS_ENUM
 };

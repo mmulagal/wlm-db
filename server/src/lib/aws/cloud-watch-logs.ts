@@ -1,6 +1,12 @@
-import { CloudWatchLogsClient, GetLogEventsCommandInput, paginateGetLogEvents } from '@aws-sdk/client-cloudwatch-logs';
+import {
+    CloudWatchLogsClient,
+    GetLogEventsCommandInput,
+    paginateGetLogEvents,
+    PutRetentionPolicyCommand
+} from '@aws-sdk/client-cloudwatch-logs';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
+import { CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -18,7 +24,7 @@ async function getCloudWatchLogsClient(region: string, credentialsId: string) {
     }
 }
 
-export default async function getPaginatedLogs(
+async function getPaginatedCloudwatchLogs(
     credentialsId: string,
     region: string,
     input: GetLogEventsCommandInput
@@ -46,3 +52,22 @@ export default async function getPaginatedLogs(
     logger.debug('Number of paginated logs retrieved', logs.length);
     return logs;
 }
+
+// Function to set the retention policy for a log group
+async function setLogGroupRetentionPolicy(
+    credentialsId: string,
+    region: string,
+    logGroupName = CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+    retentionInDays = 1
+): Promise<void> {
+    logger.info('Setting log group retention policy:', { region, credentialsId, logGroupName, retentionInDays });
+    const client = await getCloudWatchLogsClient(region, credentialsId);
+    const command = new PutRetentionPolicyCommand({
+        logGroupName,
+        retentionInDays
+    });
+    await client.send(command);
+    logger.debug('Log group retention policy set successfully:', { logGroupName, retentionInDays });
+}
+
+export { getPaginatedCloudwatchLogs, setLogGroupRetentionPolicy };

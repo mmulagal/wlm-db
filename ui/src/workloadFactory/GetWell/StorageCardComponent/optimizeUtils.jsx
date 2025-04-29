@@ -1,6 +1,6 @@
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
-import { ASSESSMENT_CONFIG_NAMES } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../../utils/consts';
 import DialogContent from './DialogContent/DialogContent';
 
 //Function for handling the dialog from getwell page
@@ -45,6 +45,7 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
                 }
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
+                dialogFrom={FROM_DIALOG.OPTIMIZE}
                 callback={() => {
                     callOptimizeApi(type, operation, singleRowData);
                 }}

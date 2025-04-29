@@ -102,3 +102,40 @@
         width: 760px;
     }
 }
+
+@media screen and (min-width: 1920px) {
+
+    [class*='subSection'] {
+        width: 48.33%;
+        
+        .managedInstance {
+
+            width: 100%;
+
+            .mainSection{
+                
+                [class*='contentSection']{
+                    width: 100%;
+
+                    .firstBlock{
+                        width: 48.33%;
+                    }
+                    [class*='container']{
+                        width: 48.33%;
+                    }
+                    
+                }
+                
+
+                #chart-item{
+                    width: 10.41%;
+
+
+                    #chart-area{
+                        width: 10.41%;
+                    }
+                }
+            }
+        }
+    }
+}

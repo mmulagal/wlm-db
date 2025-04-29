@@ -59,7 +59,7 @@ const OSPatchTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
                 if (!instanceData?.error) {
                     const hostOsPatchObj = instanceData?.assessments?.hostOsPatch;
                     const hostOsPatchStateObj = instanceData?.assessments?.dismissedConfigurations?.hostOsPatch;
-                    const isRowOptimized = isOptimized(hostOsPatchObj?.status, hostOsPatchStateObj?.state);
+                    const isRowOptimized = isOptimized(hostOsPatchObj?.status, hostOsPatchStateObj?.configState);
                     if (!isRowOptimized) {
                         hostOsPatchAssessmentData.push({
                             credentialId: hostData?.credentialId,
