@@ -1142,6 +1142,7 @@ export const GENERAL = {
     DATABASE_AVAILABLE_MSG: 'Databases are available for managed instances only.',
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
+    ONLINE_INSTANCE_DISMISS: 'Analysis state can be updated for online instances.',
     PGSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
