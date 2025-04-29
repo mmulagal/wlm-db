@@ -57,6 +57,7 @@ const JobMonitoringTable = React.memo(() => {
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
+    const refreshTimeJobMonitor = useAppSelector(state => state.headers.refreshTimeJobMonitor);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
@@ -542,6 +543,17 @@ const JobMonitoringTable = React.memo(() => {
         collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
         tableProps?.pagination?.gotoPage(0);
     }, [timeInterval, refreshTime]);
+
+    useEffect(() => {
+        const allRowIds = Object.keys(tableProps?.rowsState);
+        if (allRowIds && allRowIds.length > 0) {
+            allRowIds.forEach(rowId => {
+                tableProps.updateRowState(rowId)({
+                    isExpanded: false
+                });
+            });
+        }
+    }, [refreshTimeJobMonitor]);
 
     const downloadJobMonitoring = () => {
         dispatch(setDownloadJobsLoading(true));
