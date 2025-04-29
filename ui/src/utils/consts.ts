@@ -118,7 +118,8 @@ export const FROM_DIALOG = {
     SAVE_CONFIG: 'save_config',
     HEADER_CROSS: 'header_cross',
     DETECT_HOST: 'detect_host',
-    SANDBOX_REFRESH: 'sandbox_refresh'
+    SANDBOX_REFRESH: 'sandbox_refresh',
+    DISMISS: 'dismiss'
 };
 
 export const DBType = {
