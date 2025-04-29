@@ -802,7 +802,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     (item: any) => item.name === 'performance-tier'
                 );
                 const perfTierStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'performance-tier'
+                    (item: any) => item?.configurationName === 'performance-tier'
                 );
                 const isStorageTierOptimized = isOptimized(perfTierObj?.status, perfTierStateObj?.configState);
                 setConfigState(configState, 'storageTier', perfTierStateObj?.configState);
@@ -811,7 +811,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     (item: any) => item.name === 'headroom'
                 );
                 const headroomStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'headroom'
+                    (item: any) => item?.configurationName === 'headroom'
                 );
                 const isFileSystemHeadroomOptimized = isOptimized(headroomObj?.status, headroomStateObj?.configState);
                 setConfigState(configState, 'fileSystemHeadroom', headroomStateObj?.configState);
@@ -820,7 +820,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     (item: any) => item.name === 'log-drive-size'
                 );
                 const logDriveSizeStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'log-drive-size'
+                    (item: any) => item?.configurationName === 'log-drive-size'
                 );
                 const isLogDriveSizeOptimized = isOptimized(logDriveSizeObj?.status, logDriveSizeStateObj?.configState);
                 setConfigState(configState, 'logDriveSize', logDriveSizeStateObj?.configState);
@@ -829,7 +829,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     (item: any) => item.name === 'tempdb-drive-size'
                 );
                 const tempdbDriveSizeStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'tempdb-drive-size'
+                    (item: any) => item?.configurationName === 'tempdb-drive-size'
                 );
                 const isTempdbDriveSizeOptimized = isOptimized(
                     tempdbDriveSizeObj?.status,
@@ -841,7 +841,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     (item: any) => item.name === 'data-files-location'
                 );
                 const userDataFilesStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item.name === 'data-files-location'
+                    (item: any) => item?.configurationName === 'data-files-location'
                 );
                 const isUserDataFilesOptimized = isOptimized(
                     userDataFilesObj?.status,
@@ -853,7 +853,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     (item: any) => item.name === 'log-files-location'
                 );
                 const logFilesStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item.name === 'log-files-location'
+                    (item: any) => item?.configurationName === 'log-files-location'
                 );
                 const isLogFilesOptimized = isOptimized(logFilesObj?.status, logFilesStateObj?.configState);
                 setConfigState(configState, 'logFiles', logFilesStateObj?.configState);

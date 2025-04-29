@@ -3,7 +3,13 @@ import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATE_ACTIONS, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
+    CONFIG_STATE_ACTIONS,
+    FROM_DIALOG,
+    WLF_TABS
+} from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
@@ -192,9 +198,7 @@ const DashboardDismissPage = () => {
             .then((res: any) => {
                 if (!res.error) {
                     let { successList, failedList } = categorizeStateInstances(res?.data, type);
-                    successList?.map((perRow: any) => {
-                        updateConfigStateStatus(perRow, dispatch, action);
-                    });
+                    updateConfigStateStatus(successList, dispatch, action);
                     dispatch(
                         setInProgressStateData({
                             ...inProgressStateData,
@@ -611,31 +615,31 @@ const DashboardDismissPage = () => {
         switch (type) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'performance-tier'
+                    (item: any) => item?.configurationName === 'performance-tier'
                 );
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'headroom'
+                    (item: any) => item?.configurationName === 'headroom'
                 );
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'log-drive-size'
+                    (item: any) => item?.configurationName === 'log-drive-size'
                 );
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'tempdb-drive-size'
+                    (item: any) => item?.configurationName === 'tempdb-drive-size'
                 );
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item.name === 'data-files-location'
+                    (item: any) => item?.configurationName === 'data-files-location'
                 );
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item.name === 'log-files-location'
+                    (item: any) => item?.configurationName === 'log-files-location'
                 );
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item.name === 'tempdb-files-location'
+                    (item: any) => item?.configurationName === 'tempdb-files-location'
                 );
             case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 return instanceData?.assessments?.dismissedConfigurations?.compute;

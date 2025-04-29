@@ -852,7 +852,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         id: targetId,
                         name: cardData?.block_one?.value
                     };
-                    updateConfigStateStatus(perObj, dispatch, updatedState);
+                    updateConfigStateStatus([perObj], dispatch, updatedState);
 
                     dispatch(
                         addNotification({

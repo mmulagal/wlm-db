@@ -2967,7 +2967,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
 
-export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any) => {
+export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any) => {
     let setAction = '';
     if (action === CONFIG_STATE_ACTIONS.DISMISS) {
         setAction = CONFIG_STATES.DISMISSED;
@@ -2977,178 +2977,190 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
         setAction = CONFIG_STATES.ACTIVATING;
     }
     const state = store.getState();
-    const updatedAsessmentData = state.inventoryV2.allmssqlHostAssessmentData?.map((hostData: any) => {
-        if (
-            hostData?.databaseHostId === rowData?.hostId &&
-            hostData?.credentialId === rowData?.credentialId &&
-            hostData?.regionId === rowData?.regionId
-        ) {
-            const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
-                if (instance?.databaseInstanceId === rowData?.instanceId) {
-                    const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
-                    const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_LAYOUT_MAP;
-                    const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
-                    const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
-                    if (storageSizingMap[rowData?.name]) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                dismissedConfigurations: {
-                                    ...instance?.assessments?.dismissedConfigurations,
-                                    storage: {
-                                        ...instance?.assessments?.dismissedConfigurations?.storage,
-                                        sizing: instance?.assessments?.dismissedConfigurations?.storage?.sizing
-                                            ? instance?.assessments?.dismissedConfigurations?.storage?.sizing.map(
-                                                  (item: any) => {
-                                                      if (item?.configurationName === storageSizingMap[rowData?.name]) {
-                                                          return {
-                                                              ...item,
-                                                              configState: setAction,
-                                                              endTime: rowData?.endTime
-                                                          };
-                                                      } else {
-                                                          return item;
+    const { allmssqlHostAssessmentData } = state.inventoryV2;
+    let updatedAsessmentData = [...allmssqlHostAssessmentData]; // Clone the original data
+
+    rowList?.forEach((rowData: any) => {
+        updatedAsessmentData = updatedAsessmentData?.map((hostData: any) => {
+            if (
+                hostData?.databaseHostId === rowData?.hostId &&
+                hostData?.credentialId === rowData?.credentialId &&
+                hostData?.regionId === rowData?.regionId
+            ) {
+                const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
+                    if (instance?.databaseInstanceId === rowData?.instanceId) {
+                        const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
+                        const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_LAYOUT_MAP;
+                        const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
+                        const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
+                        if (storageSizingMap[rowData?.name]) {
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        storage: {
+                                            ...instance?.assessments?.dismissedConfigurations?.storage,
+                                            sizing: instance?.assessments?.dismissedConfigurations?.storage?.sizing
+                                                ? instance?.assessments?.dismissedConfigurations?.storage?.sizing.map(
+                                                      (item: any) => {
+                                                          if (
+                                                              item?.configurationName ===
+                                                              storageSizingMap[rowData?.name]
+                                                          ) {
+                                                              return {
+                                                                  ...item,
+                                                                  configState: setAction,
+                                                                  endTime: rowData?.endTime
+                                                              };
+                                                          } else {
+                                                              return item;
+                                                          }
                                                       }
-                                                  }
-                                              )
-                                            : [
-                                                  {
-                                                      configurationName: storageSizingMap[rowData?.name],
-                                                      configState: setAction,
-                                                      endTime: rowData?.endTime
-                                                  }
-                                              ]
-                                    }
-                                } || {
-                                    storage: {
-                                        sizing: [
-                                            {
-                                                configurationName: storageSizingMap[rowData?.name],
-                                                configState: setAction,
-                                                endTime: rowData?.endTime
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        };
-                    } else if (storageLayoutMap[rowData?.name]) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                dismissedConfigurations: {
-                                    ...instance?.assessments?.dismissedConfigurations,
-                                    storage: {
-                                        ...instance?.assessments?.dismissedConfigurations?.storage,
-                                        layout: instance?.assessments?.dismissedConfigurations?.storage?.layout
-                                            ? instance?.assessments?.dismissedConfigurations?.storage?.layout.map(
-                                                  (item: any) => {
-                                                      if (item?.configurationName === storageLayoutMap[rowData?.name]) {
-                                                          return {
-                                                              ...item,
-                                                              configState: setAction,
-                                                              endTime: rowData?.endTime
-                                                          };
-                                                      } else {
-                                                          return item;
-                                                      }
-                                                  }
-                                              )
-                                            : [
-                                                  {
-                                                      configurationName: storageLayoutMap[rowData?.name],
-                                                      configState: setAction,
-                                                      endTime: rowData?.endTime
-                                                  }
-                                              ]
-                                    }
-                                } || {
-                                    storage: {
-                                        layout: [
-                                            {
-                                                configurationName: storageLayoutMap[rowData?.name],
-                                                configState: setAction,
-                                                endTime: rowData?.endTime
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        };
-                    } else if (storageConfigurationMap[rowData?.id]) {
-                        const key = storageConfigurationMap[rowData?.id];
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                dismissedConfigurations: {
-                                    ...instance?.assessments?.dismissedConfigurations,
-                                    storage: {
-                                        ...instance?.assessments?.dismissedConfigurations?.storage,
-                                        configuration: {
-                                            ...instance?.assessments?.dismissedConfigurations?.storage?.configuration,
-                                            [key]: instance?.assessments?.dismissedConfigurations?.storage
-                                                ?.configuration?.[key]
-                                                ? instance?.assessments?.dismissedConfigurations?.storage?.configuration?.[
-                                                      key
-                                                  ].map((item: any) => {
-                                                      if (item?.configurationName === rowData?.id) {
-                                                          return {
-                                                              ...item,
-                                                              configState: setAction,
-                                                              endTime: rowData?.endTime
-                                                          };
-                                                      } else {
-                                                          return item;
-                                                      }
-                                                  })
+                                                  )
                                                 : [
                                                       {
-                                                          configurationName: rowData?.id,
+                                                          configurationName: storageSizingMap[rowData?.name],
                                                           configState: setAction,
                                                           endTime: rowData?.endTime
                                                       }
                                                   ]
                                         }
+                                    } || {
+                                        storage: {
+                                            sizing: [
+                                                {
+                                                    configurationName: storageSizingMap[rowData?.name],
+                                                    configState: setAction,
+                                                    endTime: rowData?.endTime
+                                                }
+                                            ]
+                                        }
                                     }
                                 }
-                            }
-                        };
-                    } else if (otherConfigMap[rowData?.name]) {
-                        let name = otherConfigMap[rowData?.name];
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                dismissedConfigurations: {
-                                    ...instance?.assessments?.dismissedConfigurations,
-                                    [name]: instance?.assessments?.dismissedConfigurations?.[name]
-                                        ? {
-                                              ...instance?.assessments?.dismissedConfigurations?.[name],
-                                              configState: setAction,
-                                              endTime: rowData?.endTime
-                                          }
-                                        : {
-                                              configurationName: rowData?.id,
-                                              configState: setAction,
-                                              endTime: rowData?.endTime
-                                          }
+                            };
+                        } else if (storageLayoutMap[rowData?.name]) {
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        storage: {
+                                            ...instance?.assessments?.dismissedConfigurations?.storage,
+                                            layout: instance?.assessments?.dismissedConfigurations?.storage?.layout
+                                                ? instance?.assessments?.dismissedConfigurations?.storage?.layout.map(
+                                                      (item: any) => {
+                                                          if (
+                                                              item?.configurationName ===
+                                                              storageLayoutMap[rowData?.name]
+                                                          ) {
+                                                              return {
+                                                                  ...item,
+                                                                  configState: setAction,
+                                                                  endTime: rowData?.endTime
+                                                              };
+                                                          } else {
+                                                              return item;
+                                                          }
+                                                      }
+                                                  )
+                                                : [
+                                                      {
+                                                          configurationName: storageLayoutMap[rowData?.name],
+                                                          configState: setAction,
+                                                          endTime: rowData?.endTime
+                                                      }
+                                                  ]
+                                        }
+                                    } || {
+                                        storage: {
+                                            layout: [
+                                                {
+                                                    configurationName: storageLayoutMap[rowData?.name],
+                                                    configState: setAction,
+                                                    endTime: rowData?.endTime
+                                                }
+                                            ]
+                                        }
+                                    }
                                 }
-                            }
-                        };
+                            };
+                        } else if (storageConfigurationMap[rowData?.id]) {
+                            const key = storageConfigurationMap[rowData?.id];
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        storage: {
+                                            ...instance?.assessments?.dismissedConfigurations?.storage,
+                                            configuration: {
+                                                ...instance?.assessments?.dismissedConfigurations?.storage
+                                                    ?.configuration,
+                                                [key]: instance?.assessments?.dismissedConfigurations?.storage
+                                                    ?.configuration?.[key]
+                                                    ? instance?.assessments?.dismissedConfigurations?.storage?.configuration?.[
+                                                          key
+                                                      ].map((item: any) => {
+                                                          if (item?.configurationName === rowData?.id) {
+                                                              return {
+                                                                  ...item,
+                                                                  configState: setAction,
+                                                                  endTime: rowData?.endTime
+                                                              };
+                                                          } else {
+                                                              return item;
+                                                          }
+                                                      })
+                                                    : [
+                                                          {
+                                                              configurationName: rowData?.id,
+                                                              configState: setAction,
+                                                              endTime: rowData?.endTime
+                                                          }
+                                                      ]
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+                        } else if (otherConfigMap[rowData?.name]) {
+                            let name = otherConfigMap[rowData?.name];
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        [name]: instance?.assessments?.dismissedConfigurations?.[name]
+                                            ? {
+                                                  ...instance?.assessments?.dismissedConfigurations?.[name],
+                                                  configState: setAction,
+                                                  endTime: rowData?.endTime
+                                              }
+                                            : {
+                                                  configurationName: rowData?.id,
+                                                  configState: setAction,
+                                                  endTime: rowData?.endTime
+                                              }
+                                    }
+                                }
+                            };
+                        } else {
+                            return instance;
+                        }
                     } else {
                         return instance;
                     }
-                } else {
-                    return instance;
-                }
-            });
-            return { ...hostData, instancesAssessment: updatedInstancesAssessment };
-        } else {
-            return hostData;
-        }
+                });
+                return { ...hostData, instancesAssessment: updatedInstancesAssessment };
+            } else {
+                return hostData;
+            }
+        });
     });
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
