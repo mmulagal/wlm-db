@@ -119,7 +119,8 @@ export const FROM_DIALOG = {
     HEADER_CROSS: 'header_cross',
     DETECT_HOST: 'detect_host',
     SANDBOX_REFRESH: 'sandbox_refresh',
-    DISMISS: 'dismiss'
+    DISMISS: 'dismiss',
+    OPTIMIZE: 'optimize'
 };
 
 export const DBType = {

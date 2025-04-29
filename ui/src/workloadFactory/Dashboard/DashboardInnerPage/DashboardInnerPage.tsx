@@ -4,7 +4,7 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
@@ -784,6 +784,7 @@ const DashboardInnerPage = () => {
                             operation={operation}
                         />
                     }
+                    dialogFrom={FROM_DIALOG.OPTIMIZE}
                     primaryButton={GENERAL.CONTINUE}
                     secondaryButton={GENERAL.CANCEL}
                     callback={() => {
