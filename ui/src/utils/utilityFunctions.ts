@@ -180,7 +180,7 @@ export const categorizeStorageSize = (value: string): string => {
     // Convert value string to bytes for comparison
     const sizeInBytes = convertToBytes(value);
 
-    if (sizeInBytes >= 60 && sizeInBytes < 99) {
+    if (sizeInBytes >= 0 && sizeInBytes < 100 * 1024 ** 2) {
         return '0 - 100 MiB';
     } else if (sizeInBytes >= 100 * 1024 ** 2 && sizeInBytes < 1024 ** 3) {
         return '100 MiB - 1 GiB';
