@@ -387,7 +387,8 @@ async function initiateStorageAssessmentCollection(
             ssmComment,
             accountId,
             false,
-            ASSESSMENT_SSM_EXECUTION_TIMEOUT
+            ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+            true
         );
 
         const parsedResponse = response ? sqlResponseParsing(response) : {};
