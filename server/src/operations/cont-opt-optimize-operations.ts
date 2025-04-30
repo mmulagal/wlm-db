@@ -2831,9 +2831,9 @@ async function optimizeClone(
             type: JOBTYPE.OPTIMIZATION,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName as string,
-            name: `Optimize the ${name} ${clone.action} process for ${serverNameWithHostName}`,
+            name: `${clone.action} ${name} for ${serverNameWithHostName}`,
             startTime: Date.now(),
-            description: `Optimize the ${name} ${clone.action} process for ${serverNameWithHostName}`,
+            description: `${clone.action} ${name} for ${serverNameWithHostName}`,
             parentJobId
         });
         childCloneJobId = id;
