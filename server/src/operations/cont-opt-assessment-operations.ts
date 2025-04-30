@@ -1047,10 +1047,16 @@ async function fetchDriftAssessment(
     });
 
     const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-    const {
+    let {
         configurations: instanceConfigurations,
         resource: { configurations: hostConfigurations }
     } = instanceDetail as unknown as DatabaseInstance;
+
+    if (isDemoFlow) {
+        const [resource] = await listResources(accountId, databaseHostId, credentialsId, region);
+        ({ configurations: hostConfigurations } = resource as unknown as ResourceDetails);
+    }
+    // prismock does not support proper mapping of resource and database instance, hence calling resource listing again to fetch the configurations
 
     const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
 
