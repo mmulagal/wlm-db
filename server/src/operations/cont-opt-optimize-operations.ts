@@ -2831,9 +2831,11 @@ async function optimizeClone(
             type: JOBTYPE.OPTIMIZATION,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName as string,
-            name: `${clone.action} ${name} for ${serverNameWithHostName}`,
+            name: `${clone.action[0].toUpperCase()}${clone.action.slice(1)} ${name} for ${serverNameWithHostName}`,
             startTime: Date.now(),
-            description: `${clone.action} ${name} for ${serverNameWithHostName}`,
+            description: `${clone.action[0].toUpperCase()}${clone.action.slice(
+                1
+            )} ${name} for ${serverNameWithHostName}`,
             parentJobId
         });
         childCloneJobId = id;
