@@ -9,7 +9,8 @@ import {
     ManageMsSqlSchemaV2,
     DiscoverPgSqlSchema,
     PgSqlResourceDetailsSchema,
-    DiscoverOracleSchema
+    DiscoverOracleSchema,
+    UnManagePgSqlSchema
 } from './schemas/discover-schemas';
 import {
     getHostAndSqlServerInfo,
@@ -141,6 +142,25 @@ export default function discoverRoutes(fastify: FastifyInstance) {
 
             const apiInfo = await getPgSqlResourceDetails(accountId, credentialsId, region, instances, fields);
             return reply.send(apiInfo);
+        }
+    );
+
+    server.delete(
+        '/v1/pgsql/credentials/:credentialsId/resources/:resourceId/instances',
+        { schema: UnManagePgSqlSchema },
+        async request => {
+            const {
+                params: { accountId, credentialsId, resourceId },
+                query: { databaseInstanceIds }
+            } = castRequest(request);
+
+            const response = await unmanageDatabaseInstance(
+                accountId,
+                credentialsId,
+                resourceId,
+                databaseInstanceIds ?? ''
+            );
+            return response;
         }
     );
 
