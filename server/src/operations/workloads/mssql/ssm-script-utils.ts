@@ -65,15 +65,17 @@ $sqlDrives = New-Object System.Collections.ArrayList
 if ($deploymentType -eq 'FCI') {
     $sqlResource = ${instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'}
     $sqlgroup = Get-ClusterResource | Where-Object Name -eq "$sqlResource"
-    $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
-    $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
+    if (-not [string]::IsNullOrEmpty($sqlgroup)) {
+        $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+        $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
 
-    foreach ($resource in $resourcegroup) {
-        $sqldisks = $resource.GetRelated("MSCluster_Disk")
-        foreach ($disk in $sqldisks) {
-            $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
-            $diskdrive = $diskpart.path
-            $sqlDrives.Add($diskdrive) | Out-Null
+        foreach ($resource in $resourcegroup) {
+            $sqldisks = $resource.GetRelated("MSCluster_Disk")
+            foreach ($disk in $sqldisks) {
+                $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+                $diskdrive = $diskpart.path
+                $sqlDrives.Add($diskdrive) | Out-Null
+            }
         }
     }
 }
