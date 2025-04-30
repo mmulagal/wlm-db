@@ -454,12 +454,11 @@ export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) =>
 
 export const isOptimized = (status?: string, dismissState?: string) => {
     return (
-        status &&
-        (status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
-            status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase() ||
-            dismissState === CONFIG_STATES.DISMISSED ||
-            dismissState === CONFIG_STATES.POSTPONED ||
-            dismissState === CONFIG_STATES.ACTIVATING)
+        status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
+        status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase() ||
+        dismissState === CONFIG_STATES.DISMISSED ||
+        dismissState === CONFIG_STATES.POSTPONED ||
+        dismissState === CONFIG_STATES.ACTIVATING
     );
 };
 
