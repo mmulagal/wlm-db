@@ -196,7 +196,7 @@ export const categorizeStorageSize = (value: string): string => {
 export const cloneAgeRange = (value: any) => {
     if (value >= 60 && value < 99) {
         return '60 - 99 days';
-    } else if (value >= 100 && value < 200) {
+    } else if (value >= 100 && value <= 200) {
         return '100 - 200 days';
     } else if (value >= 201) {
         return '200+ days';
