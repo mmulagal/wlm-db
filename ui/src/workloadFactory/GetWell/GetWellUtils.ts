@@ -53,6 +53,7 @@ import {
 export const cardDataDefault: GwCardDataInterface = {
     storage_tier: {
         id: 'performance-tier',
+        mapName: ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
         category: 'storage',
         block_one: {
             type: 'Storage sizing',
@@ -87,6 +88,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     file_system_headroom: {
         id: 'headroom',
+        mapName: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
         category: 'storage',
         block_one: {
             value: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
@@ -123,6 +125,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     transaction_log_drive_size: {
         id: 'log-drive-size',
+        mapName: ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
         category: 'storage',
         block_one: {
             value: ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
@@ -159,6 +162,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     tempdb_drive_size: {
         id: 'tempdb-drive-size',
+        mapName: ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
         category: 'storage',
         block_one: {
             value: ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
@@ -195,6 +199,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     user_data_files: {
         id: 'data-files-location',
+        mapName: ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
         category: 'storage',
         block_one: {
             value: 'Data files (.mdf) placement',
@@ -231,6 +236,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     transaction_log_files: {
         id: 'log-files-location',
+        mapName: ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
         category: 'storage',
         block_one: {
             value: 'Log files (.ldf) placement',
@@ -267,6 +273,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     tempdb_files: {
         id: 'tempdb-files-location',
+        mapName: ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
         category: 'storage',
         block_one: {
             value: ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
@@ -303,6 +310,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     ontap_configuration: {
         category: 'storage',
+        mapName: ASSESSMENT_CONFIG_NAMES.ONTAP,
         block_one: {
             value: 'ONTAP',
             type: 'Configuration'
@@ -329,6 +337,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     os_configuration: {
         category: 'storage',
+        mapName: ASSESSMENT_CONFIG_NAMES.OS,
         block_one: {
             value: 'Operating system',
             type: 'Configuration'
@@ -352,65 +361,9 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         tags: ['Performance efficiency', 'Reliability']
     },
-    Latency: {
-        block_one: {
-            value: 'Latency',
-            type: 'Storage performance '
-        },
-        block_two: {
-            type: 'Status',
-            value: 'Not optimized'
-        },
-        block_three: {
-            type: 'Latency',
-            value: '< 20 ms'
-        },
-        block_four: {
-            type: 'Severity',
-            value: 'Critical'
-        },
-        tags: []
-    },
-    Throughput: {
-        block_one: {
-            value: 'Throughput',
-            type: 'Storage performance '
-        },
-        block_two: {
-            type: 'Status',
-            value: 'Not optimized'
-        },
-        block_three: {
-            type: 'Throughput',
-            value: '> 80%'
-        },
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        tags: []
-    },
-    IOPS: {
-        block_one: {
-            value: 'IOPS',
-            type: 'Storage performance '
-        },
-        block_two: {
-            type: 'Status',
-            value: 'Not optimized'
-        },
-        block_three: {
-            type: 'Throughput',
-            value: '> 80%'
-        },
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        tags: []
-    },
     compute_rightsizing: {
         id: 'compute-rightsizing',
+        mapName: ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
         category: 'compute',
         block_one: {
             type: 'Compute',
@@ -447,6 +400,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     rss_config: {
         id: 'rss-config',
+        mapName: ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
         category: 'compute',
         block_one: {
             type: 'Compute',
@@ -494,6 +448,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     host_os_patch: {
         id: 'host-os-patch',
+        mapName: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
         category: 'compute',
         block_one: {
             type: 'Compute',
@@ -531,6 +486,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     sql_licenses: {
         id: 'sql-license',
+        mapName: ASSESSMENT_CONFIG_NAMES.LICENSE,
         category: 'application',
         block_one: {
             type: GENERAL.APPLICATION,
@@ -578,6 +534,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     microsoft_sql_patch: {
         id: 'microsoft-sql-patch',
+        mapName: ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
         category: 'application',
         block_one: {
             type: GENERAL.APPLICATION,
@@ -613,6 +570,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     maxdop: {
         id: 'maxdop',
+        mapName: ASSESSMENT_CONFIG_NAMES.MAXDOP,
         category: 'application',
         block_one: {
             type: GENERAL.APPLICATION,
@@ -650,6 +608,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     scheduled_local_snapshot: {
         id: 'snapshot-policy',
+        mapName: ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
         category: 'application',
         block_one: {
             type: GENERAL.RESILIENCY,
@@ -686,6 +645,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     crr: {
         id: 'crr',
+        mapName: ASSESSMENT_CONFIG_NAMES.CRR,
         category: 'application',
         block_one: {
             type: GENERAL.RESILIENCY,
@@ -722,6 +682,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     scheduled_FSx_for_ONTAP_backups: {
         id: 'aws-backup-policy',
+        mapName: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
         category: 'application',
         block_one: {
             type: GENERAL.RESILIENCY,
@@ -758,6 +719,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     clone_management: {
         id: 'clone',
+        mapName: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
         category: 'cloning',
         block_one: {
             type: GENERAL.CLONING,
@@ -3005,22 +2967,39 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                         storage: {
                                             ...instance?.assessments?.dismissedConfigurations?.storage,
                                             sizing: instance?.assessments?.dismissedConfigurations?.storage?.sizing
-                                                ? instance?.assessments?.dismissedConfigurations?.storage?.sizing.map(
-                                                      (item: any) => {
-                                                          if (
+                                                ? (() => {
+                                                      const existingSizing =
+                                                          instance?.assessments?.dismissedConfigurations?.storage
+                                                              ?.sizing;
+                                                      const itemIndex = existingSizing.findIndex(
+                                                          (item: any) =>
                                                               item?.configurationName ===
                                                               storageSizingMap[rowData?.name]
-                                                          ) {
-                                                              return {
-                                                                  ...item,
+                                                      );
+
+                                                      if (itemIndex !== -1) {
+                                                          // Update the existing item
+                                                          return existingSizing.map((item: any, index: number) =>
+                                                              index === itemIndex
+                                                                  ? {
+                                                                        ...item,
+                                                                        configState: setAction,
+                                                                        endTime: rowData?.endTime
+                                                                    }
+                                                                  : item
+                                                          );
+                                                      } else {
+                                                          // Add a new item to the list
+                                                          return [
+                                                              ...existingSizing,
+                                                              {
+                                                                  configurationName: storageSizingMap[rowData?.name],
                                                                   configState: setAction,
                                                                   endTime: rowData?.endTime
-                                                              };
-                                                          } else {
-                                                              return item;
-                                                          }
+                                                              }
+                                                          ];
                                                       }
-                                                  )
+                                                  })()
                                                 : [
                                                       {
                                                           configurationName: storageSizingMap[rowData?.name],
@@ -3052,22 +3031,39 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                         storage: {
                                             ...instance?.assessments?.dismissedConfigurations?.storage,
                                             layout: instance?.assessments?.dismissedConfigurations?.storage?.layout
-                                                ? instance?.assessments?.dismissedConfigurations?.storage?.layout.map(
-                                                      (item: any) => {
-                                                          if (
+                                                ? (() => {
+                                                      const existingLayout =
+                                                          instance?.assessments?.dismissedConfigurations?.storage
+                                                              ?.layout;
+                                                      const itemIndex = existingLayout.findIndex(
+                                                          (item: any) =>
                                                               item?.configurationName ===
                                                               storageLayoutMap[rowData?.name]
-                                                          ) {
-                                                              return {
-                                                                  ...item,
+                                                      );
+
+                                                      if (itemIndex !== -1) {
+                                                          // Update the existing item
+                                                          return existingLayout.map((item: any, index: number) =>
+                                                              index === itemIndex
+                                                                  ? {
+                                                                        ...item,
+                                                                        configState: setAction,
+                                                                        endTime: rowData?.endTime
+                                                                    }
+                                                                  : item
+                                                          );
+                                                      } else {
+                                                          // Add a new item to the list
+                                                          return [
+                                                              ...existingLayout,
+                                                              {
+                                                                  configurationName: storageLayoutMap[rowData?.name],
                                                                   configState: setAction,
                                                                   endTime: rowData?.endTime
-                                                              };
-                                                          } else {
-                                                              return item;
-                                                          }
+                                                              }
+                                                          ];
                                                       }
-                                                  )
+                                                  })()
                                                 : [
                                                       {
                                                           configurationName: storageLayoutMap[rowData?.name],
@@ -3193,17 +3189,35 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 storage: {
                     ...driftAssessmentData?.dismissedConfigurations?.storage,
                     sizing: driftAssessmentData?.dismissedConfigurations?.storage?.sizing
-                        ? driftAssessmentData?.dismissedConfigurations?.storage?.sizing.map((item: any) => {
-                              if (item?.configurationName === name) {
-                                  return {
-                                      ...item,
-                                      configState: setAction,
-                                      endTime: endTime
-                                  };
+                        ? (() => {
+                              const existingSizing = driftAssessmentData?.dismissedConfigurations?.storage?.sizing;
+                              const itemIndex = existingSizing.findIndex(
+                                  (item: any) => item?.configurationName === name
+                              );
+
+                              if (itemIndex !== -1) {
+                                  // Update the existing item
+                                  return existingSizing.map((item: any, index: number) =>
+                                      index === itemIndex
+                                          ? {
+                                                ...item,
+                                                configState: setAction,
+                                                endTime: endTime
+                                            }
+                                          : item
+                                  );
                               } else {
-                                  return item;
+                                  // Add a new item to the list
+                                  return [
+                                      ...existingSizing,
+                                      {
+                                          configurationName: name,
+                                          configState: setAction,
+                                          endTime: endTime
+                                      }
+                                  ];
                               }
-                          })
+                          })()
                         : [
                               {
                                   configurationName: name,
@@ -3232,17 +3246,35 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 storage: {
                     ...driftAssessmentData?.dismissedConfigurations?.storage,
                     layout: driftAssessmentData?.dismissedConfigurations?.storage?.layout
-                        ? driftAssessmentData?.dismissedConfigurations?.storage?.layout.map((item: any) => {
-                              if (item?.configurationName === name) {
-                                  return {
-                                      ...item,
-                                      configState: setAction,
-                                      endTime: endTime
-                                  };
+                        ? (() => {
+                              const existingLayout = driftAssessmentData?.dismissedConfigurations?.storage?.layout;
+                              const itemIndex = existingLayout.findIndex(
+                                  (item: any) => item?.configurationName === name
+                              );
+
+                              if (itemIndex !== -1) {
+                                  // Update the existing item
+                                  return existingLayout.map((item: any, index: number) =>
+                                      index === itemIndex
+                                          ? {
+                                                ...item,
+                                                configState: setAction,
+                                                endTime: endTime
+                                            }
+                                          : item
+                                  );
                               } else {
-                                  return item;
+                                  // Add a new item to the list
+                                  return [
+                                      ...existingLayout,
+                                      {
+                                          configurationName: name,
+                                          configState: setAction,
+                                          endTime: endTime
+                                      }
+                                  ];
                               }
-                          })
+                          })()
                         : [
                               {
                                   configurationName: name,

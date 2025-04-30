@@ -829,10 +829,10 @@ export const CONFIG_STATE_ACTIONS = {
 
 export const CONFIG_NAME_TO_ID_MAPPING = {
     STORAGE_SIZING_MAP: {
-        'Log drive size': 'log-drive-size',
-        'Storage tier': 'performance-tier',
-        'File system headroom': 'headroom',
-        'TempDB drive size': 'tempdb-drive-size'
+        [ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]: 'log-drive-size',
+        [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: 'performance-tier',
+        [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: 'headroom',
+        [ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]: 'tempdb-drive-size'
     },
     STORAGE_CONFIG_MAP: {
         'os-type': 'luns',

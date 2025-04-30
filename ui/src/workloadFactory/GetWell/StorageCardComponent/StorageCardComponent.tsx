@@ -850,7 +850,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         regionId: selectedGwInstanceRegionId,
                         state: updatedState,
                         id: targetId,
-                        name: cardData?.block_one?.value
+                        name: cardData?.mapName
                     };
                     updateConfigStateStatus([perObj], dispatch, updatedState);
 

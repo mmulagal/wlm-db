@@ -18,6 +18,7 @@ import {
 } from './InventoryUtilsV2';
 import { useDispatch } from 'react-redux';
 import { setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
+import store from '../../store/store';
 
 const InventoryV2 = () => {
     const dispatch = useDispatch();
@@ -32,6 +33,8 @@ const InventoryV2 = () => {
 
     useEffect(() => {
         if (inventoryTableData) {
+            const state = store.getState();
+            const { allmssqlHostAssessmentData: allmssqlHostAssessmentDataLatest } = state.inventoryV2;
             let hostTableRows: any = [];
             let instanceTableRows: any = [];
             let hostUniqueId: number = 0;
@@ -93,7 +96,7 @@ const InventoryV2 = () => {
                     let perHost = inventoryTableData?.[key];
                     let optimizationStatusLoading = false;
                     let optimizationStatusList: any = [];
-                    let assessRow = allmssqlHostAssessmentData?.filter(
+                    let assessRow = allmssqlHostAssessmentDataLatest?.filter(
                         (perRow: any) =>
                             uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === key
                     );

@@ -174,6 +174,7 @@ export interface GwCardDataInterface {
 }
 
 export interface GwPerConfigCardInterface {
+    mapName: string;
     block_one: {
         type: string;
         value: string;
