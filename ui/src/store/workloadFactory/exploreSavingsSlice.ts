@@ -138,13 +138,17 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     onPremStorageAndComputeInfo: {},
     onPremNetworkPerformance: null,
     storageSavingsOnPremResponse: {},
-    storageSavingsOnPremLoading: false
+    storageSavingsOnPremLoading: false,
+    regionChangeInstanceLoading: false
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setRegionChangeInstanceLoading(state, action: PayloadAction<any>) {
+            state.regionChangeInstanceLoading = action.payload;
+        },
         setOnPremiseData(state, action: PayloadAction<any>) {
             state.onPremiseData = action.payload;
         },
@@ -490,6 +494,7 @@ const exploreSavingsSlice = createSlice({
 
 export const {
     setOnPremiseData,
+    setRegionChangeInstanceLoading,
     setOnPremiseDataLoading,
     setOnPremNetworkPerformance,
     setSelectedExploreSavingsTab,

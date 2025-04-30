@@ -7,6 +7,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import {
     setMonthlyChangeRate,
     setNumberOfClonedCopies,
+    setRegionChangeInstanceLoading,
     setSelectedDeploymentModelForManualTCO,
     setSelectedManualServerEdition,
     setSelectedMonthlyBYOLCost,
@@ -167,6 +168,7 @@ const ManualTCOFields = () => {
                         value={selectedManualRegion}
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedRegionFromManualTCO(selectedOptions));
+                            dispatch(setRegionChangeInstanceLoading(true));
                         }}
                         isSearchable={generateRegionList.length > 5}
                         options={generateRegionList}

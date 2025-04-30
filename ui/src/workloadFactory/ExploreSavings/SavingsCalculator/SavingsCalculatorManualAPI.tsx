@@ -11,6 +11,7 @@ import {
     addManualRegionsList,
     setDisableState,
     setInstanceLoading,
+    setRegionChangeInstanceLoading,
     setManualRegionsLoading,
     setRequestedPayload,
     setRequestedRegion,
@@ -55,6 +56,8 @@ const SavingsCalculatorManualApi = () => {
         requestedRegion
     } = useAppSelector(state => state.exploreSavings);
 
+    const instanceTypeLoading = useAppSelector(state => state.exploreSavings.regionChangeInstanceLoading);
+
     const [getInstanceTypes] = useLazyGetInstanceTypesWithoutCredQuery();
     const [getRegionsWithoutCred] = useLazyGetRegionsWithoutCredQuery();
 
@@ -91,9 +94,11 @@ const SavingsCalculatorManualApi = () => {
                 .then(res => {
                     dispatch(addManualInstanceTypeList(res?.data));
                     dispatch(setInstanceLoading(false));
+                    dispatch(setRegionChangeInstanceLoading(false));
                 })
                 .catch(error => {
                     dispatch(setInstanceLoading(false));
+                    dispatch(setRegionChangeInstanceLoading(false));
                 });
         }
     }, [savingsCalculatorFrom, selectedManualRegion]);
@@ -158,6 +163,7 @@ const SavingsCalculatorManualApi = () => {
 
             if (
                 !comparedPayloadValues &&
+                !instanceTypeLoading &&
                 selectedManualRegion &&
                 numberOfClonedCopies &&
                 monthlyChangeRate &&
@@ -185,7 +191,8 @@ const SavingsCalculatorManualApi = () => {
         selectedSecondaryManualInstanceType,
         manualTCOVolumeTypes,
         volumeFilledStatus,
-        manualTCOVolumeTypes2
+        manualTCOVolumeTypes2,
+        instanceTypeLoading
     ]);
 
     useEffect(() => {
