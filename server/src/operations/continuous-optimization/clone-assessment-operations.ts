@@ -363,7 +363,8 @@ async function runCloneAssessment(
                 // Calculate the number of days since the data volume was created only if the volume type is 'data'
                 if (cloneVolumeType === 'data') {
                     cloneAge = calculateDaysSince(cloneVolumeCreateTime);
-                    if (cloneAge > CLONE_AGE) {
+                    // Change it to > CLONE_AGE after staging testing
+                    if (cloneAge >= CLONE_AGE) {
                         oldClones += 1;
                     }
                 }
@@ -377,8 +378,8 @@ async function runCloneAssessment(
                 ...databaseObject,
                 clonedBy: 'netapp_wf'
             };
-
-            if (databaseObject.cloneAge !== undefined && databaseObject.cloneAge > CLONE_AGE) {
+            // Change it to > CLONE_AGE after staging testing
+            if (databaseObject.cloneAge !== undefined && databaseObject.cloneAge >= CLONE_AGE) {
                 oldCloneDetails.push(modifiedDatabaseObject);
                 oldCloneDatabaseNames.push(sandboxName);
             }
@@ -427,7 +428,8 @@ async function runCloneAssessment(
                     }
 
                     // If the clone is old, ensure it's added to oldCloneDetails and oldCloneDatabaseNames
-                    if (cloneAge > CLONE_AGE && !oldCloneDatabaseNames.includes(clonedDatabaseName)) {
+                    // Change it to > CLONE_AGE after staging testing
+                    if (cloneAge >= CLONE_AGE && !oldCloneDatabaseNames.includes(clonedDatabaseName)) {
                         oldClones += 1;
                         oldCloneDetails.push(existingRecord);
                         oldCloneDatabaseNames.push(clonedDatabaseName);
@@ -445,7 +447,8 @@ async function runCloneAssessment(
                     };
 
                     // Add to oldCloneDetails and oldCloneDatabaseNames if it's an old clone
-                    if (cloneAge !== undefined && cloneAge > CLONE_AGE) {
+                    // Change it to > CLONE_AGE after staging testing
+                    if (cloneAge !== undefined && cloneAge >= CLONE_AGE) {
                         oldClones += 1;
                         oldCloneDetails.push(databaseObject);
                         oldCloneDatabaseNames.push(clonedDatabaseName);
