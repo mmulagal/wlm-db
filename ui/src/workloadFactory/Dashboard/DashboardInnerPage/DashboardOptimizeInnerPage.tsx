@@ -61,6 +61,7 @@ const DashboardOptimizeInnerPage = () => {
 
                     <div className={styles.mainSection}>
                         <div className={styles.contentSection}>
+                            {/* Dashboard flow */}
                             <OptimizeCard fromPage={WLF_TABS.DASHBOARD} recommendationHeight={'auto'} />
                         </div>
 
