@@ -1,4 +1,3 @@
-import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { CloneDetailType } from '../../routes/types/continuous-optimization.types';
@@ -10,7 +9,6 @@ import {
     SandboxLifecycleAction
 } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import { registerJob, updateJobDetails } from '../database/job-operations';
 import {
     runSandboxPreValidations,
     performSandboxDeletion,
@@ -161,19 +159,7 @@ async function deleteClone(
         isOtherOptimizeFlow
     });
 
-    let deleteJobId = '';
     try {
-        const { id } = await registerJob(accountId, credentialsId, region, {
-            name: `Delete clone ${cloneDatabaseName}`,
-            description: `Delete clone ${cloneDatabaseName} for ${serverNameWithHostName}`,
-            resourceName: cloneDatabaseName,
-            startTime: Date.now(),
-            status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.OPTIMIZATION,
-            parentJobId
-        });
-        deleteJobId = id;
-
         const source = { host: databaseHostId, instance: databaseInstanceId, database: cloneDatabaseName };
         const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
         logger.debug(`Executing delete operation for clone ${cloneDatabaseName}`);
@@ -181,26 +167,15 @@ async function deleteClone(
             accountId,
             region,
             credentialsId,
-            deleteJobId,
+            parentJobId,
             srcDetails,
             isOtherOptimizeFlow,
             isSandboxOptimizeFlow
         );
         logger.debug(`Successfully deleted clone ${cloneDatabaseName}`);
-
-        await updateJobDetails(accountId, deleteJobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: Date.now()
-        });
     } catch (error: any) {
         const errorMsg = `Error while deleting clone ${cloneDatabaseName}: ${error.message}`;
         logger.error(errorMsg, error);
-
-        await updateJobDetails(accountId, deleteJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: errorMsg
-        });
 
         throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
@@ -225,20 +200,7 @@ async function refreshClone(
         cloneDatabaseName
     });
 
-    let refreshJobId = '';
-
     try {
-        const { id } = await registerJob(accountId, credentialsId, region, {
-            name: `Refresh clone ${cloneDatabaseName}`,
-            description: `Refresh clone ${cloneDatabaseName} in database host ${databaseHostId}`,
-            resourceName: cloneDatabaseName,
-            startTime: Date.now(),
-            status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.OPTIMIZATION,
-            parentJobId: jobId
-        });
-        refreshJobId = id;
-
         const source = { host: databaseHostId, instance: databaseInstanceId, database: cloneDatabaseName };
         const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
         // Fetch the latest snapshot for the sandbox
@@ -272,7 +234,7 @@ async function refreshClone(
             accountId,
             credentialsId,
             region,
-            refreshJobId,
+            jobId,
             srcDetails,
             SandboxLifecycleAction.REFRESH,
             latestSnapshot.name,
@@ -280,18 +242,9 @@ async function refreshClone(
         );
 
         logger.debug(`Successfully refreshed sandbox ${cloneDatabaseName} to the latest snapshot`);
-        await updateJobDetails(accountId, refreshJobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: Date.now()
-        });
     } catch (error: any) {
         const errorMsg = `Error while refreshing sandbox ${cloneDatabaseName} in database host ${databaseHostId}: ${error.message}`;
         logger.error(errorMsg, error);
-        await updateJobDetails(accountId, refreshJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: errorMsg
-        });
         throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
 }

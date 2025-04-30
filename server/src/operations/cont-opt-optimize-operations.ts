@@ -2824,15 +2824,16 @@ async function optimizeClone(
     try {
         const { oldCloneDetails } = configData as unknown as CloneAssessment;
         logger.debug(`Clones data ${JSON.stringify(oldCloneDetails)}`);
+        const name = clone.clonedBy === 'netapp_wf' ? 'sandbox' : 'Clone';
 
         const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, cloneDatabaseName);
         const { id } = await registerJob(accountId, credentialsId, region, {
             type: JOBTYPE.OPTIMIZATION,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName as string,
-            name: `Optimize clone for ${serverNameWithHostName}`,
+            name: `Optimize the ${name} ${clone.action} process for ${serverNameWithHostName}`,
             startTime: Date.now(),
-            description: `Optimize clone for ${serverNameWithHostName}`,
+            description: `Optimize the ${name} ${clone.action} process for ${serverNameWithHostName}`,
             parentJobId
         });
         childCloneJobId = id;
