@@ -3,7 +3,7 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './DismissTables.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
     checkBoxHandleDismiss,
     formatDateAssess,
@@ -23,6 +23,7 @@ import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/man
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
+import { checkIfDisableForDismiss, disableDismissCheckBoxForErrCase } from '../../../GetWell/GetWellUtils';
 
 interface StorageTierTableProps {
     handleBulkAction: any;
@@ -80,6 +81,11 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
             return GENERAL.NOT_AVAILABLE;
         }
     };
+
+    // Update tableData when offline
+    const updatedTableData = useMemo(() => {
+        return disableDismissCheckBoxForErrCase(tableData, type || '');
+    }, [tableData]);
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -146,10 +152,11 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
             width: '150px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
+                let { isDisabled, errorMessage } = checkIfDisableForDismiss(rowData, selectedRowsForDismiss);
                 return (
                     <div
                         className={
-                            selectedRowsForDismiss.length > 0
+                            selectedRowsForDismiss.length > 0 || isDisabled
                                 ? `${styles.actionContainer} ${styles.actionDisabled}`
                                 : styles.actionContainer
                         }
@@ -159,7 +166,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
                         </DsTypography>
                         <ButtonWithDropdown
                             variant="icon"
-                            isDisabled={selectedRowsForDismiss.length > 0}
+                            isDisabled={selectedRowsForDismiss.length > 0 || isDisabled}
                             items={[
                                 {
                                     id: 'activate',
@@ -215,7 +222,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
         isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
-        rows: tableData || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
         defaultSelectedRows: [],
@@ -224,7 +231,7 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
     });
 
     useEffect(() => {
-        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
         dispatch(setSelectedRowsForDismiss(rowsData));
 

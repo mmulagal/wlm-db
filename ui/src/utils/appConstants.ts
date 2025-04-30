@@ -1142,6 +1142,7 @@ export const GENERAL = {
     DATABASE_AVAILABLE_MSG: 'Databases are available for managed instances only.',
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
+    ONLINE_INSTANCE_DISMISS: 'Analysis state can be updated for online instances.',
     PGSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
@@ -1278,7 +1279,7 @@ export const GENERAL = {
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
+        "You postponed or dismissed configuration analysis for some SQL Server instances. Configurations with postponed or dismissed analysis don't affect the optimization score.",
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:
@@ -1292,8 +1293,8 @@ export const GENERAL = {
     REACTIVATE: 'Reactivate',
     POSTPONE_FOR_30_DAYS: 'Postpone for 30 days',
     DISMISS: 'Dismiss',
-    ANALYSIS_STATE_CHANGE_SUCCESS: 'Changed analysis state.',
-    ANALYSIS_STATE_CHANGE_FAILED: 'Failed to change analysis state.'
+    ANALYSIS_STATE_CHANGE_SUCCESS: 'Updated analysis state.',
+    ANALYSIS_STATE_CHANGE_FAILED: 'Failed to update analysis state.'
 };
 
 export const CODE_VIEWER = {

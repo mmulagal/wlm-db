@@ -169,7 +169,11 @@ async function getSandboxDetails(
         region,
         command,
         activeNodeInstanceId!,
-        'Get sandbox details'
+        'Get sandbox details',
+        undefined,
+        true,
+        undefined,
+        true
     );
 
     try {

@@ -109,7 +109,10 @@ async function collectVolumeSnapshotCopiesData(
             command,
             instanceRecord.activeNodeInstanceid,
             ssmComment,
-            accountId
+            accountId,
+            true,
+            undefined,
+            true
         );
         const { response: ssmResponse, error: ssmError } = sqlResponseParsing(rawResponse);
         if (!isEmpty(ssmError)) {
@@ -488,7 +491,9 @@ async function initiateCrossRegionResiliencyAssessment(
             instanceRecord.activeNodeInstanceid,
             ssmComment,
             accountId,
-            false
+            false,
+            undefined,
+            true
         );
 
         const { crrDetails, errorMessage } = response

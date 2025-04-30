@@ -244,7 +244,11 @@ async function runCloneAssessment(
         region,
         [ssmCommand],
         activeNodeInstanceId,
-        'Get sandbox Details for clone assessment'
+        'Get sandbox Details for clone assessment',
+        undefined,
+        true,
+        undefined,
+        true
     );
 
     const [instanceVolumeMapping, response] = await Promise.all([getInstanceVolumeMapping, callSsmExecutionResponse]);

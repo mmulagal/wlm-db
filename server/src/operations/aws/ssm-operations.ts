@@ -545,12 +545,7 @@ async function extractSsmResponse(
         if (!response?.CommandId) {
             throw createError('Command Id not found');
         }
-        const responses = await getSsmResponseFromCloudWatch(
-            credentialsId,
-            region,
-            response?.CommandId,
-            instanceId
-        );
+        const responses = await getSsmResponseFromCloudWatch(credentialsId, region, response?.CommandId, instanceId);
         return {
             output: responses.join('')
         };

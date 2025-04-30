@@ -354,7 +354,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 <div className={styles.dismissContainer}>
                     <div>
                         {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && (
-                            <div>
+                            <div style={{ marginTop: '5px' }}>
                                 <InfoIcon />
                             </div>
                         )}

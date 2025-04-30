@@ -1768,7 +1768,9 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         const nestedObject = cardsData[key];
         const dismissedState = nestedObject?.dismissedObj?.configState;
         const isOptimizedViaDismissal =
-            dismissedState === CONFIG_STATES.DISMISSED || dismissedState === CONFIG_STATES.POSTPONED;
+            dismissedState === CONFIG_STATES.DISMISSED ||
+            dismissedState === CONFIG_STATES.POSTPONED ||
+            dismissedState === CONFIG_STATES.ACTIVATING;
         if (nestedObject?.category === 'storage') {
             if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
@@ -3378,6 +3380,20 @@ export const checkIfDisableForOptimize = (
     return { isDisabled, errorMessage };
 };
 
+export const checkIfDisableForDismiss = (rowData: any, selectedRowsForDismiss?: any) => {
+    let isDisabled = false;
+    let errorMessage = '';
+    if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+        isDisabled = true;
+        errorMessage = GENERAL.ONLINE_INSTANCE_DISMISS;
+    } else if (selectedRowsForDismiss && selectedRowsForDismiss.length > 0) {
+        isDisabled = true;
+        errorMessage = '';
+    }
+
+    return { isDisabled, errorMessage };
+};
+
 export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) => {
     const state = store.getState();
     const { inProgressHostData } = state.getWellOptimize;
@@ -3385,6 +3401,26 @@ export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) 
     // If no rows are selected, reset `isDisabled` for all rows
     return tableData.map((row: any) => {
         const { isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, type, row);
+        return {
+            ...row,
+            cellProps: {
+                ...row.cellProps,
+                isDisabled: row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP || isDisabled,
+                selectionProps: {
+                    title: errorMessage,
+                    titleProps: {
+                        placement: 'bottom'
+                    }
+                }
+            }
+        };
+    });
+};
+
+export const disableDismissCheckBoxForErrCase = (tableData: any, type: string) => {
+    // If no rows are selected, reset `isDisabled` for all rows
+    return tableData.map((row: any) => {
+        const { isDisabled, errorMessage } = checkIfDisableForDismiss(row);
         return {
             ...row,
             cellProps: {

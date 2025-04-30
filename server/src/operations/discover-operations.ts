@@ -68,7 +68,8 @@ import {
     AL2023_AMI_NAME,
     AMAZON_LINUX_AMI_PATH,
     HA,
-    PGSQL_DEFAULT_INSTANCE_NAME
+    PGSQL_DEFAULT_INSTANCE_NAME,
+    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -688,7 +689,11 @@ async function makeSsmCall(
             executionTimeout: [config.get<string>('ssm.execution-timeout')],
             commands
         },
-        Comment: 'Discover SQL Server instances'
+        Comment: 'Discover SQL Server instances',
+        CloudWatchOutputConfig: {
+            CloudWatchLogGroupName: CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+            CloudWatchOutputEnabled: true
+        }
     };
 
     let commandId;

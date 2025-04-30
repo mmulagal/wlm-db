@@ -130,6 +130,7 @@ import {
 import { getParametersByPath } from '../lib/aws/ssm';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { validateSvmCountCapacity } from './aws/fsx-operations';
+import { createDemoResourcesPerRegion } from '../utils/demo-utils/demoDefaultUtils';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -1395,6 +1396,7 @@ async function deployCloudFormationTemplate(
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
         const awsAccountId = randomize('0', 8);
+        await createDemoResourcesPerRegion(accountId, credentialsId, region, awsAccountId);
         createDeploymentMockDataInDB(
             accountId,
             stackId,
@@ -1794,6 +1796,7 @@ async function deployCfTemplateForPgSql(
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
         const awsAccountId = randomize('0', 8);
+        await createDemoResourcesPerRegion(accountId, credentialsId, region, awsAccountId);
         createDeploymentMockDataInDBForPgSql(
             accountId,
             stackId,

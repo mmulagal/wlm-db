@@ -154,6 +154,8 @@ async function getAvailableSnapshotPolicyList(
             activeNodeInstanceId,
             ssmComment,
             accountId,
+            true,
+            undefined,
             true
         );
         const {

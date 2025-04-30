@@ -557,8 +557,8 @@ const DashboardDismissPage = () => {
         if (dialogCheck && action === CONFIG_STATE_ACTIONS.ACTIVE) {
             setHeader = `Reactivate ${typeText} analysis`;
             setContent = [
-                'Selected instances that are active will continue to get analyzed.',
-                'Are you ready to reactivate the analysis for the selected SQL Server instances?',
+                'The analysis will continue for selected instances that are already actively analyzed.',
+                `Are you ready to reactivate the ${typeText} analysis for the selected SQL Server instances?`,
                 'Select "Reactivate" to continue.'
             ];
             setPrimaryButton = 'Reactivate';
@@ -566,7 +566,7 @@ const DashboardDismissPage = () => {
             setHeader = `Postpone ${typeText} analysis`;
             setContent = [
                 "Selected instances that are postponed won't get analyzed for 30 days.",
-                `Are you ready to postpone the ${typeText} analysis of the selected SQL Server instances?`,
+                `Are you ready to postpone the ${typeText} analysis for the selected SQL Server instances?`,
                 'Select "Postpone for 30 days" to continue.'
             ];
             setPrimaryButton = 'Postpone for 30 days';
@@ -743,7 +743,7 @@ const DashboardDismissPage = () => {
                             }
                         },
                         {
-                            title: `Update scan frequency for ${selectedConfig}`,
+                            title: `Update configuration analysis state for ${selectedConfig}`,
                             dataTestId: 'wlm-db-dismiss-configuration'
                         }
                     ]}
@@ -767,7 +767,7 @@ const DashboardDismissPage = () => {
                         },
 
                         {
-                            title: `Update scan frequency for ${selectedConfig}`,
+                            title: `Update configuration analysis state for ${selectedConfig}`,
                             dataTestId: 'wlm-db-dismiss-configuration'
                         }
                     ]}
@@ -786,7 +786,7 @@ const DashboardDismissPage = () => {
                         data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
                         variant="Semibold_20"
                     >
-                        Update scan frequency for {selectedConfig}
+                        Update configuration analysis state for {selectedConfig}
                     </DsTypography>
                     <DsTypography
                         className={styles.dismissPageMessage}

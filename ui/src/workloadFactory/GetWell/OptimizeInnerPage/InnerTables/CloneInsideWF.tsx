@@ -87,14 +87,18 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
         },
         {
             Header: 'Clone age',
-            accessor: 'cloneAge',
+            accessor: 'cloneAgeFilterData',
             id: '6',
-            isSortable: false,
-            filterOptions: 'auto',
+            isSortable: true,
+            filterOptions: [
+                { label: '60 - 99 days', value: '60 - 99 days' },
+                { label: '100 - 200 days', value: '100 - 200 days' },
+                { label: '200+ days', value: '200+ days' }
+            ],
             isSticky: true,
-            width: fromPage === WLF_TABS.DASHBOARD ? '134px' : '211px',
-            renderCell: (cellData: any) => {
-                return (cellData || 0) + ' days';
+            width: fromPage === WLF_TABS.DASHBOARD ? '154px' : '211px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (rowData?.cloneAge || 0) + ' days';
             }
         },
         {
