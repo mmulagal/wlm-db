@@ -25,6 +25,7 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { handleOptimizeResourceJob, nameToIdConfigMapping } from '../GetWellUtils';
 import store from '../../../store/store';
+import { cloneAgeRange } from '../../../utils/utilityFunctions';
 
 const CloneTabs = ({ fromPage = '' }: any) => {
     const dispatch = useDispatch();
@@ -53,13 +54,15 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 wfDbItems.push({
                     ...item,
                     id: `${item?.resourceId}_${item?.instanceId}_${item?.cloneDatabaseName}`,
-                    sourceVolumeNamesList: sourceVolumeNames.join(',')
+                    sourceVolumeNamesList: sourceVolumeNames.join(','),
+                    cloneAgeFilterData: cloneAgeRange(item?.cloneAge)
                 });
             } else {
                 otherDbItems.push({
                     ...item,
                     id: `${item?.resourceId}_${item?.instanceId}_${item?.cloneDatabaseName}`,
-                    sourceVolumeNamesList: sourceVolumeNames.join(',')
+                    sourceVolumeNamesList: sourceVolumeNames.join(','),
+                    cloneAgeFilterData: cloneAgeRange(item?.cloneAge)
                 });
             }
         });
