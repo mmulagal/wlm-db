@@ -61,7 +61,7 @@ const DashboardOptimizeInnerPage = () => {
 
                     <div className={styles.mainSection}>
                         <div className={styles.contentSection}>
-                            <OptimizeCard recommendationHeight={'auto'} />
+                            <OptimizeCard fromPage={WLF_TABS.DASHBOARD} recommendationHeight={'auto'} />
                         </div>
 
                         <div className={styles.tagSection}>
