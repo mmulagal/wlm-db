@@ -150,6 +150,17 @@ const PgSqlResourceDetailsSchema = {
     }
 };
 
+const UnManagePgSqlSchema = {
+    ...DiscoveryBaseRequest,
+    params: UnmanageInstanceParams,
+    querystring: DatabaseInstanceQueryString,
+    summary: 'Unmanage PostgreSQL database instances.',
+    description: 'Unmanage PostgreSQL database instances managed by Workload Factory.',
+    response: {
+        200: MultiInstanceUnmanageResponseBody
+    }
+};
+
 const DiscoverOracleSchema = {
     ...DiscoveryBaseRequest,
     params: CredentialsIdParams,
@@ -177,5 +188,6 @@ export {
     ManageMsSqlSchemaV2,
     DiscoverPgSqlSchema,
     PgSqlResourceDetailsSchema,
-    DiscoverOracleSchema
+    DiscoverOracleSchema,
+    UnManagePgSqlSchema
 };
