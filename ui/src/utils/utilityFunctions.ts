@@ -180,7 +180,7 @@ export const categorizeStorageSize = (value: string): string => {
     // Convert value string to bytes for comparison
     const sizeInBytes = convertToBytes(value);
 
-    if (sizeInBytes >= 0 && sizeInBytes < 100 * 1024 ** 2) {
+    if (sizeInBytes >= 60 && sizeInBytes < 99) {
         return '0 - 100 MiB';
     } else if (sizeInBytes >= 100 * 1024 ** 2 && sizeInBytes < 1024 ** 3) {
         return '100 MiB - 1 GiB';
@@ -190,6 +190,16 @@ export const categorizeStorageSize = (value: string): string => {
         return '10 GiB - 5 TiB';
     } else {
         return '5 TiB+';
+    }
+};
+
+export const cloneAgeRange = (value: any) => {
+    if (value >= 60 && value < 99) {
+        return '60 - 99 days';
+    } else if (value >= 100 && value < 200) {
+        return '100 - 200 days';
+    } else if (value >= 201) {
+        return '200+ days';
     }
 };
 
