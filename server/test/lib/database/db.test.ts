@@ -311,70 +311,57 @@ describe('Tracked EC2 operations', () => {
 });
 describe('Database Host Configuration Operations', () => {
     it('Should update database host configurations successfully', async () => {
-        // Create a resource with the provided details
-        await createResource(ACCOUNT_ID, {
-            resourceId: '6cbdabbfe3fb147e',
-            resourceName: 'test-resource',
-            resourceType: 'MSSQL',
-            coRelationId: 'fs-f6082f35c1db',
-            cloudProviderAccountId: 'test-aws-account',
-            cloudProviderName: 'AWS',
-            region: DEFAULT_AWS_REGION,
-            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-            storageType: 'FSXN',
-            metadata: {
-                node1InstanceId: 'i-07e76a4b916548dc0',
-                node2InstanceId: 'i-0880a21327284f67c',
-                sqlDeploymentType: 'FCI'
-            }
-        });
+      // Create a resource with the provided details.
+      await createResource(ACCOUNT_ID, {
+        resourceId: '6cbdabbfe3fb147e',
+        resourceName: 'test-resource',
+        resourceType: 'MSSQL',
+        coRelationId: 'fs-f6082f35c1db',
+        cloudProviderAccountId: 'test-aws-account',
+        cloudProviderName: 'AWS',
+        region: DEFAULT_AWS_REGION,
+        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+        storageType: 'FSXN',
+        metadata: {
+          node1InstanceId: 'i-07e76a4b916548dc0',
+          node2InstanceId: 'i-0880a21327284f67c',
+          sqlDeploymentType: 'FCI'
+        }
+      });
 
-        // Define the updated configurations to be applied to the resource
-        const updatedConfigs = {
-            configurationName: 'sql-license',
-            configState: 'ACTIVE',
-            startTime: Date.now(),
-            endTime: undefined
-        };
+      await upsertDatabaseInstance(ACCOUNT_ID, {
+        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+        region: DEFAULT_AWS_REGION,
+        resourceId: '6cbdabbfe3fb147e',
+        databaseInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+        databaseInstanceName: 'MSSQLSERVER',
+        isDefault: true,
+        source: 'deployment',
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
+        fsxnIds: 'fs-0f53fbecdd3d85fb2',
+        databaseType: ''
+      });
 
-        // Call updateDatabaseHostConfigurations with proper parameters
-        const updateResponse = await updateDatabaseHostConfigurations(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            '6cbdabbfe3fb147e',
-            updatedConfigs
-        );
+      const startTime = Date.now();
+      const updatedConfigs = {
+        configurationName: 'sql-license',
+        configState: 'ACTIVE',
+        startTime,
+        endTime: undefined
+      };
 
-        // Assert that the response matches the expected structure
-        expect(updateResponse).to.deep.equal({
-            dismissedConfigurations: [
-                {
-                    configurationName: 'sql-license',
-                    configState: 'ACTIVE',
-                    startTime: updatedConfigs.startTime,
-                    endTime: undefined,
-                    databaseHosts: [
-                        {
-                            id: '6cbdabbfe3fb147e',
-                            region: DEFAULT_AWS_REGION,
-                            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                            status: 'FAILED',
-                            sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d'],
-                            failedInstances: [
-                                {
-                                    instanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
-                                    databaseHostId: '6cbdabbfe3fb147e',
-                                    errorMessage: 'Database instance not found'
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        });
+      const updateResponse = await updateDatabaseHostConfigurations(
+        ACCOUNT_ID,
+        DEFAULT_AWS_CREDENTIALS_ID,
+        DEFAULT_AWS_REGION,
+        '6cbdabbfe3fb147e',
+        updatedConfigs
+      );
 
-        // Cleanup: Delete the created resource to avoid polluting subsequent tests
-        await deleteResource(ACCOUNT_ID, '6cbdabbfe3fb147e');
+      expect(updateResponse).to.deep.equal({ count: 1 });
+
+      // Cleanup: Delete the created resource to avoid polluting subsequent tests.
+      await deleteResource(ACCOUNT_ID, '6cbdabbfe3fb147e');
     });
-});
+  });

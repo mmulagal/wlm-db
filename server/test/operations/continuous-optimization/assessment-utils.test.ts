@@ -14,7 +14,7 @@ import {
     updateDismissConfigurations,
     updateFieldsBasedOnDismissedConfigurations
 } from '../../../src/operations/continuous-optimization/assessment-utils';
-import { FINDING, RESOURCE_ID } from '../../../src/utils/consts';
+import { FINDING } from '../../../src/utils/consts';
 import { AssessmentStatus } from '../../../src/utils/continous-optimization-consts';
 import { createResource, deleteDatabaseInstance, upsertDatabaseInstance } from '../../../src/lib/database/db';
 
