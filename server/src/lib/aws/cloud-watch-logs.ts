@@ -1,12 +1,13 @@
 import {
     CloudWatchLogsClient,
+    DescribeLogGroupsCommand,
     GetLogEventsCommandInput,
+    LogGroup,
     paginateGetLogEvents,
     PutRetentionPolicyCommand
 } from '@aws-sdk/client-cloudwatch-logs';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -53,21 +54,43 @@ async function getPaginatedCloudwatchLogs(
     return logs;
 }
 
-// Function to set the retention policy for a log group
-async function setLogGroupRetentionPolicy(
+async function describeLogGroups(
     credentialsId: string,
     region: string,
-    logGroupName = CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+    logGroupName: string
+): Promise<LogGroup[] | undefined> {
+    logger.info('Describing log groups:', { region, credentialsId, logGroupName });
+    const client = await getCloudWatchLogsClient(region, credentialsId);
+
+    try {
+        const describeCommand = new DescribeLogGroupsCommand({ logGroupNamePrefix: logGroupName });
+        const response = await client.send(describeCommand);
+        logger.debug('Log groups:', response.logGroups);
+        return response.logGroups;
+    } catch (error) {
+        logger.error('Error describing log groups:', error);
+    }
+}
+
+async function putLogGroupRetentionPolicy(
+    credentialsId: string,
+    region: string,
+    logGroupName: string,
     retentionInDays = 1
 ): Promise<void> {
     logger.info('Setting log group retention policy:', { region, credentialsId, logGroupName, retentionInDays });
     const client = await getCloudWatchLogsClient(region, credentialsId);
-    const command = new PutRetentionPolicyCommand({
-        logGroupName,
-        retentionInDays
-    });
-    await client.send(command);
-    logger.debug('Log group retention policy set successfully:', { logGroupName, retentionInDays });
+
+    try {
+        const command = new PutRetentionPolicyCommand({
+            logGroupName,
+            retentionInDays
+        });
+        await client.send(command);
+        logger.info(`Retention policy updated to ${retentionInDays} days for log group "${logGroupName}".`);
+    } catch (error) {
+        logger.error('Error setting retention policy:', error);
+    }
 }
 
-export { getPaginatedCloudwatchLogs, setLogGroupRetentionPolicy };
+export { getPaginatedCloudwatchLogs, describeLogGroups, putLogGroupRetentionPolicy };

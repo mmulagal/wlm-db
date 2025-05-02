@@ -37,8 +37,7 @@ import { SSMParamterObject, MultipleCommandSsmResponse } from '../../utils/commo
 import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { getLogs } from './cloud-watch-operations';
-import { setLogGroupRetentionPolicy } from '../../lib/aws/cloud-watch-logs';
+import { getCloudWatchLogs, setLogGroupRetentionPolicy } from './cloud-watch-logs-operations';
 
 const logger = getLogger();
 
@@ -310,7 +309,7 @@ async function getSsmResponseFromCloudWatch(
     const logStreamName = `${commandId}/${instanceId}/${logStreamSuffix}`;
 
     try {
-        const logs = await getLogs(credentialId, region, logGroupName, logStreamName);
+        const logs = await getCloudWatchLogs(credentialId, region, logGroupName, logStreamName);
         return logs;
     } catch (error) {
         logger.error('Error getting logs from CloudWatch', error);

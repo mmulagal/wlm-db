@@ -1,0 +1,14 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "b9a45b8d-41ce-421a-8cca-8347f1ee56c9",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "logGroups": [
+        {
+            "logGroupName": "netapp/wlmdb/ssm-response",
+            "retentionInDays": 1
+        }
+    ]
+}

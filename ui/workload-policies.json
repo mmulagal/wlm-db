@@ -237,7 +237,8 @@
                     "ssm:DescribeInstancePatchStates",
                     "ssm:ListCommands",
                     "ssm:DescribeInstanceInformation",
-                    "fsx:ListTagsForResource"
+                    "fsx:ListTagsForResource",
+                    "logs:DescribeLogGroups"
                 ],
                 "Resource": [
                     "*"
