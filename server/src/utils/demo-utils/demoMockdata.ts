@@ -3336,17 +3336,124 @@ const mockResourceAssessmentData = {
             licenseFinding: 'OPTIMIZED',
             sqlServerInstances: [
                 {
-                    sqlServerName: 'MEGASQL',
-
+                    sqlServerInstance: 'PROD-MarketingCampaigns',
                     sqlServerState: 'Running',
-
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
                     sqlServerEdition: 'Standard Edition (64-bit)',
-                    sqlServerVersion: '15.0.2000.5',
-
-                    sqlServerInstance: 'MEGASQL',
-
-                    sqlServerProductYear: 2019,
-
+                    sqlServerEngineEdition: 2,
+                    sqlServerName: 'SQL-Managed-Host-Prod'
+                },
+                {
+                    sqlServerInstance: 'PROD-SupplierManagement',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2,
+                    sqlServerName: 'SQL-Managed-Host-Prod'
+                },
+                {
+                    sqlServerInstance: 'PROD-ProductCatalog',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2,
+                    sqlServerName: 'SQL-Managed-Host-Prod'
+                },
+                {
+                    sqlServerInstance: 'MSSQLSERVER',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2,
+                    sqlServerName: 'SQLServer-QA-02'
+                },
+                {
+                    sqlServerInstance: 'PreProd-BusinessIntelligence',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2,
+                    sqlServerName: 'SQLServer-PreProd-02'
+                },
+                {
+                    sqlServerInstance: 'DEV-InventoryControl',
+                    sqlServerState: 'Stopped',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2
+                },
+                {
+                    sqlServerInstance: 'DEV-CustomerDatabase',
+                    sqlServerState: 'Stopped',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2
+                },
+                {
+                    sqlServerInstance: 'DEV-EmployeeDirectory',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2
+                },
+                {
+                    sqlServerInstance: 'DEV-ComplianceManagement',
+                    sqlServerState: 'Stopped',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2
+                },
+                {
+                    sqlServerInstance: 'Prod-HelpDesk',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2,
+                    sqlServerName: 'SQLServer-Prod-02'
+                },
+                {
+                    sqlServerInstance: 'Dev-VendorManagement',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2,
+                    sqlServerName: 'SQLServer-Dev-02'
+                },
+                {
+                    sqlServerInstance: 'UAT-QualityControl',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2,
+                    sqlServerName: 'SQLServer-UAT-02'
+                },
+                {
+                    sqlServerInstance: 'DEV-SalesAnalytics',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
+                    sqlServerEngineEdition: 2,
+                    sqlServerName: 'SQL-Managed-Host-DEV'
+                },
+                {
+                    sqlServerInstance: 'DEV-ProjectManagement',
+                    sqlServerState: 'Running',
+                    sqlServerVersion: '16.0.4080.1',
+                    sqlServerProductYear: 2022,
+                    sqlServerEdition: 'Standard Edition (64-bit)',
                     sqlServerEngineEdition: 2
                 }
             ],

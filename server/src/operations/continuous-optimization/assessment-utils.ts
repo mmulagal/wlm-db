@@ -267,7 +267,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         configurations.map(async config => {
             const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
             const startTime = Date.now();
-            const thirtyDaysInMs = moment.duration(4, 'hours').asMilliseconds(); // Updated to 4 hours for testing
+            const thirtyDaysInMs = moment.duration(30, 'days').asMilliseconds();
             const endTime = startTime + thirtyDaysInMs;
             const response = {
                 configurationName: configName,
