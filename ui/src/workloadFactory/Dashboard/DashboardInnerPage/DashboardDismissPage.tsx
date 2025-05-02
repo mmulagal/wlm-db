@@ -558,24 +558,21 @@ const DashboardDismissPage = () => {
             setHeader = `Reactivate ${typeText} analysis`;
             setContent = [
                 'The analysis will continue for selected instances that are already actively analyzed.',
-                `Are you ready to reactivate the ${typeText} analysis for the selected SQL Server instances?`,
-                'Select "Reactivate" to continue.'
+                `Are you ready to reactivate the ${typeText} analysis for the selected SQL Server instances?`
             ];
             setPrimaryButton = 'Reactivate';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.POSTPONED) {
             setHeader = `Postpone ${typeText} analysis`;
             setContent = [
                 "Selected instances that are postponed won't get analyzed for 30 days.",
-                `Are you ready to postpone the ${typeText} analysis for the selected SQL Server instances?`,
-                'Select "Postpone for 30 days" to continue.'
+                `Are you ready to postpone the ${typeText} analysis for the selected SQL Server instances?`
             ];
             setPrimaryButton = 'Postpone for 30 days';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.DISMISS) {
             setHeader = `Dismiss ${typeText} analysis`;
             setContent = [
                 "Selected instances that you dismiss won't get analyzed.",
-                `Are you ready to dismiss the ${typeText} analysis for the selected SQL Server instances?`,
-                'Select "Dismiss" to continue.'
+                `Are you ready to dismiss the ${typeText} analysis for the selected SQL Server instances?`
             ];
             setPrimaryButton = 'Dismiss';
         }
