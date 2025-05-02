@@ -932,7 +932,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 style={{
                     height: cardData?.block_three?.smallFont ? '56px' : '64px',
                     minWidth: cardData?.block_five?.minWidth ? cardData?.block_five?.minWidth : '165px',
-                    width: 'fit-content',
+
                     position: 'relative',
                     top: '3px'
                 }}
