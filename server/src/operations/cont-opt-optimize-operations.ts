@@ -25,7 +25,8 @@ import {
     AuditStatus,
     SqlServerDeploymentModel,
     RESOURCESTYPE,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE
 } from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
@@ -2828,18 +2829,17 @@ async function optimizeClone(
     try {
         const { oldCloneDetails } = configData as unknown as CloneAssessment;
         logger.debug(`Clones data ${JSON.stringify(oldCloneDetails)}`);
-        const name = clone.clonedBy === 'netapp_wf' ? 'sandbox' : 'Clone';
+        const name = clone.clonedBy === SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE ? 'sandbox' : 'clone';
+        const operation = clone.action[0].toUpperCase() + clone.action.slice(1);
 
         const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, cloneDatabaseName);
         const { id } = await registerJob(accountId, credentialsId, region, {
             type: JOBTYPE.OPTIMIZATION,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName as string,
-            name: `${clone.action[0].toUpperCase()}${clone.action.slice(1)} ${name} for ${serverNameWithHostName}`,
+            name: `${operation} ${name} for ${serverNameWithHostName}`,
             startTime: Date.now(),
-            description: `${clone.action[0].toUpperCase()}${clone.action.slice(
-                1
-            )} ${name} for ${serverNameWithHostName}`,
+            description: `${operation} ${name} for ${serverNameWithHostName}`,
             parentJobId
         });
         childCloneJobId = id;
