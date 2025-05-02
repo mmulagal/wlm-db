@@ -143,7 +143,8 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
         }
     
         Function Get-LunFromSerialNumber($responseObject) {
-            Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
+            $responseJson = $responseObject.GetEnumerator() | ForEach-Object { @{ $_.Key = $_.Value } } | ConvertTo-Json
+            Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseJson"
     
             $QueryFilter = ''
             $serialNumbers = @()
