@@ -173,7 +173,8 @@ async function createDemoResourcesPerRegion(
                 protocol: STORAGE_PROTOCOLS.ISCSI,
                 sqlInstances: [
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-MarketingCampaigns' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-SupplierManagement' }
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-SupplierManagement' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-ProductCatalog' }
                 ],
                 databaseType: DatabaseTypes.MS_SQL_SERVER,
                 deploymentType: 'Standalone'

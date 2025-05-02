@@ -281,7 +281,11 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 5000
             );
             const parsedResp = sqlResponseParsing(resp);
-            const objectsOptimized = parsedResp.num_records || 0;
+            let objectsOptimized = parsedResp.num_records || 0;
+
+            objectsOptimized = isDemoFlow ? objectsToOptimize.length : objectsOptimized;
+            // with bulk optimization of volumes, user can send 1/2/3 vol ids to optimize but ssm response will hardcoded to reply with 3 as optimized.
+
             const optimizeMessage = `Optimized ${objectsOptimized}/${
                 objectsToOptimize.length
             } ${jobParamKey} in ${serverNameWithHostName} for configuration parameter '${

@@ -11,10 +11,12 @@ import '../../simulator/scopes/aws/compute-optimizer-scope';
 import {
     getMatchingAssessmentStatus,
     handleOptimizeJobCreation,
+    updateDismissConfigurations,
     updateFieldsBasedOnDismissedConfigurations
 } from '../../../src/operations/continuous-optimization/assessment-utils';
 import { FINDING } from '../../../src/utils/consts';
 import { AssessmentStatus } from '../../../src/utils/continous-optimization-consts';
+import { createResource, deleteDatabaseInstance, upsertDatabaseInstance } from '../../../src/lib/database/db';
 
 describe('Assessment utils', () => {
     it('Should return matching assessment status', async () => {
@@ -51,4 +53,77 @@ describe('Assessment utils', () => {
 
         expect(result).toEqual(['maxdop', 'compute', 'storage', 'license']);
     });
+});
+
+it('Should update dismiss configurations successfully', async () => {
+    await createResource(ACCOUNT_ID, {
+        resourceId: '6cbdabbfe3fb147e',
+        resourceName: 'test-resource',
+        resourceType: 'MSSQL',
+        coRelationId: 'fs-f6082f35c1db',
+        cloudProviderAccountId: 'test-aws-account',
+        cloudProviderName: 'AWS',
+        region: DEFAULT_AWS_REGION,
+        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+        storageType: 'FSXN',
+        metadata: {
+            node1InstanceId: 'i-07e76a4b916548dc0',
+            node2InstanceId: 'i-0880a21327284f67c',
+            sqlDeploymentType: 'FCI'
+        }
+    });
+    await upsertDatabaseInstance(ACCOUNT_ID, {
+        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+        region: DEFAULT_AWS_REGION,
+        resourceId: '6cbdabbfe3fb147e',
+        databaseInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+        databaseInstanceName: 'MSSQLSERVER',
+        isDefault: true,
+        source: 'deployment',
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
+        fsxnIds: 'fs-0f53fbecdd3d85fb2',
+        databaseType: ''
+    });
+    const mockAccountId = ACCOUNT_ID;
+    const mockConfigurations = [
+        {
+            configurationName: 'sql-license',
+            configState: 'ACTIVE',
+            databaseHosts: [
+                {
+                    id: '6cbdabbfe3fb147e',
+                    sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION
+                }
+            ]
+        }
+    ];
+    const mockResponse = [
+        {
+            configurationName: 'sql-license',
+            startTime: expect.any(Number),
+            endTime: undefined,
+            configState: 'ACTIVE',
+            databaseHosts: [
+                {
+                    id: '6cbdabbfe3fb147e',
+                    sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
+                    status: 'SUCCESS'
+                }
+            ]
+        }
+    ];
+    const result = await updateDismissConfigurations(mockAccountId, mockConfigurations);
+    expect(result).toEqual({ dismissedConfigurations: mockResponse });
+    // Cleanup the database instance
+    const DATABASE_INSTANCE_RECORD = {
+        resourceId: '6cbdabbfe3fb147e'
+    };
+    await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DATABASE_INSTANCE_RECORD.resourceId, [
+        'non-existing-instance'
+    ]);
 });
