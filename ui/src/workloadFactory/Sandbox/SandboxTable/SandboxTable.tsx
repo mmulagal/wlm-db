@@ -507,8 +507,8 @@ const SandboxTable = () => {
         const { databaseHostId, name, instanceId } = rowData;
         dispatch(updateConnectionInfoLoading(true));
         getConnectionInfoApi({
-            credentialsId: headers?.headerSelectedCred?.data?.credentialsId,
-            regionId: headers?.headerSelectedRegion?.label2,
+            credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+            regionId: headerSelectedRegionSandbox?.label2,
             databaseHostId,
             instanceId,
             sandboxName: name

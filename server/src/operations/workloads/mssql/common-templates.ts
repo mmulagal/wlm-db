@@ -122,9 +122,6 @@ const ontapRestRequestBootstrap = `
                 if ($FSxHostName -is [array]) {
                     $FSxHostName = $FSxHostName[0]
                 }
-                # Setting the privatesubnet flag to true for testing
-                $isprivatesubnet = $True
-                $regionCertificate = ''
             }
             return @{
                 FSxCredentialsInBase64 = $FSxCredentialsInBase64

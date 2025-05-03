@@ -2348,9 +2348,6 @@ async function performLifecycleUpdate(
         logger.error(`Failed to perform lifecycle update for sandbox ${resourceDetails.database}`, e);
         errorMsg = e.message || 'Internal Server Error';
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
-        if (isSandboxOptimizeFlow) {
-            throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
-        }
         // Clean up only when the sandbox is not updated
         if (!sandboxUpdated) {
             await startCleanup(
@@ -2379,6 +2376,9 @@ async function performLifecycleUpdate(
                     mappings
                 );
             }
+        }
+        if (isSandboxOptimizeFlow) {
+            throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
         }
     } finally {
         // check any of the sub job has failure if so udpate the paraent job as warning which is completed with failure in status shown

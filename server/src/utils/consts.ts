@@ -1726,6 +1726,7 @@ const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1',
 
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
 const CLONE_AGE = 0; // It has to be changed to 60 after testing
+const OTHER_CLONE = 'other';
 
 export {
     WLMDB,
@@ -2075,5 +2076,6 @@ export {
     RESTRICTED_FSX_REGIONS,
     CLONE_AGE,
     PGSQL_DEFAULT_INSTANCE_NAME,
-    CLONE_ACTION
+    CLONE_ACTION,
+    OTHER_CLONE
 };
