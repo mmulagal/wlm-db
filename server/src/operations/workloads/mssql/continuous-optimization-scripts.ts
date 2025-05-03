@@ -143,7 +143,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
         }
     
         Function Get-LunFromSerialNumber($responseObject) {
-            $responseJson = $responseObject | ConvertTo-Json
+            $responseJson = $responseObject | ConvertTo-Json -Depth 5 -Compress
             Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseJson"
     
             $QueryFilter = ''
