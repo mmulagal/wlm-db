@@ -14,7 +14,7 @@ The script gathers information such as OS edition, CPU count, RAM size, network 
 The collected data is output in JSON format, which can be used for further analysis or reporting.
 
 .PREREQUISITES
-# - PowerShell 3.0 or later
+# - PowerShell 5.0 or later
 # - Necessary permissions to access WMI and SQL Server on the remote computer
 # - Network connectivity to the remote computer
 
@@ -23,6 +23,9 @@ The collected data is output in JSON format, which can be used for further analy
 2. Open PowerShell with administrative privileges.
 3. Navigate to the directory where the script is downloaded.
 4. Run the script with the required parameters.
+5. Script should be run with a Windows local login OR domain login (for Cluster configuration) that has admin rights on the system.
+6. User should have all views access to the SQL Server instance(SQL login should have these securables-'VIEW ANY DEFINITION','VIEW SERVER STATE','VIEW SERVER PERFORMANCE STATE').
+7. If the Windwows login does not have required access to the SQL Server instance, then provide the local SQL user credentials for collection with '-SqlUserName' parameter.
 
 .PARAMETER instanceNames
 (Optional) Array of SQL Server instance names to query. If not specified, the script will attempt to gather information from all available SQL Server instances on the remote computer.
