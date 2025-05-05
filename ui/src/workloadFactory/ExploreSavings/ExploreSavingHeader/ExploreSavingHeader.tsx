@@ -251,7 +251,7 @@ const ExploreSavingHeader = () => {
                                                     </DsTypography>
                                                 </div>
                                                 <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host with Windows login having admin rights on the system and all views permission on SQL server.
+                                                    Run the script on the SQL Server host with Windows login having admin rights on the system and on SQL server. SQL local user credentials can be used if the Windows login does not have sufficient privileges.
                                                 </DsTypography>
                                             </div>
 
