@@ -402,7 +402,7 @@ async function getMappedVolumeDetailForInstance(
                 activeNodeInstanceId,
                 [instanceName],
                 sqlAuthEnabled,
-                true,
+                false,
                 accountId,
                 ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
                 svmUuid,

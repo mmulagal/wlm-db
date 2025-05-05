@@ -27,7 +27,7 @@ import {
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { GET_SANDBOX_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
-import { calculateDaysSince, determineVolumeType, sqlResponseParsing } from '../../utils/utils';
+import { calculateDaysSince, sqlResponseParsing } from '../../utils/utils';
 import {
     createDatabaseInstanceConfigData,
     listDatabaseInstanceConfigData
@@ -231,7 +231,7 @@ async function runCloneAssessment(
         activeNodeInstanceId,
         [databaseInstanceName],
         sqlAuthEnabled,
-        true,
+        false,
         accountId,
         ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
         svmUuid,
@@ -346,27 +346,21 @@ async function runCloneAssessment(
                     }
                 } = volumeDetails;
 
-                const cloneVolumeType = determineVolumeType(cloneVolumeName);
-
                 const clonedVolumeInfo = {
                     sourceVolumeName: cloneParentVolumeName,
                     cloneVolumeName,
                     cloneVolumeUuid,
                     cloneVolumeCreateTime,
                     cloneDatabaseName: sandboxName,
-                    cloneVolumeType,
+                    cloneVolumeType: 'data',
                     isFlexClone
                 };
 
-                let cloneAge: number | undefined;
-
                 // Calculate the number of days since the data volume was created only if the volume type is 'data'
-                if (cloneVolumeType === 'data') {
-                    cloneAge = calculateDaysSince(cloneVolumeCreateTime);
-                    // Change it to > CLONE_AGE after staging testing
-                    if (cloneAge >= CLONE_AGE) {
-                        oldClones += 1;
-                    }
+                const cloneAge = calculateDaysSince(cloneVolumeCreateTime);
+                // Change it to > CLONE_AGE after staging testing
+                if (cloneAge >= CLONE_AGE) {
+                    oldClones += 1;
                 }
 
                 databaseObject.clonedVolumeDetails?.push(clonedVolumeInfo);
