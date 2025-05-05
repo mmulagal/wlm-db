@@ -777,7 +777,11 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(inventoryApi.util.resetApiState());
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
-        } else if (selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS) {
+        } else if (
+            selectedHeaderTab === WLF_TABS.INVENTORY ||
+            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+            selectedHeaderTab.includes(WLF_TABS.EXPLORE_SAVINGS)
+        ) {
             dispatch(setRefreshTime(getCurrentDateTime()));
             resetDBHomePageState(dispatch);
             dispatch(inventoryApi.util.resetApiState());
