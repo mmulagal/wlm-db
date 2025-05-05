@@ -650,7 +650,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     instanceAssessmentData?.storage?.sizing?.length === 4 &&
                     instanceAssessmentData?.storage.sizing.every((item: any) => {
                         return ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(
-                            item?.configurationName
+                            item?.name
                         );
                     });
                 const isStorageConfigOptimized =
