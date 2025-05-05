@@ -2284,8 +2284,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
         );
         const parsedResp = sqlResponseParsing(resp);
         const objectsOptimized = parsedResp.num_records || 0;
-
-        if (objectsOptimized !== volumeNames.length) {
+        if (objectsOptimized !== volumeNames.length && !isDemoFlow) {
             if (objectsOptimized === 0) {
                 jobError = `Failed to optimize storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
                 logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
