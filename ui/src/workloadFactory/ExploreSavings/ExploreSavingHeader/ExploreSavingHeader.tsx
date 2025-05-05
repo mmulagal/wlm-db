@@ -86,7 +86,7 @@ const ExploreSavingHeader = () => {
                                                     </DsTypography>
                                                 </div>
                                                 <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host.
+                                                Run the script on the SQL Server host with a user who has admin rights on both the system and SQL Server. Refer to the script's documentation (DocString) for more details.
                                                 </DsTypography>
                                             </div>
 
@@ -251,7 +251,7 @@ const ExploreSavingHeader = () => {
                                                     </DsTypography>
                                                 </div>
                                                 <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host.
+                                                Run the script on the SQL Server host with a user who has admin rights on both the system and SQL Server. Refer to the script's documentation (DocString) for more details.
                                                 </DsTypography>
                                             </div>
 
@@ -423,7 +423,7 @@ const ExploreSavingHeader = () => {
                                                     </DsTypography>
                                                 </div>
                                                 <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host.
+                                                Run the script on the SQL Server host with a user who has admin rights on both the system and SQL Server. Refer to the script's documentation (DocString) for more details.
                                                 </DsTypography>
                                             </div>
 
