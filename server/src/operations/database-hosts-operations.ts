@@ -1236,6 +1236,10 @@ async function getDatabaseHostSummaryV2(
         );
     }
     databaseHostDetails.sqlLicenseIncluded = WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation!) || false;
+    databaseHostDetails.name = databaseHostDetails?.name?.toLowerCase();
+    databaseHostDetails.databaseInstancesSummary?.forEach((instance: DatabaseHostInstanceSummaryResponseType) => {
+        instance.databaseInstanceName = instance?.databaseInstanceName?.toLowerCase();
+    });
     return databaseHostDetails;
 }
 
@@ -1827,7 +1831,7 @@ async function getDatabaseInstancesSummary(
 
         const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
             databaseInstanceId,
-            databaseInstanceName: savedDatabaseInstanceName,
+            databaseInstanceName: savedDatabaseInstanceName?.toLocaleLowerCase(),
             status: ''
         };
 
