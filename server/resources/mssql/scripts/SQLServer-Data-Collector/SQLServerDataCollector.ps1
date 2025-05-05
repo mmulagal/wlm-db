@@ -27,6 +27,7 @@ The collected data is output in JSON format, which can be used for further analy
 6. User should have admin privileges on SQL Server instance to get full report.
 7. If the Windows login does not have required access to the SQL Server instance, provide the local SQL user credentials for collection with '-SqlUserName' parameter.
 8. Collection should not have any performance impact on the SQL Server instance and finishes within few minutes.
+9. Script collects configuration information of the host node and partner node in case of FCI/AOAG. Most of the performance stats are captured from historic counter data in SQL Server(4hrs). Memory usage is point-in-time. 
 
 .PARAMETER instanceNames
 (Optional) Array of SQL Server instance names to query. If not specified, the script will attempt to gather information from all available SQL Server instances on the remote computer.
