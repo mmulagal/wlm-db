@@ -1,4 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
+import { ACCOUNT_ID } from '../../utils/schema-description-consts';
 
 const FormConfigObjectResponse = Type.Object({
     id: Type.String(),
@@ -30,25 +31,25 @@ type FormConfigListResponseType = Static<typeof FormConfigListResponse>;
 type FormConfigObjectResponseType = Static<typeof FormConfigObjectResponse>;
 
 const FormConfigListParams = Type.Object({
-    accountId: Type.String({ minLength: 1 })
+    accountId: Type.String({ description: ACCOUNT_ID, minLength: 1 })
 });
 type FormConfigListParamsType = Static<typeof FormConfigListParams>;
 
 const FormConfigUpdateParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
+    accountId: Type.String({ description: ACCOUNT_ID, minLength: 1 }),
     id: Type.String({ minLength: 1 })
 });
 type FormConfigUpdateParamsType = Static<typeof FormConfigUpdateParams>;
 
 const FormConfigObjectParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
+    accountId: Type.String({ description: ACCOUNT_ID, minLength: 1 }),
     id: Type.String({ minLength: 1 })
 });
 type FormConfigObjectParamsType = Static<typeof FormConfigObjectParams>;
 
 const FormConfigCreateResponse = Type.Object({
     id: Type.String({ minLength: 1 }),
-    accountId: Type.String({ minLength: 1 }),
+    accountId: Type.String({ description: ACCOUNT_ID, minLength: 1 }),
     name: Type.String(),
     creationTime: Type.Number(),
     user: Type.String(),

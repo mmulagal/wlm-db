@@ -1,6 +1,7 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { PGSQL_DEFAULT_INSTANCE_NAME, RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
+import { AWS_REGION, CREDENTIALS_ID, DATABASE_HOST_ID } from '../../utils/schema-description-consts';
 
 const DiscoverQuery = Type.Object({
     pageSize: Type.Number({
@@ -164,11 +165,11 @@ const MultiInstanceUnmanageResponseBody = Type.Object({
 });
 
 const BulkManageMsSqlRequestBody = Type.Object({
-    credentialsId: Type.String({ description: 'Credentials ID' }),
-    region: Type.String({ description: 'AWS region' }),
+    credentialsId: Type.String({ description: CREDENTIALS_ID }),
+    region: Type.String({ description: AWS_REGION }),
     ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
     databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' })),
-    databaseHostId: Type.Optional(Type.String({ description: 'Database host ID' }))
+    databaseHostId: Type.Optional(Type.String({ description: DATABASE_HOST_ID }))
 });
 const MultiInstanceManageMsSqlRequestBody = Type.Object({
     items: Type.Array(BulkManageMsSqlRequestBody)
@@ -177,7 +178,7 @@ const MultiInstanceManageMsSqlRequestBody = Type.Object({
 type MultiInstanceManageMsSqlRequestBodyType = Static<typeof BulkManageMsSqlRequestBody>;
 const MultiInstanceManageResponseBody = Type.Array(
     Type.Object({
-        resourceId: Type.Optional(Type.String({ description: 'Workload Factory resource ID.' })),
+        resourceId: Type.Optional(Type.String({ description: DATABASE_HOST_ID })),
         ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
         region: Type.String({ description: 'AWS region' }),
         credentialsId: Type.String({ description: 'Credentials ID' }),

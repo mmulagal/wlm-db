@@ -13,69 +13,50 @@ import {
     SANDBOX_LIFECYCLE_REBASELINE
 } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
+import {
+    ACCOUNT_ID,
+    AWS_REGION,
+    CREDENTIALS_ID,
+    DATABASE_HOST_ID,
+    DATABASE_INSTANCE_ID,
+    DATABASE_INSTANCE_NAME
+} from '../../utils/schema-description-consts';
 
 const DatabaseHostObjectParams = Type.Object({
-    accountId: Type.String({ minLength: 1 })
+    accountId: Type.String({ description: ACCOUNT_ID, minLength: 1 })
 });
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
 const DatabaseHostSummaryParams = Type.Composite([
     CredentialsIdParams,
-    Type.Object({
-        databaseHostId: Type.String({
-            minLength: 1,
-            description:
-                'Unique identifier for database hosts managed by Workload Factory. The value for databaseHostId can be found using the GET database hosts API under Resources section in Database.'
-        })
-    })
+    Type.Object({ databaseHostId: Type.String({ minLength: 1, description: DATABASE_HOST_ID }) })
 ]);
 
 const DatabaseHostInstanceSummaryParams = Type.Composite([
     DatabaseHostSummaryParams,
-    Type.Object({
-        databaseInstanceId: Type.String({
-            minLength: 1,
-            description:
-                'Unique identifier for a database instance managed by Workload Factory. The value for databaseInstanceId can be found using the GET database hosts API under Resources section in Database.'
-        })
-    })
+    Type.Object({ databaseInstanceId: Type.String({ minLength: 1, description: DATABASE_INSTANCE_ID }) })
 ]);
 
 const DatabaseHostOptionalInstanceSummaryParams = Type.Composite([
     DatabaseHostSummaryParams,
-    Type.Optional(
-        Type.Object({
-            databaseInstanceId: Type.String({
-                description:
-                    'Unique identifier for a database instance managed by Workload Factory. The value for databaseInstanceId can be found using the GET database hosts API under Resources section in Database.'
-            })
-        })
-    )
+    Type.Optional(Type.Object({ databaseInstanceId: Type.String({ description: DATABASE_INSTANCE_ID }) }))
 ]);
 
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
 const CreateDatabaseParams = Type.Object({
-    accountId: Type.String({ minLength: 7 }),
-    databaseHostId: Type.String({
-        minLength: 10,
-        description:
-            'Unique identifier for database hosts managed by Workload Factory. The value for databaseHostId can be found using the GET database hosts API under Resources section in Database.'
-    }),
-    credentialsId: Type.String({ format: 'uuid' }),
-    region: Type.String()
+    accountId: Type.String({ description: ACCOUNT_ID, minLength: 7 }),
+    databaseHostId: Type.String({ minLength: 10, description: DATABASE_HOST_ID }),
+    credentialsId: Type.String({ description: CREDENTIALS_ID, format: 'uuid' }),
+    region: Type.String({ description: AWS_REGION })
 });
 
 const CreateDatabaseParamsV2 = Type.Object({
-    accountId: Type.String({ description: 'Workload Factory account ID', minLength: 7 }),
-    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1, format: 'uuid' }),
-    region: Type.String({ description: 'AWS region of the database host', minLength: 1 }),
-    databaseHostId: Type.String({
-        description:
-            'Unique identifier for database hosts managed by Workload Factory. The value for databaseHostId can be found using the GET database hosts API under Resources section in Database.',
-        minLength: 10
-    }),
-    databaseInstanceName: Type.String({ description: 'SQL Server instance name' })
+    accountId: Type.String({ description: ACCOUNT_ID, minLength: 7 }),
+    credentialsId: Type.String({ description: CREDENTIALS_ID, minLength: 1, format: 'uuid' }),
+    region: Type.String({ description: AWS_REGION, minLength: 1 }),
+    databaseHostId: Type.String({ description: DATABASE_HOST_ID, minLength: 10 }),
+    databaseInstanceName: Type.String({ description: DATABASE_INSTANCE_NAME })
 });
 
 // Query parameter to fetch protection, performance, storage and cost details
@@ -393,20 +374,16 @@ const DriveInfoResponseBody = Type.Object({
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
 const DatabaseHostsParamsWithRegion = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String({ format: 'uuid' }),
-    region: Type.String()
+    accountId: Type.String({ description: ACCOUNT_ID, minLength: 1 }),
+    credentialsId: Type.String({ format: 'uuid', description: CREDENTIALS_ID }),
+    region: Type.String({ description: AWS_REGION, minLength: 1 })
 });
 
 const DatabaseHostSummaryParamsWithRegion = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    databaseHostId: Type.String({
-        minLength: 1,
-        description:
-            'Unique identifier for database hosts managed by Workload Factory. The value for databaseHostId can be found using the GET database hosts API under Resources section in Database.'
-    }),
-    credentialsId: Type.String({ format: 'uuid' }),
-    region: Type.String()
+    accountId: Type.String({ minLength: 1, description: ACCOUNT_ID }),
+    databaseHostId: Type.String({ minLength: 1, description: DATABASE_HOST_ID }),
+    credentialsId: Type.String({ format: 'uuid', description: CREDENTIALS_ID }),
+    region: Type.String({ description: AWS_REGION, minLength: 1 })
 });
 type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
 
@@ -492,7 +469,7 @@ const SandboxParams = Type.Composite([
     DatabaseHostSummaryParams,
     Type.Object({
         sandboxName: Type.String({ maxLength: 27, pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$' }),
-        databaseInstanceId: Type.String({ description: 'SQL Server instance id' })
+        databaseInstanceId: Type.String({ description: DATABASE_INSTANCE_ID })
     })
 ]);
 

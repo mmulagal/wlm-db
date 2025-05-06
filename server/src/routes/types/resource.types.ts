@@ -1,5 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { CredentialsIdParams } from './generic.types';
+import { CREDENTIALS_ID } from '../../utils/schema-description-consts';
 
 const FileSystemsCredentialsStatusRequestQuery = Type.Object({
     fsxids: Type.String()
@@ -20,7 +21,7 @@ const FileSystemsCredentialsStatusResponse = Type.Object({
 });
 
 const ManageResourcesQueryString = Type.Object({
-    credentialsIds: Type.Optional(Type.String()),
+    credentialsIds: Type.Optional(Type.String({ description: CREDENTIALS_ID })),
     regions: Type.Optional(Type.String()),
     databaseTypes: Type.Optional(Type.String()),
     nextToken: Type.Optional(Type.String()),

@@ -1,19 +1,20 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { HEADERS } from '../../utils/consts';
+import { ACCOUNT_ID, DATABASE_HOST_ID, DATABASE_INSTANCE_NAME } from '../../utils/schema-description-consts';
 
 const DatabaseHeaders = Type.Object({
     [HEADERS.WORKSPACE_ID_HEADER]: Type.Optional(Type.String({ minLength: 1 }))
 });
 
 const DatabaseParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    resourceId: Type.String({ minLength: 1 })
+    accountId: Type.String({ description: ACCOUNT_ID }),
+    resourceId: Type.String({ description: DATABASE_HOST_ID })
 });
 
 const Tablesparams = Type.Object({
-    accountId: Type.String(),
-    resourceId: Type.String(),
-    databaseName: Type.String()
+    accountId: Type.String({ description: ACCOUNT_ID }),
+    resourceId: Type.String({ description: DATABASE_HOST_ID }),
+    databaseName: Type.String({ description: DATABASE_INSTANCE_NAME })
 });
 
 const MsSqlServerDiscoveryResponse = Type.Object({
