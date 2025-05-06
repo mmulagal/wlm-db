@@ -621,6 +621,26 @@ export const inventoryApi = createApi({
                     return response;
                 }
             }),
+            discoverOracleHosts: builder.query({
+                query: ({ regionId, credentialsId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/oracle/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10&nextToken=${nextToken}`;
+                    } else {
+                        return `v1/oracle/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10`;
+                    }
+                },
+                keepUnusedDataFor: 1,
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialsId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
             getFsxCredentialStatus: builder.query({
                 query: ({ regionId, credentialsId, fsxIds }) => ({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/resources/file-systems/credentials-status?fsxids=${fsxIds}`
@@ -1175,6 +1195,7 @@ export const { useCreateUserDBMutation, useGetDriveInfoV2Query, useGetCollationL
 export const {
     useLazyGetManagedHostDataQuery,
     useLazyDiscoverHostsQuery,
+    useLazyDiscoverOracleHostsQuery,
     useLazyGetFsxCredentialStatusQuery,
     useRegisterResourceCredentialsMutation,
     useGetMssqlInstanceDataMutation,

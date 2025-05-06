@@ -439,7 +439,10 @@ const InstancesTable = () => {
     const disableManageCheck = (rowData: any) => {
         let errorMessage = '';
         let isDisabled = false;
-        if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+            isDisabled = true;
+            errorMessage = GENERAL.NON_MSSQL_BULK_CTA;
+        } else if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
             isDisabled = true;
             errorMessage = 'The instance is already managed by Workload Factory.';
         } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
@@ -460,7 +463,7 @@ const InstancesTable = () => {
         } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
             isDisabled = true;
             errorMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
-        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
             isDisabled = true;
             errorMessage = GENERAL.PGSQL_CTA_NA;
         }
@@ -624,8 +627,8 @@ const InstancesTable = () => {
             renderCell: (cellData: string, rowData: any) => {
                 let disableMsg = '';
                 let disableMenu = () => {
-                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
-                        disableMsg = GENERAL.PGSQL_ASSESSMENT_NA;
+                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+                        disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
                         return true;
                     }
                     if (
@@ -931,7 +934,7 @@ const InstancesTable = () => {
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
-                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
                         disableMsg = GENERAL.PGSQL_CTA_NA;
                         width = '110px';
                         height = '33px';

@@ -20,7 +20,9 @@ import {
     setInventoryTableData,
     setIsDatabaseHostsLoading,
     setIsDiscoverHostLoading,
+    setIsDiscoverOracleHostLoading,
     setIsDiscoveredHostData,
+    setIsDiscoveredOracleHostData,
     setIsFullHostDataLoading,
     setIsFullPgSqlHostDataLoading,
     setIsManagedHostListLoading,
@@ -37,6 +39,7 @@ import {
     useGetMssqlInstanceDataV2Mutation,
     useGetStorageSavingsMutation,
     useLazyDiscoverHostsQuery,
+    useLazyDiscoverOracleHostsQuery,
     useLazyGetAllMssqlHostsAssessmentDataQuery,
     useLazyGetDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
@@ -50,6 +53,7 @@ import {
 import {
     addInstanceIdToGetPerf,
     formatDiscoveredInventoryData,
+    formatDiscoveredOracleInventoryData,
     formatInventoryTableData,
     getExploreSavingsRows,
     getFsxIdsFromdiscover,
@@ -86,6 +90,7 @@ const InventoryApisV3 = () => {
     } = useAppSelector(state => state.headers);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
+    const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const fsxCredentialStatusObj = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObj);
     const mssqlInstancesData = useAppSelector(state => state.inventoryV2.mssqlInstancesData);
@@ -133,8 +138,11 @@ const InventoryApisV3 = () => {
     // Potential savings API for EBS and FSxW
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
 
-    // Discover API
+    // Discover MSSQL API
     const [getDiscoveryHostsListApi] = useLazyDiscoverHostsQuery();
+
+    // Discover oracle API
+    const [getDiscoveryOracleHostsListApi] = useLazyDiscoverOracleHostsQuery();
 
     // Get fsx credentials status query.
     const [getFsxCredentialStatusListApi] = useLazyGetFsxCredentialStatusQuery();
@@ -331,7 +339,9 @@ const InventoryApisV3 = () => {
 
     const callManagedHostAllAPis = (managedList: any) => {
         let discoveredRows: any = [];
+        let discoveredOracleRows: any = [];
         getDiscoveryHostsList(discoveredRows, null, credId, regionId);
+        getDiscoveryOracleHostsList(discoveredOracleRows, null, credId, regionId);
         if (managedList?.length > 0) {
             let fullHostData: any = {};
             let fullPgsqlHostData: any = {};
@@ -564,7 +574,7 @@ const InventoryApisV3 = () => {
         }
     };
 
-    // This function is to get discovery API data.
+    // This function is to get discovery API data for mssql.
     const getDiscoveryHostsList = async (
         discoveredList: any,
         nextToken: string | null,
@@ -627,6 +637,66 @@ const InventoryApisV3 = () => {
             } catch (error) {
                 dispatch(setIsDiscoverHostLoading(false));
                 dispatch(setIsDiscoveredHostData(discoveredList));
+            }
+        }
+    };
+
+    // This function is to get discovery API data.
+    const getDiscoveryOracleHostsList = async (
+        discoveredOracleList: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getDiscoveryOracleHostsListApi({
+                    regionId: regionId,
+                    credentialsId: credId,
+                    nextToken: nextToken
+                });
+                if (
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+                ) {
+                    dispatch(setResetManagedData(false));
+                    if (result && !result?.error) {
+                        result?.data?.items?.map((perRow: any) => {
+                            if (perRow?.ec2InstanceId) {
+                                discoveredOracleList = [
+                                    ...discoveredOracleList,
+                                    {
+                                        ...perRow,
+                                        hostType: GENERAL.ORACLE_TYPE,
+                                        credentialId: credId,
+                                        regionId: regionId
+                                    }
+                                ];
+                            }
+                        });
+                        if (result?.data?.nextToken) {
+                            dispatch(setIsDiscoveredOracleHostData(discoveredOracleList));
+                            getDiscoveryOracleHostsList(
+                                discoveredOracleList,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setIsDiscoverOracleHostLoading(false));
+                            dispatch(setIsDiscoveredOracleHostData(discoveredOracleList));
+                        }
+                    } else {
+                        dispatch(setIsDiscoverOracleHostLoading(false));
+                        dispatch(setIsDiscoveredOracleHostData(discoveredOracleList));
+                    }
+                }
+            } catch (error) {
+                dispatch(setIsDiscoverOracleHostLoading(false));
+                dispatch(setIsDiscoveredOracleHostData(discoveredOracleList));
             }
         }
     };
@@ -1413,6 +1483,25 @@ const InventoryApisV3 = () => {
             }
         }
     }, [discoveredHostData, fsxCredentialStatusObj, managedHostListLoading]);
+
+    useEffect(() => {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (
+            !resetManagedData &&
+            !managedHostListLoading &&
+            discoveredOracleHostData &&
+            discoveredOracleHostData.length
+        ) {
+            // Grouping logic is not required here as oracle is just supporting standalone for now
+            // Grouing logic will be required if they support cluster in future
+            const formattedDiscoveredOracleInventoryTableData =
+                formatDiscoveredOracleInventoryData(discoveredOracleHostData);
+            // To Avoid overriding
+            let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredOracleInventoryTableData };
+            dispatch(setInventoryTableData(updatedResult));
+        }
+    }, [discoveredOracleHostData, managedHostListLoading]);
 
     // This data is coming from database-hosts API
     useEffect(() => {

@@ -175,7 +175,11 @@ export const STATUS_CONST = {
     COMPLETED: 'Completed',
     ONLINE: 'Online',
     OFFLINE: 'Offline',
-    UNKNOWN: 'Unknown'
+    UNKNOWN: 'Unknown',
+    OPEN: 'OPEN',
+    STARTED: 'STARTED',
+    MOUNTED: 'MOUNTED',
+    OPEN_MIGRATE: 'OPEN MIGRATE'
 };
 
 export const JOB_MONITORING_STATUS = {

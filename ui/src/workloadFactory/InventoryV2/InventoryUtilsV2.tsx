@@ -20,12 +20,14 @@ import {
     PREPARE_API_ENDPOINT,
     PROTECTION_TEXT_STATUS,
     SQL_DEPLOYMENT_MODE,
+    STATUS_CONST,
     WLF_TABS
 } from '../../utils/consts';
 import {
     DatabaseInstanceDetailsInterface,
     DatabaseInstancesSummaryInterface,
     DiscoverHostInterface,
+    DiscoverOracleHostInterface,
     DiscoveredStorageObj,
     EC2DetailsInterface,
     EstimatedUsageCostInterface,
@@ -35,6 +37,7 @@ import {
     InventoryTableData,
     InventoryTableInstanceDatInterface,
     ManagedHostsRowInterface,
+    OracleInstancesDiscovered,
     SQLServerInstancesDiscovered,
     StatusObjInterface
 } from '../../utils/types/inventoryV2Types';
@@ -673,6 +676,25 @@ export const formatDiscoveredInventoryData = (
     return result;
 };
 
+export const formatDiscoveredOracleInventoryData = (discoveredData: Array<DiscoverOracleHostInterface>) => {
+    let result = {};
+    if (!discoveredData) {
+        return result;
+    }
+    let state = store.getState();
+    const { credentialMapping, regionMapping } = state?.headers;
+    discoveredData?.map((perRow: DiscoverHostInterface) => {
+        result = {
+            ...result,
+            ...{
+                [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
+                    formatOracleDiscoveredRows(perRow, credentialMapping, regionMapping)
+            }
+        };
+    });
+    return result;
+};
+
 export const formatDiscoveredRows = (
     discoveredRow: DiscoverHostInterface,
     credentialMapping: any,
@@ -717,6 +739,58 @@ export const formatDiscoveredRows = (
         // totalCost: '',
         // allocatedCapacity: '',
         sqlServerInstances: formatDiscoverInstanceData(discoveredRow, perInstanceStatus),
+        credentialId: discoveredRow?.credentialId,
+        regionId: discoveredRow?.regionId,
+        credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
+        accountId: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.providerAccountId,
+        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName
+    };
+    return result;
+};
+
+export const formatOracleDiscoveredRows = (
+    discoveredRow: DiscoverOracleHostInterface,
+    credentialMapping: any,
+    regionMapping: any
+) => {
+    let totalInstanceCount = discoveredRow?.databaseInstanceDetails?.length || 0;
+    let ssmState = getDiscoverSsmState(discoveredRow);
+    let perInstanceStatus = getOracleDiscoverPerInstanceStatus(discoveredRow, ssmState);
+    let installationMode = discoveredRow?.oracleServerDeploymentType || '';
+    let actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
+    let ec2Details = [
+        {
+            id: discoveredRow?.ec2InstanceId,
+            name: discoveredRow?.ec2InstanceName
+        }
+    ];
+    const result = {
+        id: discoveredRow?.ec2InstanceId,
+        ec2InstanceId: discoveredRow?.ec2InstanceId,
+        ec2InstanceName: discoveredRow?.ec2InstanceName,
+        name: discoveredRow?.ec2InstanceName,
+        status: ssmState, // discover status will depends on ssmState only
+        ssmState: ssmState,
+        totalInstance: totalInstanceCount,
+        managedInstance: 0,
+        serverInstallationMode: installationMode,
+        serverAllInstallationMode: [installationMode],
+        vpcId: discoveredRow?.vpc?.id,
+        vpcName: discoveredRow?.vpc?.name,
+        vpcCidr: discoveredRow?.vpc?.cidrBlock,
+        action: actionObj?.action,
+        actionDisable: actionObj?.actionDisable,
+        isManagedHost: false,
+        loading: false,
+        storageType: actionObj?.storageType,
+        isDetected: actionObj?.isDetected,
+        ec2Details: ec2Details,
+        hostType: GENERAL.ORACLE_TYPE,
+        // **** Below values will get from Instances API *****
+        // estimatedUsageCost: {}, // Initially it will be blank
+        // totalCost: '',
+        // allocatedCapacity: '',
+        sqlServerInstances: formatOracleDiscoverInstanceData(discoveredRow, perInstanceStatus),
         credentialId: discoveredRow?.credentialId,
         regionId: discoveredRow?.regionId,
         credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
@@ -851,6 +925,63 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                 } else {
                     statusObj = {
                         name: perRow.sqlServerInstance,
+                        status: INVENTORY_STATUS.UNMANAGED,
+                        storageType: perRow?.storage,
+                        fsxId: fsxIdObject?.id,
+                        isFsxRegistered: !fsxCredentialValidationFailed
+                    };
+                }
+                result = [...result, ...[statusObj]];
+            }
+        });
+    }
+    return result;
+};
+
+export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterface, ssmState: string) => {
+    let result: Array<StatusObjInterface> = [];
+    let state = store.getState();
+    const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj;
+    if (row?.databaseInstanceDetails && row?.databaseInstanceDetails?.length > 0) {
+        row?.databaseInstanceDetails?.map((perRow: OracleInstancesDiscovered) => {
+            let statusObj = {};
+            if (perRow?.instanceName) {
+                let fsxCredentialValidationFailed;
+                let storageTypeCheck;
+                let fsxIdObject = perRow?.storage?.find(
+                    (item: DiscoveredStorageObj) => item.type === DETECT_HOST_VAR.FSXN
+                );
+                if (perRow?.storage && perRow?.storage?.length > 0) {
+                    fsxCredentialValidationFailed = perRow?.storage?.find(
+                        (item: DiscoveredStorageObj) =>
+                            item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj?.[item.id!]
+                    );
+                    storageTypeCheck = perRow?.storage?.find(
+                        (item: DiscoveredStorageObj) =>
+                            item.type === DETECT_HOST_VAR.FSXN ||
+                            item.type === DETECT_HOST_VAR.FSXW ||
+                            item.type === DETECT_HOST_VAR.EBS
+                    );
+                }
+
+                if (ssmState !== INVENTORY_STATUS.ONLINE || fsxCredentialValidationFailed || !storageTypeCheck) {
+                    let detectOptionObj = getDetectOptionForInstance(
+                        perRow,
+                        row?.ssmState,
+                        fsxIdObject?.id,
+                        fsxCredentialStatusObj
+                    );
+                    statusObj = {
+                        ...detectOptionObj,
+                        name: perRow.instanceName,
+                        status: INVENTORY_STATUS.UNDETECTED,
+                        storageType: perRow?.storage,
+                        fsxId: fsxIdObject?.id,
+                        isFsxRegistered: !fsxCredentialValidationFailed
+                    };
+                } else {
+                    statusObj = {
+                        name: perRow.instanceName,
                         status: INVENTORY_STATUS.UNMANAGED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
@@ -1003,6 +1134,36 @@ export const formatDiscoverInstanceData = (
             //     (perRow?.storage?.fsxn?.size || 0) +
             //     (perRow?.storage?.fsxw?.size || 0) +
             //     (perRow?.storage?.ebs?.size || 0)
+        };
+    });
+    return instanceRows;
+};
+
+export const formatOracleDiscoverInstanceData = (
+    row: DiscoverOracleHostInterface,
+    perInstanceStatus: Array<StatusObjInterface>
+) => {
+    let instanceRows = row?.databaseInstanceDetails?.map((perRow: OracleInstancesDiscovered) => {
+        const statusObj = perInstanceStatus?.filter((per: StatusObjInterface) => per?.name === perRow?.instanceName);
+        const instanceStatus =
+            perRow?.instanceState === STATUS_CONST.OPEN || perRow?.instanceState === STATUS_CONST.STARTED
+                ? INVENTORY_STATUS.CASE_SENSITIVE_UP
+                : INVENTORY_STATUS.CASE_SENSITIVE_DOWN;
+        return {
+            ...perRow,
+            databaseInstanceId: perRow?.instanceId,
+            databaseInstanceName: perRow?.instanceName,
+            status: instanceStatus,
+            databaseCount: perRow?.databaseCount,
+            statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,
+            fileSystemType: getDiscoverFileSystemType(perRow),
+            storage: perRow?.storage,
+            fsxId: statusObj?.[0]?.fsxId,
+            isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
+            defaultAuth: perRow?.defaultAuth,
+            detectOption: statusObj?.[0]?.detectOption,
+            detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
+            oracleServerDeploymentType: row?.oracleServerDeploymentType
         };
     });
     return instanceRows;
@@ -1961,19 +2122,19 @@ export const detectFieldsValidation = (entryData: any) => {
 
 export const getDiscoveredHostDeploymentV2 = (host: any) => {
     // This will get deployment type in case of unmanaged hosts
-    const sqlServerDeploymentType = host?.sqlServerDeploymentType || '';
+    const deploymentType = host?.sqlServerDeploymentType || host?.oracleServerDeploymentType || '';
     let type = '';
 
-    if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+    if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
         type = GENERAL.AOAG;
-    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+    } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
         type = GENERAL.FAILOVER_CLUSTER_INSTANCES;
-    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+    } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
         type = GENERAL.STANDALONE;
-    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+    } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
         type = GENERAL.HA;
     } else {
-        type = sqlServerDeploymentType;
+        type = deploymentType;
     }
     return type;
 };

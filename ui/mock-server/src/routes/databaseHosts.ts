@@ -11,6 +11,7 @@ import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
 import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
 import optimizeBulkJobs from '../data/optimizeBulkJobs.json';
 import DiscoverEC2 from '../data/discoverEc2V2.json';
+import DiscoverOracle from '../data/discoverOracle.json';
 import CredentialsStatus from '../data/credentialsStatus.json';
 import ManagedInstanceList from '../data/managedInstanceList.json';
 import MssqlInstanceData from '../data/mssqlInstance.json';
@@ -96,6 +97,12 @@ router.get(`${BASE_URL}/v1/jobs/:jobId`, async (req: {}, res: any) => {
 router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/discover`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, DiscoverEC2);
+    }, 30);
+});
+
+router.get(`${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/discover`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, DiscoverOracle);
     }, 30);
 });
 

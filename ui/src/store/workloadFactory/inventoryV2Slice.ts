@@ -28,6 +28,10 @@ const initialInventoryV2State: InventorySliceData = {
         discoveredHostData: null,
         discoverHostLoading: false
     },
+    discoveredOracleHosts: {
+        discoveredOracleHostData: null,
+        discoverOracleHostLoading: false
+    },
     fsxCredentialStatusObj: {},
     fsxCredentialStatusLoading: false,
     mssqlInstancesData: null,
@@ -162,6 +166,12 @@ const inventoryV2Slice = createSlice({
         setIsDiscoverHostLoading: (state, action: PayloadAction<any>) => {
             state.discoveredHosts.discoverHostLoading = action.payload;
         },
+        setIsDiscoveredOracleHostData: (state, action: PayloadAction<any>) => {
+            state.discoveredOracleHosts.discoveredOracleHostData = action.payload;
+        },
+        setIsDiscoverOracleHostLoading: (state, action: PayloadAction<any>) => {
+            state.discoveredOracleHosts.discoverOracleHostLoading = action.payload;
+        },
         setFsxCredentialStatus: (state, action: PayloadAction<any>) => {
             state.fsxCredentialStatusObj = action.payload;
         },
@@ -287,6 +297,8 @@ const inventoryV2Slice = createSlice({
             state.getPgSqlDatabaseHosts.databaseHostsData = null;
             state.discoveredHosts.discoveredHostData = null;
             state.discoveredHosts.discoverHostLoading = true;
+            state.discoveredOracleHosts.discoveredOracleHostData = null;
+            state.discoveredOracleHosts.discoverOracleHostLoading = true;
             state.dashSandboxList.loading = true;
             state.dashSandboxSavings.loading = true;
             state.inventoryChartData = null;
@@ -321,6 +333,7 @@ const inventoryV2Slice = createSlice({
             state.getPgSqlDatabaseHosts.fullHostDataLoading = false;
             state.allmssqlHostAssessmentLoading = false;
             state.discoveredHosts.discoverHostLoading = false;
+            state.discoveredOracleHosts.discoverOracleHostLoading = false;
             state.dashSandboxList.loading = false;
             state.dashSandboxSavings.loading = false;
         }
@@ -348,6 +361,8 @@ export const {
     addPgSqlDatabaseHostsData,
     setIsDiscoveredHostData,
     setIsDiscoverHostLoading,
+    setIsDiscoveredOracleHostData,
+    setIsDiscoverOracleHostLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
     setMssqlInstancesData,
