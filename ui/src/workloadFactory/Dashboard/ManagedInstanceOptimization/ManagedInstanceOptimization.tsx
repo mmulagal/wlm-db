@@ -48,7 +48,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
 
                 <div className={styles.ManageInstanceTooltipSection}>
                     {loading && <FlashingDotsLoader />}
-                    {instanceOptimizationSummary?.hasDismissedOrPostponed && (<TooltipInfo>{GENERAL.MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP}</TooltipInfo>)}
+                    <TooltipInfo>{GENERAL.MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP}</TooltipInfo>
                 </div>
             </div>
 
