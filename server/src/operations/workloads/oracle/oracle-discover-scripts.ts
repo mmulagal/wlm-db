@@ -1,21 +1,28 @@
-const getStorageDetails = `
+const loadStorageDetectionModules = `
 
     # Function to find mount point details for a given file or directory.
     find_mountpoint() {
         local target="$1"
-        local mountPoint
-        mountPoint=$(findmnt -T "$target" -n -o SOURCE)
-        if [ -n "$mountPoint" ]; then
-            dns_name=$(echo "$mountPoint" | cut -d':' -f1)
-            nfs_mount_point=$(echo "$mountPoint" | cut -d':' -f2-)
-            # Check if dns_name already appears to be an IP address (simple check for digits and dots)
-            if [[ $dns_name =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
-                nfs_ip_address="$dns_name"
+        local mount_info
+        mount_info=$(findmnt -T "$target" -n -o SOURCE,FSTYPE)
+        read source fstype <<< "$mount_info"
+    
+        if [ -n "$source" ]; then
+            if [[ "$fstype" == nfs* ]]; then
+                dns_name=$(echo "$source" | cut -d':' -f1)
+                mountPoint=$(echo "$source" | cut -d':' -f2-)
+                protocol="NFS"
+                # Check if dns_name already appears to be an IP address (simple check for digits and dots)
+                if [[ $dns_name =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+                    mountIp="$dns_name"
+                else
+                    mountIp=$(dig +short "$dns_name")
+                fi
             else
-                nfs_ip_address=$(dig +short "$dns_name")
+                return 1
             fi
-
-            echo "$nfs_ip_address,$nfs_mount_point"
+            
+            echo "$mountIp,$mountPoint,$protocol"
             return 0
         fi
 
@@ -23,33 +30,290 @@ const getStorageDetails = `
         return 1
     }
 
-    get_data_file_path() {
-        # Function to retrieve the data file path from the database.
+    get_data_file_paths() {
+        # Function to retrieve the data file path from the database. Getting the distinct file paths here as data files in some cases can spread across multiple mounted directories.
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        local alter_cmd=""
+        if [ "$isCDB" == "YES" ]; then
+            alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
+        fi
+
         sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
             sqlplus -S / as sysdba
             SET HEADING OFF
             SET LINESIZE 500
-            SELECT file_name FROM dba_data_files WHERE ROWNUM = 1;
+            SET FEEDBACK OFF
+            SET TERMOUT OFF
+            $alter_cmd
+            SELECT DISTINCT
+                SUBSTR(file_name,
+                        1,
+                        INSTR(file_name, '/', -1) - 1) AS data_dir
+            FROM   dba_data_files
+            WHERE  file_name NOT LIKE '+%';
+EOF
+    }
+
+    get_disk_details() {
+        local ORACLE_SID="$1"
+        local diskgroupName="$2"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            sqlplus -S / as sysdba 
+            SET HEADING OFF
+            SET LINESIZE 500
+            SELECT d.name
+            FROM v\\$asm_disk d
+            JOIN v\\$asm_diskgroup g ON d.group_number = g.group_number
+            WHERE g.name = '$diskgroupName' AND ROWNUM = 1;
+EOF
+}
+
+    get_disk_device_path() {
+        local ORACLE_SID="$1"
+        local diskName="$2"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            sqlplus -S / as sysdba
+            SET HEADING OFF
+            SET LINESIZE 500
+            SELECT path 
+                FROM v$asm_disk 
+                WHERE name = '$diskName'
+                AND header_status = 'MEMBER';
             EXIT;
 EOF
     }
 
-    # Query to retrieve data file path.
-    DATA_FILE=$(get_data_file_path)
-    DATA_FILE=$(echo "$DATA_FILE" | xargs)
-
-    if [ -z "$DATA_FILE" ]; then
-        echo "No data file path returned for instance"
-    else
-        # Determine the directory to use.
-        if [ -e "$DATA_FILE" ]; then
-            TARGET="$DATA_FILE"
-        else
-            TARGET=$(dirname "$DATA_FILE")
+    get_unique_asm_disk_groups() {
+    
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        local alter_cmd=""
+        if [ "$isCDB" == "YES" ]; then
+            alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
         fi
 
-        mount_details=$(find_mountpoint "$TARGET")
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            sqlplus -S / as sysdba
+            SET HEADING OFF
+            SET LINESIZE 500
+            SET FEEDBACK OFF
+            SET TERMOUT OFF
+            $alter_cmd
+            SELECT DISTINCT SUBSTR(file_name, 2, INSTR(file_name, '/') - 2) AS diskgroup
+            FROM dba_data_files
+            WHERE file_name LIKE '+%';
+EOF
+}
+
+    get_loop_device_associated_with_disk() {
+        local diskName="$1"
+        sudo -i -u oracle bash -c "oracleasm querydisk -p $diskName | awk -F':' '/^\\/dev\\// {print \\$1}' | cut -d':' -f1"
+    }
+
+    get_back_file_path() {
+        # back-file path refers to the underlying file or block device that the loop device is associated with. 
+        local loopDevice="$1"
+        sudo -u oracle bash -c "losetup -l --noheadings $loopDevice | awk '{print \\$6}'"
+    }
+
+    get_asm_nfs_details() {
+        local diskName="$1"
+        loopDevice=$(get_loop_device_associated_with_disk "$diskName")
+        if [ -n "$loopDevice" ]; then
+            backFilePath=$(get_back_file_path "$loopDevice")
+            if [ -n "$backFilePath" ]; then
+                mount_details=$(find_mountpoint "$backFilePath")
+                mountIP=$(echo "$mount_details" | cut -d',' -f1)
+                mountPoint=$(echo "$mount_details" | cut -d',' -f2)
+                protocol=$(echo "$mount_details" | cut -d',' -f3)
+                echo "$mountIP,$mountPoint,$protocol"
+            else
+                echo "No loop device path found for disk $diskName"
+                exit 1
+            fi
+        fi
+    }
+
+    get_asm_iscsi_details() {
+        local diskName="$1"
+        
+        mountDevice=$(udevadm info --query=all --name="/dev/oracleasm/disks/$diskName" | grep -m 1 "disk/by-path" | awk '{print $2}')
+        mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
+        mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
+
+        if echo "$mountPoint" | grep -q "iscsi"; then
+            protocol="iSCSI"
+        else
+            protocol="others"
+        fi
+        echo "$mountIp,$mountPoint,$protocol"
+    }
+
+    get_diskgroup_mappings() {
+
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        diskGroups=$(get_unique_asm_disk_groups "$ORACLE_SID" "$isCDB" "$pdbName")
+        
+        diskgroupMappings="["
+        if [ -n "$diskGroups" ]; then
+            while IFS= read -r diskGroup; do
+                
+                # Skip empty lines
+                if [ -z "$diskGroup" ]; then
+                    continue
+                fi
+                
+                # Get first disk from the disk group, all disks in a diskgroup must follow same protocol & storage type. 
+                diskName=$(get_disk_details "$ORACLE_SID" "$diskGroup")
+                if [ -n "$diskName" ]; then
+                    
+                    result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details "$diskName")
+                    if [ $? -ne 0 ]; then
+                        echo "Failed to get NFS or iSCSI details for disk $diskName"
+                        continue
+                    fi
+                    mountIP=$(echo "$result" | cut -d',' -f1)
+                    mountPoint=$(echo "$result" | cut -d',' -f2)
+                    protocol=$(echo "$result" | cut -d',' -f3)
+
+                    json_obj="{\\"isAsmManaged\\":\\"true\\", \\"mountIP\\":\\"$mountIP\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                    
+                    if [ "$diskgroupMappings" == "[" ]; then
+                        diskgroupMappings+="$json_obj"
+                    else
+                        diskgroupMappings+=", $json_obj"
+                    fi
+                fi
+            done <<< "$diskGroups"
+            diskgroupMappings+="]"
+        fi
+        echo "$diskgroupMappings"
+    }
+
+    check_asm_managed() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            sqlplus -s / as sysdba
+            SET HEADING OFF;
+            SET FEEDBACK OFF;
+            SET VERIFY OFF;
+            SET PAGESIZE 0;
+            SELECT CASE 
+                    WHEN COUNT(*) > 0 THEN 'TRUE'
+                    ELSE 'FALSE'
+                END
+            FROM dba_data_files
+            WHERE file_name LIKE '+%';
+            EXIT;
+EOF
+}
+
+    get_non_asm_nfs_or_iscsi_storage_details() {
+        
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        
+        dataDirectories=$(get_data_file_paths "$ORACLE_SID" "$isCDB" "$pdbName")
+
+        dataDirectoryMappings="["
+        
+        while IFS= read -r dataDirectory; do
+            {
+                # Skip empty lines
+                if [ -z "$dataDirectory" ]; then
+                    continue
+                fi
+
+                mount_info=$(findmnt -T "$dataDirectory" -n -o SOURCE,FSTYPE)
+                read source fstype <<< "$mount_info"
+
+                if [ -n "$source" ]; then
+                    if [[ "$fstype" != nfs* ]]; then
+                        mountDevice=$(udevadm info --query=all --name='$source' | grep -m 1 "disk/by-path" | awk '{print $2}')
+                        mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
+                        mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
+                        if echo "$mountPoint" | grep -q "iscsi"; then
+                            protocol="iSCSI"
+                        else
+                            protocol="others"
+                        fi
+
+                        jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                    elif [[ "$fstype" == nfs* ]]; then
+                        dns_name=$(echo "$source" | cut -d':' -f1)
+                        mountPoint=$(echo "$source" | cut -d':' -f2-)
+                        protocol="NFS"
+                        # Check if dns_name already appears to be an IP address (simple check for digits and dots)
+                        if [[ $dns_name =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+                            mountIp="$dns_name"
+                        else
+                            mountIp=$(dig +short "$dns_name")
+                        fi
+                        jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
+                    else
+                        continue
+                    fi
+
+                    if [ "$dataDirectoryMappings" == "[" ]; then
+                        dataDirectoryMappings+="$jsonObj"
+                    else
+                        dataDirectoryMappings+=", $jsonObj"
+                    fi
+
+                fi
+            } || {
+                continue
+            }
+        done <<< "$dataDirectories"
+        dataDirectoryMappings+="]"
+        echo "$dataDirectoryMappings"
+    }`;
+
+const getInstanceStorageDetails = `
+    isASMManaged=$(check_asm_managed $sid)
+    storageDetails="["
+    if [ "$isASMManaged" == "TRUE" ]; then
+        # If multiple PDBs are present, loop through each PDB. As underlying storage & protocol can differ for each PDB.
+        if [ "$is_cdb" == "YES" ]; then
+            for pdb_name in $pdb_names; do
+                pdbStorageDetails=$(get_diskgroup_mappings "$sid" "$is_cdb" "$pdb_name")
+                if [ "$storageDetails" == "[" ]; then
+                    storageDetails+="$pdbStorageDetails"
+                else
+                    storageDetails+=", $pdbStorageDetails"
+                fi
+            done
+        else
+            singleInstanceDbStorageDetails=$(get_diskgroup_mappings "$sid" "$is_cdb" "null")
+            storageDetails+="$singleInstanceDbStorageDetails"
+        fi
+    else
+        if [ "$is_cdb" == "YES" ]; then
+            for pdb_name in $pdb_names; do
+                pdbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "$is_cdb" "$pdb_name")
+                if [ "$storageDetails" == "[" ]; then
+                    storageDetails+="$pdbStorageDetails"
+                else
+                    storageDetails+=", $pdbStorageDetails"
+                fi
+            done
+        else
+            singleInstanceDbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "$is_cdb" "null")
+            storageDetails+="$singleInstanceDbStorageDetails"
+        fi
     fi
+    storageDetails+="]"
 `;
 
 const discoverOracleHosts = `
@@ -62,8 +326,8 @@ const discoverOracleHosts = `
     RESULTS="["  # start of the JSON array
     FIRST=1      # flag to determine the first object
 
-    # Parse /etc/oratab, ignoring comment lines (#) and blank lines
-    SIDS=$(grep -v '^#' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
+    # Parse /etc/oratab, ignoring comment lines (#), lines starting with (+) and blank lines
+    SIDS=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
 
     if [ -z "$SIDS" ]; then
         echo "No SIDs found in /etc/oratab."
@@ -71,7 +335,9 @@ const discoverOracleHosts = `
     fi
 
     get_instance_details() {
+        local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
             sqlplus -S / as sysdba
                 SET HEADING OFF
                 SET LINESIZE 500
@@ -87,7 +353,9 @@ EOF
     }
 
     get_database_details() {
+        local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
             sqlplus -S / as sysdba
                 SET HEADING OFF
                 SET LINESIZE 500
@@ -103,7 +371,9 @@ EOF
     }
 
     get_pdb_databases_details() {
+        local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
             sqlplus -S / as sysdba
             SET HEADING OFF
             SET LINESIZE 500
@@ -118,9 +388,9 @@ EOF
 EOF
     }
 
-    for sid in $SIDS; do
-        export ORACLE_SID="$sid"
+    ${loadStorageDetectionModules}
 
+    for sid in $SIDS; do
         # Check if the instance is running by checking for its PMON process.
         if ! pgrep -f "ora_pmon_$ORACLE_SID" > /dev/null 2>&1; then
             echo "Instance $ORACLE_SID is not active. Skipping."
@@ -128,26 +398,25 @@ EOF
         fi
 
         {
-            INSTANCE_DETAILS=$(get_instance_details)
-            DATABASE_DETAILS=$(get_database_details)
+            INSTANCE_DETAILS=$(get_instance_details "$sid")
+            DATABASE_DETAILS=$(get_database_details "$sid")
             
             is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
 
             if [ "$is_cdb" == "YES" ]; then
-                PDB_DATABASE_DETAILS=$(get_pdb_databases_details)
+                PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
+                pdb_names=$(echo "$PDB_DATABASE_DETAILS" | jq -r '.[] | .pdb_name')
             else
                 PDB_DATABASE_DETAILS="null"
             fi
 
-            mount_details=${getStorageDetails}
-            nfs_ip_address=$(echo "$mount_details" | cut -d',' -f1)
-            nfs_mount_point=$(echo "$mount_details" | cut -d',' -f2)
+            ${getInstanceStorageDetails}
         } || {
             echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
             continue
         }
 
-        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"nfs_ip_address\\": \\"$nfs_ip_address\\", \\"nfs_mount_point\\": \\"$nfs_mount_point\\"}"
+        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails}"
 
         # If not the first object, prepend a comma in the JSON array.
         if [ $FIRST -eq 1 ]; then

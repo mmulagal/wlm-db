@@ -371,6 +371,11 @@ const oracleDatabaseInstance = Type.Object({
             })
         )
     ),
+    isInstanceStorageAsmManaged: Type.Optional(
+        Type.Boolean({
+            description: 'true if instance storage is managed through ASM'
+        })
+    ),
     storage: Type.Optional(
         Type.Array(
             Type.Object({
@@ -381,7 +386,6 @@ const oracleDatabaseInstance = Type.Object({
                         description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP'
                     })
                 ),
-                protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or NFS' })),
                 fileSystemStorageType: Type.Optional(
                     Type.String({ description: 'File system storage type, SSD or HDD' })
                 ),
@@ -389,7 +393,16 @@ const oracleDatabaseInstance = Type.Object({
                 zones: Type.Optional(
                     Type.Array(Type.Optional(Type.String({ description: 'Availability zones of storage' })))
                 ),
-                nfsMountPoint: Type.Optional(Type.String({ description: 'Mount point of storage' }))
+                mountDetails: Type.Optional(
+                    Type.Array(
+                        Type.Object({
+                            mountPoint: Type.String({ description: 'mount point info' }),
+                            protocol: Type.String({
+                                description: 'Data sharing protocol, NFS or iSCSI'
+                            })
+                        })
+                    )
+                )
             })
         )
     )
