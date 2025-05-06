@@ -1,0 +1,15 @@
+.manage-instance-wizard {
+    [class^='WizardLayout-module_left'] {
+        padding-left: 40px;
+    }
+    [class^='WizardLayout-module_right'] {
+        padding-right: 40px;
+    }
+    [class^='WizardSteps-module_base-wrapper'] [class^='WizardSteps-module_base'] {
+        max-width: 850px !important;
+
+        [class^='WizardSteps-module_steps'] {
+            column-gap: 20px !important;
+        }
+    }
+}
