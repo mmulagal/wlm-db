@@ -1,12 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
-import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
+import { AUTHENTICATION_TYPE, DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
 import {
     initialDatabaseTableColState,
     initialHostsTableColState,
     initialInstanceTableColState
 } from '../../utils/manageColumnUtils';
-import { set } from 'lodash';
 
 const initialInventoryV2State: InventorySliceData = {
     breadCrumbSelectedFrom: '',
@@ -86,13 +85,17 @@ const initialInventoryV2State: InventorySliceData = {
         loading: false,
         error: ''
     },
-    createResourceApiLoading: false
+    createResourceApiLoading: false,
+    authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setAuthenticationType: (state, action: PayloadAction<any>) => {
+            state.authenticationType = action.payload;
+        },
         setTableManageColumnState: (state, action: PayloadAction<any>) => {
             state.tableManageColumnState = action.payload;
         },
@@ -325,6 +328,7 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setAuthenticationType,
     setSelectedFilterValue,
     setSelectedInventoryTab,
     setOptimizeInnerPageValues,
