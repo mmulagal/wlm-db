@@ -98,5 +98,5 @@
         "sender-email": "calculator@console.workloads.netapp.com",
         "max-emails-per-day": 20
     },
-    "clone-age": 0
+    "clone-age-in-days": 0
 }

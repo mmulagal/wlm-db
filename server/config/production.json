@@ -27,5 +27,5 @@
     "reporting": {
         "bucket-name": "prod.reports.data-services.tlveng.netapp.com"
     },
-    "clone-age": 60
+    "clone-age-in-days": 60
 }

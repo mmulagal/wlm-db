@@ -7,5 +7,5 @@
             }
         }
     },
-    "clone-age": 60
+    "clone-age-in-days": 60
 }
