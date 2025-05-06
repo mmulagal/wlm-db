@@ -17,21 +17,15 @@
         "region": "us-east-1"
     },
     "ec2": {
-        "vcpu-filter": [
-            "4",
-            "8",
-            "16",
-            "32",
-            "64",
-            "72"
-        ]
+        "vcpu-filter": ["4", "8", "16", "32", "64", "72"]
     },
     "db": {
         "tco": {
             "update-recommendation-preference": "7d"
         }
     },
-    "reporting":{
+    "reporting": {
         "bucket-name": "prod.reports.data-services.tlveng.netapp.com"
-    }
+    },
+    "clone-age": 60
 }

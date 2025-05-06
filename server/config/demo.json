@@ -6,5 +6,6 @@
                 "older-than": "15d"
             }
         }
-    }
+    },
+    "clone-age": 60
 }
