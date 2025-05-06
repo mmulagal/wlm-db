@@ -60,9 +60,10 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         savingsCalculatorFrom,
         selectedManualRegion,
         selectedExploreSavingsTab,
-        selectedOnPremRegion
+        selectedOnPremRegion,
+        selectedExRegionId
     } = useAppSelector(state => state.exploreSavings);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [fsxData, setFsxData] = useState({});
@@ -94,7 +95,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
         ) {
-            selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === selectedExRegionId);
+            selectedRegion = matchingRegionEntry?.regionName + ' | ' + matchingRegionEntry?.regionCode;
         } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
             selectedRegion = selectedOnPremRegion?.data?.regionName + ' | ' + selectedOnPremRegion?.data?.regionCode;
         } else {

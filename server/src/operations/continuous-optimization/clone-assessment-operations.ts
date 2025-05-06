@@ -358,8 +358,7 @@ async function runCloneAssessment(
 
                 // Calculate the number of days since the data volume was created only if the volume type is 'data'
                 const cloneAge = calculateDaysSince(cloneVolumeCreateTime);
-                // Change it to > CLONE_AGE after staging testing
-                if (cloneAge >= CLONE_AGE) {
+                if (cloneAge > CLONE_AGE) {
                     oldClones += 1;
                 }
 
@@ -372,8 +371,7 @@ async function runCloneAssessment(
                 ...databaseObject,
                 clonedBy: 'netapp_wf'
             };
-            // Change it to > CLONE_AGE after staging testing
-            if (databaseObject.cloneAge !== undefined && databaseObject.cloneAge >= CLONE_AGE) {
+            if (databaseObject.cloneAge !== undefined && databaseObject.cloneAge > CLONE_AGE) {
                 oldCloneDetails.push(modifiedDatabaseObject);
                 oldCloneDatabaseNames.push(sandboxName);
             }
@@ -422,8 +420,7 @@ async function runCloneAssessment(
                     }
 
                     // If the clone is old, ensure it's added to oldCloneDetails and oldCloneDatabaseNames
-                    // Change it to > CLONE_AGE after staging testing
-                    if (cloneAge >= CLONE_AGE && !oldCloneDatabaseNames.includes(clonedDatabaseName)) {
+                    if (cloneAge > CLONE_AGE && !oldCloneDatabaseNames.includes(clonedDatabaseName)) {
                         oldClones += 1;
                         oldCloneDetails.push(existingRecord);
                         oldCloneDatabaseNames.push(clonedDatabaseName);
@@ -441,8 +438,7 @@ async function runCloneAssessment(
                     };
 
                     // Add to oldCloneDetails and oldCloneDatabaseNames if it's an old clone
-                    // Change it to > CLONE_AGE after staging testing
-                    if (cloneAge !== undefined && cloneAge >= CLONE_AGE) {
+                    if (cloneAge !== undefined && cloneAge > CLONE_AGE) {
                         oldClones += 1;
                         oldCloneDetails.push(databaseObject);
                         oldCloneDatabaseNames.push(clonedDatabaseName);

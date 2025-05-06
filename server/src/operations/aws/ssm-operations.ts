@@ -209,7 +209,11 @@ async function executeSSMDocument(
     try {
         const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
         logger.debug('SSM command commandId, Response:', commandId, response);
-        return response;
+        return {
+            commandId,
+            response,
+            instanceId: instanceIds
+        };
     } catch (error) {
         const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
         logger.error(errorMessage);
@@ -282,7 +286,7 @@ async function callSsmExecution(
                 logger.error('Error setting log group retention policy', error);
             });
         }
-        const { error, output = '' } = await extractSsmResponse(credentialsId, region, { response });
+        const { error, output = '' } = await extractSsmResponse(credentialsId, region, response);
         if (error) {
             throw createError(error);
         }

@@ -33,7 +33,7 @@ const ExploreSavingHeader = () => {
                     {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                         <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
                             <div className={styles.topPart}>
-                                <div className={styles.svgContainer}>
+                                <div className={`${styles.svgContainer} ${styles.svgContainerOnPrem}`}>
                                     <ExploreSavingOnPrem />
                                 </div>
                                 <div className={styles.contentSection}>
@@ -86,7 +86,9 @@ const ExploreSavingHeader = () => {
                                                     </DsTypography>
                                                 </div>
                                                 <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host.
+                                                    Run the script on the SQL Server host with a user who has admin
+                                                    rights on both the system and SQL Server. Refer to the script's
+                                                    documentation (DocString) for more details.
                                                 </DsTypography>
                                             </div>
 
@@ -251,7 +253,9 @@ const ExploreSavingHeader = () => {
                                                     </DsTypography>
                                                 </div>
                                                 <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host.
+                                                    Run the script on the SQL Server host with a user who has admin
+                                                    rights on both the system and SQL Server. Refer to the script's
+                                                    documentation (DocString) for more details.
                                                 </DsTypography>
                                             </div>
 
@@ -423,7 +427,9 @@ const ExploreSavingHeader = () => {
                                                     </DsTypography>
                                                 </div>
                                                 <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host.
+                                                    Run the script on the SQL Server host with a user who has admin
+                                                    rights on both the system and SQL Server. Refer to the script's
+                                                    documentation (DocString) for more details.
                                                 </DsTypography>
                                             </div>
 

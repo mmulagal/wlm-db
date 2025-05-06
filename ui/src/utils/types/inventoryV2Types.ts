@@ -1,4 +1,5 @@
 export interface InventorySliceData {
+    authenticationType: string;
     tableManageColumnState: any;
     selectedFilterValue: {} | any;
     selectedInventoryTab: string;

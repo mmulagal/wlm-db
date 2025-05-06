@@ -381,6 +381,11 @@ export const DRIVE_LETTER_TYPE = {
     EXISTING: 'Existing drive letter'
 };
 
+export const AUTHENTICATION_TYPE = {
+    SQL_SERVER_AUTHENTICATION: 'SQL Server authentication',
+    WINDOWS_AUTHENTICATION: 'Windows authentication'
+};
+
 export const DEPLOY_ENDPOINT = '/cloudformation/deploy';
 export const CREATE_DB_ENDPOINT = (databaseHostId: any) => `/database-hosts/${databaseHostId}/database`;
 export const CREATE_SANDBOX_ENDPOINT = '/sandboxes';
