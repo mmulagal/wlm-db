@@ -78,6 +78,11 @@ import BulkActionContainer from '../../../../common/BulkAction/BulkActionContain
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 
+const ACTION_CTA = {
+    FIX_ISSUES: 'Fix issues',
+    MANAGE_INSTANCES: 'Manage instances'
+};
+
 const InstancesTable = () => {
     const disptach = useDispatch();
 
@@ -501,6 +506,45 @@ const InstancesTable = () => {
         });
     }, [instanceTableRows, selectedRowsForManage]);
 
+    const manageActionCol = (rowData?: any) => {
+        let colText = '';
+        let disableMsg = '';
+        if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+            colText = ACTION_CTA.FIX_ISSUES;
+        } else {
+            colText = ACTION_CTA.MANAGE_INSTANCES;
+        }
+
+        if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
+            disableMsg = GENERAL.HOST_DOWN;
+        } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+            disableMsg = GENERAL.SSM_DOWN;
+        } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+            disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+            disableMsg = GENERAL.PGSQL_CTA_NA;
+        } else if (
+            rowData?.detectOption === DETECT_HOST_VAR.DISABLE ||
+            rowData?.detectOption === DETECT_HOST_VAR.HIDE
+        ) {
+            disableMsg = rowData?.detectOptionDisableMsg;
+        } else if (
+            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+            rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
+        ) {
+            disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
+        } else if (
+            rowData?.serverInstallationMode === GENERAL.AOAG &&
+            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+        ) {
+            disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
+        }
+        return {
+            colText: colText,
+            disableMsg: disableMsg
+        };
+    };
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'Instance name',
@@ -850,18 +894,45 @@ const InstancesTable = () => {
             width: '200px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
+                const { colText, disableMsg } = manageActionCol(rowData);
                 return (
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin
-                            onClick={() => {
-                                navigate('../manage-wizard');
-                            }}
-                        >
-                            Manage instances
-                        </DsButton>
-                    </div>
+                    <>
+                        {disableMsg ? (
+                            <Popover
+                                isAppendedToBody={true}
+                                children={disableMsg}
+                                trigger="hover"
+                                delayHide={200}
+                                interactive={true}
+                                container={
+                                    <div className={styles.buttonContainer}>
+                                        <DsButton variant="secondary" isThin isDisabled={true}>
+                                            {colText}
+                                        </DsButton>
+                                    </div>
+                                }
+                            />
+                        ) : (
+                            <div className={styles.buttonContainer}>
+                                <DsButton
+                                    variant="secondary"
+                                    isThin
+                                    onClick={() => {
+                                        if (colText === ACTION_CTA.FIX_ISSUES) {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            optimizeAction(rowData);
+                                        } else {
+                                            navigate('../manage-wizard');
+                                        }
+                                    }}
+                                >
+                                    {colText}
+                                </DsButton>
+                            </div>
+                        )}
+                    </>
                 );
             }
         }
@@ -955,6 +1026,12 @@ const InstancesTable = () => {
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
+                    if (
+                        rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                        rowData.statusColText === INVENTORY_STATUS.UNDETECTED
+                    ) {
+                        return true;
+                    }
                     if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
                         disableMsg = GENERAL.PGSQL_CTA_NA;
                         width = '110px';
