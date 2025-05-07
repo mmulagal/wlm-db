@@ -2,7 +2,7 @@ import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { CommandFilterKey } from '@aws-sdk/client-ssm';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 
 import getLogger from '../../utils/logger';
 import {
@@ -21,6 +21,7 @@ import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm
 import { listSsmCommands } from '../../lib/aws/ssm';
 import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { callSsmExecution } from '../aws/ssm-operations';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';

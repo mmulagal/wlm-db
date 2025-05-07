@@ -15,7 +15,11 @@ import {
     STORAGE_CONFIGURATION_ASSESMENT_MAP
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
-import { getInstanceInfo } from '../database/database-operations';
+import {
+    getInstanceInfo,
+    updateDatabaseHostConfigurations,
+    updateDatabaseInstanceConfigurations
+} from '../database/database-operations';
 import { BulkDismissConfigurationType } from '../../routes/types/continuous-optimization.types';
 import {
     DatabaseInstanceDismissConfigs,
@@ -24,11 +28,7 @@ import {
     Metadata,
     DatabaseHostConfigurations
 } from '../../utils/common-types';
-import {
-    listResources,
-    updateDatabaseHostConfigurations,
-    updateDatabaseInstanceConfigurations
-} from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 import { HttpErrorCodes } from '../../utils/consts';
 

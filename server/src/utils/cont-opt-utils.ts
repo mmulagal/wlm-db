@@ -1,6 +1,7 @@
 import getLogger from './logger';
-import { listResources, updateResourceMetaData } from '../lib/database/db';
+import { listResources } from '../lib/database/db';
 import { Metadata } from './common-types';
+import { updateResourceMetaData } from '../operations/database/database-operations';
 
 const logger = getLogger();
 

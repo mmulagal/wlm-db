@@ -33,7 +33,7 @@ import {
     AuditStatus
 } from '../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
-import { getInstanceInfo, getResources } from './database/database-operations';
+import { getInstanceInfo, getResources, updateResourceMetaData } from './database/database-operations';
 import { getFsxStorageCapacity } from './aws/fsx-operations';
 import {
     DatabaseCreateResponseType,
@@ -47,7 +47,6 @@ import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateUserDBIntoInstanceTable, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
-import { updateResourceMetaData } from '../lib/database/db';
 import { cleanupResources } from './workloads/mssql/createdb-scripts';
 import { checkScriptNeedsUpdate, copyScriptsToHost } from './resource-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';

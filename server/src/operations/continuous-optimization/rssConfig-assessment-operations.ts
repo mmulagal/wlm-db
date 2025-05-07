@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 import { Metadata, RssConfigAssesment } from '../../utils/common-types';
 import {
     AssessmentStatus,
@@ -18,6 +18,7 @@ import { GET_RSS_CONFIG_DETAILS } from '../workloads/mssql/continuous-optimizati
 
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 

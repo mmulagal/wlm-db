@@ -4,12 +4,7 @@ import { compact, groupBy, isEmpty, uniq, uniqBy } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
-import {
-    listDatabaseInstances,
-    listResources,
-    updateInstanceMetadata,
-    updateResourceMetaData
-} from '../lib/database/db';
+import { listDatabaseInstances, listResources } from '../lib/database/db';
 import {
     ACCOUNTID,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
@@ -51,7 +46,7 @@ import {
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getDatabaseInstanceName, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
-import { getResources } from './database/database-operations';
+import { getResources, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 import { updateParentJobStatus, registerJob, updateJobDetails } from './database/job-operations';
 import {
     updateSandboxDBIntoInstanceData,

@@ -31,13 +31,7 @@ import {
 } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
-import {
-    listAllManagedInstances,
-    listDatabaseInstances,
-    listResources,
-    updateInstanceMetadata,
-    updateResourceMetaData
-} from '../lib/database/db';
+import { listDatabaseInstances, listResources } from '../lib/database/db';
 import { AssessmentCategories, AssessmentStatus, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import {
     CloneDriftResponseType,
@@ -49,7 +43,12 @@ import {
     ParameterDriftResponseType,
     RssConfigDriftResponseType
 } from '../routes/types/continuous-optimization.types';
-import { getInstanceInfo } from './database/database-operations';
+import {
+    getInstanceInfo,
+    listAllManagedInstances,
+    updateInstanceMetadata,
+    updateResourceMetaData
+} from './database/database-operations';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';

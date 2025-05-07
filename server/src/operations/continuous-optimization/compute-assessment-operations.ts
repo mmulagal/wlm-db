@@ -2,7 +2,7 @@ import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { getEC2InstanceRecommendations } from '../../lib/aws/compute-optimizer';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 import { checkComputeOptimizerEnrollmentStatus } from '../recommendation-operations';
 
 import getLogger from '../../utils/logger';
@@ -20,6 +20,7 @@ import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
 import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 

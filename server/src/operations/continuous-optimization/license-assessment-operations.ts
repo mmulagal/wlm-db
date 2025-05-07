@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { getHostAndSqlServerInfo } from '../discover-operations';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 import {
     fetchSqlServerInstanceConfiguration,
     getLicenseRecommendations,
@@ -21,6 +21,7 @@ import {
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
 import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 

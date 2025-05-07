@@ -32,12 +32,12 @@ import {
     instanceTypeChangePreReqs,
     waitForInstanceToBeStopped
 } from '../aws/ec2-operations';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from '../workloads/mssql/discover-consts';
 import { calculateComputeDrift } from './compute-assessment-operations';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
-import { getInstanceInfo } from '../database/database-operations';
+import { getInstanceInfo, updateResourceMetaData } from '../database/database-operations';
 import { AssessmentStatus } from '../../utils/continous-optimization-consts';
 
 interface ModifiedInstancesNodeDetails {

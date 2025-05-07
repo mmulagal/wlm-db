@@ -13,13 +13,14 @@ import {
 } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/common-types';
 import { extractKbNumber, extractVersionDetails, sqlResponseParsing } from '../../utils/utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { GET_INSTALLED_MSSQL_VERSION } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 

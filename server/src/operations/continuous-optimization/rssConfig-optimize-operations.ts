@@ -1,6 +1,6 @@
 import { isEmpty, isUndefined } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 import getLogger from '../../utils/logger';
 import { Metadata, RssConfigAssesment } from '../../utils/common-types';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
@@ -14,7 +14,7 @@ import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { OPTIMIZE_NETWORK_ADAPTERS } from '../workloads/mssql/continuous-optimization-scripts';
 import { updateJobDetails } from '../database/job-operations';
-import { getInstanceInfo } from '../database/database-operations';
+import { getInstanceInfo, updateResourceMetaData } from '../database/database-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
     checkRunningStatus,
