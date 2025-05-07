@@ -543,7 +543,8 @@ async function modifySizingAttributes(
                         credentialsId,
                         region,
                         filesystemId,
-                        parentJobId
+                        parentJobId,
+                        serverNameWithHostName
                     );
                     childJobsStatus.push(result);
                     break;
@@ -658,14 +659,15 @@ async function headroomOptimization(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    parentJobId: string
+    parentJobId: string,
+    serverNameWithHostName: string
 ) {
     logger.info('Optimizing FSx for NetApp ONTAP headroom ', { accountId, credentialsId, region, fileSystemId });
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
         region,
-        fileSystemId,
+        serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         'Optimize FSx for NetApp ONTAP headroom',
         'Optimize FSx for NetApp ONTAP headroom',
@@ -807,7 +809,7 @@ async function logDriveOptimization(
         accountId,
         credentialsId,
         region,
-        fileSystemId,
+        serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         'Optimize log drive sizing',
         'Optimize log drive sizing',
@@ -1029,7 +1031,7 @@ async function tempDbDriveOptimization(
         accountId,
         credentialsId,
         region,
-        fileSystemId,
+        serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         'Optimize tempdb drive sizing',
         'Optimize tempdb drive sizing',

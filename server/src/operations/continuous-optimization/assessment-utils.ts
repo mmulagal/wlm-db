@@ -86,7 +86,7 @@ async function handleOptimizeJobCreation(
 
     const filterParams = {
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName as string,
+        resourceName: serverNameWithHostName,
         typeFilter: jobType,
         region,
         credentialsId,
@@ -110,7 +110,7 @@ async function handleOptimizeJobCreation(
     const { id } = await registerJob(accountId, credentialsId, region, {
         type: jobType,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName as string,
+        resourceName: serverNameWithHostName,
         name: jobName,
         startTime: Date.now(),
         description: jobDescription,
