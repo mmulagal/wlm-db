@@ -26,14 +26,26 @@ const discoverPgsqlHosts = `
         if [[ -z $data_dir ]]; then
             echo "Error: Data directory not found"
         else
+            is_nfs="false"
             nfs_string=$(sudo findmnt -n -o SOURCE $data_dir)
             if [[ -z $nfs_string ]]; then
-                echo "Mounted volume not found"
+                DEVICE=$(sudo df --output=source "$data_dir" | tail -n 1)
+                if [[ $DEVICE == *"nvme"* ]]; then
+                    if ! command -v nvme &> /dev/null; then
+                        # echo "nvme-cli is not installed. Installing..."
+                        sudo yum install -y nvme-cli
+                    fi
+                    VOLUME_ID=$(sudo /usr/sbin/ebsnvme-id $DEVICE | grep "Volume ID" | awk '{print $3}')
+                    echo $is_nfs,$VOLUME_ID
+                else
+                    echo $is_nfs,$DEVICE
+                fi
             else
                 dns_name=$(echo "$nfs_string" | cut -d':' -f1)
                 nfs_mount_point=$(echo "$nfs_string" | cut -d':' -f2-)
                 nfs_ip_address=$(dig +short $dns_name)
-                echo "$nfs_ip_address,$nfs_mount_point"
+                is_nfs="true"
+                echo "$is_nfs,$nfs_ip_address,$nfs_mount_point"
             fi
         fi
     }
@@ -107,8 +119,13 @@ const discoverPgsqlHosts = `
     get_postgres_info() {
         local version=$(get_version)
         local mount_details=$(get_mount_details)
-        local nfs_ip_address=$(echo "$mount_details" | cut -d',' -f1)
-        local nfs_mount_point=$(echo "$mount_details" | cut -d',' -f2)
+        local is_nfs=$(echo "$mount_details" | cut -d',' -f1)
+        if [[ $is_nfs == "true" ]]; then
+            local nfs_ip_address=$(echo "$mount_details" | cut -d',' -f2)
+            local nfs_mount_point=$(echo "$mount_details" | cut -d',' -f3)
+        else
+            local ebs_volume=$(echo "$mount_details" | cut -d',' -f2)
+        fi
         local status=$(get_server_running_status)
         local hostname=$(hostname)
         local postgres_server=$(get_postgres_server)
@@ -139,7 +156,7 @@ const discoverPgsqlHosts = `
             \\"replica_type\\": \\"\${replica_type:-null}\\",
             \\"replica_info\\": \${replica_info},
             \\"primary_host\\": \\"\${primary_host:-null}\\",
-            \\"ebs_volume_id\\": \\"null\\",
+            \\"ebs_volume\\": \\"\${ebs_volume:-null}\\",
             \\"server_instance_id\\": \\"\${server_instance_id:-null}\\",
             \\"default_auth\\": \\"\${default_auth:-null}\\"
         }"

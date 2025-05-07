@@ -5,7 +5,13 @@ import randomize from 'randomatic';
 import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { FileSystemType } from '@aws-sdk/client-fsx';
 import { attempt, compact, uniqBy, isEmpty, cloneDeep } from 'lodash-es';
-import { DescribeInstancesCommandInput, Filter, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
+import {
+    DescribeInstancesCommandInput,
+    Filter,
+    InstanceBlockDeviceMapping,
+    InstanceStateName,
+    Vpc
+} from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus, SendCommandCommandInput } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import {
@@ -154,6 +160,7 @@ interface FSxInfo {
 type DiscoveredEc2InstanceType = (DiscoverPgSqlResponseType | DiscoverOracleResponseType) & {
     error?: string;
     ebsVolumeIDs: (string | undefined)[] | undefined;
+    ebsVolumes?: (InstanceBlockDeviceMapping | undefined)[] | undefined;
 };
 
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
@@ -2020,6 +2027,7 @@ async function discoverEc2Instances(
             ec2UsageOperation: ec2Instance?.UsageOperation || '',
             ssmState: ssmConnectionMap.get(ec2Instance?.InstanceId) || ConnectionStatus.NOT_CONNECTED,
             ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId),
+            ebsVolumes: ec2Instance?.BlockDeviceMappings,
             vpc: {
                 ...(ec2Instance?.VpcId && { id: ec2Instance?.VpcId }),
                 ...(vpcNames.has(ec2Instance?.VpcId) && { name: vpcNames.get(ec2Instance?.VpcId) }),
@@ -2122,7 +2130,7 @@ async function discoverPgSqlResources(
                     const {
                         version,
                         nfs_ip_address: nfsIpAddress,
-                        ebs_volume_id: localVolumeName,
+                        ebs_volume: ebsVolume,
                         status,
                         hostname,
                         nfs_mount_point: nfsMountPoint,
@@ -2153,13 +2161,13 @@ async function discoverPgSqlResources(
                     };
 
                     ec2Instance.storage = getDiscoveredPgSqlStorageDetails(
-                        ec2Instance.ebsVolumeIDs!,
+                        ec2Instance.ebsVolumes!,
                         endPointIpWithFsxInfo,
                         fsIdWithFsxInfo,
                         subnetListMap,
                         ebsVolumeToAvailabilityZoneMap,
                         nfsIpAddress,
-                        localVolumeName,
+                        ebsVolume,
                         nfsMountPoint
                     );
                     instancesWithSsmResponse.push(ec2Instance);
@@ -2182,27 +2190,27 @@ async function discoverPgSqlResources(
 }
 
 function getDiscoveredPgSqlStorageDetails(
-    ebsVolumeIDs: (string | undefined)[],
+    ebsVolumes: (InstanceBlockDeviceMapping | undefined)[],
     endPointIpWithFsxInfo: Map<string, FSxInfo>,
     fsIdWithFsxInfo: Map<string, FsxServerConfig>,
     subnetListMap: Map<string, string>,
     ebsVolumeToAvailabilityZoneMap: Map<string, string>,
-    nfsIpAddress?: string,
-    localVolumeName?: string,
+    nfsIpAddress: string,
+    ebsVolume: string,
     nfsMountPoint?: string
 ) {
     logger.debug('getDiscoveredPgSqlStorageDetails', {
-        ebsVolumeIDs,
+        ebsVolumes,
         endPointIpWithFsxInfo,
         fsIdWithFsxInfo,
         subnetListMap,
         ebsVolumeToAvailabilityZoneMap,
         nfsIpAddress,
-        localVolumeName,
+        ebsVolume,
         nfsMountPoint
     });
 
-    const ebsVolumeId = ebsVolumeIDs?.find((elem: string | undefined) => elem === localVolumeName);
+    const ebsVolumeId = getEbsVolumeId(ebsVolumes, ebsVolume);
     const storageTypes = [];
     if (ebsVolumeId) {
         const ebsAvailabilityZone = ebsVolumeToAvailabilityZoneMap.get(ebsVolumeId);
@@ -2236,6 +2244,21 @@ function getDiscoveredPgSqlStorageDetails(
             return rest;
         })
     );
+}
+
+function getEbsVolumeId(ebsVolumeIDs: (InstanceBlockDeviceMapping | undefined)[], ebsVolume: string) {
+    logger.debug('getEbsVolumeId', { ebsVolumeIDs, ebsVolume });
+    if (isValidProp(ebsVolume)) {
+        if (/vol-\w+/.test(ebsVolume)) {
+            return ebsVolumeIDs?.find(elem => elem?.Ebs?.VolumeId === ebsVolume)?.Ebs?.VolumeId;
+        }
+        const ebsVolumeId = ebsVolumeIDs?.find(
+            elem => ebsVolume?.includes(elem?.DeviceName || '') && elem?.Ebs?.VolumeId === ebsVolume
+        )?.Ebs?.VolumeId;
+        if (ebsVolumeId) {
+            return ebsVolumeId;
+        }
+    }
 }
 
 async function getPrimaryHostDetails(credentialsId: string, region: string, primaryHostIp: string) {
