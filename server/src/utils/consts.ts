@@ -653,7 +653,9 @@ const WLM_ASSETS: Record<string, string> = {
 
 // Template error messages
 const MISSING_PERMISSIONS = (implicitlyDenied: MissingPermission[], explicitlyDenied: MissingPermission[]) =>
-    `Required permissions are not available to deploy cloud formation template. Implicitly denied: ${implicitlyDenied}. Explicitly denied: ${explicitlyDenied}`;
+    `Required permissions are not available to deploy cloud formation template. Implicitly denied: ${JSON.stringify(
+        implicitlyDenied
+    )}. Explicitly denied: ${JSON.stringify(explicitlyDenied)}`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 const STANDALONE_NETWORK_VIOLATION_MESSAGE =

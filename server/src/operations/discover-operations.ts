@@ -455,7 +455,7 @@ async function getHostAndSqlInfoFromPsOutput(
             }
 
             let responseInJson = JSON.parse(powerShellScriptOutput);
-            logger.info(`SSM response for ${ssmTarget.ec2InstanceId}: ${responseInJson}`);
+            logger.info(`SSM response for ${ssmTarget.ec2InstanceId}: ${JSON.stringify(responseInJson)}`);
 
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
