@@ -1,4 +1,4 @@
-import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
+import { createResource, listResources, upsertDatabaseInstance } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/aws/fsx-scope';
@@ -13,6 +13,7 @@ import {
     calculateHostOsPatchDrift,
     managedHostOsPatchAssessment
 } from '../../../src/operations/continuous-optimization/hostOsPatch-assessment-operations';
+import { Metadata } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 
@@ -50,8 +51,16 @@ beforeAll(async () => {
 });
 describe('Host OS Patch assessment operations', () => {
     it('Should calculate host os patch drift', async () => {
+        const [{ metadata = {} } = {}] =
+            (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
         try {
-            await calculateHostOsPatchDrift(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, RESOURCE_ID);
+            await calculateHostOsPatchDrift(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                metadata as unknown as Metadata
+            );
         } catch (error) {
             expect(error).toContain('No HOST_OS_PATCH assessment data found');
 
@@ -60,7 +69,8 @@ describe('Host OS Patch assessment operations', () => {
                 ACCOUNT_ID,
                 DEFAULT_AWS_CREDENTIALS_ID,
                 DEFAULT_AWS_REGION,
-                RESOURCE_ID
+                RESOURCE_ID,
+                metadata as unknown as Metadata
             );
 
             expect(response.name).toEqual('host-os-patch');

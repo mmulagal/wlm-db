@@ -3,6 +3,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
 import throat from 'throat';
+import moment from 'moment';
 import getLogger from '../utils/logger';
 import { isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
@@ -10,12 +11,14 @@ import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import {
+    CloneAssessment,
     DatabaseInstance,
     DatabaseInstanceConfigurations,
     DatabaseInstanceDismissConfigs,
     DatabaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     MappedOnTapVolumeResponse,
+    MaxDOPAssesment,
     Metadata,
     ResourceDetails,
     StorageAssessment,
@@ -44,12 +47,15 @@ import {
     RssConfigDriftResponseType
 } from '../routes/types/continuous-optimization.types';
 import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData
+} from '../lib/database/database-instance-config';
+import {
     getInstanceInfo,
     listAllManagedInstances,
     updateInstanceMetadata,
     updateResourceMetaData
 } from './database/database-operations';
-import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -90,7 +96,6 @@ import {
     managedHostsCloneAssessment
 } from './continuous-optimization/clone-assessment-operations';
 import {
-    getLastAssessedTime,
     checkAndUpdatePostponedEndTime,
     updateFieldsBasedOnDismissedConfigurations
 } from './continuous-optimization/assessment-utils';
@@ -965,6 +970,7 @@ async function hostLevelDriftData(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
+    metadata: Metadata,
     fields?: string
 ) {
     logger.info('Fetching host level drift data', {
@@ -1005,19 +1011,45 @@ async function hostLevelDriftData(
         mssqlPatchAssessmentResponse
     ] = await Promise.all([
         shouldCalculateComputeAssessment
-            ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateComputeDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  metadata as unknown as Metadata
+              )
             : Promise.resolve({}),
         shouldCalculateLicenseAssessment
-            ? calculateLicenseDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateLicenseDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  metadata as unknown as Metadata
+              )
             : Promise.resolve({}),
         shouldCalculateHostOsPatchAssessment
-            ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId)
+            ? calculateHostOsPatchDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  metadata as unknown as Metadata
+              )
             : Promise.resolve({}),
         shouldCalculateRssConfigAssessment
-            ? calculateRssConfigDrift(accountId, credentialsId, region, databaseHostId)
+            ? calculateRssConfigDrift(accountId, credentialsId, region, databaseHostId, metadata as unknown as Metadata)
             : Promise.resolve({}),
         shouldCalculateMSSQLPatchAssessment
-            ? calculateMSSQLPatchDrift(accountId, credentialsId, region, databaseHostId)
+            ? calculateMSSQLPatchDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  metadata as unknown as Metadata
+              )
             : Promise.resolve({})
     ]);
 
@@ -1050,7 +1082,7 @@ async function fetchDriftAssessment(
     const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
     let {
         configurations: instanceConfigurations,
-        resource: { configurations: hostConfigurations }
+        resource: { configurations: hostConfigurations, metadata: resourceMetadata }
     } = instanceDetail as unknown as DatabaseInstance;
 
     if (isDemoFlow) {
@@ -1085,6 +1117,22 @@ async function fetchDriftAssessment(
 
     let driftAssessmentData: DriftAssessmentResponseType = {};
 
+    const databaseInstanceConfigData = await listDatabaseInstanceConfigData(
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId
+    );
+    const assessmentDataMap = databaseInstanceConfigData.reduce((acc, config) => {
+        acc[config.config_data_type] = config.config_data;
+        return acc;
+    }, {} as Record<string, unknown>);
+
+    const storageAssessmentData = assessmentDataMap[AssessmentCategories.STORAGE];
+    const maxDOPAssessmentData = assessmentDataMap[AssessmentCategories.MAXDOP];
+    const cloneAssessmentData = assessmentDataMap[AssessmentCategories.CLONE];
+
     const [
         storageAssessmentResponse,
         maxDOPResponse,
@@ -1099,23 +1147,60 @@ async function fetchDriftAssessment(
         resilienceAssessmentResponse
     ] = await Promise.all([
         shouldCalculateStorageAssessment
-            ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateStorageDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  storageAssessmentData as unknown as StorageAssessment
+              )
             : Promise.resolve({}),
         shouldCalculateMaxDOPAssessment
-            ? calculateMaxDOPDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateMaxDOPDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  maxDOPAssessmentData as unknown as MaxDOPAssesment
+              )
             : Promise.resolve({}),
         shouldCalculateCloneAssessment
-            ? calculateCloneDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateCloneDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  cloneAssessmentData as unknown as CloneAssessment
+              )
             : Promise.resolve({}),
         shouldCalculateComputeAssessment ||
         shouldCalculateLicenseAssessment ||
         shouldCalculateHostOsPatchAssessment ||
         shouldCalculateRssConfigAssessment ||
         shouldCalculateMSSQLPatchAssessment
-            ? hostLevelDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
+            ? hostLevelDriftData(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  resourceMetadata as unknown as Metadata,
+                  fields
+              )
             : Promise.resolve({}),
         shouldCalculateResilienceAssessment
-            ? getResilienceDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
+            ? getResilienceDriftAssessment(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  fields,
+                  databaseInstanceConfigData
+              )
             : Promise.resolve({})
     ]);
 
@@ -1245,13 +1330,14 @@ async function fetchDriftAssessment(
 
     // Get last assessed timestamp
     try {
-        driftAssessmentData.lastAssessmentTimestamp = await getLastAssessedTime(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId
+        const [{ creation_time: latestInstanceLevelAssessedTime = 0 }] = databaseInstanceConfigData;
+        const { assessment: { lastAssessedDate: latestHostLevelAssessedTime } = {} } =
+            resourceMetadata as unknown as Metadata;
+        const latestAssessmentTimestamp = Math.max(
+            latestInstanceLevelAssessedTime ? latestInstanceLevelAssessedTime.getTime() : 0,
+            latestHostLevelAssessedTime ? Number(latestHostLevelAssessedTime) : 0
         );
+        driftAssessmentData.lastAssessmentTimestamp = moment(Number(latestAssessmentTimestamp)).unix() * 1000;
     } catch (error) {
         logger.error('Error while fetching last assessment timestamp:', error);
     }
@@ -1288,7 +1374,7 @@ async function fetchDriftAssessmentPerHost(
         throw createError(HttpErrorCodes.NOT_FOUND, `${infoMessage}`);
     }
 
-    let { resource_name: databaseHostName } = resourceDetail;
+    let { resource_name: databaseHostName, metadata } = resourceDetail;
     databaseHostName ||= '';
 
     const driftAssessments: Array<{
@@ -1348,6 +1434,7 @@ async function fetchDriftAssessmentPerHost(
             region,
             databaseHostId,
             databaseInstanceId,
+            metadata as unknown as Metadata,
             hostFieldsToQuery.join(',')
         );
         computeAssessmentResponse = hostLevelData.computeAssessmentResponse as ComputeDriftResponseType;

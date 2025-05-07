@@ -9,10 +9,7 @@ import {
     ParameterDriftResponseType
 } from '../../routes/types/continuous-optimization.types';
 import getLogger from '../../utils/logger';
-import {
-    createDatabaseInstanceConfigData,
-    listDatabaseInstanceConfigData
-} from '../../lib/database/database-instance-config';
+import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 import {
     AssessmentCategories,
     AssessmentStatus,
@@ -29,7 +26,9 @@ import {
     StorageAssessment,
     WorkloadInstance,
     MappedOnTapVolumeResponse,
-    AWSBackupAssessment
+    AWSBackupAssessment,
+    CrrAssessment,
+    CrrDetails
 } from '../../utils/common-types';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { getInstanceInfo } from '../database/database-operations';
@@ -164,7 +163,8 @@ async function getResilienceDriftAssessment(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    fields: string = ''
+    fields: string = '',
+    databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = []
 ) {
     logger.info('Getting resilience drift assessment for:', {
         credentialsId,
@@ -179,16 +179,48 @@ async function getResilienceDriftAssessment(
     const shouldTriggerAwsBackupAssessment =
         isEmpty(fieldsArray) || fieldsArray.includes(AssessmentCategories.AWS_BACKUP);
 
+    const configDataMap = databaseInstanceConfigData.reduce((acc, config) => {
+        acc[config.config_data_type] = config.config_data;
+        return acc;
+    }, {} as Record<string, any>);
+
+    const mappedVolumesData = configDataMap.mappedVolumes;
+    const storageAssessmentData = configDataMap[AssessmentCategories.STORAGE];
+    const awsbackupAssessmentData = configDataMap[AssessmentCategories.AWS_BACKUP];
+    const crrAssessmentData = configDataMap[AssessmentCategories.CRR];
+
     try {
         const [snapshotPolicy, crrData, awsBackup] = await Promise.all([
             shouldTriggerSnapshotPolicyAssessment
-                ? getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+                ? getSnapshotPolicyDriftData(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      mappedVolumesData,
+                      storageAssessmentData as unknown as StorageAssessment
+                  )
                 : Promise.resolve(undefined),
             shouldTriggerCrrAssessment
-                ? getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+                ? getCrrDriftData(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      crrAssessmentData as unknown as CrrAssessment
+                  )
                 : Promise.resolve(undefined),
             shouldTriggerAwsBackupAssessment
-                ? getAwsBackupDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+                ? getAwsBackupDriftData(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      awsbackupAssessmentData as unknown as AWSBackupAssessment
+                  )
                 : Promise.resolve(undefined)
         ]);
 
@@ -209,9 +241,17 @@ async function getSnapshotPolicyDriftData(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    mappedVolumesData: MappedOnTapVolumeResponse[],
+    storageAssessmentData: StorageAssessment
 ): Promise<GenericAssessmentResponseType> {
-    logger.info('Calculate snapshot policy drift data for:', { credentialsId, databaseInstanceId, databaseHostId });
+    logger.info('Calculate snapshot policy drift data for:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseInstanceId,
+        databaseHostId
+    });
     let errorMessage;
     const snapshotPolicyAssessmentData: ParameterDriftResponseType = {
         ...storageGoldenConfigData.resiliency.snapshotPolicy,
@@ -221,31 +261,12 @@ async function getSnapshotPolicyDriftData(
         totalObjectsInViolation: 0
     };
     try {
-        const [[persistedConfigurationData], [mappedVolumesData]] = await Promise.all([
-            listDatabaseInstanceConfigData(
-                accountId,
-                region,
-                credentialsId,
-                databaseHostId,
-                databaseInstanceId,
-                AssessmentCategories.STORAGE
-            ),
-            listDatabaseInstanceConfigData(
-                accountId,
-                region,
-                credentialsId,
-                databaseHostId,
-                databaseInstanceId,
-                AssessmentCategories.MAPPED_ONTAP_VOLUMES // Snapshot-policy is stored with storage assesment data
-            )
-        ]);
-
-        if (isEmpty(persistedConfigurationData)) {
+        if (isEmpty(storageAssessmentData)) {
             errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.SNAPSHOT_POLICY);
             return { errorMessage };
         }
-        const { config_data: configData } = persistedConfigurationData;
-        const { volumes, errors } = configData as unknown as StorageAssessment;
+
+        const { volumes, errors } = storageAssessmentData as unknown as StorageAssessment;
 
         if (errors?.volumes) {
             return { errorMessage: errors.volumes };
@@ -254,8 +275,7 @@ async function getSnapshotPolicyDriftData(
         // Check if mapped volumes data is available and filter out only data and log volumes
         let dataLogVolumeUuids: string[] = [];
         if (!isEmpty(mappedVolumesData)) {
-            const { config_data: mappedVolumes } = mappedVolumesData;
-            ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumes as unknown as MappedOnTapVolumeResponse));
+            ({ dataLogVolumeUuids } = filterDataLogVolumes(mappedVolumesData as unknown as MappedOnTapVolumeResponse));
         }
 
         snapshotPolicyAssessmentData.totalObjectsAssessed = dataLogVolumeUuids.length;
@@ -393,7 +413,8 @@ async function getAwsBackupDriftData(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    awsBackupAssessmentData: AWSBackupAssessment
 ) {
     logger.info('Get Scheduled FSx for ONTAP backup assessment data', {
         accountId,
@@ -403,22 +424,13 @@ async function getAwsBackupDriftData(
         databaseInstanceId
     });
 
-    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-        accountId,
-        region,
-        credentialsId,
-        databaseHostId,
-        databaseInstanceId,
-        AssessmentCategories.AWS_BACKUP
-    );
-    if (isEmpty(persistedConfigurationData)) {
+    if (isEmpty(awsBackupAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.AWS_BACKUP);
         logger.error(errorMessage);
         return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
     }
 
-    const { fileSystemId, isAWSBackupEnabled, errorMessage } =
-        persistedConfigurationData.config_data as unknown as AWSBackupAssessment;
+    const { fileSystemId, isAWSBackupEnabled, errorMessage } = awsBackupAssessmentData;
     if (errorMessage) {
         return { errorMessage };
     }
@@ -584,7 +596,8 @@ async function getCrrDriftData(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    crrAssessmentData: CrrAssessment
 ) {
     logger.info('Calculate crr drift data for:', {
         accountId,
@@ -593,24 +606,16 @@ async function getCrrDriftData(
         databaseInstanceId,
         databaseHostId
     });
-    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-        accountId,
-        region,
-        credentialsId,
-        databaseHostId,
-        databaseInstanceId,
-        AssessmentCategories.CRR
-    );
-    if (isEmpty(persistedConfigurationData)) {
+
+    if (isEmpty(crrAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CRR);
         return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
     }
 
+    const { crrDetails } = crrAssessmentData;
+
     try {
-        const { crrDetails } = persistedConfigurationData.config_data as { crrDetails: any[] };
-        const allVolumesOptimized: boolean = crrDetails.every(
-            (detail: { isCRREnabled: boolean }) => detail.isCRREnabled
-        );
+        const allVolumesOptimized: boolean = crrDetails.every((detail: CrrDetails) => detail.isCRREnabled);
 
         const response: ParameterDriftResponseType = {
             name: 'crr',

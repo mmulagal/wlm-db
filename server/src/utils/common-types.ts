@@ -88,6 +88,16 @@ interface MaxDOPAssesment {
     status: string;
 }
 
+interface CrrDetails {
+    volumeName: string;
+    isCRREnabled: boolean;
+    isSnapMirrored: boolean;
+    sourceSvmUuid: string;
+}
+interface CrrAssessment {
+    crrDetails: CrrDetails[];
+    errorMessage?: string;
+}
 interface AWSBackupAssessment {
     fileSystemId: string;
     isAWSBackupEnabled: boolean;
@@ -707,5 +717,7 @@ export {
     InstanceDismissParams,
     DatabaseInstanceDismissConfigs,
     DatabaseInstanceConfigurations,
-    DatabaseHostConfigurations
+    DatabaseHostConfigurations,
+    CrrAssessment,
+    CrrDetails
 };

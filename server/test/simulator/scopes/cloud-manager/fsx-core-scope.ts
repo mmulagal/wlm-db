@@ -40,7 +40,7 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
             tags: [{ key: 'Name', value: 'fsx-wlmdb-SSNGI' }],
             deploymentType: 'MULTI_AZ',
             awsDeploymentType: 'MULTI_AZ_1',
-            endpointIpAddressRange: `${faker.internet.ipv4}/16`, //use faker to generate a random ip address
+            endpointIpAddressRange: `${faker.internet.ipv4}/16`, // use faker to generate a random ip address
             endpoints: {
                 intercluster: {
                     dnsName: 'intercluster.fs-8b810ed2978f24edea.fsx.us-east-1.amazonaws.com',

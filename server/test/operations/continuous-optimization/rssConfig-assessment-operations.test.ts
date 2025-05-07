@@ -7,7 +7,8 @@ import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../.
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/ssm-scope';
-import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
+import { createResource, listResources, upsertDatabaseInstance } from '../../../src/lib/database/db';
+import { Metadata } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 
@@ -83,11 +84,15 @@ describe('calculateRssConfigDrift', () => {
     });
 
     it('run RSS config assessment drift data', async () => {
+        const [{ metadata = {} } = {}] =
+            (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
+
         const rssConfigAssessmentResponse = await calculateRssConfigDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
-            RESOURCE_ID
+            RESOURCE_ID,
+            metadata as unknown as Metadata
         );
         expect(rssConfigAssessmentResponse.name).toEqual('rss-config');
     });

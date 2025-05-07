@@ -1,7 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { getHostAndSqlServerInfo } from '../discover-operations';
-import { listResources } from '../../lib/database/db';
 import {
     fetchSqlServerInstanceConfiguration,
     getLicenseRecommendations,
@@ -30,20 +29,14 @@ async function calculateLicenseDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating license drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
     let errorMessage = '';
     let licenseAssessment;
-    let metadata;
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating license drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
+
     try {
         const { assessment: { license, errors } = {} } = metadata as unknown as Metadata;
 

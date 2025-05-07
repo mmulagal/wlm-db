@@ -72,18 +72,12 @@ async function calculateHostOsPatchDrift(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string
+    databaseHostId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating Host OS patch drift', { accountId, credentialsId, region, databaseHostId });
     let errorMessage = '';
-    let metadata;
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating host os patch drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
+
     const metadataObject = metadata as unknown as Metadata;
     try {
         const { assessment: { hostOsPatch, errors } = {} } = metadataObject;

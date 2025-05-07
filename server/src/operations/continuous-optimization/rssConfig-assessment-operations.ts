@@ -1,6 +1,5 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { listResources } from '../../lib/database/db';
 import { Metadata, RssConfigAssesment } from '../../utils/common-types';
 import {
     AssessmentStatus,
@@ -26,19 +25,13 @@ async function calculateRssConfigDrift(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string
+    databaseHostId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating RSS drift', { accountId, credentialsId, region, databaseHostId });
     let errorMessage = '';
-    let metadata;
     let rssConfigAssessment;
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating rss drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
+
     try {
         const { assessment: { rssConfig, errors } = {} } = metadata as unknown as Metadata;
 

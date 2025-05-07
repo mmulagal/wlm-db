@@ -2,7 +2,6 @@ import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { getEC2InstanceRecommendations } from '../../lib/aws/compute-optimizer';
-import { listResources } from '../../lib/database/db';
 import { checkComputeOptimizerEnrollmentStatus } from '../recommendation-operations';
 
 import getLogger from '../../utils/logger';
@@ -105,20 +104,12 @@ async function calculateComputeDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating compute drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
     let errorMessage = '';
-    let metadata;
-
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating compute drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
 
     try {
         const { assessment: { compute, errors } = {} } = metadata as unknown as Metadata;

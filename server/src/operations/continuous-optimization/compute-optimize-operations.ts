@@ -584,12 +584,18 @@ export default async function optimizeCompute(
         databaseInstanceId,
         instanceType
     });
+
+    const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    const [{ resource_name: resourceName, metadata }] = resourceDetails;
+
     const { recommendationOptions } = await calculateComputeDrift(
         accountId,
         credentialsId,
         region,
         databaseHostId,
-        databaseInstanceId
+        databaseInstanceId,
+        metadata as unknown as Metadata
     );
     const recommendedInstanceTypes =
         recommendationOptions?.map(({ instanceType: recommendedInstanceType }) => recommendedInstanceType) || [];
@@ -618,10 +624,6 @@ export default async function optimizeCompute(
     if (!isEmpty(platformDifferences)) {
         throw createError(400, 'We dont support the selected instance type as it has platform differences');
     }
-
-    const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
-
-    const [{ resource_name: resourceName, metadata }] = resourceDetails;
 
     const jobMetadata: JobMetadata = {
         hostsToOptimize: [

@@ -13,7 +13,6 @@ import {
 } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
-import { listResources } from '../../lib/database/db';
 import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/common-types';
 import { extractKbNumber, extractVersionDetails, sqlResponseParsing } from '../../utils/utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
@@ -34,7 +33,8 @@ async function calculateMSSQLPatchDrift(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string
+    databaseHostId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating MSSQL Patch drift', {
         accountId,
@@ -44,14 +44,7 @@ async function calculateMSSQLPatchDrift(
     });
     let errorMessage = '';
     let patchAssessment: MSSQLPatchAssessmentObject[] = [];
-    let metadata;
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating mssql patch drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
+
     try {
         const metadataObject = metadata as unknown as Metadata;
         const { assessment: { mssqlPatch, errors } = {} } = metadataObject;
