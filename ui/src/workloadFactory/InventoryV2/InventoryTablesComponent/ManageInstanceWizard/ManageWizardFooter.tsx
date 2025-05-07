@@ -14,18 +14,27 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: any = useWizard();
 
+    const { ontapUserNameFromWizard, ontapPasswordFromWizard, mssqlUserNameFromWizard, mssqlPasswordFromWizard } =
+        state;
+
     const dispatch = useDispatch();
 
     const goBack = () => {
         gotoPreviousStep();
     };
     const goForward = () => {
-        const noError = validation ? validation() : true;
+        setState({ hitNext: true });
+        const noError =
+            ontapUserNameFromWizard &&
+            ontapUserNameFromWizard.length > 0 &&
+            ontapPasswordFromWizard &&
+            ontapPasswordFromWizard.length > 0 &&
+            mssqlUserNameFromWizard &&
+            mssqlUserNameFromWizard.length > 0 &&
+            mssqlPasswordFromWizard &&
+            mssqlPasswordFromWizard.length > 0;
         if (noError) {
-            if (onClick) {
-                // onClick();
-                goToNextStep();
-            } else goToNextStep();
+            goToNextStep();
         }
     };
 

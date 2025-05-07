@@ -14,17 +14,18 @@ import { useEffect, useState } from 'react';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { setIsDetectHostError } from '../../../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../../../utils/appConstants';
-import { set } from 'lodash';
 
 const DetectContent = () => {
     const dispatch = useDispatch();
     const { state, setState }: any = useWizard();
+
     const {
         ontapUserNameFromWizard,
         ontapPasswordFromWizard,
         mssqlUserNameFromWizard,
         mssqlPasswordFromWizard,
-        authenticationTypeSelected
+        authenticationTypeSelected,
+        hitNext
     } = state;
     const { authenticationType } = useAppSelector(state => state.inventoryV2);
 
@@ -124,7 +125,7 @@ const DetectContent = () => {
                             setState({ mssqlUserNameFromWizard: e.target.value });
                         }}
                         className={styles.textFieldStyle}
-                        error={!detectManageUserName ? GENERAL.ACTION_REQUIRED : ''}
+                        error={!detectManageUserName && hitNext ? GENERAL.ACTION_REQUIRED : ''}
                     />
 
                     <PasswordField
@@ -135,7 +136,7 @@ const DetectContent = () => {
                             setState({ mssqlPasswordFromWizard: e.target.value });
                         }}
                         className={styles.textFieldStyle}
-                        error={!detectManagePassword ? GENERAL.ACTION_REQUIRED : ''}
+                        error={!detectManagePassword && hitNext ? GENERAL.ACTION_REQUIRED : ''}
                     />
                 </div>
             </div>
@@ -151,7 +152,7 @@ const DetectContent = () => {
                             setState({ ontapUserNameFromWizard: e.target.value });
                         }}
                         className={styles.textFieldStyle}
-                        error={!detectOntapUsername ? GENERAL.ACTION_REQUIRED : ''}
+                        error={!detectOntapUsername && hitNext ? GENERAL.ACTION_REQUIRED : ''}
                     />
 
                     <PasswordField
@@ -162,7 +163,7 @@ const DetectContent = () => {
                             setState({ ontapPasswordFromWizard: e.target.value });
                         }}
                         className={styles.textFieldStyle}
-                        error={!detectOntapPassword ? GENERAL.ACTION_REQUIRED : ''}
+                        error={!detectOntapPassword && hitNext ? GENERAL.ACTION_REQUIRED : ''}
                     />
                 </div>
             </div>

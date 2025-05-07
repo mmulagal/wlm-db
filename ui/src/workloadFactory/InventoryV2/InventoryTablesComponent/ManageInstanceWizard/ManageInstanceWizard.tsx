@@ -47,7 +47,7 @@ const Wizard = () => {
 
 const ManageInstanceWizard = () => {
     const initialState: any = {};
-    const isAlreadyDetected = true;
+    const isAlreadyDetected = false;
     return (
         <>
             {isAlreadyDetected && (
