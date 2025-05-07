@@ -1,7 +1,7 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { PGSQL_DEFAULT_INSTANCE_NAME, RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
-import { AWS_REGION, CREDENTIALS_ID, DATABASE_HOST_ID } from '../../utils/schema-description-consts';
+import { AWS_REGION_DESC, CREDENTIALS_ID_DESC, DATABASE_HOST_ID_DESC } from '../../utils/schema-description-consts';
 
 const DiscoverQuery = Type.Object({
     pageSize: Type.Number({
@@ -165,11 +165,14 @@ const MultiInstanceUnmanageResponseBody = Type.Object({
 });
 
 const BulkManageMsSqlRequestBody = Type.Object({
-    credentialsId: Type.String({ description: CREDENTIALS_ID }),
-    region: Type.String({ description: AWS_REGION }),
+    credentialsId: Type.String({
+        description: CREDENTIALS_ID_DESC,
+        examples: ['123e4567-e89b-12d3-a456-426614174000']
+    }),
+    region: Type.String({ description: AWS_REGION_DESC }),
     ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
     databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' })),
-    databaseHostId: Type.Optional(Type.String({ description: DATABASE_HOST_ID }))
+    databaseHostId: Type.Optional(Type.String({ description: DATABASE_HOST_ID_DESC }))
 });
 const MultiInstanceManageMsSqlRequestBody = Type.Object({
     items: Type.Array(BulkManageMsSqlRequestBody)
@@ -178,7 +181,7 @@ const MultiInstanceManageMsSqlRequestBody = Type.Object({
 type MultiInstanceManageMsSqlRequestBodyType = Static<typeof BulkManageMsSqlRequestBody>;
 const MultiInstanceManageResponseBody = Type.Array(
     Type.Object({
-        resourceId: Type.Optional(Type.String({ description: DATABASE_HOST_ID })),
+        resourceId: Type.Optional(Type.String({ description: DATABASE_HOST_ID_DESC })),
         ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
         region: Type.String({ description: 'AWS region' }),
         credentialsId: Type.String({ description: 'Credentials ID' }),
