@@ -11,6 +11,7 @@ type PlanningWizardFooterProps = {
 const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const { nextButtonProps, validation, style } = props; //onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
+
     const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: any = useWizard();
 
     const dispatch = useDispatch();
@@ -29,7 +30,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     const handleManage = () => {
-        // dispatch(setPlan(state)); //keep the plan in the store for deployment phase
+        //state is having all payload data
+        console.log(state);
     };
 
     return (

@@ -114,6 +114,10 @@ export const initialInstanceTableColState = {
     },
     11: {
         isHidden: false
+    },
+    12: {
+        isHidden: false,
+        isRemovalDisabled: true
     }
 };
 

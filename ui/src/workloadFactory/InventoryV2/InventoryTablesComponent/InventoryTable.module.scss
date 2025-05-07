@@ -6,6 +6,18 @@
     // max-width: 1607px;
     margin-top: 16px;
 
+    .buttonContainer {
+        display: flex;
+        justify-content: space-between;
+        width: 92%;
+
+        [class*='dsButtons'] {
+            border-radius: 20px !important;
+            width: 150px;
+            padding: 0;
+        }
+    }
+
     .menuPointerDisabled {
         font-weight: 600;
         font-size: 22px;

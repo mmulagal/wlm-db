@@ -1,4 +1,5 @@
 export interface InventorySliceData {
+    manageInstanceInstallAction: any;
     authenticationType: string;
     tableManageColumnState: any;
     selectedFilterValue: {} | any;

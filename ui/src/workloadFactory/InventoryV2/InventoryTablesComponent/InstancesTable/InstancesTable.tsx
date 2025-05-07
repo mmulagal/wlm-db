@@ -80,6 +80,7 @@ import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected
 
 const InstancesTable = () => {
     const disptach = useDispatch();
+
     const { instanceTableRows, inProgressInstances, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
@@ -838,6 +839,29 @@ const InstancesTable = () => {
                     <DsTypography variant="Regular_13" className={styles.colText}>
                         {cellData || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
+                );
+            }
+        },
+        {
+            id: '12',
+            Header: '',
+            accessor: '',
+            isSortable: false,
+            width: '200px',
+            isSticky: true,
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div className={styles.buttonContainer}>
+                        <DsButton
+                            variant="secondary"
+                            isThin
+                            onClick={() => {
+                                navigate('../manage-wizard');
+                            }}
+                        >
+                            Manage instances
+                        </DsButton>
+                    </div>
                 );
             }
         }

@@ -14,22 +14,28 @@ import { useEffect, useState } from 'react';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { setIsDetectHostError } from '../../../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../../../utils/appConstants';
+import { set } from 'lodash';
 
 const DetectContent = () => {
     const dispatch = useDispatch();
     const { state, setState }: any = useWizard();
-    const { ontapUserNameFromWizard, ontapPasswordFromWizard, mssqlUserNameFromWizard, mssqlPasswordFromWizard } =
-        state;
+    const {
+        ontapUserNameFromWizard,
+        ontapPasswordFromWizard,
+        mssqlUserNameFromWizard,
+        mssqlPasswordFromWizard,
+        authenticationTypeSelected
+    } = state;
     const { authenticationType } = useAppSelector(state => state.inventoryV2);
 
     const { detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword } = useAppSelector(
         state => state.inventoryV2
     );
 
-    const [textSearch, setTextSearch] = useSearchDebounce(1000);
-    const [ontapPasswordSearch, setOntapPasswordSearch] = useSearchDebounce(1000);
-    const [detectUserNameSearch, setDetectUserNameSearch] = useSearchDebounce(1000);
-    const [detectPasswordSearch, setDetectPasswordSearch] = useSearchDebounce(1000);
+    const [textSearch, setTextSearch] = useSearchDebounce(100);
+    const [ontapPasswordSearch, setOntapPasswordSearch] = useSearchDebounce(100);
+    const [detectUserNameSearch, setDetectUserNameSearch] = useSearchDebounce(100);
+    const [detectPasswordSearch, setDetectPasswordSearch] = useSearchDebounce(100);
 
     const [ontapUserName, setOntapUserName] = useState(ontapUserNameFromWizard ? ontapUserNameFromWizard : '');
     const [ontapPassword, setOntapPassword] = useState(ontapPasswordFromWizard ? ontapPasswordFromWizard : '');
@@ -39,6 +45,12 @@ const DetectContent = () => {
     useEffect(() => {
         dispatch(setIsDetectHostError(''));
     }, [detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword]);
+
+    useEffect(() => {
+        if (authenticationTypeSelected === undefined) {
+            setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
+        }
+    }, []);
 
     //Use effect for ontap username
     useEffect(() => {
@@ -84,6 +96,7 @@ const DetectContent = () => {
                     isChecked={authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
                     onChange={() => {
                         dispatch(setAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
+                        setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
                     }}
                     children={AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
                     className=""
@@ -93,6 +106,7 @@ const DetectContent = () => {
                     isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
                     onChange={() => {
                         dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
+                        setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION });
                     }}
                     children={AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
                     className=""

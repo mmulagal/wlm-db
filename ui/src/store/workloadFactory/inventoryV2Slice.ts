@@ -86,13 +86,24 @@ const initialInventoryV2State: InventorySliceData = {
         error: ''
     },
     createResourceApiLoading: false,
-    authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+    authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+    manageInstanceInstallAction: {
+        installMissingAWS: true,
+        installMissingPowershell: true
+    }
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setInstallType: (state, action: PayloadAction<Partial<typeof state.manageInstanceInstallAction>>) => {
+            state.manageInstanceInstallAction = {
+                ...state.manageInstanceInstallAction,
+                ...action.payload
+            };
+        },
+
         setAuthenticationType: (state, action: PayloadAction<any>) => {
             state.authenticationType = action.payload;
         },
@@ -328,6 +339,7 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setInstallType,
     setAuthenticationType,
     setSelectedFilterValue,
     setSelectedInventoryTab,
