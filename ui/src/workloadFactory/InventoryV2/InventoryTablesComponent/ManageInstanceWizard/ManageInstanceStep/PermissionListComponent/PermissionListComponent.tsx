@@ -5,6 +5,11 @@ import { ReactComponent as Fix } from '../../../../../../assets/Fix.svg';
 import { ReactComponent as Database } from '../../../../../../assets/Database.svg';
 import { ReactComponent as SandboxImage } from '../../../../../../assets/create-db-copies.svg';
 
+import { ReactComponent as ReviewDisabled } from '../../../../../../assets/Review-disabled.svg';
+import { ReactComponent as FixDisabled } from '../../../../../../assets/Fix-disabled.svg';
+import { ReactComponent as DatabaseDisabled } from '../../../../../../assets/Database-disabled.svg';
+import { ReactComponent as SandboxImageDisabled } from '../../../../../../assets/Sandbox-disabled.svg';
+
 import styles from './PermissionListComponent.module.scss';
 import { useState } from 'react';
 import { PermissionContent } from './PermissionContent/PermissionContent';
@@ -12,6 +17,7 @@ import { PermissionContent } from './PermissionContent/PermissionContent';
 const PermissionListComponent = () => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll, setDisableAll] = useState(false);
+    const missingPermissions = false;
 
     const items: AccordionItem[] = [
         {
@@ -19,7 +25,7 @@ const PermissionListComponent = () => {
             title: 'Review well-architected issues and recommendations',
             subtitle: 'Capability',
             readinessStatus: 'Ready',
-            image: <Review />,
+            image: missingPermissions ? <ReviewDisabled /> : <Review />,
             content: (
                 <PermissionContent
                     title="Permission list"
@@ -47,7 +53,7 @@ const PermissionListComponent = () => {
             title: 'Fix well-architected issues',
             subtitle: 'Capability',
             readinessStatus: 'Ready',
-            image: <Fix />,
+            image: missingPermissions ? <FixDisabled /> : <Fix />,
             content: (
                 <PermissionContent
                     title="Permission list"
@@ -97,7 +103,7 @@ const PermissionListComponent = () => {
             title: 'Create database',
             subtitle: 'Capability',
             readinessStatus: 'Ready',
-            image: <Database />,
+            image: missingPermissions ? <DatabaseDisabled /> : <Database />,
             content: (
                 <PermissionContent
                     title="Permission list"
@@ -130,7 +136,7 @@ const PermissionListComponent = () => {
             title: 'Create database copies (Sandbox)',
             subtitle: 'Capability',
             readinessStatus: 'Ready',
-            image: <SandboxImage />,
+            image: missingPermissions ? <SandboxImageDisabled /> : <SandboxImage />,
             content: (
                 <PermissionContent
                     title="Permission list"

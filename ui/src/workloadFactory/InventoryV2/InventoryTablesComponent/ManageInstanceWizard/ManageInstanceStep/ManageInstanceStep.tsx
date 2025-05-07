@@ -4,11 +4,19 @@ import styles from './ManageInstanceStep.module.scss';
 import ActionComponent from './ActionComponent/ActionComponent';
 import NoteComponent from './NoteComponent/NoteComponent';
 import PermissionListComponent from './PermissionListComponent/PermissionListComponent';
+import DetectHeader from '../DetectInstanceStep/DetectHeader/DetectHeader';
 
 export const Content = () => {
     const { state, setState } = useWizard();
+    const isAlreadyDetected = false;
     return (
         <div className={styles['manage-instance-step']}>
+            {isAlreadyDetected && (
+                <div style={{ marginBottom: '40px' }}>
+                    <DetectHeader />
+                </div>
+            )}
+
             <div className={styles.textSection}>
                 <DsTypography variant="Regular_14">
                     Before proceeding, ensure you have completed all required preparations.

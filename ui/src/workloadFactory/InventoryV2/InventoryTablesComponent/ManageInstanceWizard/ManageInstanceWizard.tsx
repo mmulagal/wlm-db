@@ -3,6 +3,8 @@ import { StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
 import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
+import { useNavigate } from 'react-router-dom';
+import ManageOnlyWizard from './ManageOnlyWizard';
 
 const MANAGE_STEPS = [
     { key: 'detect-instance', label: 'Detect instance', component: DetectInstanceStep },
@@ -17,6 +19,7 @@ const stepPaths = {
 
 const Wizard = () => {
     const { stepsMap, currentStep }: any = useWizard();
+    const navigate = useNavigate();
 
     const { Footer: StepFooter, Content: StepContent } = stepsMap[currentStep];
     return (
@@ -25,7 +28,7 @@ const Wizard = () => {
                 className={styles['manage-instance-wizard']}
                 title={'Manage instance'}
                 onExit={() => {
-                    console.log('cancel');
+                    navigate('../databases/inventory');
                 }}
             />
             <WizardContent
@@ -44,16 +47,26 @@ const Wizard = () => {
 
 const ManageInstanceWizard = () => {
     const initialState: any = {};
+    const isAlreadyDetected = true;
     return (
-        <WizardContextProvider
-            stepsMap={stepsMap}
-            stepPaths={stepPaths}
-            initialStep={'detect-instance'}
-            initialPath={'regular'}
-            initialState={initialState}
-        >
-            <Wizard />
-        </WizardContextProvider>
+        <>
+            {isAlreadyDetected && (
+                <>
+                    <ManageOnlyWizard />
+                </>
+            )}
+            {!isAlreadyDetected && (
+                <WizardContextProvider
+                    stepsMap={stepsMap}
+                    stepPaths={stepPaths}
+                    initialStep={'detect-instance'}
+                    initialPath={'regular'}
+                    initialState={initialState}
+                >
+                    <Wizard />
+                </WizardContextProvider>
+            )}
+        </>
     );
 };
 
