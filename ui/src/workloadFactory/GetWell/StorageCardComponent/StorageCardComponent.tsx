@@ -759,7 +759,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         ) {
             return 'View';
         } else {
-            return 'Fix';
+            return GENERAL.OPTIMIZE;
         }
     };
 

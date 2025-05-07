@@ -2225,9 +2225,9 @@ export const getOptimizationStatus = (
         optimizationStatus =
             optBreakDown?.total?.notOptimized !== 0
                 ? optBreakDown?.total?.notOptimized === 1
-                    ? optBreakDown?.total?.notOptimized + ' recommendation'
-                    : optBreakDown?.total?.notOptimized + ' recommendations'
-                : 'Optimized';
+                    ? optBreakDown?.total?.notOptimized + ' issues'
+                    : optBreakDown?.total?.notOptimized + ' issues'
+                : 'Well architected';
     } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     } else if (instanceRow?.assessments && !instanceRow?.assessments?.lastAssessmentTimestamp) {

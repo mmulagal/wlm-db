@@ -139,7 +139,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -189,7 +189,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -239,7 +239,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -289,7 +289,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -336,7 +336,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Fix
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -381,7 +381,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             <div>
                                 <DsButton data-testid="wlm-db-optimize-log-files" variant="secondary" isDisabled={true}>
-                                    Fix
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -430,7 +430,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Fix
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -481,7 +481,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 configData?.ontapConfiguration === configData?.total
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         <Popover
@@ -521,7 +521,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 configData?.operatingSystem === configData?.total
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         <Popover
@@ -561,7 +561,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 configData?.computeRightsizing === configData?.total
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -608,7 +608,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Fix
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -660,7 +660,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[GENERAL.RSS_CONFIGURATION]?.length > 0
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -706,7 +706,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Fix
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -755,7 +755,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Fix
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -807,7 +807,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -857,7 +857,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -895,7 +895,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <TooltipComponent title={''} placement="bottom" width="120px" height="30px">
                             <div>
                                 <DsButton data-testid="wlm-db-optimize-crr" variant="secondary" isDisabled={true}>
-                                    Fix
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -948,7 +948,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     ?.length > 0
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -1027,7 +1027,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
                             }
                         >
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (

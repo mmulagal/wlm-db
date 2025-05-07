@@ -170,7 +170,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />
@@ -179,7 +179,7 @@ const OptimizeInnerPage = () => {
         if (selectedOptimizeConfig?.type === GENERAL.CRR) {
             return (
                 <DsButton isThin variant="secondary" isDisabled={true}>
-                    Fix
+                    {GENERAL.OPTIMIZE}
                 </DsButton>
             );
         } else if (
@@ -201,7 +201,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />
@@ -216,7 +216,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />
@@ -247,7 +247,7 @@ const OptimizeInnerPage = () => {
                         );
                     }}
                 >
-                    Fix
+                    {GENERAL.OPTIMIZE}
                 </DsButton>
             );
         } else {
@@ -260,7 +260,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Fix
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />

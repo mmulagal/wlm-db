@@ -69,6 +69,7 @@ import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection
 import downloadPdf from '../../common/pdfGenerator';
 import { useLazyGetSubTaskListQuery, useTriggerInstanceAssessmentMutation } from '../../utils/apiService';
 import AssessmentContainer from './AssessmentContainer/AssessmentContainer';
+import PartialDataContainer from './PartialDataContainer/PartialDataContainer';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -464,6 +465,10 @@ const GetWell = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Partial data warning here - based on condition */}
+
+                {/* <PartialDataContainer /> */}
 
                 {/* Assessment Section here */}
                 <AssessmentContainer onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress} />

@@ -480,16 +480,6 @@ const InstancesTable = () => {
         }
     };
 
-    const setWellArchitectStatus = (cellData: any) => {
-        if (cellData.includes('recommendations')) {
-            return cellData.replace('recommendations', 'issues');
-        } else if (cellData === 'Optimized') {
-            return 'Well architected';
-        } else {
-            return cellData;
-        }
-    };
-
     const updatedTableData = useMemo(() => {
         return instanceTableRows?.map((row: any) => {
             const { isDisabled, errorMessage } = disableManageCheck(row);
@@ -722,7 +712,7 @@ const InstancesTable = () => {
                             <DsFlashingDotsLoader />
                         ) : (
                             <div className={styles.statusCol}>
-                                <DsTypography variant="Regular_14">{setWellArchitectStatus(cellData)}</DsTypography>
+                                <DsTypography variant="Regular_14">{cellData}</DsTypography>
                                 <DsButton type="text" onClick={() => redirectToAction(rowData)}>
                                     View
                                 </DsButton>

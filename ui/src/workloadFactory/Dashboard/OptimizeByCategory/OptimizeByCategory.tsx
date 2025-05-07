@@ -100,7 +100,7 @@ const OptimizeByCategory = () => {
                         isDisabled={loading}
                         data-testid="wlm-db-optimize-instances-by-category"
                     >
-                        Fix
+                        {GENERAL.OPTIMIZE}
                     </DsButton>
                 </div>
             </div>

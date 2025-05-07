@@ -1132,7 +1132,7 @@ const DashboardInnerPage = () => {
                                 interactive={true}
                                 container={
                                     <DsButton variant="secondary" isDisabled={true}>
-                                        Fix
+                                        {GENERAL.OPTIMIZE}
                                     </DsButton>
                                 }
                             />
@@ -1146,7 +1146,7 @@ const DashboardInnerPage = () => {
                                     handleDialog(name, rowData, 'single');
                                 }}
                             >
-                                Fix
+                                {GENERAL.OPTIMIZE}
                             </DsButton>
                         )}
                     </div>
