@@ -319,7 +319,7 @@ main() {
 
     if [ "${node_name}" = "PgPoolNode" ]; then
         echo "Condition met: ${node_name} is PgPoolNode"
-        download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/packages/pgpool.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250403%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250403T051851Z&X-Amz-Expires=604800&X-Amz-Signature=802c2dfcfb2f635d62e0646eb9a09c235e57c263e0acae939edea934df1ced9a&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject" "/home/ec2-user/cfn/pgpool.zip"
+        download_file "{{{ PGPOOLPackage }}}" "/home/ec2-user/cfn/pgpool.zip"
     fi
 
     download_file "{{{ PGSQLPackages }}}" "/home/ec2-user/cfn/pgvector.zip"
