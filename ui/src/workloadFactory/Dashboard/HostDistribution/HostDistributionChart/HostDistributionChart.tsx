@@ -61,7 +61,7 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText, cente
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                     {centerValue}
                 </Typography>
-                <Typography variant="Regular_14">{centerText}</Typography>
+
                 {loading && (
                     <div style={{ marginTop: '6px' }}>
                         <DsFlashingDotsLoader />

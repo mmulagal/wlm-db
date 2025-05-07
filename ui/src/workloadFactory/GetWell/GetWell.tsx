@@ -411,7 +411,7 @@ const GetWell = () => {
                             className={styles.optimizeHeader}
                             variant="Semibold_16"
                         >
-                            Optimize instance
+                            Well-architected dashboard
                         </DsTypography>
 
                         {!optimizePrintState &&

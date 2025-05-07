@@ -480,6 +480,16 @@ const InstancesTable = () => {
         }
     };
 
+    const setWellArchitectStatus = (cellData: any) => {
+        if (cellData.includes('recommendations')) {
+            return cellData.replace('recommendations', 'issues');
+        } else if (cellData === 'Optimized') {
+            return 'Well architected';
+        } else {
+            return cellData;
+        }
+    };
+
     const updatedTableData = useMemo(() => {
         return instanceTableRows?.map((row: any) => {
             const { isDisabled, errorMessage } = disableManageCheck(row);
@@ -616,7 +626,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Optimization status',
+            Header: 'Well-architected status',
             accessor: 'optimizationStatus',
             id: '6',
             width: '240px',
@@ -706,13 +716,13 @@ const InstancesTable = () => {
                                     isAppendedToBody={false}
                                     container={<TooltipIcon />}
                                 />
-                                <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
+                                <DsTypography variant="Regular_14">{'Not analyzed'}</DsTypography>
                             </div>
                         ) : rowData?.optimizationStatusLoading ? (
                             <DsFlashingDotsLoader />
                         ) : (
                             <div className={styles.statusCol}>
-                                <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                <DsTypography variant="Regular_14">{setWellArchitectStatus(cellData)}</DsTypography>
                                 <DsButton type="text" onClick={() => redirectToAction(rowData)}>
                                     View
                                 </DsButton>

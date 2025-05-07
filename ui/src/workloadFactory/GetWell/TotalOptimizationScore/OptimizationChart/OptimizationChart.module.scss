@@ -1,6 +1,6 @@
 .optimizationChart {
-    width: 200px;
-    height: 200px;
+    width: 144px;
+    height: 144px;
     position: relative;
 
     .center-text {
@@ -16,8 +16,8 @@
     }
 
     .emptyCircle {
-        width: 200px;
-        height: 200px;
+        width: 144px;
+        height: 144px;
         border-radius: 50%;
         border: 1px solid var(--field-border-disabled);
     }
@@ -25,14 +25,14 @@
 
 @media screen and (max-width: 1770px) {
     .optimizationChart {
-        width: 180px;
-        height: 180px;
+        width: 144px;
+        height: 144px;
 
         position: relative;
 
         .emptyCircle {
-            width: 180px;
-            height: 180px;
+            width: 144px;
+            height: 144px;
         }
     }
 }

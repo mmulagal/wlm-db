@@ -34,7 +34,7 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
     } else {
         setDialog(
             <DialogComponent
-                header={`${type} optimization`}
+                header={`${type}`}
                 content={
                     <DialogContent
                         type={type}

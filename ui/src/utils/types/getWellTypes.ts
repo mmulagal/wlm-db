@@ -53,6 +53,8 @@ interface CountBreakDown {
     optimized?: number;
     notOptimized?: number;
     percent?: number;
+    critical?: number;
+    warning?: number;
 }
 
 export interface AssessmentResponseInterface {

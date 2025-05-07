@@ -1720,6 +1720,18 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let optimizedCloning = 0;
     let notOptimizedCloning = 0;
 
+    //For warning and critical
+    let warningStorage = 0;
+    let criticalStorage = 0;
+    let warningCompute = 0;
+    let criticalCompute = 0;
+    let warningApplication = 0;
+    let criticalApplication = 0;
+    let warningResiliency = 0;
+    let criticalResiliency = 0;
+    let warningCloning = 0;
+    let criticalCloning = 0;
+
     let hasDismissedOrPostponedStorage = false;
     let hasDismissedOrPostponedCompute = false;
     let hasDismissedOrPostponedApplication = false;
@@ -1737,6 +1749,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedStorage++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalStorage++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningStorage++;
             } else {
                 notOptimizedStorage++;
             }
@@ -1748,6 +1764,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 isOptimizedViaDismissal
             ) {
                 optimizedCompute++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalCompute++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningCompute++;
             } else {
                 notOptimizedCompute++;
             }
@@ -1755,6 +1775,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isOptimizedViaDismissal) hasDismissedOrPostponedApplication = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedApplication++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalApplication++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningApplication++;
             } else {
                 notOptimizedApplication++;
             }
@@ -1762,6 +1786,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalResiliency++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningResiliency++;
             } else {
                 notOptimizedResiliency++;
             }
@@ -1769,6 +1797,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isOptimizedViaDismissal) hasDismissedOrPostponedCloning = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedCloning++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalCloning++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningCloning++;
             } else {
                 notOptimizedCloning++;
             }
@@ -1777,51 +1809,73 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
 
     let storageCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedStorage,
-        total: optimizedStorage + notOptimizedStorage,
+        total: optimizedStorage + notOptimizedStorage + criticalStorage + warningStorage,
+        critical: criticalStorage,
+        warning: warningStorage,
         optimized: optimizedStorage,
         notOptimized: notOptimizedStorage,
         percent: optimizedStorage
-            ? formatNumberWithCustomComma((optimizedStorage / (optimizedStorage + notOptimizedStorage)) * 100)
+            ? formatNumberWithCustomComma(
+                  (optimizedStorage / (optimizedStorage + notOptimizedStorage + criticalStorage + warningStorage)) * 100
+              )
             : 0
     };
     let computeCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedCompute,
-        total: optimizedCompute + notOptimizedCompute,
+        total: optimizedCompute + notOptimizedCompute + criticalCompute + warningCompute,
+        critical: criticalCompute,
+        warning: warningCompute,
         optimized: optimizedCompute,
         notOptimized: notOptimizedCompute,
         percent: optimizedCompute
-            ? formatNumberWithCustomComma((optimizedCompute / (optimizedCompute + notOptimizedCompute)) * 100)
+            ? formatNumberWithCustomComma(
+                  (optimizedCompute / (optimizedCompute + notOptimizedCompute + criticalCompute + warningCompute)) * 100
+              )
             : 0
     };
     let applicationCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedApplication,
-        total: optimizedApplication + notOptimizedApplication,
+        total: optimizedApplication + notOptimizedApplication + criticalApplication + warningApplication,
+        critical: criticalApplication,
+        warning: warningApplication,
         optimized: optimizedApplication,
         notOptimized: notOptimizedApplication,
         percent: optimizedApplication
             ? formatNumberWithCustomComma(
-                  (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
+                  (optimizedApplication /
+                      (optimizedApplication + notOptimizedApplication + criticalApplication + warningApplication)) *
+                      100
               )
             : 0
     };
 
     let resiliencyCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedResiliency,
-        total: optimizedResiliency + notOptimizedResiliency,
+        total: optimizedResiliency + notOptimizedResiliency + criticalResiliency + warningResiliency,
+        critical: criticalResiliency,
+        warning: warningResiliency,
         optimized: optimizedResiliency,
         notOptimized: notOptimizedResiliency,
         percent: optimizedResiliency
-            ? formatNumberWithCustomComma((optimizedResiliency / (optimizedResiliency + notOptimizedResiliency)) * 100)
+            ? formatNumberWithCustomComma(
+                  (optimizedResiliency /
+                      (optimizedResiliency + notOptimizedResiliency + criticalResiliency + warningResiliency)) *
+                      100
+              )
             : 0
     };
 
     let cloningCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedCloning,
-        total: optimizedCloning + notOptimizedCloning,
+        total: optimizedCloning + notOptimizedCloning + criticalCloning + warningCloning,
+        critical: criticalCloning,
+        warning: warningCloning,
         optimized: optimizedCloning,
         notOptimized: notOptimizedCloning,
         percent: optimizedCloning
-            ? formatNumberWithCustomComma((optimizedCloning / (optimizedCloning + notOptimizedCloning)) * 100)
+            ? formatNumberWithCustomComma(
+                  (optimizedCloning / (optimizedCloning + notOptimizedCloning + criticalCloning + warningCloning)) * 100
+              )
             : 0
     };
 
@@ -1845,6 +1899,18 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 applicationCount?.optimized +
                 resiliencyCount?.optimized +
                 cloningCount?.optimized,
+            critical:
+                storageCount?.critical +
+                computeCount?.critical +
+                applicationCount?.critical +
+                resiliencyCount?.critical +
+                cloningCount?.critical,
+            warning:
+                storageCount?.warning +
+                computeCount?.warning +
+                applicationCount?.warning +
+                resiliencyCount?.warning +
+                cloningCount?.warning,
             notOptimized:
                 storageCount?.notOptimized +
                 computeCount?.notOptimized +
@@ -2159,7 +2225,7 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOptimizingInstanceData(false));
 };
 
-// This function is used to update the progress of the optimization process for assessment confif resource level jobs.
+// This function is used to update the progress of the Fixing process for assessment confif resource level jobs.
 // Currently it is only written for clone cleanup.
 const updateProgressResourceForBulk = (
     dispatch: any,

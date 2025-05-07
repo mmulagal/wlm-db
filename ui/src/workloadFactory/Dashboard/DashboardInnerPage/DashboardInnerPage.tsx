@@ -560,7 +560,7 @@ const DashboardInnerPage = () => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"
@@ -1120,7 +1120,7 @@ const DashboardInnerPage = () => {
                         {isInProgress ? (
                             <div className={styles['optimize-in-progress']}>
                                 <OptimizeInProgressIcon />
-                                <DsTypography variant="Semibold_14">Optimizing</DsTypography>
+                                <DsTypography variant="Semibold_14">Fixing</DsTypography>
                             </div>
                         ) : isDisabled && errorMessage ? (
                             <Popover
@@ -1132,7 +1132,7 @@ const DashboardInnerPage = () => {
                                 interactive={true}
                                 container={
                                     <DsButton variant="secondary" isDisabled={true}>
-                                        Optimize
+                                        Fix
                                     </DsButton>
                                 }
                             />
@@ -1146,7 +1146,7 @@ const DashboardInnerPage = () => {
                                     handleDialog(name, rowData, 'single');
                                 }}
                             >
-                                Optimize
+                                Fix
                             </DsButton>
                         )}
                     </div>
@@ -1228,7 +1228,7 @@ const DashboardInnerPage = () => {
                                 }
                             },
                             {
-                                title: `Optimize configuration (${selectedConfig})`,
+                                title: `Fix configuration (${selectedConfig})`,
                                 dataTestId: 'wlm-db-optimize-configuration'
                             }
                         ]}
@@ -1248,7 +1248,7 @@ const DashboardInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
-                        Manage instance optimization
+                        Manage instance fixing
                     </DsTypography>
                 </div>
 

@@ -170,7 +170,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            Fix
                         </DsButton>
                     }
                 />
@@ -179,7 +179,7 @@ const OptimizeInnerPage = () => {
         if (selectedOptimizeConfig?.type === GENERAL.CRR) {
             return (
                 <DsButton isThin variant="secondary" isDisabled={true}>
-                    Optimize
+                    Fix
                 </DsButton>
             );
         } else if (
@@ -201,7 +201,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            Fix
                         </DsButton>
                     }
                 />
@@ -216,7 +216,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            Fix
                         </DsButton>
                     }
                 />
@@ -247,7 +247,7 @@ const OptimizeInnerPage = () => {
                         );
                     }}
                 >
-                    Optimize
+                    Fix
                 </DsButton>
             );
         } else {
@@ -260,7 +260,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            Fix
                         </DsButton>
                     }
                 />
@@ -453,7 +453,7 @@ const OptimizeInnerPage = () => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"

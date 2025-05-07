@@ -233,7 +233,7 @@ const OptimizeOntapInnerPage = () => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${rowData?.name}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${rowData?.name}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"

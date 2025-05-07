@@ -76,7 +76,7 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
                                         postponed configurations.
                                     </TooltipInfo>
                                 )}
-                                <DsTypography variant="Regular_14">Optimized configurations:</DsTypography>
+                                <DsTypography variant="Regular_14">Well-architected configurations:</DsTypography>
                             </div>
                         )}
 

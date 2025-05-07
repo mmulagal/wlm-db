@@ -195,7 +195,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"

@@ -29,13 +29,27 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
         }
     };
 
+    const setColor = (value: any) => {
+        if (value <= 25) {
+            return '#FE5502';
+        } else if (value > 25 && value <= 50) {
+            return '#F7941D';
+        } else if (value > 50 && value <= 75) {
+            return '#FDC300';
+        } else if (value > 75 && value < 100) {
+            return '#68C6B3';
+        } else {
+            return unProtectedColor;
+        }
+    };
+
     var config = {
         type: 'doughnut',
         data: {
             datasets: [
                 {
                     data: [hostData?.percent || 0, 100 - (hostData?.percent || 0)],
-                    backgroundColor: ['#68C6B3', unProtectedColor]
+                    backgroundColor: [setColor(hostData?.percent), unProtectedColor]
                 }
             ]
             //   labels: label,
@@ -76,17 +90,12 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
                         {hostData?.percent || 0}%
                     </DsTypography>
                 )}
-                <DsTypography
-                    variant="Regular_14"
-                    isDisabled={!optimizePageLoading && !isAssessmentAvailable ? true : false}
-                >
-                    Optimization score
-                </DsTypography>
+
                 {optimizePageLoading && <DsFlashingDotsLoader />}
             </div>
             {(!isAssessmentAvailable || optimizePageLoading) && <div className={styles.emptyCircle}></div>}
             {isAssessmentAvailable && !optimizePageLoading ? (
-                <canvas ref={ref} id="chart-area" width={200} height={200}></canvas>
+                <canvas ref={ref} id="chart-area" width={144} height={144}></canvas>
             ) : null}
         </div>
     );

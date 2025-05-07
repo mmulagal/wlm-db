@@ -48,7 +48,7 @@ export const GENERAL = {
     USER_DATABASE: 'User Database',
     SYSTEM_DATABASE: 'System Database',
     MULTIPLE_VALUES: 'Multiple values',
-    OPTIMIZE: 'Optimize',
+    OPTIMIZE: 'Fix',
     REBASE_LINE: 'Re-baseline',
     MICROSOFT_SQL: 'Microsoft SQL',
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
@@ -611,7 +611,7 @@ export const GENERAL = {
     JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
-    JM_TYPE_OPTIMIZE: 'Optimization',
+    JM_TYPE_OPTIMIZE: 'Well-architected',
     JM_DOWNLOAD_PROGRESS: 'Download in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table was downloaded',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -1279,7 +1279,7 @@ export const GENERAL = {
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Optimization is only available for managed instances that have been assessed and are online.  Offline and un-assessed instances aren't available for optimization.",
+        "Well-architected is only available for managed instances that have been analyzed and are online. Offline and unanalyzed instances aren't available for well-architected",
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:

@@ -67,7 +67,7 @@ const OptimizeByCategory = () => {
         let isOnlineInstance = tableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
         setDialog(
             <DialogComponent
-                header={`Optimization`}
+                header={`Fix well-architected issues`}
                 content={<CategoryDialogComponent tableData={tableData} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
@@ -88,7 +88,7 @@ const OptimizeByCategory = () => {
         <div className={styles.optimizeByCategory}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Instances optimization breakdown by category
+                    Well-architected breakdown by category
                 </DsTypography>
 
                 <div className={styles.rightSection}>
@@ -100,7 +100,7 @@ const OptimizeByCategory = () => {
                         isDisabled={loading}
                         data-testid="wlm-db-optimize-instances-by-category"
                     >
-                        Optimize
+                        Fix
                     </DsButton>
                 </div>
             </div>

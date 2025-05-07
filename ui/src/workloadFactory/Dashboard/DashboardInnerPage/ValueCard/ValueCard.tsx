@@ -35,7 +35,7 @@ const ValueCard = ({
                         <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                             {optimizedInstances}
                         </DsTypography>
-                        <DsTypography variant="Regular_14">Optimized instances</DsTypography>
+                        <DsTypography variant="Regular_14">Well architected instances</DsTypography>
                     </div>
 
                     <div className={styles.block} style={{ borderRight: '1px solid var(--border)' }}>

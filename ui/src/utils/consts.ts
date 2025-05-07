@@ -192,7 +192,8 @@ export const JOB_MONITORING_TYPE = {
     PREPARE_RESOURCE: 'PREPARE_RESOURCE',
     SANDBOX: 'SANDBOX',
     ASSESSMENT: 'ASSESSMENT',
-    OPTIMIZE: 'OPTIMIZATION'
+    OPTIMIZE: 'OPTIMIZATION',
+    WELL_ARCHITECTED: 'WELL_ARCHITECTED'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -710,7 +711,9 @@ export const GETWELL_STATUS = {
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
     NOT_APPLICABLE: GENERAL.UNAVAILABLE,
-    ANALYZING: 'Analyzing'
+    ANALYZING: 'Analyzing',
+    CRITICAL: 'Critical',
+    WARNING: 'Warning'
 };
 
 export const GETWELL_VALUES: any = {
