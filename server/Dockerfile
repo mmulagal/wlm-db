@@ -48,6 +48,9 @@ USER netappuser
 
 RUN npm ci --omit=dev
 
+#Temporary fix for jsonwebtoken and node 24 compatibility https://github.com/auth0/node-jsonwebtoken/issues/992
+RUN npm upgrade jwa
+
 # prisma generate command after every change to Prisma schema to update the generated Prisma Client code.
 RUN npx prisma generate
 
