@@ -341,7 +341,8 @@ const InventoryApisV3 = () => {
         let discoveredRows: any = [];
         let discoveredOracleRows: any = [];
         getDiscoveryHostsList(discoveredRows, null, credId, regionId);
-        getDiscoveryOracleHostsList(discoveredOracleRows, null, credId, regionId);
+        // ToDo - Will enable oracle call once demo issue is fixed
+        // getDiscoveryOracleHostsList(discoveredOracleRows, null, credId, regionId);
         if (managedList?.length > 0) {
             let fullHostData: any = {};
             let fullPgsqlHostData: any = {};
