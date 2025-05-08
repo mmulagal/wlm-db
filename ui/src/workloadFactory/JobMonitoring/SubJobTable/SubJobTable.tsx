@@ -151,7 +151,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                                         navigateToContinuosOptimization(cellData, rowData);
                                     }}
                                 >
-                                    instance optimization dashboard
+                                    instance well-architect dashboard
                                 </Button>
                             </span>
                         </div>

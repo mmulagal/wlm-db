@@ -683,7 +683,7 @@ export const GENERAL = {
         'Quick create enhances database performance by allocating new drive letters for you and segregating the user database layout into distinct volumes and LUNs per data and log files.'
     ],
     ADVANCED_DB_CREATE_CONTENT:
-        'Recommended for small to medium databases. With Advanced create mode, you set your storage layout configuration to optimize performance by configuring new and existing drive letter options for data and log files.',
+        'Recommended for small to medium databases. With Advanced create mode, you set your storage layout configuration to well-architect performance by configuring new and existing drive letter options for data and log files.',
     FILE_SIZE_TEXT: [
         'Data and log file sizes have a minimum value of 1 GiB.',
         'The recommended log file size (default) is 25% of the data file size. The default log file size value is editable.'
@@ -1261,7 +1261,7 @@ export const GENERAL = {
     SQL_COLLATION_NOTE:
         'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You will be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You will be able to fix after the current fixing operation ends.',
     ONPREM_TOOLTIP:
         'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
@@ -1285,7 +1285,7 @@ export const GENERAL = {
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:
-        "You postponed or dismissed configuration analysis for some SQL Server instances. Configurations with postponed or dismissed analysis don't affect the optimization score.",
+        "You postponed or dismissed configuration analysis for some SQL Server instances. Configurations with postponed or dismissed analysis don't affect the well-architected score.",
     MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.',
     DISMISS_MIX_CASE_TOOLTIP: 'This configurations analysis is dismissed or postponed for some of the instances.',
 
@@ -1405,7 +1405,7 @@ export const GETWELL_DIALOG_CONTENT = {
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and to acknowledge the required downtime.'
     ],
     COMPUTE_RS_LAST_POINT: [
-        'Compute rightsizing optimization involves an instance type change and impacts all SQL Server instances and any other applications running on the host. Make sure that your applications are compatible with the new instance type. Refer to ',
+        'Compute rightsizing fixing involves an instance type change and impacts all SQL Server instances and any other applications running on the host. Make sure that your applications are compatible with the new instance type. Refer to ',
         'AWS resize limitations',
         ' for limitations on changing instance types.'
     ]

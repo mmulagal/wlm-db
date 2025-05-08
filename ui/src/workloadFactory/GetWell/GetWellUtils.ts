@@ -192,7 +192,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'TempDB drive size recommendation',
             description:
-                'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+                'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to well-architect performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
             valuesHeading: 'TempDB drive size percentages are as follows:',
             values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
@@ -2437,7 +2437,7 @@ const updateAssessmentWithCompletedJobs = (
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                    message: `${bulkRowData?.[0]?.name} instances optimized successfully.`
+                    message: `${bulkRowData?.[0]?.name} instances fixed successfully.`
                 })
             );
         }, 0);
@@ -2462,7 +2462,7 @@ const updateAssessmentWithCompletedJobs = (
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: `${rowData?.name} optimized successfully.`
+                message: `${rowData?.name} fixed successfully.`
             })
         );
     }
@@ -2516,7 +2516,7 @@ const updateAssessmentWithWarningJobs = (
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.INFO,
-                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances optimized successfully.`
+                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances fixed successfully.`
                 })
             );
         }, 0);
@@ -2540,7 +2540,7 @@ const updateAssessmentWithWarningJobs = (
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: `${rowData?.name} optimized successfully.`
+                message: `${rowData?.name} fixed successfully.`
             })
         );
     }
@@ -2653,7 +2653,7 @@ export const handleOptimizeResourceJob = (
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                    message: `Clone databases optimized successfully.`
+                                    message: `Clone databases fixed successfully.`
                                 })
                             );
                         }, 0);
@@ -2690,7 +2690,7 @@ export const handleOptimizeResourceJob = (
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.INFO,
-                                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances optimized successfully.`
+                                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances fixed successfully.`
                                 })
                             );
                         }, 0);

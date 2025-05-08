@@ -710,10 +710,12 @@ export const EBS_PROTECTED_OPTIONS = {
 
 export const GETWELL_STATUS = {
     OPTIMIZED: 'Optimized',
+    WELL_ARCHITECTED: 'Well-architected',
     NOT_OPTIMIZED: 'Not optimized',
     UNDER_PROVISIONED: 'Under-provisioned',
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
+    FIXING: 'Fixing',
     NOT_APPLICABLE: GENERAL.UNAVAILABLE,
     ANALYZING: 'Analyzing',
     CRITICAL: 'Critical',

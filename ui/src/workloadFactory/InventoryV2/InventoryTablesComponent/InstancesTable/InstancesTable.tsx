@@ -893,7 +893,7 @@ const InstancesTable = () => {
                     menu.push(
                         {
                             id: 'optimize',
-                            displayName: 'Optimize',
+                            displayName: 'Well-architect',
                             disabled: disableOption,
                             infoText: disableMessage
                         },
