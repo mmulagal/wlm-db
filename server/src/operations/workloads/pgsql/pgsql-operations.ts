@@ -222,19 +222,17 @@ async function getPgSqlDatabaseInstancesSummary(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
-    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE.toLocaleLowerCase());
-    const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
-    const getDatabasesWithoutProtection = fieldsValues?.includes(
-        DatabaseHostsQueryFields.DATABASES.toLocaleLowerCase()
-    );
+    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE.toLowerCase());
+    const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLowerCase());
+    const getDatabasesWithoutProtection = fieldsValues?.includes(DatabaseHostsQueryFields.DATABASES.toLowerCase());
     const getDatabasesWithProtection = fieldsValues?.includes(
-        DatabaseHostsQueryFields.DATABASES_WITH_PROTECTION.toLocaleLowerCase()
+        DatabaseHostsQueryFields.DATABASES_WITH_PROTECTION.toLowerCase()
     );
     const shouldQueryDatabaseTopology = fieldsValues?.includes(
-        DatabaseHostsQueryFields.DATABASE_INSTANCE_TOPOLOGY.toLocaleLowerCase()
+        DatabaseHostsQueryFields.DATABASE_INSTANCE_TOPOLOGY.toLowerCase()
     );
-    const getPerformanceMetrics = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE.toLocaleLowerCase());
-    const getProtectionStatus = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION.toLocaleLowerCase());
+    const getPerformanceMetrics = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE.toLowerCase());
+    const getProtectionStatus = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION.toLowerCase());
 
     const sqlDeploymentType = databaseInstances[0].database_deployment_type;
     let storageData: any;

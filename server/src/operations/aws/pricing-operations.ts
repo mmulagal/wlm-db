@@ -877,8 +877,7 @@ function calculateFsxWindowsCapacityPrice(
     const roundedValue = Math.ceil(requiredNoOfFileSystems);
     const minimumRequiredThroughput = roundedValue * 8;
     const provisionedThroughput = Math.max(throughput, minimumRequiredThroughput);
-    const capacityPrice =
-        storageType?.toLocaleLowerCase() === 'ssd' ? ssdStorageRate * capacity : hddStorageRate * capacity;
+    const capacityPrice = storageType?.toLowerCase() === 'ssd' ? ssdStorageRate * capacity : hddStorageRate * capacity;
     const iopsPrice = iopsRate * Math.max(iops - 3 * capacity, 0);
     const throughputPrice = throughputRate * provisionedThroughput;
 

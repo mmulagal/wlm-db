@@ -344,8 +344,7 @@ async function getHostAndSqlServerInfo(
 
                     if (dbInfo.length) {
                         dbInfo.forEach(sqlServerInstanceInfo => {
-                            sqlServerInstanceInfo.sqlServerName =
-                                sqlServerInstanceInfo?.sqlServerName?.toLocaleLowerCase();
+                            sqlServerInstanceInfo.sqlServerName = sqlServerInstanceInfo?.sqlServerName?.toLowerCase();
                         });
                         ssmConnectedEc2ResponseInfo.push({
                             ec2InstanceId: target.ec2InstanceId,
