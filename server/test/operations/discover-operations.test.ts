@@ -91,7 +91,7 @@ describe('Discover operations: PGSQL', () => {
     it('Discover EC2 instances hosting PostgreSQL Server', async () => {
         const response = await discoverPgSqlResources(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 10);
         const connectedResources = response.items.find(item => item.ssmState === 'connected');
-        expect(connectedResources?.pgsqlServerVersion).toEqual('psql (PostgreSQL) 16.5');
+        expect(connectedResources?.pgsqlServerInstances?.[0]?.pgsqlServerVersion).toEqual('psql (PostgreSQL) 16.5');
         expect(response).toBeDefined();
     });
 });

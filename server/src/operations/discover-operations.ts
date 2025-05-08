@@ -106,7 +106,8 @@ import {
     DiscoverPgSqlResponseBodyType,
     DiscoverOracleResponseType,
     DiscoverOracleInstanceType,
-    DiscoverOracleResponseBodyType
+    DiscoverOracleResponseBodyType,
+    PgSqlServerInstaceType
 } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
@@ -2096,7 +2097,7 @@ async function discoverPgSqlResources(
         }
     };
 
-    const instancesWithSsmResponse: DiscoverPgSqlResponseType[] = [];
+    let instancesWithSsmResponse: DiscoverPgSqlResponseType[] = [];
 
     try {
         const {
@@ -2114,14 +2115,16 @@ async function discoverPgSqlResources(
             pageSize
         );
 
-        await Promise.all(
+        instancesWithSsmResponse = await Promise.all(
             ssmConnectedEc2Instances.map(async ec2Instance => {
                 const ssmResponse = ssmResponseMap.get(ec2Instance.ec2InstanceId);
                 const output = ssmResponse?.output;
                 const error = ssmResponse?.error;
                 if (error) {
-                    ec2Instance.error = error;
-                    return instancesWithSsmResponse.push(ec2Instance);
+                    return {
+                        ...ec2Instance,
+                        error
+                    };
                 }
 
                 let parsedResponse;
@@ -2144,8 +2147,7 @@ async function discoverPgSqlResources(
                         default_auth: defaultAuth
                     } = parsedResponse;
 
-                    ec2Instance = {
-                        ...ec2Instance,
+                    const pgsqlServerInstance: PgSqlServerInstaceType = {
                         pgsqlServerVersion: isValidProp(version) ? version : undefined,
                         pgsqlServerState: isValidProp(status) ? status : undefined,
                         pgsqlServerName: getPgSqlHostName(hostname, pgSqlServer),
@@ -2160,7 +2162,7 @@ async function discoverPgSqlResources(
                         })
                     };
 
-                    ec2Instance.storage = getDiscoveredPgSqlStorageDetails(
+                    pgsqlServerInstance.storage = getDiscoveredPgSqlStorageDetails(
                         ec2Instance.ebsVolumes!,
                         endPointIpWithFsxInfo,
                         fsIdWithFsxInfo,
@@ -2170,11 +2172,18 @@ async function discoverPgSqlResources(
                         ebsVolume,
                         nfsMountPoint
                     );
-                    instancesWithSsmResponse.push(ec2Instance);
+
+                    return {
+                        ...ec2Instance,
+                        pgsqlServerInstances: [pgsqlServerInstance]
+                    };
                 } catch (err: unknown) {
                     logger.warn('Failed to parse SSM response', { error: err });
                     ec2Instance.error = err as string;
-                    return instancesWithSsmResponse.push(ec2Instance);
+                    return {
+                        ...ec2Instance,
+                        error: `Failed to parse SSM response: ${err}`
+                    };
                 }
             })
         );
@@ -2329,7 +2338,7 @@ async function getPgSqlResourceDetails(
                 creationDate: Date.now(),
                 node1InstanceId: ec2Instance.ec2InstanceId
             },
-            clusterNodeDetails: ec2Instance.nodes,
+            clusterNodeDetails: ec2Instance?.pgsqlServerInstances?.[0]?.nodes || [],
             databaseInstanceDetails: [],
             co_relation_id: null,
             ebsVolumeIds: [],
@@ -2337,33 +2346,35 @@ async function getPgSqlResourceDetails(
         };
         const clonedResourceDetails = cloneDeep(resourceDetails);
 
-        const { storage } = ec2Instance;
-        let ebsVolumeIds: string[] | undefined = [];
-        let fsxnId: string | undefined;
-        storage?.forEach(({ type, id }) => {
-            // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
-            // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
-            ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
-            fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
-        });
+        for (const pgsqlServerInstance of ec2Instance?.pgsqlServerInstances || []) {
+            const { storage } = pgsqlServerInstance;
+            let ebsVolumeIds: string[] | undefined = [];
+            let fsxnId: string | undefined;
+            storage?.forEach(({ type, id }: { type: string; id: string }) => {
+                // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
+                // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
+                ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
+                fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
+            });
 
-        resourceDetails.ebsVolumeIds = resourceDetails.ebsVolumeIds?.concat(ebsVolumeIds);
+            resourceDetails.ebsVolumeIds = resourceDetails.ebsVolumeIds?.concat(ebsVolumeIds);
 
-        resourceDetails.databaseInstanceDetails?.push({
-            database_instance_id: ec2Instance.pgsqlServerInstanceId || '',
-            database_instance_name: ec2Instance.pgsqlServerInstance || PGSQL_DEFAULT_INSTANCE_NAME,
-            database_type: RESOURCESTYPE.PGSQL,
-            is_default: true,
-            instanceState: ec2Instance.pgsqlServerState,
-            region,
-            credentials_id: credentialsId,
-            metadata: { userDatabase: [] },
-            fsxn_ids: fsxnId || '',
-            ebsVolumeIds,
-            database_deployment_type: ec2Instance.pgsqlServerDeploymentType,
-            storage_type: fsxnId ? STORAGE_TYPE.FSXN : ebsVolumeIds.length > 0 ? STORAGE_TYPE.EBS : NOT_AVAILABLE,
-            resource: clonedResourceDetails
-        });
+            resourceDetails.databaseInstanceDetails?.push({
+                database_instance_id: pgsqlServerInstance.pgsqlServerInstanceId || '',
+                database_instance_name: pgsqlServerInstance.pgsqlServerInstanceName || PGSQL_DEFAULT_INSTANCE_NAME,
+                database_type: RESOURCESTYPE.PGSQL,
+                is_default: true,
+                instanceState: pgsqlServerInstance.pgsqlServerState,
+                region,
+                credentials_id: credentialsId,
+                metadata: { userDatabase: [] },
+                fsxn_ids: fsxnId || '',
+                ebsVolumeIds,
+                database_deployment_type: pgsqlServerInstance.pgsqlServerDeploymentType,
+                storage_type: fsxnId ? STORAGE_TYPE.FSXN : ebsVolumeIds.length > 0 ? STORAGE_TYPE.EBS : NOT_AVAILABLE,
+                resource: clonedResourceDetails
+            });
+        }
         return resourceDetails;
     });
 
