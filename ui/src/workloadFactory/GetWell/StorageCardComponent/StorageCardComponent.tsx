@@ -234,6 +234,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 ? `${styles.titleText} ${styles.overProvisioned}`
                                 : styles.titleText
                         }
+                        style={{
+                            whiteSpace:
+                                cardData?.errorMessage ||
+                                (cardData?.block_two?.value === GETWELL_STATUS.ANALYZING &&
+                                    cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING)
+                                    ? 'unset'
+                                    : 'nowrap'
+                        }}
                     >
                         {cardData?.block_two?.value && cardData?.block_two?.value !== GENERAL.UNAVAILABLE ? (
                             <>
@@ -890,9 +898,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
                     {/* Status */}
                     <div className={`${styles.column} ${styles.tooltip}`}>
-                        <DsTypography variant="Semibold_14" className={styles.titleText}>
-                            {sectionTwoContentNew(cardData)}
-                        </DsTypography>
+                        {sectionTwoContentNew(cardData)}
+
                         <DsTypography variant="Regular_14" isDisabled={disableText} className={styles.label}>
                             {cardData?.block_two?.type}
                         </DsTypography>
