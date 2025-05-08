@@ -118,6 +118,21 @@
         }
     }
 
+    .overProvisioned {
+        display: flex;
+        align-items: center;
+        overflow: unset;
+
+        [class*='svgSection'] {
+            top: 0px;
+        }
+
+        .tooltipLevel {
+            position: relative;
+            top: 4px;
+        }
+    }
+
     .centerTextContainer {
         display: flex;
         gap: 8px;

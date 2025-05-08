@@ -227,7 +227,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else {
             return (
                 <>
-                    <DsTypography variant="Semibold_14" className={styles.titleText}>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            cardData?.block_two?.value === 'Over-provisioned'
+                                ? `${styles.titleText} ${styles.overProvisioned}`
+                                : styles.titleText
+                        }
+                    >
                         {cardData?.block_two?.value && cardData?.block_two?.value !== GENERAL.UNAVAILABLE ? (
                             <>
                                 <span className={styles.svgSection}>
@@ -243,16 +250,19 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         ) : (
                             <>
                                 {cardData?.errorMessage && (
-                                    <span>
-                                        <Popover
-                                            popoverClass={''}
-                                            children={cardData?.errorMessage}
-                                            trigger="hover"
-                                            isAppendedToBody={false}
-                                            container={<TooltipIcon />}
-                                            placement="bottom"
-                                        />
-                                        <span>
+                                    <span className={styles.overProvisioned}>
+                                        <span className={styles.tooltipLevel}>
+                                            <Popover
+                                                popoverClass={''}
+                                                children={cardData?.errorMessage}
+                                                trigger="hover"
+                                                isAppendedToBody={false}
+                                                container={<TooltipIcon />}
+                                                placement="bottom"
+                                            />
+                                        </span>
+
+                                        <span style={{ marginLeft: '8px' }}>
                                             <DsTypography variant="Semibold_14" isDisabled={disableText}>
                                                 {GENERAL.UNAVAILABLE}
                                             </DsTypography>
