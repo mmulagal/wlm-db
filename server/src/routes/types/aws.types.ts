@@ -1,26 +1,20 @@
 import { Type, Static } from '@fastify/type-provider-typebox';
-import {
-    ACCOUNT_ID_DESC,
-    AWS_REGION_DESC,
-    AWS_REGION_CODE_DESC,
-    AWS_REGION_NAME_DESC,
-    CREDENTIALS_ID_DESC
-} from '../../utils/schema-description-consts';
+import { API_DESCRIPTION, API_DESCRIPTION_EXAMPLES } from '../../utils/schema-description-consts';
 
 // AWS request parameters
 const AwsParams = Type.Object({
-    accountId: Type.String({ description: ACCOUNT_ID_DESC }),
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC }),
     credentialsId: Type.String({
-        description: CREDENTIALS_ID_DESC,
+        description: API_DESCRIPTION.CREDENTIALS_ID_DESC,
         format: 'uuid',
-        examples: ['12345678-1234-1234-1234-123456789012']
+        examples: API_DESCRIPTION_EXAMPLES.CREDENTIALS_ID_EX
     })
 });
 
 // AWS request parameters wth region
 const AwsParamsWithRegion = Type.Composite([
     AwsParams,
-    Type.Object({ region: Type.String({ description: AWS_REGION_DESC }) })
+    Type.Object({ region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC }) })
 ]);
 
 // EC2 instance Types response
@@ -159,8 +153,8 @@ const AdsResponse = Type.Object({
 
 // Regions supporting FSx for ONTAP response
 const FSxAvailableRegion = Type.Object({
-    regionCode: Type.String({ description: AWS_REGION_CODE_DESC }),
-    regionName: Type.String({ description: AWS_REGION_NAME_DESC })
+    regionCode: Type.String({ description: API_DESCRIPTION.AWS_REGION_CODE_DESC }),
+    regionName: Type.String({ description: API_DESCRIPTION.AWS_REGION_NAME_DESC })
 });
 
 const FSxRegionsResponse = Type.Object({

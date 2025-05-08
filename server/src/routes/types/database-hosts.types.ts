@@ -13,59 +13,56 @@ import {
     SANDBOX_LIFECYCLE_REBASELINE
 } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
-import {
-    ACCOUNT_ID_DESC,
-    AWS_REGION_DESC,
-    CREDENTIALS_ID_DESC,
-    DATABASE_HOST_ID_DESC,
-    DATABASE_INSTANCE_ID_DESC,
-    DATABASE_INSTANCE_NAME_DESC
-} from '../../utils/schema-description-consts';
+import { API_DESCRIPTION, API_DESCRIPTION_EXAMPLES } from '../../utils/schema-description-consts';
 
 const DatabaseHostObjectParams = Type.Object({
-    accountId: Type.String({ description: ACCOUNT_ID_DESC, minLength: 1 })
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC, minLength: 1 })
 });
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
 const DatabaseHostSummaryParams = Type.Composite([
     CredentialsIdParams,
-    Type.Object({ databaseHostId: Type.String({ minLength: 1, description: DATABASE_HOST_ID_DESC }) })
+    Type.Object({ databaseHostId: Type.String({ minLength: 1, description: API_DESCRIPTION.DATABASE_HOST_ID_DESC }) })
 ]);
 
 const DatabaseHostInstanceSummaryParams = Type.Composite([
     DatabaseHostSummaryParams,
-    Type.Object({ databaseInstanceId: Type.String({ minLength: 1, description: DATABASE_INSTANCE_ID_DESC }) })
+    Type.Object({
+        databaseInstanceId: Type.String({ minLength: 1, description: API_DESCRIPTION.DATABASE_INSTANCE_ID_DESC })
+    })
 ]);
 
 const DatabaseHostOptionalInstanceSummaryParams = Type.Composite([
     DatabaseHostSummaryParams,
-    Type.Optional(Type.Object({ databaseInstanceId: Type.String({ description: DATABASE_INSTANCE_ID_DESC }) }))
+    Type.Optional(
+        Type.Object({ databaseInstanceId: Type.String({ description: API_DESCRIPTION.DATABASE_INSTANCE_ID_DESC }) })
+    )
 ]);
 
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
 const CreateDatabaseParams = Type.Object({
-    accountId: Type.String({ description: ACCOUNT_ID_DESC, minLength: 7 }),
-    databaseHostId: Type.String({ minLength: 10, description: DATABASE_HOST_ID_DESC }),
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC, minLength: 7 }),
+    databaseHostId: Type.String({ minLength: 10, description: API_DESCRIPTION.DATABASE_HOST_ID_DESC }),
     credentialsId: Type.String({
-        description: CREDENTIALS_ID_DESC,
+        description: API_DESCRIPTION.CREDENTIALS_ID_DESC,
         format: 'uuid',
-        examples: ['123e4567-e89b-12d3-a456-426614174000']
+        examples: API_DESCRIPTION_EXAMPLES.CREDENTIALS_ID_EX
     }),
-    region: Type.String({ description: AWS_REGION_DESC })
+    region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC })
 });
 
 const CreateDatabaseParamsV2 = Type.Object({
-    accountId: Type.String({ description: ACCOUNT_ID_DESC, minLength: 7 }),
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC, minLength: 7 }),
     credentialsId: Type.String({
-        description: CREDENTIALS_ID_DESC,
+        description: API_DESCRIPTION.CREDENTIALS_ID_DESC,
         minLength: 1,
         format: 'uuid',
-        examples: ['123e4567-e89b-12d3-a456-426614174000']
+        examples: API_DESCRIPTION_EXAMPLES.CREDENTIALS_ID_EX
     }),
-    region: Type.String({ description: AWS_REGION_DESC, minLength: 1 }),
-    databaseHostId: Type.String({ description: DATABASE_HOST_ID_DESC, minLength: 10 }),
-    databaseInstanceName: Type.String({ description: DATABASE_INSTANCE_NAME_DESC })
+    region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC, minLength: 1 }),
+    databaseHostId: Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC, minLength: 10 }),
+    databaseInstanceName: Type.String({ description: API_DESCRIPTION.DATABASE_INSTANCE_NAME_DESC })
 });
 
 // Query parameter to fetch protection, performance, storage and cost details
@@ -383,24 +380,24 @@ const DriveInfoResponseBody = Type.Object({
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
 const DatabaseHostsParamsWithRegion = Type.Object({
-    accountId: Type.String({ description: ACCOUNT_ID_DESC, minLength: 1 }),
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC, minLength: 1 }),
     credentialsId: Type.String({
         format: 'uuid',
-        description: CREDENTIALS_ID_DESC,
-        examples: ['123e4567-e89b-12d3-a456-426614174000']
+        description: API_DESCRIPTION.CREDENTIALS_ID_DESC,
+        examples: API_DESCRIPTION_EXAMPLES.CREDENTIALS_ID_EX
     }),
-    region: Type.String({ description: AWS_REGION_DESC, minLength: 1 })
+    region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC, minLength: 1 })
 });
 
 const DatabaseHostSummaryParamsWithRegion = Type.Object({
-    accountId: Type.String({ minLength: 1, description: ACCOUNT_ID_DESC }),
-    databaseHostId: Type.String({ minLength: 1, description: DATABASE_HOST_ID_DESC }),
+    accountId: Type.String({ minLength: 1, description: API_DESCRIPTION.ACCOUNT_ID_DESC }),
+    databaseHostId: Type.String({ minLength: 1, description: API_DESCRIPTION.DATABASE_HOST_ID_DESC }),
     credentialsId: Type.String({
         format: 'uuid',
-        description: CREDENTIALS_ID_DESC,
-        examples: ['123e4567-e89b-12d3-a456-426614174000']
+        description: API_DESCRIPTION.CREDENTIALS_ID_DESC,
+        examples: API_DESCRIPTION_EXAMPLES.CREDENTIALS_ID_EX
     }),
-    region: Type.String({ description: AWS_REGION_DESC, minLength: 1 })
+    region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC, minLength: 1 })
 });
 type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
 
@@ -486,7 +483,7 @@ const SandboxParams = Type.Composite([
     DatabaseHostSummaryParams,
     Type.Object({
         sandboxName: Type.String({ maxLength: 27, pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$' }),
-        databaseInstanceId: Type.String({ description: DATABASE_INSTANCE_ID_DESC })
+        databaseInstanceId: Type.String({ description: API_DESCRIPTION.DATABASE_INSTANCE_ID_DESC })
     })
 ]);
 

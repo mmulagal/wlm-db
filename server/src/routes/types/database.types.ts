@@ -1,24 +1,20 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { HEADERS } from '../../utils/consts';
-import {
-    ACCOUNT_ID_DESC,
-    DATABASE_HOST_ID_DESC,
-    DATABASE_INSTANCE_NAME_DESC
-} from '../../utils/schema-description-consts';
+import { API_DESCRIPTION } from '../../utils/schema-description-consts';
 
 const DatabaseHeaders = Type.Object({
     [HEADERS.WORKSPACE_ID_HEADER]: Type.Optional(Type.String({ minLength: 1 }))
 });
 
 const DatabaseParams = Type.Object({
-    accountId: Type.String({ description: ACCOUNT_ID_DESC }),
-    resourceId: Type.String({ description: DATABASE_HOST_ID_DESC })
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC }),
+    resourceId: Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC })
 });
 
 const Tablesparams = Type.Object({
-    accountId: Type.String({ description: ACCOUNT_ID_DESC }),
-    resourceId: Type.String({ description: DATABASE_HOST_ID_DESC }),
-    databaseName: Type.String({ description: DATABASE_INSTANCE_NAME_DESC })
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC }),
+    resourceId: Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC }),
+    databaseName: Type.String({ description: API_DESCRIPTION.DATABASE_INSTANCE_NAME_DESC })
 });
 
 const MsSqlServerDiscoveryResponse = Type.Object({
