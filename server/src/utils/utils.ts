@@ -406,6 +406,9 @@ function derivePropertiesFromARN(awsResourceArn: string) {
 }
 
 async function sleep(ms: number) {
+    if (isDemo()) {
+        return;
+    }
     await new Promise(resolve => {
         setTimeout(resolve, ms);
     });

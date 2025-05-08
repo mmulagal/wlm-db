@@ -995,13 +995,11 @@ async function hostLevelDriftData(
         fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
     }
 
-    shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-    shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
-    shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
-        AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
-    );
-    shouldCalculateRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
-    shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
+    shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLowerCase());
+    shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLowerCase());
+    shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLowerCase());
+    shouldCalculateRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLowerCase());
+    shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase());
 
     const [
         computeAssessmentResponse,
