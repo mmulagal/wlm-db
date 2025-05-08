@@ -381,7 +381,7 @@ const GetWell = () => {
                 </>
             )}
             <div className={styles.getWell} id="export-optimize-pdf">
-                {!optimizePrintState && (
+                {/* {!optimizePrintState && (
                     <div className={commonStyles.commonBreadCrumb} style={{ left: '0%', paddingLeft: '40px' }}>
                         <BreadCrumbs
                             items={[
@@ -404,8 +404,8 @@ const GetWell = () => {
                             ]}
                         />
                     </div>
-                )}
-                <div className={styles.header}>
+                )} */}
+                {/* <div className={styles.header}>
                     <div className={styles['header-top-section']}>
                         <DsTypography
                             data-testid={`wlm-db-optimize-instance`}
@@ -464,7 +464,7 @@ const GetWell = () => {
                             </DsTypography>
                         </div>
                     )}
-                </div>
+                </div> */}
 
                 {/* Partial data warning here - based on condition */}
 

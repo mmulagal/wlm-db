@@ -1,4 +1,5 @@
 export interface GetWellSliceInterface {
+    selectedWellArchitectTab: string;
     selectedCloneTab: string;
     optimizePageLoading: boolean;
     driftAssessmentData: AssessmentResponseInterface | null;

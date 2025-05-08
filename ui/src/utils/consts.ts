@@ -722,6 +722,13 @@ export const GETWELL_STATUS = {
     WARNING: 'Warning'
 };
 
+export const WELL_ARCHITECTED_TABS = {
+    OVERVIEW: 'Overview',
+    WELL_ARCHITECTED_STATUS: 'Well-architected status',
+    DATABASES: 'Databases',
+    SANDBOXES: 'Sandboxes'
+};
+
 export const GETWELL_VALUES: any = {
     optimized: 'Optimized',
     optimizing: 'Optimizing',

@@ -10,10 +10,13 @@ import { formatSize } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 import { getProtectionText, isAwsBackupEnabledText } from '../../InventoryV2/InventoryUtilsV2';
 import { PROTECTION_TEXT_STATUS } from '../../../utils/consts';
+import DatabaseHostOverviewApiV2 from '../ResourceHomePage/DatabaseHostOverviewApiV2';
 
 const DatabaseListTable = () => {
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
     const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
+
+    DatabaseHostOverviewApiV2();
 
     const formatData = (tableData: WorkloadFactoryDatabaseItem[]) => {
         return tableData?.map(perRow => {

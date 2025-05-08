@@ -24,7 +24,13 @@ import {
     getSelectedFromSelectionState,
     isSmbProtocol
 } from '../../../../utils/utilityFunctions';
-import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import {
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    INVENTORY_STATUS,
+    WELL_ARCHITECTED_TABS,
+    WLF_TABS
+} from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -52,7 +58,11 @@ import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { setGwPageLoadInstanceData, setLandingFrom } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setGwPageLoadInstanceData,
+    setLandingFrom,
+    setSelectedWellArchitectTab
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import UndetectedSecondDialogV2 from '../../InventoryTable/UndetectedSecondDialog/UndetectedSecondDialogV2';
 import UndetectedHostDialogContentV2 from '../../InventoryTable/UndetectedHostDialogContent/UndetectedHostDialogContentV2';
@@ -1031,6 +1041,11 @@ const InstancesTable = () => {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(
+                                                setSelectedWellArchitectTab(
+                                                    WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
+                                                )
+                                            );
                                             optimizeAction(rowData);
                                         }
 

@@ -2,6 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { cardDataDefault } from '../../workloadFactory/GetWell/GetWellUtils';
 import { GetWellSliceInterface } from '../../utils/types/getWellTypes';
 import { GENERAL } from '../../utils/appConstants';
+import { WELL_ARCHITECTED_TABS } from '../../utils/consts';
 
 const initialState: GetWellSliceInterface = {
     optimizePageLoading: false,
@@ -47,13 +48,17 @@ const initialState: GetWellSliceInterface = {
     selectedCloneTab: GENERAL.CLONE_MANAGEMENT_TAB1,
     cloneDashboardData: [], // Data stored for clone in inner page
     cloneIsOptimizedRows: {}, // To maintain optimized rows in clone assessment (resourceId + instanceId + cloneDatabasename)
-    inProgressStateData: {}
+    inProgressStateData: {},
+    selectedWellArchitectTab: WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
 };
 
 const getWellOptimizeSlice = createSlice({
     name: 'getWellOptimize',
     initialState,
     reducers: {
+        setSelectedWellArchitectTab: (state, action: PayloadAction<any>) => {
+            state.selectedWellArchitectTab = action.payload;
+        },
         setSelectedCloneTab: (state, action: PayloadAction<string>) => {
             state.selectedCloneTab = action.payload;
         },
@@ -212,6 +217,7 @@ const getWellOptimizeSlice = createSlice({
 });
 
 export const {
+    setSelectedWellArchitectTab,
     setSelectedCloneTab,
     setSelectedSnapshot,
     setSelectedSnapshotPolicy,

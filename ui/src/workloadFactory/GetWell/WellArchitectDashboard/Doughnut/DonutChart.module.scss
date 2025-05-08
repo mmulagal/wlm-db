@@ -1,0 +1,39 @@
+$lg: 184;
+$sm: 144;
+
+:export {
+    var_lg: $lg;
+    var_sm: $sm;
+}
+
+.base {
+    position: relative;
+    display: inline-flex;
+}
+
+.lg {
+    width: #{$lg}px;
+    height: #{$lg}px;
+}
+
+.sm {
+    width: #{$sm}px;
+    height: #{$sm}px;
+}
+
+.total {
+    position: absolute;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    > div:first-child {
+        display: flex;
+        align-items: flex-end;
+    }
+}
