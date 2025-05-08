@@ -2250,54 +2250,69 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
 
     let volumeNames = volumesToOptimize ?? [];
     try {
+        const missingVolumes: string[] = [];
+        const instanceVolumeMapping =
+            (await getMappedOntapVolumes(
+                credentialsId,
+                region,
+                fsxId,
+                false,
+                activeNodeInstanceId!,
+                [instanceName],
+                sqlAuthEnabled,
+                true
+            )) || [];
+        const mappedVolumeNames = (
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i?.volumeRecords)
+                .flat() || []
+        )?.map(volume => volume.name as string);
         if (isEmpty(volumesToOptimize)) {
-            const instanceVolumeMapping =
-                (await getMappedOntapVolumes(
-                    credentialsId,
-                    region,
-                    fsxId,
-                    false,
-                    activeNodeInstanceId!,
-                    [instanceName],
-                    sqlAuthEnabled,
-                    true
-                )) || [];
-
-            const volumeRecords =
-                Object.values(instanceVolumeMapping)
-                    ?.map(i => i?.volumeRecords)
-                    .flat() || [];
-            volumeNames = volumeRecords.map(volume => volume.name as string);
-        }
-        const apiQueryFilter = `vserver=${svmName}&volume=${volumeNames.join(',')}`;
-        const apiEndpoint = '/private/cli/volume';
-
-        const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
-            fsxId,
-            region,
-            apiEndpoint,
-            apiQueryFilter,
-            apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
-        });
-        const resp = await retryWithDelay(
-            callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
-            3,
-            5000
-        );
-        const parsedResp = sqlResponseParsing(resp);
-        const objectsOptimized = parsedResp.num_records || 0;
-        if (objectsOptimized !== volumeNames.length && !isDemoFlow) {
-            if (objectsOptimized === 0) {
-                jobError = `Failed to optimize storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
-                logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
-                jobStatus = JOBSTATUS.FAILED;
-            } else {
-                const unOptimizedObjects = volumeNames.filter(obj => !parsedResp.cli_output.includes(obj));
-                jobError = `Failed to optimize storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
-                jobStatus = JOBSTATUS.WARNING;
-            }
+            volumeNames = mappedVolumeNames;
         } else {
-            jobStatus = JOBSTATUS.COMPLETED;
+            volumeNames = volumeNames.filter(volumeName => {
+                const isMapped = mappedVolumeNames.includes(volumeName);
+                if (!isMapped) {
+                    missingVolumes.push(volumeName);
+                }
+                return isMapped;
+            });
+        }
+        if (!isEmpty(volumeNames)) {
+            const apiQueryFilter = `vserver=${svmName}&volume=${volumeNames.join(',')}`;
+            const apiEndpoint = '/private/cli/volume';
+
+            const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+                fsxId,
+                region,
+                apiEndpoint,
+                apiQueryFilter,
+                apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
+            });
+            const resp = await retryWithDelay(
+                callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
+                3,
+                5000
+            );
+            const parsedResp = sqlResponseParsing(resp);
+            const objectsOptimized = parsedResp.num_records || 0;
+            if (objectsOptimized !== volumeNames.length && !isDemoFlow) {
+                if (objectsOptimized === 0) {
+                    jobError = `Failed to optimize storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
+                    logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
+                    jobStatus = JOBSTATUS.FAILED;
+                } else {
+                    const unOptimizedObjects = volumeNames.filter(obj => !parsedResp.cli_output.includes(obj));
+                    jobError = `Failed to optimize storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                    jobStatus = JOBSTATUS.WARNING;
+                }
+            } else {
+                jobStatus = JOBSTATUS.COMPLETED;
+            }
+        }
+        if (missingVolumes.length > 0 && !isDemoFlow) {
+            jobError += `Volumes ${missingVolumes} not found for ${serverNameWithHostName}.`;
+            jobStatus = JOBSTATUS.WARNING;
         }
     } catch (error) {
         jobStatus = JOBSTATUS.FAILED;
