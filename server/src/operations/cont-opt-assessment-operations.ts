@@ -1584,6 +1584,7 @@ async function onDemandTriggerDriftAssessmentDataCollection(
             type: JOBTYPE.ASSESSMENT,
             parentJobId
         });
+        await updateLongRunningAuditGroup(undefined, undefined, savedInstanceName);
         // Call the async function without awaiting it
         handleAssessment(accountId, managedInstance, jobId, initiatedBy, fields);
 
