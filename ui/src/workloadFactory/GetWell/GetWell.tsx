@@ -847,6 +847,82 @@ const GetWell = () => {
                                                     variant="underline"
                                                 />
                                             </div>
+                                            <div className={styles.dropDown}>
+                                                <DsSelect
+                                                    title=""
+                                                    selectedOptionIds={
+                                                        defaultFilterOptions['resourceType']
+                                                            ? defaultFilterOptions['resourceType']
+                                                            : []
+                                                    }
+                                                    isExpanded={isAccordionOpen ? undefined : false}
+                                                    isCleanable={false}
+                                                    formatLabel={() =>
+                                                        `Resource type: ${
+                                                            !defaultFilterOptions['resourceType']?.length ||
+                                                            defaultFilterOptions['resourceType'].length === 9
+                                                                ? 'All'
+                                                                : ''
+                                                        }(${
+                                                            defaultFilterOptions['resourceType']?.length > 0
+                                                                ? defaultFilterOptions['resourceType']?.length
+                                                                : 9
+                                                        })`
+                                                    }
+                                                    placeholder="Placeholder text"
+                                                    options={[
+                                                        {
+                                                            id: 0,
+                                                            label: 'Database',
+                                                            value: 'Database'
+                                                        },
+                                                        {
+                                                            id: 1,
+                                                            label: 'Volume',
+                                                            value: 'Volume'
+                                                        },
+                                                        {
+                                                            id: 2,
+                                                            label: 'File system (FSx for ONTAP)',
+                                                            value: 'File system (FSx for ONTAP)'
+                                                        },
+                                                        {
+                                                            id: 3,
+                                                            label: 'Drive',
+                                                            value: 'Drive'
+                                                        },
+                                                        {
+                                                            id: 4,
+                                                            label: 'LUN path',
+                                                            value: 'LUN path'
+                                                        },
+                                                        {
+                                                            id: 5,
+                                                            label: 'Storage multipath',
+                                                            value: 'Storage multipath'
+                                                        },
+                                                        {
+                                                            id: 6,
+                                                            label: 'EC2 instance',
+                                                            value: 'EC2 instance'
+                                                        },
+                                                        {
+                                                            id: 8,
+                                                            label: 'SQL instance',
+                                                            value: 'SQL instance'
+                                                        },
+                                                        {
+                                                            id: 9,
+                                                            label: 'Network Adapter',
+                                                            value: 'Network Adapter'
+                                                        }
+                                                    ]}
+                                                    selectionType="multi"
+                                                    isWithActions={true}
+                                                    onSelect={(option: any) => handleSelect(option, 'resourceType')}
+                                                    variant="underline"
+                                                />
+                                            </div>
                                         </div>
 
                                         <div
@@ -1051,6 +1127,34 @@ const GetWell = () => {
                                                 defaultFilterOptions['configState']?.length === 3
                                                     ? 'All(3)'
                                                     : `${defaultFilterOptions['configState']?.length}/3`}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={styles.items}>
+                                            <DsTypography
+                                                style={{
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
+                                                }}
+                                                variant="Regular_14"
+                                            >
+                                                Resource type:
+                                            </DsTypography>
+                                            <DsTypography
+                                                style={{
+                                                    color:
+                                                        loading || !isAssessmentAvailable
+                                                            ? 'var(--text-disabled)'
+                                                            : 'var(--text-primary)'
+                                                }}
+                                                variant="Semibold_14"
+                                            >
+                                                {!defaultFilterOptions['resourceType']?.length ||
+                                                defaultFilterOptions['resourceType']?.length === 9
+                                                    ? 'All(9)'
+                                                    : `${defaultFilterOptions['resourceType']?.length}/9`}
                                             </DsTypography>
                                         </div>
                                     </div>
@@ -2153,7 +2257,9 @@ const GetWell = () => {
                     )}
 
                     {/* Section six */}
-                    {(filteredCardData?.scheduled_local_snapshot || filteredCardData?.crr) && (
+                    {(filteredCardData?.scheduled_local_snapshot ||
+                        filteredCardData?.crr ||
+                        filteredCardData?.scheduled_FSx_for_ONTAP_backups) && (
                         <div className={styles.sectionClass}>
                             <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                 <DsTypography

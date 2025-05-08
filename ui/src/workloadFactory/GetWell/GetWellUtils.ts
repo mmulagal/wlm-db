@@ -48,6 +48,7 @@ import {
     getCurrentDateTime,
     sortListOfDict
 } from '../../utils/utilityFunctions';
+import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
@@ -2189,7 +2190,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         const checkSubCategory =
             !filters['sub-catagories'] || filters['sub-catagories']?.includes(categoryData[key]?.subCategory);
 
-        const isOptmized = cardData[key]['block_two'].value === GETWELL_VALUES.optimized;
+        const isOptmized = isOptimized(cardData[key]['block_two'].value, cardData[key]['dismissedObj']?.configState);
         const checkStatus =
             !filters.status ||
             (filters.status?.includes(GETWELL_VALUES.optimized) && isOptmized) ||
@@ -2200,12 +2201,41 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         const checkTags =
             !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags?.includes(tag)).length > 0;
 
-        const checkConfigState =
-            !filters.configState ||
-            (!cardData[key]['dismissedObj']?.configState && filters.configState.includes(CONFIG_STATES.ACTIVE)) ||
-            filters.configState?.includes(cardData[key]['dismissedObj']?.configState);
+        let configVal = '';
+        if (!cardData[key]['dismissedObj']?.configState) {
+            configVal = CONFIG_STATES.ACTIVE;
+        } else if (cardData[key]['dismissedObj']?.configState === CONFIG_STATES.ACTIVATING) {
+            configVal = CONFIG_STATES.ACTIVE;
+        } else {
+            configVal = cardData[key]['dismissedObj']?.configState;
+        }
+        const checkConfigState = !filters.configState || filters.configState?.includes(configVal);
 
-        if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags && checkConfigState) {
+        let resourceType = cardData[key]['block_five'].value;
+        if (
+            key === 'ontap_configuration' &&
+            filters.resourceType &&
+            (filters.resourceType.includes('Volume') || filters.resourceType.includes('LUN path'))
+        ) {
+            resourceType = filters.resourceType[0];
+        } else if (
+            key === 'os_configuration' &&
+            filters.resourceType &&
+            (filters.resourceType.includes('Drive') || filters.resourceType.includes('Storage multipath'))
+        ) {
+            resourceType = filters.resourceType[0];
+        }
+        const checkResourceType = !filters.resourceType || filters.resourceType?.includes(resourceType);
+
+        if (
+            checkCategory &&
+            checkSubCategory &&
+            checkStatus &&
+            checkSeverity &&
+            checkTags &&
+            checkConfigState &&
+            checkResourceType
+        ) {
             filteredCardData[key] = cardData[key];
             if (categoryData[key] && cardData[key]['block_two'].value) {
                 configCount++;
