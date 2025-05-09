@@ -75,16 +75,15 @@ describe('Compute assessment operations', () => {
     });
 
     it('Should perform compute assessment for managed hosts', async () => {
-        const response = await managedHostsComputeAssessment(
+        const { computeAssessment } = await managedHostsComputeAssessment(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             DEMO_AWS_ACCOUNT_ID,
             'i-07e76a4b916548dc0',
             'test-resource',
-            'test-job-id',
-            RESOURCE_ID
+            'test-job-id'
         );
-        expect(response?.finding).toBeDefined();
+        expect(computeAssessment?.finding).toBeDefined();
     });
 });

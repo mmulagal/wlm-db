@@ -16,7 +16,6 @@ import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPa
 import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/common-types';
 import { extractKbNumber, extractVersionDetails, sqlResponseParsing } from '../../utils/utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
-import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { GET_INSTALLED_MSSQL_VERSION } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { updateResourceMetaData } from '../database/database-operations';
@@ -162,19 +161,9 @@ async function managedHostMSSQLPatchAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
-        if (errorMessage) {
-            await updateAsssementErrorInResourceMetadata(
-                accountId,
-                databaseHostId,
-                credentialsId,
-                region,
-                errorMessage,
-                'mssqlPatch'
-            );
-        }
     }
 
-    return patchAssessment;
+    return { patchAssessment, errorMessage };
 }
 
 async function getTheMSSqlversion(credentialsId: string, region: string, instanceId: string) {

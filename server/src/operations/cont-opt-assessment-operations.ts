@@ -209,33 +209,39 @@ async function initiateHostLevelAssessmentDataCollection(
     );
     if (metadata && activeNodeInstanceId) {
         let licenseAssessment;
+        let licenseErrorMessage;
+
         let computeAssessment;
+        let computeErrorMessage;
         let hostOsPatchAssessment;
+        let hostOsPatchErrorMessage;
         let rssConfigAssessment;
+        let rssConfigErrorMessage;
         let mssqlPatchAssessment;
+        let mssqlPatchErrorMessage;
 
         if (fields?.includes(AssessmentCategories.LICENSE)) {
-            licenseAssessment = await managedHostsLicenseAssessment(
-                accountId,
-                credentialsId,
-                region,
-                activeNodeInstanceId,
-                resourceName,
-                jobId,
-                databaseHostId
-            );
+            ({ licenseAssessment, errorMessage: licenseErrorMessage } =
+                (await managedHostsLicenseAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId,
+                    resourceName,
+                    jobId
+                )) || {});
         }
         if (fields?.includes(AssessmentCategories.COMPUTE)) {
-            computeAssessment = await managedHostsComputeAssessment(
-                accountId,
-                credentialsId,
-                region,
-                awsAccountId!,
-                activeNodeInstanceId,
-                resourceName,
-                jobId,
-                databaseHostId
-            );
+            ({ computeAssessment, errorMessage: computeErrorMessage } =
+                (await managedHostsComputeAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    awsAccountId!,
+                    activeNodeInstanceId,
+                    resourceName,
+                    jobId
+                )) || {});
             if (computeAssessment) {
                 // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
                 let { finding, findingReasonCodes, recommendationOptions } = computeAssessment || {};
@@ -274,56 +280,87 @@ async function initiateHostLevelAssessmentDataCollection(
             }
         }
         if (fields?.includes(AssessmentCategories.HOST_OS_PATCH)) {
-            hostOsPatchAssessment = await managedHostOsPatchAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                activeNodeInstanceId,
-                !!node2InstanceId, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
-                resourceName,
-                jobId
-            );
+            ({ hostOsPatchAssessment, errorMessage: hostOsPatchErrorMessage } =
+                (await managedHostOsPatchAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    activeNodeInstanceId,
+                    !!node2InstanceId, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+                    resourceName,
+                    jobId
+                )) || {});
         }
         if (fields?.includes(AssessmentCategories.RSS_CONFIG)) {
-            rssConfigAssessment = await managedHostsRssConfigAssessment(
-                accountId,
-                credentialsId,
-                region,
-                activeNodeInstanceId,
-                resourceName,
-                databaseHostId,
-                jobId,
-                metadata as unknown as Metadata
-            );
+            ({ rssConfigAssessment, errorMessage: rssConfigErrorMessage } =
+                (await managedHostsRssConfigAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId,
+                    resourceName,
+                    jobId,
+                    metadata as unknown as Metadata
+                )) || {});
         }
         if (fields?.includes(AssessmentCategories.MSSQL_PATCH)) {
             const isCluster = Boolean(node2InstanceId && node2InstanceId.trim() !== '');
 
-            mssqlPatchAssessment = await managedHostMSSQLPatchAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                activeNodeInstanceId,
-                isCluster, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
-                resourceName,
-                jobId
-            );
+            ({ patchAssessment: mssqlPatchAssessment, errorMessage: mssqlPatchErrorMessage } =
+                (await managedHostMSSQLPatchAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    activeNodeInstanceId,
+                    isCluster, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+                    resourceName,
+                    jobId
+                )) || {});
         }
-        if (
-            !isEmpty(licenseAssessment) ||
-            !isEmpty(computeAssessment) ||
-            !isEmpty(hostOsPatchAssessment) ||
-            !isEmpty(rssConfigAssessment) ||
-            !isEmpty(mssqlPatchAssessment)
-        ) {
+        const hasAssessmentOrError = [
+            licenseAssessment,
+            licenseErrorMessage,
+            computeAssessment,
+            computeErrorMessage,
+            hostOsPatchAssessment,
+            hostOsPatchErrorMessage,
+            rssConfigAssessment,
+            rssConfigErrorMessage,
+            mssqlPatchAssessment,
+            mssqlPatchErrorMessage
+        ].some(item => !isEmpty(item));
+
+        if (hasAssessmentOrError) {
+            const existingAssessmentData = (metadata as unknown as Metadata).assessment || {};
             (metadata as unknown as Metadata).assessment = {
-                license: licenseAssessment || undefined,
-                compute: computeAssessment || undefined,
-                hostOsPatch: hostOsPatchAssessment || undefined,
-                rssConfig: rssConfigAssessment || undefined,
-                mssqlPatch: mssqlPatchAssessment || undefined,
+                license: licenseAssessment || (!licenseErrorMessage ? existingAssessmentData?.license : undefined),
+                compute: computeAssessment || (!computeErrorMessage ? existingAssessmentData?.compute : undefined),
+                hostOsPatch:
+                    hostOsPatchAssessment ||
+                    (!hostOsPatchErrorMessage ? existingAssessmentData?.hostOsPatch : undefined),
+                rssConfig:
+                    rssConfigAssessment || (!rssConfigErrorMessage ? existingAssessmentData?.rssConfig : undefined),
+                mssqlPatch:
+                    mssqlPatchAssessment || (!mssqlPatchErrorMessage ? existingAssessmentData?.mssqlPatch : undefined),
+                errors: {
+                    license:
+                        licenseErrorMessage ||
+                        (!licenseAssessment ? existingAssessmentData?.errors?.license : undefined),
+                    compute:
+                        computeErrorMessage ||
+                        (!computeAssessment ? existingAssessmentData?.errors?.compute : undefined),
+                    hostOsPatch:
+                        hostOsPatchErrorMessage ||
+                        (!hostOsPatchAssessment ? existingAssessmentData?.errors?.hostOsPatch : undefined),
+                    rssConfig:
+                        rssConfigErrorMessage ||
+                        (!rssConfigAssessment ? existingAssessmentData?.errors?.rssConfig : undefined),
+                    mssqlPatch:
+                        mssqlPatchErrorMessage ||
+                        (!mssqlPatchAssessment ? existingAssessmentData?.errors?.mssqlPatch : undefined)
+                },
                 lastAssessedDate: new Date().getTime().toString()
             };
 

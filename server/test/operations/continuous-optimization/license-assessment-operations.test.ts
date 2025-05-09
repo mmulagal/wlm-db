@@ -164,15 +164,14 @@ describe('License assessment operations', () => {
     });
 
     it('Should perform license assessment for managed hosts', async () => {
-        const response = await managedHostsLicenseAssessment(
+        const { licenseAssessment } = await managedHostsLicenseAssessment(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             'i-07e76a4b916548dc0',
             'test-resource',
-            'test-job-id',
-            RESOURCE_ID
+            'test-job-id'
         );
-        expect(response?.licenseFinding).toBeDefined();
+        expect(licenseAssessment?.licenseFinding).toBeDefined();
     });
 });

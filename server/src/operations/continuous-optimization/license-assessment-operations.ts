@@ -19,7 +19,6 @@ import {
 } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
-import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
@@ -88,8 +87,7 @@ async function managedHostsLicenseAssessment(
     region: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    parentJobId?: string,
-    databaseHostId?: string
+    parentJobId?: string
 ) {
     logger.info('Managed hosts license assessment', {
         accountId,
@@ -126,19 +124,9 @@ async function managedHostsLicenseAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
-        if (errorMessage) {
-            await updateAsssementErrorInResourceMetadata(
-                accountId,
-                databaseHostId!,
-                credentialsId,
-                region,
-                errorMessage,
-                'license'
-            );
-        }
     }
 
-    return licenseAssessment;
+    return { licenseAssessment, errorMessage };
 }
 
 async function runLicenseAssessment(

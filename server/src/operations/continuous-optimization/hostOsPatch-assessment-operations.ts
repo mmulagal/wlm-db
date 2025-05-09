@@ -19,7 +19,6 @@ import { getAllClusterNodeDetails } from '../database-hosts-operations';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
-import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { updateResourceMetaData } from '../database/database-operations';
 
@@ -185,18 +184,8 @@ async function managedHostOsPatchAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
-        if (errorMessage) {
-            await updateAsssementErrorInResourceMetadata(
-                accountId,
-                databaseHostId,
-                credentialsId,
-                region,
-                errorMessage,
-                'hostOsPatch'
-            );
-        }
     }
-    return hostOsPatchAssessment;
+    return { hostOsPatchAssessment, errorMessage };
 }
 
 async function checkIfPatchBaselineInProgress(credentialsId: string, region: string, instanceIds: string[]) {

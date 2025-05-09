@@ -294,7 +294,7 @@ describe('MSSql Patch assessment operations', () => {
     });
 
     it('Should perform mssql patch assessment for managed hosts clustered', async () => {
-        const [response] =
+        const { patchAssessment } =
             (await managedHostMSSQLPatchAssessment(
                 ACCOUNT_ID,
                 DEFAULT_AWS_CREDENTIALS_ID,
@@ -304,12 +304,12 @@ describe('MSSql Patch assessment operations', () => {
                 true,
                 'test-resource',
                 'test-job-id'
-            )) || [];
-        expect(response.ec2InstanceId).toBeDefined();
+            )) || {};
+        expect(patchAssessment?.[0]?.ec2InstanceId).toBeDefined();
     });
 
     it('Should perform mssql patch assessment for managed hosts standalone', async () => {
-        const [response] =
+        const { patchAssessment } =
             (await managedHostMSSQLPatchAssessment(
                 ACCOUNT_ID,
                 DEFAULT_AWS_CREDENTIALS_ID,
@@ -320,6 +320,6 @@ describe('MSSql Patch assessment operations', () => {
                 'test-resource',
                 'test-job-id'
             )) || [];
-        expect(response.ec2InstanceId).toBeDefined();
+        expect(patchAssessment?.[0]?.ec2InstanceId).toBeDefined();
     });
 });
