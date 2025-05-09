@@ -6,8 +6,16 @@ import ProtectedDatabases from './ProtectedDatabases/ProtectedDatabases';
 import CapacityUtilization from './CapacityUtilizationCard/CapacityUtilization';
 import IOPSCard from './IOPSCard/IOPSCard';
 import ThroughputCard from './ThroughputCard/ThroughputCard';
+import InformationSection from '../../../ResourcePage/InformationSection/InformationSection';
+import StorageSavingResource from '../../../ResourcePage/StorageSavingResource/StorageSavingResource';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { getAggrStorageSavings } from '../../../../utils/utilityFunctions';
+import DatabaseHostOverviewApiV2 from '../../../ResourcePage/ResourceHomePage/DatabaseHostOverviewApiV2';
 
 const ResourceMSSQLOverview = () => {
+    const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+
+    DatabaseHostOverviewApiV2();
     return (
         <div className={styles['resource-mssql-overview']}>
             <div className={styles.leftSide}>
@@ -27,8 +35,19 @@ const ResourceMSSQLOverview = () => {
                     <IOPSCard />
                     <ThroughputCard />
                 </div>
+
+                <div className={styles.barContainer}>
+                    <div className={styles.commonContainer}>
+                        <StorageSavingResource
+                            hostData={getAggrStorageSavings([resourceDetails])}
+                            hostsLoading={resourceLoading}
+                        />
+                    </div>
+                </div>
             </div>
-            <div className={styles.rightSide}></div>
+            <div className={styles.rightSide}>
+                <InformationSection />
+            </div>
         </div>
     );
 };

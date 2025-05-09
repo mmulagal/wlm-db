@@ -1,6 +1,56 @@
-.resourceHeader {
-    background-color: var(--content-background);
-    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
+.dbHostTile {
     height: 100px;
-    width: 100%;
+    background-color: var(--content-background);
+    box-shadow: 2px 2px 6px var(--grey-15);
+    display: flex;
+
+    .loaderHeight {
+        height: 24px;
+    }
+
+    .dbHostSection {
+        display: flex;
+        gap: 16px;
+        padding: 24px 0 24px 32px;
+        width: 34.6%;
+    }
+
+    .dbHostSeparator {
+        background: var(--border);
+        width: 1px;
+        height: 56px;
+        margin-top: 20px;
+    }
+
+    .statusSection {
+        display: flex;
+        flex-direction: column;
+        padding: 24px 0 24px 32px;
+        width: 20.3%;
+
+        .firstSection {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    }
+
+    .commonSection {
+        display: flex;
+        flex-direction: column;
+        padding: 24px 0 24px 32px;
+        width: 20%;
+
+        .commonSectionLevel {
+            display: flex;
+            gap: 8px;
+
+            .textManage {
+                max-width: 150px;
+                overflow-x: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+    }
 }

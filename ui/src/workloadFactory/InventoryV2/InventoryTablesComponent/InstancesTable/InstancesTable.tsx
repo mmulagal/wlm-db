@@ -259,28 +259,6 @@ const InstancesTable = () => {
         );
     };
 
-    const resourceAction = (rowData: any) => {
-        const updatedState = store.getState();
-        const { inventoryTableData }: any = updatedState.inventoryV2;
-        const targettedHost =
-            inventoryTableData[uniqueHostRow(rowData.resourceId, rowData.credentialId, rowData.regionId)] ||
-            inventoryTableData[uniqueHostRow(rowData.ec2InstanceId, rowData.credentialId, rowData.regionId)];
-        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
-            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
-        );
-        dispatch(resetWorkloadFactoryResourceData());
-        dispatch(setSelectedHostname(rowData?.name));
-        dispatch(
-            setSelectedResourcePageHostData({
-                resourceId: targettedHost?.resourceId,
-                databaseInstanceId: targettedDbInstance?.databaseInstanceId,
-                databaseInstanceName: targettedDbInstance?.databaseInstanceName,
-                credentialId: targettedHost?.credentialId,
-                regionId: targettedHost?.regionId
-            })
-        );
-    };
-
     const optimizeAction = (rowData: any) => {
         const updatedState = store.getState();
         const { inventoryTableData }: any = updatedState.inventoryV2;
@@ -301,6 +279,19 @@ const InstancesTable = () => {
                 credId: targettedHost?.credentialId,
                 regionId: targettedHost?.regionId,
                 storageType: targettedDbInstance?.sqlServerDeploymentType
+            })
+        );
+
+        //For overview and database
+        dispatch(resetWorkloadFactoryResourceData());
+        dispatch(setSelectedHostname(rowData?.name));
+        dispatch(
+            setSelectedResourcePageHostData({
+                resourceId: targettedHost?.resourceId,
+                databaseInstanceId: targettedDbInstance?.databaseInstanceId,
+                databaseInstanceName: targettedDbInstance?.databaseInstanceName,
+                credentialId: targettedHost?.credentialId,
+                regionId: targettedHost?.regionId
             })
         );
     };
@@ -1061,9 +1052,13 @@ const InstancesTable = () => {
                                             );
                                         }
                                         if (menuId === 'viewInstance') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                            dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
-                                            resourceAction(rowData);
+                                            // dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
+                                            // dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
+                                            optimizeAction(rowData);
                                         }
                                         if (menuId === 'viewDatabases') {
                                             dispatch(setSelectedInventoryTab('Databases'));

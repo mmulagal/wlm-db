@@ -68,7 +68,7 @@ const LineGraph = React.memo(
             const labels = categories;
 
             const datasets = (!Array.isArray(data[0]) ? [data] : data).map((values, index, arr) => {
-                let colorRgb = Array.isArray(color) ? tokens[`--${color[index]}`] : color;
+                let colorRgb = Array.isArray(color) ? color[index] : color;
 
                 return {
                     data: values,
@@ -97,15 +97,15 @@ const LineGraph = React.memo(
                         radius: 6,
                         pointHoverRadius: 8,
                         pointHoverBorderWidth: 2,
-                        pointHoverBorderColor: tokens['--content-background'],
+                        pointHoverBorderColor: 'white',
                         borderWidth: 2,
-                        borderColor: tokens['--content-background']
+                        borderColor: 'white'
                     }
                 },
                 scales: {
                     x: {
                         border: {
-                            color: tokens['--border']
+                            color: '#e0e0e0'
                         },
                         grid: {
                             display: false
@@ -113,7 +113,7 @@ const LineGraph = React.memo(
                         ticks: {
                             padding: 0,
                             backdropPadding: 0,
-                            color: tokens['--text-primary'],
+                            color: '#404040',
                             font: {
                                 size: 13,
                                 lineHeight: '20px',
@@ -123,16 +123,16 @@ const LineGraph = React.memo(
                     },
                     y: {
                         border: {
-                            color: tokens['--border']
+                            color: '#e0e0e0'
                         },
                         grid: {
-                            color: tokens['--border'],
+                            color: '#e0e0e0',
                             tickLength: 0
                         },
                         ticks: {
                             padding: 16,
                             backdropPadding: 0,
-                            color: tokens['--text-primary'],
+                            color: '#404040',
                             callback: yTickFormatter,
                             font: {
                                 size: 13,
@@ -163,10 +163,7 @@ const LineGraph = React.memo(
                             const backgroundColor = Array.isArray(color) ? color[index] : color;
                             return (
                                 <div key={label}>
-                                    <div
-                                        className={styles.box}
-                                        style={{ backgroundColor: `var(--${backgroundColor})` }}
-                                    />
+                                    <div className={styles.box} style={{ backgroundColor: backgroundColor }} />
                                     <Span level={13}>{label}</Span>
                                 </div>
                             );

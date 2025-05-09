@@ -10,8 +10,7 @@ import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import WellArchitectTabs from './WellArchitectTabs/WellArchitectTabs';
 import GetWell from '../GetWell';
 import DatabaseListTable from '../../ResourcePage/DatabaseListTable/DatabaseListTable';
-import DoughnutChartComponent from './Doughnut/DoughnutChartComponent';
-import _ from 'lodash';
+
 import { useEffect } from 'react';
 import ResourceMSSQLOverview from './ResourceMSSQLOverview/ResourceMSSQLOverview';
 
@@ -38,19 +37,6 @@ const WellArchitectDashboard = () => {
                     : selectedWellArchitectTab;
             dispatch(setTabVisited(tabValue));
         }
-
-        //     const isReturningFromInnerPage =
-        //     lastVisitedTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS &&
-        //     selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS;
-        // if (!visitedTabs[selectedWellArchitectTab] && !isReturningFromInnerPage) {
-        //     const tabValue =
-        //         selectedWellArchitectTab === 'Overview' || selectedWellArchitectTab === 'Databases'
-        //             ? 'Overview'
-        //             : selectedWellArchitectTab;
-        //     dispatch(setTabVisited(tabValue));
-        // }
-
-        // dispatch(setLastVisitedTab(selectedWellArchitectTab));
     }, [selectedWellArchitectTab, visitedTabs, dispatch]);
 
     return (
@@ -83,20 +69,7 @@ const WellArchitectDashboard = () => {
             <WellArchitectTabs />
 
             <div className={styles['well-architect-tabs-content']}>
-                {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW && (
-                    // <DoughnutChartComponent
-                    //     label="Used capacity"
-                    //     valueFormatter={() => ({
-                    //         value: _.toNumber(((731335395462 / 1979120929997) * 100).toFixed(2)).toString(),
-                    //         unit: '%'
-                    //     })}
-                    //     data={[731335395462, 1979120929997 - 731335395462]}
-                    //     colors={['#A815F3', '#DE9EFF']}
-                    //     includeTotalRing
-                    //     totalRingColor={'chart-10'}
-                    // />
-                    <ResourceMSSQLOverview />
-                )}
+                {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW && <ResourceMSSQLOverview />}
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS && <GetWell />}
 
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES && (

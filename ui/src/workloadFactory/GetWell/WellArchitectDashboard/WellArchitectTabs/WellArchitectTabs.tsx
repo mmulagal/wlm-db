@@ -20,7 +20,6 @@ const WellArchitectTabs = () => {
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedWellArchitectTab(value));
-        dispatch(setLandingFromInnerPage(true));
     };
     return (
         <div className={styles['well-architect-tabs']}>
