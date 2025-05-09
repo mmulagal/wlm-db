@@ -158,6 +158,13 @@ interface FSxInfo {
     type?: string;
 }
 
+interface OracleInstanceStorageInfo {
+    isAsmManaged: string;
+    mountIP: string;
+    mountPoint: string;
+    protocol: string;
+}
+
 type DiscoveredEc2InstanceType = (DiscoverPgSqlResponseType | DiscoverOracleResponseType) & {
     error?: string;
     ebsVolumeIDs: (string | undefined)[] | undefined;
@@ -2411,9 +2418,7 @@ function getDiscoveredOracleInstancesStorageDetails(
     fsIdWithFsxInfo: Map<string, FsxServerConfig>,
     subnetListMap: Map<string, string>,
     ebsVolumeToAvailabilityZoneMap: Map<string, string>,
-    nfsIpAddress?: string,
-    localVolumeName?: string,
-    nfsMountPoint?: string
+    oracleInstanceStorageDetails: OracleInstanceStorageInfo[]
 ) {
     logger.info('Get discovered oracle instances storage details', {
         ebsVolumeIDs,
@@ -2421,40 +2426,47 @@ function getDiscoveredOracleInstancesStorageDetails(
         fsIdWithFsxInfo,
         subnetListMap,
         ebsVolumeToAvailabilityZoneMap,
-        nfsIpAddress,
-        localVolumeName,
-        nfsMountPoint
+        oracleInstanceStorageDetails
     });
 
-    const ebsVolumeId = ebsVolumeIDs?.find((elem: string | undefined) => elem === localVolumeName);
-    const storageTypes = [];
-    if (ebsVolumeId) {
-        const ebsAvailabilityZone = ebsVolumeToAvailabilityZoneMap.get(ebsVolumeId);
-        storageTypes.push({
-            type: STORAGE_TYPE.EBS,
-            id: ebsVolumeId,
-            deploymentType: SINGLE_AZ,
-            ...(ebsAvailabilityZone && { zone: ebsAvailabilityZone })
-        });
-    } else if (nfsIpAddress && endPointIpWithFsxInfo.has(nfsIpAddress)) {
-        const { fsxId, svmId } = endPointIpWithFsxInfo.get(nfsIpAddress)!;
-        const { deploymentType, subnetIds, fileSystemStorageType } = fsIdWithFsxInfo.get(fsxId!) || {};
-
-        storageTypes.push({
-            type: STORAGE_TYPE.FSXN,
-            id: fsxId!,
-            svmId,
-            protocol: STORAGE_PROTOCOLS.NFS,
-            fileSystemStorageType,
-            deploymentType,
-            zones: compact(subnetIds?.map((subnetId: string) => subnetListMap.get(subnetId))),
-            subnetIdString: subnetIds?.join(),
-            nfsMountPoint
-        });
+    const oracleStorageFsxMap = new Map();
+    for (const oracleStorage of oracleInstanceStorageDetails) {
+        const { mountIP, mountPoint, protocol } = oracleStorage;
+        if (oracleStorageFsxMap.has(mountIP)) {
+            oracleStorageFsxMap.get(mountIP).push({ mountPoint, protocol });
+        } else {
+            oracleStorageFsxMap.set(mountIP, [{ mountPoint, protocol }]);
+        }
     }
 
+    const storageTypes = [];
+    for (const [mountIP, mountDetails] of oracleStorageFsxMap.entries()) {
+        const fsxInfo = endPointIpWithFsxInfo.get(mountIP);
+        if (fsxInfo) {
+            const { fsxId, svmId } = fsxInfo;
+            const { deploymentType, subnetIds, fileSystemStorageType } = fsIdWithFsxInfo.get(fsxId!) || {};
+            const uniqueMountDetails = mountDetails.reduce((acc: any[], current: any) => {
+                const currentItem = JSON.stringify(current);
+                const exists = acc.some(item => JSON.stringify(item) === currentItem);
+                if (!exists) {
+                    acc.push(current);
+                }
+                return acc;
+            }, []);
+            storageTypes.push({
+                type: STORAGE_TYPE.FSXN,
+                id: fsxId!,
+                svmId,
+                fileSystemStorageType,
+                deploymentType,
+                zones: compact(subnetIds?.map((subnetId: string) => subnetListMap.get(subnetId))),
+                subnetIdString: subnetIds?.join(),
+                mountDetails: uniqueMountDetails
+            });
+        }
+    }
     return compact(
-        uniqBy(storageTypes, v => [v.id, v.svmId, v.protocol, v.subnetIdString].join()).map(v => {
+        uniqBy(storageTypes, v => [v.id, v.svmId, v.subnetIdString].join()).map(v => {
             const { subnetIdString, ...rest } = v;
             logger.debug('subnet string', subnetIdString);
             return rest;
@@ -2540,7 +2552,6 @@ async function discoverOracleResources(
                     ec2Instance.error = error;
                     return instancesWithSsmResponse.push(ec2Instance);
                 }
-
                 let parsedResponse;
                 try {
                     parsedResponse = sqlResponseParsing(output || '{}');
@@ -2560,14 +2571,26 @@ async function discoverOracleResources(
                                 version,
                                 instance_state: instanceState
                             },
-                            database_details: {
-                                database_id: databaseId,
-                                name: databaseName,
-                                open_mode: openMode,
-                                is_cdb: isCDB
-                            }
+                            database_details: databaseDetails,
+                            storage_details: instanceStorageDetails
                         } = dbInstance;
 
+                        let databaseInfo: {
+                            databaseId?: string;
+                            name?: string;
+                            openMode?: string;
+                            isCDB?: string;
+                            error?: string;
+                        } = {};
+
+                        let isCDB;
+                        if (databaseDetails.hasOwnProperty('error')) {
+                            databaseInfo.error = databaseDetails.error;
+                        } else {
+                            const { database_id: databaseId, name, open_mode: openMode } = databaseDetails;
+                            ({ is_cdb: isCDB } = databaseDetails);
+                            databaseInfo = { databaseId, name, openMode, isCDB };
+                        }
                         const pluggableDatabases = [];
                         const isContainerDbInstance = isCDB === 'YES';
                         if (isContainerDbInstance) {
@@ -2580,17 +2603,18 @@ async function discoverOracleResources(
                                 });
                             }
                         }
-                        const nfsIpAddress = dbInstance.nfs_ip_address;
-                        const nfsMountPoint = dbInstance.nfs_mount_point;
+
+                        const flattenedInstanceStorageDetails: [] = instanceStorageDetails.flat();
+                        const isInstanceStorageAsmManaged = flattenedInstanceStorageDetails.some(
+                            (storage: { isAsmManaged: string }) => storage.isAsmManaged === 'true'
+                        );
                         const storageDetails = getDiscoveredOracleInstancesStorageDetails(
                             ec2Instance.ebsVolumeIDs!,
                             endPointIpWithFsxInfo,
                             fsIdWithFsxInfo,
                             subnetListMap,
                             ebsVolumeToAvailabilityZoneMap,
-                            nfsIpAddress,
-                            undefined, // TO-DO: EBS storage identification for ORACLE
-                            nfsMountPoint
+                            flattenedInstanceStorageDetails
                         );
 
                         databaseInstanceDetails.push({
@@ -2600,15 +2624,12 @@ async function discoverOracleResources(
                             instanceState,
                             instanceType: isContainerDbInstance ? 'MULTI_TENANT' : 'SINGLE_TENANT',
                             databaseCount: isContainerDbInstance ? pluggableDatabases.length : 1,
-                            databaseDetails: {
-                                databaseId,
-                                databaseName,
-                                openMode
-                            },
+                            databaseDetails: databaseInfo,
                             ...(isContainerDbInstance && {
                                 pluggableDatabases
                             }),
-                            storage: storageDetails
+                            storage: storageDetails,
+                            isInstanceStorageAsmManaged
                         });
                     }
 
@@ -2622,7 +2643,7 @@ async function discoverOracleResources(
             })
         );
     } catch (error: any) {
-        logger.error('Failed to discover PostgreSQL resources', { error: error.message });
+        logger.error('Failed to discover oracle resources', { error: error.message });
     }
 
     return {
@@ -2667,7 +2688,7 @@ async function fetchFsxResourceMappings(
                 : Promise.resolve([])
         ]);
 
-    logger.debug({ fsxList, svmList, subnetList, ebsVolumeList });
+    // logger.info('FSX LIST', { fsxList, svmList, subnetList, ebsVolumeList });
     const extractedSsmResponseList = await Promise.all(
         ssmResponseList.map(async ssmResponse => extractSsmResponse(credentialsId, region, ssmResponse))
     );
@@ -2693,6 +2714,14 @@ async function fetchFsxResourceMappings(
         const { FileSystemId, StorageVirtualMachineId, Endpoints } = svm;
         if (FileSystemId && Endpoints) {
             Endpoints?.Nfs?.IpAddresses?.forEach(ip => {
+                endPointIpWithFsxInfo.set(ip, {
+                    fsxId: FileSystemId,
+                    svmId: StorageVirtualMachineId,
+                    type: STORAGE_TYPE.FSXN
+                });
+            });
+
+            Endpoints?.Iscsi?.IpAddresses?.forEach(ip => {
                 endPointIpWithFsxInfo.set(ip, {
                     fsxId: FileSystemId,
                     svmId: StorageVirtualMachineId,
