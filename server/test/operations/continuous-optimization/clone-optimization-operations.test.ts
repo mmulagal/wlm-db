@@ -58,7 +58,7 @@ beforeAll(async () => {
         DEFAULT_AWS_CREDENTIALS_ID,
         DEFAULT_AWS_REGION,
         resourceName!,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Optimize EC2 compute for ${resourceName}`,
         `Optimize EC2 compute for ${resourceName}`,
         rootJobId

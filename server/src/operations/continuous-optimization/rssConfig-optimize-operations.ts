@@ -145,7 +145,7 @@ async function handleOptimizeRssOptimization(
                     credentialsId,
                     region,
                     accountId,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     `Optimize network adapters for ${formattedInstanceName}`,
                     `Optimize network adapters for ${formattedInstanceName}`
                 );
@@ -183,7 +183,7 @@ async function handleOptimizeRssOptimization(
                     credentialsId,
                     region,
                     resourceName!,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     jobDescription,
                     jobDescription,
                     parentJobId,
@@ -225,7 +225,7 @@ async function handleOptimizeRssOptimization(
                     credentialsId,
                     region,
                     formattedInstanceName,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     jobDescription,
                     jobDescription,
                     parentJobId
@@ -275,7 +275,7 @@ async function handleOptimizeRssOptimization(
                 credentialsId,
                 region,
                 resourceName!,
-                JOBTYPE.OPTIMIZATION,
+                JOBTYPE.WELL_ARCHITECTED,
                 jobDescription,
                 jobDescription,
                 parentJobId,
@@ -314,7 +314,7 @@ async function handleOptimizeRssOptimization(
                     credentialsId,
                     region,
                     formattedInstanceName,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     jobDescription,
                     jobDescription,
                     parentJobId
@@ -354,7 +354,7 @@ async function handleOptimizeRssOptimization(
                 credentialsId,
                 region,
                 formattedInstanceName,
-                JOBTYPE.OPTIMIZATION,
+                JOBTYPE.WELL_ARCHITECTED,
                 jobDescription,
                 jobDescription,
                 parentJobId
@@ -423,7 +423,7 @@ async function handleOptimizeRssOptimization(
                 credentialsId,
                 region,
                 formattedInstanceName,
-                JOBTYPE.OPTIMIZATION,
+                JOBTYPE.WELL_ARCHITECTED,
                 'Rollback cluster ownership transfer to primary node',
                 'Rollback cluster ownership transfer to primary node'
             );
