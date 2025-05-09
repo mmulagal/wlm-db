@@ -201,30 +201,31 @@ async function getSandboxDetails(
                 return;
             }
 
-            const filteredSandboxItems = parsedInstanceResponse.filter((item: sandboxType) =>
-                item.sandbox_properties.some((prop: any) => prop.name === ACCOUNTID && prop.value === accountId)
-            );
+            if (Array.isArray(parsedInstanceResponse)) {
+                const filteredSandboxItems = parsedInstanceResponse.filter((item: sandboxType) =>
+                    item.sandbox_properties.some((prop: any) => prop.name === ACCOUNTID && prop.value === accountId)
+                );
 
-            filteredSandboxItems.forEach((item: sandboxType) => {
-                const sources = getSourceDetails(item);
+                filteredSandboxItems.forEach((item: sandboxType) => {
+                    const sources = getSourceDetails(item);
 
-                const databaseObject = {
-                    sandboxName: item.database_name,
-                    databaseHostName: resourceDetails.resource_name!,
-                    databaseHostId: resourceDetails.resource_id!,
-                    databaseInstanceName: instance.instanceName,
-                    databaseInstanceId: instance.databaseInstanceId,
-                    sourceDatabaseHostName: sources[0],
-                    sourceDatabaseInstanceName: sources[1],
-                    sourceDatabaseName: sources[2],
-                    createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
-                    updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
-                    tag: getProperty(item, 'tag')
-                };
+                    const databaseObject = {
+                        sandboxName: item.database_name,
+                        databaseHostName: resourceDetails.resource_name!,
+                        databaseHostId: resourceDetails.resource_id!,
+                        databaseInstanceName: instance.instanceName,
+                        databaseInstanceId: instance.databaseInstanceId,
+                        sourceDatabaseHostName: sources[0],
+                        sourceDatabaseInstanceName: sources[1],
+                        sourceDatabaseName: sources[2],
+                        createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
+                        updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
+                        tag: getProperty(item, 'tag')
+                    };
 
-                sandboxInfo.push(databaseObject);
-            });
-
+                    sandboxInfo.push(databaseObject);
+                });
+            }
             return sandboxInfo;
         });
     } catch (err) {
