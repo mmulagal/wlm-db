@@ -2534,15 +2534,26 @@ async function discoverOracleResources(
                                 version,
                                 instance_state: instanceState
                             },
-                            database_details: {
-                                database_id: databaseId,
-                                name: databaseName,
-                                open_mode: openMode,
-                                is_cdb: isCDB
-                            },
+                            database_details: databaseDetails,
                             storage_details: instanceStorageDetails
                         } = dbInstance;
 
+                        let databaseInfo: {
+                            databaseId?: string;
+                            name?: string;
+                            openMode?: string;
+                            isCDB?: string;
+                            error?: string;
+                        } = {};
+
+                        let isCDB;
+                        if (databaseDetails.hasOwnProperty('error')) {
+                            databaseInfo.error = databaseDetails.error;
+                        } else {
+                            const { database_id: databaseId, name, open_mode: openMode } = databaseDetails;
+                            ({ is_cdb: isCDB } = databaseDetails);
+                            databaseInfo = { databaseId, name, openMode, isCDB };
+                        }
                         const pluggableDatabases = [];
                         const isContainerDbInstance = isCDB === 'YES';
                         if (isContainerDbInstance) {
@@ -2576,11 +2587,7 @@ async function discoverOracleResources(
                             instanceState,
                             instanceType: isContainerDbInstance ? 'MULTI_TENANT' : 'SINGLE_TENANT',
                             databaseCount: isContainerDbInstance ? pluggableDatabases.length : 1,
-                            databaseDetails: {
-                                databaseId,
-                                databaseName,
-                                openMode
-                            },
+                            databaseDetails: databaseInfo,
                             ...(isContainerDbInstance && {
                                 pluggableDatabases
                             }),
@@ -2644,7 +2651,7 @@ async function fetchFsxResourceMappings(
                 : Promise.resolve([])
         ]);
 
-    logger.debug({ fsxList, svmList, subnetList, ebsVolumeList });
+    // logger.info('FSX LIST', { fsxList, svmList, subnetList, ebsVolumeList });
     const extractedSsmResponseList = await Promise.all(
         ssmResponseList.map(async ssmResponse => extractSsmResponse(credentialsId, region, ssmResponse))
     );
@@ -2670,6 +2677,14 @@ async function fetchFsxResourceMappings(
         const { FileSystemId, StorageVirtualMachineId, Endpoints } = svm;
         if (FileSystemId && Endpoints) {
             Endpoints?.Nfs?.IpAddresses?.forEach(ip => {
+                endPointIpWithFsxInfo.set(ip, {
+                    fsxId: FileSystemId,
+                    svmId: StorageVirtualMachineId,
+                    type: STORAGE_TYPE.FSXN
+                });
+            });
+
+            Endpoints?.Iscsi?.IpAddresses?.forEach(ip => {
                 endPointIpWithFsxInfo.set(ip, {
                     fsxId: FileSystemId,
                     svmId: StorageVirtualMachineId,

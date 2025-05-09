@@ -114,7 +114,19 @@ EOF
 
     get_loop_device_associated_with_disk() {
         local diskName="$1"
-        sudo -i -u oracle bash -c "oracleasm querydisk -p $diskName | awk -F':' '/^\\/dev\\// {print \\$1}' | cut -d':' -f1"
+        local raw_output
+        raw_output=$(sudo -i -u oracle bash -c "oracleasm querydisk -p $diskName 2>/dev/null")
+
+        # Process the output only if it contains a valid device
+        local loopDev
+        loopDev=$(echo "$raw_output" | awk -F':' '/^\\/dev\\// {print $1}' | cut -d':' -f1)
+
+        if [ -n "$loopDev" ]; then
+            echo "$loopDev"
+            return 0
+        else
+            return 1
+        fi
     }
 
     get_back_file_path() {
@@ -134,10 +146,13 @@ EOF
                 mountPoint=$(echo "$mount_details" | cut -d',' -f2)
                 protocol=$(echo "$mount_details" | cut -d',' -f3)
                 echo "$mountIP,$mountPoint,$protocol"
+                return 0
             else
                 echo "No loop device path found for disk $diskName"
-                exit 1
+                return 1
             fi
+        else
+            return 1
         fi
     }
 
@@ -176,7 +191,7 @@ EOF
                 diskName=$(get_disk_details "$ORACLE_SID" "$diskGroup")
                 if [ -n "$diskName" ]; then
                     
-                    result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details "$diskName")
+                    result=$(get_asm_nfs_details "$diskName") || result=$(get_asm_iscsi_details $diskName)
                     if [ $? -ne 0 ]; then
                         echo "Failed to get NFS or iSCSI details for disk $diskName"
                         continue
@@ -240,7 +255,7 @@ EOF
 
                 if [ -n "$source" ]; then
                     if [[ "$fstype" != nfs* ]]; then
-                        mountDevice=$(udevadm info --query=all --name='$source' | grep -m 1 "disk/by-path" | awk '{print $2}')
+                        mountDevice=$(udevadm info --query=all --name=$source | grep -m 1 "disk/by-path" | awk '{print $2}')
                         mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
                         mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
                         if echo "$mountPoint" | grep -q "iscsi"; then
@@ -354,20 +369,26 @@ EOF
 
     get_database_details() {
         local ORACLE_SID="$1"
-        sudo -i -u oracle bash <<EOF
+        local jsonRes
+        jsonRes=$(sudo -i -u oracle bash <<EOF
+            set -e
             export ORACLE_SID="$ORACLE_SID"
             sqlplus -S / as sysdba
+                WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
                 SET LINESIZE 500
                 SELECT JSON_OBJECT(
-                        'name' value NAME,
-                        'database_id' value DBID,
-                        'created' value CREATED,
-                        'open_mode' value OPEN_MODE,
-                        'is_cdb' value CDB
-                    ) AS database_info
+                    'name' value NAME,
+                    'database_id' value DBID,
+                    'created' value CREATED,
+                    'open_mode' value OPEN_MODE,
+                    'is_cdb' value CDB
+                )
                 FROM V\\$DATABASE;
 EOF
+) || return 1
+    
+        echo $jsonRes
     }
 
     get_pdb_databases_details() {
@@ -400,6 +421,9 @@ EOF
         {
             INSTANCE_DETAILS=$(get_instance_details "$sid")
             DATABASE_DETAILS=$(get_database_details "$sid")
+            if [ $? -ne 0 ]; then
+                DATABASE_DETAILS='{"error": "failed to retrieve database details for instance '$sid'"}'
+            fi
             
             is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
 

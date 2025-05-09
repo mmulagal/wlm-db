@@ -343,12 +343,15 @@ const oracleDatabaseInstance = Type.Object({
     }),
     databaseCount: Type.Number({ description: 'Number of databases in the Oracle instance.' }),
     databaseDetails: Type.Object({
-        databaseName: Type.String({ description: 'Oracle database name' }),
-        databaseId: Type.String({ description: 'Oracle database ID' }),
-        openMode: Type.String({
-            description: 'database open mode',
-            enum: ['READ WRITE', 'READ', 'MOUNTED']
-        })
+        databaseName: Type.Optional(Type.String({ description: 'Oracle database name' })),
+        databaseId: Type.Optional(Type.String({ description: 'Oracle database ID' })),
+        openMode: Type.Optional(
+            Type.String({
+                description: 'database open mode',
+                enum: ['READ WRITE', 'READ', 'MOUNTED']
+            })
+        ),
+        error: Type.Optional(Type.String({ description: 'Error details, if any.' }))
     }),
     pluggableDatabases: Type.Optional(
         Type.Array(
