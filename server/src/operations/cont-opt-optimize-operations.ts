@@ -236,7 +236,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
             name: `Optimize storage for ${serverNameWithHostName}`,
             description: jobDescription,
             startTime: Date.now(),
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName,
             parentJobId
@@ -440,7 +440,7 @@ async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Optimize storage for ${serverNameWithHostName}`,
         `Optimize storage for ${serverNameWithHostName}`,
         bulkOptimizeJobId
@@ -668,7 +668,7 @@ async function headroomOptimization(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Optimize FSx for NetApp ONTAP headroom',
         'Optimize FSx for NetApp ONTAP headroom',
         parentJobId
@@ -810,7 +810,7 @@ async function logDriveOptimization(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Optimize log drive sizing',
         'Optimize log drive sizing',
         parentJobId
@@ -1032,7 +1032,7 @@ async function tempDbDriveOptimization(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Optimize tempdb drive sizing',
         'Optimize tempdb drive sizing',
         parentJobId
@@ -1147,7 +1147,7 @@ async function optimizeSizing(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Optimize ${types} sizing for ${serverNameWithHostName}`,
         `Optimize ${types} sizing for ${serverNameWithHostName}`,
         masterOptimizeParentId,
@@ -1202,7 +1202,7 @@ async function validateMpioPolicyToRoundRobin(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1278,7 +1278,7 @@ async function setMpioPolicyToRoundRobin(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1457,7 +1457,7 @@ async function configureMpio(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1531,7 +1531,7 @@ async function checkMpioInstallation(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1707,7 +1707,7 @@ async function validateMpioSessions(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1781,7 +1781,7 @@ async function remediateMpioSessions(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -2068,7 +2068,7 @@ async function optimizeOperatingSystemSettings(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         masterOptimizeParentId,
@@ -2242,7 +2242,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
         credentialsId,
         region,
         serverNameWithHostName!,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for ${serverNameWithHostName}`,
         jobDescription,
         parentJobId
@@ -2410,7 +2410,7 @@ async function optimizeStorageTier(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Optimize storage-tier for ${serverNameWithHostName}`,
         `Optimize storage-tier for ${serverNameWithHostName}`,
         masterOptimizeParentId,
@@ -2489,7 +2489,7 @@ async function handleMaxDopRemediation(
         credentialsId,
         region,
         serverNameWithHostName!,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -2635,7 +2635,7 @@ async function optimizeMaxDop(
             credentialsId,
             region,
             serverNameWithHostName,
-            JOBTYPE.OPTIMIZATION,
+            JOBTYPE.WELL_ARCHITECTED,
             `Optimize max-dop for ${serverNameWithHostName}`,
             `Optimize max-dop for ${serverNameWithHostName}`,
             masterOptimizeParentId,
@@ -2698,7 +2698,7 @@ async function handleUpdateAwsBackup(
         credentialsId,
         region,
         '',
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Update AWS FSx for ONTAP backup',
         jobDescription,
         masterOptimizeParentId,
@@ -2850,7 +2850,7 @@ async function optimizeClone(
 
         const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, cloneDatabaseName);
         const { id } = await registerJob(accountId, credentialsId, region, {
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName as string,
             name: `${operation} ${name} for ${serverNameWithHostName}`,

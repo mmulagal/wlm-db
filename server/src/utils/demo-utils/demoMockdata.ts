@@ -2416,7 +2416,7 @@ function optimizeStorageJobData(
             name: `Optimize storage for ${resourceName}\\${instanceName}.`,
             status: JOBSTATUS.WARNING,
             resource_name: resourceName,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 12000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -2482,7 +2482,7 @@ function optimizeOperatingSystemJobData(
             name: `Optimize operating system configuration for ${resourceName}\\${instanceName}.`,
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -2497,7 +2497,7 @@ function optimizeOperatingSystemJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now() - 14000),
             initiator: 'SYSTEM'
@@ -2512,7 +2512,7 @@ function optimizeOperatingSystemJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 14000),
             end_time: new Date(Date.now() - 8000),
             initiator: 'SYSTEM'
@@ -2527,7 +2527,7 @@ function optimizeOperatingSystemJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 8000),
             end_time: new Date(Date.now() - 4000),
             initiator: 'SYSTEM'
@@ -2542,7 +2542,7 @@ function optimizeOperatingSystemJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 4000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -2577,7 +2577,7 @@ function optimizeMpioSessionsJobData(
             name: `Optimize operating system MPIO iSCSI sessions for ${resourceName}\\${instanceName}.`,
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -2592,7 +2592,7 @@ function optimizeMpioSessionsJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now() - 14000),
             initiator: 'SYSTEM'
@@ -2607,7 +2607,7 @@ function optimizeMpioSessionsJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 14000),
             end_time: new Date(Date.now() - 8000),
             initiator: 'SYSTEM'
@@ -2622,7 +2622,7 @@ function optimizeMpioSessionsJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 4000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -3116,7 +3116,7 @@ function optimizeStorageTierJobData(
             name: `Optimize storage-tier for ${resourceName}\\${instanceName}.`,
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -3131,7 +3131,7 @@ function optimizeStorageTierJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now() - 14000),
             initiator: 'SYSTEM'
@@ -3146,7 +3146,7 @@ function optimizeStorageTierJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 14000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -3181,7 +3181,7 @@ function enableMPIOJobData(
             name: `Enable MPIO and configure for MPIO iSCSI sessions ${resourceName}\\${instanceName}.`,
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -3196,7 +3196,7 @@ function enableMPIOJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now() - 14000),
             initiator: 'SYSTEM'
@@ -3211,7 +3211,7 @@ function enableMPIOJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now() - 14000),
             initiator: 'SYSTEM'
@@ -3226,7 +3226,7 @@ function enableMPIOJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             parent_job_id: parentJobId,
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             start_time: new Date(Date.now() - 14000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'

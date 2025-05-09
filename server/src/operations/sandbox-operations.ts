@@ -889,7 +889,7 @@ async function getMappings(
         description: `Get the volume LUN mapping for the source database ${srcDetails.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
         startTime: Date.now(),
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
         parentJobId
     });
@@ -982,7 +982,7 @@ async function createVolumeClone(
         startTime: Date.now(),
         name: 'Create ONTAP FlexClone volumes',
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1103,7 +1103,7 @@ async function invokeVirtualMount(
         description: `Discover cloned LUNs and create virtual mount points in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         startTime: Date.now(),
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1269,7 +1269,7 @@ async function createCloneDb(
         startTime: Date.now(),
 
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1374,7 +1374,7 @@ async function createExtendedProperties(
         startTime: Date.now(),
         name: `Add extended properties to sandbox ${destDetails.database}`,
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1512,7 +1512,7 @@ async function startCleanup(
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
     const name = isOptimizeFlow ? 'Clone' : 'sandbox';
-    const jobType = isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX;
+    const jobType = isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX;
 
     const cleanupJob = await registerJob(accountId, credentialsId, region, {
         description: `Clean up resources for ${name} ${destDetails.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
@@ -1959,7 +1959,7 @@ async function validateDeleteSandboxParams(
     isSandboxOptimizeFlow: boolean = false
 ) {
     const name = isOptimizeFlow ? 'Clone' : 'sandbox';
-    const jobType = isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX;
+    const jobType = isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX;
 
     logger.info(`Validate delete ${name} params`, {
         accountId,
@@ -2405,7 +2405,7 @@ async function validateLifeCycleParams(
     let errMsg;
 
     const validationJob = await registerJob(accountId, credentialsId, region, {
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         status,
         name: `Validate ${
             action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
@@ -2491,7 +2491,7 @@ async function detachSandboxAndAccessPath(
         startTime: Date.now(),
         description: `Detach sandbox and access path for ${resourceDetails.database} in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: resourceDetails.database,
         parentJobId
     });
