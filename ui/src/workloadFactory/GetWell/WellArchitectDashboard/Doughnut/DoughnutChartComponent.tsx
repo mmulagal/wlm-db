@@ -92,7 +92,7 @@ const DonutChart = React.memo(
         value?: string | number;
         label?: string;
         valueFormatter?: ValueFormatter;
-        colors?: (ChartColor | ChartDisabled)[] | (ChartColor | ChartDisabled)[][];
+        colors?: any;
         includeTotalRing?: boolean;
         totalRingColor?: ChartColor | ChartDisabled;
     }) => {
@@ -155,7 +155,7 @@ const DonutChart = React.memo(
                               backgroundColor: (Array.isArray(colors[0])
                                   ? (colors[index] as ChartColor[])
                                   : colors
-                              ).map(color => tokens[`--${color}`]),
+                              ).map((color: any) => color),
                               weight
                           };
                       })

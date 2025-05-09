@@ -1,4 +1,5 @@
 export interface GetWellSliceInterface {
+    visitedTabs: any;
     selectedWellArchitectTab: string;
     selectedCloneTab: string;
     optimizePageLoading: boolean;

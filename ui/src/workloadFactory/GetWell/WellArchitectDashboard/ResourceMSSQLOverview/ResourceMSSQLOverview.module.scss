@@ -1,0 +1,27 @@
+.resource-mssql-overview {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    width: 100%;
+
+    .leftSide {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        width: 57.29%;
+
+        .commonBlock {
+            display: flex;
+            gap: 24px;
+        }
+    }
+
+    .rightSide {
+        width: 28.1%;
+        flex-shrink: 0;
+
+        background-color: var(--content-background);
+        box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
+        height: 100px;
+    }
+}

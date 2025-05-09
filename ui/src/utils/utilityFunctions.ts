@@ -2039,3 +2039,19 @@ export const makeRegionMapping = (data: any) => {
     });
     return regionMapping;
 };
+
+const roundedFormatter = Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+const twoDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const fourDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 });
+
+export const rounded = (value: number) => {
+    return roundedFormatter.format(value);
+};
+
+export const twoFractionDigits = (value: number) => {
+    return twoDecimalFormatter.format(value);
+};
+
+export const fourFractionDigits = (value: number) => {
+    return fourDecimalFormatter.format(value);
+};

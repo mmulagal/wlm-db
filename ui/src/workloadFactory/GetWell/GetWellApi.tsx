@@ -18,6 +18,7 @@ const GetWellApi = () => {
     const { credIdFromJM, regionFromJM, landingFrom, landingFromInnerPage } = useAppSelector(
         state => state.getWellOptimize
     );
+
     const {
         selectedResourceId,
         selectedDatabaseInstance,
@@ -29,12 +30,16 @@ const GetWellApi = () => {
     const [assessmentDetailsApi] = useGetMssqlAssessmentDataMutation();
 
     useEffect(() => {
-        // On page load, call the API to get the assessment details
+        //On page load, call the API to get the assessment details
         if (!landingFromInnerPage) {
             viewOptimizeAction();
         } else {
             dispatch(setLandingFromInnerPage(false));
         }
+
+        // if (!visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
+        //     viewOptimizeAction();
+        // }
     }, []);
 
     const runAssessmentDetailsApi = async () => {

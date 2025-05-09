@@ -49,16 +49,24 @@ const initialState: GetWellSliceInterface = {
     cloneDashboardData: [], // Data stored for clone in inner page
     cloneIsOptimizedRows: {}, // To maintain optimized rows in clone assessment (resourceId + instanceId + cloneDatabasename)
     inProgressStateData: {},
-    selectedWellArchitectTab: WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
+    selectedWellArchitectTab: WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS,
+    visitedTabs: {}
 };
 
 const getWellOptimizeSlice = createSlice({
     name: 'getWellOptimize',
     initialState,
     reducers: {
+        setTabVisited: (state, action: PayloadAction<any>) => {
+            state.visitedTabs[action.payload] = true;
+        },
+        resetVisitedTabs: state => {
+            state.visitedTabs = {};
+        },
         setSelectedWellArchitectTab: (state, action: PayloadAction<any>) => {
             state.selectedWellArchitectTab = action.payload;
         },
+
         setSelectedCloneTab: (state, action: PayloadAction<string>) => {
             state.selectedCloneTab = action.payload;
         },
@@ -217,6 +225,8 @@ const getWellOptimizeSlice = createSlice({
 });
 
 export const {
+    setTabVisited,
+    resetVisitedTabs,
     setSelectedWellArchitectTab,
     setSelectedCloneTab,
     setSelectedSnapshot,
