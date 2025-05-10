@@ -4,8 +4,17 @@ import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
 import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { resetGwData, resetVisitedTabs, setTabVisited } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setDefaultFilterOptions,
+    setOptimizeFilterTags,
+    setSelectedHeaderTab
+} from '../../../store/workloadFactory/inventoryV2Slice';
+import {
+    resetGwData,
+    resetVisitedTabs,
+    setGwRefreshPage,
+    setTabVisited
+} from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import WellArchitectTabs from './WellArchitectTabs/WellArchitectTabs';
 import GetWell from '../GetWell';
@@ -14,7 +23,7 @@ import DatabaseListTable from '../../ResourcePage/DatabaseListTable/DatabaseList
 import { useEffect } from 'react';
 import ResourceMSSQLOverview from './ResourceMSSQLOverview/ResourceMSSQLOverview';
 import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
-import { ButtonWithDropdown } from '@netapp/design-system';
+import { ButtonWithDropdown, Popover } from '@netapp/design-system';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
@@ -22,14 +31,25 @@ import {
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../store/authSlice';
 import { useNavigate } from 'react-router-dom';
+import { setRefreshTime } from '../../../store/workloadFactory/headersSlice';
+import { getCurrentDateTime } from '../../../utils/utilityFunctions';
+import { workloadFactoryResourceApiV2 } from '../../../utils/apiService';
+import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import { resetGwValuesOnRefresh } from '../GetWellUtils';
 
 const WellArchitectDashboard = () => {
     const dispatch = useDispatch();
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
-    const { selectedHostname, selectedDatabaseInstanceName, selectedWellArchitectTab, visitedTabs } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const {
+        selectedHostname,
+        selectedDatabaseInstanceName,
+        selectedWellArchitectTab,
+        visitedTabs,
+        gwRefreshTimestamp
+    } = useAppSelector(state => state.getWellOptimize);
     const navigate = useNavigate();
+
+    const { refreshTime } = useAppSelector(state => state.headers);
 
     const {
         resourceLoading: resourceLoadingState,
@@ -58,6 +78,33 @@ const WellArchitectDashboard = () => {
         }
     }, [selectedWellArchitectTab, visitedTabs, dispatch]);
 
+    const handleRefresh = () => {
+        if (
+            selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW ||
+            selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES
+        ) {
+            dispatch(setRefreshTime(getCurrentDateTime()));
+            dispatch(workloadFactoryResourceApiV2.util.resetApiState());
+            dispatch(setIsResourceRefresh(true));
+        } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
+            dispatch(setOptimizeFilterTags([]));
+            dispatch(setDefaultFilterOptions({}));
+            resetGwValuesOnRefresh(dispatch);
+            dispatch(setGwRefreshPage(true));
+        }
+    };
+
+    const setRefreshTimeOnIcon = () => {
+        if (
+            selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW ||
+            selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES
+        ) {
+            return refreshTime;
+        } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
+            return gwRefreshTimestamp;
+        }
+    };
+
     return (
         <div className={styles['well-architect-dashboard']}>
             <div className={`${commonStyles.commonBreadCrumb} ${styles.breadCrumb}`} style={{ left: '0%' }}>
@@ -81,9 +128,16 @@ const WellArchitectDashboard = () => {
                 />
 
                 <div className={styles.rightSection}>
-                    <div className={styles.refreshIcon}>
-                        <RefreshIcon />
-                    </div>
+                    <Popover
+                        popoverClass={styles['copy-popover']}
+                        children={`Last update: ${setRefreshTimeOnIcon()}`}
+                        trigger="hover"
+                        container={
+                            <div className={styles.refreshIcon} onClick={handleRefresh}>
+                                <RefreshIcon />
+                            </div>
+                        }
+                    />
 
                     <div className={styles.buttonContainer}>
                         <ButtonWithDropdown
