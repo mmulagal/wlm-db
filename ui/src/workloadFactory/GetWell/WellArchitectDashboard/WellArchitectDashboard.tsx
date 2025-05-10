@@ -13,6 +13,15 @@ import DatabaseListTable from '../../ResourcePage/DatabaseListTable/DatabaseList
 
 import { useEffect } from 'react';
 import ResourceMSSQLOverview from './ResourceMSSQLOverview/ResourceMSSQLOverview';
+import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
+import { ButtonWithDropdown } from '@netapp/design-system';
+import {
+    addInitialDBCreateData,
+    initialCreateNewUserState,
+    setCdbPageData
+} from '../../../store/workloadFactory/createNewDBSlice';
+import { updateResourceId } from '../../../store/authSlice';
+import { useNavigate } from 'react-router-dom';
 
 const WellArchitectDashboard = () => {
     const dispatch = useDispatch();
@@ -20,6 +29,16 @@ const WellArchitectDashboard = () => {
     const { selectedHostname, selectedDatabaseInstanceName, selectedWellArchitectTab, visitedTabs } = useAppSelector(
         state => state.getWellOptimize
     );
+    const navigate = useNavigate();
+
+    const {
+        resourceLoading: resourceLoadingState,
+
+        selectedDatabaseInstance,
+        selectedResourceId,
+        selectedResourceCredId,
+        selectedResourceRegionId
+    } = useAppSelector(state => state.workloadFactoryResource);
 
     // Reset visited tabs when leaving the dashboard
     useEffect(() => {
@@ -61,8 +80,53 @@ const WellArchitectDashboard = () => {
                     ]}
                 />
 
-                <div className={styles.refreshIcon}>
-                    <RefreshIcon />
+                <div className={styles.rightSection}>
+                    <div className={styles.refreshIcon}>
+                        <RefreshIcon />
+                    </div>
+
+                    <div className={styles.buttonContainer}>
+                        <ButtonWithDropdown
+                            variant="icon"
+                            items={[
+                                {
+                                    id: 'createUserDB',
+                                    children: 'Create a user database',
+                                    isDisabled: resourceLoadingState,
+                                    onClick: () => {
+                                        if (!resourceLoadingState) {
+                                            dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                            dispatch(
+                                                setCdbPageData({
+                                                    dbHostName: selectedHostname,
+                                                    instanceId: selectedDatabaseInstance,
+                                                    instanceName: selectedDatabaseInstanceName,
+                                                    cdbCredId: selectedResourceCredId,
+                                                    cdbRegionId: selectedResourceRegionId
+                                                })
+                                            );
+                                            dispatch(updateResourceId(selectedResourceId));
+                                            navigate('../create-new-user');
+                                        }
+                                    }
+                                },
+                                {
+                                    id: 'resetSQLServerPassword',
+                                    children: 'Reset SQL server password',
+
+                                    onClick: () => {}
+                                },
+                                {
+                                    id: 'resetFSxAdminPassword',
+                                    children: 'Reset FSxadmin password',
+
+                                    onClick: () => {}
+                                }
+                            ]}
+                        >
+                            <MenuIcon />
+                        </ButtonWithDropdown>
+                    </div>
                 </div>
             </div>
 

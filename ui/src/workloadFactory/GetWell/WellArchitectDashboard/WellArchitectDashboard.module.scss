@@ -26,13 +26,25 @@
         }
     }
 
-    .refreshIcon {
-        cursor: pointer;
-        svg {
-            --icon-primary-color: var(--button-secondary);
-            width: 20px;
-            height: 20px;
-            margin-top: 5px;
+    .rightSection {
+        display: flex;
+        gap: 24px;
+
+        .buttonContainer {
+            svg {
+                path {
+                    fill: var(--text-button-secondary);
+                }
+            }
+        }
+        .refreshIcon {
+            cursor: pointer;
+            svg {
+                --icon-primary-color: var(--button-secondary);
+                width: 20px;
+                height: 20px;
+                margin-top: 5px;
+            }
         }
     }
 
