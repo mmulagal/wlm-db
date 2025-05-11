@@ -468,7 +468,7 @@ const GetWell = () => {
 
                 {/* Partial data warning here - based on condition */}
 
-                {/* <PartialDataContainer /> */}
+                {cardData?.compute_rightsizing?.errorMessage?.includes('not authorized') && <PartialDataContainer />}
 
                 {/* Assessment Section here */}
                 <AssessmentContainer onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress} />
