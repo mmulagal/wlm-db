@@ -120,7 +120,8 @@ export const FROM_DIALOG = {
     DETECT_HOST: 'detect_host',
     SANDBOX_REFRESH: 'sandbox_refresh',
     DISMISS: 'dismiss',
-    OPTIMIZE: 'optimize'
+    OPTIMIZE: 'optimize',
+    FSXADMIN: 'fsxadmin'
 };
 
 export const DBType = {

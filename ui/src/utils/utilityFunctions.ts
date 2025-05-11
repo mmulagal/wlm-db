@@ -466,6 +466,20 @@ export const isValidUserName = (userName: string) => {
     }
 };
 
+export const isValidPassword = (password: string) => {
+    if (
+        password.length > 0 &&
+        (password.length < 8 ||
+            password.length > 50 ||
+            !/[A-Za-z]/.test(password) ||
+            !/\d/.test(password) ||
+            /[^A-Za-z\d]/.test(password) ||
+            /admin/i.test(password))
+    ) {
+        return 'Check password criteria.';
+    }
+};
+
 export const sortListOfDict = (dataList: any, field: string, ascOrder = true) => {
     if (!dataList || (dataList && dataList.length < 2)) {
         return dataList;

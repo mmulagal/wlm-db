@@ -51,6 +51,7 @@ export const GENERAL = {
     MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Fix',
     REBASE_LINE: 'Re-baseline',
+    APPLY: 'Apply',
     MICROSOFT_SQL: 'Microsoft SQL',
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
     LOADING_DATA: 'Loading data',

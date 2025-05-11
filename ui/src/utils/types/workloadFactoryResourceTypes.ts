@@ -10,6 +10,7 @@ export interface WorkloadFactoryResourceEntities {
     selectedResourceRegionId: any;
     selectedHostname: string;
     isResourceRefresh: boolean;
+    fsxAdminPasswords: any;
 }
 
 export interface WorkloadFactoryResourceDetails {

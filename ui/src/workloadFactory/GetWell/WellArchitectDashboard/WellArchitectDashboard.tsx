@@ -2,7 +2,7 @@ import styles from './WellArchitectDashboard.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
+import { FROM_DIALOG, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import {
     setDefaultFilterOptions,
@@ -23,7 +23,7 @@ import DatabaseListTable from '../../ResourcePage/DatabaseListTable/DatabaseList
 import { useEffect } from 'react';
 import ResourceMSSQLOverview from './ResourceMSSQLOverview/ResourceMSSQLOverview';
 import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
-import { ButtonWithDropdown, Popover } from '@netapp/design-system';
+import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
@@ -36,10 +36,14 @@ import { getCurrentDateTime } from '../../../utils/utilityFunctions';
 import { workloadFactoryResourceApiV2 } from '../../../utils/apiService';
 import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetGwValuesOnRefresh } from '../GetWellUtils';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import { GENERAL } from '../../../utils/appConstants';
+import FSXPasswordContent from './FSXPasswordContent/FSXPasswordContent';
 
 const WellArchitectDashboard = () => {
     const dispatch = useDispatch();
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
+    const { setDialog, closeDialog } = useDialog();
     const {
         selectedHostname,
         selectedDatabaseInstanceName,
@@ -103,6 +107,22 @@ const WellArchitectDashboard = () => {
         } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
             return gwRefreshTimestamp;
         }
+    };
+
+    const handleFsxPassword = () => {
+        setDialog(
+            <DialogComponent
+                header={'Reset FSxadmin password '}
+                content={<FSXPasswordContent />}
+                primaryButton={GENERAL.APPLY}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {}}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                dialogFrom={FROM_DIALOG.FSXADMIN}
+            />
+        );
     };
 
     return (
@@ -174,7 +194,9 @@ const WellArchitectDashboard = () => {
                                     id: 'resetFSxAdminPassword',
                                     children: 'Reset FSxadmin password',
 
-                                    onClick: () => {}
+                                    onClick: () => {
+                                        handleFsxPassword();
+                                    }
                                 }
                             ]}
                         >
