@@ -98,11 +98,7 @@ export interface SandboxEntities {
         sandboxListLoading: boolean;
         sandboxListError: string;
     };
-    getSandboxInstanceList: {
-        sandboxInstanceListData: SandboxListEntities;
-        sandboxInstanceListLoading: boolean;
-        sandboxInstanceListError: string;
-    };
+
     aggregatedSandboxList: SandboxListEntities;
     aggregatedSandboxInstanceList: SandboxListEntities;
     allSandboxList: SandboxListEntities;

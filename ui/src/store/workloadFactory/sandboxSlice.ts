@@ -9,11 +9,7 @@ export const initialSandboxState: SandboxEntities = {
         sandboxListLoading: false,
         sandboxListError: ''
     },
-    getSandboxInstanceList: {
-        sandboxInstanceListData: [],
-        sandboxInstanceListLoading: false,
-        sandboxInstanceListError: ''
-    },
+
     aggregatedSandboxList: [],
     aggregatedSandboxInstanceList: [],
     allSandboxList: [],
@@ -44,9 +40,6 @@ const sandboxSlice = createSlice({
     reducers: {
         setRefreshSandboxInstanceTime: (state, action: PayloadAction<any>) => {
             state.refreshSandboxInstanceTime = action.payload;
-        },
-        setSandboxInstanceListState: (state, action: PayloadAction<any>) => {
-            state.getSandboxInstanceList = action.payload;
         },
         setSandboxListState: (state, action: PayloadAction<any>) => {
             state.getSandboxList = action.payload;
@@ -105,7 +98,7 @@ const sandboxSlice = createSlice({
 export const {
     setRefreshSandboxInstanceTime,
     setIsRefreshedSandboxInstance,
-    setSandboxInstanceListState,
+
     setAggregatedSandboxInstanceList,
     setSandboxListState,
     setAllSandboxInstanceList,

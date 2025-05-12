@@ -4,8 +4,7 @@ import {
     setAggregatedSandboxInstanceList,
     setAllSandboxInstanceList,
     setIsRefreshedSandboxInstance,
-    setRefreshSandboxInstanceTime,
-    setSandboxInstanceListState
+    setRefreshSandboxInstanceTime
 } from '../../../../../store/workloadFactory/sandboxSlice';
 import { useAppDispatch, useAppSelector } from '../../../../../store/storeHooks';
 import { useLazyGetSandboxInstanceListQuery } from '../../../../../utils/apiService';
@@ -69,29 +68,12 @@ const SandboxInstanceApis = () => {
 
                 dispatch(setRefreshSandboxInstanceTime(getCurrentDateTime()));
 
-                dispatch(
-                    setSandboxInstanceListState({
-                        databaseHosts: result.data.items,
-                        sandboxListLoading: false,
-                        sandboxListError: false
-                    })
-                );
-
                 // Automatically call the API again if nextToken exists
                 if (result.data.nextToken) {
                     runApiDetails(result.data.nextToken);
                 }
             }
-        } catch (error) {
-            console.error('Error fetching sandbox list:', error);
-            dispatch(
-                setSandboxInstanceListState({
-                    databaseHosts: [],
-                    sandboxListLoading: false,
-                    sandboxListError: true
-                })
-            );
-        }
+        } catch (error) {}
     };
 
     return <></>;
