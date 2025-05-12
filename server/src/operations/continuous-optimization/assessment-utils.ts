@@ -15,21 +15,21 @@ import {
     STORAGE_CONFIGURATION_ASSESMENT_MAP
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
-import { getInstanceInfo } from '../database/database-operations';
+import {
+    getInstanceInfo,
+    updateDatabaseHostConfigurations,
+    updateDatabaseInstanceConfigurations
+} from '../database/database-operations';
 import { BulkDismissConfigurationType } from '../../routes/types/continuous-optimization.types';
 import {
     DatabaseInstanceDismissConfigs,
     DatabaseInstanceConfigurations,
     InstanceDismissParams,
-    Metadata,
     DatabaseHostConfigurations
 } from '../../utils/common-types';
-import {
-    listResources,
-    updateDatabaseHostConfigurations,
-    updateDatabaseInstanceConfigurations
-} from '../../lib/database/db';
-import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
+
+import { listResources } from '../../lib/database/db';
+
 import { HttpErrorCodes } from '../../utils/consts';
 
 const logger = getLogger();
@@ -86,7 +86,7 @@ async function handleOptimizeJobCreation(
 
     const filterParams = {
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName as string,
+        resourceName: serverNameWithHostName,
         typeFilter: jobType,
         region,
         credentialsId,
@@ -110,7 +110,7 @@ async function handleOptimizeJobCreation(
     const { id } = await registerJob(accountId, credentialsId, region, {
         type: jobType,
         status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName as string,
+        resourceName: serverNameWithHostName,
         name: jobName,
         startTime: Date.now(),
         description: jobDescription,
@@ -120,27 +120,6 @@ async function handleOptimizeJobCreation(
     logger.debug(`Job created with id ${id}`);
 
     return id;
-}
-
-async function getLastAssessedTime(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    databaseInstanceId: string
-) {
-    const [[{ creation_time: latestInstanceLevelAssessedTime } = {}], [{ metadata = {} } = {}]] = await Promise.all([
-        listDatabaseInstanceConfigData(accountId, region, credentialsId, databaseHostId, databaseInstanceId),
-        listResources(accountId, databaseHostId, credentialsId, region)
-    ]);
-
-    const { assessment: { lastAssessedDate: latestHostLevelAssessedTime } = {} } = metadata as unknown as Metadata;
-    const latestAssessmentTimestamp = Math.max(
-        latestInstanceLevelAssessedTime ? latestInstanceLevelAssessedTime.getTime() : 0,
-        latestHostLevelAssessedTime ? Number(latestHostLevelAssessedTime) : 0
-    );
-
-    return moment(Number(latestAssessmentTimestamp)).unix() * 1000;
 }
 
 function createNewConfig(configurationName: string, configState: string, startTime: number, endTime?: number) {
@@ -551,7 +530,6 @@ export {
     JobMetadata,
     updateDismissConfigurations,
     formatInstanceDismissConfigurations,
-    getLastAssessedTime,
     updateFieldsBasedOnDismissedConfigurations,
     checkAndUpdatePostponedEndTime
 };

@@ -17,10 +17,7 @@ import { GET_VCPU_AND_MAXDOP_DETAILS } from '../workloads/mssql/continuous-optim
 import { callSsmExecution } from '../aws/ssm-operations';
 import { sqlResponseParsing } from '../../utils/utils';
 import { ParameterDriftResponseType } from '../../routes/types/continuous-optimization.types';
-import {
-    createDatabaseInstanceConfigData,
-    listDatabaseInstanceConfigData
-} from '../../lib/database/database-instance-config';
+import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 
 const logger = getLogger();
 
@@ -29,30 +26,21 @@ async function calculateMaxDOPDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    maxdopAssessmentData: MaxDOPAssesment
 ) {
     logger.info('Calculating Max DOP drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
     let errorMessage = '';
     try {
-        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-            accountId,
-            region,
-            credentialsId,
-            databaseHostId,
-            databaseInstanceId,
-            AssessmentCategories.MAXDOP
-        );
+        logger.debug('Persisted max DOP configuration data from DB', maxdopAssessmentData);
 
-        logger.debug('Persisted max DOP configuration data from DB', persistedConfigurationData);
-        const maxDOP = persistedConfigurationData?.config_data as unknown as MaxDOPAssesment;
-
-        if (isEmpty(maxDOP)) {
+        if (isEmpty(maxdopAssessmentData)) {
             errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.MAXDOP);
             logger.error({ errorMessage });
             return { errorMessage };
         }
 
-        const maxDOPAssessment = maxDOP as MaxDOPAssesment;
+        const maxDOPAssessment = maxdopAssessmentData as MaxDOPAssesment;
 
         const { current, recommendedMaxDOP, status } = maxDOPAssessment;
         const recommendationMessage =

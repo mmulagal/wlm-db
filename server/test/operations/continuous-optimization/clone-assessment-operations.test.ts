@@ -64,12 +64,25 @@ describe('calculate clone drift', () => {
     });
 
     it('calculate clone assessment drift data', async () => {
+        const result = await runCloneAssessment(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            activeNodeInstanceId,
+            'MSSQLSERVER',
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            '6cbdabbfe3fb147e',
+            'test-resource',
+            { MSSQLSERVER: { fsxId: 'fs-0f53fbecdd3d85fb2', svmUuid: 'svm-0123456789abcdef0' } },
+            false
+        );
         const cloneAssessmentResponse = await calculateCloneDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d'
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            result
         );
         expect(cloneAssessmentResponse).toBeDefined();
     });

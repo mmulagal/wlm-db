@@ -1,4 +1,4 @@
-import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
+import { createResource, listResources, upsertDatabaseInstance } from '../../../src/lib/database/db';
 import {
     calculateComputeDrift,
     managedHostsComputeAssessment
@@ -14,6 +14,7 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/aws/compute-optimizer-scope';
+import { Metadata } from '../../../src/utils/common-types';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 
@@ -59,28 +60,30 @@ beforeAll(async () => {
 });
 describe('Compute assessment operations', () => {
     it('Should calculate compute drift', async () => {
+        const [{ metadata = {} } = {}] =
+            (await listResources(ACCOUNT_ID, RESOURCE_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION)) || [];
         const response = await calculateComputeDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d'
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            metadata as unknown as Metadata
         );
 
         expect(response.name).toEqual('compute-rightsizing');
     });
 
     it('Should perform compute assessment for managed hosts', async () => {
-        const response = await managedHostsComputeAssessment(
+        const { computeAssessment } = await managedHostsComputeAssessment(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             DEMO_AWS_ACCOUNT_ID,
             'i-07e76a4b916548dc0',
             'test-resource',
-            'test-job-id',
-            RESOURCE_ID
+            'test-job-id'
         );
-        expect(response?.finding).toBeDefined();
+        expect(computeAssessment?.finding).toBeDefined();
     });
 });

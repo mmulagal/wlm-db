@@ -1,6 +1,5 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { Metadata, RssConfigAssesment } from '../../utils/common-types';
 import {
     AssessmentStatus,
@@ -12,12 +11,12 @@ import {
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
-import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { GET_RSS_CONFIG_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -25,19 +24,13 @@ async function calculateRssConfigDrift(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string
+    databaseHostId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating RSS drift', { accountId, credentialsId, region, databaseHostId });
     let errorMessage = '';
-    let metadata;
     let rssConfigAssessment;
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating rss drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
+
     try {
         const { assessment: { rssConfig, errors } = {} } = metadata as unknown as Metadata;
 
@@ -107,7 +100,6 @@ async function managedHostsRssConfigAssessment(
     region: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    databaseHostId: string,
     parentJobId?: string,
     metadata?: Metadata
 ) {
@@ -152,19 +144,9 @@ async function managedHostsRssConfigAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
-        if (errorMessage) {
-            await updateAsssementErrorInResourceMetadata(
-                accountId,
-                databaseHostId,
-                credentialsId,
-                region,
-                errorMessage,
-                'rssConfig'
-            );
-        }
     }
 
-    return rssConfigAssessment;
+    return { rssConfigAssessment, errorMessage };
 }
 
 async function runRssConfigAssessment(

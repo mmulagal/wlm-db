@@ -28,10 +28,7 @@ import { registerJob, updateJobDetails } from '../database/job-operations';
 import { GET_SANDBOX_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { calculateDaysSince, sqlResponseParsing } from '../../utils/utils';
-import {
-    createDatabaseInstanceConfigData,
-    listDatabaseInstanceConfigData
-} from '../../lib/database/database-instance-config';
+import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 import { GET_SANDBOXES } from '../workloads/mssql/queries';
 import { getProperty, getSourceDetails } from '../sandbox-operations';
 import { getMappedOntapVolumes } from '../aws/fsx-operations';
@@ -48,30 +45,21 @@ async function calculateCloneDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    cloneAssessmentData: CloneAssessment
 ) {
     logger.info('Calculating Clone drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
     let errorMessage = '';
     try {
-        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-            accountId,
-            region,
-            credentialsId,
-            databaseHostId,
-            databaseInstanceId,
-            AssessmentCategories.CLONE
-        );
+        logger.debug('Persisted Clone configuration data from DB', cloneAssessmentData);
 
-        logger.debug('Persisted Clone configuration data from DB', persistedConfigurationData);
-        const cloneAssessment = persistedConfigurationData?.config_data as unknown as CloneAssessment;
-
-        if (isEmpty(cloneAssessment)) {
+        if (isEmpty(cloneAssessmentData)) {
             errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CLONE);
             logger.error(errorMessage);
             return { errorMessage };
         }
         const { cloneDetails, status, oldClones, oldCloneDetails, oldCloneDatabaseNames } =
-            cloneAssessment as CloneAssessment;
+            cloneAssessmentData as CloneAssessment;
         logger.debug('Clone assessment result', cloneDetails);
 
         const recommendationMessage =

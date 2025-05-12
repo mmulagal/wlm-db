@@ -263,6 +263,7 @@ const HOST_AND_SQL_INFO_PS1 = [
 
   Function GetSQLInstanceDriveDetails($serverInstance, $sqlUsername, $sqlPassword) {
     $sqlInstancePaths = $null
+    $sqlInstanceDriveLetterOrPathList = @()
 
     try {
       $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance 2> $null
@@ -277,11 +278,10 @@ const HOST_AND_SQL_INFO_PS1 = [
             $sqlInstancePaths = sqlcmd -U $sqlUsername -P $sqlPassword -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance 2> $null
           }
         } catch {
-          # NOOP
+          # Handle the case where the registry key does not exist}
         }
       }
     }
-    $sqlInstanceDriveLetterOrPathList = @()
     ForEach ($path in $sqlInstancePaths) {
       $path = $path.TrimStart('\\')
       $driveOrPath = ($path -split '\\\\')[0]
@@ -324,6 +324,89 @@ const HOST_AND_SQL_INFO_PS1 = [
 
     return $clusterDetailsResponse
   }
+
+  Function FetchAllSQLInstancesFromRegistry {
+    $sqlInstances = @()
+    $registryPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL"
+    $instanceNames = Get-ItemProperty -Path $registryPath | Select-Object -Property * | ForEach-Object {
+        $_.PSObject.Properties | Where-Object { $_.Name -notlike "PS*" } | Select-Object -ExpandProperty Value
+    }
+    ForEach ($instanceName in $instanceNames) {
+      $sqlInstances += $instanceName
+    }
+    return $sqlInstances
+  }
+
+  Function FetchSqlServerInfoFromRegistry($allSqlInstanceNamesFromRegistry, $instanceName) {
+    $sqlServerInfo = @{}
+    $instance = $allSqlInstanceNamesFromRegistry | Where-Object { $_ -like "*$instanceName*" } | Select-Object -First 1
+
+    if (-not $instance) {
+        Write-Information "Instance '$instanceName' not found in the registry."
+        return $null
+    }
+
+    $instanceConfigPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$instance\\MSSQLServer"
+    $instanceSetupConfigPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$instance\\Setup"
+
+    # Fetch SQL Server Edition and Engine Edition
+    $edition = (Get-ItemProperty -Path $instanceSetupConfigPath -Name "Edition" -ErrorAction SilentlyContinue).Edition
+    if (-not ([string]::IsNullOrEmpty($edition))) {
+        $sqlServerInfo['sqlServerEdition'] = $edition
+        if ($edition.StartsWith("Standard")) { $sqlServerInfo['sqlServerEngineEdition'] = 2 }
+        elseif ($edition.StartsWith("Enterprise")) { $sqlServerInfo['sqlServerEngineEdition'] = 3 }
+        elseif ($edition.StartsWith("Express")) { $sqlServerInfo['sqlServerEngineEdition'] = 4 }
+        else { $sqlServerInfo['sqlServerEngineEdition'] = 100 }
+    }
+
+    # Fetch SQL Server Version
+    $sqlServerVersion = (Get-ItemProperty -Path $instanceSetupConfigPath -Name "Version" -ErrorAction SilentlyContinue).Version
+    if (-not ([string]::IsNullOrEmpty($sqlServerVersion))) {
+        $sqlServerInfo['sqlServerVersion'] = $sqlServerVersion
+    }
+
+    # Check if the instance is clustered
+    $sqlServerInfo['isClustered'] = $False
+    $isClustered = (Get-ItemProperty -Path $instanceSetupConfigPath -Name "SQLCluster" -ErrorAction SilentlyContinue).SQLCluster
+    if (-not ([string]::IsNullOrEmpty($isClustered))) {
+        $sqlServerInfo['isClustered'] = if ($isClustered -eq 1) { $True } else { $False }
+    }
+
+    # Check if HADR (High Availability Disaster Recovery) is enabled
+    $sqlServerInfo['hadrEnabled'] = $False
+    $instanceHADRConfigPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$instance\\MSSQLServer\\HADR"
+    $hadrEnabled = (Get-ItemProperty -Path $instanceHADRConfigPath -Name "HADR_Enabled" -ErrorAction SilentlyContinue).HADR_Enabled
+    if (-not ([string]::IsNullOrEmpty($hadrEnabled))) {
+        $sqlServerInfo['hadrEnabled'] = if ($hadrEnabled -eq 1) { $True } else { $False }
+    }
+
+    # Fetch Drive Details
+    $sqlInstanceDriveLetterList = @()
+    try {
+        $defaultDataPath = (Get-ItemProperty -Path $instanceConfigPath -Name "DefaultData" -ErrorAction SilentlyContinue).DefaultData
+        if (-not ([string]::IsNullOrEmpty($defaultDataPath))) {
+            $sqlInstanceDriveLetterList += ($defaultDataPath -split '\\\\')[0]
+        }
+
+        $defaultLogPath = (Get-ItemProperty -Path $instanceConfigPath -Name "DefaultLog" -ErrorAction SilentlyContinue).DefaultLog
+        if (-not ([string]::IsNullOrEmpty($defaultLogPath))) {
+            $sqlInstanceDriveLetterList += ($defaultLogPath -split '\\\\')[0]
+        }
+
+        $rootDataPath = (Get-ItemProperty -Path $instanceSetupConfigPath -Name "SQLDataRoot" -ErrorAction SilentlyContinue).SQLDataRoot
+        if (-not ([string]::IsNullOrEmpty($rootDataPath))) {
+            $sqlInstanceDriveLetterList += ($rootDataPath -split '\\\\')[0]
+        }
+    } catch {
+        Write-Warning "Failed to fetch drive details for instance '$instanceName'."
+    }
+
+    $sqlServerInfo['driveDetails'] = $sqlInstanceDriveLetterList | Select-Object -Unique
+
+    return $sqlServerInfo
+  }
+
+
     
   try {
     $responseObject = @{}
@@ -334,6 +417,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
     $sqlPermissions = @(${SQL_PERMISSIONS})
+    $allSqlInstanceNamesFromRegistry = FetchAllSQLInstancesFromRegistry
   
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "60"} -Method PUT -Uri 'http://169.254.169.254/latest/api/token'
@@ -360,6 +444,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
       $responseObject = @{}
       $instanceSectionStartTime = Get-Date
+      
   
       If ($DiskTargetInfoMap.Count -le 0) {
         $body['failureInfo'] += "Failed to get drive letter and disk target details\`n"
@@ -376,7 +461,10 @@ const HOST_AND_SQL_INFO_PS1 = [
       $isDefaultInstance = -Not $sqlService.Name.Contains('$')
       $responseObject['isDefaultInstance'] = $isDefaultInstance
       $instanceName = $sqlService.Name -Replace "MSSQL\\$", ""
-  
+
+
+      $sqlServerInfoFromRegistry = FetchSqlServerInfoFromRegistry $allSqlInstanceNamesFromRegistry $instanceName
+     
       $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
       If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
         $info = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"
@@ -409,29 +497,24 @@ const HOST_AND_SQL_INFO_PS1 = [
         If ($? -eq $True) {
           $editionDBCountMachineInfoGuid = $null
           $existingPermissions = $null
-          $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" }
+          $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" } 
 
+        
           try {
             $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';"  2> $null
-            $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
             $responseObject['windowsAuthentication'] = $?
+            $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
             $deploymentTypeCheck = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH" 2> $null
-            $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance
-            if ($? -eq $False) {
-              $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
-            }
+            $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance 
           } catch {
             $responseObject['windowsAuthentication'] = $False
-            try {
+            try {           
               $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
               if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
                   $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" 2> $null
                   $deploymentTypeCheck = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH"  2> $null
                   $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
                   $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
-                  if ($? -eq $False) {
-                    $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
-                    }
                   }
                 }
                 catch {
@@ -439,27 +522,45 @@ const HOST_AND_SQL_INFO_PS1 = [
                 }
             }
           
-          if ($editionDBCountMachineInfoGuid) {
-            $responseObject['sqlServerEdition'] = $editionDBCountMachineInfoGuid[0]
-            $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfoGuid[1]
-            $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
-            $responseObject['sqlServerName'] = $editionDBCountMachineInfoGuid[3]
-            $responseObject['serverGuid'] = $editionDBCountMachineInfoGuid[4]
+          if ($editionDBCountMachineInfoGuid -or $sqlServerInfoFromRegistry) {
 
-            if($deploymentTypeCheck) {
-              $isHadrEnabled = $deploymentTypeCheck | ConvertFrom-Json | ForEach-Object { $_.IsHadrEnabled }
-              $isClustered = $deploymentTypeCheck | ConvertFrom-Json | ForEach-Object { $_.IsClustered }
-                if($isHadrEnabled -eq $True) {
-                  $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
-                }
-                elseif($isClustered -eq $True) {
-                  $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
-                }
-                else{
-                  $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
-                  $responseObject['sqlServerNodes'] = hostname
-                }
+            if( -Not ([string]::IsNullOrEmpty($editionDBCountMachineInfoGuid)))
+            {
+              $responseObject['sqlServerEdition'] = $editionDBCountMachineInfoGuid[0]
+              $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfoGuid[1]
+              $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
+              $responseObject['serverGuid'] = $editionDBCountMachineInfoGuid[4]
             }
+
+            elseif( -Not ([string]::IsNullOrEmpty($sqlServerInfoFromRegistry))) 
+            {
+              if($sqlServerInfoFromRegistry.ContainsKey('sqlServerEdition')) {
+                $responseObject['sqlServerEdition'] = $sqlServerInfoFromRegistry['sqlServerEdition']
+                $responseObject['sqlServerEngineEdition'] = $sqlServerInfoFromRegistry['sqlServerEngineEdition']
+              }
+              if($sqlServerInfoFromRegistry.ContainsKey('sqlServerVersion')) {
+                $responseObject['sqlServerVersion'] = $sqlServerInfoFromRegistry['sqlServerVersion']
+              }
+              $isHadrEnabled = $sqlServerInfoFromRegistry['hadrEnabled']
+              $isClustered = $sqlServerInfoFromRegistry['isClustered']
+            }
+            $responseObject['sqlServerName'] = (Get-WmiObject -Class Win32_ComputerSystem).Name
+            
+            if($deploymentTypeCheck) {
+             $isHadrEnabled = $deploymentTypeCheck | ConvertFrom-Json | ForEach-Object { $_.IsHadrEnabled }
+             $isClustered = $deploymentTypeCheck | ConvertFrom-Json | ForEach-Object { $_.IsClustered }
+             }     
+            if($isHadrEnabled -eq $True) {
+              $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
+            }
+            elseif($isClustered -eq $True) {
+              $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
+            }
+            else{
+              $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
+              $responseObject['sqlServerNodes'] = hostname
+            }
+            
 
             $missingPermissions = @()
             if( -Not ([string]::IsNullOrEmpty($existingPermissions))) {
@@ -472,6 +573,9 @@ const HOST_AND_SQL_INFO_PS1 = [
             }
             $responseObject['missingSqlPermissions'] = $missingPermissions
 
+            if(($sqlInstanceDriveLetterOrPathList.Count -eq 0) -and (-Not [string]::IsNullOrEmpty($sqlServerInfoFromRegistry)) -and $sqlServerInfoFromRegistry.ContainsKey('driveDetails')) {
+              $sqlInstanceDriveLetterOrPathList = $sqlServerInfoFromRegistry['driveDetails']
+            }
 
             $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
               if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {

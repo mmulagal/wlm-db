@@ -12,13 +12,17 @@ const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) =>
     const buttonContainer = () => {
         const checkForOnlyPostponed =
             rowData.length > 0 && rowData.every((item: any) => item === CONFIG_STATES.POSTPONED);
-        const checkForOnlyActive = rowData.length > 0 && rowData.every((item: any) => item === CONFIG_STATES.ACTIVE);
+        const checkForOnlyActive =
+            rowData.length > 0 &&
+            rowData.every((item: any) => item === CONFIG_STATES.ACTIVE || item === CONFIG_STATES.ACTIVATING);
         const checkForOnlyDismissed =
             rowData.length > 0 && rowData.every((item: any) => item === CONFIG_STATES.DISMISSED);
 
         const hasSomeDismissed = rowData.length > 0 && rowData.some((item: any) => item === CONFIG_STATES.DISMISSED);
 
-        const hasSomeActive = rowData.length > 0 && rowData.some((item: any) => item === CONFIG_STATES.ACTIVE);
+        const hasSomeActive =
+            rowData.length > 0 &&
+            rowData.some((item: any) => item === CONFIG_STATES.ACTIVE || item === CONFIG_STATES.ACTIVATING);
 
         const hasSomePostponed = rowData.length > 0 && rowData.some((item: any) => item === CONFIG_STATES.POSTPONED);
 

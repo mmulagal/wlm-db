@@ -113,7 +113,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${rowData?.name}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${rowData?.name}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"
@@ -187,7 +187,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     const handleOntapDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={`${rowData?.name} optimization`}
+                header={`${rowData?.name}`}
                 content={<DialogContent type={rowData?.name} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
@@ -247,7 +247,13 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                 <InProgress className={styles.statusIcon} />
                             )}
                         </div>
-                        <div>{cellData || GENERAL.NOT_AVAILABLE}</div>
+                        <div>
+                            {cellData === GETWELL_STATUS.OPTIMIZED
+                                ? GETWELL_STATUS.WELL_ARCHITECTED
+                                : cellData === GETWELL_STATUS.OPTIMIZING
+                                ? GETWELL_STATUS.FIXING
+                                : cellData || GENERAL.NOT_AVAILABLE}
+                        </div>
                     </div>
                 );
             }

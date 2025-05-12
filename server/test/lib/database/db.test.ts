@@ -21,8 +21,7 @@ import {
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record,
-    listAllManagedInstances,
-    updateDatabaseHostConfigurations
+    updateResource
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -226,7 +225,7 @@ describe('Database instance operations', () => {
         response = await listDatabaseInstances(ACCOUNT_ID, {});
         expect(response.length).toEqual(1);
 
-        const managedInstances = await listAllManagedInstances();
+        const managedInstances = await listDatabaseInstances();
         expect(managedInstances.length).toBeGreaterThan(0);
         expect(managedInstances[0].resource.id).toBeDefined();
 
@@ -351,13 +350,13 @@ describe('Database Host Configuration Operations', () => {
             endTime: undefined
         };
 
-        const updateResponse = await updateDatabaseHostConfigurations(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            '6cbdabbfe3fb147e',
+        const updateResponse = await updateResource({
+            accountId: ACCOUNT_ID,
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            resourceId: '6cbdabbfe3fb147e',
             updatedConfigs
-        );
+        });
 
         expect(updateResponse).to.deep.equal({ count: 1 });
 

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WorkloadFactoryResourceEntities } from '../../utils/types/workloadFactoryResourceTypes';
+import { set } from 'lodash';
 
 const initialState: WorkloadFactoryResourceEntities = {
     resourceLoading: true,
@@ -138,13 +139,23 @@ const initialState: WorkloadFactoryResourceEntities = {
     selectedResourceCredId: '',
     selectedResourceRegionId: '',
     selectedHostname: '',
-    isResourceRefresh: false
+    isResourceRefresh: false,
+    fsxAdminPasswords: {
+        password: '',
+        confirmPassword: ''
+    }
 };
 
 const workloadFactoryResourceSlice = createSlice({
     name: 'workloadFactoryResource',
     initialState,
     reducers: {
+        setFsxAdminPassword: (state, action: PayloadAction<any>) => {
+            state.fsxAdminPasswords.password = action.payload;
+        },
+        setFsxAdminConfirmPassword: (state, action: PayloadAction<any>) => {
+            state.fsxAdminPasswords.confirmPassword = action.payload;
+        },
         setResourceLoading: (state, action: PayloadAction<any>) => {
             state.resourceLoading = action.payload;
         },
@@ -193,6 +204,8 @@ const workloadFactoryResourceSlice = createSlice({
 });
 
 export const {
+    setFsxAdminPassword,
+    setFsxAdminConfirmPassword,
     setResourceLoading,
     setResourceDetails,
     setDatabaseListLoading,

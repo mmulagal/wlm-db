@@ -50,6 +50,7 @@ import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedRowsForManage } from '../store/workloadFactory/inventoryV2Slice';
+import { PgsqlInstancesDiscovered } from './types/inventoryV2Types';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -466,6 +467,20 @@ export const isValidUserName = (userName: string) => {
     }
 };
 
+export const isValidPassword = (password: string) => {
+    if (
+        password.length > 0 &&
+        (password.length < 8 ||
+            password.length > 50 ||
+            !/[A-Za-z]/.test(password) ||
+            !/\d/.test(password) ||
+            /[^A-Za-z\d]/.test(password) ||
+            /admin/i.test(password))
+    ) {
+        return 'Check password criteria.';
+    }
+};
+
 export const sortListOfDict = (dataList: any, field: string, ascOrder = true) => {
     if (!dataList || (dataList && dataList.length < 2)) {
         return dataList;
@@ -623,6 +638,16 @@ export const getAzType = (deploymentType: string | undefined) => {
         : multiAzPattern.test(deploymentType)
         ? GENERAL.MULTI_AZ
         : deploymentType;
+};
+
+export const getPgsqlAzType = (perRow: PgsqlInstancesDiscovered) => {
+    let deploymentType = '';
+    perRow?.storage?.forEach((storageObj: any) => {
+        if (storageObj?.deploymentType) {
+            deploymentType = storageObj?.deploymentType;
+        }
+    });
+    return getAzType(deploymentType);
 };
 
 export const formatHostData = (val: any) => {
@@ -1262,7 +1287,7 @@ export const jobMonitoringTypeMapping = (val: string) => {
         typeValue = GENERAL.JM_TYPE_SANDBOX;
     } else if (val === JOB_MONITORING_TYPE.ASSESSMENT) {
         typeValue = GENERAL.JM_TYPE_ASSESSMENT;
-    } else if (val === JOB_MONITORING_TYPE.OPTIMIZE) {
+    } else if (val === JOB_MONITORING_TYPE.OPTIMIZE || val === JOB_MONITORING_TYPE.WELL_ARCHITECTED) {
         typeValue = GENERAL.JM_TYPE_OPTIMIZE;
     }
     return typeValue;
@@ -2038,4 +2063,20 @@ export const makeRegionMapping = (data: any) => {
         }
     });
     return regionMapping;
+};
+
+const roundedFormatter = Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+const twoDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const fourDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 });
+
+export const rounded = (value: number) => {
+    return roundedFormatter.format(value);
+};
+
+export const twoFractionDigits = (value: number) => {
+    return twoDecimalFormatter.format(value);
+};
+
+export const fourFractionDigits = (value: number) => {
+    return fourDecimalFormatter.format(value);
 };

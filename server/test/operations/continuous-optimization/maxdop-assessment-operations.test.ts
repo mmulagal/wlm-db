@@ -59,12 +59,21 @@ describe('calculate maxdop drift', () => {
     });
 
     it('calculate max dop assessment drift data', async () => {
+        const result = await runMaxDOPAssessment(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            activeNodeInstanceId,
+            'MSSQLSERVER',
+            false
+        );
         const maxDOPAssessmentResponse = await calculateMaxDOPDrift(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d'
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            result
         );
         expect(maxDOPAssessmentResponse).toBeDefined();
     });

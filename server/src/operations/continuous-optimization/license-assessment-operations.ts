@@ -1,7 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { getHostAndSqlServerInfo } from '../discover-operations';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import {
     fetchSqlServerInstanceConfiguration,
     getLicenseRecommendations,
@@ -20,7 +19,7 @@ import {
 } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
-import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -29,20 +28,14 @@ async function calculateLicenseDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating license drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
     let errorMessage = '';
     let licenseAssessment;
-    let metadata;
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating license drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
+
     try {
         const { assessment: { license, errors } = {} } = metadata as unknown as Metadata;
 
@@ -94,8 +87,7 @@ async function managedHostsLicenseAssessment(
     region: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    parentJobId?: string,
-    databaseHostId?: string
+    parentJobId?: string
 ) {
     logger.info('Managed hosts license assessment', {
         accountId,
@@ -132,19 +124,9 @@ async function managedHostsLicenseAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
-        if (errorMessage) {
-            await updateAsssementErrorInResourceMetadata(
-                accountId,
-                databaseHostId!,
-                credentialsId,
-                region,
-                errorMessage,
-                'license'
-            );
-        }
     }
 
-    return licenseAssessment;
+    return { licenseAssessment, errorMessage };
 }
 
 async function runLicenseAssessment(

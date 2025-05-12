@@ -10,7 +10,9 @@ import {
     listDeployments,
     listResources,
     countResources,
-    listDatabaseInstances
+    listDatabaseInstances,
+    updateDatabaseInstance,
+    updateResource
 } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
@@ -320,6 +322,43 @@ async function getInstanceInfo(
     return instanceDetail;
 }
 
+async function listAllManagedInstances(accountId?: string) {
+    return listDatabaseInstances(accountId);
+}
+
+async function updateInstanceMetadata(accountId: string, instanceId: string, metaData: any) {
+    logger.info('Update instance metadata', { accountId, instanceId, metaData });
+    return updateDatabaseInstance({ accountId, instanceId, metaData });
+}
+
+async function updateDatabaseInstanceConfigurations(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    instanceId: string,
+    updatedConfigs: any
+) {
+    logger.info('Update instance configurations', { accountId, instanceId, updatedConfigs });
+    return updateDatabaseInstance({ accountId, credentialsId, region, databaseHostId, instanceId, updatedConfigs });
+}
+
+async function updateResourceMetaData(accountId: string, credentialsId: string, resourceId: string, metaData?: any) {
+    logger.info('Update resource metadata', { accountId, resourceId, metaData });
+    return updateResource({ accountId, credentialsId, resourceId, metaData });
+}
+
+async function updateDatabaseHostConfigurations(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceId: string,
+    updatedConfigs: any
+) {
+    logger.info('Update host configurations', { accountId, resourceId, updatedConfigs });
+    return updateResource({ accountId, credentialsId, region, resourceId, updatedConfigs });
+}
+
 export {
     getSavedConfig,
     getAllSavedConfig,
@@ -331,5 +370,10 @@ export {
     getDeployments,
     getResources,
     trimAccountIdForDemo,
-    getInstanceInfo
+    getInstanceInfo,
+    listAllManagedInstances,
+    updateInstanceMetadata,
+    updateDatabaseInstanceConfigurations,
+    updateResourceMetaData,
+    updateDatabaseHostConfigurations
 };

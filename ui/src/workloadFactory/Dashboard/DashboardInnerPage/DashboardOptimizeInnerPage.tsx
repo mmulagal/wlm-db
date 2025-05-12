@@ -28,7 +28,7 @@ const DashboardOptimizeInnerPage = () => {
                                     }
                                 },
                                 {
-                                    title: `Optimize configuration (${selectedConfig})`,
+                                    title: `Fix configuration (${selectedConfig})`,
                                     dataTestId: 'wlm-db-optimize-configuration',
                                     onClick: () => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
@@ -55,7 +55,7 @@ const DashboardOptimizeInnerPage = () => {
                                 .replace(/ /g, '-')}`}
                             variant="Semibold_16"
                         >
-                            Manage instance optimization
+                            Manage instance fixing
                         </DsTypography>
                     </div>
 

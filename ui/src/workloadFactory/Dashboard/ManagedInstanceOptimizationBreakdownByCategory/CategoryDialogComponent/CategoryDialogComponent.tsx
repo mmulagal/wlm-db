@@ -73,7 +73,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         },
         {
             id: '3',
-            Header: `Optimization score`,
+            Header: `Well-architected issues`,
             accessor: 'score',
             width: '30%',
             isSortable: true,
@@ -123,7 +123,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
     return (
         <div className={styles.categoryDialogContent}>
             <DsTypography variant="Regular_14">
-                Select the instance to optimize and then select 'Continue' to be redirected to the instance optimization
+                Select the instance to fix and then select 'Continue' to be redirected to the well-architected page
                 page.
             </DsTypography>
             <div className={styles.table}>

@@ -16,14 +16,7 @@ import {
     STORAGE_PROTOCOLS
 } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import {
-    checkAccount,
-    createDeployment,
-    createResource,
-    updateInstanceMetadata,
-    updateResourceMetaData,
-    upsertDatabaseInstance
-} from '../lib/database/db';
+import { checkAccount, createDeployment, createResource, upsertDatabaseInstance } from '../lib/database/db';
 import { Metadata, Sandbox, DatabaseInstanceMetadata, ResourceAssessmentData } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
@@ -60,6 +53,7 @@ import {
     ASSESSMENT_MAXDOP_CONFIG_DATA
 } from '../utils/demo-utils/demoInventoryData';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 
 const logger = getLogger();
 

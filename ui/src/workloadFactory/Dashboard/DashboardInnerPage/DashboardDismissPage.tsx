@@ -757,7 +757,7 @@ const DashboardDismissPage = () => {
                             }
                         },
                         {
-                            title: `Optimize configuration (${selectedConfig})`,
+                            title: `Fix configuration (${selectedConfig})`,
                             onClick: () => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
                             }

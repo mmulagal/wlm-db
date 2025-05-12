@@ -4,12 +4,7 @@ import { compact, groupBy, isEmpty, uniq, uniqBy } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
-import {
-    listDatabaseInstances,
-    listResources,
-    updateInstanceMetadata,
-    updateResourceMetaData
-} from '../lib/database/db';
+import { listDatabaseInstances, listResources } from '../lib/database/db';
 import {
     ACCOUNTID,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
@@ -51,7 +46,7 @@ import {
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getDatabaseInstanceName, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
-import { getResources } from './database/database-operations';
+import { getResources, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 import { updateParentJobStatus, registerJob, updateJobDetails } from './database/job-operations';
 import {
     updateSandboxDBIntoInstanceData,
@@ -206,30 +201,31 @@ async function getSandboxDetails(
                 return;
             }
 
-            const filteredSandboxItems = parsedInstanceResponse.filter((item: sandboxType) =>
-                item.sandbox_properties.some((prop: any) => prop.name === ACCOUNTID && prop.value === accountId)
-            );
+            if (Array.isArray(parsedInstanceResponse)) {
+                const filteredSandboxItems = parsedInstanceResponse.filter((item: sandboxType) =>
+                    item.sandbox_properties.some((prop: any) => prop.name === ACCOUNTID && prop.value === accountId)
+                );
 
-            filteredSandboxItems.forEach((item: sandboxType) => {
-                const sources = getSourceDetails(item);
+                filteredSandboxItems.forEach((item: sandboxType) => {
+                    const sources = getSourceDetails(item);
 
-                const databaseObject = {
-                    sandboxName: item.database_name,
-                    databaseHostName: resourceDetails.resource_name!,
-                    databaseHostId: resourceDetails.resource_id!,
-                    databaseInstanceName: instance.instanceName,
-                    databaseInstanceId: instance.databaseInstanceId,
-                    sourceDatabaseHostName: sources[0],
-                    sourceDatabaseInstanceName: sources[1],
-                    sourceDatabaseName: sources[2],
-                    createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
-                    updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
-                    tag: getProperty(item, 'tag')
-                };
+                    const databaseObject = {
+                        sandboxName: item.database_name,
+                        databaseHostName: resourceDetails.resource_name!,
+                        databaseHostId: resourceDetails.resource_id!,
+                        databaseInstanceName: instance.instanceName,
+                        databaseInstanceId: instance.databaseInstanceId,
+                        sourceDatabaseHostName: sources[0],
+                        sourceDatabaseInstanceName: sources[1],
+                        sourceDatabaseName: sources[2],
+                        createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
+                        updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
+                        tag: getProperty(item, 'tag')
+                    };
 
-                sandboxInfo.push(databaseObject);
-            });
-
+                    sandboxInfo.push(databaseObject);
+                });
+            }
             return sandboxInfo;
         });
     } catch (err) {
@@ -893,7 +889,7 @@ async function getMappings(
         description: `Get the volume LUN mapping for the source database ${srcDetails.database} in the database instance ${srcDetails.resourceName}\\${srcDetails.databaseInstanceName}`,
         startTime: Date.now(),
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
         parentJobId
     });
@@ -986,7 +982,7 @@ async function createVolumeClone(
         startTime: Date.now(),
         name: 'Create ONTAP FlexClone volumes',
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1107,7 +1103,7 @@ async function invokeVirtualMount(
         description: `Discover cloned LUNs and create virtual mount points in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         startTime: Date.now(),
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1273,7 +1269,7 @@ async function createCloneDb(
         startTime: Date.now(),
 
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1378,7 +1374,7 @@ async function createExtendedProperties(
         startTime: Date.now(),
         name: `Add extended properties to sandbox ${destDetails.database}`,
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -1516,7 +1512,7 @@ async function startCleanup(
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
     const name = isOptimizeFlow ? 'Clone' : 'sandbox';
-    const jobType = isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX;
+    const jobType = isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX;
 
     const cleanupJob = await registerJob(accountId, credentialsId, region, {
         description: `Clean up resources for ${name} ${destDetails.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
@@ -1963,7 +1959,7 @@ async function validateDeleteSandboxParams(
     isSandboxOptimizeFlow: boolean = false
 ) {
     const name = isOptimizeFlow ? 'Clone' : 'sandbox';
-    const jobType = isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX;
+    const jobType = isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX;
 
     logger.info(`Validate delete ${name} params`, {
         accountId,
@@ -2409,7 +2405,7 @@ async function validateLifeCycleParams(
     let errMsg;
 
     const validationJob = await registerJob(accountId, credentialsId, region, {
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         status,
         name: `Validate ${
             action === SANDBOX_LIFECYCLE_REFRESH ? SandboxLifecycleAction.REFRESH : SandboxLifecycleAction.REBASELINE
@@ -2495,7 +2491,7 @@ async function detachSandboxAndAccessPath(
         startTime: Date.now(),
         description: `Detach sandbox and access path for ${resourceDetails.database} in the database instance ${resourceDetails.resourceName}\\${resourceDetails.databaseInstanceName}`,
         status,
-        type: isSandboxOptimizeFlow ? JOBTYPE.OPTIMIZATION : JOBTYPE.SANDBOX,
+        type: isSandboxOptimizeFlow ? JOBTYPE.WELL_ARCHITECTED : JOBTYPE.SANDBOX,
         resourceName: resourceDetails.database,
         parentJobId
     });

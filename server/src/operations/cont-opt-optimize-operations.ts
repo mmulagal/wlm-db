@@ -236,7 +236,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
             name: `Optimize storage for ${serverNameWithHostName}`,
             description: jobDescription,
             startTime: Date.now(),
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName,
             parentJobId
@@ -440,7 +440,7 @@ async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Optimize storage for ${serverNameWithHostName}`,
         `Optimize storage for ${serverNameWithHostName}`,
         bulkOptimizeJobId
@@ -543,7 +543,8 @@ async function modifySizingAttributes(
                         credentialsId,
                         region,
                         filesystemId,
-                        parentJobId
+                        parentJobId,
+                        serverNameWithHostName
                     );
                     childJobsStatus.push(result);
                     break;
@@ -658,15 +659,16 @@ async function headroomOptimization(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    parentJobId: string
+    parentJobId: string,
+    serverNameWithHostName: string
 ) {
     logger.info('Optimizing FSx for NetApp ONTAP headroom ', { accountId, credentialsId, region, fileSystemId });
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
         region,
-        fileSystemId,
-        JOBTYPE.OPTIMIZATION,
+        serverNameWithHostName,
+        JOBTYPE.WELL_ARCHITECTED,
         'Optimize FSx for NetApp ONTAP headroom',
         'Optimize FSx for NetApp ONTAP headroom',
         parentJobId
@@ -807,8 +809,8 @@ async function logDriveOptimization(
         accountId,
         credentialsId,
         region,
-        fileSystemId,
-        JOBTYPE.OPTIMIZATION,
+        serverNameWithHostName,
+        JOBTYPE.WELL_ARCHITECTED,
         'Optimize log drive sizing',
         'Optimize log drive sizing',
         parentJobId
@@ -1029,8 +1031,8 @@ async function tempDbDriveOptimization(
         accountId,
         credentialsId,
         region,
-        fileSystemId,
-        JOBTYPE.OPTIMIZATION,
+        serverNameWithHostName,
+        JOBTYPE.WELL_ARCHITECTED,
         'Optimize tempdb drive sizing',
         'Optimize tempdb drive sizing',
         parentJobId
@@ -1145,7 +1147,7 @@ async function optimizeSizing(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Optimize ${types} sizing for ${serverNameWithHostName}`,
         `Optimize ${types} sizing for ${serverNameWithHostName}`,
         masterOptimizeParentId,
@@ -1200,7 +1202,7 @@ async function validateMpioPolicyToRoundRobin(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1276,7 +1278,7 @@ async function setMpioPolicyToRoundRobin(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1455,7 +1457,7 @@ async function configureMpio(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1529,7 +1531,7 @@ async function checkMpioInstallation(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1705,7 +1707,7 @@ async function validateMpioSessions(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1779,7 +1781,7 @@ async function remediateMpioSessions(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -2066,7 +2068,7 @@ async function optimizeOperatingSystemSettings(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         masterOptimizeParentId,
@@ -2240,7 +2242,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
         credentialsId,
         region,
         serverNameWithHostName!,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for ${serverNameWithHostName}`,
         jobDescription,
         parentJobId
@@ -2248,54 +2250,69 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
 
     let volumeNames = volumesToOptimize ?? [];
     try {
+        const missingVolumes: string[] = [];
+        const instanceVolumeMapping =
+            (await getMappedOntapVolumes(
+                credentialsId,
+                region,
+                fsxId,
+                false,
+                activeNodeInstanceId!,
+                [instanceName],
+                sqlAuthEnabled,
+                true
+            )) || [];
+        const mappedVolumeNames = (
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i?.volumeRecords)
+                .flat() || []
+        )?.map(volume => volume.name as string);
         if (isEmpty(volumesToOptimize)) {
-            const instanceVolumeMapping =
-                (await getMappedOntapVolumes(
-                    credentialsId,
-                    region,
-                    fsxId,
-                    false,
-                    activeNodeInstanceId!,
-                    [instanceName],
-                    sqlAuthEnabled,
-                    true
-                )) || [];
-
-            const volumeRecords =
-                Object.values(instanceVolumeMapping)
-                    ?.map(i => i?.volumeRecords)
-                    .flat() || [];
-            volumeNames = volumeRecords.map(volume => volume.name as string);
-        }
-        const apiQueryFilter = `vserver=${svmName}&volume=${volumeNames.join(',')}`;
-        const apiEndpoint = '/private/cli/volume';
-
-        const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
-            fsxId,
-            region,
-            apiEndpoint,
-            apiQueryFilter,
-            apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
-        });
-        const resp = await retryWithDelay(
-            callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
-            3,
-            5000
-        );
-        const parsedResp = sqlResponseParsing(resp);
-        const objectsOptimized = parsedResp.num_records || 0;
-        if (objectsOptimized !== volumeNames.length && !isDemoFlow) {
-            if (objectsOptimized === 0) {
-                jobError = `Failed to optimize storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
-                logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
-                jobStatus = JOBSTATUS.FAILED;
-            } else {
-                const unOptimizedObjects = volumeNames.filter(obj => !parsedResp.cli_output.includes(obj));
-                jobError = `Failed to optimize storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
-                jobStatus = JOBSTATUS.WARNING;
-            }
+            volumeNames = mappedVolumeNames;
         } else {
-            jobStatus = JOBSTATUS.COMPLETED;
+            volumeNames = volumeNames.filter(volumeName => {
+                const isMapped = mappedVolumeNames.includes(volumeName);
+                if (!isMapped) {
+                    missingVolumes.push(volumeName);
+                }
+                return isMapped;
+            });
+        }
+        if (!isEmpty(volumeNames)) {
+            const apiQueryFilter = `vserver=${svmName}&volume=${volumeNames.join(',')}`;
+            const apiEndpoint = '/private/cli/volume';
+
+            const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+                fsxId,
+                region,
+                apiEndpoint,
+                apiQueryFilter,
+                apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
+            });
+            const resp = await retryWithDelay(
+                callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
+                3,
+                5000
+            );
+            const parsedResp = sqlResponseParsing(resp);
+            const objectsOptimized = parsedResp.num_records || 0;
+            if (objectsOptimized !== volumeNames.length && !isDemoFlow) {
+                if (objectsOptimized === 0) {
+                    jobError = `Failed to optimize storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
+                    logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
+                    jobStatus = JOBSTATUS.FAILED;
+                } else {
+                    const unOptimizedObjects = volumeNames.filter(obj => !parsedResp.cli_output.includes(obj));
+                    jobError = `Failed to optimize storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                    jobStatus = JOBSTATUS.WARNING;
+                }
+            } else {
+                jobStatus = JOBSTATUS.COMPLETED;
+            }
+        }
+        if (missingVolumes.length > 0 && !isDemoFlow) {
+            jobError += `Volumes ${missingVolumes} not found for ${serverNameWithHostName}.`;
+            jobStatus = JOBSTATUS.WARNING;
         }
     } catch (error) {
         jobStatus = JOBSTATUS.FAILED;
@@ -2393,7 +2410,7 @@ async function optimizeStorageTier(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Optimize storage-tier for ${serverNameWithHostName}`,
         `Optimize storage-tier for ${serverNameWithHostName}`,
         masterOptimizeParentId,
@@ -2472,7 +2489,7 @@ async function handleMaxDopRemediation(
         credentialsId,
         region,
         serverNameWithHostName!,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -2618,7 +2635,7 @@ async function optimizeMaxDop(
             credentialsId,
             region,
             serverNameWithHostName,
-            JOBTYPE.OPTIMIZATION,
+            JOBTYPE.WELL_ARCHITECTED,
             `Optimize max-dop for ${serverNameWithHostName}`,
             `Optimize max-dop for ${serverNameWithHostName}`,
             masterOptimizeParentId,
@@ -2681,7 +2698,7 @@ async function handleUpdateAwsBackup(
         credentialsId,
         region,
         '',
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Update AWS FSx for ONTAP backup',
         jobDescription,
         masterOptimizeParentId,
@@ -2833,7 +2850,7 @@ async function optimizeClone(
 
         const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, cloneDatabaseName);
         const { id } = await registerJob(accountId, credentialsId, region, {
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName as string,
             name: `${operation} ${name} for ${serverNameWithHostName}`,

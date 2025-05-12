@@ -16,13 +16,7 @@ import {
 import getLogger from '../utils/logger';
 import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './database/job-operations';
 
-import {
-    deleteResource,
-    listAllManagedInstances,
-    listTrackedEc2,
-    removeTrackedEc2Record,
-    updateTrackedEc2Record
-} from '../lib/database/db';
+import { deleteResource, listTrackedEc2, removeTrackedEc2Record, updateTrackedEc2Record } from '../lib/database/db';
 import { getHostAndSqlServerInfo } from './discover-operations';
 import {
     manageInstanceRecommendationPreReqs,
@@ -39,6 +33,7 @@ import { triggerDriftAssessmentDataCollection } from './cont-opt-assessment-oper
 import { DriftAssessmentJob, Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy, REDIS_URL } from '../utils/continous-optimization-consts';
 import { purgeOlderAssessmentRecords } from './database/instance-config-operations';
+import { listAllManagedInstances } from './database/database-operations';
 
 const logger = getLogger();
 

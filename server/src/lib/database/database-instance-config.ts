@@ -31,9 +31,7 @@ async function listDatabaseInstanceConfigData(
     credentialsId?: string,
     resourceId?: string,
     databaseInstanceId?: string,
-    configDataType?: string,
-    sort: string = 'creation_time',
-    sortOrder: string = 'desc'
+    configDataType?: string
 ) {
     logger.info('Listing database instance config data', {
         accountId,
@@ -45,7 +43,7 @@ async function listDatabaseInstanceConfigData(
     });
     accountId = checkAccount(accountId!);
 
-    return prisma.client.database_instance_config_data.findMany({
+    const results = await prisma.client.database_instance_config_data.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
             ...(region && { region }),
@@ -54,15 +52,16 @@ async function listDatabaseInstanceConfigData(
             ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
             ...(configDataType && { config_data_type: configDataType })
         },
-        orderBy: [
-            {
-                [sort]: `${sortOrder}`
-            }
-        ],
         include: {
             database_instances: true,
             resource: true
         }
+    });
+
+    return results.sort((a, b) => {
+        const dateA = new Date(a.creation_time).getTime();
+        const dateB = new Date(b.creation_time).getTime();
+        return dateB - dateA; // Sort by creation_time in descending order
     });
 }
 

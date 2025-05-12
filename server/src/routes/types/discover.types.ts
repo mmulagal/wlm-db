@@ -1,6 +1,7 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { PGSQL_DEFAULT_INSTANCE_NAME, RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
+import { API_DESCRIPTION } from '../../utils/schema-description-consts';
 
 const DiscoverQuery = Type.Object({
     pageSize: Type.Number({
@@ -164,11 +165,14 @@ const MultiInstanceUnmanageResponseBody = Type.Object({
 });
 
 const BulkManageMsSqlRequestBody = Type.Object({
-    credentialsId: Type.String({ description: 'Credentials ID' }),
-    region: Type.String({ description: 'AWS region' }),
+    credentialsId: Type.String({
+        description: API_DESCRIPTION.CREDENTIALS_ID_DESC,
+        examples: ['123e4567-e89b-12d3-a456-426614174000']
+    }),
+    region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC }),
     ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
     databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' })),
-    databaseHostId: Type.Optional(Type.String({ description: 'Database host ID' }))
+    databaseHostId: Type.Optional(Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC }))
 });
 const MultiInstanceManageMsSqlRequestBody = Type.Object({
     items: Type.Array(BulkManageMsSqlRequestBody)
@@ -177,7 +181,7 @@ const MultiInstanceManageMsSqlRequestBody = Type.Object({
 type MultiInstanceManageMsSqlRequestBodyType = Static<typeof BulkManageMsSqlRequestBody>;
 const MultiInstanceManageResponseBody = Type.Array(
     Type.Object({
-        resourceId: Type.Optional(Type.String({ description: 'Workload Factory resource ID.' })),
+        resourceId: Type.Optional(Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC })),
         ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
         region: Type.String({ description: 'AWS region' }),
         credentialsId: Type.String({ description: 'Credentials ID' }),
@@ -267,54 +271,59 @@ const pgSqlServerNode = Type.Object({
     ec2UsageOperation: Type.Optional(Type.String({ description: 'EC2 usage operation details' }))
 });
 
+const pgSqlServerInstance = Type.Object({
+    pgsqlServerInstanceName: Type.Optional(
+        Type.String({ description: 'PostgreSQL instance name', default: PGSQL_DEFAULT_INSTANCE_NAME })
+    ),
+    pgsqlServerState: Type.Optional(
+        Type.String({
+            description: 'PostgreSQL server state',
+            enum: ['running', 'stopped']
+        })
+    ),
+    pgsqlServerVersion: Type.Optional(Type.String({ description: 'PostgreSQL version' })),
+    pgsqlServerName: Type.Optional(Type.String({ description: 'PostgreSQL server name' })),
+    pgsqlServerDeploymentType: Type.Optional(
+        Type.String({
+            description: 'PostgreSQL deployment architecture.',
+            enum: ['standalone', 'ha']
+        })
+    ),
+    pgsqlServerInstanceId: Type.Optional(Type.String({ description: 'PostgreSQL instance ID' })),
+    databaseCount: Type.Optional(Type.Number({ description: 'Number of databases in the PostgreSQL instance.' })),
+    isPrimary: Type.Optional(Type.Boolean({ description: 'Is this primary PostgreSQL instance' })),
+    nodes: Type.Optional(Type.Array(pgSqlServerNode)),
+    primaryNode: Type.Optional(pgSqlServerNode),
+    defaultAuth: Type.Optional(Type.Boolean()),
+    storage: Type.Optional(
+        Type.Array(
+            Type.Object({
+                type: Type.String({ description: 'Underlying storage types of the PostgreSQL instance' }),
+                id: Type.String({ description: 'ID of the storage' }),
+                svmId: Type.Optional(
+                    Type.String({
+                        description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP'
+                    })
+                ),
+                protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' })),
+                fileSystemStorageType: Type.Optional(
+                    Type.String({ description: 'File system storage type, SSD or HDD' })
+                ),
+                deploymentType: Type.Optional(Type.String({ description: 'Deployment type of storage' })),
+                zones: Type.Optional(
+                    Type.Array(Type.Optional(Type.String({ description: 'Availability zones of storage' })))
+                ),
+                nfsMountPoint: Type.Optional(Type.String({ description: 'Mount point of storage' }))
+            })
+        )
+    ),
+    error: Type.Optional(Type.String({ description: 'Error details, if any.' }))
+});
+
 const DiscoverPgSqlResponseInfo = Type.Intersect([
     Type.Omit(DiscoverResponseInfo, ['sqlServerInstances']),
     Type.Object({
-        pgsqlServerInstance: Type.Optional(
-            Type.String({ description: 'PostgreSQL instance name', default: PGSQL_DEFAULT_INSTANCE_NAME })
-        ),
-        pgsqlServerState: Type.Optional(
-            Type.String({
-                description: 'PostgreSQL server state',
-                enum: ['running', 'stopped']
-            })
-        ),
-        pgsqlServerVersion: Type.Optional(Type.String({ description: 'PostgreSQL version' })),
-        pgsqlServerName: Type.Optional(Type.String({ description: 'PostgreSQL server name' })),
-        pgsqlServerDeploymentType: Type.Optional(
-            Type.String({
-                description: 'PostgreSQL deployment architecture.',
-                enum: ['standalone', 'ha']
-            })
-        ),
-        pgsqlServerInstanceId: Type.Optional(Type.String({ description: 'PostgreSQL instance ID' })),
-        databaseCount: Type.Optional(Type.Number({ description: 'Number of databases in the PostgreSQL instance.' })),
-        isPrimary: Type.Optional(Type.Boolean({ description: 'Is this primary PostgreSQL instance' })),
-        nodes: Type.Optional(Type.Array(pgSqlServerNode)),
-        primaryNode: Type.Optional(pgSqlServerNode),
-        defaultAuth: Type.Optional(Type.Boolean()),
-        storage: Type.Optional(
-            Type.Array(
-                Type.Object({
-                    type: Type.String({ description: 'Underlying storage types of the PostgreSQL instance' }),
-                    id: Type.String({ description: 'ID of the storage' }),
-                    svmId: Type.Optional(
-                        Type.String({
-                            description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP'
-                        })
-                    ),
-                    protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' })),
-                    fileSystemStorageType: Type.Optional(
-                        Type.String({ description: 'File system storage type, SSD or HDD' })
-                    ),
-                    deploymentType: Type.Optional(Type.String({ description: 'Deployment type of storage' })),
-                    zones: Type.Optional(
-                        Type.Array(Type.Optional(Type.String({ description: 'Availability zones of storage' })))
-                    ),
-                    nfsMountPoint: Type.Optional(Type.String({ description: 'Mount point of storage' }))
-                })
-            )
-        ),
+        pgsqlServerInstances: Type.Optional(Type.Array(pgSqlServerInstance)),
         error: Type.Optional(Type.String({ description: 'Error details, if any.' }))
     })
 ]);
@@ -343,12 +352,15 @@ const oracleDatabaseInstance = Type.Object({
     }),
     databaseCount: Type.Number({ description: 'Number of databases in the Oracle instance.' }),
     databaseDetails: Type.Object({
-        databaseName: Type.String({ description: 'Oracle database name' }),
-        databaseId: Type.String({ description: 'Oracle database ID' }),
-        openMode: Type.String({
-            description: 'database open mode',
-            enum: ['READ WRITE', 'READ', 'MOUNTED']
-        })
+        databaseName: Type.Optional(Type.String({ description: 'Oracle database name' })),
+        databaseId: Type.Optional(Type.String({ description: 'Oracle database ID' })),
+        openMode: Type.Optional(
+            Type.String({
+                description: 'database open mode',
+                enum: ['READ WRITE', 'READ', 'MOUNTED']
+            })
+        ),
+        error: Type.Optional(Type.String({ description: 'Error details, if any.' }))
     }),
     pluggableDatabases: Type.Optional(
         Type.Array(
@@ -371,6 +383,11 @@ const oracleDatabaseInstance = Type.Object({
             })
         )
     ),
+    isInstanceStorageAsmManaged: Type.Optional(
+        Type.Boolean({
+            description: 'true if instance storage is managed through ASM'
+        })
+    ),
     storage: Type.Optional(
         Type.Array(
             Type.Object({
@@ -381,7 +398,6 @@ const oracleDatabaseInstance = Type.Object({
                         description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP'
                     })
                 ),
-                protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or NFS' })),
                 fileSystemStorageType: Type.Optional(
                     Type.String({ description: 'File system storage type, SSD or HDD' })
                 ),
@@ -389,7 +405,16 @@ const oracleDatabaseInstance = Type.Object({
                 zones: Type.Optional(
                     Type.Array(Type.Optional(Type.String({ description: 'Availability zones of storage' })))
                 ),
-                nfsMountPoint: Type.Optional(Type.String({ description: 'Mount point of storage' }))
+                mountDetails: Type.Optional(
+                    Type.Array(
+                        Type.Object({
+                            mountPoint: Type.String({ description: 'mount point info' }),
+                            protocol: Type.String({
+                                description: 'Data sharing protocol, NFS or iSCSI'
+                            })
+                        })
+                    )
+                )
             })
         )
     )
@@ -421,6 +446,7 @@ const DiscoverOracleResponseBody = Type.Object({
 
 type DiscoverPgSqlResponseBodyType = Static<typeof DiscoverPgSqlResponseBody>;
 type DiscoverPgSqlResponseType = Static<typeof DiscoverPgSqlResponseInfo>;
+type PgSqlServerInstaceType = Static<typeof pgSqlServerInstance>;
 type pgsqlNodeDetailsType = Static<typeof pgSqlServerNode>;
 type DiscoverOracleInstanceType = Static<typeof oracleDatabaseInstance>;
 type DiscoverOracleResponseBodyType = Static<typeof DiscoverOracleResponseBody>;
@@ -448,6 +474,7 @@ export {
     DiscoverPgSqlResponseBody,
     DiscoverPgSqlResponseBodyType,
     DiscoverPgSqlResponseType,
+    PgSqlServerInstaceType,
     pgsqlNodeDetailsType,
     MultiHostManageResponseBody,
     DiscoverOracleResponseBody,

@@ -15,6 +15,7 @@ import styles from './DialogComponent.module.scss';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
 import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
 import { GENERAL } from '../../utils/appConstants';
+import { isValidPassword } from '../../utils/utilityFunctions';
 
 type DialogProps = {
     header: string | any;
@@ -58,6 +59,7 @@ const DialogComponent = ({
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
+    const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
 
     //Managed Host table button disable
     const { manageHostSelectedRows } = useAppSelector(state => state.inventoryV2);
@@ -109,6 +111,15 @@ const DialogComponent = ({
         dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
 
     const disabledCheck = () => {
+        //Condition to disable Apply in FSX Admin password dialog
+        if (
+            dialogFrom === FROM_DIALOG.FSXADMIN &&
+            ((password.length === 0 && confirmPassword.length === 0) ||
+                password !== confirmPassword ||
+                isValidPassword(password))
+        ) {
+            return true;
+        }
         //Condition to disable primary button for AWS backup dialog
         if (
             dialogFrom === FROM_DIALOG.OPTIMIZE &&

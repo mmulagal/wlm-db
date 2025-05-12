@@ -13,7 +13,7 @@ import getLogger from './logger';
 const logger = getLogger();
 
 export default function errorHandler(error: any, request: FastifyRequest, reply: FastifyReply) {
-    logger.error(`Request ${request.method} ${request.url} failed: ${error}`, error?.stack);
+    logger.error(`Request ${request.method} ${request.url} failed:`, error, { stack: error?.stack });
 
     const { validation, statusCode = 500, message } = error;
 
