@@ -110,7 +110,7 @@ const OptimizeOntapInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            Fix
                         </DsButton>
                     }
                 />
@@ -132,7 +132,7 @@ const OptimizeOntapInnerPage = () => {
                         );
                     }}
                 >
-                    Optimize
+                    Fix
                 </DsButton>
             );
         }
