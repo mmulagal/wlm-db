@@ -191,6 +191,7 @@ const Home = () => {
                             <Route path={'/job-monitor'} element={<JobMonitoring />} />
                             <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
                             {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
+                            <Route path={'/manage-wizard'} element={<ManageInstanceWizard />} />
                         </Routes>
                     </Suspense>
                 )}
