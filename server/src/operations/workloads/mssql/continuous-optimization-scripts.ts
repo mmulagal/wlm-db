@@ -891,7 +891,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
     $apiBody = '${params.apiBody}'
-    Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
+    Write-Information "Fixing storage for FSx ID: $FSxID FSX region: $FSxRegion"
     ${ontapRestRequest}
 
     $newBody = $apiBody | ConvertFrom-Json
@@ -1138,14 +1138,14 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
                 }
                 # wait for insyance to respond back to the SSM invocation before reboot
             } catch {
-                $errMsg = "Error occurred while optimizing network adapter: $adapterName $_.Exception.Message"
+                $errMsg = "Error occurred while fixing network adapter: $adapterName $_.Exception.Message"
                 Write-Information $errMsg
                 $response['errors'][$adapterName] = $errMsg
             }          
         }
         Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r", "/t 10") -Wait -NoNewWindow
     } catch {
-        $errMsg = "Error occurred while optimizing network adapters: $_.Exception.Message"
+        $errMsg = "Error occurred while fixing network adapters: $_.Exception.Message"
         Write-Information $errMsg
         $response['errors']['networkAdapters'] = $errMsg
     }
@@ -1379,7 +1379,7 @@ const SET_VOLUME_SNAPSHOT_POLICY = (params: BulkOptimizeSnapshotPolicyParamsType
 
     foreach($volUuid in $volUuids) {
         try {
-            Write-Information "Optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid"
+            Write-Information "fixing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid"
             $body = $apiBody | ConvertFrom-Json | ConvertTo-Json
             $apiEndpointWithPathParams = $apiEndpoint + $volUuid
             $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $apiEndpointWithPathParams -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
@@ -1388,7 +1388,7 @@ const SET_VOLUME_SNAPSHOT_POLICY = (params: BulkOptimizeSnapshotPolicyParamsType
             }
         } catch {
             $errors += $_.Exception.Message
-            Write-Information "Error occurred while optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid. Error: $_.Exception.Message"
+            Write-Information "Error occurred while fixing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid. Error: $_.Exception.Message"
         }
     }
     $res['response'] = @($volRes)
