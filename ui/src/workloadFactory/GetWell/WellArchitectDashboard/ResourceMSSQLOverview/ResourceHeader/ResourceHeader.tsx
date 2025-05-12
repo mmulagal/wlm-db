@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTypography, FlashingDotsLoader, Typography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { ReactComponent as DescriptionIcon } from '../../../../../assets/Description Icons.svg';
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg';
