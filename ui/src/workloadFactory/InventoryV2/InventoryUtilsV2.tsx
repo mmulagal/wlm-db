@@ -460,7 +460,7 @@ export const getPrimaryClusterNode = (
             }
             // To find partner node in a cluster
             const partnerNode = newDiscoveredHostData.filter((perHost: DiscoverHostInterface) => {
-                const isSameCluster = host?.nodesList?.filter((val: string) => {
+                const isSameCluster = host?.nodesList?.every((val: string) => {
                     return (
                         perHost?.ec2InstanceId !== host?.ec2InstanceId &&
                         perHost?.nodesList &&
@@ -470,7 +470,7 @@ export const getPrimaryClusterNode = (
                     );
                 });
                 // checking same vpc or not
-                if (isSameCluster && isSameCluster.length > 0 && perHost?.vpc?.id === host?.vpc?.id) {
+                if (isSameCluster && perHost?.vpc?.id === host?.vpc?.id) {
                     return perHost;
                 } else {
                     return;
