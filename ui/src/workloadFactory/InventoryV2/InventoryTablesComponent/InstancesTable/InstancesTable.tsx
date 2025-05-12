@@ -42,6 +42,7 @@ import {
     setDetectedInstanceId,
     setInProgressInstances,
     setInventoryTableData,
+    setManageSingleInstanceData,
     setRadioValueDetect,
     setSelectedFilterValue,
     setSelectedHeaderTab,
@@ -642,21 +643,14 @@ const InstancesTable = () => {
         },
         {
             Header: 'Management status',
-            accessor: 'statusColText',
+            accessor: 'managementStatus',
             id: '5',
             isSortable: false,
             width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'statusColText'),
+            filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
                     return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
-                }
-                if (cellData === INVENTORY_STATUS.UNDETECTED) {
-                    if (rowData?.hostType === GENERAL.MICROSOFT_SQL_SERVER_TYPE) {
-                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
-                    } else {
-                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
-                    }
                 }
                 if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
@@ -935,6 +929,7 @@ const InstancesTable = () => {
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
                                             optimizeAction(rowData);
                                         } else {
+                                            dispatch(setManageSingleInstanceData(rowData));
                                             navigate('../manage-wizard');
                                         }
                                     }}

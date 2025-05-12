@@ -98,7 +98,8 @@ const initialInventoryV2State: InventorySliceData = {
     manageInstanceInstallAction: {
         installMissingAWS: true,
         installMissingPowershell: true
-    }
+    },
+    manageSingleInstanceData: null
 };
 
 const inventoryV2Slice = createSlice({
@@ -305,6 +306,9 @@ const inventoryV2Slice = createSlice({
         setCreateResourceApiLoading: (state, action: PayloadAction<any>) => {
             state.createResourceApiLoading = action.payload;
         },
+        setManageSingleInstanceData: (state, action: PayloadAction<any>) => {
+            state.manageSingleInstanceData = action.payload;
+        },
         resetPerComboData: (state, action: PayloadAction<any>) => {
             state.createResourceApiLoading = true;
             state.resetManagedData = true;
@@ -431,7 +435,8 @@ export const {
     setDashSandboxList,
     setDashSandboxSavings,
     setCreateResourceApiLoading,
-    resetInventoryLoading
+    resetInventoryLoading,
+    setManageSingleInstanceData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

@@ -5,6 +5,9 @@ import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
 import { useNavigate } from 'react-router-dom';
 import ManageOnlyWizard from './ManageOnlyWizard';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useMemo } from 'react';
+import { INVENTORY_STATUS } from '../../../../utils/consts';
 
 const MANAGE_STEPS = [
     { key: 'detect-instance', label: 'Detect instance', component: DetectInstanceStep },
@@ -47,7 +50,14 @@ const Wizard = () => {
 
 const ManageInstanceWizard = () => {
     const initialState: any = {};
-    const isAlreadyDetected = false;
+    const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
+    const isAlreadyDetected = useMemo(() => {
+        if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+            return true;
+        }
+        return false;
+    }, [manageSingleInstanceData]);
+
     return (
         <>
             {isAlreadyDetected && (

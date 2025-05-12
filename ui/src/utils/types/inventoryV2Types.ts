@@ -78,6 +78,7 @@ export interface InventorySliceData {
         error: string;
     };
     createResourceApiLoading: boolean;
+    manageSingleInstanceData: any;
 }
 
 export interface InventoryTableData {

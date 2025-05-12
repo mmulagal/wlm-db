@@ -32,6 +32,7 @@ const DetectContent = () => {
     const { detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword } = useAppSelector(
         state => state.inventoryV2
     );
+    const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
 
     const [textSearch, setTextSearch] = useSearchDebounce(100);
     const [ontapPasswordSearch, setOntapPasswordSearch] = useSearchDebounce(100);
@@ -90,83 +91,94 @@ const DetectContent = () => {
     }, [detectPasswordSearch]);
     return (
         <div className={styles.detectContent}>
-            <div className={styles['radio-container']}>
-                <DsTypography variant="Semibold_14">Select authentication type</DsTypography>
-                <RadioButton
-                    id="select-sql-authentication"
-                    isChecked={authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
-                    onChange={() => {
-                        dispatch(setAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
-                        setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
-                    }}
-                    children={AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
-                    className=""
-                />
-                <RadioButton
-                    id="select-windows-authentication"
-                    isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
-                    onChange={() => {
-                        dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
-                        setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION });
-                    }}
-                    children={AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
-                    className=""
-                />
-            </div>
-
-            <div className={styles.firstSection}>
-                <DsTypography variant="Semibold_14">{GENERAL.DETECT_MSSQL_HEADING}</DsTypography>
-                <div className={styles.textFieldContainer}>
-                    <TextField
-                        label={GENERAL.DETECT_MSSQL_USERNAME}
-                        value={detectUserName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setDetectUserName(e.target.value);
-                            setState({ mssqlUserNameFromWizard: e.target.value });
+            {!manageSingleInstanceData?.sqlServerAuthentication && !manageSingleInstanceData?.windowsAuthentication && (
+                <div className={styles['radio-container']}>
+                    <DsTypography variant="Semibold_14">Select authentication type</DsTypography>
+                    <RadioButton
+                        id="select-sql-authentication"
+                        isChecked={authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
+                        onChange={() => {
+                            dispatch(setAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
+                            setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
                         }}
-                        className={styles.textFieldStyle}
-                        error={!detectManageUserName && hitNext ? GENERAL.ACTION_REQUIRED : ''}
+                        children={AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
+                        className=""
                     />
-
-                    <PasswordField
-                        label={GENERAL.DETECT_MSSQL_PASSWORD}
-                        value={detectPassword}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setDetectPassword(e.target.value);
-                            setState({ mssqlPasswordFromWizard: e.target.value });
+                    <RadioButton
+                        id="select-windows-authentication"
+                        isDisabled={true} // Currently windows auth is not supported
+                        isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                        onChange={() => {
+                            dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
+                            setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION });
                         }}
-                        className={styles.textFieldStyle}
-                        error={!detectManagePassword && hitNext ? GENERAL.ACTION_REQUIRED : ''}
+                        children={AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                        className=""
                     />
                 </div>
-            </div>
+            )}
 
-            <div className={styles.secondSection}>
-                <DsTypography variant="Semibold_14">{GENERAL.DETECT_FSX_HEADING}</DsTypography>
-                <div className={styles.textFieldContainer}>
-                    <TextField
-                        label={GENERAL.DETECT_FSX_USERNAME}
-                        value={ontapUserName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setOntapUserName(e.target.value);
-                            setState({ ontapUserNameFromWizard: e.target.value });
-                        }}
-                        className={styles.textFieldStyle}
-                        error={!detectOntapUsername && hitNext ? GENERAL.ACTION_REQUIRED : ''}
-                    />
+            {!manageSingleInstanceData?.sqlServerAuthentication && !manageSingleInstanceData?.windowsAuthentication && (
+                <div className={styles.firstSection}>
+                    <DsTypography variant="Semibold_14">{GENERAL.DETECT_MSSQL_HEADING}</DsTypography>
+                    <div className={styles.textFieldContainer}>
+                        <TextField
+                            label={GENERAL.DETECT_MSSQL_USERNAME}
+                            value={detectUserName}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                setDetectUserName(e.target.value);
+                                setState({ mssqlUserNameFromWizard: e.target.value });
+                            }}
+                            className={styles.textFieldStyle}
+                            error={!detectManageUserName && hitNext ? GENERAL.ACTION_REQUIRED : ''}
+                            placeholder={'Enter ' + GENERAL.DETECT_MSSQL_USERNAME}
+                        />
 
-                    <PasswordField
-                        label={GENERAL.DETECT_FSX_PASSWORD}
-                        value={ontapPassword}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setOntapPassword(e.target.value);
-                            setState({ ontapPasswordFromWizard: e.target.value });
-                        }}
-                        className={styles.textFieldStyle}
-                        error={!detectOntapPassword && hitNext ? GENERAL.ACTION_REQUIRED : ''}
-                    />
+                        <PasswordField
+                            label={GENERAL.DETECT_MSSQL_PASSWORD}
+                            value={detectPassword}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                setDetectPassword(e.target.value);
+                                setState({ mssqlPasswordFromWizard: e.target.value });
+                            }}
+                            className={styles.textFieldStyle}
+                            error={!detectManagePassword && hitNext ? GENERAL.ACTION_REQUIRED : ''}
+                            placeholder={'Enter password'}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered && (
+                <div className={styles.secondSection}>
+                    <DsTypography variant="Semibold_14">{GENERAL.DETECT_FSX_HEADING}</DsTypography>
+                    <div className={styles.textFieldContainer}>
+                        <TextField
+                            label={GENERAL.DETECT_FSX_USERNAME}
+                            value={ontapUserName}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                setOntapUserName(e.target.value);
+                                setState({ ontapUserNameFromWizard: e.target.value });
+                            }}
+                            className={styles.textFieldStyle}
+                            error={!detectOntapUsername && hitNext ? GENERAL.ACTION_REQUIRED : ''}
+                            placeholder={'Enter ' + GENERAL.DETECT_FSX_USERNAME}
+                        />
+
+                        <PasswordField
+                            label={GENERAL.DETECT_FSX_PASSWORD}
+                            value={ontapPassword}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                setOntapPassword(e.target.value);
+                                setState({ ontapPasswordFromWizard: e.target.value });
+                            }}
+                            className={styles.textFieldStyle}
+                            error={!detectOntapPassword && hitNext ? GENERAL.ACTION_REQUIRED : ''}
+                            placeholder={'Enter password'}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

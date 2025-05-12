@@ -1,6 +1,13 @@
 import { DsButton, useWizard, WizardFooter } from '@netapp/design-system';
 import styles from './ManageInstanceWizard.module.scss';
 import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { detectFieldsValidation, saveFsxInCredRegisteredObj } from '../../InventoryUtilsV2';
+import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
+import { useRegisterResourceCredentialsMutation } from '../../../../utils/apiService';
+import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -16,25 +23,75 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const { ontapUserNameFromWizard, ontapPasswordFromWizard, mssqlUserNameFromWizard, mssqlPasswordFromWizard } =
         state;
+    const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
+    const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
 
     const dispatch = useDispatch();
+
+    const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     const goBack = () => {
         gotoPreviousStep();
     };
+
+    const handleRegisterResourceCred = async () => {
+        dispatch(setIsDetectHostLoading(true));
+        const sqlServerInstance =
+            manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
+        try {
+            const result: any = await registerResourceCred({
+                credentialId: manageSingleInstanceData?.credentialId,
+                regionId: manageSingleInstanceData?.regionId,
+                instanceId: manageSingleInstanceData?.ec2InstanceId,
+                payload: createDetectHostPayload(
+                    sqlServerInstance,
+                    manageSingleInstanceData?.fsxId,
+                    manageSingleInstanceData
+                )
+            });
+            if (result && !result?.error) {
+                if (result?.data?.sqlServerError || result?.data?.fsxnError) {
+                    let error = [];
+                    error.push(result?.data?.sqlServerError || '');
+                    error.push(result?.data?.fsxnError || '');
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: error.join(' ') || GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                        })
+                    );
+                    dispatch(setIsDetectHostLoading(false));
+                } else {
+                    dispatch(setIsDetectHostLoading(false));
+                    // store fsx cred in register obj if payload has fsx register
+                    let isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
+                    goToNextStep();
+                }
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: result?.error?.data?.message || GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                    })
+                );
+                dispatch(setIsDetectHostLoading(false));
+            }
+        } catch (error) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                })
+            );
+            dispatch(setIsDetectHostLoading(false));
+        }
+    };
+
     const goForward = () => {
         setState({ hitNext: true });
-        const noError =
-            ontapUserNameFromWizard &&
-            ontapUserNameFromWizard.length > 0 &&
-            ontapPasswordFromWizard &&
-            ontapPasswordFromWizard.length > 0 &&
-            mssqlUserNameFromWizard &&
-            mssqlUserNameFromWizard.length > 0 &&
-            mssqlPasswordFromWizard &&
-            mssqlPasswordFromWizard.length > 0;
-        if (noError) {
-            goToNextStep();
+        const fieldsCorrect = detectFieldsValidation(manageSingleInstanceData);
+        if (fieldsCorrect) {
+            handleRegisterResourceCred();
         }
     };
 
@@ -61,6 +118,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     isThin={true}
                     onClick={goForward}
                     variant={'primary'}
+                    isLoading={detectHostLoading}
                     {...rest}
                 >
                     Next

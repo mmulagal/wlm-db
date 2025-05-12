@@ -1645,6 +1645,7 @@ export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
     const statusWeights: any = {
         [INVENTORY_STATUS.CASE_SENSITIVE_UP]: 3000,
         [INVENTORY_STATUS.RUNNING]: 3000,
+        [INVENTORY_STATUS.RUNNING_LOWER]: 3000,
         [INVENTORY_STATUS.CASE_SENSITIVE_DOWN]: 2000,
         [INVENTORY_STATUS.STOPPED]: 2000,
         [INVENTORY_STATUS.UNKNOWN]: 1000,

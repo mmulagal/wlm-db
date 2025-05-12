@@ -132,7 +132,7 @@ router.post(
                 sqlServerError: '',
                 fsxnError: ''
             });
-        }, 30);
+        }, 5000);
     }
 );
 

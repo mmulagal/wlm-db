@@ -16,7 +16,6 @@ export const Content = () => {
 
 export const Footer = () => {
     const { state }: any = useWizard();
-    const { isLoading } = state;
     return (
         <ManageWizardFooter
             nextButtonProps={{
@@ -24,9 +23,7 @@ export const Footer = () => {
                     if (state.submit) {
                         state.submit();
                     }
-                },
-                isLoading,
-                isDisabled: isLoading
+                }
             }}
         />
     );

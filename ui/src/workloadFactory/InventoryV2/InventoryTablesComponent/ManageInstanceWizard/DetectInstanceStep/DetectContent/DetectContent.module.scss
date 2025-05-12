@@ -1,6 +1,6 @@
 .detectContent {
     width: 1064px;
-    height: 472px;
+    max-height: 472px;
     padding: 40px;
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
@@ -18,9 +18,9 @@
 
     .firstSection {
         margin-top: 40px;
+        margin-bottom: 40px;
     }
     .secondSection {
-        margin-top: 40px;
         margin-bottom: 40px;
     }
     .textFieldContainer {
