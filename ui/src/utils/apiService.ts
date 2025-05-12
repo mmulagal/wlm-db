@@ -641,6 +641,26 @@ export const inventoryApi = createApi({
                     return response;
                 }
             }),
+            discoverPgsqlHosts: builder.query({
+                query: ({ regionId, credentialsId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/pgsql/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10&nextToken=${nextToken}`;
+                    } else {
+                        return `v1/pgsql/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10`;
+                    }
+                },
+                keepUnusedDataFor: 1,
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialsId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
             getFsxCredentialStatus: builder.query({
                 query: ({ regionId, credentialsId, fsxIds }) => ({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/resources/file-systems/credentials-status?fsxids=${fsxIds}`
@@ -1196,6 +1216,7 @@ export const {
     useLazyGetManagedHostDataQuery,
     useLazyDiscoverHostsQuery,
     useLazyDiscoverOracleHostsQuery,
+    useLazyDiscoverPgsqlHostsQuery,
     useLazyGetFsxCredentialStatusQuery,
     useRegisterResourceCredentialsMutation,
     useGetMssqlInstanceDataMutation,

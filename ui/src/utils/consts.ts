@@ -624,7 +624,8 @@ export const INVENTORY_STATUS = {
     RUNNING: 'Running',
     STOPPED: 'Stopped',
     CASE_SENSITIVE_UP: 'Up',
-    CASE_SENSITIVE_DOWN: 'Down'
+    CASE_SENSITIVE_DOWN: 'Down',
+    RUNNING_LOWER: 'running'
 };
 
 export const INVENTORY_ACTIONS = {

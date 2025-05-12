@@ -472,7 +472,10 @@ const InstancesTable = () => {
     };
 
     const setStatusForFilter = (rowData?: any) => {
-        if (rowData?.status === INVENTORY_STATUS.RUNNING || rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) {
+        if (
+            rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
+            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+        ) {
             return INVENTORY_STATUS.ONLINE;
         } else if (
             rowData?.status === INVENTORY_STATUS.STOPPED ||
@@ -523,7 +526,7 @@ const InstancesTable = () => {
                     <div>
                         <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
                         <div className={styles.firstColText}>
-                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
+                            {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                             )}
@@ -535,7 +538,7 @@ const InstancesTable = () => {
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
                             )}
                             <DsTypography variant="Regular_13">
-                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                {rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
                                     ? INVENTORY_STATUS.ONLINE
                                     : rowData?.status === INVENTORY_STATUS.STOPPED ||
@@ -604,7 +607,11 @@ const InstancesTable = () => {
                     return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
                 }
                 if (cellData === INVENTORY_STATUS.UNDETECTED) {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
+                    if (rowData?.hostType === GENERAL.MICROSOFT_SQL_SERVER_TYPE) {
+                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
+                    } else {
+                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
+                    }
                 }
                 if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
                     return (

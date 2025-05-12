@@ -50,6 +50,7 @@ import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedRowsForManage } from '../store/workloadFactory/inventoryV2Slice';
+import { PgsqlInstancesDiscovered } from './types/inventoryV2Types';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -637,6 +638,16 @@ export const getAzType = (deploymentType: string | undefined) => {
         : multiAzPattern.test(deploymentType)
         ? GENERAL.MULTI_AZ
         : deploymentType;
+};
+
+export const getPgsqlAzType = (perRow: PgsqlInstancesDiscovered) => {
+    let deploymentType = '';
+    perRow?.storage?.forEach((storageObj: any) => {
+        if (storageObj?.deploymentType) {
+            deploymentType = storageObj?.deploymentType;
+        }
+    });
+    return getAzType(deploymentType);
 };
 
 export const formatHostData = (val: any) => {
