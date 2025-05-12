@@ -323,7 +323,7 @@ const JobMonitoringTable = React.memo(() => {
                 { value: JOB_MONITORING_TYPE.PREPARE_RESOURCE, label: GENERAL.JM_TYPE_PREPARE_RESOURCE },
                 { value: JOB_MONITORING_TYPE.SANDBOX, label: GENERAL.JM_TYPE_SANDBOX },
                 { value: JOB_MONITORING_TYPE.ASSESSMENT, label: GENERAL.JM_TYPE_ASSESSMENT },
-                { value: JOB_MONITORING_TYPE.OPTIMIZE, label: GENERAL.JM_TYPE_OPTIMIZE }
+                { value: JOB_MONITORING_TYPE.WELL_ARCHITECTED, label: GENERAL.JM_TYPE_OPTIMIZE }
             ],
             renderCell: (cellData: any) => {
                 return jobMonitoringTypeMapping(cellData);

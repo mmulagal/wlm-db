@@ -106,7 +106,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         <div className={styles.managedBreakdown}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Managed instances well-architect breakdown by configurations
+                    Well-architected breakdown by configurations
                 </DsTypography>
 
                 {loading && <FlashingDotsLoader />}

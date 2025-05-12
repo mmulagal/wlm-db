@@ -390,7 +390,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                     >
                                         <div>
                                             <DsButton variant="secondary" isDisabled={true}>
-                                                {innerPageCheck(rowData?.name) ? 'View & optimize' : 'Optimize'}
+                                                {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
                                             </DsButton>
                                         </div>
                                     </TooltipComponent>
@@ -405,7 +405,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                     >
                                         <div>
                                             <DsButton variant="secondary" isDisabled={true}>
-                                                {innerPageCheck(rowData?.name) ? 'View & optimize' : 'Optimize'}
+                                                {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
                                             </DsButton>
                                         </div>
                                     </TooltipComponent>
@@ -416,7 +416,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                             onClick={() => handleDifferentNavigation(rowData)}
                                             isDisabled={rowData?.status === 'Not optimized' ? false : true}
                                         >
-                                            {innerPageCheck(rowData?.name) ? 'View & optimize' : 'Optimize'}
+                                            {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
                                         </DsButton>
                                     </div>
                                 ))}

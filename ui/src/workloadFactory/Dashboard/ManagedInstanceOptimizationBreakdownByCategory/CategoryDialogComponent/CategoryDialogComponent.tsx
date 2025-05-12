@@ -123,8 +123,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
     return (
         <div className={styles.categoryDialogContent}>
             <DsTypography variant="Regular_14">
-                Select the instance to fix and then select 'Continue' to be redirected to the well-architected page
-                page.
+                Select the instance to fix and then select 'Continue' to be redirected to the well-architected page.
             </DsTypography>
             <div className={styles.table}>
                 <TableTopBar
