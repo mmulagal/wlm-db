@@ -1,4 +1,4 @@
-import { FlashingDotsLoader, Typography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, FlashingDotsLoader, Typography } from '@netapp/design-system';
 import { ReactComponent as DescriptionIcon } from '../../../../../assets/Description Icons.svg';
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg';
@@ -12,77 +12,89 @@ const ResourceHeader = () => {
     );
 
     return (
-        <div className={styles.dbHostTile}>
-            <div className={styles.dbHostSection}>
-                <DescriptionIcon />
-                <div className={styles.secondLevel}>
-                    {resourceLoading ? (
-                        <FlashingDotsLoader className={styles.loaderHeight} />
-                    ) : (
-                        <Typography
-                            variant="Semibold_14"
-                            className={styles.textManage}
-                            title={selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
-                        >
-                            {selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
-                        </Typography>
-                    )}
-
-                    <Typography variant="Regular_14">{GENERAL.INSTANCE_NAME}</Typography>
-                </div>
-            </div>
-
-            <div className={styles.dbHostSeparator} />
-
-            <div className={styles.statusSection}>
-                {resourceLoading ? (
-                    <FlashingDotsLoader className={styles.loaderHeight} />
-                ) : (
-                    <div className={styles.firstSection}>
-                        {resourceDetails.status === 'Up' ? <Success /> : <Failure />}
-                        <Typography variant="Semibold_14" className={styles.textManage} title={resourceDetails.status}>
-                            {resourceDetails.status}
-                        </Typography>
+        <>
+            <div className={styles.cardHeader}>
+                <div className={styles.cardContent}>
+                    {/* image*/}
+                    <div className={`${styles.column} ${styles.columnImage}`}>
+                        <DescriptionIcon />
                     </div>
-                )}
-                <Typography variant="Regular_14">{GENERAL.STATUS}</Typography>
-            </div>
 
-            <div className={styles.dbHostSeparator} />
+                    <div className={`${styles.column}`}>
+                        {resourceLoading ? (
+                            <DsFlashingDotsLoader />
+                        ) : (
+                            <DsTypography
+                                variant="Semibold_14"
+                                className={styles.titleText}
+                                title={selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
+                            >
+                                {selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
+                            </DsTypography>
+                        )}
+                        <DsTypography variant="Regular_14" className={styles.label} title={GENERAL.INSTANCE_NAME}>
+                            {GENERAL.INSTANCE_NAME}
+                        </DsTypography>
+                    </div>
 
-            <div className={styles.commonSection}>
-                <div className={styles.commonSectionLevel}>
-                    {resourceLoading ? (
-                        <FlashingDotsLoader className={styles.loaderHeight} />
-                    ) : (
-                        <Typography
+                    {/* section 2 */}
+                    <div className={`${styles.column}`}>
+                        <DsTypography variant="Semibold_14" className={styles.titleText}>
+                            {resourceLoading ? (
+                                <DsFlashingDotsLoader />
+                            ) : (
+                                <>
+                                    <span className={styles.svgSection}>
+                                        {resourceDetails.status === 'Up' ? <Success /> : <Failure />}
+                                    </span>
+                                    <span className={styles.valueSection} title={resourceDetails.status}>
+                                        {resourceDetails.status}
+                                    </span>
+                                </>
+                            )}
+                        </DsTypography>
+
+                        <DsTypography variant="Regular_14" className={styles.label}>
+                            {GENERAL.STATUS}
+                        </DsTypography>
+                    </div>
+
+                    {/* section 3 */}
+                    <div className={`${styles.column}`}>
+                        <DsTypography
                             variant="Semibold_14"
-                            className={styles.textManage}
+                            className={styles.titleText}
                             title={resourceDetails?.topology?.serverInstallationMode}
                         >
-                            {resourceDetails?.topology?.serverInstallationMode}
-                        </Typography>
-                    )}
+                            {resourceLoading ? (
+                                <DsFlashingDotsLoader />
+                            ) : (
+                                resourceDetails?.topology?.serverInstallationMode
+                            )}
+                        </DsTypography>
+
+                        <DsTypography
+                            variant="Regular_14"
+                            className={styles.label}
+                            title={GENERAL.RESOURCE_DEPLOYMENT_MODEL}
+                        >
+                            {GENERAL.RESOURCE_DEPLOYMENT_MODEL}
+                        </DsTypography>
+                    </div>
+
+                    {/* section 4 */}
+                    <div className={`${styles.column}`} style={{ borderRight: 'none' }}>
+                        <DsTypography variant="Semibold_14" className={styles.titleText}>
+                            {resourceLoading ? <DsFlashingDotsLoader /> : resourceDetails.databaseCount}
+                        </DsTypography>
+
+                        <DsTypography variant="Regular_14" className={styles.label} title={GENERAL.NO_OF_DBS}>
+                            {GENERAL.NO_OF_DBS}
+                        </DsTypography>
+                    </div>
                 </div>
-
-                <Typography variant="Regular_14">{GENERAL.RESOURCE_DEPLOYMENT_MODEL}</Typography>
             </div>
-
-            <div className={styles.dbHostSeparator} />
-
-            <div className={styles.commonSection}>
-                <div className={styles.commonSectionLevel}>
-                    {resourceLoading ? (
-                        <FlashingDotsLoader className={styles.loaderHeight} />
-                    ) : (
-                        <Typography variant="Semibold_14" className={styles.textManage}>
-                            {resourceDetails.databaseCount}
-                        </Typography>
-                    )}
-                </div>
-                <Typography variant="Regular_14">{GENERAL.NO_OF_DBS}</Typography>
-            </div>
-        </div>
+        </>
     );
 };
 
