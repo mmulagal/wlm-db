@@ -2,12 +2,13 @@ import { DsButton, useWizard, WizardFooter } from '@netapp/design-system';
 import styles from './ManageInstanceWizard.module.scss';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { detectFieldsValidation, saveFsxInCredRegisteredObj } from '../../InventoryUtilsV2';
+import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { useRegisterResourceCredentialsMutation } from '../../../../utils/apiService';
 import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { GENERAL } from '../../../../utils/appConstants';
+import { setInventoryTableData } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -65,6 +66,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     dispatch(setIsDetectHostLoading(false));
                     // store fsx cred in register obj if payload has fsx register
                     let isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
+                    const updatedInventoryTableData = updateInstanceStatus('detect', manageSingleInstanceData, manageSingleInstanceData);
+                    dispatch(setInventoryTableData(updatedInventoryTableData));
                     goToNextStep();
                 }
             } else {
