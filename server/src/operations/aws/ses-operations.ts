@@ -1,7 +1,7 @@
 import { createTransport } from 'nodemailer';
 import createError from 'http-errors';
 import { Attachment } from 'nodemailer/lib/mailer';
-import * as aws from '@aws-sdk/client-ses';
+import * as aws from '@aws-sdk/client-sesv2';
 import { getSES } from '../../lib/aws/ses';
 import getLogger from '../../utils/logger';
 import { HttpErrorCodes } from '../../utils/consts';
