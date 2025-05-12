@@ -166,22 +166,22 @@ const WellArchitectDashboard = () => {
                                 {
                                     id: 'createUserDB',
                                     children: 'Create a user database',
-                                    isDisabled: resourceLoadingState,
+                                    // isDisabled: resourceLoadingState,
                                     onClick: () => {
-                                        if (!resourceLoadingState) {
-                                            dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                            dispatch(
-                                                setCdbPageData({
-                                                    dbHostName: selectedHostname,
-                                                    instanceId: selectedDatabaseInstance,
-                                                    instanceName: selectedDatabaseInstanceName,
-                                                    cdbCredId: selectedResourceCredId,
-                                                    cdbRegionId: selectedResourceRegionId
-                                                })
-                                            );
-                                            dispatch(updateResourceId(selectedResourceId));
-                                            navigate('../create-new-user');
-                                        }
+                                        // if (!resourceLoadingState) {
+                                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                        dispatch(
+                                            setCdbPageData({
+                                                dbHostName: selectedHostname,
+                                                instanceId: selectedDatabaseInstance,
+                                                instanceName: selectedDatabaseInstanceName,
+                                                cdbCredId: selectedResourceCredId,
+                                                cdbRegionId: selectedResourceRegionId
+                                            })
+                                        );
+                                        dispatch(updateResourceId(selectedResourceId));
+                                        navigate('../create-new-user');
+                                        // }
                                     }
                                 },
                                 {

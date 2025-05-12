@@ -72,7 +72,7 @@ const CapacityUtilization = () => {
                             {!resourceLoading && (
                                 <>
                                     <DsTypography variant="Semibold_14">
-                                        {bytesToTB(resourceDetails?.storage?.fsxn?.used ?? 0)} TiB
+                                        {bytesToTB(resourceDetails?.storage?.fsxn?.used ?? 0).toFixed(2)} TiB
                                     </DsTypography>
                                 </>
                             )}
@@ -96,7 +96,7 @@ const CapacityUtilization = () => {
                                         {bytesToTB(
                                             (resourceDetails?.storage?.fsxn?.size ?? 0) -
                                                 (resourceDetails?.storage?.fsxn?.used ?? 0)
-                                        )}{' '}
+                                        ).toFixed(2)}{' '}
                                         TiB
                                     </DsTypography>
                                 </>
@@ -118,7 +118,7 @@ const CapacityUtilization = () => {
                             {!resourceLoading && (
                                 <>
                                     <DsTypography variant="Semibold_14">
-                                        {bytesToTB(resourceDetails?.storage?.fsxn?.size ?? 0)} TiB
+                                        {bytesToTB(resourceDetails?.storage?.fsxn?.size ?? 0).toFixed(2)} TiB
                                     </DsTypography>
                                 </>
                             )}

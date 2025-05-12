@@ -86,11 +86,14 @@ const ThemeProvider = React.memo(
             if (isRoot) {
                 const styleTag = window.document.createElement('style');
 
-                styleTag.innerHTML = `
-                :root, ::before, ::after {
-                    ${themeState.styleString};
-                }
-            `;
+                // Use textContent to set the CSS rules safely
+                const styleContent = `
+                    :root, ::before, ::after {
+                        ${themeState.styleString};
+                    }
+                `;
+                styleTag.textContent = styleContent;
+
                 // @ts-ignore
                 ThemeProvider.activeStyles = themeState.styleString;
 
@@ -104,11 +107,13 @@ const ThemeProvider = React.memo(
                     const styleTag = window.document.createElement('style');
                     const className = `theme-provider-${crypto.randomUUID()}`;
 
-                    styleTag.innerHTML = `
-                    .${className}, .${className}::before, .${className}::after {
-                        ${themeState.styleString}
-                    }
-                `;
+                    // Use textContent to set the CSS rules safely
+                    const styleContent = `
+                        .${className}, .${className}::before, .${className}::after {
+                            ${themeState.styleString}
+                        }
+                    `;
+                    styleTag.textContent = styleContent;
 
                     styleTag.setAttribute('data-component', 'ThemeProviderStyle');
                     container.appendChild(styleTag);
@@ -119,7 +124,7 @@ const ThemeProvider = React.memo(
                         container.classList.remove(className);
                     };
                 } else if (wrapperRef.current) {
-                    wrapperRef.current.setAttribute('style', themeState.styleString);
+                    wrapperRef.current.style.cssText = themeState.styleString;
                 }
             }
         }, [themeState, isRoot]);
