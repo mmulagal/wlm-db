@@ -21,12 +21,16 @@ const DatabaseHostOverviewApiV2 = () => {
         selectedResourceRegionId
     } = useAppSelector(state => state.workloadFactoryResource);
 
+    const { visitedTabs } = useAppSelector(state => state.getWellOptimize);
+
     const [resourceDetailsApi] = useLazyGetResourceDetailsV2Query();
     const [databaseListApi] = useLazyGetDatabaseListV2Query();
 
     useEffect(() => {
-        viewResourceAction();
-    }, []);
+        if (!visitedTabs['Overview']) {
+            viewResourceAction();
+        }
+    }, [visitedTabs]);
 
     useEffect(() => {
         if (isResourceRefresh) {

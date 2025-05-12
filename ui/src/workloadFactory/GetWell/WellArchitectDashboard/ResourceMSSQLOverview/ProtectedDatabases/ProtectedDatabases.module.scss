@@ -1,0 +1,50 @@
+.protectedDatabases {
+    background-color: var(--content-background);
+    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
+    height: 352px;
+    width: 49.05%;
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+
+        .rightTopValue {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+    }
+
+    .mainSection {
+        padding: 48px 40px 40px 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 44px;
+        .barContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            .valueSection {
+                display: flex;
+                justify-content: space-between;
+
+                .count {
+                    display: flex;
+                    gap: 8px;
+                    align-items: baseline;
+                }
+            }
+
+            .barSection {
+                [class*='Suc-progressbar'] {
+                    height: 16px;
+                }
+            }
+        }
+    }
+}
