@@ -91,14 +91,22 @@ export interface SandboxItemEntities {
 
 export interface SandboxEntities {
     showBanner: boolean;
+    refreshSandboxInstanceTime: any;
     isNA: boolean;
     getSandboxList: {
         sandboxListData: SandboxListEntities;
         sandboxListLoading: boolean;
         sandboxListError: string;
     };
+    getSandboxInstanceList: {
+        sandboxInstanceListData: SandboxListEntities;
+        sandboxInstanceListLoading: boolean;
+        sandboxInstanceListError: string;
+    };
     aggregatedSandboxList: SandboxListEntities;
+    aggregatedSandboxInstanceList: SandboxListEntities;
     allSandboxList: SandboxListEntities;
+    allSandboxInstanceList: [];
     getSandboxSavings: {
         sandboxSavings: {
             consumedStorage: number;
@@ -115,6 +123,7 @@ export interface SandboxEntities {
     isRollbackSelected: boolean;
     selectedRollbackSnapshot: any;
     isRefreshedSandbox: boolean;
+    isRefreshSandboxInstance: boolean;
 }
 
 export type SandboxActions = 'delete' | 'refresh' | 'rebaseline' | 'split' | 'integrityCheck';
