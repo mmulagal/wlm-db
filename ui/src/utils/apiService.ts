@@ -886,6 +886,25 @@ export const sandboxApi = createApi({
                     return response;
                 }
             }),
+            getSandboxInstanceList: builder.query({
+                query: ({ credentialId, region, databaseHostId, databaseInstanceId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${databaseInstanceId}/sandboxes?nextToken=${nextToken}`;
+                    } else {
+                        return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${databaseInstanceId}/sandboxes`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.region
+                        };
+                    }
+                    return response;
+                }
+            }),
             getSandboxSavings: builder.query({
                 query: ({ credentialId, region }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/sandboxes/savings`
@@ -1237,6 +1256,7 @@ export const {
 
 export const {
     useGetSandboxListQuery,
+    useLazyGetSandboxInstanceListQuery,
     useLazyGetSandboxListQuery,
     useGetSandboxSavingsQuery,
     useLazyGetSandboxSavingsQuery,

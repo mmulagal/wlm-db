@@ -39,6 +39,12 @@ import { resetGwValuesOnRefresh } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import FSXPasswordContent from './FSXPasswordContent/FSXPasswordContent';
+import SandboxInstanceTable from './ResourceMSSQLOverview/SandboxInstanceTable/SandboxInstanceTable';
+import {
+    setAggregatedSandboxInstanceList,
+    setAllSandboxInstanceList,
+    setIsRefreshedSandboxInstance
+} from '../../../store/workloadFactory/sandboxSlice';
 
 const WellArchitectDashboard = () => {
     const dispatch = useDispatch();
@@ -55,6 +61,8 @@ const WellArchitectDashboard = () => {
 
     const { refreshTime } = useAppSelector(state => state.headers);
 
+    const { refreshSandboxInstanceTime } = useAppSelector(state => state.sandbox);
+
     const {
         resourceLoading: resourceLoadingState,
 
@@ -68,6 +76,8 @@ const WellArchitectDashboard = () => {
     useEffect(() => {
         return () => {
             dispatch(resetVisitedTabs());
+            dispatch(setAggregatedSandboxInstanceList([]));
+            dispatch(setAllSandboxInstanceList([]));
         };
     }, [dispatch]);
 
@@ -95,6 +105,8 @@ const WellArchitectDashboard = () => {
             dispatch(setDefaultFilterOptions({}));
             resetGwValuesOnRefresh(dispatch);
             dispatch(setGwRefreshPage(true));
+        } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.SANDBOXES) {
+            dispatch(setIsRefreshedSandboxInstance(true));
         }
     };
 
@@ -106,6 +118,8 @@ const WellArchitectDashboard = () => {
             return refreshTime;
         } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
             return gwRefreshTimestamp;
+        } else {
+            return refreshSandboxInstanceTime;
         }
     };
 
@@ -217,6 +231,8 @@ const WellArchitectDashboard = () => {
                         <DatabaseListTable />
                     </div>
                 )}
+
+                {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.SANDBOXES && <SandboxInstanceTable />}
             </div>
         </div>
     );
