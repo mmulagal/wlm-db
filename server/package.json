@@ -1,6 +1,6 @@
 {
     "name": "server",
-    "version": "1.1.7",
+    "version": "1.1.8",
     "description": "Server App for Workload Manager for DB",
     "type": "module",
     "private": true,
@@ -88,7 +88,7 @@
         "nodemailer": "^7.0.2",
         "numeral": "^2.0.6",
         "patch-package": "^8.0.0",
-        "prisma": "^6.5.0",
+        "prisma": "^6.7.0",
         "randomatic": "^3.1.1",
         "throat": "^6.0.2",
         "typescript": "^5.8.3",
