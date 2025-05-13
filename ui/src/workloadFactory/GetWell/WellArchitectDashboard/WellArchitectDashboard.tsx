@@ -34,7 +34,11 @@ import { useNavigate } from 'react-router-dom';
 import { setRefreshTime } from '../../../store/workloadFactory/headersSlice';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
 import { useRegisterResourceCredentialsMutation, workloadFactoryResourceApiV2 } from '../../../utils/apiService';
-import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import {
+    setFsxAdminConfirmPassword,
+    setFsxAdminPassword,
+    setIsResourceRefresh
+} from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetGwValuesOnRefresh } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
@@ -150,6 +154,8 @@ const WellArchitectDashboard = () => {
             });
             if (result && !result?.error) {
                 if (!result?.data?.sqlServerError && !result?.data?.fsxnError) {
+                    dispatch(setFsxAdminPassword(''));
+                    dispatch(setFsxAdminConfirmPassword(''));
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.SUCCESS,
@@ -159,6 +165,8 @@ const WellArchitectDashboard = () => {
                 }
             }
         } catch (error) {
+            dispatch(setFsxAdminPassword(''));
+            dispatch(setFsxAdminConfirmPassword(''));
             dispatch(
                 addNotification({
                     type: NOTIFICATION_TYPES.ERROR,
