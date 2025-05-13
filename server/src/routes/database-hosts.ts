@@ -9,39 +9,15 @@ import {
 import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
     DatabasesCreateSchema,
-    CreateSandboxSchema,
-    GetSandboxSavingsSchema,
-    GetSandboxesInfoSchema,
-    GetSandboxesMountPointSchema,
-    GetSandboxConnectionStringSchema,
-    DeleteSandboxSchema,
-    GetSandboxSplitEstimateSchema,
-    SandboxLifeCycleSchema,
-    SandboxSplitSchema,
     DatabaseHostsSummarySchemaV2,
-    CheckSandboxIntegritySchema,
     DatabaseHostDetailsSchemaV2,
     DatabaseHostInstanceDetailsSchema,
     DatabasesListSchemaV2,
-    GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
     PgSqlDbHostDetailsSchema,
     PgSqlDbHostsSummarySchema
 } from './schemas/database-hosts-schemas';
-import {
-    createSandbox,
-    getSandboxConnectionString,
-    getSandboxesInfo,
-    getDatabaseMountPointInfo,
-    getSandboxSavings,
-    deleteSandbox,
-    getSandboxSplitEstimate,
-    updateSandboxLifeCycle,
-    splitSandbox,
-    checkDatabaseIntegrity,
-    getSandboxSnapshots
-} from '../operations/sandbox-operations';
 import { DatabaseTypes } from '../utils/consts';
 import castRequest from './utils';
 
@@ -52,18 +28,6 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server
-        // TODO: Accept instance id, database name as query params for more granularity
-        .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/sandboxes/savings`,
-            { schema: GetSandboxSavingsSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region }
-                } = castRequest(request);
-                const response = await getSandboxSavings(accountId, credentialsId, region);
-                return reply.send(response);
-            }
-        )
         .post(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database`,
             { schema: DatabasesCreateSchema },
@@ -99,147 +63,6 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     region,
                     databaseInstanceId
-                );
-                return reply.send(response);
-            }
-        )
-        // TODO: Accept instance id as query params for more granularity
-        .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/sandboxes`,
-            { schema: GetSandboxesInfoSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region },
-                    query: { nextToken }
-                } = castRequest(request);
-                const response = await getSandboxesInfo(accountId, credentialsId, region, nextToken);
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-mount-points`,
-            { schema: GetSandboxesMountPointSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId },
-                    query: { databaseName, databaseInstanceId }
-                } = castRequest(request);
-                const response = await getDatabaseMountPointInfo(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    databaseName
-                );
-                return reply.send(response);
-            }
-        )
-        .post(`${MSSQL_API_PREFIX_PATH}/sandboxes`, { schema: CreateSandboxSchema }, async (request, reply) => {
-            const {
-                params: { accountId, credentialsId, region },
-                body: { source, destination, tag, mountPoints }
-            } = castRequest(request);
-            const response = await createSandbox(
-                accountId,
-                credentialsId,
-                region,
-                source,
-                destination,
-                tag,
-                mountPoints
-            );
-            return reply.code(202).send(response);
-        })
-        .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/connection-string`,
-            { schema: GetSandboxConnectionStringSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
-                } = castRequest(request);
-                const response = await getSandboxConnectionString(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    sandboxName
-                );
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/split-estimate`,
-            { schema: GetSandboxSplitEstimateSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
-                } = castRequest(request);
-                const response = await getSandboxSplitEstimate(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    sandboxName
-                );
-                return reply.send({ volumes: response });
-            }
-        )
-        .delete(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName`,
-            { schema: DeleteSandboxSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
-                } = castRequest(request);
-                const response = await deleteSandbox(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    sandboxName
-                );
-                return reply.code(202).send(response);
-            }
-        )
-        .patch(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName`,
-            { schema: SandboxLifeCycleSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName },
-                    body: { snapshot, action }
-                } = castRequest(request);
-                const response = await updateSandboxLifeCycle(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    sandboxName,
-                    action,
-                    snapshot
-                );
-                return reply.code(202).send(response);
-            }
-        )
-        .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/split`,
-            { schema: SandboxSplitSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
-                } = castRequest(request);
-                const response = await splitSandbox(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    sandboxName
                 );
                 return reply.send(response);
             }
@@ -359,44 +182,6 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     fields
                 );
                 return reply.send(response);
-            }
-        )
-        .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/check-integrity`,
-            { schema: CheckSandboxIntegritySchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceId }
-                } = castRequest(request);
-                const response = await checkDatabaseIntegrity(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    sandboxName
-                );
-                return reply.send(response);
-            }
-        )
-        .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/sandboxes/:sandboxName/snapshots`,
-            { schema: GetSandboxSnapshotsSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceId },
-                    query: { historical }
-                } = castRequest(request);
-                const response = await getSandboxSnapshots(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    sandboxName,
-                    historical
-                );
-                return reply.send({ snapshots: response });
             }
         )
         .get(
