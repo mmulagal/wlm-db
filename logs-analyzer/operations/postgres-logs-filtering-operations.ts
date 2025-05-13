@@ -12,7 +12,7 @@ interface PostgresLog {
     severity: string;
 }
 
-async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed: number) {
+async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed: number): Promise<PostgresLog[]> {
     logger.info(`Starting to read PostgreSQL logs from file: ${filePath}`, { timestampLastLogProcessed });
 
     const stream = createReadStream(filePath, { encoding: 'utf-8' });
@@ -43,7 +43,7 @@ async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed:
                 }
 
                 if (match) {
-                    const [_, timestamp, processId, message] = match;
+                    const [_, timestamp, processId, severity, message] = match;
                     if (!logSet.has(message)) {
                         const start = Math.max(0, i - contextLines);
                         const end = Math.min(lines.length, i + contextLines + 1);
@@ -56,11 +56,13 @@ async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed:
                             return false;
                         });
                         const context = contextData.join('\n');
-                        logs.push({ timestamp, processId, message, context });
+                        logs.unshift({ timestamp, processId, message, context, severity });
                         contextData.forEach(item => logSet.add(item));
                     }
                 }
             }
+            // sort the logs by timestamp in descending order
+            logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         });
 
         stream.on('end', () => {

@@ -13,7 +13,7 @@ interface MsSqlErrorLog {
     error: string;
 }
 
-async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: number) {
+async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: number): Promise<MsSqlErrorLog[]> {
     logger.debug(`Starting to read SQL logs from file: ${filePath}`, { timestampLastLogProcessed });
     const stream = createReadStream(filePath, { encoding: 'utf-8' });
 
@@ -58,11 +58,18 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
                             return false;
                         })
                         const context = contextData.join('\n');
-                        errorLogs.push({ timestamp, spid, errorCode, severity, state, context, error: line });
+                        // unshift to push error to the beginning of the array so that the latest error logs are at the top
+                        errorLogs.unshift({ timestamp, spid, errorCode, severity, state, context, error: line });
+                        //errorLogs.push({ timestamp, spid, errorCode, severity, state, context, error: line });
                         contextData.forEach(item => errorSet.add(item))
                     }
                 }
+
             }
+
+            // order logs by timestamp
+            errorLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
         });
 
         stream.on('end', () => {

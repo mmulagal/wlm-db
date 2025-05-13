@@ -7,7 +7,7 @@ import logger from '../../logs-analyzer/src/utils/logging';
 import { DATABASE_TYPE } from '../utils/const';
 
 
-export default async function collectLogs(databaseType: string, logsFolderPath: string, timestampLastLogProcessed: number) {
+export default async function collectLogs(databaseType: string, logsFolderPath: string, timestampLastLogProcessed: number, logsCount: number) {
     logger.debug(`Starting to collect logs from ${logsFolderPath} for database type: ${databaseType}`);
 
     const files = readdirSync(logsFolderPath);
@@ -21,27 +21,42 @@ export default async function collectLogs(databaseType: string, logsFolderPath: 
     const filesToProcess = filteredFiles.length > 0 ? filteredFiles : files;
 
     if (databaseType === DATABASE_TYPE.MSSQL) {
-        const logs: MsSqlErrorLog[] = [];
+        let logs: MsSqlErrorLog[] = [];
         await Promise.all(filesToProcess.map(async file => {
             const filePath = join(logsFolderPath, file);
             if (statSync(filePath).isFile()) {
                 logger.debug(`Processing file: ${filePath}`);
                 const content = await readMsSqlLogsFile(filePath, timestampLastLogProcessed);
+
                 if (!isEmpty(content)) {
                     logs.push(...content);
+                }
+
+                if (logs.length >= logsCount) {
+                    logger.debug(`Collected ${logs.length} logs, stopping further processing.`);
+                    logs = logs.slice(0, logsCount); // Limit to logsCount
+                    logger.debug(`Final logs count: ${logs.length}`);
+                    return;
                 }
             }
         }));
 
         return getUniqueErrorAndRespectiveCount(logs);
     } else if (databaseType === DATABASE_TYPE.POSTGRESQL) {
-        const logs: PostgresLog[] = [];
+        let logs: PostgresLog[] = [];
         await Promise.all(filesToProcess.map(async file => {
             const filePath = join(logsFolderPath, file);
             if (statSync(filePath).isFile()) {
                 const content = await readPostgresLogsFile(filePath, timestampLastLogProcessed);
                 if (!isEmpty(content)) {
                     logs.push(...content);
+                }
+
+                if (logs.length >= logsCount) {
+                    logger.debug(`Collected ${logs.length} logs, stopping further processing.`);
+                    logs = logs.slice(0, logsCount); // Limit to logsCount
+                    logger.debug(`Final logs count: ${logs.length}`);
+                    return;
                 }
             }
         }));

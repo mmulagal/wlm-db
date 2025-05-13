@@ -53,7 +53,13 @@ const argv = yargs(hideBin(process.argv))
         alias: 't',
         type: 'number',
         description: 'Timestamp of the last log statement in milliseconds',
-        default: Date.now() - 1000 * 60 * 60 * 24 // Default to 24 hours ago
+        default: Date.now() - 1000 * 60 * 60 * 24 * 120 // Default to 24 hours ago
+    })
+    .option('logs-count-to-consider',{
+        alias: 'c',
+        type: 'number',
+        description: 'Number of logs to consider for analysis',
+        default: 1000
     })
     .option('help', {
         alias: 'h',
@@ -65,7 +71,7 @@ const argv = yargs(hideBin(process.argv))
 
 logger.info('Command line arguments:', argv);
 
-const { 'logs-path': LOGS_FOLDER, 'job-id': JOB_ID, 'instance-id': INSTANCE_ID, 'log-level': LOG_LEVEL, region: REGION, timestamp: TIMESTAMP_LAST_LOG_PROCESSED } = argv as any;
+const { 'logs-path': LOGS_FOLDER, 'job-id': JOB_ID, 'instance-id': INSTANCE_ID, 'log-level': LOG_LEVEL, region: REGION, timestamp: TIMESTAMP_LAST_LOG_PROCESSED, 'logs-count-to-consider': LOGS_COUNT } = argv as any;
 
 logger.level = LOG_LEVEL;
 logger.info(`Log level set to: ${LOG_LEVEL}`);
@@ -353,7 +359,7 @@ async function analyzeDatabaseApplicationLogs(tool: ToolUse, client: BedrockRunt
     // Collect logs based on the identified database type
     const { databaseType: dbType = '' } = databaseDetails || {};
 
-    const { uniqueErrorLogs: errorLogs } = await collectLogs(dbType, logsFolderPath, TIMESTAMP_LAST_LOG_PROCESSED);
+    const { uniqueErrorLogs: errorLogs } = await collectLogs(dbType, logsFolderPath, TIMESTAMP_LAST_LOG_PROCESSED, LOGS_COUNT);
 
     if (isEmpty(errorLogs)) {
         logger.error("No error logs found in the logs.");

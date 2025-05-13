@@ -33,7 +33,8 @@ The `logs-analyzer` package is designed to analyze SQL logs and provide remediat
      --instance-id "your-instance-id" \
      --region "us-east-1" \
      --log-level "info" \
-     --timestamp 1715558400000
+     --timestamp 1715558400000 \
+     --logs-count-to-consider 100
    ```
    - `--logs-path` (required): Path to the database application logs folder.
    - `--job-id` (required): Workload Factory job ID.
@@ -41,6 +42,7 @@ The `logs-analyzer` package is designed to analyze SQL logs and provide remediat
    - `--region` (required): AWS region.
    - `--log-level` (optional): Log level (`debug`, `info`, `warn`, `error`). Default: `info`.
    - `--timestamp` (optional): Timestamp (in milliseconds) of the last log statement to process. Default: 24 hours ago.
+   - `--logs-count-to-consider` (optional): Total count of logs to consider for analysis. Default 1000
    - `--help` (optional): Show help.
 4. The binary will analyze the logs and output remediation recommendations to the console or the specified output file.
 
