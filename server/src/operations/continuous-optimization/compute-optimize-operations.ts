@@ -422,7 +422,7 @@ async function handleComputeRemediation(
         jobStatus = JOBSTATUS.FAILED;
         errorMessage = 'No active node found in the cluster';
     } catch (error) {
-        errorMessage = `Error while optimizing compute ${error}`;
+        errorMessage = `Error while fixing compute ${error}`;
         logger.error(errorMessage);
         isJobStatusUpdated = true;
         jobStatus = JOBSTATUS.FAILED;
@@ -640,8 +640,8 @@ export default async function optimizeCompute(
         region,
         resourceName!,
         JOBTYPE.WELL_ARCHITECTED,
-        `Optimize EC2 compute for ${resourceName}`,
-        `Optimize EC2 compute for ${resourceName}`,
+        `Fix EC2 compute for ${resourceName}`,
+        `Fix EC2 compute for ${resourceName}`,
         masterOptimizeParentId,
         jobMetadata
     );

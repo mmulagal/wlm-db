@@ -1,7 +1,7 @@
 {
     "id": "1234",
     "accountId": "account-3JuDht6X",
-    "name": "Optimize storage tier",
+    "name": "Fix storage tier",
     "status": "WARNING",
     "resourceName": "account-3JuDht6X",
     "type": "OPTIMIZATION",
@@ -11,7 +11,7 @@
         "code": "us-east-1",
         "name": "US East (N. Virginia)"
     },
-    "description": "Optimize storage tier",
+    "description": "Fix storage tier",
     "endTime": 1737707385000,
     "subJobs": [
         {
@@ -21,7 +21,7 @@
             },
             "id": "91d8422c-d940-456f-87b3-5a48503b063a",
             "accountId": "account-3JuDht6X",
-            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+            "name": "Fix storage-tier for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
             "status": "COMPLETED",
             "hostsToOptimize": [
                 {
@@ -160,7 +160,7 @@
             },
             "id": "7668df69-5afa-4ce9-9745-05a0f611c7f4",
             "accountId": "account-3JuDht6X",
-            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\MSSQLSERVER",
+            "name": "Fix storage-tier for SQL-Managed-Host-Prod\\MSSQLSERVER",
             "status": "FAILED",
             "hostsToOptimize": [
                 {
@@ -298,7 +298,7 @@
             },
             "id": "4429c2cb-fc75-42ab-b06c-0bb4857282f8",
             "accountId": "account-3JuDht6X",
-            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+            "name": "Fix storage-tier for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
             "status": "COMPLETED",
             "hostsToOptimize": [
                 {
@@ -437,7 +437,7 @@
             },
             "id": "91d8422c-d940-456f-87b3-5a48503b063a",
             "accountId": "account-3JuDht6X",
-            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+            "name": "Fix storage-tier for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
             "status": "COMPLETED",
             "hostsToOptimize": [
                 {
@@ -576,7 +576,7 @@
             },
             "id": "7668df69-5afa-4ce9-9745-05a0f611c7f4",
             "accountId": "account-3JuDht6X",
-            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\MSSQLSERVER",
+            "name": "Fix storage-tier for SQL-Managed-Host-Prod\\MSSQLSERVER",
             "status": "FAILED",
             "hostsToOptimize": [
                 {
@@ -714,7 +714,7 @@
             },
             "id": "4429c2cb-fc75-42ab-b06c-0bb4857282f8",
             "accountId": "account-3JuDht6X",
-            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+            "name": "Fix storage-tier for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
             "status": "COMPLETED",
             "hostsToOptimize": [
                 {

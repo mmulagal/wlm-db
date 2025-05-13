@@ -140,7 +140,7 @@ async function calculateComputeDrift(
             if (findingValue.includes('provisioned') || findingValue === AssessmentStatus.NOT_OPTIMIZED) {
                 // under_provisioned or over_provisioned
                 const genericRecommendationMessage =
-                    'Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.';
+                    'Click Fix to view cost comparison between current and recommended instance types to understand potential savings.';
                 recommendationMessage =
                     findingValue === AssessmentStatus.UNDER_PROVISIONED
                         ? underProvisionedRecommendationMessage

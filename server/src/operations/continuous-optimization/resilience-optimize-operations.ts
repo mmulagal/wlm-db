@@ -229,7 +229,7 @@ async function setSnapshotPolicyForVolumes(
                 }
             ]
         };
-        const subJobDetails = `Optimize snapshot policy for ${instanceRecord.resourceName}`;
+        const subJobDetails = `Fix snapshot policy for ${instanceRecord.resourceName}`;
         subJobId = await handleOptimizeJobCreation(
             accountId,
             credentialsId,
@@ -380,7 +380,7 @@ async function handleResiliecyOptimize(
         ]
     };
     // check whether any jobs on the same resource running
-    const jobDetails = `Optimize resiliency for ${instanceRecord.resourceName}`;
+    const jobDetails = `Fix resiliency for ${instanceRecord.resourceName}`;
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
