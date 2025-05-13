@@ -163,21 +163,20 @@ async function getResilienceDriftAssessment(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    fields: string = '',
+    fieldsValues: string[] = [],
     databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = []
 ) {
     logger.info('Getting resilience drift assessment for:', {
         credentialsId,
         databaseInstanceId,
         databaseHostId,
-        fields
+        fieldsValues
     });
-    const fieldsArray = fields ? fields.split(',') : [];
     const shouldTriggerSnapshotPolicyAssessment =
-        isEmpty(fieldsArray) || fieldsArray.includes(AssessmentCategories.SNAPSHOT_POLICY);
-    const shouldTriggerCrrAssessment = isEmpty(fieldsArray) || fieldsArray.includes(AssessmentCategories.CRR);
+        isEmpty(fieldsValues) || fieldsValues.includes(AssessmentCategories.SNAPSHOT_POLICY);
+    const shouldTriggerCrrAssessment = isEmpty(fieldsValues) || fieldsValues.includes(AssessmentCategories.CRR);
     const shouldTriggerAwsBackupAssessment =
-        isEmpty(fieldsArray) || fieldsArray.includes(AssessmentCategories.AWS_BACKUP);
+        isEmpty(fieldsValues) || fieldsValues.includes(AssessmentCategories.AWS_BACKUP);
 
     const configDataMap = databaseInstanceConfigData.reduce((acc, config) => {
         acc[config.config_data_type] = config.config_data;

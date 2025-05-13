@@ -226,7 +226,7 @@ async function getStorageData(
             error
         )}`;
         let { message } = error as { message: string };
-        if (message?.toLocaleLowerCase().includes('ThrottlingException: Rate exceeded'.toLowerCase())) {
+        if (message?.toLowerCase().includes('ThrottlingException: Rate exceeded'.toLowerCase())) {
             message += '. Retry the operation.';
             throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, message);
         }
@@ -853,13 +853,18 @@ async function getDatabaseHostsSummaryV2(
         fsxId,
         undefined,
         apiPageSize,
-        nextToken
+        nextToken,
+        true
     );
 
     if (isEmpty(resourceDetails)) {
         logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
         return { count: 0, items: [], nextToken: '' };
     }
+
+    const managedInstancesMap = new Map(
+        resourceDetails.map(r => [r.resource_id, (r as any)?.database_instances?.flat()])
+    );
 
     const databaseHosts: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
     try {
@@ -873,7 +878,8 @@ async function getDatabaseHostsSummaryV2(
                     customerCredentialsId,
                     awsRegion,
                     fields,
-                    resourceDetail
+                    resourceDetail,
+                    managedInstancesMap.get(resourceId)
                 );
                 databaseHosts.push(databaseHostDetails);
             })
@@ -949,6 +955,7 @@ async function getDatabaseHostSummaryV2(
     awsRegion: string,
     fields?: string,
     resourceDetail?: ResourceDetails,
+    instancesManaged: DatabaseInstance[] = [],
     isManagedResource: boolean = true
 ) {
     logger.info('Fetching details about a database host ', accountId, databaseHostId, fields, isManagedResource);
@@ -978,10 +985,12 @@ async function getDatabaseHostSummaryV2(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
-    const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLocaleLowerCase());
-    const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
+    const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
+    const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLowerCase());
 
-    let instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    if (isEmpty(instancesManaged)) {
+        instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    }
 
     if (isDemo()) {
         instancesManaged.map(instance => {
@@ -1108,7 +1117,8 @@ async function getDatabaseHostSummaryV2(
                             (instance: InstanceDetails) =>
                                 instance.instanceState === ServerState.UP &&
                                 (instance.instanceName === resource.database_instance_name ||
-                                    (resourceType === DatabaseTypes.PG_SQL && resourceId === resource.resource_id))
+                                    (resourceType === DatabaseTypes.PG_SQL &&
+                                        resourceId === resource.resource.resource_id))
                         )
                     );
                 } else {
@@ -1236,6 +1246,10 @@ async function getDatabaseHostSummaryV2(
         );
     }
     databaseHostDetails.sqlLicenseIncluded = WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation!) || false;
+    databaseHostDetails.name = databaseHostDetails?.name?.toLowerCase();
+    databaseHostDetails.databaseInstancesSummary?.forEach((instance: DatabaseHostInstanceSummaryResponseType) => {
+        instance.databaseInstanceName = instance?.databaseInstanceName?.toLowerCase();
+    });
     return databaseHostDetails;
 }
 
@@ -1554,13 +1568,16 @@ async function getDatabaseDetails(
                                 isFsxOntapSnapshotsEnabled: isDemoFlow
                                     ? true
                                     : checkKey(ontapBackup, database.databaseName),
-                                isSqlNativeEnabled: Boolean(
-                                    backedupDatabases?.[instName] &&
-                                        backedupDatabases[instName]?.find(
-                                            (e: { backedupDatabases: string }) =>
-                                                e.backedupDatabases === database.databaseName
-                                        )
-                                )
+                                isSqlNativeEnabled:
+                                    backedupDatabases?.[instName] && backedupDatabases?.[instName].includes('error')
+                                        ? false
+                                        : Boolean(
+                                              backedupDatabases?.[instName] &&
+                                                  backedupDatabases[instName]?.find(
+                                                      (e: { backedupDatabases: string }) =>
+                                                          e.backedupDatabases === database.databaseName
+                                                  )
+                                          )
                             }
                         })
                     })
@@ -1639,25 +1656,21 @@ async function getDatabaseInstancesSummary(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
     const shouldQueryDatabasesWithProtection = fieldsValues?.includes(
-        DatabaseHostsQueryFields.DATABASES_WITH_PROTECTION.toLocaleLowerCase()
+        DatabaseHostsQueryFields.DATABASES_WITH_PROTECTION.toLowerCase()
     );
     const shouldQueryDatabasesWithoutProtection = fieldsValues?.includes(
-        DatabaseHostsQueryFields.DATABASES.toLocaleLowerCase()
+        DatabaseHostsQueryFields.DATABASES.toLowerCase()
     );
-    const shouldQueryServerDetails = fieldsValues?.includes(
-        DatabaseHostsQueryFields.SERVER_DETAILS.toLocaleLowerCase()
-    );
+    const shouldQueryServerDetails = fieldsValues?.includes(DatabaseHostsQueryFields.SERVER_DETAILS.toLowerCase());
     const shouldQueryDatabaseTopology = fieldsValues?.includes(
-        DatabaseHostsQueryFields.DATABASE_INSTANCE_TOPOLOGY.toLocaleLowerCase()
+        DatabaseHostsQueryFields.DATABASE_INSTANCE_TOPOLOGY.toLowerCase()
     );
     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
-    const getResourceutilization = fieldsValues?.includes(
-        DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
-    );
+    const getResourceutilization = fieldsValues?.includes(DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLowerCase());
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
-    const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
-    const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLocaleLowerCase());
+    const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLowerCase());
+    const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
 
     let serverDetails: any;
     let databaseInstancetopologyData: any;
@@ -1827,7 +1840,7 @@ async function getDatabaseInstancesSummary(
 
         const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
             databaseInstanceId,
-            databaseInstanceName: savedDatabaseInstanceName,
+            databaseInstanceName: savedDatabaseInstanceName?.toLowerCase(),
             status: ''
         };
 

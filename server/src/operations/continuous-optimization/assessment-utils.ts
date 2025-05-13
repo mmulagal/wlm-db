@@ -141,9 +141,11 @@ function createNewConfig(configurationName: string, configState: string, startTi
                         deactivationReason: undefined
                     };
                 case DISMISS_STATUS.ACTIVE:
+                case DISMISS_STATUS.ACTIVATING:
                     return {
                         deactivationReason: DISMISS_DEACTIVATION_REASON.USER,
-                        endTime: undefined
+                        endTime: undefined,
+                        configState: DISMISS_STATUS.ACTIVATING
                     };
                 default:
                     return {};
@@ -246,7 +248,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         configurations.map(async config => {
             const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
             const startTime = Date.now();
-            const thirtyDaysInMs = moment.duration(30, 'days').asMilliseconds();
+            const thirtyDaysInMs = moment.duration(1, 'days').asMilliseconds(); // update to 1 day for testing will be reverted to 30 days after testing
             const endTime = startTime + thirtyDaysInMs;
             const response = {
                 configurationName: configName,
@@ -470,6 +472,89 @@ function updateFieldsBasedOnDismissedConfigurations(
     return updatedFieldsValues;
 }
 
+function processConfigForExpiration(configDetails: InstanceDismissParams) {
+    logger.debug('Processing config for expiration', { configDetails });
+    const { endTime, configState, configurationName } = configDetails;
+    let updatedStorageConfig = configDetails;
+    let isConfigExpired = false;
+
+    if (
+        configState === DISMISS_STATUS.ACTIVATING ||
+        (configState === DISMISS_STATUS.POSTPONED && endTime && Date.now() > endTime)
+    ) {
+        logger.debug(`Configuration ${configurationName} has expired and will be activated`, { configDetails });
+        updatedStorageConfig = {
+            ...configDetails,
+            configState: DISMISS_STATUS.ACTIVE,
+            deactivationReason: DISMISS_DEACTIVATION_REASON.EXPIRED,
+            endTime: undefined
+        };
+        isConfigExpired = true;
+    }
+    return { updatedStorageConfig, isConfigExpired };
+}
+
+function processConfigEntries(
+    entries: [string, InstanceDismissParams][],
+    dismissedConfigs: DatabaseInstanceDismissConfigs
+) {
+    let isConfigUpdated = false;
+
+    const updatedConfigs: DatabaseInstanceDismissConfigs = { ...dismissedConfigs };
+    entries.forEach(([key, config]) => {
+        if (key === 'storage') {
+            const storageEntries = Object.entries(config);
+            storageEntries.forEach(([storageKey, storageConfig]) => {
+                if (storageKey === 'configuration') {
+                    const configEntries = Object.entries(storageConfig as DatabaseInstanceDismissConfigs);
+                    configEntries.forEach(([configKeyName, configValue]) => {
+                        const subCategories = Object.entries(configValue);
+                        subCategories.forEach(([configName, configDetails]) => {
+                            const { updatedStorageConfig, isConfigExpired } = processConfigForExpiration(
+                                configDetails as InstanceDismissParams
+                            );
+                            if (isConfigExpired) {
+                                (
+                                    (
+                                        updatedConfigs!.storage!.configuration as Record<
+                                            string,
+                                            Record<string, InstanceDismissParams>
+                                        >
+                                    )[configKeyName] as Record<string, InstanceDismissParams>
+                                )[configName] = updatedStorageConfig;
+                                isConfigUpdated = true;
+                            }
+                        });
+                    });
+                } else if (['sizing', 'layout'].includes(storageKey)) {
+                    const storageConfigEntries = Object.entries(storageConfig as InstanceDismissParams);
+                    storageConfigEntries.forEach(([configKey, configValue]) => {
+                        const { updatedStorageConfig, isConfigExpired } = processConfigForExpiration(
+                            configValue as InstanceDismissParams
+                        );
+                        if (isConfigExpired) {
+                            (
+                                updatedConfigs.storage![storageKey as keyof typeof updatedConfigs.storage] as Record<
+                                    string,
+                                    InstanceDismissParams
+                                >
+                            )[configKey] = updatedStorageConfig;
+                            isConfigUpdated = true;
+                        }
+                    });
+                }
+            });
+        } else {
+            const { updatedStorageConfig, isConfigExpired } = processConfigForExpiration(config);
+            if (isConfigExpired) {
+                updatedConfigs[key as keyof typeof dismissedConfigs] = updatedStorageConfig;
+                isConfigUpdated = true;
+            }
+        }
+    });
+    return { updatedConfigs, isConfigUpdated };
+}
+
 async function checkAndUpdatePostponedEndTime(
     accountId: string,
     credentialsId: string,
@@ -486,26 +571,12 @@ async function checkAndUpdatePostponedEndTime(
         dismissedConfigs,
         databaseInstanceId
     });
-    const updatedConfigs = { ...dismissedConfigs };
-    let isConfigUpdated = false;
 
-    for (const [key, config] of Object.entries(dismissedConfigs)) {
-        if (config.configState === DISMISS_STATUS.POSTPONED) {
-            logger.debug(`Checking postponed configuration ${key}`, { config });
-            const currentTime = Date.now();
-            const { endTime } = config;
-            if (currentTime > endTime) {
-                logger.info(`Configuration ${key} has expired and will be activated`, { config });
-                updatedConfigs[key as keyof typeof dismissedConfigs] = {
-                    ...config,
-                    configState: DISMISS_STATUS.ACTIVE,
-                    deactivationReason: DISMISS_DEACTIVATION_REASON.EXPIRED,
-                    endTime: undefined
-                };
-                isConfigUpdated = true;
-            }
-        }
-    }
+    const { updatedConfigs, isConfigUpdated } = processConfigEntries(
+        Object.entries(dismissedConfigs),
+        dismissedConfigs
+    );
+
     if (isConfigUpdated) {
         if (databaseInstanceId) {
             await updateDatabaseInstanceConfigurations(
@@ -522,6 +593,7 @@ async function checkAndUpdatePostponedEndTime(
             });
         }
     }
+    return updatedConfigs;
 }
 
 export {

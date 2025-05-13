@@ -28,6 +28,7 @@ import {
     DatabaseInstancesSummaryInterface,
     DiscoverHostInterface,
     DiscoverOracleHostInterface,
+    DiscoverPgsqlHostInterface,
     DiscoveredStorageObj,
     EC2DetailsInterface,
     EstimatedUsageCostInterface,
@@ -38,6 +39,7 @@ import {
     InventoryTableInstanceDatInterface,
     ManagedHostsRowInterface,
     OracleInstancesDiscovered,
+    PgsqlInstancesDiscovered,
     SQLServerInstancesDiscovered,
     StatusObjInterface
 } from '../../utils/types/inventoryV2Types';
@@ -45,7 +47,8 @@ import {
     formatFractionalNumber,
     formatSizeOnePrecision,
     formatSizeTwoPrecision,
-    getAzType
+    getAzType,
+    getPgsqlAzType
 } from '../../utils/utilityFunctions';
 import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
 import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
@@ -230,6 +233,8 @@ export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) =
             installationMode = GENERAL.AOAG;
         } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
             installationMode = GENERAL.HA;
+        } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+            installationMode = GENERAL.STANDALONE;
         }
         return installationMode;
     } else {
@@ -361,9 +366,11 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
     if (row?.databaseInstanceDetails) {
         instanceRows = row?.databaseInstanceDetails?.map(perRow => {
             const isManagedRow = row?.databaseInstanceDetails?.filter(
-                per => per?.instanceName === perRow?.instanceName
+                per => per?.instanceName?.toLowerCase() === perRow?.instanceName?.toLowerCase()
             );
-            const statusObj = nonManagedStatus?.filter((per: StatusObjInterface) => per?.name === perRow?.instanceName);
+            const statusObj = nonManagedStatus?.filter(
+                (per: StatusObjInterface) => per?.name?.toLowerCase() === perRow?.instanceName?.toLowerCase()
+            );
             return {
                 ...perRow,
                 databaseInstanceId: perRow?.databaseInstanceId,
@@ -378,13 +385,13 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
     if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
         instanceRows = instanceRows?.map(instRow => {
             const perRow = row?.databaseInstancesSummary?.find(
-                per => per?.databaseInstanceName === instRow?.databaseInstanceName
+                per => per?.databaseInstanceName?.toLowerCase() === instRow?.databaseInstanceName?.toLowerCase()
             );
             const isManagedRow = row?.databaseInstanceDetails?.filter(
-                per => per?.instanceName === perRow?.databaseInstanceName
+                per => per?.instanceName?.toLowerCase() === perRow?.databaseInstanceName?.toLowerCase()
             );
             const statusObj = nonManagedStatus?.filter(
-                (per: StatusObjInterface) => per?.name === perRow?.databaseInstanceName
+                (per: StatusObjInterface) => per?.name?.toLowerCase() === perRow?.databaseInstanceName?.toLowerCase()
             );
             const allocatedCapacity =
                 (perRow?.storage?.fsxn?.size || 0) +
@@ -453,7 +460,7 @@ export const getPrimaryClusterNode = (
             }
             // To find partner node in a cluster
             const partnerNode = newDiscoveredHostData.filter((perHost: DiscoverHostInterface) => {
-                const isSameCluster = host?.nodesList?.filter((val: string) => {
+                const isSameCluster = host?.nodesList?.every((val: string) => {
                     return (
                         perHost?.ec2InstanceId !== host?.ec2InstanceId &&
                         perHost?.nodesList &&
@@ -463,7 +470,7 @@ export const getPrimaryClusterNode = (
                     );
                 });
                 // checking same vpc or not
-                if (isSameCluster && isSameCluster.length > 0 && perHost?.vpc?.id === host?.vpc?.id) {
+                if (isSameCluster && perHost?.vpc?.id === host?.vpc?.id) {
                     return perHost;
                 } else {
                     return;
@@ -530,6 +537,106 @@ export const getPrimaryClusterNode = (
     return;
 };
 
+export const getPrimaryPgsqlNode = (
+    newDiscoveredPgsqlHostData: Array<DiscoverPgsqlHostInterface>,
+    discoveredPgsqlHostData: Array<DiscoverHostInterface>,
+    removeRows: Array<string>,
+    managedHostsList: string[],
+    clusterDiscoveredHost: any,
+    isDemoMode: boolean | undefined
+) => {
+    let testedNodes: string[] = [];
+
+    discoveredPgsqlHostData?.map((host: any) => {
+        let perHostNodesList: any = [];
+        perHostNodesList.push(host?.ec2InstanceId);
+        if (host?.pgsqlServerInstances) {
+            host?.pgsqlServerInstances?.map((perSql: any) => {
+                if (perSql?.primaryNode) {
+                    perHostNodesList.push(perSql?.primaryNode?.ec2InstanceId);
+                }
+                perSql?.nodes?.map((pernode: any) => {
+                    perHostNodesList.push(pernode?.ec2InstanceId);
+                });
+            });
+        }
+        host = { ...host, nodesList: perHostNodesList };
+        newDiscoveredPgsqlHostData.push(host);
+    });
+
+    newDiscoveredPgsqlHostData?.map((host: DiscoverPgsqlHostInterface) => {
+        if (host?.nodesList) {
+            if (testedNodes.includes(host?.ec2InstanceId || '')) {
+                return;
+            }
+            // To find partner node in a cluster
+            let partnerNode = newDiscoveredPgsqlHostData?.filter((perHost: DiscoverHostInterface) => {
+                const isSameCluster = host?.nodesList?.filter((val: string) => {
+                    return (
+                        perHost?.ec2InstanceId !== host?.ec2InstanceId &&
+                        perHost?.nodesList &&
+                        perHost.nodesList.includes(val) &&
+                        perHost?.credentialId === host?.credentialId &&
+                        perHost?.regionId === host?.regionId
+                    );
+                });
+                // checking same vpc or not
+                if (isSameCluster && isSameCluster.length > 0 && perHost?.vpc?.id === host?.vpc?.id) {
+                    return perHost;
+                } else {
+                    return;
+                }
+            });
+
+            if (partnerNode && !isDemoMode) {
+                partnerNode = [host, ...partnerNode];
+
+                let anyManagedNode = false;
+                partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
+                    testedNodes.push(perPartnerNode?.ec2InstanceId);
+                    if (managedHostsList.includes(perPartnerNode?.ec2InstanceId)) {
+                        anyManagedNode = true;
+                    }
+                });
+
+                if (anyManagedNode) {
+                    partnerNode?.map((perPN: DiscoverHostInterface) => {
+                        if (perPN?.ec2InstanceId) {
+                            removeRows.push(
+                                uniqueHostRow(perPN?.ec2InstanceId, perPN?.credentialId || '', perPN?.regionId || '')
+                            );
+                        }
+                    });
+                    return;
+                } else {
+                    let combinedData: any = combinePgsqlClusterData(partnerNode, removeRows);
+                    if (combinedData) {
+                        clusterDiscoveredHost[
+                            uniqueHostRow(combinedData?.key, host?.credentialId || '', host?.regionId || '')
+                        ] = combinedData?.data;
+                    }
+                }
+            } else {
+                let isManagedNode1;
+                if (host?.ec2InstanceId) {
+                    testedNodes.push(host?.ec2InstanceId);
+                    isManagedNode1 = managedHostsList.includes(host?.ec2InstanceId);
+                }
+                // To check if node is already in managed host. Ignore other node if is already available in Managed host.
+
+                if (isManagedNode1) {
+                    if (host?.ec2InstanceId) {
+                        removeRows.push(
+                            uniqueHostRow(host?.ec2InstanceId, host?.credentialId || '', host?.regionId || '')
+                        );
+                    }
+                    return;
+                }
+            }
+        }
+    });
+};
+
 export const combineClusterData = (
     node: DiscoverHostInterface,
     partner: DiscoverHostInterface,
@@ -587,6 +694,55 @@ export const combineClusterData = (
             }
         };
     }
+    return result;
+};
+
+export const combinePgsqlClusterData = (allNodes: Array<DiscoverPgsqlHostInterface>, removeRows: Array<string>) => {
+    let result = null;
+    let key = allNodes?.map(perPartner => perPartner.ec2InstanceId).join(',') || '';
+    let pgsqlInstanceList: Array<PgsqlInstancesDiscovered> = [];
+    let uniqueSqlServerList: Array<string> = [];
+    let primaryNode: string = '';
+
+    primaryNode =
+        allNodes?.find((node: DiscoverPgsqlHostInterface) =>
+            node?.pgsqlServerInstances?.some((perRow: PgsqlInstancesDiscovered) => perRow?.isPrimary)
+        )?.ec2InstanceId || '';
+    if (!primaryNode) {
+        primaryNode =
+            allNodes?.find((node: DiscoverPgsqlHostInterface) =>
+                node?.pgsqlServerInstances?.some(
+                    (perRow: PgsqlInstancesDiscovered) => perRow?.pgsqlServerState === 'running'
+                )
+            )?.ec2InstanceId || '';
+    }
+
+    allNodes?.map((node: DiscoverPgsqlHostInterface) => {
+        node?.pgsqlServerInstances?.map((perRow: PgsqlInstancesDiscovered) => {
+            if (uniqueSqlServerList.includes(perRow?.pgsqlServerInstanceName!)) {
+                uniqueSqlServerList.push(perRow?.pgsqlServerInstanceName!);
+                pgsqlInstanceList.push(perRow);
+            } else {
+                uniqueSqlServerList.push(perRow?.pgsqlServerInstanceName!);
+                pgsqlInstanceList.push(perRow);
+            }
+        });
+    });
+
+    allNodes?.map((node: DiscoverPgsqlHostInterface) => {
+        if (primaryNode === node?.ec2InstanceId) {
+            result = {
+                key: primaryNode,
+                data: {
+                    ...node,
+                    key: key,
+                    sqlServerInstances: pgsqlInstanceList
+                }
+            };
+        } else if (node?.ec2InstanceId) {
+            removeRows.push(uniqueHostRow(node?.ec2InstanceId, node?.credentialId || '', node?.regionId || ''));
+        }
+    });
     return result;
 };
 
@@ -659,7 +815,8 @@ export const formatDiscoveredInventoryData = (
                                 uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')
                             ],
                             credentialMapping,
-                            regionMapping
+                            regionMapping,
+                            GENERAL.MICROSOFT_SQL_SERVER_TYPE
                         )
                 }
             };
@@ -668,7 +825,61 @@ export const formatDiscoveredInventoryData = (
                 ...result,
                 ...{
                     [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
-                        formatDiscoveredRows(perRow, credentialMapping, regionMapping)
+                        formatDiscoveredRows(
+                            perRow,
+                            credentialMapping,
+                            regionMapping,
+                            GENERAL.MICROSOFT_SQL_SERVER_TYPE
+                        )
+                }
+            };
+        }
+    });
+    return result;
+};
+
+export const formatDiscoveredPgsqlInventoryData = (
+    discoveredData: Array<DiscoverPgsqlHostInterface>,
+    removeRows: Array<string>,
+    clusterDiscoveredHost: any
+) => {
+    let result = {};
+    if (!discoveredData) {
+        return result;
+    }
+    let state = store.getState();
+    const { credentialMapping, regionMapping } = state?.headers;
+    discoveredData?.map((perRow: DiscoverPgsqlHostInterface) => {
+        if (
+            removeRows.includes(uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || ''))
+        ) {
+            return;
+        }
+        if (
+            clusterDiscoveredHost?.[
+                uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')
+            ]
+        ) {
+            result = {
+                ...result,
+                ...{
+                    [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
+                        formatPgsqlDiscoveredRows(
+                            clusterDiscoveredHost[
+                                uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')
+                            ],
+                            credentialMapping,
+                            regionMapping,
+                            GENERAL.POSTGRESQL_TYPE
+                        )
+                }
+            };
+        } else {
+            result = {
+                ...result,
+                ...{
+                    [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
+                        formatPgsqlDiscoveredRows(perRow, credentialMapping, regionMapping, GENERAL.POSTGRESQL_TYPE)
                 }
             };
         }
@@ -698,12 +909,13 @@ export const formatDiscoveredOracleInventoryData = (discoveredData: Array<Discov
 export const formatDiscoveredRows = (
     discoveredRow: DiscoverHostInterface,
     credentialMapping: any,
-    regionMapping: any
+    regionMapping: any,
+    type: string
 ) => {
     let totalInstanceCount = discoveredRow?.sqlServerInstances?.length || 0;
     let ssmState = getDiscoverSsmState(discoveredRow);
     let perInstanceStatus = getDiscoveredPerInstanceStatus(discoveredRow, ssmState);
-    let installationMode = getDiscoverInstallationMode(discoveredRow);
+    let installationMode = getDiscoverInstallationMode(discoveredRow, type);
     let actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
     let ec2Details = [
         {
@@ -716,7 +928,7 @@ export const formatDiscoveredRows = (
         ec2InstanceId: discoveredRow?.ec2InstanceId,
         ec2InstanceName: discoveredRow?.ec2InstanceName,
         resourceId: discoveredRow?.key,
-        name: getDiscoverHostname(discoveredRow),
+        name: getDiscoverHostname(discoveredRow, type),
         status: ssmState, // discover status will depends on ssmState only
         ssmState: ssmState,
         totalInstance: totalInstanceCount,
@@ -739,6 +951,60 @@ export const formatDiscoveredRows = (
         // totalCost: '',
         // allocatedCapacity: '',
         sqlServerInstances: formatDiscoverInstanceData(discoveredRow, perInstanceStatus),
+        credentialId: discoveredRow?.credentialId,
+        regionId: discoveredRow?.regionId,
+        credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
+        accountId: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.providerAccountId,
+        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName
+    };
+    return result;
+};
+
+export const formatPgsqlDiscoveredRows = (
+    discoveredRow: DiscoverPgsqlHostInterface,
+    credentialMapping: any,
+    regionMapping: any,
+    type: string
+) => {
+    let totalInstanceCount = discoveredRow?.pgsqlServerInstances?.length || 0;
+    let ssmState = getDiscoverSsmState(discoveredRow);
+    let perInstanceStatus = getPgsqlPerInstanceStatus(discoveredRow, ssmState);
+    let installationMode = getDiscoverInstallationMode(discoveredRow, type);
+    let actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
+    let ec2Details = [
+        {
+            id: discoveredRow?.ec2InstanceId,
+            name: discoveredRow?.ec2InstanceName
+        }
+    ];
+    const result = {
+        id: discoveredRow?.ec2InstanceId,
+        ec2InstanceId: discoveredRow?.ec2InstanceId,
+        ec2InstanceName: discoveredRow?.ec2InstanceName,
+        resourceId: discoveredRow?.key,
+        name: getDiscoverHostname(discoveredRow, type),
+        status: ssmState, // discover status will depends on ssmState only
+        ssmState: ssmState,
+        totalInstance: totalInstanceCount,
+        managedInstance: 0,
+        serverInstallationMode: installationMode,
+        serverAllInstallationMode: [installationMode],
+        vpcId: discoveredRow?.vpc?.id,
+        vpcName: discoveredRow?.vpc?.name,
+        vpcCidr: discoveredRow?.vpc?.cidrBlock,
+        action: actionObj?.action,
+        actionDisable: actionObj?.actionDisable,
+        isManagedHost: false,
+        loading: false,
+        storageType: actionObj?.storageType,
+        isDetected: actionObj?.isDetected,
+        ec2Details: ec2Details,
+        hostType: GENERAL.POSTGRESQL_TYPE,
+        // **** Below values will get from Instances API *****
+        // estimatedUsageCost: {}, // Initially it will be blank
+        // totalCost: '',
+        // allocatedCapacity: '',
+        sqlServerInstances: formatPgsqlDiscoverInstanceData(discoveredRow, perInstanceStatus),
         credentialId: discoveredRow?.credentialId,
         regionId: discoveredRow?.regionId,
         credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
@@ -800,9 +1066,9 @@ export const formatOracleDiscoveredRows = (
     return result;
 };
 
-export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface) => {
-    let name = '';
-    if (discoveredRow?.sqlServerInstances) {
+export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface, type: string) => {
+    let name: string = '';
+    if (type === GENERAL.MICROSOFT_SQL_SERVER_TYPE && discoveredRow?.sqlServerInstances) {
         for (let i = 0; i < discoveredRow?.sqlServerInstances?.length; i++) {
             const val = discoveredRow?.sqlServerInstances[i];
             if (val?.sqlServerName) {
@@ -810,6 +1076,16 @@ export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface) => {
                 break;
             }
         }
+    } else if (type === GENERAL.POSTGRESQL_TYPE && discoveredRow?.pgsqlServerInstances) {
+        for (let i = 0; i < discoveredRow?.pgsqlServerInstances?.length; i++) {
+            const val = discoveredRow?.pgsqlServerInstances[i];
+            if (val?.pgsqlServerName) {
+                name = val?.pgsqlServerName;
+                break;
+            }
+        }
+    } else if (type === GENERAL.ORACLE_TYPE && discoveredRow?.ec2InstanceName) {
+        name = discoveredRow?.ec2InstanceName;
     }
     return name;
 };
@@ -826,9 +1102,9 @@ export const getDiscoverSsmState = (row: DiscoverHostInterface) => {
     }
 };
 
-export const getDiscoverInstallationMode = (row: DiscoverHostInterface) => {
+export const getDiscoverInstallationMode = (row: any, type: string) => {
     let installationMode = '';
-    if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
+    if (type === GENERAL.MICROSOFT_SQL_SERVER_TYPE && row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
         for (let i = 0; i < row?.sqlServerInstances?.length; i++) {
             const val = row?.sqlServerInstances[i];
             if (val?.sqlServerDeploymentType) {
@@ -836,17 +1112,28 @@ export const getDiscoverInstallationMode = (row: DiscoverHostInterface) => {
                 break;
             }
         }
-        if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
-            installationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
-        } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
-            installationMode = GENERAL.AOAG;
-        } else if (installationMode.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
-            installationMode = GENERAL.HA;
+    } else if (type === GENERAL.POSTGRESQL_TYPE && row?.pgsqlServerInstances && row?.pgsqlServerInstances?.length > 0) {
+        for (let i = 0; i < row?.pgsqlServerInstances?.length; i++) {
+            const val = row?.pgsqlServerInstances[i];
+            if (val?.pgsqlServerDeploymentType) {
+                installationMode = val?.pgsqlServerDeploymentType;
+                break;
+            }
         }
-        return installationMode;
-    } else {
-        return '';
+    } else if (type === GENERAL.ORACLE_TYPE && row?.oracleServerDeploymentType) {
+        installationMode = row?.oracleServerDeploymentType;
     }
+
+    if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+        installationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+    } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+        installationMode = GENERAL.AOAG;
+    } else if (installationMode.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+        installationMode = GENERAL.HA;
+    } else if (installationMode.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        installationMode = GENERAL.STANDALONE;
+    }
+    return installationMode;
 };
 
 export const getAllDiscoverInstallationMode = (row: DiscoverHostInterface) => {
@@ -912,7 +1199,8 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         perRow,
                         row?.ssmState,
                         fsxIdObject?.id,
-                        fsxCredentialStatusObj
+                        fsxCredentialStatusObj,
+                        GENERAL.MICROSOFT_SQL_SERVER_TYPE
                     );
                     statusObj = {
                         ...detectOptionObj,
@@ -969,7 +1257,8 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                         perRow,
                         row?.ssmState,
                         fsxIdObject?.id,
-                        fsxCredentialStatusObj
+                        fsxCredentialStatusObj,
+                        GENERAL.ORACLE_TYPE
                     );
                     statusObj = {
                         ...detectOptionObj,
@@ -995,11 +1284,76 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
     return result;
 };
 
+export const getPgsqlPerInstanceStatus = (row: DiscoverPgsqlHostInterface, ssmState: string) => {
+    let result: Array<StatusObjInterface> = [];
+    let state = store.getState();
+    const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj;
+    if (row?.pgsqlServerInstances && row?.pgsqlServerInstances?.length > 0) {
+        row?.pgsqlServerInstances?.map((perRow: PgsqlInstancesDiscovered) => {
+            let statusObj = {};
+            if (perRow?.pgsqlServerInstanceName) {
+                const isdefaultAuth = perRow?.defaultAuth;
+                let fsxCredentialValidationFailed;
+                let storageTypeCheck;
+                let fsxIdObject = perRow?.storage?.find(
+                    (item: DiscoveredStorageObj) => item.type === DETECT_HOST_VAR.FSXN
+                );
+                if (perRow?.storage && perRow?.storage?.length > 0) {
+                    fsxCredentialValidationFailed = perRow?.storage?.find(
+                        (item: DiscoveredStorageObj) =>
+                            item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj?.[item.id!]
+                    );
+                    storageTypeCheck = perRow?.storage?.find(
+                        (item: DiscoveredStorageObj) =>
+                            item.type === DETECT_HOST_VAR.FSXN ||
+                            item.type === DETECT_HOST_VAR.FSXW ||
+                            item.type === DETECT_HOST_VAR.EBS
+                    );
+                }
+
+                if (
+                    ssmState !== INVENTORY_STATUS.ONLINE ||
+                    !isdefaultAuth ||
+                    fsxCredentialValidationFailed ||
+                    !storageTypeCheck
+                ) {
+                    let detectOptionObj = getDetectOptionForInstance(
+                        perRow,
+                        row?.ssmState,
+                        fsxIdObject?.id,
+                        fsxCredentialStatusObj,
+                        GENERAL.POSTGRESQL_TYPE
+                    );
+                    statusObj = {
+                        ...detectOptionObj,
+                        name: perRow.pgsqlServerInstanceName,
+                        status: INVENTORY_STATUS.UNDETECTED,
+                        storageType: perRow?.storage,
+                        fsxId: fsxIdObject?.id,
+                        isFsxRegistered: !fsxCredentialValidationFailed
+                    };
+                } else {
+                    statusObj = {
+                        name: perRow.pgsqlServerInstanceName,
+                        status: INVENTORY_STATUS.UNMANAGED,
+                        storageType: perRow?.storage,
+                        fsxId: fsxIdObject?.id,
+                        isFsxRegistered: !fsxCredentialValidationFailed
+                    };
+                }
+                result = [...result, ...[statusObj]];
+            }
+        });
+    }
+    return result;
+};
+
 export const getDetectOptionForInstance = (
-    perRow: SQLServerInstancesDiscovered,
+    perRow: any,
     ssmState: string | undefined,
     fsxId: string | undefined,
-    fsxCredentialStatusObj: any
+    fsxCredentialStatusObj: any,
+    type: string
 ) => {
     let hasStorageTypes = false;
     if (perRow?.storage && perRow?.storage?.length > 0) {
@@ -1007,14 +1361,27 @@ export const getDetectOptionForInstance = (
     }
     let detectOption = DETECT_HOST_VAR.DISABLE;
     let detectOptionDisableMsg = '';
-    let isSqlRunning = perRow?.sqlServerState === DETECT_HOST_VAR.RUNNING;
+    let state = '';
+    if (type === GENERAL.POSTGRESQL_TYPE) {
+        state = perRow?.pgsqlServerState;
+    } else if (type === GENERAL.ORACLE_TYPE) {
+        state = perRow?.instanceState;
+    } else {
+        state = perRow?.sqlServerState;
+    }
+    let auth = perRow?.windowsAuthentication || perRow?.sqlServerAuthentication;
+    if (type === GENERAL.POSTGRESQL_TYPE) {
+        auth = perRow?.defaultAuth;
+    }
+    let isSqlRunning =
+        state === DETECT_HOST_VAR.RUNNING || state === STATUS_CONST.OPEN || state === STATUS_CONST.STARTED;
     if (ssmState?.toLowerCase() !== INVENTORY_STATUS.SSM_CONNECTED) {
         detectOption = DETECT_HOST_VAR.HIDE;
         detectOptionDisableMsg = GENERAL.SSM_CONNECTION_DOWN;
     } else if (!isSqlRunning) {
         detectOption = DETECT_HOST_VAR.DISABLE;
         detectOptionDisableMsg = GENERAL.SQL_SERVER_NOT_RUNNING;
-    } else if (!hasStorageTypes && (perRow?.windowsAuthentication || perRow?.sqlServerAuthentication)) {
+    } else if (!hasStorageTypes && auth) {
         detectOption = DETECT_HOST_VAR.DISABLE;
         detectOptionDisableMsg = GENERAL.STORAGE_NOT_PRESENT;
     } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
@@ -1086,7 +1453,7 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>, installatio
     };
 };
 
-export const getDiscoverFileSystemType = (row: SQLServerInstancesDiscovered) => {
+export const getDiscoverFileSystemType = (row: SQLServerInstancesDiscovered | PgsqlInstancesDiscovered) => {
     const typeList: string[] = [];
     row?.storage?.map((storageObj: any) => {
         if (storageObj.type === DETECT_HOST_VAR.FSXN && !typeList.includes(GENERAL.FSX_FOR_ONTAP)) {
@@ -1125,6 +1492,42 @@ export const formatDiscoverInstanceData = (
             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
             sqlServerAuthentication: perRow?.sqlServerAuthentication,
             windowsAuthentication: perRow?.windowsAuthentication,
+            detectOption: statusObj?.[0]?.detectOption,
+            detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg
+            // protection: {},
+            // performance: {},
+            // storageSavingsText: '',
+            // allocatedCapacity:
+            //     (perRow?.storage?.fsxn?.size || 0) +
+            //     (perRow?.storage?.fsxw?.size || 0) +
+            //     (perRow?.storage?.ebs?.size || 0)
+        };
+    });
+    return instanceRows;
+};
+
+export const formatPgsqlDiscoverInstanceData = (
+    row: DiscoverPgsqlHostInterface,
+    perInstanceStatus: Array<StatusObjInterface>
+) => {
+    let instanceRows = row?.pgsqlServerInstances?.map((perRow: PgsqlInstancesDiscovered) => {
+        const statusObj = perInstanceStatus?.filter(
+            (per: StatusObjInterface) => per?.name === perRow?.pgsqlServerInstanceName
+        );
+        return {
+            ...perRow,
+            databaseInstanceId: perRow?.pgsqlServerInstanceId,
+            databaseInstanceName: perRow?.pgsqlServerInstanceName,
+            status: perRow?.pgsqlServerState,
+            // databaseCount: 0,
+            databaseCount: perRow?.databaseCount,
+            statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,
+            fileSystemDeploymentMode: getPgsqlAzType(perRow),
+            fileSystemType: getDiscoverFileSystemType(perRow),
+            storage: perRow?.storage,
+            fsxId: statusObj?.[0]?.fsxId,
+            isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
+            isDefaultAuth: perRow?.defaultAuth,
             detectOption: statusObj?.[0]?.detectOption,
             detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg
             // protection: {},
@@ -2122,7 +2525,8 @@ export const detectFieldsValidation = (entryData: any) => {
 
 export const getDiscoveredHostDeploymentV2 = (host: any) => {
     // This will get deployment type in case of unmanaged hosts
-    const deploymentType = host?.sqlServerDeploymentType || host?.oracleServerDeploymentType || '';
+    const deploymentType =
+        host?.sqlServerDeploymentType || host?.oracleServerDeploymentType || host?.pgsqlServerDeploymentType || '';
     let type = '';
 
     if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {

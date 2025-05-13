@@ -4,11 +4,10 @@ import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { FastifyInstrumentation } from '@opentelemetry/instrumentation-fastify';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
-import pkg from '@prisma/instrumentation';
+import { PrismaInstrumentation } from '@prisma/instrumentation';
 import getLogger from './logger';
 import { WLMDB, SIGNOZ_ENDPOINT } from './consts';
 
-const { PrismaInstrumentation } = pkg;
 const logger = getLogger();
 // import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 // diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);

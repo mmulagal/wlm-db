@@ -1,0 +1,59 @@
+.well-architect-dashboard {
+    height: inherit;
+    overflow: auto;
+    background-color: var(--main-background);
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .breadCrumb {
+        display: flex;
+        justify-content: space-between;
+        width: 87.3%;
+
+        [class*='BreadCrumbs_bread-crumbs'] {
+            position: relative;
+            top: -3px;
+        }
+        [class*='bread-crumbs'] {
+            margin-left: -3%;
+
+            [class*='bread-crumbs-item'] {
+                margin-left: 0;
+            }
+        }
+    }
+
+    .rightSection {
+        display: flex;
+        gap: 24px;
+
+        .buttonContainer {
+            svg {
+                path {
+                    fill: var(--text-button-secondary);
+                }
+            }
+        }
+        .refreshIcon {
+            cursor: pointer;
+            svg {
+                --icon-primary-color: var(--button-secondary);
+                width: 20px;
+                height: 20px;
+                margin-top: 5px;
+            }
+        }
+    }
+
+    .well-architect-tabs-content {
+        width: 100%;
+
+        .databaseListTable {
+            width: 87.3%;
+            margin: 0 auto;
+        }
+    }
+}

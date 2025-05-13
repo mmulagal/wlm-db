@@ -98,15 +98,14 @@ describe('calculateRssConfigDrift', () => {
     });
 
     it('perform rss config assessment for managed hosts', async () => {
-        const response = await managedHostsRssConfigAssessment(
+        const { rssConfigAssessment } = await managedHostsRssConfigAssessment(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             activeNodeInstanceId,
             'test-resource',
-            RESOURCE_ID,
             'test-job-id'
         );
-        expect(response?.rssConfigFinding).toBeDefined();
+        expect(rssConfigAssessment?.rssConfigFinding).toBeDefined();
     });
 });

@@ -10,16 +10,24 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
 import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { getAssessmentHostListGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import { setGwPageLoadInstanceData, setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setGwPageLoadInstanceData,
+    setLandingFrom,
+    setSelectedWellArchitectTab
+} from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection, setSelectedAssessmentRow } from '../../../store/workloadFactory/databaseHomeSlice';
 import { sortListOfDict } from '../../../utils/utilityFunctions';
-import { INVENTORY_STATUS, WLF_TABS } from '../../../utils/consts';
+import { INVENTORY_STATUS, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import store from '../../../store/store';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import CategoryDialogComponent from '../ManagedInstanceOptimizationBreakdownByCategory/CategoryDialogComponent/CategoryDialogComponent';
+import {
+    setSelectedHostname,
+    setSelectedResourcePageHostData
+} from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();
@@ -38,6 +46,7 @@ const OptimizeByCategory = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
         dispatch(setBreadCrumbSelectedFrom(WLF_TABS.DASHBOARD));
+        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
 
         const updatedState = store.getState();
         const { selectedAssessmentRow }: any = updatedState.databaseHome;
@@ -51,6 +60,18 @@ const OptimizeByCategory = () => {
                 credId: selectedAssessmentRow?.credentialId,
                 regionId: selectedAssessmentRow?.regionId,
                 storageType: selectedAssessmentRow?.sqlServerDeploymentType
+            })
+        );
+
+        dispatch(setSelectedHostname(selectedAssessmentRow?.hostName));
+
+        dispatch(
+            setSelectedResourcePageHostData({
+                resourceId: selectedAssessmentRow?.databaseHostId,
+                databaseInstanceId: selectedAssessmentRow?.instanceId,
+                databaseInstanceName: selectedAssessmentRow?.databaseInstanceName,
+                credentialId: selectedAssessmentRow?.credentialId,
+                regionId: selectedAssessmentRow?.regionId
             })
         );
         setTimeout(() => {

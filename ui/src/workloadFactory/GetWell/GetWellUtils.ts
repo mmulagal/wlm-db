@@ -192,7 +192,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'TempDB drive size recommendation',
             description:
-                'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+                'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to well-architect performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
             valuesHeading: 'TempDB drive size percentages are as follows:',
             values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
@@ -395,7 +395,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Compute rightsizing recommendation',
             description:
-                'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, we recommend rightsizing based on your workload demands.\nIf your current instance is under-provisioned, upgrading will enhance CPU, memory, and I/O capacity.\nIf it is over-provisioned, downgrading will maintain performance while reducing costs.\nClick Optimize to compare costs between your current and recommended instance types and to identify potential savings.'
+                'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, we recommend rightsizing based on your workload demands.\nIf your current instance is under-provisioned, upgrading will enhance CPU, memory, and I/O capacity.\nIf it is over-provisioned, downgrading will maintain performance while reducing costs.\nClick Fix to compare costs between your current and recommended instance types and to identify potential savings.'
         },
         tags: ['Cost optimization', 'Performance efficiency']
     },
@@ -2437,7 +2437,7 @@ const updateAssessmentWithCompletedJobs = (
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                    message: `${bulkRowData?.[0]?.name} instances optimized successfully.`
+                    message: `${bulkRowData?.[0]?.name} instances fixed successfully.`
                 })
             );
         }, 0);
@@ -2462,7 +2462,7 @@ const updateAssessmentWithCompletedJobs = (
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: `${rowData?.name} optimized successfully.`
+                message: `${rowData?.name} fixed successfully.`
             })
         );
     }
@@ -2516,7 +2516,7 @@ const updateAssessmentWithWarningJobs = (
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.INFO,
-                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances optimized successfully.`
+                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances fixed successfully.`
                 })
             );
         }, 0);
@@ -2540,7 +2540,7 @@ const updateAssessmentWithWarningJobs = (
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: `${rowData?.name} optimized successfully.`
+                message: `${rowData?.name} fixed successfully.`
             })
         );
     }
@@ -2653,7 +2653,7 @@ export const handleOptimizeResourceJob = (
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                    message: `Clone databases optimized successfully.`
+                                    message: `Clone databases fixed successfully.`
                                 })
                             );
                         }, 0);
@@ -2690,7 +2690,7 @@ export const handleOptimizeResourceJob = (
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.INFO,
-                                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances optimized successfully.`
+                                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances fixed successfully.`
                                 })
                             );
                         }, 0);

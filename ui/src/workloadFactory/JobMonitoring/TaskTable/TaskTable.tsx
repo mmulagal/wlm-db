@@ -83,7 +83,7 @@ const TaskTable = ({ taskList = [] }: any) => {
                                 navigateToContinuosOptimization(desc, rowData);
                             }}
                         >
-                            instance optimization dashboard
+                            instance well-architected dashboard
                         </Button>
                     </span>
                 </div>

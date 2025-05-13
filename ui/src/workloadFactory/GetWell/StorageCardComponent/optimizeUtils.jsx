@@ -72,7 +72,7 @@ const isDialogPrimaryBtnDisabled = rowData => {
 export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
     setDialog(
         <DialogComponent
-            header={`${rowData?.name} optimization`}
+            header={`${rowData?.name} `}
             content={<DialogContent type={rowData?.name} />}
             primaryButton={GENERAL.CONTINUE}
             secondaryButton={GENERAL.CANCEL}

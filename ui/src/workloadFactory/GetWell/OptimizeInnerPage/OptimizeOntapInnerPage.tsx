@@ -80,8 +80,8 @@ const OptimizeOntapInnerPage = () => {
                 break;
             case 'Tiering minimum cooling days':
                 setCardHeight({
-                    recommendationSection: '80px',
-                    tagSection: '176px'
+                    recommendationSection: '260px',
+                    tagSection: '356px'
                 });
                 break;
             case 'Multipath I/O Policy':
@@ -110,7 +110,7 @@ const OptimizeOntapInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            Fix
                         </DsButton>
                     }
                 />
@@ -132,7 +132,7 @@ const OptimizeOntapInnerPage = () => {
                         );
                     }}
                 >
-                    Optimize
+                    Fix
                 </DsButton>
             );
         }

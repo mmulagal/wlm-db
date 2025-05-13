@@ -88,21 +88,21 @@ async function bulkOptimization(
 
     const jobDescription =
         optimizationCategory === OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM
-            ? 'Optimize operating system configuration'
+            ? 'Fix operating system configuration'
             : optimizationCategory === OPTIMIZATION_CATEGORIES.STORAGE_TIER
-            ? 'Optimize storage tier'
+            ? 'Fix storage tier'
             : optimizationCategory === OPTIMIZATION_CATEGORIES.MAXDOP
-            ? 'Optimize maxdop configuration'
+            ? 'Fix maxdop configuration'
             : optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP
-            ? 'Optimize AWS FSx for ONTAP automatic backup configuration'
-            : 'Optimize storage sizing';
+            ? 'Fix AWS FSx for ONTAP automatic backup configuration'
+            : 'Fix storage sizing';
 
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
         '',
         '',
         accountId,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         undefined,
@@ -136,7 +136,7 @@ async function bulkCloneOptimization(accountId: string, hostsToOptimize: BulkOpt
         hostsToOptimize: await formatJobMetadata(hostsToOptimize)
     };
 
-    const jobDescription = 'Optimize clones';
+    const jobDescription = 'Fix clones';
 
     // First Job Created
     const parentJobId = await handleOptimizeJobCreation(
@@ -144,7 +144,7 @@ async function bulkCloneOptimization(accountId: string, hostsToOptimize: BulkOpt
         '',
         '',
         accountId,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         undefined,
@@ -237,10 +237,7 @@ async function handleBulkCloneOptimization(
     if (status === JOBSTATUS.COMPLETED) {
         updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } else if (status === JOBSTATUS.FAILED) {
-        updateLongRunningAuditGroup(
-            AuditStatus.FAILED,
-            `Error occurred while optimizing clone for account ${accountId}`
-        );
+        updateLongRunningAuditGroup(AuditStatus.FAILED, `Error occurred while fixing clone for account ${accountId}`);
     }
 }
 
@@ -383,9 +380,9 @@ async function bulkComputeOptimization(
         '',
         '',
         accountId,
-        JOBTYPE.OPTIMIZATION,
-        'Optimize compute',
-        'Optimize compute',
+        JOBTYPE.WELL_ARCHITECTED,
+        'Fix compute',
+        'Fix compute',
         undefined,
         jobMetadata
     );
@@ -438,9 +435,9 @@ async function handleBulkComputeOptimization(
                                 credentialsId,
                                 region,
                                 accountId,
-                                JOBTYPE.OPTIMIZATION,
-                                `Optimize ${optimizationName} for ${resourceName}`,
-                                `Optimize ${optimizationName} for ${resourceName}`,
+                                JOBTYPE.WELL_ARCHITECTED,
+                                `Fix ${optimizationName} for ${resourceName}`,
+                                `Fix ${optimizationName} for ${resourceName}`,
                                 masterOptimizeJobParentId,
                                 jobMetadata
                             );
@@ -475,7 +472,7 @@ async function handleBulkComputeOptimization(
                                 }
                                 masterOptimizeParentStatus = JOBSTATUS.COMPLETED;
                             } catch (error: any) {
-                                errorMessage = `Error occurred while optimizing compute for account ${accountId}, ${databaseHostId}. Error: ${error}`;
+                                errorMessage = `Error occurred while fixing compute for account ${accountId}, ${databaseHostId}. Error: ${error}`;
                                 logger.error(errorMessage);
                                 masterOptimizeParentStatus = JOBSTATUS.FAILED;
                                 throw Error(errorMessage);

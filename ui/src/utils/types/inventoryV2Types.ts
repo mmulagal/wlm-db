@@ -31,6 +31,10 @@ export interface InventorySliceData {
         discoveredOracleHostData: any;
         discoverOracleHostLoading: boolean;
     };
+    discoveredPgsqlHosts: {
+        discoveredPgsqlHostData: any;
+        discoverPgsqlHostLoading: boolean;
+    };
     fsxCredentialStatusObj: any;
     fsxCredentialStatusLoading: boolean;
     mssqlInstancesData: any;
@@ -421,6 +425,10 @@ export interface DiscoverHostInterface {
     sqlServerInstances?: Array<SQLServerInstancesDiscovered>;
     credentialId?: string;
     regionId?: string;
+    pgsqlServerInstances?: Array<PgsqlInstancesDiscovered>;
+    oracleServerDeploymentType?: string;
+    databaseInstanceDetails?: Array<OracleInstancesDiscovered>;
+    [key: string]: any;
 }
 
 export interface DiscoverOracleHostInterface {
@@ -437,6 +445,24 @@ export interface DiscoverOracleHostInterface {
     };
     oracleServerDeploymentType?: string;
     databaseInstanceDetails?: Array<OracleInstancesDiscovered>;
+    credentialId?: string;
+    regionId?: string;
+}
+
+export interface DiscoverPgsqlHostInterface {
+    ec2InstanceId: string;
+    ec2InstanceType?: string;
+    ssmState?: string;
+    ec2InstanceName?: string;
+    ec2UsageOperation?: string;
+    nodesList?: Array<string>;
+    key?: string;
+    vpc?: {
+        id?: string;
+        name?: string;
+        cidrBlock?: string;
+    };
+    pgsqlServerInstances?: Array<PgsqlInstancesDiscovered>;
     credentialId?: string;
     regionId?: string;
 }
@@ -492,6 +518,33 @@ export interface SQLServerInstancesDiscovered {
     deploymentTypes?: Array<{
         type?: string;
         zones?: Array<string>;
+    }>;
+}
+
+export interface PgsqlInstancesDiscovered {
+    pgsqlServerInstanceName?: string;
+    pgsqlServerState?: string;
+    pgsqlServerVersion?: string;
+    pgsqlServerName?: string;
+    pgsqlServerDeploymentType?: boolean;
+    pgsqlServerInstanceId?: boolean;
+    databaseCount?: string;
+    isPrimary?: number;
+    defaultAuth?: string;
+    primaryNode?: {
+        ec2InstanceId?: string;
+        ec2InstancePrivateIpAddress?: string;
+        ec2InstanceType?: string;
+        ec2InstanceName?: string;
+        ec2UsageOperation?: string;
+    };
+    storage?: Array<any>;
+    nodes?: Array<{
+        ec2InstanceId?: string;
+        ec2InstancePrivateIpAddress?: string;
+        ec2InstanceType?: string;
+        ec2InstanceName?: string;
+        ec2UsageOperation?: string;
     }>;
 }
 

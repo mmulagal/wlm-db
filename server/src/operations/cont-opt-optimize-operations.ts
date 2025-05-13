@@ -229,14 +229,14 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
         serverNameWithHostName
     } = params;
     logger.info(`Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
-    const jobDescription = `Optimize storage for ${serverNameWithHostName}`;
+    const jobDescription = `Fix storage for ${serverNameWithHostName}`;
 
     for (const data of optimizationTargets) {
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: `Optimize storage for ${serverNameWithHostName}`,
+            name: `Fix storage for ${serverNameWithHostName}`,
             description: jobDescription,
             startTime: Date.now(),
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName,
             parentJobId
@@ -294,13 +294,13 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
 
             if (objectsOptimized !== objectsToOptimize.length) {
                 if (objectsOptimized === 0) {
-                    const optimizeErrorMessage = `Failed to optimize  ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
+                    const optimizeErrorMessage = `Failed to fix ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
                     logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
                     newJobStatus = JOBSTATUS.FAILED;
                     newJobError = optimizeErrorMessage;
                 } else {
                     const unOptimizedObjects = objectsToOptimize.filter(obj => !parsedResp.cli_output.includes(obj));
-                    const optimizeErrorMessage = `Failed to optimize  ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                    const optimizeErrorMessage = `Failed to fix ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
                     newJobStatus = JOBSTATUS.FAILED;
                     newJobError = optimizeErrorMessage;
                 }
@@ -309,7 +309,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 newJobStatus = JOBSTATUS.COMPLETED;
             }
         } catch (error) {
-            const errorMessage = `Error while optimizing storage ${error}`;
+            const errorMessage = `Error while fixing storage ${error}`;
             logger.error(errorMessage);
             newJobStatus = JOBSTATUS.FAILED;
             newJobError = errorMessage;
@@ -374,7 +374,7 @@ async function activeSqlNodeDetails(
             : false;
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Unable to optimize instance ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
+        const errorMessage = `Unable to fix instance ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -440,9 +440,9 @@ async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
-        `Optimize storage for ${serverNameWithHostName}`,
-        `Optimize storage for ${serverNameWithHostName}`,
+        JOBTYPE.WELL_ARCHITECTED,
+        `Fix storage for ${serverNameWithHostName}`,
+        `Fix storage for ${serverNameWithHostName}`,
         bulkOptimizeJobId
     );
 
@@ -475,7 +475,7 @@ async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?
         } as OptimizeStorageOperationParams);
         await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (error) {
-        const errorMessage = `Error while optimizing storage ${error}`;
+        const errorMessage = `Error while fixing storage ${error}`;
         logger.error(errorMessage);
         await updateJobDetails(accountId, parentJobId, {
             status: JOBSTATUS.FAILED,
@@ -635,10 +635,10 @@ async function modifySizingAttributes(
         } else {
             errorMessage = ` ${childJobsStatus.map(job => job?.errorMessage)}`;
             jobStatus = JOBSTATUS.FAILED;
-            updateLongRunningAuditGroup(AuditStatus.FAILED, 'Failed to optimize sizing');
+            updateLongRunningAuditGroup(AuditStatus.FAILED, 'Failed to Fix sizing');
         }
     } catch (error) {
-        errorMessage = `Error while optimizing sizing: ${error}`;
+        errorMessage = `Error while fixing sizing: ${error}`;
         logger.error(errorMessage);
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
@@ -668,9 +668,9 @@ async function headroomOptimization(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
-        'Optimize FSx for NetApp ONTAP headroom',
-        'Optimize FSx for NetApp ONTAP headroom',
+        JOBTYPE.WELL_ARCHITECTED,
+        'Fix FSx for NetApp ONTAP headroom',
+        'Fix FSx for NetApp ONTAP headroom',
         parentJobId
     );
 
@@ -703,7 +703,7 @@ async function headroomOptimization(
         errorMessage = 'Headroom is more than 35%, no action required';
         jobStatus = JOBSTATUS.WARNING;
     } catch (error) {
-        errorMessage = `Error while optimizing headroom sizing ${error}`;
+        errorMessage = `Error while fixing headroom sizing ${error}`;
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
@@ -810,9 +810,9 @@ async function logDriveOptimization(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
-        'Optimize log drive sizing',
-        'Optimize log drive sizing',
+        JOBTYPE.WELL_ARCHITECTED,
+        'Fix log drive sizing',
+        'Fix log drive sizing',
         parentJobId
     );
 
@@ -896,7 +896,7 @@ async function logDriveOptimization(
             jobStatus = JOBSTATUS.WARNING;
         }
     } catch (error) {
-        errorMessage = `Error while optimizing log volume sizing ${error}`;
+        errorMessage = `Error while fixing log volume sizing ${error}`;
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
@@ -1032,9 +1032,9 @@ async function tempDbDriveOptimization(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
-        'Optimize tempdb drive sizing',
-        'Optimize tempdb drive sizing',
+        JOBTYPE.WELL_ARCHITECTED,
+        'Fix tempdb drive sizing',
+        'Fix tempdb drive sizing',
         parentJobId
     );
 
@@ -1084,7 +1084,7 @@ async function tempDbDriveOptimization(
             jobStatus = JOBSTATUS.WARNING;
         }
     } catch (error) {
-        errorMessage = `Error while optimizing tempDb sizing ${error}`;
+        errorMessage = `Error while fixing tempDb sizing ${error}`;
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
@@ -1147,9 +1147,9 @@ async function optimizeSizing(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
-        `Optimize ${types} sizing for ${serverNameWithHostName}`,
-        `Optimize ${types} sizing for ${serverNameWithHostName}`,
+        JOBTYPE.WELL_ARCHITECTED,
+        `Fix ${types} sizing for ${serverNameWithHostName}`,
+        `Fix ${types} sizing for ${serverNameWithHostName}`,
         masterOptimizeParentId,
         jobMetadata
     );
@@ -1202,7 +1202,7 @@ async function validateMpioPolicyToRoundRobin(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1278,7 +1278,7 @@ async function setMpioPolicyToRoundRobin(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1410,7 +1410,7 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             AssessmentCategories.STORAGE
         );
     } catch (error) {
-        jobError = `Error while optimizing mpio configuration ${error}`;
+        jobError = `Error while fixing mpio configuration ${error}`;
         jobStatus = JOBSTATUS.FAILED;
         await updateJobDetails(accountId, parentJobId, {
             status: jobStatus,
@@ -1457,7 +1457,7 @@ async function configureMpio(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1531,7 +1531,7 @@ async function checkMpioInstallation(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1707,7 +1707,7 @@ async function validateMpioSessions(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -1781,7 +1781,7 @@ async function remediateMpioSessions(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -2005,7 +2005,7 @@ async function optimizeOperatingSystemSettings(
     );
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Unable to optimize host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
+        const errorMessage = `Unable to fix host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -2048,9 +2048,9 @@ async function optimizeOperatingSystemSettings(
 
     const jobDescription =
         configurationName === OptimizeOperatingSystemParams.MPIO_POLICY
-            ? `Optimize operating system MPIO load balancing policy for ${serverNameWithHostName}`
+            ? `Fix operating system MPIO load balancing policy for ${serverNameWithHostName}`
             : configurationName === OptimizeOperatingSystemParams.MPIO_SESSIONS
-            ? `Optimize operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
+            ? `Fix operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
             : configurationName === OptimizeOperatingSystemParams.MPIO_ENABLE
             ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
             : '';
@@ -2068,7 +2068,7 @@ async function optimizeOperatingSystemSettings(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         masterOptimizeParentId,
@@ -2100,7 +2100,7 @@ async function optimizeOperatingSystemSettings(
                 });
                 await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
-                const errorMessage = `Error while optimizing operating system settings ${error}`;
+                const errorMessage = `Error while fixing operating system settings ${error}`;
                 logger.error(errorMessage);
                 await updateJobDetails(accountId, parentJobId, {
                     status: JOBSTATUS.FAILED,
@@ -2147,7 +2147,7 @@ async function optimizeOperatingSystemSettings(
                 });
                 await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error: any) {
-                const errorMessage = `Error while optimizing iscsi sessions ${error}`;
+                const errorMessage = `Error while fixing iscsi sessions ${error}`;
                 logger.error(errorMessage);
                 await updateJobDetails(accountId, parentJobId, {
                     status: JOBSTATUS.FAILED,
@@ -2242,7 +2242,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
         credentialsId,
         region,
         serverNameWithHostName!,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for ${serverNameWithHostName}`,
         jobDescription,
         parentJobId
@@ -2250,58 +2250,73 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
 
     let volumeNames = volumesToOptimize ?? [];
     try {
+        const missingVolumes: string[] = [];
+        const instanceVolumeMapping =
+            (await getMappedOntapVolumes(
+                credentialsId,
+                region,
+                fsxId,
+                false,
+                activeNodeInstanceId!,
+                [instanceName],
+                sqlAuthEnabled,
+                true
+            )) || [];
+        const mappedVolumeNames = (
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i?.volumeRecords)
+                .flat() || []
+        )?.map(volume => volume.name as string);
         if (isEmpty(volumesToOptimize)) {
-            const instanceVolumeMapping =
-                (await getMappedOntapVolumes(
-                    credentialsId,
-                    region,
-                    fsxId,
-                    false,
-                    activeNodeInstanceId!,
-                    [instanceName],
-                    sqlAuthEnabled,
-                    true
-                )) || [];
-
-            const volumeRecords =
-                Object.values(instanceVolumeMapping)
-                    ?.map(i => i?.volumeRecords)
-                    .flat() || [];
-            volumeNames = volumeRecords.map(volume => volume.name as string);
-        }
-        const apiQueryFilter = `vserver=${svmName}&volume=${volumeNames.join(',')}`;
-        const apiEndpoint = '/private/cli/volume';
-
-        const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
-            fsxId,
-            region,
-            apiEndpoint,
-            apiQueryFilter,
-            apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
-        });
-        const resp = await retryWithDelay(
-            callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
-            3,
-            5000
-        );
-        const parsedResp = sqlResponseParsing(resp);
-        const objectsOptimized = parsedResp.num_records || 0;
-        if (objectsOptimized !== volumeNames.length && !isDemoFlow) {
-            if (objectsOptimized === 0) {
-                jobError = `Failed to optimize storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
-                logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
-                jobStatus = JOBSTATUS.FAILED;
-            } else {
-                const unOptimizedObjects = volumeNames.filter(obj => !parsedResp.cli_output.includes(obj));
-                jobError = `Failed to optimize storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
-                jobStatus = JOBSTATUS.WARNING;
-            }
+            volumeNames = mappedVolumeNames;
         } else {
-            jobStatus = JOBSTATUS.COMPLETED;
+            volumeNames = volumeNames.filter(volumeName => {
+                const isMapped = mappedVolumeNames.includes(volumeName);
+                if (!isMapped) {
+                    missingVolumes.push(volumeName);
+                }
+                return isMapped;
+            });
+        }
+        if (!isEmpty(volumeNames)) {
+            const apiQueryFilter = `vserver=${svmName}&volume=${volumeNames.join(',')}`;
+            const apiEndpoint = '/private/cli/volume';
+
+            const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+                fsxId,
+                region,
+                apiEndpoint,
+                apiQueryFilter,
+                apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
+            });
+            const resp = await retryWithDelay(
+                callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
+                3,
+                5000
+            );
+            const parsedResp = sqlResponseParsing(resp);
+            const objectsOptimized = parsedResp.num_records || 0;
+            if (objectsOptimized !== volumeNames.length && !isDemoFlow) {
+                if (objectsOptimized === 0) {
+                    jobError = `Failed to fix storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
+                    logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
+                    jobStatus = JOBSTATUS.FAILED;
+                } else {
+                    const unOptimizedObjects = volumeNames.filter(obj => !parsedResp.cli_output.includes(obj));
+                    jobError = `Failed to fix storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                    jobStatus = JOBSTATUS.WARNING;
+                }
+            } else {
+                jobStatus = JOBSTATUS.COMPLETED;
+            }
+        }
+        if (missingVolumes.length > 0 && !isDemoFlow) {
+            jobError += `Volumes ${missingVolumes} not found for ${serverNameWithHostName}.`;
+            jobStatus = JOBSTATUS.WARNING;
         }
     } catch (error) {
         jobStatus = JOBSTATUS.FAILED;
-        jobError = `Error while optimizing storage-tier ${error}`;
+        jobError = `Error while fixing storage-tier ${error}`;
         logger.error(jobError);
     } finally {
         await updateJobDetails(accountId, jobId, {
@@ -2395,9 +2410,9 @@ async function optimizeStorageTier(
         credentialsId,
         region,
         serverNameWithHostName,
-        JOBTYPE.OPTIMIZATION,
-        `Optimize storage-tier for ${serverNameWithHostName}`,
-        `Optimize storage-tier for ${serverNameWithHostName}`,
+        JOBTYPE.WELL_ARCHITECTED,
+        `Fix storage-tier for ${serverNameWithHostName}`,
+        `Fix storage-tier for ${serverNameWithHostName}`,
         masterOptimizeParentId,
         jobMetadata
     );
@@ -2431,7 +2446,7 @@ async function optimizeStorageTier(
             volumesToOptimize: objectsToOptimize
         } as StorageTierParams);
     } catch (error) {
-        const errorMessage = `Error while optimizing storage-tier ${error}`;
+        const errorMessage = `Error while fixing storage-tier ${error}`;
         logger.error(errorMessage);
         await updateJobDetails(accountId, parentJobId, {
             status: JOBSTATUS.FAILED,
@@ -2474,7 +2489,7 @@ async function handleMaxDopRemediation(
         credentialsId,
         region,
         serverNameWithHostName!,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDescription,
         jobDescription,
         parentJobId
@@ -2516,7 +2531,7 @@ async function handleMaxDopRemediation(
         jobStatus = parsedResp.status === 'success' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
     } catch (error) {
         jobStatus = JOBSTATUS.FAILED;
-        jobError = `Error while optimizing max-dop ${error}`;
+        jobError = `Error while fixing max-dop ${error}`;
         logger.error(jobError);
     } finally {
         await updateJobDetails(accountId, jobId, {
@@ -2620,9 +2635,9 @@ async function optimizeMaxDop(
             credentialsId,
             region,
             serverNameWithHostName,
-            JOBTYPE.OPTIMIZATION,
-            `Optimize max-dop for ${serverNameWithHostName}`,
-            `Optimize max-dop for ${serverNameWithHostName}`,
+            JOBTYPE.WELL_ARCHITECTED,
+            `Fix max-dop for ${serverNameWithHostName}`,
+            `Fix max-dop for ${serverNameWithHostName}`,
             masterOptimizeParentId,
             jobMetadata
         );
@@ -2638,7 +2653,7 @@ async function optimizeMaxDop(
             databaseInstanceId
         );
     } catch (error) {
-        const errorMessage = `Error while optimizing max-dop ${error}`;
+        const errorMessage = `Error while fixing max-dop ${error}`;
         logger.error(errorMessage);
         await updateJobDetails(accountId, parentJobId, {
             status: JOBSTATUS.FAILED,
@@ -2683,7 +2698,7 @@ async function handleUpdateAwsBackup(
         credentialsId,
         region,
         '',
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Update AWS FSx for ONTAP backup',
         jobDescription,
         masterOptimizeParentId,
@@ -2835,7 +2850,7 @@ async function optimizeClone(
 
         const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName, cloneDatabaseName);
         const { id } = await registerJob(accountId, credentialsId, region, {
-            type: JOBTYPE.OPTIMIZATION,
+            type: JOBTYPE.WELL_ARCHITECTED,
             status: JOBSTATUS.IN_PROGRESS,
             resourceName: serverNameWithHostName as string,
             name: `${operation} ${name} for ${serverNameWithHostName}`,
@@ -2871,7 +2886,7 @@ async function optimizeClone(
             endTime: Date.now()
         });
     } catch (err) {
-        const errorMessage = `Error while optimizing clone ${clone.cloneDatabaseName} ${err}`;
+        const errorMessage = `Error while fixing clone ${clone.cloneDatabaseName} ${err}`;
         logger.error(errorMessage);
         await updateJobDetails(accountId, childCloneJobId, {
             status: JOBSTATUS.FAILED,

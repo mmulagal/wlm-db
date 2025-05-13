@@ -2333,8 +2333,14 @@
                     "status": "NORMAL"
                 }
             ],
-            "nfs_ip_address": "172.31.255.207",
-            "nfs_mount_point": "/ORADATA1"
+            "storage_details": [
+                {
+                    "isAsmManaged": "true",
+                    "mountIP": "172.31.255.207",
+                    "mountPoint": "/ORADATA1",
+                    "protocol": "NFS"
+                }
+            ]
         }
     ]
 }

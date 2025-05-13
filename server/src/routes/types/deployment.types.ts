@@ -1,4 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
+import { API_DESCRIPTION, API_DESCRIPTION_EXAMPLES } from '../../utils/schema-description-consts';
 
 const CFNetworkConfiguration = Type.Object({
     vpcId: Type.String(),
@@ -167,15 +168,20 @@ const DeploymentStatusResponse = Type.Object({
 });
 
 const DeploymentStatusObjectParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    credentialsId: Type.String({ minLength: 1, format: 'uuid' }),
-    region: Type.String({ minLength: 1 }),
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC, minLength: 1 }),
+    credentialsId: Type.String({
+        description: API_DESCRIPTION.CREDENTIALS_ID_DESC,
+        minLength: 1,
+        format: 'uuid',
+        examples: API_DESCRIPTION_EXAMPLES.CREDENTIALS_ID_EX
+    }),
+    region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC, minLength: 1 }),
     stackName: Type.String({ minLength: 1 })
 });
 
 const FSxAvailableRegion = Type.Object({
-    regionCode: Type.String(),
-    regionName: Type.String()
+    regionCode: Type.String({ description: API_DESCRIPTION.AWS_REGION_CODE_DESC }),
+    regionName: Type.String({ description: API_DESCRIPTION.AWS_REGION_NAME_DESC })
 });
 
 const FsxAvailableRegionsForThroughputListResponse = Type.Object({

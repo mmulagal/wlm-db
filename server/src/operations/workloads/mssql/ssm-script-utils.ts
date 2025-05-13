@@ -1337,6 +1337,12 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
                 if ($LASTEXITCODE -ne 0) {
                     throw $sqlError
                 }
+                
+                if ([string]::IsNullOrEmpty($sqlResponse) -or $sqlResponse -eq "NULL") {
+                    $errorMessage = "SQL response is null or empty. $sqlResponse"
+                    Write-Information $errorMessage
+                    throw $errorMessage
+                }
                 $responseObject[$serverInstanceName] = $sqlResponse | ConvertFrom-Json
             } catch {
                 $responseObject[$serverInstanceName] = "error: $_.Exception.Message"

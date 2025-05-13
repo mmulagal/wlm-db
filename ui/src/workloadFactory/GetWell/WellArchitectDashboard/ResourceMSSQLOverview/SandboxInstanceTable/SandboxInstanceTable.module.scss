@@ -1,0 +1,65 @@
+.sandboxTable {
+    width: 87.3%;
+    margin: 0 auto;
+
+    .jobMenuPopover {
+        margin-left: -13px;
+        [class*='MenuPopover_menuPointer'] {
+            background: none !important;
+        }
+    }
+
+    .menuPointerDisabled {
+        font-weight: 600;
+        font-size: 22px;
+        width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        height: 16px;
+        color: var(--text-disabled);
+
+        .menuPointer {
+            height: 40px;
+        }
+    }
+    .statusCol {
+        display: flex;
+        gap: 16px;
+        align-items: ce;
+        .statusIcon {
+            width: 20px;
+            height: 20px;
+        }
+        svg {
+            position: relative;
+            top: 1px;
+        }
+    }
+}
+
+.setWidth {
+    width: 792px !important;
+    [class*='DialogLayout-module_buttons-container'] {
+        position: static !important;
+    }
+}
+
+@media screen and (max-width: 1428px) {
+    .sandboxTable {
+        width: 1107px;
+
+        [class*='Table-module_row'] {
+            [class*='Table-module_cell']:first-child {
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .sandboxTable {
+        max-width: unset;
+    }
+}

@@ -139,7 +139,7 @@ async function handleComputeRemediation(
                         credentialsId,
                         region,
                         formattedInstanceName,
-                        JOBTYPE.OPTIMIZATION,
+                        JOBTYPE.WELL_ARCHITECTED,
                         'Prerequisite check for compute optimization of secondary nodes.',
                         'Prerequisite check for compute optimization of secondary nodes.',
                         jobId
@@ -170,7 +170,7 @@ async function handleComputeRemediation(
                         credentialsId,
                         region,
                         formattedInstanceName,
-                        JOBTYPE.OPTIMIZATION,
+                        JOBTYPE.WELL_ARCHITECTED,
                         'Modify instance type for secondary nodes in the cluster',
                         `Modify instance type of SQL nodes ${nonPrimaryNodeInstanceIds.join(
                             ','
@@ -224,7 +224,7 @@ async function handleComputeRemediation(
                         credentialsId,
                         region,
                         formattedInstanceName,
-                        JOBTYPE.OPTIMIZATION,
+                        JOBTYPE.WELL_ARCHITECTED,
                         'Transfer cluster node ownership from primary to another node in the cluster',
                         'Transfer cluster node ownership from primary node in the cluster to a healthy node in the cluster.',
                         jobId
@@ -270,7 +270,7 @@ async function handleComputeRemediation(
                     credentialsId,
                     region,
                     formattedInstanceName,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     'Prerequisite check for compute optimization in SQL node',
                     'Prerequisite check for compute optimization of SQL node.',
                     jobId
@@ -298,7 +298,7 @@ async function handleComputeRemediation(
                 credentialsId,
                 region,
                 formattedInstanceName,
-                JOBTYPE.OPTIMIZATION,
+                JOBTYPE.WELL_ARCHITECTED,
                 'Modify instance type for primary node in the cluster',
                 `Modify instance type of SQL node ${activeNodeInstanceId} to ${instanceType}.To modify, instance will be stopped,modified and restarted.`,
                 jobId
@@ -346,7 +346,7 @@ async function handleComputeRemediation(
                     credentialsId,
                     region,
                     formattedInstanceName,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     'Transfer node ownership back to primary node in the cluster',
                     'Transfer node ownership back to primary node in the cluster',
                     jobId
@@ -422,7 +422,7 @@ async function handleComputeRemediation(
         jobStatus = JOBSTATUS.FAILED;
         errorMessage = 'No active node found in the cluster';
     } catch (error) {
-        errorMessage = `Error while optimizing compute ${error}`;
+        errorMessage = `Error while fixing compute ${error}`;
         logger.error(errorMessage);
         isJobStatusUpdated = true;
         jobStatus = JOBSTATUS.FAILED;
@@ -639,9 +639,9 @@ export default async function optimizeCompute(
         credentialsId,
         region,
         resourceName!,
-        JOBTYPE.OPTIMIZATION,
-        `Optimize EC2 compute for ${resourceName}`,
-        `Optimize EC2 compute for ${resourceName}`,
+        JOBTYPE.WELL_ARCHITECTED,
+        `Fix EC2 compute for ${resourceName}`,
+        `Fix EC2 compute for ${resourceName}`,
         masterOptimizeParentId,
         jobMetadata
     );
@@ -743,7 +743,7 @@ async function updateDnsSettings(
         credentialsId,
         region,
         instanceName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Update DNS settings',
         'Update DNS settings',
         jobId
@@ -830,7 +830,7 @@ async function handleIscsiSessions(
         credentialsId,
         region,
         instanceName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Check and update ISCSI sessions',
         'Check and update ISCSI sessions to ensure ISCSI sessions are available after instance type change',
         jobId
@@ -1044,7 +1044,7 @@ async function handleRollbackClusterOwnership(
             credentialsId,
             region,
             formattedInstanceName,
-            JOBTYPE.OPTIMIZATION,
+            JOBTYPE.WELL_ARCHITECTED,
             'Rollback cluster ownership transfer to primary node',
             'Rollback cluster ownership transfer to primary node',
             rollBackJobId
@@ -1102,7 +1102,7 @@ async function handleRollbackInstanceTypeChange(
         credentialsId,
         region,
         formattedInstanceName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Rolling back instance type change for ${nodeType} in the cluster`,
         `Rolling back instance type of SQL node/s ${modifiedInstancesNodeDetails
             .map(({ ec2InstanceId }) => ec2InstanceId)
@@ -1170,7 +1170,7 @@ async function rollbackComputeOptimize(
         credentialsId,
         region,
         formattedInstanceName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Rollback EC2 compute remidiation for nodes in the cluster',
         'Rollback EC2 compute remidiation for nodes in the cluster'
     );

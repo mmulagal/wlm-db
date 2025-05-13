@@ -120,7 +120,8 @@ export const FROM_DIALOG = {
     DETECT_HOST: 'detect_host',
     SANDBOX_REFRESH: 'sandbox_refresh',
     DISMISS: 'dismiss',
-    OPTIMIZE: 'optimize'
+    OPTIMIZE: 'optimize',
+    FSXADMIN: 'fsxadmin'
 };
 
 export const DBType = {
@@ -623,7 +624,8 @@ export const INVENTORY_STATUS = {
     RUNNING: 'Running',
     STOPPED: 'Stopped',
     CASE_SENSITIVE_UP: 'Up',
-    CASE_SENSITIVE_DOWN: 'Down'
+    CASE_SENSITIVE_DOWN: 'Down',
+    RUNNING_LOWER: 'running'
 };
 
 export const INVENTORY_ACTIONS = {
@@ -710,14 +712,23 @@ export const EBS_PROTECTED_OPTIONS = {
 
 export const GETWELL_STATUS = {
     OPTIMIZED: 'Optimized',
+    WELL_ARCHITECTED: 'Well-architected',
     NOT_OPTIMIZED: 'Not optimized',
     UNDER_PROVISIONED: 'Under-provisioned',
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
+    FIXING: 'Fixing',
     NOT_APPLICABLE: GENERAL.UNAVAILABLE,
     ANALYZING: 'Analyzing',
     CRITICAL: 'Critical',
     WARNING: 'Warning'
+};
+
+export const WELL_ARCHITECTED_TABS = {
+    OVERVIEW: 'Overview',
+    WELL_ARCHITECTED_STATUS: 'Well-architected status',
+    DATABASES: 'Databases',
+    SANDBOXES: 'Sandboxes'
 };
 
 export const GETWELL_VALUES: any = {

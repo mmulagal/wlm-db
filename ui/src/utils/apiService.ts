@@ -641,6 +641,26 @@ export const inventoryApi = createApi({
                     return response;
                 }
             }),
+            discoverPgsqlHosts: builder.query({
+                query: ({ regionId, credentialsId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/pgsql/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10&nextToken=${nextToken}`;
+                    } else {
+                        return `v1/pgsql/credentials/${credentialsId}/regions/${regionId}/discover?pageSize=10`;
+                    }
+                },
+                keepUnusedDataFor: 1,
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialsId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
             getFsxCredentialStatus: builder.query({
                 query: ({ regionId, credentialsId, fsxIds }) => ({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/resources/file-systems/credentials-status?fsxids=${fsxIds}`
@@ -853,6 +873,25 @@ export const sandboxApi = createApi({
                         return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/sandboxes?nextToken=${nextToken}`;
                     } else {
                         return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/sandboxes`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.region
+                        };
+                    }
+                    return response;
+                }
+            }),
+            getSandboxInstanceList: builder.query({
+                query: ({ credentialId, region, databaseHostId, databaseInstanceId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${databaseInstanceId}/sandboxes?nextToken=${nextToken}`;
+                    } else {
+                        return `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${databaseInstanceId}/sandboxes`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -1196,6 +1235,7 @@ export const {
     useLazyGetManagedHostDataQuery,
     useLazyDiscoverHostsQuery,
     useLazyDiscoverOracleHostsQuery,
+    useLazyDiscoverPgsqlHostsQuery,
     useLazyGetFsxCredentialStatusQuery,
     useRegisterResourceCredentialsMutation,
     useGetMssqlInstanceDataMutation,
@@ -1216,6 +1256,7 @@ export const {
 
 export const {
     useGetSandboxListQuery,
+    useLazyGetSandboxInstanceListQuery,
     useLazyGetSandboxListQuery,
     useGetSandboxSavingsQuery,
     useLazyGetSandboxSavingsQuery,

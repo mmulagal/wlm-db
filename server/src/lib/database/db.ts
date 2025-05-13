@@ -84,6 +84,15 @@ interface DatabaseInstanceRecord {
     configurations?: DatabaseInstanceConfigurations;
 }
 
+interface ListDatabaseInstancesRecord {
+    resourceId?: string;
+    sqlInstanceId?: string;
+    sqlInstanceName?: string;
+    isDefault?: boolean;
+    credentialsId?: string;
+    region?: string | null;
+}
+
 async function listDeployments(
     accountId?: string,
     deploymentId?: string,
@@ -310,7 +319,8 @@ async function listResources(
     fsxId?: string,
     metaFilters?: { [x: string]: string | number | boolean },
     pageSize?: number,
-    nextToken?: string
+    nextToken?: string,
+    includeDatabaseInstances?: boolean
 ) {
     logger.info('Listing resources for params', {
         accountId,
@@ -320,7 +330,8 @@ async function listResources(
         credentialIds,
         metaFilters,
         pageSize,
-        nextToken
+        nextToken,
+        includeDatabaseInstances
     });
 
     if (accountId) {
@@ -354,6 +365,11 @@ async function listResources(
         ...(nextToken && {
             cursor: { id: nextToken },
             skip: 1
+        }),
+        ...(includeDatabaseInstances && {
+            include: {
+                database_instances: true
+            }
         })
     });
 }
@@ -575,7 +591,7 @@ async function updateResource({
         },
         data: {
             ...(!isEmpty(metaData) && { metadata: metaData }),
-            ...(!isEmpty(updatedConfigs) && { updated_configs: updatedConfigs })
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
         }
     });
 }
@@ -611,7 +627,7 @@ async function updateDatabaseInstance({
         },
         data: {
             ...(!isEmpty(metaData) && { metadata: metaData }),
-            ...(!isEmpty(updatedConfigs) && { updated_configs: updatedConfigs })
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
         }
     });
 }
@@ -677,7 +693,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
     });
 }
 
-async function listDatabaseInstances(accountId?: string, record?: any) {
+async function listDatabaseInstances(accountId?: string, record?: ListDatabaseInstancesRecord) {
     logger.info('List database instances for given account and record', { accountId, record });
 
     const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region } = record ?? {};

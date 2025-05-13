@@ -118,6 +118,7 @@ import store from '../../../store/store';
 import DashboardDismissPage from '../../Dashboard/DashboardInnerPage/DashboardDismissPage';
 import DashboardOptimizeInnerPage from '../../Dashboard/DashboardInnerPage/DashboardOptimizeInnerPage';
 import { DsBlueXpMenu } from '../../../common/DsMenuBlueXP/DsBlueXpMenu';
+import WellArchitectDashboard from '../../GetWell/WellArchitectDashboard/WellArchitectDashboard';
 
 type Tab = {
     tab: string;
@@ -1455,7 +1456,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 {/* For optimize tab */}
 
-                {selectedHeaderTab === WLF_TABS.OPTIMIZE && <GetWell />}
+                {selectedHeaderTab === WLF_TABS.OPTIMIZE && <WellArchitectDashboard />}
 
                 {selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE && <DashboardInnerPage />}
 
