@@ -21,7 +21,9 @@ const ManageOnlyWizard = () => {
                 title={'Manage instance'}
                 closeButtonProps={{
                     onClick: () => {
-                        navigate('../databases/inventory');
+                        setTimeout(() => {
+                            navigate('../databases/inventory');
+                        }, 100);
                     }
                 }}
             />

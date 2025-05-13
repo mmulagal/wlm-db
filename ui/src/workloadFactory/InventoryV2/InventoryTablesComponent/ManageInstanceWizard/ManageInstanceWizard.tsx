@@ -31,7 +31,9 @@ const Wizard = () => {
                 className={styles['manage-instance-wizard']}
                 title={'Manage instance'}
                 onExit={() => {
-                    navigate('../databases/inventory');
+                    setTimeout(() => {
+                        navigate('../databases/inventory');
+                    }, 100);
                 }}
             />
             <WizardContent
