@@ -1,4 +1,3 @@
-import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
 
 import {
@@ -9,19 +8,9 @@ import {
     DatabasesCreateResponse,
     CreateDatabaseParams,
     DriveInfoResponseBody,
-    CreateSandboxBody,
     CollationInfoResponseBody,
-    SandboxSavingsResponseBody,
-    SandboxInfoResponseBody,
-    DatabaseMountPointRequestQueryParam,
     GetDriveQueryString,
-    DatabaseMountPointResponseBody,
-    SandboxParams,
-    SplitEstimatesResponse,
-    SandboxLifeCycleBody,
     DatabaseHostSummaryForMultiInstanceListResponse,
-    SandboxSnapshotsResponse,
-    SandboxSnapshotsQueryParams,
     DatabaseHostSummaryForMultiInstanceResponse,
     DatabaseHostInstanceSummaryParams,
     DatabaseHostInstanceSummaryResponse,
@@ -30,7 +19,7 @@ import {
     PgSqlDbHostSummaryListResponse,
     PgSqlDbHostsSummaryResponse
 } from '../types/database-hosts.types';
-import { CredentialsIdParams, NextTokenQueryString } from '../types/generic.types';
+import { CredentialsIdParams } from '../types/generic.types';
 
 // Base Request for resource with credential and region Routes
 const resourceRequest = {
@@ -113,19 +102,6 @@ const GetDriveInfoSchemaV2 = {
     }
 };
 
-const CreateSandboxSchema = {
-    ...resourceRequest,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Create sandbox',
-    description: 'Create sandbox in same or alternate host',
-    body: CreateSandboxBody,
-    response: {
-        202: Type.Object({
-            jobId: Type.String()
-        })
-    }
-};
-
 // const GetCollationDetailsSchema = {
 //     ...resourceRequest,
 //     summary: 'Get database host collation details (deprecated)',
@@ -144,98 +120,6 @@ const GetCollationDetailsSchemaV2 = {
     params: DatabaseHostOptionalInstanceSummaryParams,
     response: {
         200: CollationInfoResponseBody
-    }
-};
-
-const GetSandboxSavingsSchema = {
-    ...resourceRequest,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Get sandbox savings',
-    description: 'Get savings across all the database hosts for sandboxes created',
-    response: {
-        200: SandboxSavingsResponseBody
-    }
-};
-
-const GetSandboxesInfoSchema = {
-    ...resourceRequest,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Get Sandboxes Information',
-    description: 'Get Sandboxes Information of all databases',
-    querystring: NextTokenQueryString,
-    response: {
-        200: SandboxInfoResponseBody
-    }
-};
-
-const GetSandboxesMountPointSchema = {
-    params: CreateDatabaseParams,
-    querystring: DatabaseMountPointRequestQueryParam,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Get mount point information of database',
-    description: 'Get data and log file mount point drive information of database',
-    response: {
-        200: DatabaseMountPointResponseBody
-    }
-};
-
-const PatchResourceForSandboxSchema = {
-    tags: [RouteTags.SANDBOX],
-    hide: process.env.NODE_ENV === 'production',
-    summary: 'Patch for sandboxcreation resource metadata ',
-    description: 'Patch for sandboxcreation resource metadata.',
-    params: DatabaseHostSummaryParams,
-    response: {
-        200: Type.Any()
-    }
-};
-
-const GetSandboxConnectionStringSchema = {
-    params: SandboxParams,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Get Sandbox connection string',
-    description: 'Get sandbox connection string for sql server connection',
-    response: {
-        200: Type.Object({
-            server: Type.String(),
-            database: Type.String(),
-            userId: Type.Optional(Type.String())
-        })
-    }
-};
-
-const GetSandboxSplitEstimateSchema = {
-    params: SandboxParams,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Get Sandbox split estimate',
-    description: 'Get split estimate of all the mapped ontap volumes for the given sandbox',
-    response: {
-        200: SplitEstimatesResponse
-    }
-};
-
-const DeleteSandboxSchema = {
-    params: SandboxParams,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Delete sandbox',
-    description: 'Delete sandbox within a database host',
-    response: {
-        202: Type.Object({
-            jobId: Type.String()
-        })
-    }
-};
-
-const SandboxLifeCycleSchema = {
-    params: SandboxParams,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Sandbox lifecycle',
-    description: 'Sandbox lifecycle operations',
-    body: SandboxLifeCycleBody,
-    response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
     }
 };
 
@@ -295,24 +179,6 @@ const DatabaseHostInstanceDetailsSchema = {
     }
 };
 
-const SandboxSplitSchema = {
-    params: SandboxParams,
-    tags: [RouteTags.SANDBOX],
-    summary: 'Sandbox split',
-    description: 'Sandbox split operation',
-    response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
-    }
-};
-
-const CheckSandboxIntegritySchema = {
-    ...SandboxSplitSchema,
-    summary: 'Check sandbox integrity',
-    description: 'Check sandbox integrity operation'
-};
-
 const DatabasesListSchemaV2 = {
     tags: [RouteTags.RESOURCE],
     summary: 'Fetch details about databases in a server',
@@ -325,36 +191,12 @@ const DatabasesListSchemaV2 = {
     }
 };
 
-const GetSandboxSnapshotsSchema = {
-    params: SandboxParams,
-    tags: [RouteTags.SANDBOX],
-    querystring: SandboxSnapshotsQueryParams,
-    summary: 'Get Sandbox snapshots',
-    description:
-        'Get snapshots of all the mapped ontap volumes for the given sandbox to be able to restore the sandbox to a previous state',
-    response: {
-        200: SandboxSnapshotsResponse
-    }
-};
-
 export {
     DatabasesCreateSchema,
-    CreateSandboxSchema,
-    GetSandboxSavingsSchema,
-    GetSandboxesInfoSchema,
-    PatchResourceForSandboxSchema,
-    GetSandboxesMountPointSchema,
-    GetSandboxConnectionStringSchema,
-    DeleteSandboxSchema,
-    GetSandboxSplitEstimateSchema,
-    SandboxLifeCycleSchema,
-    SandboxSplitSchema,
     DatabaseHostsSummarySchemaV2,
     DatabaseHostDetailsSchemaV2,
     DatabaseHostInstanceDetailsSchema,
-    CheckSandboxIntegritySchema,
     DatabasesListSchemaV2,
-    GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
     PgSqlDbHostsSummarySchema,

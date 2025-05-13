@@ -84,6 +84,15 @@ interface DatabaseInstanceRecord {
     configurations?: DatabaseInstanceConfigurations;
 }
 
+interface ListDatabaseInstancesRecord {
+    resourceId?: string;
+    sqlInstanceId?: string;
+    sqlInstanceName?: string;
+    isDefault?: boolean;
+    credentialsId?: string;
+    region?: string | null;
+}
+
 async function listDeployments(
     accountId?: string,
     deploymentId?: string,
@@ -684,7 +693,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
     });
 }
 
-async function listDatabaseInstances(accountId?: string, record?: any) {
+async function listDatabaseInstances(accountId?: string, record?: ListDatabaseInstancesRecord) {
     logger.info('List database instances for given account and record', { accountId, record });
 
     const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region } = record ?? {};

@@ -19,6 +19,7 @@ import {
 } from '../../../src/operations/continuous-optimization/resilience-assessment-operation';
 import { WorkloadInstance } from '../../../src/utils/common-types';
 import { createDatabaseInstanceConfigData } from '../../../src/lib/database/database-instance-config';
+import { AssessmentCategories } from '../../../src/utils/continous-optimization-consts';
 
 const INSTANCE_CONFIG = {
     volumes: [
@@ -157,7 +158,11 @@ describe('Resilience drift assessment', () => {
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
-            ['snapshot-policy']
+            [
+                AssessmentCategories.SNAPSHOT_POLICY.toLowerCase(),
+                AssessmentCategories.CRR.toLowerCase(),
+                AssessmentCategories.AWS_BACKUP.toLowerCase()
+            ]
         );
         expect(res.snapshotPolicy).toBeDefined();
         expect(isEmpty(res.snapshotPolicy)).toBeFalsy();

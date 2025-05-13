@@ -163,7 +163,7 @@ async function getResilienceDriftAssessment(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    fieldsValues: string[],
+    fieldsValues: string[] = [],
     databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = []
 ) {
     logger.info('Getting resilience drift assessment for:', {

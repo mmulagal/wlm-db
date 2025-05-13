@@ -63,6 +63,7 @@ import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-o
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
 import chatbotRoutes from './routes/chatbot';
+import sandboxRoutes from './routes/sandbox';
 import {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
@@ -230,6 +231,7 @@ const app = fastify({
             onpremTcoRoutes(instance);
             notificationRoutes(instance);
             logsAnalyzerRoutes(instance);
+            sandboxRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }

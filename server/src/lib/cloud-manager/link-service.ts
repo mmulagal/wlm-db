@@ -1,4 +1,4 @@
-import { WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
+import { HEADERS, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { getWfServiceToken } from './auth';
@@ -20,14 +20,15 @@ async function registerSsmLink(
 ) {
     logger.info('Creating SSM link for accountId', { accountId, credentialsId, arn, name, osType, tags });
 
-    const url = `${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/links/v1/links`;
+    const url = `accounts/${accountId}/links/v1/links`;
     const { token } = await getWfServiceToken();
 
     try {
         const response = await gotInstanceForInternalRequest
             .post(url, {
+                prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
                 headers: {
-                    Authorization: `Bearer ${token}`
+                    [HEADERS.AUTHORIZATION]: token
                 },
                 json: {
                     type: 'ssm',
