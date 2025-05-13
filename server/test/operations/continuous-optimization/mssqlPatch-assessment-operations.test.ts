@@ -277,7 +277,7 @@ describe('MSSql Patch assessment operations', () => {
             true,
             'i-07e76a4b916548dc0',
             false,
-            'test-instance',
+            'MSSQLSERVER'
         );
         expect(result).toBeDefined();
     });
@@ -306,7 +306,7 @@ describe('MSSql Patch assessment operations', () => {
                 true,
                 'test-resource',
                 false,
-                'test-instance',
+                'MSSQLSERVER',
                 'test-job-id'
             )) || [];
         expect(response.ec2InstanceId).toBeDefined();
@@ -323,7 +323,7 @@ describe('MSSql Patch assessment operations', () => {
                 false,
                 'test-resource',
                 false,
-                'test-instance',
+                'MSSQLSERVER',
                 'test-job-id'
             )) || [];
         expect(response.ec2InstanceId).toBeDefined();
