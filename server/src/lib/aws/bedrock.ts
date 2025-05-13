@@ -102,7 +102,7 @@ async function getModelAvailability(accountId: string, credentialsId: string, re
                 regionAvailability: MODEL_AVAILABILITY_STATUS;
             };
         }
-        logger.error(`Failed to received body for model ${modelId} - assuming not available`);
+        logger.error(`Failed to receive body for model ${modelId} - assuming not available`);
         return {
             agreementAvailability: {
                 status: MODEL_AVAILABILITY_STATUS.NOT_AVAILABLE
