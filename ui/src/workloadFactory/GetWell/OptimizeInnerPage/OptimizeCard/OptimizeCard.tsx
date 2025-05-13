@@ -6,8 +6,9 @@ import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { WLF_TABS } from '../../../../utils/consts';
+import RecommendationText from '../../RecommendationText/RecommendationText';
 
-const OptimizeCard = ({ fromPage = '' }: any) => {
+const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { cloneDashboardData } = useAppSelector(state => state.getWellOptimize);
     const [setCardData, setSetCardData] = useState<any>({});
@@ -45,7 +46,8 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                     block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
+                    data: data?.recommendation
                 };
             case 'File system headroom':
                 return {
@@ -64,14 +66,16 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                         value: data?.recommendationText,
                         valueHeading: data?.recommendation?.valuesHeading,
                         values: data?.recommendation?.values
-                    }
+                    },
+                    data: data?.recommendation
                 };
             case 'Data files':
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation?.description }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation?.description },
+                    data: data?.recommendation
                 };
             case 'Log files':
                 return {
@@ -81,7 +85,8 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                     recommendationText: {
                         type: 'View recommendation',
                         value: data?.recommendation?.description
-                    }
+                    },
+                    data: data?.recommendation
                 };
             case 'Thin provisioning':
             case 'Autosize':
@@ -94,7 +99,11 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                     block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
                 };
             case 'Tiering policy':
             case 'Tiering minimum cooling days':
@@ -102,14 +111,22 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                     block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
                 };
             case 'OS type':
                 return {
                     block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
                 };
             case 'Space reservation':
             case 'Space allocation':
@@ -117,21 +134,33 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                     block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
                 };
             case 'Multipath I/O Policy':
                 return {
                     block_one: { type: 'Impacted drives', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
                 };
             case 'NTFS allocation unit size':
                 return {
                     block_one: { type: 'Impacted drives', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
                 };
             case 'Network adapter settings':
             case 'Network adapters':
@@ -142,14 +171,16 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                     recommendationText: {
                         type: 'View recommendation',
                         value: data?.recommendation?.descriptionRssConfig
-                    }
+                    },
+                    data: data?.recommendation
                 };
             case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
+                    data: data?.recommendation
                 };
 
             case GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
@@ -157,14 +188,16 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                     block_one: { type: 'File system Name', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
+                    data: data?.recommendation
                 };
             case GENERAL.CRR:
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
+                    data: data?.recommendation
                 };
             case GENERAL.CLONE_MANAGEMENT:
                 return {
@@ -174,110 +207,36 @@ const OptimizeCard = ({ fromPage = '' }: any) => {
                     recommendationText: {
                         type: 'View recommendation',
                         value: data?.recommendation?.description
-                    }
+                    },
+                    data: data?.recommendation
                 };
             default:
                 return null;
         }
     };
 
-    const displayRecommendations = () => {
-        if (selectedOptimizeConfig?.type === 'Log drive size') {
-            return (
-                <TooltipInfo>
-                    <div className={styles.tooltipContainer}>
-                        <DsTypography variant="Regular_14">{setCardData?.recommendationText?.value}</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {setCardData?.recommendationText?.valueHeading}
-                        </DsTypography>
-
-                        {setCardData?.recommendationText?.values.map((value: string, index: number) => (
-                            <div key={index}>
-                                <DsTypography variant="Regular_14">{value}</DsTypography>
-                            </div>
-                        ))}
-                    </div>
-                </TooltipInfo>
-            );
-        } else if (selectedOptimizeConfig?.type === 'Network adapter settings') {
-            return (
-                <TooltipInfo>
-                    <div
-                        className={styles.rssConfig}
-                        style={{
-                            //@ts-ignore
-                            whiteSpace: 'pre-wrap',
-                            width: 'unset'
-                        }}
-                    >
-                        <DsTypography variant="Regular_14">
-                            {setCardData?.recommendationText?.value?.first}
-                        </DsTypography>
-                        {setCardData?.recommendationText?.second && (
-                            <DsTypography variant="Regular_14">
-                                {setCardData?.recommendationText?.value?.second}
-                            </DsTypography>
-                        )}
-                        <div className={styles.bulletContainer}>
-                            {setCardData?.recommendationText?.value?.points?.map((perPoint: any, index: number) => {
-                                return (
-                                    <div
-                                        className={styles.points}
-                                        style={{ marginTop: index === 3 ? '-16px' : '' }}
-                                        key={index}
-                                    >
-                                        <div className={styles.bullet}>
-                                            <Bullet />
-                                        </div>
-                                        <DsTypography variant="Regular_14" style={{ position: 'relative', top: '5px' }}>
-                                            {perPoint}
-                                        </DsTypography>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <DsTypography variant="Regular_14">{setCardData?.recommendationText?.value?.last}</DsTypography>
-                    </div>
-                </TooltipInfo>
-            );
-        } else {
-            return <TooltipInfo>{setCardData?.recommendationText?.value}</TooltipInfo>;
-        }
-    };
-
     return (
-        <div className={styles.optimizeCard}>
-            <div className={styles.section}>
-                <div className={styles.leftSide}>
-                    <div className={styles.commonRow}>
-                        <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                            {setCardData?.block_one?.value}
-                        </DsTypography>
-                        <DsTypography variant="Regular_14">{setCardData?.block_one?.type}</DsTypography>
-                    </div>
+        <div className={styles.optimizeCardContainer}>
+            <div className={styles.optimizeCard}>
+                <div className={styles.section}>
+                    <div className={styles.leftSide}>
+                        <div className={styles.commonRow}>
+                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                {setCardData?.block_one?.value}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">{setCardData?.block_one?.type}</DsTypography>
+                        </div>
 
-                    <div className={styles.commonRow}>
-                        <DsTypography variant="Semibold_14">{setCardData?.block_two?.value}</DsTypography>
-                        <DsTypography variant="Regular_14">{setCardData?.block_two?.type}</DsTypography>
-                    </div>
-
-                    <div className={styles.tagRow}>
-                        <DsTypography variant="Semibold_14">{setCardData?.block_three?.type}</DsTypography>
-                        <div className={styles.tagContainer}>
-                            {setCardData?.block_three?.value.map((tag: string, index: number) => {
-                                return (
-                                    <div key={index}>
-                                        <Tag text={tag} />
-                                    </div>
-                                );
-                            })}
+                        <div className={styles.commonRow}>
+                            <DsTypography variant="Semibold_14">{setCardData?.block_two?.value}</DsTypography>
+                            <DsTypography variant="Regular_14">{setCardData?.block_two?.type}</DsTypography>
                         </div>
                     </div>
                 </div>
-                <div className={styles.rightSide}>
-                    {displayRecommendations()}
-                    <DsTypography variant="Regular_14">{setCardData?.recommendationText?.type}</DsTypography>
-                </div>
+            </div>
+
+            <div className={styles.recommendation} style={{ height: recommendationHeight }}>
+                <RecommendationText data={setCardData?.data} from={'dashboard'} cardName={setCardData?.cardName} />
             </div>
         </div>
     );

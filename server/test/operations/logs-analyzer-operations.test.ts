@@ -1,0 +1,59 @@
+import {triggerLogsAnalysis } from "../../src/operations/logs-analyzer-operations";
+
+import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
+import { ACCOUNT_ID } from "../utils/consts";
+const TEST_RESOURCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
+const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
+const TEST_REGION = 'ap-southeast-1';
+
+describe('Logs Analyzer Operations', () => {
+  beforeAll(async () => {
+    await createResource(ACCOUNT_ID, {
+      resourceId: TEST_RESOURCE_ID,
+      resourceName: 'test-resource',
+      resourceType: 'MSSQL',
+      coRelationId: 'fs-f6082f35c1db',
+      cloudProviderAccountId: 'test-aws-account',
+      cloudProviderName: 'AWS',
+      region: TEST_REGION,
+      credentialsId: TEST_CREDENTIALS_ID,
+      storageType: 'FSXN',
+      metadata: {
+        node1InstanceId: 'i-07e76a4b916548dc0',
+        node2InstanceId: 'i-0880a21327284f67c',
+        sqlDeploymentType: 'FCI'
+      }
+    });
+
+
+    await upsertDatabaseInstance(ACCOUNT_ID, {
+        credentialsId: TEST_CREDENTIALS_ID,
+        region: TEST_REGION,
+        resourceId: TEST_RESOURCE_ID,
+        databaseInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+        databaseInstanceName: 'MSSQLSERVER',
+        isDefault: true,
+        source: 'deployment',
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
+        fsxnIds: 'fs-0f53fbecdd3d85fb2',
+        databaseType: '' // Add the missing property 'databaseType'
+    });
+  });
+
+  afterAll(async () => {
+    await deleteResource(ACCOUNT_ID, TEST_RESOURCE_ID);
+    await deleteResource(ACCOUNT_ID, 'fs-f6082f35c1db');
+  });
+
+  it('should trigger logs analysis and return a jobId', async () => {
+    const result = await triggerLogsAnalysis(
+      ACCOUNT_ID,
+      TEST_CREDENTIALS_ID,
+      TEST_REGION,
+      TEST_RESOURCE_ID,
+      'f4b7c5d3-e1f6-4g2a-9b5d'
+    );
+    expect(result).toHaveProperty('jobId');
+  });
+});

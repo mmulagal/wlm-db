@@ -58,9 +58,9 @@ beforeAll(async () => {
         DEFAULT_AWS_CREDENTIALS_ID,
         DEFAULT_AWS_REGION,
         resourceName!,
-        JOBTYPE.OPTIMIZATION,
-        `Optimize EC2 compute for ${resourceName}`,
-        `Optimize EC2 compute for ${resourceName}`,
+        JOBTYPE.WELL_ARCHITECTED,
+        `Fix EC2 compute for ${resourceName}`,
+        `Fix EC2 compute for ${resourceName}`,
         rootJobId
     );
 });
@@ -89,7 +89,8 @@ describe('Compute remediation operations', () => {
                     credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                     storage_type: 'FSXN',
                     co_relation_id: 'fs-f6082f35c1db',
-                    resource_name: 'test-resource'
+                    resource_name: 'test-resource',
+                    configurations: {}
                 }
             ],
             optimizeParentId,
@@ -120,7 +121,8 @@ describe('Compute remediation operations', () => {
                     credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                     storage_type: 'FSXN',
                     co_relation_id: 'fs-f6082f35c1db',
-                    resource_name: 'test-resource'
+                    resource_name: 'test-resource',
+                    configurations: null
                 }
             ],
             optimizeParentId,

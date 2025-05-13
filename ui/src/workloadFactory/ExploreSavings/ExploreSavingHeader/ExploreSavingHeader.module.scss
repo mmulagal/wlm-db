@@ -60,7 +60,15 @@
 
 .exploreSavingsHeaderOnPrem {
     .topPart {
-        height: 358px;
+        height: 420px;
+
+        .svgContainerOnPrem {
+            height: 420px;
+            background-color: #e8eefd;
+            rect:first-child {
+                height: 420px;
+            }
+        }
 
         .contentSection {
             .leftSide {

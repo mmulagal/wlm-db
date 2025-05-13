@@ -111,13 +111,24 @@ enum OptimizeMaxDopParams {
     MAX_DOP = 'max-dop'
 }
 
+enum OptimizeCloneParams {
+    CLONE = 'clone'
+}
+
 enum OPTIMIZATION_CATEGORIES {
     STORAGE_TIER = 'storage-tier',
     STORAGE_SIZING = 'storage-sizing',
     OPERATING_SYSTEM = 'operating-system',
     COMPUTE = 'compute',
     MAXDOP = 'max-dop',
-    RSS_CONFIG = 'rss-config'
+    RSS_CONFIG = 'rss-config',
+    CLONE = 'clone'
+}
+
+enum DISMISS_STATUS_ENUM {
+    DISMISSED = 'DISMISSED',
+    POSTPONED = 'POSTPONED',
+    ACTIVE = 'ACTIVE'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -232,25 +243,24 @@ const ASSESSMENT_RESOURCE_TYPE = {
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
 
 const STORAGE_ASSESMENT_CONFIGS_MAP = {
-    storage: {
-        configuration: {
-            volumes: [
-                'thin-provision',
-                'autosize',
-                'autosize-mode',
-                'fractional-reserve',
-                'snapshot-copy-reserve',
-                'snapshot-autodelete',
-                'space-mgmt-try-first',
-                'tiering-policy',
-                'tiering-min-cooling-days'
-            ],
-            luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
-            os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size']
-        },
-        sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size'],
-        layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
-    }
+    sizing: ['performance-tier', 'tempdb-drive-size', 'log-drive-size', 'headroom'],
+    layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
+};
+
+const STORAGE_CONFIGURATION_ASSESMENT_MAP = {
+    volumes: [
+        'thin-provision',
+        'autosize',
+        'autosize-mode',
+        'fractional-reserve',
+        'snapshot-copy-reserve',
+        'snapshot-autodelete',
+        'space-mgmt-try-first',
+        'tiering-policy',
+        'tiering-min-cooling-days'
+    ],
+    luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
+    os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size']
 };
 
 const ASSESSMENT_CONFIGS = {
@@ -262,13 +272,15 @@ const ASSESSMENT_CONFIGS = {
     rssConfig: 'rss-config',
     snapshotPolicy: 'snapshot-policy',
     crr: 'crr',
-    awsBackup: 'scheduled-fsx-for-ontap-backups'
+    awsBackup: 'scheduled-fsx-for-ontap-backups',
+    clone: 'clone-management'
 };
 
 const DISMISS_STATUS = {
     DISMISSED: 'DISMISSED',
     POSTPONED: 'POSTPONED',
-    ACTIVE: 'ACTIVE'
+    ACTIVE: 'ACTIVE',
+    ACTIVATING: 'ACTIVATING'
 };
 
 const DISMISS_DEACTIVATION_REASON = {
@@ -281,6 +293,24 @@ const DISMISS_UPDATE_STATUS = {
     FAILED: 'FAILED',
     PARTIAL: 'PARTIAL'
 };
+
+const INSTANCE_LEVEL_CONFIGURATIONS = [
+    'storage',
+    'maxdop',
+    'mssql-patch',
+    'mapped-ontap-volumes',
+    'clone',
+    'snapshot-policy',
+    'crr'
+];
+
+const HOST_LEVEL_CONFIGURATIONS = [
+    'license',
+    'host-os-patch',
+    'rss-config',
+    'compute-rightsizing',
+    'scheduled-fsx-for-ontap-backups'
+];
 
 export {
     AssessmentCategories,
@@ -315,9 +345,14 @@ export {
     OPTIMIZE_RESILIENCY_CONFIGS,
     VALID_MPIO_LB_POLICIES,
     OptimizeComputeJobNames,
+    OptimizeCloneParams,
     ASSESSMENT_CONFIGS,
     STORAGE_ASSESMENT_CONFIGS_MAP,
     DISMISS_DEACTIVATION_REASON,
     DISMISS_STATUS,
-    DISMISS_UPDATE_STATUS
+    DISMISS_UPDATE_STATUS,
+    INSTANCE_LEVEL_CONFIGURATIONS,
+    HOST_LEVEL_CONFIGURATIONS,
+    STORAGE_CONFIGURATION_ASSESMENT_MAP,
+    DISMISS_STATUS_ENUM
 };

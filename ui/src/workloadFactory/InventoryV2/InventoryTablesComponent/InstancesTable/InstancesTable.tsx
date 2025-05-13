@@ -24,7 +24,13 @@ import {
     getSelectedFromSelectionState,
     isSmbProtocol
 } from '../../../../utils/utilityFunctions';
-import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import {
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    INVENTORY_STATUS,
+    WELL_ARCHITECTED_TABS,
+    WLF_TABS
+} from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -52,7 +58,11 @@ import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { setGwPageLoadInstanceData, setLandingFrom } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setGwPageLoadInstanceData,
+    setLandingFrom,
+    setSelectedWellArchitectTab
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import UndetectedSecondDialogV2 from '../../InventoryTable/UndetectedSecondDialog/UndetectedSecondDialogV2';
 import UndetectedHostDialogContentV2 from '../../InventoryTable/UndetectedHostDialogContent/UndetectedHostDialogContentV2';
@@ -249,28 +259,6 @@ const InstancesTable = () => {
         );
     };
 
-    const resourceAction = (rowData: any) => {
-        const updatedState = store.getState();
-        const { inventoryTableData }: any = updatedState.inventoryV2;
-        const targettedHost =
-            inventoryTableData[uniqueHostRow(rowData.resourceId, rowData.credentialId, rowData.regionId)] ||
-            inventoryTableData[uniqueHostRow(rowData.ec2InstanceId, rowData.credentialId, rowData.regionId)];
-        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
-            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
-        );
-        dispatch(resetWorkloadFactoryResourceData());
-        dispatch(setSelectedHostname(rowData?.name));
-        dispatch(
-            setSelectedResourcePageHostData({
-                resourceId: targettedHost?.resourceId,
-                databaseInstanceId: targettedDbInstance?.databaseInstanceId,
-                databaseInstanceName: targettedDbInstance?.databaseInstanceName,
-                credentialId: targettedHost?.credentialId,
-                regionId: targettedHost?.regionId
-            })
-        );
-    };
-
     const optimizeAction = (rowData: any) => {
         const updatedState = store.getState();
         const { inventoryTableData }: any = updatedState.inventoryV2;
@@ -291,6 +279,19 @@ const InstancesTable = () => {
                 credId: targettedHost?.credentialId,
                 regionId: targettedHost?.regionId,
                 storageType: targettedDbInstance?.sqlServerDeploymentType
+            })
+        );
+
+        //For overview and database
+        dispatch(resetWorkloadFactoryResourceData());
+        dispatch(setSelectedHostname(rowData?.name));
+        dispatch(
+            setSelectedResourcePageHostData({
+                resourceId: targettedHost?.resourceId,
+                databaseInstanceId: targettedDbInstance?.databaseInstanceId,
+                databaseInstanceName: targettedDbInstance?.databaseInstanceName,
+                credentialId: targettedHost?.credentialId,
+                regionId: targettedHost?.regionId
             })
         );
     };
@@ -439,9 +440,15 @@ const InstancesTable = () => {
     const disableManageCheck = (rowData: any) => {
         let errorMessage = '';
         let isDisabled = false;
-        if (rowData?.statusColText !== INVENTORY_STATUS.UNMANAGED) {
+        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
             isDisabled = true;
-            errorMessage = 'Only unmanaged instances can be managed';
+            errorMessage = GENERAL.NON_MSSQL_BULK_CTA;
+        } else if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+            isDisabled = true;
+            errorMessage = 'The instance is already managed by Workload Factory.';
+        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+            isDisabled = true;
+            errorMessage = 'The instance is not detected.';
         } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
             isDisabled = true;
             errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
@@ -457,7 +464,7 @@ const InstancesTable = () => {
         } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
             isDisabled = true;
             errorMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
-        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
             isDisabled = true;
             errorMessage = GENERAL.PGSQL_CTA_NA;
         }
@@ -465,7 +472,10 @@ const InstancesTable = () => {
     };
 
     const setStatusForFilter = (rowData?: any) => {
-        if (rowData?.status === INVENTORY_STATUS.RUNNING || rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) {
+        if (
+            rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
+            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+        ) {
             return INVENTORY_STATUS.ONLINE;
         } else if (
             rowData?.status === INVENTORY_STATUS.STOPPED ||
@@ -516,7 +526,7 @@ const InstancesTable = () => {
                     <div>
                         <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
                         <div className={styles.firstColText}>
-                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
+                            {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                             )}
@@ -528,7 +538,7 @@ const InstancesTable = () => {
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
                             )}
                             <DsTypography variant="Regular_13">
-                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                {rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
                                     ? INVENTORY_STATUS.ONLINE
                                     : rowData?.status === INVENTORY_STATUS.STOPPED ||
@@ -597,7 +607,11 @@ const InstancesTable = () => {
                     return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
                 }
                 if (cellData === INVENTORY_STATUS.UNDETECTED) {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
+                    if (rowData?.hostType === GENERAL.MICROSOFT_SQL_SERVER_TYPE) {
+                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
+                    } else {
+                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
+                    }
                 }
                 if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
@@ -613,7 +627,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Optimization status',
+            Header: 'Well-architected status',
             accessor: 'optimizationStatus',
             id: '6',
             width: '240px',
@@ -621,8 +635,8 @@ const InstancesTable = () => {
             renderCell: (cellData: string, rowData: any) => {
                 let disableMsg = '';
                 let disableMenu = () => {
-                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
-                        disableMsg = GENERAL.PGSQL_ASSESSMENT_NA;
+                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+                        disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
                         return true;
                     }
                     if (
@@ -703,7 +717,7 @@ const InstancesTable = () => {
                                     isAppendedToBody={false}
                                     container={<TooltipIcon />}
                                 />
-                                <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
+                                <DsTypography variant="Regular_14">{'Not analyzed'}</DsTypography>
                             </div>
                         ) : rowData?.optimizationStatusLoading ? (
                             <DsFlashingDotsLoader />
@@ -887,7 +901,7 @@ const InstancesTable = () => {
                     menu.push(
                         {
                             id: 'optimize',
-                            displayName: 'Optimize',
+                            displayName: 'Well-architect',
                             disabled: disableOption,
                             infoText: disableMessage
                         },
@@ -928,7 +942,7 @@ const InstancesTable = () => {
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
-                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
                         disableMsg = GENERAL.PGSQL_CTA_NA;
                         width = '110px';
                         height = '33px';
@@ -1025,6 +1039,11 @@ const InstancesTable = () => {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(
+                                                setSelectedWellArchitectTab(
+                                                    WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
+                                                )
+                                            );
                                             optimizeAction(rowData);
                                         }
 
@@ -1040,9 +1059,13 @@ const InstancesTable = () => {
                                             );
                                         }
                                         if (menuId === 'viewInstance') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                            dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
-                                            resourceAction(rowData);
+                                            // dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
+                                            // dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
+                                            optimizeAction(rowData);
                                         }
                                         if (menuId === 'viewDatabases') {
                                             dispatch(setSelectedInventoryTab('Databases'));

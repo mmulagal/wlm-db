@@ -4,12 +4,12 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
     cardDataDefault,
     checkIfDisableForOptimize,
@@ -70,6 +70,7 @@ import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { backupStartTime } from '../../../utils/utilityFunctions';
 import CloneManagementTable from './RenderTables/CloneManagementTable';
+import { setDismissPageLanding, setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -85,6 +86,7 @@ const DashboardInnerPage = () => {
         optimizedInstances: '',
         notOptimizedInstances: '',
         severity: '',
+        analysisState: '',
         cardHeight: '',
         tagHeight: '',
         data: {
@@ -558,7 +560,7 @@ const DashboardInnerPage = () => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"
@@ -782,6 +784,7 @@ const DashboardInnerPage = () => {
                             operation={operation}
                         />
                     }
+                    dialogFrom={FROM_DIALOG.OPTIMIZE}
                     primaryButton={GENERAL.CONTINUE}
                     secondaryButton={GENERAL.CANCEL}
                     callback={() => {
@@ -818,6 +821,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -833,6 +837,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '184px',
                     tagHeight: '281px',
                     data: {
@@ -849,6 +854,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '208px',
                     tagHeight: '305px',
                     data: {
@@ -866,6 +872,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '232px',
                     tagHeight: '329px',
                     data: {
@@ -882,6 +889,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -896,6 +904,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -910,6 +919,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '160px',
                     tagHeight: '257px',
                     data: {
@@ -925,6 +935,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
@@ -940,6 +951,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
@@ -954,6 +966,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '204px',
                     tagHeight: '301px',
                     data: {
@@ -969,6 +982,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -983,6 +997,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '450px',
                     tagHeight: '547px',
                     data: {
@@ -997,6 +1012,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '228px',
                     tagHeight: '325px',
                     data: cardDataDefault?.sql_licenses?.recommendation
@@ -1008,6 +1024,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '160px',
                     tagHeight: '257px',
                     data: {
@@ -1022,6 +1039,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '216px',
                     tagHeight: '313px',
                     data: {
@@ -1037,6 +1055,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -1053,6 +1072,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -1068,6 +1088,7 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
+                    configurationState: selectedConfigSummary.configState,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -1081,11 +1102,11 @@ const DashboardInnerPage = () => {
 
     const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
         return {
-            id: '4',
+            id: '7',
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '318px',
+            width: '220px',
             renderCell: (cellData: any, rowData: any) => {
                 let { isDisabled, errorMessage } = checkIfDisableForOptimize(
                     inProgressHostData,
@@ -1099,7 +1120,7 @@ const DashboardInnerPage = () => {
                         {isInProgress ? (
                             <div className={styles['optimize-in-progress']}>
                                 <OptimizeInProgressIcon />
-                                <DsTypography variant="Semibold_14">Optimizing</DsTypography>
+                                <DsTypography variant="Semibold_14">Fixing</DsTypography>
                             </div>
                         ) : isDisabled && errorMessage ? (
                             <Popover
@@ -1111,7 +1132,7 @@ const DashboardInnerPage = () => {
                                 interactive={true}
                                 container={
                                     <DsButton variant="secondary" isDisabled={true}>
-                                        Optimize
+                                        {GENERAL.OPTIMIZE}
                                     </DsButton>
                                 }
                             />
@@ -1125,7 +1146,7 @@ const DashboardInnerPage = () => {
                                     handleDialog(name, rowData, 'single');
                                 }}
                             >
-                                Optimize
+                                {GENERAL.OPTIMIZE}
                             </DsButton>
                         )}
                     </div>
@@ -1183,6 +1204,17 @@ const DashboardInnerPage = () => {
         }
     };
 
+    const handleEditAnanlysis = (type: string) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
+        dispatch(setDismissPageLanding(WLF_TABS.DASHBOARD_INNER_PAGE));
+        dispatch(setSelectedConfig(type));
+        setOptimizeInnerpageSummary(type, configData, dispatch);
+    };
+
+    const configData = useMemo(() => {
+        return getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
+    }, [allmssqlHostAssessmentData]);
+
     return (
         <div className={styles.dashboardInnerPage}>
             <div className={styles.innerPage}>
@@ -1196,7 +1228,7 @@ const DashboardInnerPage = () => {
                                 }
                             },
                             {
-                                title: `Optimize configuration (${selectedConfig})`,
+                                title: `Fix configuration (${selectedConfig})`,
                                 dataTestId: 'wlm-db-optimize-configuration'
                             }
                         ]}
@@ -1216,7 +1248,7 @@ const DashboardInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
-                        Manage instance optimization
+                        Manage instance fixing
                     </DsTypography>
                 </div>
 
@@ -1227,6 +1259,9 @@ const DashboardInnerPage = () => {
                             optimizedInstances={valueCardData.optimizedInstances}
                             notOptimizedInstances={valueCardData.notOptimizedInstances}
                             severity={valueCardData.severity}
+                            configurationState={valueCardData.configurationState}
+                            type={selectedConfig}
+                            handleEdit={handleEditAnanlysis}
                         />
 
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>

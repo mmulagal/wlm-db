@@ -637,7 +637,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Optimized configuration
+                                Well-architected configuration
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
@@ -699,7 +699,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Optimized configuration
+                                Well-architected configuration
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
@@ -761,7 +761,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Optimized configuration
+                                Well-architected configuration
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
@@ -828,7 +828,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Optimized configuration
+                                Well-architected configuration
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
@@ -1172,8 +1172,8 @@ const DialogContent = ({
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends optimizing your SQL Server's performance by adjusting its
-                                storage tiers.
+                                Workload Factory recommends optimizing your MSSQL server's network performance by
+                                adjusting its network adapter settings.
                             </DsTypography>
                         </div>
 

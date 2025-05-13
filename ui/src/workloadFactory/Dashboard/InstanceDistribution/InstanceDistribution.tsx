@@ -93,7 +93,7 @@ const InstanceDistribution = () => {
                         beforeOutOf={mssqlHostData?.managedInstances || 0}
                         afterOutOf={mssqlHostData?.totalInstances || 0}
                         bottomText="Managed instances:"
-                        width="440px"
+                        width="auto"
                         loading={mssqlDatabaseHostsLoading || multiDataLoading}
                     />
                     <BarComponent
@@ -106,7 +106,7 @@ const InstanceDistribution = () => {
                         beforeOutOf={pgsqlHostData?.managedInstances || 0}
                         afterOutOf={pgsqlHostData?.totalInstances || 0}
                         bottomText="Managed instances:"
-                        width="440px"
+                        width="auto"
                         loading={pgsqlDatabaseHostsLoading || multiDataLoading}
                     />
                 </div>

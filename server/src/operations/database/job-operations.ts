@@ -437,7 +437,7 @@ async function updateParentJobStatus(
     const parentJob = await getJobDetails(accountId, parentId);
 
     if (parentJob.status === JOBSTATUS.COMPLETED || parentJob.status === JOBSTATUS.FAILED) {
-        return;
+        return parentJob.status;
     }
 
     while (parentJob.status === JOBSTATUS.IN_PROGRESS) {
@@ -480,7 +480,7 @@ async function updateParentJobStatus(
 
         if (jobStatus !== JOBSTATUS.IN_PROGRESS) {
             await updateJobDetails(accountId, parentId, modifiedJobData);
-            return;
+            return jobStatus;
         }
 
         await sleep(30000);

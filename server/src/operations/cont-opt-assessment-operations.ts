@@ -2,6 +2,8 @@ import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
+import throat from 'throat';
+import moment from 'moment';
 import getLogger from '../utils/logger';
 import { isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
@@ -9,11 +11,14 @@ import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import {
+    CloneAssessment,
     DatabaseInstance,
     DatabaseInstanceConfigurations,
+    DatabaseInstanceDismissConfigs,
     DatabaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     MappedOnTapVolumeResponse,
+    MaxDOPAssesment,
     Metadata,
     ResourceDetails,
     StorageAssessment,
@@ -29,13 +34,7 @@ import {
 } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
-import {
-    listAllManagedInstances,
-    listDatabaseInstances,
-    listResources,
-    updateInstanceMetadata,
-    updateResourceMetaData
-} from '../lib/database/db';
+import { listDatabaseInstances, listResources } from '../lib/database/db';
 import { AssessmentCategories, AssessmentStatus, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import {
     CloneDriftResponseType,
@@ -47,8 +46,16 @@ import {
     ParameterDriftResponseType,
     RssConfigDriftResponseType
 } from '../routes/types/continuous-optimization.types';
-import { getInstanceInfo } from './database/database-operations';
-import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData
+} from '../lib/database/database-instance-config';
+import {
+    getInstanceInfo,
+    listAllManagedInstances,
+    updateInstanceMetadata,
+    updateResourceMetaData
+} from './database/database-operations';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -88,7 +95,10 @@ import {
     calculateCloneDrift,
     managedHostsCloneAssessment
 } from './continuous-optimization/clone-assessment-operations';
-import { getLastAssessedTime } from './continuous-optimization/assessment-utils';
+import {
+    checkAndUpdatePostponedEndTime,
+    updateFieldsBasedOnDismissedConfigurations
+} from './continuous-optimization/assessment-utils';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -160,7 +170,7 @@ async function updateAssesmentResultsInInstanceMetadata(
         await updateAssessmentResultsInHostMetadata(driftAssessmentData, resourceDetails);
     }
 }
-async function initiateComputeLicenseAssessmentCollection(
+async function initiateHostLevelAssessmentDataCollection(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -199,35 +209,39 @@ async function initiateComputeLicenseAssessmentCollection(
     );
     if (metadata && activeNodeInstanceId) {
         let licenseAssessment;
+        let licenseErrorMessage;
+
         let computeAssessment;
+        let computeErrorMessage;
         let hostOsPatchAssessment;
+        let hostOsPatchErrorMessage;
         let rssConfigAssessment;
-        let maxDOPAssessment;
+        let rssConfigErrorMessage;
         let mssqlPatchAssessment;
-        let cloneAssessment;
+        let mssqlPatchErrorMessage;
 
         if (fields?.includes(AssessmentCategories.LICENSE)) {
-            licenseAssessment = await managedHostsLicenseAssessment(
-                accountId,
-                credentialsId,
-                region,
-                activeNodeInstanceId,
-                resourceName,
-                jobId,
-                databaseHostId
-            );
+            ({ licenseAssessment, errorMessage: licenseErrorMessage } =
+                (await managedHostsLicenseAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId,
+                    resourceName,
+                    jobId
+                )) || {});
         }
         if (fields?.includes(AssessmentCategories.COMPUTE)) {
-            computeAssessment = await managedHostsComputeAssessment(
-                accountId,
-                credentialsId,
-                region,
-                awsAccountId!,
-                activeNodeInstanceId,
-                resourceName,
-                jobId,
-                databaseHostId
-            );
+            ({ computeAssessment, errorMessage: computeErrorMessage } =
+                (await managedHostsComputeAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    awsAccountId!,
+                    activeNodeInstanceId,
+                    resourceName,
+                    jobId
+                )) || {});
             if (computeAssessment) {
                 // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
                 let { finding, findingReasonCodes, recommendationOptions } = computeAssessment || {};
@@ -266,111 +280,87 @@ async function initiateComputeLicenseAssessmentCollection(
             }
         }
         if (fields?.includes(AssessmentCategories.HOST_OS_PATCH)) {
-            hostOsPatchAssessment = await managedHostOsPatchAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                activeNodeInstanceId,
-                !!node2InstanceId, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
-                resourceName,
-                jobId
-            );
+            ({ hostOsPatchAssessment, errorMessage: hostOsPatchErrorMessage } =
+                (await managedHostOsPatchAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    activeNodeInstanceId,
+                    !!node2InstanceId, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+                    resourceName,
+                    jobId
+                )) || {});
         }
         if (fields?.includes(AssessmentCategories.RSS_CONFIG)) {
-            rssConfigAssessment = await managedHostsRssConfigAssessment(
-                accountId,
-                credentialsId,
-                region,
-                activeNodeInstanceId,
-                resourceName,
-                databaseHostId,
-                jobId,
-                metadata as unknown as Metadata
-            );
-        }
-        if (fields?.includes(AssessmentCategories.MAXDOP)) {
-            // This will run instance level maxDOP assessment
-            maxDOPAssessment = await managedHostsMaxDOPAssessment(
-                accountId,
-                credentialsId,
-                region,
-                activeNodeInstanceId,
-                resourceName,
-                databaseHostId,
-                databaseInstanceId as string,
-                jobId
-            );
-            if (!isEmpty(maxDOPAssessment)) {
-                await createDatabaseInstanceConfigData([
-                    {
-                        account_id: accountId,
-                        credentials_id: credentialsId,
-                        region,
-                        resource_id: databaseHostId,
-                        database_instance_id: databaseInstanceId as string,
-                        creation_time: new Date(Date.now()),
-                        config_data_type: AssessmentCategories.MAXDOP,
-                        config_data: maxDOPAssessment
-                    }
-                ]);
-            }
+            ({ rssConfigAssessment, errorMessage: rssConfigErrorMessage } =
+                (await managedHostsRssConfigAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId,
+                    resourceName,
+                    jobId,
+                    metadata as unknown as Metadata
+                )) || {});
         }
         if (fields?.includes(AssessmentCategories.MSSQL_PATCH)) {
             const isCluster = Boolean(node2InstanceId && node2InstanceId.trim() !== '');
 
-            mssqlPatchAssessment = await managedHostMSSQLPatchAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                activeNodeInstanceId,
-                isCluster, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
-                resourceName,
-                jobId
-            );
+            ({ patchAssessment: mssqlPatchAssessment, errorMessage: mssqlPatchErrorMessage } =
+                (await managedHostMSSQLPatchAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    activeNodeInstanceId,
+                    isCluster, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+                    resourceName,
+                    jobId
+                )) || {});
         }
-        if (fields?.includes(AssessmentCategories.CLONE)) {
-            // This will run instance level clone assessment
-            cloneAssessment = await managedHostsCloneAssessment(
-                accountId,
-                credentialsId,
-                region,
-                activeNodeInstanceId,
-                resourceName,
-                databaseHostId,
-                databaseInstanceId as string,
-                jobId
-            );
-            if (!isEmpty(cloneAssessment)) {
-                await createDatabaseInstanceConfigData([
-                    {
-                        account_id: accountId,
-                        credentials_id: credentialsId,
-                        region,
-                        resource_id: databaseHostId,
-                        database_instance_id: databaseInstanceId as string,
-                        creation_time: new Date(Date.now()),
-                        config_data_type: AssessmentCategories.CLONE,
-                        config_data: cloneAssessment
-                    }
-                ]);
-            }
-        }
+        const hasAssessmentOrError = [
+            licenseAssessment,
+            licenseErrorMessage,
+            computeAssessment,
+            computeErrorMessage,
+            hostOsPatchAssessment,
+            hostOsPatchErrorMessage,
+            rssConfigAssessment,
+            rssConfigErrorMessage,
+            mssqlPatchAssessment,
+            mssqlPatchErrorMessage
+        ].some(item => !isEmpty(item));
 
-        if (
-            !isEmpty(licenseAssessment) ||
-            !isEmpty(computeAssessment) ||
-            !isEmpty(hostOsPatchAssessment) ||
-            !isEmpty(rssConfigAssessment) ||
-            !isEmpty(mssqlPatchAssessment)
-        ) {
+        if (hasAssessmentOrError) {
+            const existingAssessmentData = (metadata as unknown as Metadata).assessment || {};
             (metadata as unknown as Metadata).assessment = {
-                license: licenseAssessment || undefined,
-                compute: computeAssessment || undefined,
-                hostOsPatch: hostOsPatchAssessment || undefined,
-                rssConfig: rssConfigAssessment || undefined,
-                mssqlPatch: mssqlPatchAssessment || undefined,
+                license: licenseAssessment || (!licenseErrorMessage ? existingAssessmentData?.license : undefined),
+                compute: computeAssessment || (!computeErrorMessage ? existingAssessmentData?.compute : undefined),
+                hostOsPatch:
+                    hostOsPatchAssessment ||
+                    (!hostOsPatchErrorMessage ? existingAssessmentData?.hostOsPatch : undefined),
+                rssConfig:
+                    rssConfigAssessment || (!rssConfigErrorMessage ? existingAssessmentData?.rssConfig : undefined),
+                mssqlPatch:
+                    mssqlPatchAssessment || (!mssqlPatchErrorMessage ? existingAssessmentData?.mssqlPatch : undefined),
+                errors: {
+                    license:
+                        licenseErrorMessage ||
+                        (!licenseAssessment ? existingAssessmentData?.errors?.license : undefined),
+                    compute:
+                        computeErrorMessage ||
+                        (!computeAssessment ? existingAssessmentData?.errors?.compute : undefined),
+                    hostOsPatch:
+                        hostOsPatchErrorMessage ||
+                        (!hostOsPatchAssessment ? existingAssessmentData?.errors?.hostOsPatch : undefined),
+                    rssConfig:
+                        rssConfigErrorMessage ||
+                        (!rssConfigAssessment ? existingAssessmentData?.errors?.rssConfig : undefined),
+                    mssqlPatch:
+                        mssqlPatchErrorMessage ||
+                        (!mssqlPatchAssessment ? existingAssessmentData?.errors?.mssqlPatch : undefined)
+                },
                 lastAssessedDate: new Date().getTime().toString()
             };
 
@@ -438,7 +428,8 @@ async function initiateStorageAssessmentCollection(
             ssmComment,
             accountId,
             false,
-            ASSESSMENT_SSM_EXECUTION_TIMEOUT
+            ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+            true
         );
 
         const parsedResponse = response ? sqlResponseParsing(response) : {};
@@ -552,7 +543,8 @@ async function driftAssessmentDataCollection(
     jobId: string,
     databaseHostId: string,
     databaseInstanceRecord: WorkloadInstance,
-    fields?: string
+    fields?: string,
+    dismissedConfigurations?: DatabaseInstanceDismissConfigs
 ) {
     logger.info('Drift assessment data collection', {
         accountId,
@@ -561,55 +553,45 @@ async function driftAssessmentDataCollection(
         jobId,
         databaseHostId,
         databaseInstanceRecord,
-        fields
+        fields,
+        dismissedConfigurations
     });
 
-    let shouldRunStorageAssessment = false;
-    let shouldRunComputeAssessment = false;
-    let shouldRunLicenseAssessment = false;
-    let shouldRunHostOsPatchAssessment = false;
-    let shouldRunRssConfigAssessment = false;
-    let shouldRunMAXDOPAssessment = false;
-    let shouldRunMSSQLPatchAssessment = false;
-    let shouldRunSnapshotPolicyAssessment = false;
-    let shouldRunAwsBackupAssessment = false;
-    let shouldRunCrrAssessment = false;
-    let shouldRunCloneAssessment = false;
+    let fieldsValues = fields
+        ? fields.toLowerCase().replace(/\s+/g, '').split(',')
+        : Object.values(AssessmentCategories).map(category => category.toLowerCase());
 
-    let fieldsValues: string | string[] = [];
-    if (fields) {
-        // remove the empty spaces in the string & split the fields by comma separated array values
-        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-        shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
-        shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-        shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
-        shouldRunHostOsPatchAssessment = fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase());
-        shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
-        shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
-        shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
-        shouldRunSnapshotPolicyAssessment = fieldsValues?.includes(
-            AssessmentCategories.SNAPSHOT_POLICY.toLocaleLowerCase()
-        );
-        shouldRunAwsBackupAssessment = fieldsValues?.includes(AssessmentCategories.AWS_BACKUP.toLocaleLowerCase());
-        shouldRunCrrAssessment = fieldsValues?.includes(AssessmentCategories.CRR.toLocaleLowerCase());
-
-        shouldRunCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
-    } else {
-        fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
-        shouldRunStorageAssessment = true;
-        shouldRunComputeAssessment = true;
-        shouldRunLicenseAssessment = true;
-        shouldRunHostOsPatchAssessment = true;
-        shouldRunRssConfigAssessment = true;
-        shouldRunMAXDOPAssessment = true;
-        shouldRunMSSQLPatchAssessment = true;
-        shouldRunSnapshotPolicyAssessment = true;
-        shouldRunAwsBackupAssessment = true;
-        shouldRunCrrAssessment = true;
-        shouldRunCloneAssessment = true;
+    if (!isEmpty(dismissedConfigurations)) {
+        fieldsValues = updateFieldsBasedOnDismissedConfigurations(fieldsValues, dismissedConfigurations);
     }
 
-    if (shouldRunStorageAssessment || shouldRunSnapshotPolicyAssessment) {
+    const shouldRunStorageAssessment = fieldsValues.includes(AssessmentCategories.STORAGE.toLowerCase());
+    const shouldRunComputeAssessment = fieldsValues.includes(AssessmentCategories.COMPUTE.toLowerCase());
+    const shouldRunLicenseAssessment = fieldsValues.includes(AssessmentCategories.LICENSE.toLowerCase());
+    const shouldRunHostOsPatchAssessment = fieldsValues.includes(AssessmentCategories.HOST_OS_PATCH.toLowerCase());
+    const shouldRunRssConfigAssessment = fieldsValues.includes(AssessmentCategories.RSS_CONFIG.toLowerCase());
+    const shouldRunMAXDOPAssessment = fieldsValues.includes(AssessmentCategories.MAXDOP.toLowerCase());
+    const shouldRunMSSQLPatchAssessment = fieldsValues.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase());
+    const shouldRunSnapshotPolicyAssessment = fieldsValues.includes(AssessmentCategories.SNAPSHOT_POLICY.toLowerCase());
+    const shouldRunAwsBackupAssessment = fieldsValues.includes(AssessmentCategories.AWS_BACKUP.toLowerCase());
+    const shouldRunCrrAssessment = fieldsValues.includes(AssessmentCategories.CRR.toLowerCase());
+    const shouldRunCloneAssessment = fieldsValues.includes(AssessmentCategories.CLONE.toLowerCase());
+
+    const shouldRunInstanceLevelAssessment =
+        shouldRunStorageAssessment ||
+        shouldRunSnapshotPolicyAssessment ||
+        shouldRunCrrAssessment ||
+        shouldRunAwsBackupAssessment ||
+        shouldRunCloneAssessment ||
+        shouldRunMAXDOPAssessment;
+    const shouldRunHostLevelAssessment =
+        shouldRunComputeAssessment ||
+        shouldRunLicenseAssessment ||
+        shouldRunHostOsPatchAssessment ||
+        shouldRunRssConfigAssessment ||
+        shouldRunMSSQLPatchAssessment;
+
+    if (shouldRunInstanceLevelAssessment) {
         const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
             databaseInstanceRecord.fsxFileSystem
         ]);
@@ -717,18 +699,34 @@ async function driftAssessmentDataCollection(
                 instanceVolumeMapping
             );
         }
+        if (shouldRunCloneAssessment) {
+            await managedHostsCloneAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseInstanceRecord.activeNodeInstanceid,
+                databaseInstanceRecord.resourceName,
+                databaseHostId,
+                databaseInstanceId,
+                instanceLevelAssessmentJobId
+            );
+        }
+        if (shouldRunMAXDOPAssessment) {
+            await managedHostsMaxDOPAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseInstanceRecord.activeNodeInstanceid,
+                databaseInstanceRecord.resourceName,
+                databaseHostId,
+                databaseInstanceId,
+                instanceLevelAssessmentJobId
+            );
+        }
     }
 
-    if (
-        shouldRunComputeAssessment ||
-        shouldRunLicenseAssessment ||
-        shouldRunHostOsPatchAssessment ||
-        shouldRunRssConfigAssessment ||
-        shouldRunMAXDOPAssessment ||
-        shouldRunMSSQLPatchAssessment ||
-        shouldRunCloneAssessment
-    ) {
-        await initiateComputeLicenseAssessmentCollection(
+    if (shouldRunHostLevelAssessment) {
+        await initiateHostLevelAssessmentDataCollection(
             accountId,
             credentialsId,
             region,
@@ -762,6 +760,9 @@ async function triggerAssessment(
     let newDatabaseInstanceDetails;
     let cloudProviderAccountId;
     let instanceDetails;
+    let dismissedConfigurations;
+    let updatedDismissedInstanceConfigurations;
+    let updatedDismissedHostConfigurations;
 
     try {
         instanceDetails = await getInstanceDetails(
@@ -775,6 +776,36 @@ async function triggerAssessment(
         activeNodeInstanceId = instanceDetails.activeNodeInstanceId;
         newDatabaseInstanceDetails = instanceDetails.newDatabaseInstanceDetails;
         cloudProviderAccountId = instanceDetails.cloudProviderAccountId;
+        const { configurations: instanceConfigurations, resource: resourceDetail } =
+            newDatabaseInstanceDetails as unknown as DatabaseInstance;
+        const { configurations: hostConfigurations } = resourceDetail as unknown as ResourceDetails;
+        const dismissedInstanceConfigurations = (instanceConfigurations as unknown as DatabaseInstanceConfigurations)
+            ?.dismissedConfigurations;
+        if (dismissedInstanceConfigurations) {
+            updatedDismissedInstanceConfigurations = await checkAndUpdatePostponedEndTime(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                dismissedInstanceConfigurations,
+                databaseInstanceId
+            );
+        }
+        const dismissedHostConfigurations = (hostConfigurations as unknown as DatabaseInstanceConfigurations)
+            ?.dismissedConfigurations;
+        if (dismissedHostConfigurations) {
+            updatedDismissedHostConfigurations = await checkAndUpdatePostponedEndTime(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                dismissedHostConfigurations
+            );
+        }
+        dismissedConfigurations = {
+            ...updatedDismissedInstanceConfigurations,
+            ...updatedDismissedHostConfigurations
+        };
     } catch (error) {
         errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
         logger.error(errorMessage);
@@ -808,7 +839,8 @@ async function triggerAssessment(
             parentJobId,
             databaseHostId,
             instanceRecord,
-            fields
+            fields,
+            dismissedConfigurations || {}
         );
     } catch (error: any) {
         logger.error(error);
@@ -838,108 +870,159 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
         }, {} as { [key: string]: DatabaseInstancesIncludingResource[] });
 
     await Promise.all(
-        Object.entries(managedInstancesGroupedByAccountId).map(async ([accountId, managedInstances]) => {
-            if (isEmpty(managedInstances)) {
-                const errorMessage = `No managed instances found for account ${accountId}.`;
-                logger.info(errorMessage);
-            } else {
-                const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
-                let parentJobStatus = '';
-                const { id: parentJobId } = await registerJob(accountId, '', '', {
-                    name: jobDescription,
-                    description: jobDescription,
-                    resourceName: accountId,
-                    initiator: initiatedBy.toLocaleUpperCase(),
-                    startTime: Date.now(),
-                    status: JOBSTATUS.IN_PROGRESS,
-                    type: JOBTYPE.ASSESSMENT
-                });
-                const assessmentErrors: unknown[] = [];
-                try {
-                    await Promise.all(
-                        managedInstances.map(
-                            async managedInstance => {
-                                try {
-                                    await triggerAssessment(managedInstance, parentJobId, fields);
-                                } catch (error) {
-                                    assessmentErrors.push(error);
-                                }
-                            },
-                            {
-                                concurrency: 1
-                            }
-                        )
-                    );
-
-                    if (assessmentErrors.length === managedInstances.length) {
-                        const errorMessage = `No managed instances are online and running in account ${accountId}.`;
-                        logger.info(errorMessage);
-                        await updateJobDetails(accountId, parentJobId, {
-                            status: JOBSTATUS.WARNING,
-                            error: errorMessage,
-                            endTime: Date.now()
-                        });
-                    } else {
-                        // Proceeding with compute and license assessment at host level
-                        const uniqueResMap = new Map(
-                            managedInstances.map(({ resource }) => [
-                                `${resource.account_id} + ${resource.credentials_id} + ${resource.id}`,
-                                resource
-                            ])
-                        ); // create a map with unique resources; key being (accountId,credsId,resourceId unique combination) and value being actual resource
-                        const uniqueResources = Array.from(uniqueResMap.values()); // getting all the unique resources from the map
-
+        Object.entries(managedInstancesGroupedByAccountId).map(
+            throat(3, async ([accountId, managedInstances]) => {
+                if (isEmpty(managedInstances)) {
+                    const errorMessage = `No managed instances found for account ${accountId}.`;
+                    logger.info(errorMessage);
+                } else {
+                    const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
+                    let parentJobStatus = '';
+                    const { id: parentJobId } = await registerJob(accountId, '', '', {
+                        name: jobDescription,
+                        description: jobDescription,
+                        resourceName: accountId,
+                        initiator: initiatedBy.toLocaleUpperCase(),
+                        startTime: Date.now(),
+                        status: JOBSTATUS.IN_PROGRESS,
+                        type: JOBTYPE.ASSESSMENT
+                    });
+                    const assessmentErrors: unknown[] = [];
+                    try {
                         await Promise.all(
-                            uniqueResources.map(
-                                async ({
-                                    account_id: wfAccountId,
-                                    credentials_id: credentialsId,
-                                    region,
-                                    resource_id: databaseHostId,
-                                    resource_name: resourceName
-                                }) => {
-                                    await initiateComputeLicenseAssessmentCollection(
-                                        wfAccountId,
-                                        credentialsId,
-                                        region!,
-                                        databaseHostId,
-                                        resourceName!,
-                                        parentJobId,
-                                        [
-                                            AssessmentCategories.LICENSE,
-                                            AssessmentCategories.COMPUTE,
-                                            AssessmentCategories.HOST_OS_PATCH,
-                                            AssessmentCategories.RSS_CONFIG,
-                                            AssessmentCategories.MSSQL_PATCH
-                                        ]
-                                    );
-                                }
+                            managedInstances.map(
+                                throat(3, async managedInstance => {
+                                    try {
+                                        const {
+                                            configurations: instanceConfigurations,
+                                            resource,
+                                            credentials_id: credentialsId,
+                                            region,
+                                            resource_id: resourceId,
+                                            database_instance_id: databaseInstanceId
+                                        } = managedInstance;
+                                        const instanceConfiguration = (
+                                            instanceConfigurations as unknown as DatabaseInstanceConfigurations
+                                        )?.dismissedConfigurations;
+                                        const hostDismissedConfigurations = (
+                                            resource?.configurations as unknown as DatabaseInstanceConfigurations
+                                        )?.dismissedConfigurations;
+                                        try {
+                                            await checkAndUpdatePostponedEndTime(
+                                                accountId,
+                                                credentialsId,
+                                                region,
+                                                resourceId,
+                                                instanceConfiguration,
+                                                databaseInstanceId
+                                            );
+                                        } catch (error) {
+                                            logger.error('Error while updating instance postponed end time', {
+                                                accountId,
+                                                credentialsId,
+                                                region,
+                                                resourceId,
+                                                databaseInstanceId,
+                                                error
+                                            });
+                                        }
+
+                                        try {
+                                            await checkAndUpdatePostponedEndTime(
+                                                accountId,
+                                                credentialsId,
+                                                region,
+                                                resourceId,
+                                                hostDismissedConfigurations
+                                            );
+                                        } catch (error) {
+                                            logger.error('Error while updating instance postponed end time', {
+                                                accountId,
+                                                credentialsId,
+                                                region,
+                                                resourceId,
+                                                error
+                                            });
+                                        }
+
+                                        await triggerAssessment(managedInstance, parentJobId, fields);
+                                    } catch (error) {
+                                        assessmentErrors.push(error);
+                                    }
+                                })
                             )
                         );
-                    }
-                } catch (error: any) {
-                    logger.info('Error while triggering drift assessment for account', { accountId, error });
-                    parentJobStatus = JOBSTATUS.FAILED;
-                    await updateJobDetails(accountId, parentJobId, {
-                        status: parentJobStatus,
-                        error: error.message,
-                        endTime: Date.now()
-                    });
-                } finally {
-                    if (parentJobStatus !== JOBSTATUS.FAILED) {
-                        await updateParentJobStatus(accountId, parentJobId);
-                    }
 
-                    // Lets update assessment result in instance metadata
-                    // Host level assessments are run for all the instances in the account. So we will update the results from one of the instance
-                    await Promise.all(
-                        managedInstances.map(async (managedInstance, index) => {
-                            await updateAssesmentResultsInInstanceMetadata(managedInstance, index === 0);
-                        })
-                    );
+                        if (assessmentErrors.length === managedInstances.length) {
+                            const errorMessage = `No managed instances are online and running in account ${accountId}.`;
+                            logger.info(errorMessage);
+                            await updateJobDetails(accountId, parentJobId, {
+                                status: JOBSTATUS.WARNING,
+                                error: errorMessage,
+                                endTime: Date.now()
+                            });
+                        } else {
+                            // Proceeding with compute and license assessment at host level
+                            const uniqueResMap = new Map(
+                                managedInstances.map(({ resource }) => [
+                                    `${resource.account_id} + ${resource.credentials_id} + ${resource.id}`,
+                                    resource
+                                ])
+                            ); // create a map with unique resources; key being (accountId,credsId,resourceId unique combination) and value being actual resource
+                            const uniqueResources = Array.from(uniqueResMap.values()); // getting all the unique resources from the map
+
+                            await Promise.all(
+                                uniqueResources.map(
+                                    async ({
+                                        account_id: wfAccountId,
+                                        credentials_id: credentialsId,
+                                        region,
+                                        resource_id: databaseHostId,
+                                        resource_name: resourceName
+                                    }) => {
+                                        await initiateHostLevelAssessmentDataCollection(
+                                            wfAccountId,
+                                            credentialsId,
+                                            region!,
+                                            databaseHostId,
+                                            resourceName!,
+                                            parentJobId,
+                                            [
+                                                AssessmentCategories.LICENSE,
+                                                AssessmentCategories.COMPUTE,
+                                                AssessmentCategories.HOST_OS_PATCH,
+                                                AssessmentCategories.RSS_CONFIG,
+                                                AssessmentCategories.MSSQL_PATCH
+                                            ]
+                                        );
+                                    }
+                                )
+                            );
+                        }
+                    } catch (error: any) {
+                        logger.info('Error while triggering drift assessment for account', { accountId, error });
+                        parentJobStatus = JOBSTATUS.FAILED;
+                        await updateJobDetails(accountId, parentJobId, {
+                            status: parentJobStatus,
+                            error: error.message,
+                            endTime: Date.now()
+                        });
+                    } finally {
+                        if (parentJobStatus !== JOBSTATUS.FAILED) {
+                            await updateParentJobStatus(accountId, parentJobId);
+                        }
+
+                        // Lets update assessment result in instance metadata
+                        // Host level assessments are run for all the instances in the account. So we will update the results from one of the instance
+                        await Promise.all(
+                            managedInstances.map(async (managedInstance, index) => {
+                                await updateAssesmentResultsInInstanceMetadata(managedInstance, index === 0);
+                            })
+                        );
+                    }
                 }
-            }
-        })
+            })
+        )
     );
 }
 
@@ -949,7 +1032,8 @@ async function hostLevelDriftData(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    fields?: string
+    metadata: Metadata,
+    fieldsValues: string[]
 ) {
     logger.info('Fetching host level drift data', {
         accountId,
@@ -957,7 +1041,7 @@ async function hostLevelDriftData(
         region,
         databaseHostId,
         databaseInstanceId,
-        fields
+        fieldsValues
     });
 
     let shouldCalculateComputeAssessment = false;
@@ -966,27 +1050,11 @@ async function hostLevelDriftData(
     let shouldCalculateRssConfigAssessment = false;
     let shouldCalculateMSSQLPatchAssessment = false;
 
-    if (fields) {
-        // remove the empty spaces in the string & split the fields by comma separated array values
-        const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-        shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-        shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
-        shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
-            AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
-        );
-        shouldCalculateRssConfigAssessment = fieldsValues?.includes(
-            AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
-        );
-        shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
-            AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
-        );
-    } else {
-        shouldCalculateComputeAssessment = true;
-        shouldCalculateLicenseAssessment = true;
-        shouldCalculateHostOsPatchAssessment = true;
-        shouldCalculateRssConfigAssessment = true;
-        shouldCalculateMSSQLPatchAssessment = true;
-    }
+    shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLowerCase());
+    shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLowerCase());
+    shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLowerCase());
+    shouldCalculateRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLowerCase());
+    shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase());
 
     const [
         computeAssessmentResponse,
@@ -996,19 +1064,45 @@ async function hostLevelDriftData(
         mssqlPatchAssessmentResponse
     ] = await Promise.all([
         shouldCalculateComputeAssessment
-            ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateComputeDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  metadata as unknown as Metadata
+              )
             : Promise.resolve({}),
         shouldCalculateLicenseAssessment
-            ? calculateLicenseDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateLicenseDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  metadata as unknown as Metadata
+              )
             : Promise.resolve({}),
         shouldCalculateHostOsPatchAssessment
-            ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId)
+            ? calculateHostOsPatchDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  metadata as unknown as Metadata
+              )
             : Promise.resolve({}),
         shouldCalculateRssConfigAssessment
-            ? calculateRssConfigDrift(accountId, credentialsId, region, databaseHostId)
+            ? calculateRssConfigDrift(accountId, credentialsId, region, databaseHostId, metadata as unknown as Metadata)
             : Promise.resolve({}),
         shouldCalculateMSSQLPatchAssessment
-            ? calculateMSSQLPatchDrift(accountId, credentialsId, region, databaseHostId)
+            ? calculateMSSQLPatchDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  metadata as unknown as Metadata
+              )
             : Promise.resolve({})
     ]);
 
@@ -1038,53 +1132,70 @@ async function fetchDriftAssessment(
         fields
     });
 
+    let dismissedConfigurations;
+
     const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-    const { configurations } = instanceDetail as unknown as DatabaseInstance;
+    let {
+        configurations: instanceConfigurations,
+        resource: { configurations: hostConfigurations, metadata: resourceMetadata }
+    } = instanceDetail as unknown as DatabaseInstance;
 
-    let shouldCalculateStorageAssessment = false;
-    let shouldCalculateComputeAssessment = false;
-    let shouldCalculateLicenseAssessment = false;
-    let shouldCalculateHostOsPatchAssessment = false;
-    let shouldCalculateRssConfigAssessment = false;
-    let shouldCalculateMaxDOPAssessment = false;
-    let shouldCalculateMSSQLPatchAssessment = false;
-    let shouldCalculateResilienceAssessment = false;
-    let shouldCalculateCloneAssessment = false;
-
-    if (fields) {
-        // remove the empty spaces in the string & split the fields by comma separated array values
-        const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-
-        shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
-        shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-        shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
-        shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
-            AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
-        );
-        shouldCalculateRssConfigAssessment = fieldsValues?.includes(
-            AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
-        );
-        shouldCalculateMaxDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
-        shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
-            AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
-        );
-        shouldCalculateResilienceAssessment =
-            fieldsValues?.includes(AssessmentCategories.SNAPSHOT_POLICY.toLocaleLowerCase()) ||
-            fieldsValues?.includes(AssessmentCategories.AWS_BACKUP.toLocaleLowerCase()) ||
-            fieldsValues?.includes(AssessmentCategories.CRR.toLocaleLowerCase());
-        shouldCalculateCloneAssessment = fieldsValues?.includes(AssessmentCategories.CLONE.toLocaleLowerCase());
-    } else {
-        shouldCalculateStorageAssessment = true;
-        shouldCalculateComputeAssessment = true;
-        shouldCalculateLicenseAssessment = true;
-        shouldCalculateHostOsPatchAssessment = true;
-        shouldCalculateRssConfigAssessment = true;
-        shouldCalculateMaxDOPAssessment = true;
-        shouldCalculateMSSQLPatchAssessment = true;
-        shouldCalculateResilienceAssessment = true;
-        shouldCalculateCloneAssessment = true;
+    if (isDemoFlow) {
+        const [resource] = await listResources(accountId, databaseHostId, credentialsId, region);
+        ({ configurations: hostConfigurations } = resource as unknown as ResourceDetails);
     }
+
+    if (!isEmpty(instanceConfigurations) || !isEmpty(hostConfigurations)) {
+        dismissedConfigurations = {
+            ...(instanceConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations,
+            ...(hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations
+        };
+    }
+    // prismock does not support proper mapping of resource and database instance, hence calling resource listing again to fetch the configurations
+
+    let fieldsValues = fields
+        ? fields.toLowerCase().replace(/\s+/g, '').split(',')
+        : Object.values(AssessmentCategories).map(category => category.toLowerCase());
+
+    if (!isEmpty(dismissedConfigurations)) {
+        fieldsValues = updateFieldsBasedOnDismissedConfigurations(fieldsValues, dismissedConfigurations);
+    }
+
+    const shouldCalculateStorageAssessment = fieldsValues.includes(AssessmentCategories.STORAGE.toLowerCase());
+    const shouldCalculateComputeAssessment = fieldsValues.includes(AssessmentCategories.COMPUTE.toLowerCase());
+    const shouldCalculateLicenseAssessment = fieldsValues.includes(AssessmentCategories.LICENSE.toLowerCase());
+    const shouldCalculateHostOsPatchAssessment = fieldsValues.includes(
+        AssessmentCategories.HOST_OS_PATCH.toLowerCase()
+    );
+    const shouldCalculateRssConfigAssessment = fieldsValues.includes(AssessmentCategories.RSS_CONFIG.toLowerCase());
+    const shouldCalculateMaxDOPAssessment = fieldsValues.includes(AssessmentCategories.MAXDOP.toLowerCase());
+    const shouldCalculateMSSQLPatchAssessment = fieldsValues.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase());
+    const shouldCalculateResilienceAssessment =
+        fieldsValues.includes(AssessmentCategories.SNAPSHOT_POLICY.toLowerCase()) ||
+        fieldsValues.includes(AssessmentCategories.AWS_BACKUP.toLowerCase()) ||
+        fieldsValues.includes(AssessmentCategories.CRR.toLowerCase());
+    const shouldCalculateCloneAssessment = fieldsValues.includes(AssessmentCategories.CLONE.toLowerCase());
+
     let driftAssessmentData: DriftAssessmentResponseType = {};
+
+    const databaseInstanceConfigData = await listDatabaseInstanceConfigData(
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId
+    );
+    // filter out the config data which is not required for assessment and listDatabaseInstanceConfigData returns in descending order of creation time
+    const assessmentDataMap = databaseInstanceConfigData.reduce((acc, config) => {
+        if (!acc[config.config_data_type]) {
+            acc[config.config_data_type] = config.config_data;
+        }
+        return acc;
+    }, {} as Record<string, unknown>);
+
+    const storageAssessmentData = assessmentDataMap[AssessmentCategories.STORAGE];
+    const maxDOPAssessmentData = assessmentDataMap[AssessmentCategories.MAXDOP];
+    const cloneAssessmentData = assessmentDataMap[AssessmentCategories.CLONE];
 
     const [
         storageAssessmentResponse,
@@ -1100,23 +1211,60 @@ async function fetchDriftAssessment(
         resilienceAssessmentResponse
     ] = await Promise.all([
         shouldCalculateStorageAssessment
-            ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateStorageDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  storageAssessmentData as unknown as StorageAssessment
+              )
             : Promise.resolve({}),
         shouldCalculateMaxDOPAssessment
-            ? calculateMaxDOPDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateMaxDOPDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  maxDOPAssessmentData as unknown as MaxDOPAssesment
+              )
             : Promise.resolve({}),
         shouldCalculateCloneAssessment
-            ? calculateCloneDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            ? calculateCloneDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  cloneAssessmentData as unknown as CloneAssessment
+              )
             : Promise.resolve({}),
         shouldCalculateComputeAssessment ||
         shouldCalculateLicenseAssessment ||
         shouldCalculateHostOsPatchAssessment ||
         shouldCalculateRssConfigAssessment ||
         shouldCalculateMSSQLPatchAssessment
-            ? hostLevelDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
+            ? hostLevelDriftData(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  resourceMetadata as unknown as Metadata,
+                  fieldsValues
+              )
             : Promise.resolve({}),
         shouldCalculateResilienceAssessment
-            ? getResilienceDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
+            ? getResilienceDriftAssessment(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  databaseInstanceId,
+                  fieldsValues,
+                  databaseInstanceConfigData
+              )
             : Promise.resolve({})
     ]);
 
@@ -1235,22 +1383,19 @@ async function fetchDriftAssessment(
     if (!isEmpty(cloneResponse)) {
         driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
     }
-
-    if (configurations) {
-        const { dismissedConfigurations = {} } = configurations as DatabaseInstanceConfigurations;
+    if (!isEmpty(dismissedConfigurations)) {
         driftAssessmentData.dismissedConfigurations = dismissedConfigurations;
-        logger.debug('Configurations successfully added to driftAssessmentData:', configurations);
     }
-
     // Get last assessed timestamp
     try {
-        driftAssessmentData.lastAssessmentTimestamp = await getLastAssessedTime(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId
+        const [{ creation_time: latestInstanceLevelAssessedTime = 0 }] = databaseInstanceConfigData;
+        const { assessment: { lastAssessedDate: latestHostLevelAssessedTime } = {} } =
+            resourceMetadata as unknown as Metadata;
+        const latestAssessmentTimestamp = Math.max(
+            latestInstanceLevelAssessedTime ? latestInstanceLevelAssessedTime.getTime() : 0,
+            latestHostLevelAssessedTime ? Number(latestHostLevelAssessedTime) : 0
         );
+        driftAssessmentData.lastAssessmentTimestamp = moment(Number(latestAssessmentTimestamp)).unix() * 1000;
     } catch (error) {
         logger.error('Error while fetching last assessment timestamp:', error);
     }
@@ -1287,7 +1432,7 @@ async function fetchDriftAssessmentPerHost(
         throw createError(HttpErrorCodes.NOT_FOUND, `${infoMessage}`);
     }
 
-    let { resource_name: databaseHostName } = resourceDetail;
+    let { resource_name: databaseHostName, metadata } = resourceDetail;
     databaseHostName ||= '';
 
     const driftAssessments: Array<{
@@ -1347,7 +1492,8 @@ async function fetchDriftAssessmentPerHost(
             region,
             databaseHostId,
             databaseInstanceId,
-            hostFieldsToQuery.join(',')
+            metadata as unknown as Metadata,
+            hostFieldsToQuery
         );
         computeAssessmentResponse = hostLevelData.computeAssessmentResponse as ComputeDriftResponseType;
         licenseAssessmentResponse = hostLevelData.licenseAssessmentResponse as LicenseDriftResponseType;
@@ -1356,58 +1502,61 @@ async function fetchDriftAssessmentPerHost(
         mssqlPatchAssessmentResponse = hostLevelData.mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType;
     }
     await Promise.all(
-        instancesManaged.map(async managedInstance => {
-            const { database_instance_id: databaseInstanceId, database_instance_name: databaseInstanceName } =
-                managedInstance;
+        instancesManaged.map(
+            throat(3, async managedInstance => {
+                const { database_instance_id: databaseInstanceId, database_instance_name: databaseInstanceName } =
+                    managedInstance;
 
-            try {
-                // For instance level assessments
-                const instanceFieldsToQuery = [
-                    AssessmentCategories.STORAGE,
-                    AssessmentCategories.MAXDOP,
-                    AssessmentCategories.SNAPSHOT_POLICY,
-                    AssessmentCategories.AWS_BACKUP,
-                    AssessmentCategories.CRR
-                ];
+                try {
+                    // For instance level assessments
+                    const instanceFieldsToQuery = [
+                        AssessmentCategories.STORAGE,
+                        AssessmentCategories.MAXDOP,
+                        AssessmentCategories.SNAPSHOT_POLICY,
+                        AssessmentCategories.AWS_BACKUP,
+                        AssessmentCategories.CRR,
+                        AssessmentCategories.CLONE
+                    ];
 
-                const driftAssessment = await fetchDriftAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    instanceFieldsToQuery.join(',')
-                );
+                    const driftAssessment = await fetchDriftAssessment(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        databaseInstanceId,
+                        instanceFieldsToQuery.join(',')
+                    );
 
-                if (isHostLevelMetrics) {
-                    if (!isEmpty(computeAssessmentResponse)) {
-                        driftAssessment.compute = computeAssessmentResponse;
+                    if (isHostLevelMetrics) {
+                        if (!isEmpty(computeAssessmentResponse)) {
+                            driftAssessment.compute = computeAssessmentResponse;
+                        }
+                        if (!isEmpty(licenseAssessmentResponse)) {
+                            driftAssessment.license = licenseAssessmentResponse;
+                        }
+                        if (!isEmpty(hostOsPatchAssessmentResponse)) {
+                            driftAssessment.hostOsPatch = hostOsPatchAssessmentResponse;
+                        }
+                        if (!isEmpty(hostRssConfigAssessmentResponse)) {
+                            driftAssessment.rssConfig = hostRssConfigAssessmentResponse;
+                        }
+                        if (!isEmpty(mssqlPatchAssessmentResponse)) {
+                            driftAssessment.mssqlPatch = mssqlPatchAssessmentResponse;
+                        }
                     }
-                    if (!isEmpty(licenseAssessmentResponse)) {
-                        driftAssessment.license = licenseAssessmentResponse;
-                    }
-                    if (!isEmpty(hostOsPatchAssessmentResponse)) {
-                        driftAssessment.hostOsPatch = hostOsPatchAssessmentResponse;
-                    }
-                    if (!isEmpty(hostRssConfigAssessmentResponse)) {
-                        driftAssessment.rssConfig = hostRssConfigAssessmentResponse;
-                    }
-                    if (!isEmpty(mssqlPatchAssessmentResponse)) {
-                        driftAssessment.mssqlPatch = mssqlPatchAssessmentResponse;
-                    }
+
+                    driftAssessments.push({
+                        databaseInstanceId,
+                        databaseInstanceName,
+                        assessments: driftAssessment
+                    });
+                } catch (error: any) {
+                    const errorMessage = `Error while fetching drift assessment for ${databaseInstanceId}. Error: ${error.message}`;
+                    logger.error(errorMessage);
+                    driftAssessments.push({ databaseInstanceId, databaseInstanceName, error: errorMessage });
                 }
-
-                driftAssessments.push({
-                    databaseInstanceId,
-                    databaseInstanceName,
-                    assessments: driftAssessment
-                });
-            } catch (error: any) {
-                const errorMessage = `Error while fetching drift assessment for ${databaseInstanceId}. Error: ${error.message}`;
-                logger.error(errorMessage);
-                driftAssessments.push({ databaseInstanceId, databaseInstanceName, error: errorMessage });
-            }
-        })
+            })
+        )
     );
 
     return {
@@ -1493,6 +1642,7 @@ async function onDemandTriggerDriftAssessmentDataCollection(
             type: JOBTYPE.ASSESSMENT,
             parentJobId
         });
+        await updateLongRunningAuditGroup(undefined, undefined, savedInstanceName);
         // Call the async function without awaiting it
         handleAssessment(accountId, managedInstance, jobId, initiatedBy, fields);
 
@@ -1547,23 +1697,25 @@ async function fetchDriftAssessmentPerAccount(
         }>;
     }> = [];
     await Promise.all(
-        resourceDetails.map(async resourceDetail => {
-            const { resource_id: databaseHostId } = resourceDetail;
-            try {
-                const drifAssessmentPerHost = await fetchDriftAssessmentPerHost(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    fields
-                );
-                driftAssessmentPerAccount.push(drifAssessmentPerHost);
-            } catch (error) {
-                logger.error(
-                    `Error while fetching drift assessment per host ${accountId}, ${databaseHostId}, ${error}`
-                );
-            }
-        })
+        resourceDetails.map(
+            throat(3, async resourceDetail => {
+                const { resource_id: databaseHostId } = resourceDetail;
+                try {
+                    const drifAssessmentPerHost = await fetchDriftAssessmentPerHost(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        fields
+                    );
+                    driftAssessmentPerAccount.push(drifAssessmentPerHost);
+                } catch (error) {
+                    logger.error(
+                        `Error while fetching drift assessment per host ${accountId}, ${databaseHostId}, ${error}`
+                    );
+                }
+            })
+        )
     );
 
     return {

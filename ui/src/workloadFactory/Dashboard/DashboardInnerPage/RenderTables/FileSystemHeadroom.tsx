@@ -1,4 +1,3 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
@@ -16,6 +15,10 @@ import {
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
+import { useTable } from '../../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../../common/Lib/Table/Table';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -29,6 +32,8 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
+    const { credentialData } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         let uniqueResourceList: Array<string> = [];
@@ -42,15 +47,21 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
             }
             uniqueResourceList.push(hostData?.databaseHostId);
 
+            const matchingCredEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const headroomObj = instanceData?.assessments?.storage?.sizing?.find(
                         (item: any) => item.name === 'headroom'
                     );
                     const headroomStateObj = instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                        (item: any) => item.name === 'headroom'
+                        (item: any) => item?.configurationName === 'headroom'
                     );
-                    const isStorageTierOptimized = isOptimized(headroomObj?.status, headroomStateObj?.state);
+                    const isStorageTierOptimized = isOptimized(headroomObj?.status, headroomStateObj?.configState);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -66,7 +77,10 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             recommendedSizeInGib: headroomObj?.recommendedSizeInGib,
                             missingPermissions: headroomObj?.missingPermissions,
                             data: instanceData,
-                            configObj: headroomStateObj
+                            configObj: headroomStateObj,
+                            credentialName: matchingCredEntry?.name,
+                            regionName: matchingRegionEntry?.regionName,
+                            accountId: matchingCredEntry?.providerAccountId
                         });
                     }
                 }
@@ -115,18 +129,39 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: 'auto',
+            width: '200px',
             filterOptions: 'auto'
         },
         {
             Header: 'File system headroom',
             accessor: 'fileSystemHeadroom',
             id: '3',
-            width: '320px',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
+        },
+        {
+            id: '4',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '5',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '6',
+            Header: 'Region',
+            accessor: 'regionName',
+            filterOptions: 'auto',
+            width: '180px'
         },
         lastColDetails(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM, {}, inProgressOptimizationData, inProgressHostData)
     ];
@@ -136,13 +171,15 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
-        isHorizontalScroll: false,
+        isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
         rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: []
+        defaultSelectedRows: [],
+        isManagedColumns: true,
+        initialColumnState: initialDashboardInnerPageOptimizeColState
     });
 
     useEffect(() => {

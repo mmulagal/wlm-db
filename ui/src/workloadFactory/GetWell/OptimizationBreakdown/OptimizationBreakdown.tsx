@@ -18,7 +18,7 @@ const OptimizationBreakdown = () => {
         <div className={styles.optimizationBreakdown}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Optimization breakdown by category
+                    Configuration categories
                 </DsTypography>
                 {loading && <DsFlashingDotsLoader />}
             </div>

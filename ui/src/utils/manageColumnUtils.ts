@@ -151,3 +151,32 @@ export const initialDatabaseTableColState = {
         isHidden: false
     }
 };
+
+export const initialDashboardInnerPageOptimizeColState = {
+    1: {
+        isHidden: false,
+        isRemovalDisabled: true
+    },
+    2: {
+        isHidden: false,
+        isRemovalDisabled: true
+    },
+    3: {
+        isHidden: false,
+        isRemovalDisabled: true
+    },
+    4: {
+        isHidden: false
+    },
+    5: {
+        isHidden: true
+    },
+
+    6: {
+        isHidden: true
+    },
+    7: {
+        isHidden: false,
+        isRemovalDisabled: true
+    }
+};

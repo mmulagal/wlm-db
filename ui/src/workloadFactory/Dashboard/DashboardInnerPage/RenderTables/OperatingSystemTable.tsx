@@ -1,4 +1,3 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
@@ -19,6 +18,10 @@ import TooltipComponent from '../../../../common/TooltipComponent/TooltipCompone
 import { useDispatch } from 'react-redux';
 import { setGwPageLoadInstanceData } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import FirstColumnComponent from './FirstColumnComponent';
+import { useTable } from '../../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../../common/Lib/Table/Table';
+import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
 
 const OperatingSystemTable = () => {
     const dispatch = useDispatch();
@@ -27,6 +30,8 @@ const OperatingSystemTable = () => {
         state => state.inventoryV2
     );
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const { credentialData } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     const tableData = useMemo(() => {
         let OSAssessmentData: any = [];
@@ -40,6 +45,12 @@ const OperatingSystemTable = () => {
                 return;
             }
             uniqueResourceList.push(hostData?.databaseHostId);
+
+            const matchingCredEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
@@ -61,7 +72,10 @@ const OperatingSystemTable = () => {
                                 ? `${notOptimized.length} out of ${instanceData?.assessments?.storage?.configuration?.os?.length}`
                                 : `0 out of 0`,
                             hostName: hostData?.databaseHostName,
-                            fullData: formatAssessmentTableData(notOptimized)
+                            fullData: formatAssessmentTableData(notOptimized),
+                            credentialName: matchingCredEntry?.name,
+                            regionName: matchingRegionEntry?.regionName,
+                            accountId: matchingCredEntry?.providerAccountId
                         });
                     }
                 }
@@ -87,7 +101,7 @@ const OperatingSystemTable = () => {
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '318px',
+            width: '250px',
             renderCell: (cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
                 const currentRowState = rowsState[rowData.id];
                 return (
@@ -138,18 +152,39 @@ const OperatingSystemTable = () => {
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: 'auto',
+            width: '200px',
             filterOptions: 'auto'
         },
         {
             Header: 'Not-optimized configuration',
             accessor: 'configuration',
             id: '3',
-            width: '320px',
+            width: '250px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
+        },
+        {
+            id: '4',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '5',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '6',
+            Header: 'Region',
+            accessor: 'regionName',
+            filterOptions: 'auto',
+            width: '180px'
         },
         lastColDetails()
     ];
@@ -192,7 +227,9 @@ const OperatingSystemTable = () => {
         isSorting: false,
         columns: TableColDefs,
         rows: tableData || [],
-        pageSize: 50
+        pageSize: 50,
+        isManagedColumns: true,
+        initialColumnState: initialDashboardInnerPageOptimizeColState
     });
     return (
         <div className={styles.renderTable}>

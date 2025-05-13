@@ -355,14 +355,14 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 )}
                 {throughPutDisable ? (
                     <DsTextField
-                        title="Throughput MB/s-default"
+                        title="Throughput (MB/s)"
                         disabledReason={GENERAL.THROUGHPUT_DISABLE_TOOLTIP}
                         isDisabled
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 ) : (
                     <TextField
-                        label={'Throughput MB/s-default'}
+                        label={'Throughput (MB/s)'}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setThroughputValue(numVal);

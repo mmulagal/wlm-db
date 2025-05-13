@@ -1,12 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
-import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
+import { AUTHENTICATION_TYPE, DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
 import {
     initialDatabaseTableColState,
     initialHostsTableColState,
     initialInstanceTableColState
 } from '../../utils/manageColumnUtils';
-import { set } from 'lodash';
 
 const initialInventoryV2State: InventorySliceData = {
     breadCrumbSelectedFrom: '',
@@ -28,6 +27,14 @@ const initialInventoryV2State: InventorySliceData = {
     discoveredHosts: {
         discoveredHostData: null,
         discoverHostLoading: false
+    },
+    discoveredOracleHosts: {
+        discoveredOracleHostData: null,
+        discoverOracleHostLoading: false
+    },
+    discoveredPgsqlHosts: {
+        discoveredPgsqlHostData: null,
+        discoverPgsqlHostLoading: false
     },
     fsxCredentialStatusObj: {},
     fsxCredentialStatusLoading: false,
@@ -86,13 +93,17 @@ const initialInventoryV2State: InventorySliceData = {
         loading: false,
         error: ''
     },
-    createResourceApiLoading: false
+    createResourceApiLoading: false,
+    authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setAuthenticationType: (state, action: PayloadAction<any>) => {
+            state.authenticationType = action.payload;
+        },
         setTableManageColumnState: (state, action: PayloadAction<any>) => {
             state.tableManageColumnState = action.payload;
         },
@@ -158,6 +169,18 @@ const inventoryV2Slice = createSlice({
         },
         setIsDiscoverHostLoading: (state, action: PayloadAction<any>) => {
             state.discoveredHosts.discoverHostLoading = action.payload;
+        },
+        setIsDiscoveredOracleHostData: (state, action: PayloadAction<any>) => {
+            state.discoveredOracleHosts.discoveredOracleHostData = action.payload;
+        },
+        setIsDiscoverOracleHostLoading: (state, action: PayloadAction<any>) => {
+            state.discoveredOracleHosts.discoverOracleHostLoading = action.payload;
+        },
+        setIsDiscoveredPgsqlHostData: (state, action: PayloadAction<any>) => {
+            state.discoveredPgsqlHosts.discoveredPgsqlHostData = action.payload;
+        },
+        setIsDiscoverPgsqlHostLoading: (state, action: PayloadAction<any>) => {
+            state.discoveredPgsqlHosts.discoverPgsqlHostLoading = action.payload;
         },
         setFsxCredentialStatus: (state, action: PayloadAction<any>) => {
             state.fsxCredentialStatusObj = action.payload;
@@ -284,6 +307,10 @@ const inventoryV2Slice = createSlice({
             state.getPgSqlDatabaseHosts.databaseHostsData = null;
             state.discoveredHosts.discoveredHostData = null;
             state.discoveredHosts.discoverHostLoading = true;
+            state.discoveredOracleHosts.discoveredOracleHostData = null;
+            state.discoveredOracleHosts.discoverOracleHostLoading = true;
+            state.discoveredPgsqlHosts.discoveredPgsqlHostData = null;
+            state.discoveredPgsqlHosts.discoverPgsqlHostLoading = true;
             state.dashSandboxList.loading = true;
             state.dashSandboxSavings.loading = true;
             state.inventoryChartData = null;
@@ -318,6 +345,8 @@ const inventoryV2Slice = createSlice({
             state.getPgSqlDatabaseHosts.fullHostDataLoading = false;
             state.allmssqlHostAssessmentLoading = false;
             state.discoveredHosts.discoverHostLoading = false;
+            state.discoveredOracleHosts.discoverOracleHostLoading = false;
+            state.discoveredPgsqlHosts.discoverPgsqlHostLoading = false;
             state.dashSandboxList.loading = false;
             state.dashSandboxSavings.loading = false;
         }
@@ -325,6 +354,7 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setAuthenticationType,
     setSelectedFilterValue,
     setSelectedInventoryTab,
     setOptimizeInnerPageValues,
@@ -344,6 +374,10 @@ export const {
     addPgSqlDatabaseHostsData,
     setIsDiscoveredHostData,
     setIsDiscoverHostLoading,
+    setIsDiscoveredOracleHostData,
+    setIsDiscoverOracleHostLoading,
+    setIsDiscoveredPgsqlHostData,
+    setIsDiscoverPgsqlHostLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
     setMssqlInstancesData,

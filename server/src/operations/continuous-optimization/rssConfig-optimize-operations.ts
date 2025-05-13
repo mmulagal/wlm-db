@@ -1,6 +1,6 @@
 import { isEmpty, isUndefined } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 import getLogger from '../../utils/logger';
 import { Metadata, RssConfigAssesment } from '../../utils/common-types';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
@@ -10,14 +10,16 @@ import {
     OPTIMIZATION_CATEGORIES
 } from '../../utils/continous-optimization-consts';
 import { getServerNameWithHostname, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../../utils/utils';
-import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
+import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { OPTIMIZE_NETWORK_ADAPTERS } from '../workloads/mssql/continuous-optimization-scripts';
 import { updateJobDetails } from '../database/job-operations';
-import { getInstanceInfo } from '../database/database-operations';
+import { getInstanceInfo, updateResourceMetaData } from '../database/database-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
+    checkRunningStatus,
     getClusterNodeInstanceIds,
+    getRunningSqlServices,
     handleRollbackClusterOwnership,
     moveClusterGroupOwnership,
     transferClusterOwnershipToStandbyNode
@@ -50,7 +52,7 @@ async function optimizeNetworkAdapters(
                 region,
                 [OPTIMIZE_NETWORK_ADAPTERS(networkAdapters)],
                 instanceId,
-                `Optimize network adapters for ${resourceName}`,
+                `Fix network adapters for ${resourceName}`,
                 accountId,
                 false,
                 '300'
@@ -58,7 +60,7 @@ async function optimizeNetworkAdapters(
         );
         const { response, error: ssmError } = sqlResponseParsing(rawResponse) || {};
         if (response === 'FAILED' || !isEmpty(ssmError)) {
-            const msg = `Failed to optimize network adapters: ${databaseHostId} account: ${accountId} region: ${region} credentialsId: ${credentialsId}`;
+            const msg = `Failed to fix network adapters: ${databaseHostId} account: ${accountId} region: ${region} credentialsId: ${credentialsId}`;
             logger.error(msg, ssmError);
             throw new Error(msg);
         }
@@ -66,6 +68,13 @@ async function optimizeNetworkAdapters(
         if (!isDemo()) {
             // Wait for 30 seconds to allow FCI setup to come online after ec2 is online
             await sleep(30000);
+        }
+        try {
+            // check for an active SSM connection to standy instance node
+            await pollSSMConnectionStatus(accountId, credentialsId, region, instanceId);
+        } catch (error) {
+            logger.error('SSM connection error', (error as Error).message);
+            throw error;
         }
     } catch (error) {
         errMsg = (error as Error).message;
@@ -120,6 +129,13 @@ async function handleOptimizeRssOptimization(
 
     try {
         if (activeNodeInstanceId) {
+            // single node cluster/standalone
+            const runningSqlServerNames = await getRunningSqlServices(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId
+            );
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             formattedInstanceName = getServerNameWithHostname(resourceName!, instanceDetail?.database_instance_name);
             await updateLongRunningAuditGroup(undefined, undefined, formattedInstanceName);
@@ -129,15 +145,18 @@ async function handleOptimizeRssOptimization(
                     credentialsId,
                     region,
                     accountId,
-                    JOBTYPE.OPTIMIZATION,
-                    `Optimize network adapters for ${formattedInstanceName}`,
-                    `Optimize network adapters for ${formattedInstanceName}`
+                    JOBTYPE.WELL_ARCHITECTED,
+                    `Fix network adapters for ${formattedInstanceName}`,
+                    `Fix network adapters for ${formattedInstanceName}`
                 );
             }
             if (node2InstanceId) {
-                const connectionStatus = await getSSMConnectionStatus(credentialsId, region, node2InstanceId);
-                if (!connectionStatus) {
-                    throw Error('SSM connection is not available for the selected instance');
+                try {
+                    // check for an active SSM connection to standy instance node
+                    await pollSSMConnectionStatus(accountId, credentialsId, region, activeNodeInstanceId);
+                } catch (error) {
+                    logger.error('SSM connection error', (error as Error).message);
+                    throw error;
                 }
                 const { clusterNodeInstanceIds } = await getClusterNodeInstanceIds(
                     accountId,
@@ -148,7 +167,7 @@ async function handleOptimizeRssOptimization(
                 const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
                     nodeId => nodeId !== activeNodeInstanceId
                 );
-                let jobDescription = `Optimize network adapters of standby nodes for ${formattedInstanceName}`;
+                let jobDescription = `Fix network adapters of standby nodes for ${formattedInstanceName}`;
                 const jobMetadata: JobMetadata = {
                     hostsToOptimize: [
                         {
@@ -164,7 +183,7 @@ async function handleOptimizeRssOptimization(
                     credentialsId,
                     region,
                     resourceName!,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     jobDescription,
                     jobDescription,
                     parentJobId,
@@ -206,7 +225,7 @@ async function handleOptimizeRssOptimization(
                     credentialsId,
                     region,
                     formattedInstanceName,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     jobDescription,
                     jobDescription,
                     parentJobId
@@ -241,7 +260,7 @@ async function handleOptimizeRssOptimization(
                 }
             }
             // Optimizing network adapters of primary nodes
-            let jobDescription = `Optimize network adapters of primary node for ${formattedInstanceName}`;
+            let jobDescription = `Fix network adapters of primary node for ${formattedInstanceName}`;
             const jobMetadata: JobMetadata = {
                 hostsToOptimize: [
                     {
@@ -256,7 +275,7 @@ async function handleOptimizeRssOptimization(
                 credentialsId,
                 region,
                 resourceName!,
-                JOBTYPE.OPTIMIZATION,
+                JOBTYPE.WELL_ARCHITECTED,
                 jobDescription,
                 jobDescription,
                 parentJobId,
@@ -289,13 +308,13 @@ async function handleOptimizeRssOptimization(
             }
             if (shouldRollbackClusterOwnership) {
                 // Transfer cluster ownership back to primary node instance
-                jobDescription = 'Transfer cluster node ownership from primary to another node in the cluster';
+                jobDescription = 'Transfer cluster node ownership from standby node in the cluster to primary node';
                 const transferOwnershipJobId = await handleOptimizeJobCreation(
                     accountId,
                     credentialsId,
                     region,
                     formattedInstanceName,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     jobDescription,
                     jobDescription,
                     parentJobId
@@ -329,19 +348,70 @@ async function handleOptimizeRssOptimization(
                 updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
 
-            // clearning all the ssm command cache so that we will get the fresh data in assessment
-            resetCache(SSM_COMMAND_CACHE_TYPE);
-            // Trigger assessment after optimize
-            await onDemandTriggerDriftAssessmentDataCollection(
+            jobDescription = `Validating SSM connectivity to the instance: ${activeNodeInstanceId}`;
+            const ssmConnectionCheckJobId = await handleOptimizeJobCreation(
                 accountId,
                 credentialsId,
                 region,
-                databaseHostId,
-                databaseInstanceId,
-                AssessmentTriggeredBy.SYSTEM,
-                AssessmentCategories.RSS_CONFIG,
-                masterOptimizeJobParentId
+                formattedInstanceName,
+                JOBTYPE.WELL_ARCHITECTED,
+                jobDescription,
+                jobDescription,
+                parentJobId
             );
+            let ssmConnectionCheckJobStatus;
+            let ssmConnectionCheckJobError;
+            try {
+                // check for an active SSM connection before running the assessment
+                await pollSSMConnectionStatus(accountId, credentialsId, region, activeNodeInstanceId);
+                ssmConnectionCheckJobStatus = JOBSTATUS.COMPLETED;
+            } catch (error) {
+                isAnySubjobFailed = true;
+                ssmConnectionCheckJobStatus = JOBSTATUS.FAILED;
+                ssmConnectionCheckJobError = (error as Error).message;
+                logger.error(ssmConnectionCheckJobError);
+                throw error;
+            } finally {
+                updateJobDetails(accountId, ssmConnectionCheckJobId, {
+                    status: ssmConnectionCheckJobStatus ?? JOBSTATUS.FAILED,
+                    endTime: Date.now(),
+                    error: ssmConnectionCheckJobError
+                });
+            }
+            // check if the sql server is running before running the assessment
+            const checkRunningResponse = await checkRunningStatus(
+                accountId,
+                parentJobId,
+                region,
+                credentialsId,
+                activeNodeInstanceId,
+                formattedInstanceName,
+                runningSqlServerNames || []
+            );
+            let canRunAssessment = false;
+
+            if (checkRunningResponse.status !== JOBSTATUS.COMPLETED) {
+                isAnySubjobFailed = true;
+                throw Error(checkRunningResponse.error);
+            } else {
+                canRunAssessment = true;
+            }
+
+            if (canRunAssessment) {
+                // clearning all the ssm command cache so that we will get the fresh data in assessment
+                resetCache(SSM_COMMAND_CACHE_TYPE);
+                // Trigger assessment after optimize
+                await onDemandTriggerDriftAssessmentDataCollection(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    AssessmentTriggeredBy.SYSTEM,
+                    AssessmentCategories.RSS_CONFIG,
+                    masterOptimizeJobParentId
+                );
+            }
         }
     } catch (error) {
         errorMessage = (error as Error).message;
@@ -353,7 +423,7 @@ async function handleOptimizeRssOptimization(
                 credentialsId,
                 region,
                 formattedInstanceName,
-                JOBTYPE.OPTIMIZATION,
+                JOBTYPE.WELL_ARCHITECTED,
                 'Rollback cluster ownership transfer to primary node',
                 'Rollback cluster ownership transfer to primary node'
             );

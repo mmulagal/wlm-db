@@ -9,7 +9,7 @@ import ComparisonChartStack from '../../../ui-components/Charts/ComparionChartSt
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { ReactComponent as PotentialSavingsImage } from '../../../assets/potential_savings.svg';
 import { ReactComponent as PotentialSavingsDarkModeImage } from '../../../assets/potential_savings_darkMode.svg';
-import { ReactComponent as PotentialSavingsSwitch } from '../../../assets/potentialSavingsSwitch.svg';
+import { ReactComponent as PotentialSavingsSwitch } from '../../../assets/no-savings.svg';
 import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
@@ -195,7 +195,17 @@ const NewPotentialSavings = () => {
                             {isDarkTheme ? (
                                 <PotentialSavingsDarkModeImage />
                             ) : noSavings ? (
-                                <PotentialSavingsSwitch />
+                                <div className={styles.potentialSavingsSwitch}>
+                                    <PotentialSavingsSwitch />
+                                    <div className={styles.potentialSavingsSwitchText}>
+                                        <DsTypography className={styles.firstTile} variant="Regular_14">
+                                            Switching to FSx for ONTAP won't save you money.
+                                        </DsTypography>
+                                        <DsTypography className={styles.secondTile} variant="Regular_14">
+                                            Select Explore savings to review the cost breakdown.
+                                        </DsTypography>
+                                    </div>
+                                </div>
                             ) : (
                                 <PotentialSavingsImage />
                             )}

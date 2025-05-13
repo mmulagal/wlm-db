@@ -535,7 +535,8 @@ async function getMappedOntapVolumes(
             ssmComment,
             accountId,
             true,
-            executionTimeout
+            executionTimeout,
+            true
         );
 
         const cleanResponse = response?.replaceAll('\r\n', '');
@@ -553,9 +554,18 @@ async function getMappedOntapVolumes(
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
                 const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
+                const normalizedVolumeDBMap = Array.isArray(volumeDBMap)
+                    ? volumeDBMap
+                    : volumeDBMap
+                    ? [volumeDBMap]
+                    : [];
                 iName = originalInstanceName;
                 if (volumes && !isEmpty(volumes?.records)) {
-                    instancesResponse[iName] = { volumeRecords: volumes.records, volumeDBMap, lunNames };
+                    instancesResponse[iName] = {
+                        volumeRecords: volumes.records,
+                        volumeDBMap: normalizedVolumeDBMap,
+                        lunNames
+                    };
                 } else {
                     instancesResponse[iName] = { volumeRecords: [], volumeDBMap: [], lunNames: [] };
                 }
@@ -671,7 +681,17 @@ async function getStorageDataFromOntap(
             isSqlAuthEnabled,
             'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'
         );
-        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId, ssmComment);
+        const response = await callSsmExecution(
+            credentialsId,
+            region!,
+            [command],
+            activeNodeInstanceId,
+            ssmComment,
+            undefined,
+            true,
+            undefined,
+            true
+        );
 
         const cleanResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanResponse);

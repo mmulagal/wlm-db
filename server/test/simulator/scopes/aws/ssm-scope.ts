@@ -846,7 +846,25 @@ ssmMock
     .on(SendCommandCommand, params => {
         return /#Get sandbox Details/.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getSandboxDetails'));
+    .resolves(getSampleCommandResponse('getSandboxDetails'))
+    .on(SendCommandCommand, params => {
+        return /# Get running SQL Server instances/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getRunningSqlServersCommand)
+    .on(SendCommandCommand, params => {
+        return /# Check running status and restart if not running/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
+    .on(SendCommandCommand, params => {
+        return /# Get running SQL Server instances/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getRunningSqlServersCommand)
+    .on(SendCommandCommand, params => {
+        return /# Check running status and restart if not running/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
+    .on(SendCommandCommand, params => params.Comment === 'Discover Oracle resources')
+    .resolves(getSampleCommandResponse('getOracleDiscoveryCommand'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1171,7 +1189,16 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'getSandboxDetails',
-            '{"cloneResponse":"[{\\"database_name\\":\\"sandbox_1743487277979\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"account-aHP3esT5\\"},{\\"name\\":\\"cloned_by\\",\\"value\\":\\"netapp_wf\\"},{\\"name\\":\\"createdAt\\",\\"value\\":1743487614964},{\\"name\\":\\"source\\",\\"value\\":\\"stvyar9|MSSQLSERVER|apr1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743487614964}]},{\\"database_name\\":\\"sandbox_ap90\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"acco…ar9|MSSQLSERVER|test1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743486922070}]},{\\"database_name\\":\\"sandbox_test234\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"account-aHP3esT5\\"},{\\"name\\":\\"cloned_by\\",\\"value\\":\\"netapp_wf\\"},{\\"name\\":\\"createdAt\\",\\"value\\":1743487698523},{\\"name\\":\\"source\\",\\"value\\":\\"stvyar9|MSSQLSERVER|test1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743487698523}]}]"}'
+            '{"cloneResponse":"[{\\"database_name\\":\\"sandbox_1743487277979\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"account-aHP3esT5\\"},{\\"name\\":\\"cloned_by\\",\\"value\\":\\"netapp_wf\\"},{\\"name\\":\\"createdAt\\",\\"value\\":1743487614964},{\\"name\\":\\"source\\",\\"value\\":\\"stvyar9|MSSQLSERVER|apr1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743487614964}]},{\\"database_name\\":\\"sandbox_ap90\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"account-aHP3esT5\\"},{\\"name\\":\\"cloned_by\\",\\"value\\":\\"netapp_wf\\"},{\\"name\\":\\"createdAt\\",\\"value\\":1743486922070},{\\"name\\":\\"source\\",\\"value\\":\\"stvyar9|MSSQLSERVER|test1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743486922070}]},{\\"database_name\\":\\"sandbox_test234\\",\\"sandbox_properties\\":[{\\"name\\":\\"accountId\\",\\"value\\":\\"account-aHP3esT5\\"},{\\"name\\":\\"cloned_by\\",\\"value\\":\\"netapp_wf\\"},{\\"name\\":\\"createdAt\\",\\"value\\":1743487698523},{\\"name\\":\\"source\\",\\"value\\":\\"stvyar9|MSSQLSERVER|test1\\"},{\\"name\\":\\"tag\\",\\"value\\":\\"Development\\"},{\\"name\\":\\"updatedAt\\",\\"value\\":1743487698523}]}]"}'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getOracleDiscoveryCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getOracleDiscoveryCommand',
+            JSON.stringify(getCommandInvocationResponse.discoverOracleServer)
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

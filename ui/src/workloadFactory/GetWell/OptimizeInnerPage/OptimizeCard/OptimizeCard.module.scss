@@ -1,83 +1,92 @@
-.optimizeCard {
-    width: 1334px;
-    height: 96px;
-    padding: 16px 40px 0 40px;
-    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
-    background-color: var(--content-background);
-    margin-top: 24px;
+.optimizeCardContainer {
+    width: 926px;
+    display: flex;
+    flex-direction: column;
 
-    .section {
-        display: flex;
-        justify-content: space-between;
+    .optimizeCard {
+        height: 96px;
+        padding: 16px 40px 0 40px;
+        box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
+        background-color: var(--content-background);
 
-        .leftSide {
+        .section {
             display: flex;
-            gap: 24px;
+            justify-content: space-between;
 
-            .commonRow {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-                min-width: 200px;
-                height: 52px;
-                border-right: 1px solid var(--border);
-            }
-
-            .tagRow {
+            .leftSide {
                 display: flex;
                 gap: 24px;
-                align-items: center;
 
-                .tagContainer {
-                    display: flex;
-                    gap: 8px;
-                }
-            }
-        }
-
-        .rightSide {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-
-            [class*='TooltipInfo-module_tooltip-base'] {
-                max-width: 400px !important;
-            }
-
-            .tooltipContainer {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .rssConfig {
-                display: flex;
-                gap: 16px;
-                flex-direction: column;
-
-                .bulletContainer {
+                .commonRow {
                     display: flex;
                     flex-direction: column;
-                    gap: 32px;
+                    gap: 4px;
+                    min-width: 200px;
+                    height: 52px;
+                    border-right: 1px solid var(--border);
                 }
 
-                .points {
+                .tagRow {
+                    display: flex;
+                    gap: 24px;
+                    align-items: center;
+
+                    .tagContainer {
+                        display: flex;
+                        gap: 8px;
+                    }
+                }
+            }
+
+            .rightSide {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+
+                [class*='TooltipInfo-module_tooltip-base'] {
+                    max-width: 400px !important;
+                }
+
+                .tooltipContainer {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+
+                .rssConfig {
                     display: flex;
                     gap: 16px;
-                    align-items: unset;
-                    height: 24px;
+                    flex-direction: column;
 
-                    .bullet {
-                        margin-top: 5px;
+                    .bulletContainer {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 32px;
+                    }
+
+                    .points {
+                        display: flex;
+                        gap: 16px;
+                        align-items: unset;
+                        height: 24px;
+
+                        .bullet {
+                            margin-top: 5px;
+                        }
                     }
                 }
             }
         }
     }
+
+    .recommendation {
+        background-color: var(--content-background);
+        box-shadow: 2px 2px 6px 0px var(--border);
+    }
 }
 
 @media screen and (min-width: 1920px) {
-    .optimizeCard {
-        width: 73.22%;
+    .optimizeCardContainer {
+        width: calc(926px + ((100vw - 1920px) * 0.6941)) !important;
     }
 }

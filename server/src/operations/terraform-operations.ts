@@ -220,7 +220,8 @@ async function uploadInitializerScripts(
                     ScriptSetup: decodeURIComponent(signedUrls.get('ScriptSetup')?.url || ''),
                     FsxCertificates: decodeURIComponent(signedUrls.get('FsxCertificates')?.url || ''),
                     ArtifactsSignatures: decodeURIComponent(signedUrls.get('ArtifactsSignatures')?.url || ''),
-                    PGSQLPackages: decodeURIComponent(signedUrls.get('PGSQLPackages')?.url || '')
+                    PGSQLPackages: decodeURIComponent(signedUrls.get('PGSQLPackages')?.url || ''),
+                    PGPOOLPackage: decodeURIComponent(signedUrls.get('PGPOOLPackage')?.url || '')
                 });
                 const templateName =
                     deploymentMode === STANDALONE ? 'PGSQLStandaloneInitializerTemplate' : 'PGSQLHAInitializerTemplate';

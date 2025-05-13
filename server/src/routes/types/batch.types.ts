@@ -1,7 +1,8 @@
 import { Type, Static } from '@fastify/type-provider-typebox';
+import { API_DESCRIPTION } from '../../utils/schema-description-consts';
 
 const BatchParams = Type.Object({
-    accountId: Type.String()
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC })
 });
 
 const BatchRequestBody = Type.Array(

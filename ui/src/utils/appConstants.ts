@@ -28,8 +28,12 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    REACTIVATE_TOOLTIP: 'Restart the analysis for a postponed or dismissed configuration.',
+    POSTPONED_TOOLTIP: 'Postpone the configuration analysis for 30 days.',
+    DISMISS_TOOLTIP: 'Stop the configuration analysis.',
     ACTIVATING_MESSAGE: 'Active. Will be analyzed in the next analysis.',
-    DISMISSED_MESSAGE: 'This issue is dismissed.',
+    ACTIVATING_MESSAGE_TWO: 'Will be analyzed in the next analysis.',
+    DISMISSED_MESSAGE: 'Analysis is dismissed.',
     CLONE_MANAGEMENT_REFRESH: 'Clone cleanup Refresh',
     CLONE_MANAGEMENT_DELETE: 'Clone cleanup Delete',
     ALL_CRED_SELECTED: 'All credentials selected',
@@ -41,11 +45,13 @@ export const GENERAL = {
     ASSESS_NOW: 'Analyze now',
     MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',
     POSTGRESQL_TYPE: 'PostgreSQL',
+    ORACLE_TYPE: 'Oracle',
     USER_DATABASE: 'User Database',
     SYSTEM_DATABASE: 'System Database',
     MULTIPLE_VALUES: 'Multiple values',
-    OPTIMIZE: 'Optimize',
+    OPTIMIZE: 'Fix',
     REBASE_LINE: 'Re-baseline',
+    APPLY: 'Apply',
     MICROSOFT_SQL: 'Microsoft SQL',
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
     LOADING_DATA: 'Loading data',
@@ -607,7 +613,7 @@ export const GENERAL = {
     JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
-    JM_TYPE_OPTIMIZE: 'Optimization',
+    JM_TYPE_OPTIMIZE: 'Well-architected',
     JM_DOWNLOAD_PROGRESS: 'Download in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table was downloaded',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -678,7 +684,7 @@ export const GENERAL = {
         'Quick create enhances database performance by allocating new drive letters for you and segregating the user database layout into distinct volumes and LUNs per data and log files.'
     ],
     ADVANCED_DB_CREATE_CONTENT:
-        'Recommended for small to medium databases. With Advanced create mode, you set your storage layout configuration to optimize performance by configuring new and existing drive letter options for data and log files.',
+        'Recommended for small to medium databases. With Advanced create mode, you set your storage layout configuration to well-architect performance by configuring new and existing drive letter options for data and log files.',
     FILE_SIZE_TEXT: [
         'Data and log file sizes have a minimum value of 1 GiB.',
         'The recommended log file size (default) is 25% of the data file size. The default log file size value is editable.'
@@ -1135,10 +1141,12 @@ export const GENERAL = {
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
     PGSQL_CTA_NA: 'Coming soon',
+    NON_MSSQL_BULK_CTA: 'Bulk manage is only supported for Microsoft SQL Server instances.',
     DATABASE_AVAILABLE_MSG: 'Databases are available for managed instances only.',
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
-    PGSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
+    ONLINE_INSTANCE_DISMISS: 'Analysis state can be updated for online instances.',
+    NON_MSSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
@@ -1254,7 +1262,7 @@ export const GENERAL = {
     SQL_COLLATION_NOTE:
         'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You will be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You will be able to fix after the current well-architected operation ends.',
     ONPREM_TOOLTIP:
         'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
@@ -1274,17 +1282,22 @@ export const GENERAL = {
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization",
+        "Well-architected is only available for managed instances that have been analyzed and are online. Offline and unanalyzed instances aren't available for well-architected",
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:
-        'You postponed the analysis for some instances in your database configurations. Instances with postponed analysis do not affect the optimization score.',
+        "You postponed or dismissed configuration analysis for some SQL Server instances. Configurations with postponed or dismissed analysis don't affect the well-architected score.",
     MIXED_STATE_CONFIG_TOOLTIP: 'This configuration analysis is dismissed or postponed for some of the instances.',
     DISMISS_MIX_CASE_TOOLTIP: 'This configurations analysis is dismissed or postponed for some of the instances.',
-    DISMISS_PAGE_MSG: [
-        'You can postpone or dismiss the analysis of a specific configuration for your SQL Server instances. Postponing delays the analysis for 30 days and dismissing the analysis stops',
-        "the analysis until you reactivate it manually. Postponed or dismissed configuration analyses won't affect the total optimization score."
-    ]
+
+    DISMISS_PAGE_MESSAGE:
+        "Postpone the scan for 30 days or indefinitely. If you postpone the scan indefinitely, you'll need to manually restart the scan. You can postpone scans for specific instances or for all instances. Configurations that have postponed scans won't affect the total well-architected score.",
+    MANAGE_ANALYSIS_STATE: 'Manage analysis state',
+    REACTIVATE: 'Reactivate',
+    POSTPONE_FOR_30_DAYS: 'Postpone for 30 days',
+    DISMISS: 'Dismiss',
+    ANALYSIS_STATE_CHANGE_SUCCESS: 'Updated analysis state.',
+    ANALYSIS_STATE_CHANGE_FAILED: 'Failed to update analysis state.'
 };
 
 export const CODE_VIEWER = {
@@ -1393,7 +1406,7 @@ export const GETWELL_DIALOG_CONTENT = {
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and to acknowledge the required downtime.'
     ],
     COMPUTE_RS_LAST_POINT: [
-        'Compute rightsizing optimization involves an instance type change and impacts all SQL Server instances and any other applications running on the host. Make sure that your applications are compatible with the new instance type. Refer to ',
+        'Compute rightsizing fixing involves an instance type change and impacts all SQL Server instances and any other applications running on the host. Make sure that your applications are compatible with the new instance type. Refer to ',
         'AWS resize limitations',
         ' for limitations on changing instance types.'
     ]

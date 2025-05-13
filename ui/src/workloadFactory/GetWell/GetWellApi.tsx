@@ -11,30 +11,36 @@ import {
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
 import { formatGetWellData, resetGwValuesOnRefresh } from './GetWellUtils';
-import { WLF_TABS } from '../../utils/consts';
+import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();
     const { credIdFromJM, regionFromJM, landingFrom, landingFromInnerPage } = useAppSelector(
         state => state.getWellOptimize
     );
+
     const {
         selectedResourceId,
         selectedDatabaseInstance,
         gwRefreshPage,
         selectedGwInstanceCredId,
-        selectedGwInstanceRegionId
+        selectedGwInstanceRegionId,
+        visitedTabs
     } = useAppSelector(state => state.getWellOptimize);
 
     const [assessmentDetailsApi] = useGetMssqlAssessmentDataMutation();
 
     useEffect(() => {
-        // On page load, call the API to get the assessment details
-        if (!landingFromInnerPage) {
+        //On page load, call the API to get the assessment details
+        if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
             viewOptimizeAction();
         } else {
             dispatch(setLandingFromInnerPage(false));
         }
+
+        // if (!visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
+        //     viewOptimizeAction();
+        // }
     }, []);
 
     const runAssessmentDetailsApi = async () => {

@@ -176,7 +176,9 @@ async function getDataBasesSummary(
             activeNodeInstanceId,
             'Get databases summary on node',
             undefined,
-            false
+            true,
+            undefined,
+            true
         );
         const cleanDBSummanry = sqlResponseParsing(dbSummary);
         return { databases: cleanDBSummanry };
@@ -213,7 +215,9 @@ async function getAllResourceUtilisationDetails(
         activeNodeInstanceId,
         'Get resource utilization for MSSQL instances',
         undefined,
-        false
+        true,
+        undefined,
+        true
     );
     const parsedResourceUtilizationData = resurceUtilizationData ? sqlResponseParsing(resurceUtilizationData) : {};
 
@@ -519,7 +523,11 @@ async function getServerDetails(
         region,
         command,
         activeNodeInstanceId,
-        'Get MSSQL server details'
+        'Get MSSQL server details',
+        undefined,
+        true,
+        undefined,
+        true
     );
 
     const instancesResponse: { [key: string]: any } = {};

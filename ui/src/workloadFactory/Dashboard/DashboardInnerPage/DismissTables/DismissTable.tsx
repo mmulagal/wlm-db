@@ -1,9 +1,9 @@
-import { Table, useTable, TableTopBar, ButtonWithDropdown, DsTypography } from '@netapp/design-system';
+import { ButtonWithDropdown, DsTypography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './DismissTables.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
     checkBoxHandleDismiss,
     formatDateAssess,
@@ -19,6 +19,11 @@ import { ReactComponent as Warning } from '../../../../assets/warning.svg';
 import { ReactComponent as Info } from '../../../../assets/info.svg';
 import BulkDismissContainer from '../../../../common/BulkAction/BulkDismissContainer';
 import { GENERAL } from '../../../../utils/appConstants';
+import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
+import { useTable } from '../../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../../common/Lib/Table/Table';
+import { checkIfDisableForDismiss, disableDismissCheckBoxForErrCase } from '../../../GetWell/GetWellUtils';
 
 interface StorageTierTableProps {
     handleBulkAction: any;
@@ -34,13 +39,29 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
 
     const setStatusIcon = (value: string) => {
         if (value === CONFIG_STATES.ACTIVE) {
-            return <Success />;
+            return (
+                <div>
+                    <Success />
+                </div>
+            );
         } else if (value === CONFIG_STATES.ACTIVATING) {
-            return <Info />;
+            return (
+                <div>
+                    <Info />
+                </div>
+            );
         } else if (value.includes(CONFIG_STATES.POSTPONED)) {
-            return <Warning />;
+            return (
+                <div>
+                    <Warning />
+                </div>
+            );
         } else {
-            return <Warning />;
+            return (
+                <div>
+                    <Warning />
+                </div>
+            );
         }
     };
 
@@ -61,6 +82,11 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
         }
     };
 
+    // Update tableData when offline
+    const updatedTableData = useMemo(() => {
+        return disableDismissCheckBoxForErrCase(tableData, type || '');
+    }, [tableData]);
+
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance name ',
@@ -78,14 +104,14 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: '403px',
+            width: '200px',
             filterOptions: 'auto'
         },
         {
-            Header: 'Configuration state',
+            Header: 'Analysis state',
             accessor: 'configState',
             id: '3',
-            width: 'auto',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return (
@@ -99,50 +125,85 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
             }
         },
         {
+            id: '4',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '5',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '6',
+            Header: 'Region',
+            accessor: 'regionName',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
             Header: 'Action',
             accessor: '',
-            id: '4',
-            width: '220px',
+            id: '7',
+            width: '150px',
+            isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
+                let { isDisabled, errorMessage } = checkIfDisableForDismiss(rowData, selectedRowsForDismiss);
                 return (
                     <div
                         className={
-                            selectedRowsForDismiss.length > 0
+                            selectedRowsForDismiss.length > 0 || isDisabled
                                 ? `${styles.actionContainer} ${styles.actionDisabled}`
                                 : styles.actionContainer
                         }
                     >
                         <DsTypography variant="Regular_14" className={styles.actionText}>
-                            Set status
+                            Update state
                         </DsTypography>
                         <ButtonWithDropdown
                             variant="icon"
-                            isDisabled={selectedRowsForDismiss.length > 0}
+                            isDisabled={selectedRowsForDismiss.length > 0 || isDisabled}
                             items={[
                                 {
                                     id: 'activate',
-                                    children: 'Activate',
+                                    children: GENERAL.REACTIVATE,
                                     isDisabled:
                                         rowData?.configState === CONFIG_STATES.ACTIVE ||
                                         rowData?.configState === CONFIG_STATES.ACTIVATING,
                                     onClick: () => {
                                         handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.ACTIVE);
+                                    },
+                                    title: GENERAL.REACTIVATE_TOOLTIP,
+                                    titleProps: {
+                                        placement: 'left'
                                     }
                                 },
                                 {
                                     id: 'postponeFor30Days',
-                                    children: 'Postpone for 30 days',
+                                    children: GENERAL.POSTPONE_FOR_30_DAYS,
                                     isDisabled: rowData?.configState.includes(CONFIG_STATES.POSTPONED),
                                     onClick: () => {
                                         handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.POSTPONED);
+                                    },
+                                    title: GENERAL.POSTPONED_TOOLTIP,
+                                    titleProps: {
+                                        placement: 'left'
                                     }
                                 },
                                 {
                                     id: 'dismiss',
-                                    children: 'Dismiss',
+                                    children: GENERAL.DISMISS,
                                     isDisabled: rowData?.configState === CONFIG_STATES.DISMISSED,
                                     onClick: () => {
                                         handleSingleAction(type, rowData, CONFIG_STATE_ACTIONS.DISMISS);
+                                    },
+                                    title: GENERAL.DISMISS_TOOLTIP,
+                                    titleProps: {
+                                        placement: 'left'
                                     }
                                 }
                             ]}
@@ -158,17 +219,19 @@ const DismissTable = ({ handleBulkAction, handleSingleAction, tableData, type }:
     const tableProps = useTable({
         //@ts-ignore
         manageColumnsProps: false,
-        isHorizontalScroll: false,
+        isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
-        rows: tableData || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: []
+        defaultSelectedRows: [],
+        isManagedColumns: true,
+        initialColumnState: initialDashboardInnerPageOptimizeColState
     });
 
     useEffect(() => {
-        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
         dispatch(setSelectedRowsForDismiss(rowsData));
 

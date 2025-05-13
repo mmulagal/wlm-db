@@ -57,6 +57,7 @@ const JobMonitoringTable = React.memo(() => {
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
+    const refreshTimeJobMonitor = useAppSelector(state => state.headers.refreshTimeJobMonitor);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
@@ -322,7 +323,7 @@ const JobMonitoringTable = React.memo(() => {
                 { value: JOB_MONITORING_TYPE.PREPARE_RESOURCE, label: GENERAL.JM_TYPE_PREPARE_RESOURCE },
                 { value: JOB_MONITORING_TYPE.SANDBOX, label: GENERAL.JM_TYPE_SANDBOX },
                 { value: JOB_MONITORING_TYPE.ASSESSMENT, label: GENERAL.JM_TYPE_ASSESSMENT },
-                { value: JOB_MONITORING_TYPE.OPTIMIZE, label: GENERAL.JM_TYPE_OPTIMIZE }
+                { value: JOB_MONITORING_TYPE.WELL_ARCHITECTED, label: GENERAL.JM_TYPE_OPTIMIZE }
             ],
             renderCell: (cellData: any) => {
                 return jobMonitoringTypeMapping(cellData);
@@ -542,6 +543,17 @@ const JobMonitoringTable = React.memo(() => {
         collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
         tableProps?.pagination?.gotoPage(0);
     }, [timeInterval, refreshTime]);
+
+    useEffect(() => {
+        const allRowIds = Object.keys(tableProps?.rowsState);
+        if (allRowIds && allRowIds.length > 0) {
+            allRowIds.forEach(rowId => {
+                tableProps.updateRowState(rowId)({
+                    isExpanded: false
+                });
+            });
+        }
+    }, [refreshTimeJobMonitor]);
 
     const downloadJobMonitoring = () => {
         dispatch(setDownloadJobsLoading(true));

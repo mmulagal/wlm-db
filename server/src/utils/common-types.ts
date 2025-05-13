@@ -88,6 +88,16 @@ interface MaxDOPAssesment {
     status: string;
 }
 
+interface CrrDetails {
+    volumeName: string;
+    isCRREnabled: boolean;
+    isSnapMirrored: boolean;
+    sourceSvmUuid: string;
+}
+interface CrrAssessment {
+    crrDetails: CrrDetails[];
+    errorMessage?: string;
+}
 interface AWSBackupAssessment {
     fileSystemId: string;
     isAWSBackupEnabled: boolean;
@@ -118,7 +128,7 @@ interface ClonedVolumeDetail {
     cloneVolumeType?: string;
 }
 
-interface CloneAssesment {
+interface CloneAssessment {
     status: string;
     cloneDetails?: CloneDetail[];
     oldClones?: number;
@@ -132,7 +142,7 @@ interface ResourceAssessmentData {
     hostOsPatch?: HostOsPatchAssessmentObject[];
     rssConfig?: RssConfigAssesment;
     maxDOP?: MaxDOPAssesment;
-    clone?: CloneAssesment;
+    clone?: CloneAssessment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
     lastAssessedDate?: string;
     errors?: {
@@ -187,6 +197,10 @@ interface DatabaseInstanceMetadata {
 }
 
 interface DatabaseInstanceConfigurations {
+    dismissedConfigurations: DatabaseInstanceDismissConfigs;
+}
+
+interface DatabaseHostConfigurations {
     dismissedConfigurations: DatabaseInstanceDismissConfigs;
 }
 
@@ -245,6 +259,7 @@ interface ResourceDetails {
     clusterNodeDetails?: NodeDetails[];
     databaseInstanceDetails?: DatabaseInstance[];
     ec2UsageOperation?: string; // internal field used to store the ec2 usage operation for the unmanaged MSSQL resource
+    configurations?: DatabaseInstanceConfigurations | JsonValue;
 }
 
 interface DeploymentDetails {
@@ -611,7 +626,7 @@ interface InstancesResponse {
 }
 
 interface InstanceDismissParams {
-    name: string;
+    configurationName: string;
     configState: string;
     startTime: number;
     endTime?: number;
@@ -628,12 +643,22 @@ interface DatabaseInstanceDismissConfigs {
         sizing?: InstanceDismissParams[];
         layout?: InstanceDismissParams[];
     };
-    compute?: InstanceDismissParams;
-    license?: InstanceDismissParams;
-    hostOsPatch?: InstanceDismissParams;
     rssConfig?: InstanceDismissParams;
     maxDop?: InstanceDismissParams;
     mssqlPatch?: InstanceDismissParams;
+    crr?: InstanceDismissParams;
+    snapshotPolicy?: InstanceDismissParams;
+    awsBackup?: InstanceDismissParams;
+    clone?: InstanceDismissParams;
+    compute?: InstanceDismissParams;
+    license?: InstanceDismissParams;
+    hostOsPatch?: InstanceDismissParams;
+}
+
+interface MappedVolumeResponseForClone {
+    volumeMapping: MappedOnTapVolumeResponse;
+    fsxId: string;
+    activeNodeInstanceId: string;
 }
 
 export {
@@ -679,7 +704,7 @@ export {
     AwsFsxNBackupConfig,
     MultipleCommandSsmResponse,
     SsmSqlServerRunningStatus,
-    CloneAssesment,
+    CloneAssessment,
     CloneDetail,
     VolumeRecord,
     MappedOnTapVolumeResponse,
@@ -687,7 +712,12 @@ export {
     VolumeDBMapEntry,
     AWSBackupAssessment,
     ResourceAssessmentData,
+    ClonedVolumeDetail,
+    MappedVolumeResponseForClone,
     InstanceDismissParams,
     DatabaseInstanceDismissConfigs,
-    DatabaseInstanceConfigurations
+    DatabaseInstanceConfigurations,
+    DatabaseHostConfigurations,
+    CrrAssessment,
+    CrrDetails
 };

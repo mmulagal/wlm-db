@@ -1,4 +1,6 @@
 export interface GetWellSliceInterface {
+    visitedTabs: any;
+    selectedWellArchitectTab: string;
     selectedCloneTab: string;
     optimizePageLoading: boolean;
     driftAssessmentData: AssessmentResponseInterface | null;
@@ -53,6 +55,8 @@ interface CountBreakDown {
     optimized?: number;
     notOptimized?: number;
     percent?: number;
+    critical?: number;
+    warning?: number;
 }
 
 export interface AssessmentResponseInterface {
@@ -174,6 +178,7 @@ export interface GwCardDataInterface {
 }
 
 export interface GwPerConfigCardInterface {
+    mapName: string;
     block_one: {
         type: string;
         value: string;

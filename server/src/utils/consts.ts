@@ -152,7 +152,8 @@ enum RouteTags {
     SANDBOX = 'Sandbox',
     ASSESSMENT = 'Continuous Optimization',
     ONPREM_TCO = 'OnPremises TCO',
-    NOTIFICATION = 'Notification'
+    NOTIFICATION = 'Notification',
+    LOGS_ANALYSIS = 'Logs Analysis'
 }
 
 enum HttpErrorCodes {
@@ -653,7 +654,9 @@ const WLM_ASSETS: Record<string, string> = {
 
 // Template error messages
 const MISSING_PERMISSIONS = (implicitlyDenied: MissingPermission[], explicitlyDenied: MissingPermission[]) =>
-    `Required permissions are not available to deploy cloud formation template. Implicitly denied: ${implicitlyDenied}. Explicitly denied: ${explicitlyDenied}`;
+    `Required permissions are not available to deploy cloud formation template. Implicitly denied: ${JSON.stringify(
+        implicitlyDenied
+    )}. Explicitly denied: ${JSON.stringify(explicitlyDenied)}`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 const STANDALONE_NETWORK_VIOLATION_MESSAGE =
@@ -1717,10 +1720,16 @@ const PGSQL_DEFAULT_INSTANCE_NAME = 'postgresql';
 const GENERIC_ASSESSMENT_ERROR_MESSAGE = (category: string) =>
     `No ${category} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try after running adhoc assessment.`;
 
+enum CLONE_ACTION {
+    DELETE = 'delete',
+    REFRESH = 'refresh'
+}
+
 const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
-const CLONE_AGE = 0; // It has to be changed to 60 after testing
+const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-age-in-days') : 60; // Fall Back to 60 days as default if not set in config
+const OTHER_CLONE = 'other';
 
 export {
     WLMDB,
@@ -2069,5 +2078,7 @@ export {
     GENERIC_ASSESSMENT_ERROR_MESSAGE,
     RESTRICTED_FSX_REGIONS,
     CLONE_AGE,
-    PGSQL_DEFAULT_INSTANCE_NAME
+    PGSQL_DEFAULT_INSTANCE_NAME,
+    CLONE_ACTION,
+    OTHER_CLONE
 };

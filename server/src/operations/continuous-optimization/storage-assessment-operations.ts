@@ -9,7 +9,6 @@ import {
 import getLogger from '../../utils/logger';
 
 import storageGoldenConfigData from './golden-configs/storage';
-import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 import {
     SizingViolationResponseType,
     StorageParameterDriftResponseType,
@@ -328,20 +327,12 @@ async function calculateStorageDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    storageAssessmentData: StorageAssessment
 ) {
     logger.info('Calculating storage drift', { accountId, credentialsId, region, databaseHostId });
 
-    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-        accountId,
-        region,
-        credentialsId,
-        databaseHostId,
-        databaseInstanceId,
-        AssessmentCategories.STORAGE
-    );
-
-    if (isEmpty(persistedConfigurationData)) {
+    if (isEmpty(storageAssessmentData)) {
         const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
         return { errorMessage };
     }
@@ -353,9 +344,8 @@ async function calculateStorageDrift(
         fileSystems: []
     };
 
-    const { config_data: configData } = persistedConfigurationData;
-
-    const { volumes, luns, os, layout, sizing, filesystemId, errors } = configData as unknown as StorageAssessment;
+    const { volumes, luns, os, layout, sizing, filesystemId, errors } =
+        storageAssessmentData as unknown as StorageAssessment;
 
     if (errors && errors.volumes) {
         driftAssessmentData.configuration.volumes.push({ errorMessage: errors.volumes });

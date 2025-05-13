@@ -2,7 +2,7 @@ import { format } from 'util';
 import { readFileSync } from 'fs';
 import log4js, { Configuration, Layout, PatternLayout } from 'log4js';
 import config from 'config';
-import { isObject, isArray, isPlainObject, isEmpty } from 'lodash-es';
+import { isObject, isArray, isPlainObject, isEmpty, isString, isObjectLike } from 'lodash-es';
 import { context, trace } from '@opentelemetry/api';
 import { ACCOUNT_ID, REQUEST_ID, SECRET_WORDS } from './consts';
 import { getAsyncLocalStorageResource } from './async-local-storage';
@@ -11,19 +11,40 @@ function isPatternLayout(layout: Layout): layout is PatternLayout {
     return (layout as PatternLayout).pattern !== undefined;
 }
 
+const stars = '*******';
+
+// Helper function to get all property names including inherited ones
+function getAllPropertyNames(obj: any): string[] {
+    const props = new Set<string>();
+    let current = obj;
+    while (current && current !== Object.prototype) {
+        Object.getOwnPropertyNames(current).forEach(name => props.add(name));
+        current = Object.getPrototypeOf(current);
+    }
+    return Array.from(props);
+}
+
+const maskDBHostUrl = (message: string) => {
+    const hostUrlPattern = /`([a-zA-Z0-9.-]+:\d+)`/g;
+    return message.replace(hostUrlPattern, stars);
+};
+
 function hideSecretsValues(obj: any) {
     if (isArray(obj)) {
         obj.forEach((arrayObj, i) => {
             obj[i] = hideSecretsValues(arrayObj);
         });
-    } else if (isObject(obj)) {
-        Object.keys(obj).forEach(key => {
+    } else if (isObjectLike(obj)) {
+        // Iterate over all keys including inherited ones
+        for (const key of getAllPropertyNames(obj)) {
             if (SECRET_WORDS.includes(key)) {
-                (obj as { [index: string]: string })[key] = '*******';
+                (obj as { [index: string]: string })[key] = stars;
+            } else if (isString(obj[key as keyof object]) && obj[key as keyof object]) {
+                obj[key] = maskDBHostUrl(obj[key]);
             } else if (isPlainObject(obj[key as keyof typeof obj]) || isArray(obj[key as keyof typeof obj])) {
                 (obj as { [index: string]: any })[key] = hideSecretsValues(obj[key as keyof object]);
             }
-        });
+        }
     }
 
     return obj;

@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import { cloneDeep, compact, isEmpty } from 'lodash-es';
 import { DatabaseInstance, Metadata, NodeDetails, SsmSqlServerRunningStatus } from '../../utils/common-types';
 import { AuditStatus } from '../../utils/consts';
-import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
+import { callSsmExecution, pollSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
     CHECK_RUNNING_STATUS_WITH_RESTART,
@@ -32,12 +32,12 @@ import {
     instanceTypeChangePreReqs,
     waitForInstanceToBeStopped
 } from '../aws/ec2-operations';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from '../workloads/mssql/discover-consts';
 import { calculateComputeDrift } from './compute-assessment-operations';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
-import { getInstanceInfo } from '../database/database-operations';
+import { getInstanceInfo, updateResourceMetaData } from '../database/database-operations';
 import { AssessmentStatus } from '../../utils/continous-optimization-consts';
 
 interface ModifiedInstancesNodeDetails {
@@ -112,11 +112,16 @@ async function handleComputeRemediation(
             storageDetails = { svmId, fsxId };
             if (node2InstanceId) {
                 // more than one node in the cluster
-                const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
-                if (!connectionStatus) {
-                    throw createError(500, 'SSM connection is not available for the selected instance');
+                try {
+                    // check for an active SSM connection on standby node
+                    await pollSSMConnectionStatus(accountId, credentialsId, region, activeNodeInstanceId);
+                } catch (error) {
+                    const errorMsg = `SSM connection is not available for the selected instance: ${
+                        (error as Error).message
+                    }`;
+                    logger.error(errorMsg);
+                    throw createError(500, errorMsg);
                 }
-
                 const { clusterNodeDetails, clusterNodeInstanceIds } = await getClusterNodeInstanceIds(
                     accountId,
                     credentialsId,
@@ -134,7 +139,7 @@ async function handleComputeRemediation(
                         credentialsId,
                         region,
                         formattedInstanceName,
-                        JOBTYPE.OPTIMIZATION,
+                        JOBTYPE.WELL_ARCHITECTED,
                         'Prerequisite check for compute optimization of secondary nodes.',
                         'Prerequisite check for compute optimization of secondary nodes.',
                         jobId
@@ -165,7 +170,7 @@ async function handleComputeRemediation(
                         credentialsId,
                         region,
                         formattedInstanceName,
-                        JOBTYPE.OPTIMIZATION,
+                        JOBTYPE.WELL_ARCHITECTED,
                         'Modify instance type for secondary nodes in the cluster',
                         `Modify instance type of SQL nodes ${nonPrimaryNodeInstanceIds.join(
                             ','
@@ -219,7 +224,7 @@ async function handleComputeRemediation(
                         credentialsId,
                         region,
                         formattedInstanceName,
-                        JOBTYPE.OPTIMIZATION,
+                        JOBTYPE.WELL_ARCHITECTED,
                         'Transfer cluster node ownership from primary to another node in the cluster',
                         'Transfer cluster node ownership from primary node in the cluster to a healthy node in the cluster.',
                         jobId
@@ -265,7 +270,7 @@ async function handleComputeRemediation(
                     credentialsId,
                     region,
                     formattedInstanceName,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     'Prerequisite check for compute optimization in SQL node',
                     'Prerequisite check for compute optimization of SQL node.',
                     jobId
@@ -293,7 +298,7 @@ async function handleComputeRemediation(
                 credentialsId,
                 region,
                 formattedInstanceName,
-                JOBTYPE.OPTIMIZATION,
+                JOBTYPE.WELL_ARCHITECTED,
                 'Modify instance type for primary node in the cluster',
                 `Modify instance type of SQL node ${activeNodeInstanceId} to ${instanceType}.To modify, instance will be stopped,modified and restarted.`,
                 jobId
@@ -341,7 +346,7 @@ async function handleComputeRemediation(
                     credentialsId,
                     region,
                     formattedInstanceName,
-                    JOBTYPE.OPTIMIZATION,
+                    JOBTYPE.WELL_ARCHITECTED,
                     'Transfer node ownership back to primary node in the cluster',
                     'Transfer node ownership back to primary node in the cluster',
                     jobId
@@ -417,7 +422,7 @@ async function handleComputeRemediation(
         jobStatus = JOBSTATUS.FAILED;
         errorMessage = 'No active node found in the cluster';
     } catch (error) {
-        errorMessage = `Error while optimizing compute ${error}`;
+        errorMessage = `Error while fixing compute ${error}`;
         logger.error(errorMessage);
         isJobStatusUpdated = true;
         jobStatus = JOBSTATUS.FAILED;
@@ -438,7 +443,7 @@ async function handleComputeRemediation(
                 shouldRollbackClusterOwnership,
                 activeNodeInstanceId,
                 oldClusterOwnerNode,
-                formattedInstanceName
+                resourceDetails[0]?.resource_name ?? formattedInstanceName
             ).catch(rollbackError => {
                 errorMessage = `Error while reverting instance type change ${rollbackError}`;
                 logger.error(errorMessage);
@@ -521,24 +526,23 @@ async function checkRunningStatus(
 
     // worst 40secs needed for one sql server to start; 10secs buffer
     const timeRequired = 40 * sqlServerNames.length + 10;
-
-    const rawStatusResponse = await callSsmExecution(
-        credentialsId,
-        region,
-        [CHECK_RUNNING_STATUS_WITH_RESTART(sqlServerNames)],
-        activeNodeInstanceId,
-        'Checking running status of the service',
-        accountId,
-        false,
-        timeRequired.toString()
-    );
-
     let jobDetails: { status: string; error?: string } = {
         status: JOBSTATUS.COMPLETED,
         error: ''
     };
+    let rawStatusResponse;
 
     try {
+        rawStatusResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            [CHECK_RUNNING_STATUS_WITH_RESTART(sqlServerNames)],
+            activeNodeInstanceId,
+            'Checking running status of the service',
+            accountId,
+            false,
+            timeRequired.toString()
+        );
         const cleanResponse = sqlResponseParsing(rawStatusResponse);
         const statuses: SsmSqlServerRunningStatus[] = formatSsmArrayResponse<SsmSqlServerRunningStatus>(cleanResponse);
 
@@ -580,12 +584,18 @@ export default async function optimizeCompute(
         databaseInstanceId,
         instanceType
     });
+
+    const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    const [{ resource_name: resourceName, metadata }] = resourceDetails;
+
     const { recommendationOptions } = await calculateComputeDrift(
         accountId,
         credentialsId,
         region,
         databaseHostId,
-        databaseInstanceId
+        databaseInstanceId,
+        metadata as unknown as Metadata
     );
     const recommendedInstanceTypes =
         recommendationOptions?.map(({ instanceType: recommendedInstanceType }) => recommendedInstanceType) || [];
@@ -615,10 +625,6 @@ export default async function optimizeCompute(
         throw createError(400, 'We dont support the selected instance type as it has platform differences');
     }
 
-    const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
-
-    const [{ resource_name: resourceName, metadata }] = resourceDetails;
-
     const jobMetadata: JobMetadata = {
         hostsToOptimize: [
             {
@@ -633,9 +639,9 @@ export default async function optimizeCompute(
         credentialsId,
         region,
         resourceName!,
-        JOBTYPE.OPTIMIZATION,
-        `Optimize EC2 compute for ${resourceName}`,
-        `Optimize EC2 compute for ${resourceName}`,
+        JOBTYPE.WELL_ARCHITECTED,
+        `Fix EC2 compute for ${resourceName}`,
+        `Fix EC2 compute for ${resourceName}`,
         masterOptimizeParentId,
         jobMetadata
     );
@@ -737,7 +743,7 @@ async function updateDnsSettings(
         credentialsId,
         region,
         instanceName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Update DNS settings',
         'Update DNS settings',
         jobId
@@ -771,6 +777,7 @@ async function updateDnsSettings(
 }
 
 async function handleEc2InstanceTypeChange(
+    accountId: string,
     credentialsId: string,
     region: string,
     instanceId: string,
@@ -782,6 +789,14 @@ async function handleEc2InstanceTypeChange(
         await modifyInstanceType(credentialsId, region, instanceId, instanceType);
         await startInstance(credentialsId, region, instanceId);
         await waitForInstanceOk(credentialsId, region, instanceId);
+        try {
+            // check for an active SSM connection on standby node
+            await pollSSMConnectionStatus(accountId, credentialsId, region, instanceId);
+        } catch (error) {
+            const errorMsg = `SSM connection is not available for the selected instance: ${(error as Error).message}`;
+            logger.error(errorMsg);
+            throw createError(500, errorMsg);
+        }
     } catch (error) {
         const errorMessage = `Failed to update instance type for ${instanceId} to ${instanceType}. ${error}`;
         logger.error(errorMessage);
@@ -815,7 +830,7 @@ async function handleIscsiSessions(
         credentialsId,
         region,
         instanceName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Check and update ISCSI sessions',
         'Check and update ISCSI sessions to ensure ISCSI sessions are available after instance type change',
         jobId
@@ -883,7 +898,7 @@ async function updateNodeInstanceType(
                 await waitForInstanceToBeStopped(credentialsId, region, ec2InstanceId);
             }
 
-            await handleEc2InstanceTypeChange(credentialsId, region, ec2InstanceId, instanceType);
+            await handleEc2InstanceTypeChange(accountId, credentialsId, region, ec2InstanceId, instanceType);
             const newDnsAddresses = await getCurrentDnsSettings(credentialsId, region, ec2InstanceId);
             if (isEmpty(newDnsAddresses) || newDnsAddresses !== oldDnsAddresses) {
                 await updateDnsSettings(
@@ -1029,7 +1044,7 @@ async function handleRollbackClusterOwnership(
             credentialsId,
             region,
             formattedInstanceName,
-            JOBTYPE.OPTIMIZATION,
+            JOBTYPE.WELL_ARCHITECTED,
             'Rollback cluster ownership transfer to primary node',
             'Rollback cluster ownership transfer to primary node',
             rollBackJobId
@@ -1087,7 +1102,7 @@ async function handleRollbackInstanceTypeChange(
         credentialsId,
         region,
         formattedInstanceName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         `Rolling back instance type change for ${nodeType} in the cluster`,
         `Rolling back instance type of SQL node/s ${modifiedInstancesNodeDetails
             .map(({ ec2InstanceId }) => ec2InstanceId)
@@ -1155,7 +1170,7 @@ async function rollbackComputeOptimize(
         credentialsId,
         region,
         formattedInstanceName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         'Rollback EC2 compute remidiation for nodes in the cluster',
         'Rollback EC2 compute remidiation for nodes in the cluster'
     );
@@ -1192,18 +1207,21 @@ async function rollbackComputeOptimize(
                 );
             }
 
+            // rollback secondary nodes instance type change
             const modifiedSecondaryNodeDetails = modifiedInstancesNodeDetails.filter(
                 instanceDetails => !instanceDetails.isPrimaryNode
-            ); // rollback secondary nodes instance type change
-            await handleRollbackInstanceTypeChange(
-                accountId,
-                credentialsId,
-                region,
-                storageDetails,
-                modifiedSecondaryNodeDetails,
-                formattedInstanceName,
-                rollbackComputeOptimizeJobId
             );
+            if (!isEmpty(modifiedSecondaryNodeDetails)) {
+                await handleRollbackInstanceTypeChange(
+                    accountId,
+                    credentialsId,
+                    region,
+                    storageDetails,
+                    modifiedSecondaryNodeDetails,
+                    formattedInstanceName,
+                    rollbackComputeOptimizeJobId
+                );
+            }
         }
     } catch (error) {
         errorMessage = `Failed to rollback compute optimization ${error}`;
@@ -1222,6 +1240,7 @@ async function rollbackComputeOptimize(
 export {
     handleComputeRemediation,
     checkRunningStatus,
+    getRunningSqlServices,
     getClusterNodeInstanceIds,
     transferClusterOwnershipToStandbyNode,
     moveClusterGroupOwnership,

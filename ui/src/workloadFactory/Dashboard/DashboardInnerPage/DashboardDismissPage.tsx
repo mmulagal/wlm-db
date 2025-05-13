@@ -3,7 +3,13 @@ import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATE_ACTIONS, WLF_TABS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
+    CONFIG_STATE_ACTIONS,
+    FROM_DIALOG,
+    WLF_TABS
+} from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
@@ -28,8 +34,10 @@ import { NOTIFICATION_TYPES, addNotification } from '../../../store/notification
 
 const DashboardDismissPage = () => {
     const dispatch = useDispatch();
-    const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
+    const { selectedConfig, selectedConfigSummary, dismissPageLanding } = useAppSelector(state => state.databaseHome);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const { credentialData } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
@@ -76,7 +84,7 @@ const DashboardDismissPage = () => {
                 type = 'tempdb-files-location';
                 break;
             case GENERAL.COMPUTE_RIGHTSIZING:
-                type = 'compute';
+                type = 'compute-rightsizing';
                 break;
             case GENERAL.RSS_CONFIGURATION:
                 type = 'rss-config';
@@ -85,10 +93,10 @@ const DashboardDismissPage = () => {
                 type = 'snapshot-policy';
                 break;
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                type = 'aws-backup';
+                type = 'scheduled-fsx-for-ontap-backups';
                 break;
             case ASSESSMENT_CONFIG_NAMES.MAXDOP:
-                type = 'max-dop';
+                type = 'maxdop';
                 break;
             case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH:
                 type = 'mssql-patch';
@@ -97,13 +105,13 @@ const DashboardDismissPage = () => {
                 type = 'host-os-patch';
                 break;
             case ASSESSMENT_CONFIG_NAMES.LICENSE:
-                type = 'license';
+                type = 'sql-license';
                 break;
             case ASSESSMENT_CONFIG_NAMES.CRR:
                 type = 'crr';
                 break;
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-                type = 'clone';
+                type = 'clone-management';
                 break;
             default:
                 break;
@@ -190,9 +198,7 @@ const DashboardDismissPage = () => {
             .then((res: any) => {
                 if (!res.error) {
                     let { successList, failedList } = categorizeStateInstances(res?.data, type);
-                    successList?.map((perRow: any) => {
-                        updateConfigStateStatus(perRow, dispatch, action);
-                    });
+                    updateConfigStateStatus(successList, dispatch, action);
                     dispatch(
                         setInProgressStateData({
                             ...inProgressStateData,
@@ -205,7 +211,7 @@ const DashboardDismissPage = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.SUCCESS,
-                            message: `Analysis state was changed.`
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_SUCCESS
                         })
                     );
                 } else {
@@ -220,7 +226,7 @@ const DashboardDismissPage = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: `Failed to change analysis state.`
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_FAILED
                         })
                     );
                 }
@@ -547,25 +553,26 @@ const DashboardDismissPage = () => {
         let setHeader = '';
         let setContent: Array<string> = [];
         let setPrimaryButton = '';
+        let typeText = type?.toLowerCase() || '';
         if (dialogCheck && action === CONFIG_STATE_ACTIONS.ACTIVE) {
-            setHeader = `Activate SQL Server instance analysis`;
+            setHeader = `Reactivate ${typeText} analysis`;
             setContent = [
-                'Are you ready to re-activate the analysis for the selected SQL Server instances?',
-                'Select "Activate" to continue.'
+                'The analysis will continue for selected instances that are already actively analyzed.',
+                `Are you ready to reactivate the ${typeText} analysis for the selected SQL Server instances?`
             ];
-            setPrimaryButton = 'Activate';
+            setPrimaryButton = 'Reactivate';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.POSTPONED) {
-            setHeader = `Postpone SQL Server instance analysis`;
+            setHeader = `Postpone ${typeText} analysis`;
             setContent = [
-                'Are you ready to re-postpone the analysis for the selected SQL Server instances?',
-                'Select "Postpone" to continue.'
+                "Selected instances that are postponed won't get analyzed for 30 days.",
+                `Are you ready to postpone the ${typeText} analysis for the selected SQL Server instances?`
             ];
-            setPrimaryButton = 'Postpone';
+            setPrimaryButton = 'Postpone for 30 days';
         } else if (dialogCheck && action === CONFIG_STATE_ACTIONS.DISMISS) {
-            setHeader = `Dismiss SQL Server instance analysis`;
+            setHeader = `Dismiss ${typeText} analysis`;
             setContent = [
-                'Are you ready to dismiss the analysis for the selected SQL Server instances?',
-                'Select "Dismiss" to continue.'
+                "Selected instances that you dismiss won't get analyzed.",
+                `Are you ready to dismiss the ${typeText} analysis for the selected SQL Server instances?`
             ];
             setPrimaryButton = 'Dismiss';
         }
@@ -577,11 +584,17 @@ const DashboardDismissPage = () => {
                     content={
                         <>
                             <DsTypography variant="Regular_14">{setContent[0]}</DsTypography>
-                            <DsTypography variant="Regular_14">{setContent[1]}</DsTypography>
+                            <DsTypography variant="Regular_14" style={{ marginTop: '24px' }}>
+                                {setContent[1]}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" style={{ marginTop: '24px' }}>
+                                {setContent[2]}
+                            </DsTypography>
                         </>
                     }
                     primaryButton={setPrimaryButton}
                     secondaryButton={GENERAL.CANCEL}
+                    dialogFrom={FROM_DIALOG.DISMISS}
                     callback={() => {
                         callDismissApi(type, rowData, action);
                     }}
@@ -599,31 +612,31 @@ const DashboardDismissPage = () => {
         switch (type) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'performance-tier'
+                    (item: any) => item?.configurationName === 'performance-tier'
                 );
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'headroom'
+                    (item: any) => item?.configurationName === 'headroom'
                 );
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'log-drive-size'
+                    (item: any) => item?.configurationName === 'log-drive-size'
                 );
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item.name === 'tempdb-drive-size'
+                    (item: any) => item?.configurationName === 'tempdb-drive-size'
                 );
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item.name === 'data-files-location'
+                    (item: any) => item?.configurationName === 'data-files-location'
                 );
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item.name === 'log-files-location'
+                    (item: any) => item?.configurationName === 'log-files-location'
                 );
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
                 return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item.name === 'tempdb-files-location'
+                    (item: any) => item?.configurationName === 'tempdb-files-location'
                 );
             case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 return instanceData?.assessments?.dismissedConfigurations?.compute;
@@ -643,6 +656,8 @@ const DashboardDismissPage = () => {
                 return instanceData?.assessments?.dismissedConfigurations?.awsBackup;
             case GENERAL.CLONE_MANAGEMENT:
                 return instanceData?.assessments?.dismissedConfigurations?.clone;
+            case ASSESSMENT_CONFIG_NAMES.CRR:
+                return instanceData?.assessments?.dismissedConfigurations?.crr;
             default:
                 return;
         }
@@ -661,6 +676,12 @@ const DashboardDismissPage = () => {
             }
             uniqueResourceList.push(hostData?.databaseHostId);
 
+            const matchingCredEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     let configObj: any = getConfigObj(type, instanceData);
@@ -674,7 +695,10 @@ const DashboardDismissPage = () => {
                         id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                         hostName: hostData?.databaseHostName,
                         configObj: configObj,
-                        configState: configObj?.state || CONFIG_STATES.ACTIVE
+                        configState: configObj?.configState || CONFIG_STATES.ACTIVE,
+                        credentialName: matchingCredEntry?.name,
+                        regionName: matchingRegionEntry?.regionName,
+                        accountId: matchingCredEntry?.providerAccountId
                     });
                 }
             });
@@ -704,48 +728,71 @@ const DashboardDismissPage = () => {
         headerSelectedMultiRegionIdsList
     ]);
 
+    const setBreadcrumbs = () => {
+        if (dismissPageLanding === WLF_TABS.DASHBOARD) {
+            return (
+                <BreadCrumbs
+                    items={[
+                        {
+                            title: 'Dashboard',
+                            onClick: () => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                            }
+                        },
+                        {
+                            title: `Update configuration analysis state for ${selectedConfig}`,
+                            dataTestId: 'wlm-db-dismiss-configuration'
+                        }
+                    ]}
+                />
+            );
+        } else {
+            return (
+                <BreadCrumbs
+                    items={[
+                        {
+                            title: 'Dashboard',
+                            onClick: () => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                            }
+                        },
+                        {
+                            title: `Fix configuration (${selectedConfig})`,
+                            onClick: () => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
+                            }
+                        },
+
+                        {
+                            title: `Update configuration analysis state for ${selectedConfig}`,
+                            dataTestId: 'wlm-db-dismiss-configuration'
+                        }
+                    ]}
+                />
+            );
+        }
+    };
+
     return (
         <div className={styles.dashboardInnerPage}>
             <div className={styles.innerPage}>
-                <div className={commonStyles.commonBreadCrumb}>
-                    <BreadCrumbs
-                        items={[
-                            {
-                                title: 'Dashboard',
-                                onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
-                                }
-                            },
-                            {
-                                title: `Manage configuration state for ${selectedConfig}`,
-                                dataTestId: 'wlm-db-dismiss-configuration'
-                            }
-                        ]}
-                    />
-                </div>
+                <div className={commonStyles.commonBreadCrumb}>{setBreadcrumbs()}</div>
 
                 <div className={styles.headingSection}>
                     <DsTypography
                         data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
                         variant="Semibold_20"
                     >
-                        Manage configuration state for {selectedConfig}
+                        Update configuration analysis state for {selectedConfig}
                     </DsTypography>
                     <DsTypography
+                        className={styles.dismissPageMessage}
                         data-testid={`wlm-db-manage-instance-heading1-for-${selectedConfig
                             .toLowerCase()
                             .replace(/ /g, '-')}`}
                         variant="Regular_16"
                     >
-                        {GENERAL.DISMISS_PAGE_MSG[0]}
-                    </DsTypography>
-                    <DsTypography
-                        data-testid={`wlm-db-manage-dismiss-heading2-for-${selectedConfig
-                            .toLowerCase()
-                            .replace(/ /g, '-')}`}
-                        variant="Regular_16"
-                    >
-                        {GENERAL.DISMISS_PAGE_MSG[1]}
+                        {GENERAL.DISMISS_PAGE_MESSAGE}
                     </DsTypography>
                 </div>
 

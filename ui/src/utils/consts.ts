@@ -118,7 +118,10 @@ export const FROM_DIALOG = {
     SAVE_CONFIG: 'save_config',
     HEADER_CROSS: 'header_cross',
     DETECT_HOST: 'detect_host',
-    SANDBOX_REFRESH: 'sandbox_refresh'
+    SANDBOX_REFRESH: 'sandbox_refresh',
+    DISMISS: 'dismiss',
+    OPTIMIZE: 'optimize',
+    FSXADMIN: 'fsxadmin'
 };
 
 export const DBType = {
@@ -173,7 +176,11 @@ export const STATUS_CONST = {
     COMPLETED: 'Completed',
     ONLINE: 'Online',
     OFFLINE: 'Offline',
-    UNKNOWN: 'Unknown'
+    UNKNOWN: 'Unknown',
+    OPEN: 'OPEN',
+    STARTED: 'STARTED',
+    MOUNTED: 'MOUNTED',
+    OPEN_MIGRATE: 'OPEN MIGRATE'
 };
 
 export const JOB_MONITORING_STATUS = {
@@ -190,7 +197,8 @@ export const JOB_MONITORING_TYPE = {
     PREPARE_RESOURCE: 'PREPARE_RESOURCE',
     SANDBOX: 'SANDBOX',
     ASSESSMENT: 'ASSESSMENT',
-    OPTIMIZE: 'OPTIMIZATION'
+    OPTIMIZE: 'OPTIMIZATION',
+    WELL_ARCHITECTED: 'WELL_ARCHITECTED'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -377,6 +385,11 @@ export const WLF_TABS = {
 export const DRIVE_LETTER_TYPE = {
     NEW: 'New drive letter',
     EXISTING: 'Existing drive letter'
+};
+
+export const AUTHENTICATION_TYPE = {
+    SQL_SERVER_AUTHENTICATION: 'SQL Server authentication',
+    WINDOWS_AUTHENTICATION: 'Windows authentication'
 };
 
 export const DEPLOY_ENDPOINT = '/cloudformation/deploy';
@@ -611,7 +624,8 @@ export const INVENTORY_STATUS = {
     RUNNING: 'Running',
     STOPPED: 'Stopped',
     CASE_SENSITIVE_UP: 'Up',
-    CASE_SENSITIVE_DOWN: 'Down'
+    CASE_SENSITIVE_DOWN: 'Down',
+    RUNNING_LOWER: 'running'
 };
 
 export const INVENTORY_ACTIONS = {
@@ -698,12 +712,23 @@ export const EBS_PROTECTED_OPTIONS = {
 
 export const GETWELL_STATUS = {
     OPTIMIZED: 'Optimized',
+    WELL_ARCHITECTED: 'Well-architected',
     NOT_OPTIMIZED: 'Not optimized',
     UNDER_PROVISIONED: 'Under-provisioned',
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
+    FIXING: 'Fixing',
     NOT_APPLICABLE: GENERAL.UNAVAILABLE,
-    ANALYZING: 'Analyzing'
+    ANALYZING: 'Analyzing',
+    CRITICAL: 'Critical',
+    WARNING: 'Warning'
+};
+
+export const WELL_ARCHITECTED_TABS = {
+    OVERVIEW: 'Overview',
+    WELL_ARCHITECTED_STATUS: 'Well-architected status',
+    DATABASES: 'Databases',
+    SANDBOXES: 'Sandboxes'
 };
 
 export const GETWELL_VALUES: any = {
@@ -763,7 +788,7 @@ export const GETWELL_CONFIG: any = {
     'aws-backup-policy': 'scheduled_FSx_for_ONTAP_backups',
     crr: 'crr',
     clone: 'clone_management',
-    'Clone Management': 'clone_management'
+    'clone-management': 'clone_management'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
@@ -827,10 +852,10 @@ export const CONFIG_STATE_ACTIONS = {
 
 export const CONFIG_NAME_TO_ID_MAPPING = {
     STORAGE_SIZING_MAP: {
-        'Log drive size': 'log-drive-size',
-        'Storage tier': 'performance-tier',
-        'File system headroom': 'headroom',
-        'TempDB drive size': 'tempdb-drive-size'
+        [ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]: 'log-drive-size',
+        [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: 'performance-tier',
+        [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: 'headroom',
+        [ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]: 'tempdb-drive-size'
     },
     STORAGE_CONFIG_MAP: {
         'os-type': 'luns',
@@ -857,13 +882,13 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
     },
     NON_STORAGE_CONFIG_MAP: {
         [ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]: 'compute',
-        [ASSESSMENT_CONFIG_NAMES.MAXDOP]: 'max-dop',
+        [ASSESSMENT_CONFIG_NAMES.MAXDOP]: 'maxDOP',
         [ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]: 'clone',
-        [ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]: 'rss-config',
-        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]: 'snapshot-policy',
-        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'aws-backup',
-        [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'mssql-patch',
-        [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'host-os-patch',
+        [ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]: 'rssConfig',
+        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]: 'snapshotPolicy',
+        [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'awsBackup',
+        [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'mssqlPatch',
+        [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'hostOsPatch',
         [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     }

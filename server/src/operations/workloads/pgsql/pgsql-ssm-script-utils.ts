@@ -1,10 +1,10 @@
 const checkCommandStatus = `
-check_status() {
-    if [ $? -ne 0 ]; then
-    echo "$1"
-    exit 1;
-    fi
-}
+    check_status() {
+        if [ $? -ne 0 ]; then
+        echo "$1"
+        exit 1;
+        fi
+    }
 `;
 
 const getMappedOntapDataVolume = (fsxnId: string, region: string) => `
@@ -53,12 +53,9 @@ const getMappedOntapDataVolume = (fsxnId: string, region: string) => `
 const getPgSqlStorageSavings = (fsxnId: string, region: string, endpoint: string) => `
     #!/bin/bash
     #PG SQL Storage Savings
-    filesystemid="${fsxnId}"
-    region="${region}"
  
     ${getMappedOntapDataVolume(fsxnId, region)}
     endpoint="${endpoint}&name=$mountedVolume"
-    ${ontapRestApi}
     result=$(ontap_request 'GET' $endpoint)
     echo $result
 `;
@@ -66,13 +63,9 @@ const getPgSqlStorageSavings = (fsxnId: string, region: string, endpoint: string
 const getPgSqlProtection = (fsxnId: string, region: string) => `
     #!/bin/bash
     #pgsql protection script
-    filesystemid="${fsxnId}"
-    region="${region}"
  
-    ${checkCommandStatus}
     ${getMappedOntapDataVolume(fsxnId, region)}
     endpoint="storage/volumes?fields=snapshot_count&name=$mountedVolume"
-    ${ontapRestApi}
     result=$(ontap_request 'GET' $endpoint)
     check_status "Failed to fetch protection data"
     echo $result
@@ -91,6 +84,10 @@ const ontapRestApi = `
  
     ontap_request () {
         management_ip=management.$filesystemid.fsx.$region.amazonaws.com
+        if ! ping -c 1 -W 2 "$management_ip" > /dev/null 2>&1; then
+            management_ip=$(aws fsx describe-file-systems --file-system-id $filesystemid --region $region --query "FileSystems[0].OntapConfiguration.Endpoints.Management.IpAddresses[0]" --output text)
+            USE_INSECURE=true
+        fi
         auth=$(printf '%s:%s' $fsxusername $fsxpassword | base64)
         method=$1
         endpoint=$2
@@ -108,6 +105,10 @@ const ontapRestApi = `
             --location https://$management_ip/api/$endpoint
             $request_body
         )
+
+        if [ "$USE_INSECURE" = true ]; then
+            args+=(--insecure)
+        fi
         return_result=$(curl "\${args[@]}")
         echo $return_result
     }

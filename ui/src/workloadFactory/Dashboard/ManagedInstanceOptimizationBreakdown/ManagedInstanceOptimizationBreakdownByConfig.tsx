@@ -5,7 +5,7 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATES_UI, WLF_TABS } from '../../../utils/consts';
-import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import { setDismissPageLanding, setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
@@ -33,7 +33,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     const handleEdit = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_DISMISS_PAGE));
-        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setDismissPageLanding(WLF_TABS.DASHBOARD));
         dispatch(setSelectedConfig(type));
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };
@@ -91,7 +91,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 percentage={dismissedOrPostponedText ? 0 : Math.round((optimizedCount / total) * 100)}
                 beforeOutOf={dismissedOrPostponedText ? undefined : optimizedCount}
                 afterOutOf={dismissedOrPostponedText ? undefined : afterOutOfTotal}
-                bottomText={dismissedOrPostponedText ? undefined : 'Optimized instances:'}
+                bottomText={dismissedOrPostponedText ? undefined : 'Well-architected:'}
                 width={width}
                 from="dashboard"
                 optimizePercentage={dismissedOrPostponedText ? 0 : optimizePercentage}
@@ -106,7 +106,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         <div className={styles.managedBreakdown}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Managed instances optimization breakdown by configurations
+                    Well-architected breakdown by configurations
                 </DsTypography>
 
                 {loading && <FlashingDotsLoader />}
@@ -139,7 +139,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -148,7 +148,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -189,7 +189,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -198,7 +198,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -239,7 +239,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -248,7 +248,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -289,7 +289,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -298,7 +298,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -336,7 +336,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Optimize
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -347,7 +347,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -381,7 +381,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             <div>
                                 <DsButton data-testid="wlm-db-optimize-log-files" variant="secondary" isDisabled={true}>
-                                    Optimize
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -392,7 +392,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -430,7 +430,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Optimize
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -441,7 +441,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -481,12 +481,18 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 configData?.ontapConfiguration === configData?.total
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
-                        <div className={styles.editDisableIcon}>
-                            <Edit />
-                        </div>
+                        <Popover
+                            children={GENERAL.COMING_SOON}
+                            trigger="hover"
+                            container={
+                                <div className={styles.editDisableIcon}>
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -515,12 +521,18 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 configData?.operatingSystem === configData?.total
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
-                        <div className={styles.editDisableIcon}>
-                            <Edit />
-                        </div>
+                        <Popover
+                            children={GENERAL.COMING_SOON}
+                            trigger="hover"
+                            container={
+                                <div className={styles.editDisableIcon}>
+                                    <Edit />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 
@@ -549,7 +561,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 configData?.computeRightsizing === configData?.total
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -558,7 +570,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -596,7 +608,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Optimize
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -607,7 +619,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -648,7 +660,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[GENERAL.RSS_CONFIGURATION]?.length > 0
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -657,7 +669,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -694,7 +706,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Optimize
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -705,7 +717,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -743,7 +755,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     variant="secondary"
                                     isDisabled={true}
                                 >
-                                    Optimize
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -754,7 +766,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -795,7 +807,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -804,7 +816,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -845,7 +857,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -854,7 +866,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -883,7 +895,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <TooltipComponent title={''} placement="bottom" width="120px" height="30px">
                             <div>
                                 <DsButton data-testid="wlm-db-optimize-crr" variant="secondary" isDisabled={true}>
-                                    Optimize
+                                    {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -894,7 +906,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -936,7 +948,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     ?.length > 0
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -945,7 +957,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div
@@ -1015,7 +1027,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
                             }
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
 
                         {loading ? (
@@ -1024,7 +1036,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         ) : (
                             <Popover
-                                children={'Manage configuration state'}
+                                children={GENERAL.MANAGE_ANALYSIS_STATE}
                                 trigger="hover"
                                 container={
                                     <div

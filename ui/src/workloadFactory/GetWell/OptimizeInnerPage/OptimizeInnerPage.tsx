@@ -41,11 +41,16 @@ import CloneManagementTable from './InnerTables/CloneManagementTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import { useEffect, useRef, useState } from 'react';
 import CloneTabs from './CloneTabs';
+import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
+    const [cardHeight, setCardHeight] = useState({
+        recommendationSection: '',
+        tagSection: ''
+    });
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
@@ -104,6 +109,56 @@ const OptimizeInnerPage = () => {
         }
     }, [selectedOptimizeConfig]);
 
+    useEffect(() => {
+        switch (selectedOptimizeConfig?.type) {
+            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                setCardHeight({
+                    recommendationSection: '144px',
+                    tagSection: '240px'
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
+                setCardHeight({
+                    recommendationSection: '208px',
+                    tagSection: '304px'
+                });
+                break;
+
+            case 'Data files':
+                setCardHeight({
+                    recommendationSection: '208px',
+                    tagSection: '304px'
+                });
+                break;
+            case 'Log files':
+                setCardHeight({
+                    recommendationSection: '208px',
+                    tagSection: '304px'
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
+                setCardHeight({
+                    recommendationSection: '450px',
+                    tagSection: '546px'
+                });
+                break;
+            case 'Cross-Region Replication (CRR)':
+                setCardHeight({
+                    recommendationSection: '160px',
+                    tagSection: '256px'
+                });
+
+                break;
+            case GENERAL.CLONE_MANAGEMENT:
+                setCardHeight({
+                    recommendationSection: '120px',
+                    tagSection: '216px'
+                });
+                break;
+        }
+    }, [selectedOptimizeConfig]);
+
     const buttonComponent = (rowData: any) => {
         if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
             return (
@@ -115,7 +170,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />
@@ -124,7 +179,7 @@ const OptimizeInnerPage = () => {
         if (selectedOptimizeConfig?.type === GENERAL.CRR) {
             return (
                 <DsButton isThin variant="secondary" isDisabled={true}>
-                    Optimize
+                    {GENERAL.OPTIMIZE}
                 </DsButton>
             );
         } else if (
@@ -146,7 +201,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />
@@ -161,7 +216,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />
@@ -192,7 +247,7 @@ const OptimizeInnerPage = () => {
                         );
                     }}
                 >
-                    Optimize
+                    {GENERAL.OPTIMIZE}
                 </DsButton>
             );
         } else {
@@ -205,7 +260,7 @@ const OptimizeInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />
@@ -398,7 +453,7 @@ const OptimizeInnerPage = () => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"
@@ -621,8 +676,14 @@ const OptimizeInnerPage = () => {
                     </DsTypography>
                 </div>
 
-                <div className={styles.contentSection}>
-                    <OptimizeCard />
+                <div className={styles.mainSection}>
+                    <div className={styles.contentSection}>
+                        <OptimizeCard recommendationHeight={cardHeight.recommendationSection} />
+                    </div>
+
+                    <div className={styles.tagSection}>
+                        <TagComponent tagHeight={cardHeight.tagSection} type={selectedOptimizeConfig?.type} />
+                    </div>
                 </div>
 
                 {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && <CloneTabs />}

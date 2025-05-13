@@ -2,7 +2,7 @@ import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { CommandFilterKey } from '@aws-sdk/client-ssm';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
+import { listResources } from '../../lib/database/db';
 
 import getLogger from '../../utils/logger';
 import {
@@ -19,8 +19,8 @@ import { getAllClusterNodeDetails } from '../database-hosts-operations';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
-import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { callSsmExecution } from '../aws/ssm-operations';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
@@ -71,18 +71,12 @@ async function calculateHostOsPatchDrift(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string
+    databaseHostId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating Host OS patch drift', { accountId, credentialsId, region, databaseHostId });
     let errorMessage = '';
-    let metadata;
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating host os patch drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
+
     const metadataObject = metadata as unknown as Metadata;
     try {
         const { assessment: { hostOsPatch, errors } = {} } = metadataObject;
@@ -190,18 +184,8 @@ async function managedHostOsPatchAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
-        if (errorMessage) {
-            await updateAsssementErrorInResourceMetadata(
-                accountId,
-                databaseHostId,
-                credentialsId,
-                region,
-                errorMessage,
-                'hostOsPatch'
-            );
-        }
     }
-    return hostOsPatchAssessment;
+    return { hostOsPatchAssessment, errorMessage };
 }
 
 async function checkIfPatchBaselineInProgress(credentialsId: string, region: string, instanceIds: string[]) {

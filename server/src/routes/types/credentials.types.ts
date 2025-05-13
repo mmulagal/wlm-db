@@ -1,4 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
+import { API_DESCRIPTION } from '../../utils/schema-description-consts';
 
 const CredentialsResponse = Type.Array(
     Type.Object({
@@ -11,7 +12,7 @@ const CredentialsResponse = Type.Array(
 type CredentialsResponseType = Static<typeof CredentialsResponse>;
 
 const CredentialsListParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
+    accountId: Type.String({ description: API_DESCRIPTION.ACCOUNT_ID_DESC, minLength: 1 }),
     credentialsType: Type.String({ enum: ['aws_assume_role'] })
 });
 type CredentialsListParamsType = Static<typeof CredentialsListParams>;

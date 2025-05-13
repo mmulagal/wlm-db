@@ -2,14 +2,17 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
+    DISMISS_STATUS_ENUM,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
+    OptimizeCloneParams,
     OptimizeComputeParams,
     OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigs,
     OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
+import { CLONE_ACTION } from '../../utils/consts';
 
 const SizingViolationResponse = Type.Object({
     databases: Type.Optional(Type.Array(Type.String())),
@@ -254,8 +257,8 @@ const StorageParameterDriftResponse = Type.Object({
 
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 
-const instanceDismissResponse = Type.Object({
-    name: Type.String(),
+const InstanceDismissResponse = Type.Object({
+    configurationName: Type.String(),
     configState: Type.String(),
     endTime: Type.Optional(Type.Number())
 });
@@ -265,25 +268,25 @@ const dismissedConfigurationsResponse = Type.Object({
         Type.Object({
             configuration: Type.Optional(
                 Type.Object({
-                    volumes: Type.Optional(Type.Array(instanceDismissResponse)),
-                    luns: Type.Optional(Type.Array(instanceDismissResponse)),
-                    os: Type.Optional(Type.Array(instanceDismissResponse))
+                    volumes: Type.Optional(Type.Array(InstanceDismissResponse)),
+                    luns: Type.Optional(Type.Array(InstanceDismissResponse)),
+                    os: Type.Optional(Type.Array(InstanceDismissResponse))
                 })
             ),
-            sizing: Type.Optional(Type.Array(instanceDismissResponse)),
-            layout: Type.Optional(Type.Array(instanceDismissResponse))
+            sizing: Type.Optional(Type.Array(InstanceDismissResponse)),
+            layout: Type.Optional(Type.Array(InstanceDismissResponse))
         })
     ),
-    compute: Type.Optional(instanceDismissResponse),
-    license: Type.Optional(instanceDismissResponse),
-    hostOsPatch: Type.Optional(instanceDismissResponse),
-    rssConfig: Type.Optional(instanceDismissResponse),
-    maxDOP: Type.Optional(instanceDismissResponse),
-    mssqlPatch: Type.Optional(instanceDismissResponse),
-    crr: Type.Optional(instanceDismissResponse),
-    clone: Type.Optional(instanceDismissResponse),
-    snapshotPolicy: Type.Optional(instanceDismissResponse),
-    awsBackup: Type.Optional(instanceDismissResponse)
+    compute: Type.Optional(InstanceDismissResponse),
+    license: Type.Optional(InstanceDismissResponse),
+    hostOsPatch: Type.Optional(InstanceDismissResponse),
+    rssConfig: Type.Optional(InstanceDismissResponse),
+    maxDOP: Type.Optional(InstanceDismissResponse),
+    mssqlPatch: Type.Optional(InstanceDismissResponse),
+    crr: Type.Optional(InstanceDismissResponse),
+    clone: Type.Optional(InstanceDismissResponse),
+    snapshotPolicy: Type.Optional(InstanceDismissResponse),
+    awsBackup: Type.Optional(InstanceDismissResponse)
 });
 type dismissedConfigurationsResponseType = Static<typeof dismissedConfigurationsResponse>;
 
@@ -505,7 +508,8 @@ const DatabaseHostsWithInstances = Type.Intersect([
         failedInstances: Type.Optional(
             Type.Array(
                 Type.Object({
-                    instanceId: Type.String(),
+                    databaseHostId: Type.String(),
+                    instanceId: Type.Optional(Type.String()),
                     errorMessage: Type.String()
                 })
             )
@@ -514,7 +518,7 @@ const DatabaseHostsWithInstances = Type.Intersect([
 ]);
 
 const BulkDismissConfiguration = Type.Object({
-    name: Type.String(),
+    configurationName: Type.String(),
     configState: Type.String(),
     databaseHosts: Type.Array(DatabaseHostsWithInstances)
 });
@@ -522,12 +526,12 @@ const BulkDismissConfiguration = Type.Object({
 type BulkDismissConfigurationType = Static<typeof BulkDismissConfiguration>;
 
 const BulkDismissConfigurationBody = Type.Object({
-    name: Type.String(),
-    configState: Type.String(),
-    databaseHosts: Type.Array(DatabaseHostsWithInstancesBody)
+    configurationName: Type.String(),
+    configState: Type.Enum(DISMISS_STATUS_ENUM),
+    databaseHosts: Type.Array(DatabaseHostsWithInstances)
 });
 
-type BulkDismissConfigurationBodyType = Static<typeof BulkDismissConfiguration>;
+type BulkDismissConfigurationBodyType = Static<typeof BulkDismissConfigurationBody>;
 
 const BulkDismissConfigurationRequestBody = Type.Object({
     configurationsToDismiss: Type.Array(BulkDismissConfigurationBody)
@@ -536,9 +540,9 @@ const BulkDismissConfigurationRequestBody = Type.Object({
 type BulkDismissConfigurationRequestBodyType = Static<typeof BulkDismissConfigurationRequestBody>;
 
 const BulkDismissConfigurationResponse = Type.Object({
-    dismisssedConfigurations: Type.Array(
+    dismissedConfigurations: Type.Array(
         Type.Object({
-            name: Type.String(),
+            configurationName: Type.String(),
             configState: Type.String(),
             startTime: Type.Number(),
             endTime: Type.Optional(Type.Number()),
@@ -548,6 +552,40 @@ const BulkDismissConfigurationResponse = Type.Object({
 });
 
 type BulkDismissConfigurationResponseType = Static<typeof BulkDismissConfigurationResponse>;
+
+const CloneDetail = Type.Object({
+    cloneDatabaseName: Type.String(),
+    clonedBy: Type.String(),
+    action: Type.String({ enum: [CLONE_ACTION.REFRESH, CLONE_ACTION.DELETE] })
+});
+
+const OptimizeClonesPerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    region: Type.String(),
+    credentialsId: Type.String(),
+    sqlServerInstances: Type.Array(
+        Type.Object({
+            instanceId: Type.String(),
+            clones: Type.Array(CloneDetail)
+        })
+    )
+});
+
+type OptimizeClonesPerHostRequestBodyType = Static<typeof OptimizeClonesPerHostRequestBody>;
+type CloneDetailType = Static<typeof CloneDetail>;
+
+const BulkOptimizeCloneInHostRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OptimizeCloneParams
+    }),
+    databaseHosts: Type.Array(OptimizeClonesPerHostRequestBody)
+});
+type BulkOptimizeCloneInHostRequestBodyType = Static<typeof BulkOptimizeCloneInHostRequestBody>;
+
+const BulkOptimizeCloneBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeCloneInHostRequestBody)
+});
+type BulkOptimizeCloneBodyType = Static<typeof BulkOptimizeCloneBody>;
 
 export {
     DriftAssessmentResponse,
@@ -601,6 +639,11 @@ export {
     CloneDriftResponseType,
     GenericAssessmentResponse,
     GenericAssessmentResponseType,
+    BulkOptimizeCloneBodyType,
+    BulkOptimizeCloneInHostRequestBodyType,
+    BulkOptimizeCloneBody,
+    OptimizeClonesPerHostRequestBodyType,
+    CloneDetailType,
     BulkDismissConfigurationType,
     BulkDismissConfigurationRequestBodyType,
     BulkDismissConfigurationResponseType,

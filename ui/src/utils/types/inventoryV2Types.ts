@@ -1,4 +1,5 @@
 export interface InventorySliceData {
+    authenticationType: string;
     tableManageColumnState: any;
     selectedFilterValue: {} | any;
     selectedInventoryTab: string;
@@ -25,6 +26,14 @@ export interface InventorySliceData {
     discoveredHosts: {
         discoveredHostData: any;
         discoverHostLoading: boolean;
+    };
+    discoveredOracleHosts: {
+        discoveredOracleHostData: any;
+        discoverOracleHostLoading: boolean;
+    };
+    discoveredPgsqlHosts: {
+        discoveredPgsqlHostData: any;
+        discoverPgsqlHostLoading: boolean;
     };
     fsxCredentialStatusObj: any;
     fsxCredentialStatusLoading: boolean;
@@ -416,6 +425,76 @@ export interface DiscoverHostInterface {
     sqlServerInstances?: Array<SQLServerInstancesDiscovered>;
     credentialId?: string;
     regionId?: string;
+    pgsqlServerInstances?: Array<PgsqlInstancesDiscovered>;
+    oracleServerDeploymentType?: string;
+    databaseInstanceDetails?: Array<OracleInstancesDiscovered>;
+    [key: string]: any;
+}
+
+export interface DiscoverOracleHostInterface {
+    ec2InstanceId: string;
+    ec2InstanceType?: string;
+    ssmState?: string;
+    ec2InstanceName?: string;
+    ec2UsageOperation?: string;
+    key?: string;
+    vpc?: {
+        id?: string;
+        name?: string;
+        cidrBlock?: string;
+    };
+    oracleServerDeploymentType?: string;
+    databaseInstanceDetails?: Array<OracleInstancesDiscovered>;
+    credentialId?: string;
+    regionId?: string;
+}
+
+export interface DiscoverPgsqlHostInterface {
+    ec2InstanceId: string;
+    ec2InstanceType?: string;
+    ssmState?: string;
+    ec2InstanceName?: string;
+    ec2UsageOperation?: string;
+    nodesList?: Array<string>;
+    key?: string;
+    vpc?: {
+        id?: string;
+        name?: string;
+        cidrBlock?: string;
+    };
+    pgsqlServerInstances?: Array<PgsqlInstancesDiscovered>;
+    credentialId?: string;
+    regionId?: string;
+}
+
+export interface OracleInstancesDiscovered {
+    instanceName?: string;
+    instanceId?: string;
+    instanceState?: string;
+    version?: string;
+    instanceType?: string;
+    databaseCount?: number;
+    databaseDetails?: {
+        databaseName?: string;
+        databaseId?: string;
+        openMode?: string;
+    };
+    pluggableDatabases?: Array<{
+        pdbName?: string;
+        pdbId?: string;
+        pdbStatus?: string;
+    }>;
+    defaultAuth?: boolean;
+    storage?: Array<{
+        type?: string;
+        id?: string;
+        svmId?: string;
+        protocol?: string;
+        fileSystemStorageType?: string;
+        deploymentType?: string;
+        zones?: Array<string>;
+        nfsMountPoint?: string;
+    }>;
 }
 
 export interface SQLServerInstancesDiscovered {
@@ -439,6 +518,33 @@ export interface SQLServerInstancesDiscovered {
     deploymentTypes?: Array<{
         type?: string;
         zones?: Array<string>;
+    }>;
+}
+
+export interface PgsqlInstancesDiscovered {
+    pgsqlServerInstanceName?: string;
+    pgsqlServerState?: string;
+    pgsqlServerVersion?: string;
+    pgsqlServerName?: string;
+    pgsqlServerDeploymentType?: boolean;
+    pgsqlServerInstanceId?: boolean;
+    databaseCount?: string;
+    isPrimary?: number;
+    defaultAuth?: string;
+    primaryNode?: {
+        ec2InstanceId?: string;
+        ec2InstancePrivateIpAddress?: string;
+        ec2InstanceType?: string;
+        ec2InstanceName?: string;
+        ec2UsageOperation?: string;
+    };
+    storage?: Array<any>;
+    nodes?: Array<{
+        ec2InstanceId?: string;
+        ec2InstancePrivateIpAddress?: string;
+        ec2InstanceType?: string;
+        ec2InstanceName?: string;
+        ec2UsageOperation?: string;
     }>;
 }
 

@@ -9,6 +9,7 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
+    regionChangeInstanceLoading: boolean;
     onPremiseData: any;
     onPremiseDataLoading: boolean;
     selectedExploreSavingsTab: string;

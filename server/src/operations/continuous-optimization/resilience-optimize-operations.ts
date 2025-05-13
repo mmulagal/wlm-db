@@ -44,6 +44,7 @@ import { updateOptimizedConfigNameInInstanceTable } from '../demo-operations';
 import { resetCache } from '../../utils/cache';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 async function getMappedVolumeDetails(credentialsId: string, region: string, instanceRecord: WorkloadInstance) {
     return (
@@ -136,7 +137,7 @@ async function getAvailableSnapshotPolicyList(
             fsxId
         ]);
         const svmIdAssignedToInstance = svms.find(svm => {
-            if (isDemo()) {
+            if (isDemoFlow) {
                 return svm;
             }
             return svm?.StorageVirtualMachineId === (svmRecord as Record<string, string>)[fsxId];
@@ -154,6 +155,8 @@ async function getAvailableSnapshotPolicyList(
             activeNodeInstanceId,
             ssmComment,
             accountId,
+            true,
+            undefined,
             true
         );
         const {
@@ -226,67 +229,79 @@ async function setSnapshotPolicyForVolumes(
                 }
             ]
         };
-        const subJobDetails = `Optimize snapshot policy for ${instanceRecord.resourceName}`;
+        const subJobDetails = `Fix snapshot policy for ${instanceRecord.resourceName}`;
         subJobId = await handleOptimizeJobCreation(
             accountId,
             credentialsId,
             region,
             instanceRecord.resourceName,
-            JOBTYPE.OPTIMIZATION,
+            JOBTYPE.WELL_ARCHITECTED,
             subJobDetails,
             subJobDetails,
             parentJobId,
             jobMetadata
         );
         let volumeUuids = [];
+        const instanceVolumeMapping = await getMappedVolumeDetails(credentialsId, region, instanceRecord);
+        const mappedVolumeUUIDs = (
+            Object.values(instanceVolumeMapping)
+                ?.map(i => i?.volumeRecords)
+                .flat() || []
+        )?.map(volume => volume.uuid as string);
+        const missingVolumes: string[] = [];
         if (volumesToOptimize && !isEmpty(volumesToOptimize)) {
             volumeUuids = volumesToOptimize.map(volume => volume.ontapVolumeUuid as string);
+            volumeUuids = volumeUuids.filter(volumeUuid => {
+                if (!mappedVolumeUUIDs.includes(volumeUuid)) {
+                    missingVolumes.push(volumeUuid);
+                    return false;
+                }
+                return true;
+            });
         } else {
-            const instanceVolumeMapping = await getMappedVolumeDetails(credentialsId, region, instanceRecord);
-            const volumeRecords =
-                Object.values(instanceVolumeMapping)
-                    ?.map(i => i?.volumeRecords)
-                    .flat() || [];
-            volumeUuids = volumeRecords.map(volume => volume.uuid as string);
+            volumeUuids = mappedVolumeUUIDs;
         }
 
-        const params: BulkOptimizeSnapshotPolicyParamsType = {
-            fsxId: instanceRecord.fsxFileSystem,
-            region,
-            volUuids: JSON.stringify(volumeUuids),
-            apiBody: JSON.stringify({ snapshot_policy: snapshotPolicy })
-        };
-
-        const command = [SET_VOLUME_SNAPSHOT_POLICY(params)];
-        const ssmComment = 'Set snapshot policy for volumes';
-
-        const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
-                credentialsId,
+        if (!isEmpty(volumeUuids)) {
+            const params: BulkOptimizeSnapshotPolicyParamsType = {
+                fsxId: instanceRecord.fsxFileSystem,
                 region,
-                command,
-                instanceRecord.activeNodeInstanceid,
-                ssmComment,
-                accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            )
-        );
-        const { response: ssmResponse, error: ssmError } = sqlResponseParsing(response);
-        if (!isEmpty(ssmError)) {
-            logger.error('Error executing SSM command to set snapshot for volumes', ssmError, volumeUuids);
-            jobError = `Failed to set snapshot policy for volumes: ${ssmError}`;
-            jobStatus = JOBSTATUS.FAILED;
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, ssmError);
+                volUuids: JSON.stringify(volumeUuids),
+                apiBody: JSON.stringify({ snapshot_policy: snapshotPolicy })
+            };
+
+            const command = [SET_VOLUME_SNAPSHOT_POLICY(params)];
+            const ssmComment = 'Set snapshot policy for volumes';
+
+            const response = await retryWithDelay(
+                callSsmExecution.bind(
+                    null,
+                    credentialsId,
+                    region,
+                    command,
+                    instanceRecord.activeNodeInstanceid,
+                    ssmComment,
+                    accountId,
+                    false,
+                    CUSTOM_SSM_EXECUTION_TIMEOUT
+                )
+            );
+            const { response: ssmResponse, error: ssmError } = sqlResponseParsing(response);
+            if (!isEmpty(ssmError)) {
+                logger.error('Error executing SSM command to set snapshot for volumes', ssmError, volumeUuids);
+                jobError = `Failed to set snapshot policy for volumes: ${ssmError}`;
+                jobStatus = JOBSTATUS.FAILED;
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, ssmError);
+            }
+            if (!isDemoFlow && ssmResponse.length !== volumeUuids.length) {
+                logger.error('Error setting snapshot policy for volumes. ONTAP job IDs:', ssmResponse, volumeUuids);
+                jobError = `Failed to set snapshot policy for some volumes: ONTAP job IDs:', ${ssmResponse}`;
+                jobStatus = JOBSTATUS.WARNING;
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error setting snapshot policy for volumes');
+            }
+            jobStatus = JOBSTATUS.COMPLETED;
         }
-        if (!isDemo() && ssmResponse.length !== volumeUuids.length) {
-            logger.error('Error setting snapshot policy for volumes. ONTAP job IDs:', ssmResponse, volumeUuids);
-            jobError = `Failed to set snapshot policy for some volumes: ONTAP job IDs:', ${ssmResponse}`;
-            jobStatus = JOBSTATUS.WARNING;
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error setting snapshot policy for volumes');
-        }
-        if (isDemo()) {
+        if (isDemoFlow) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
                 instanceRecord.id,
@@ -295,7 +310,12 @@ async function setSnapshotPolicyForVolumes(
                 instanceMetadata || ({} as DatabaseInstanceMetadata)
             );
         }
-        jobStatus = JOBSTATUS.COMPLETED;
+        if (!isDemoFlow && missingVolumes.length > 0) {
+            jobError = `Volumes UUIDs: ${missingVolumes.join(', ')} are not found for database instance: ${
+                instanceRecord.resourceName
+            }`;
+            jobStatus = JOBSTATUS.WARNING;
+        }
     } catch (error) {
         const errMsg = JSON.stringify(error);
         logger.error('Error setting snapshot policy for volumes', errMsg);
@@ -360,13 +380,13 @@ async function handleResiliecyOptimize(
         ]
     };
     // check whether any jobs on the same resource running
-    const jobDetails = `Optimize resiliency for ${instanceRecord.resourceName}`;
+    const jobDetails = `Fix resiliency for ${instanceRecord.resourceName}`;
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
         region,
         instanceRecord.resourceName,
-        JOBTYPE.OPTIMIZATION,
+        JOBTYPE.WELL_ARCHITECTED,
         jobDetails,
         jobDetails,
         undefined,

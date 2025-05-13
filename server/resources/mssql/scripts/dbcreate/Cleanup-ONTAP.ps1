@@ -50,6 +50,19 @@ $password = $credobject.fsx.password
 ##Variables
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
+try {
+    $FSxNHTTP_Request = [System.Net.WebRequest]::Create("https://$MgmtDNS")
+    $FSxNHTTP_Response = $FSxNHTTP_Request.GetResponse()
+    $FSxNHTTP_Response.Close()
+}
+catch {
+    write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
+    Write-Information "FSxN Management domain $MgmtDNS is not resolved. Switching to management IP."
+    $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.IpAddresses
+    if ($MgmtDNS -is [array]) {
+        $MgmtDNS = $MgmtDNS[0]
+    }
+}
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
 $pair = "$($username):$($password)"

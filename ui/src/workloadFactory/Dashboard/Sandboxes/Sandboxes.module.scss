@@ -86,3 +86,17 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .sandboxes {
+        width: 41.25%;
+        [class*='mainSection'] {
+            [class*='_rightSide'] {
+                width: 74.75%;
+                .individualRow {
+                    width: calc(100% - 40px);
+                }
+            }
+        }
+    }
+}

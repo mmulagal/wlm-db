@@ -4,7 +4,8 @@ import {
     DsButton,
     DsFlashingDotsLoader,
     DsTypography,
-    Popover
+    Popover,
+    TooltipInfo
 } from '@netapp/design-system';
 import { useDialog } from '@netapp/design-system';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
@@ -15,7 +16,6 @@ import { ReactComponent as ActionMenu } from '../../../assets/ic_actions_menu_ci
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { ReactComponent as InfoIcon } from '../../../assets/info.svg';
 import styles from './StorageCardComponent.module.scss';
-import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 
 import { GENERAL } from '../../../utils/appConstants';
@@ -27,26 +27,23 @@ import {
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
-    GW_TOOLTIP_KEYS_MAPPING,
     WLF_TABS
 } from '../../../utils/consts';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
-    setCardData,
     setDriftAssessmentData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
-    setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import {
     formatGetWellData,
-    formatOptimizationBreakDown,
     handleOptimizeStorageJob,
-    updateConfigStatePerInstance
+    updateConfigStatePerInstance,
+    updateConfigStateStatus
 } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -72,7 +69,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
     const [dismissAction, setDismissAction] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const { isDemoMode } = useAppSelector(state => state.auth);
+
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
         isAssessmentAvailable,
@@ -185,47 +182,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         }
     };
 
-    const tooltipRssListSection = (
-        listObj: { key: string; value: string }[],
-        secListObj: { key: string; value: string }[]
-    ) => {
-        return (
-            <div className={styles.tooltipLevel}>
-                {listObj?.map((item: any, index: number) => {
-                    return (
-                        <div key={index}>
-                            <div className={styles.rowrss}>
-                                <div className={styles.firstPart}>
-                                    <DsTypography variant="Semibold_13">{item.key}</DsTypography>
-                                </div>
-
-                                <div className={styles.secondPart}>
-                                    <div className={styles.secSubPart}>
-                                        <DsTypography variant="Regular_13">
-                                            {GETWELL_VALUES?.[item.value || ''] || item?.value}
-                                        </DsTypography>
-                                    </div>
-
-                                    {secListObj && (
-                                        <>
-                                            <div className={styles.seperator} />
-                                            <div className={styles.secSubPart}>
-                                                <DsTypography variant="Regular_13">
-                                                    {`${secListObj[index]?.value}` || ' '}
-                                                </DsTypography>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                            {index !== listObj.length - 1 && <div className={styles.tooltipSeparator} />}
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    };
-
     const tooltipListSection = (listObj: { key: string; value: string }[], valWidth: string) => {
         return (
             <div className={styles.tooltipLevel}>
@@ -251,14 +207,17 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         );
     };
 
-    const sectionTwoContent = (cardData: any) => {
+    const sectionTwoContentNew = (cardData: any) => {
         if (loading) {
             return (
                 <div style={{ height: '22px', display: 'flex', alignItems: 'center' }}>
                     <DsFlashingDotsLoader />
                 </div>
             );
-        } else if (cardData?.dismissedObj?.state && cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
+        } else if (
+            cardData?.dismissedObj?.configState &&
+            cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE
+        ) {
             //Condition to show n/a if state is not active
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
@@ -267,77 +226,85 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             );
         } else {
             return (
-                <div className={styles.tooltipContainer}>
-                    <div className={styles.statusTopSection}>
+                <>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            cardData?.block_two?.value === 'Over-provisioned'
+                                ? `${styles.titleText} ${styles.overProvisioned}`
+                                : styles.titleText
+                        }
+                        style={{
+                            whiteSpace:
+                                cardData?.errorMessage ||
+                                (cardData?.block_two?.value === GETWELL_STATUS.ANALYZING &&
+                                    cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING)
+                                    ? 'unset'
+                                    : 'nowrap'
+                        }}
+                    >
                         {cardData?.block_two?.value && cardData?.block_two?.value !== GENERAL.UNAVAILABLE ? (
                             <>
-                                <div className={styles.svgSection}>
+                                <span className={styles.svgSection}>
                                     {setImage(cardData?.block_two?.value || GENERAL.UNAVAILABLE)}
-                                </div>
-                                <DsTypography
-                                    style={{ whiteSpace: 'nowrap' }}
-                                    variant="Semibold_14"
-                                    isDisabled={disableText}
+                                </span>
+                                <span
+                                    className={styles.valueSection}
+                                    title={cardData?.block_two?.value || GENERAL.UNAVAILABLE}
                                 >
                                     {cardData?.block_two?.value || GENERAL.UNAVAILABLE}
-                                </DsTypography>
+                                </span>
                             </>
                         ) : (
-                            <div className={styles.tooltipContainer}>
-                                <div className={styles.tooltip}>
-                                    {cardData?.errorMessage && (
-                                        <Popover
-                                            popoverClass={''}
-                                            children={cardData?.errorMessage}
-                                            trigger="hover"
-                                            isAppendedToBody={false}
-                                            container={<TooltipIcon />}
-                                            placement="bottom"
-                                        />
-                                    )}
-                                </div>
-                                <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                                    {GENERAL.UNAVAILABLE}
-                                </DsTypography>
-                            </div>
-                        )}
-                    </div>
-                    {cardData?.block_two?.value === GETWELL_STATUS.ANALYZING &&
-                        cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING && (
-                            <div className={styles.tooltip}>
-                                <Popover
-                                    popoverClass={''}
-                                    children={
-                                        <div className={styles.tooltipLevel}>
-                                            <DsTypography variant="Regular_13">
-                                                {GENERAL.RIGHTSIZING_TOOLTIP}
+                            <>
+                                {cardData?.errorMessage && (
+                                    <span className={styles.overProvisioned}>
+                                        <span className={styles.tooltipLevel}>
+                                            <Popover
+                                                popoverClass={''}
+                                                children={cardData?.errorMessage}
+                                                trigger="hover"
+                                                isAppendedToBody={false}
+                                                container={<TooltipIcon />}
+                                                placement="bottom"
+                                            />
+                                        </span>
+
+                                        <span style={{ marginLeft: '8px' }}>
+                                            <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                                                {GENERAL.UNAVAILABLE}
                                             </DsTypography>
-                                        </div>
-                                    }
-                                    trigger="hover"
-                                    isAppendedToBody={false}
-                                    container={<TooltipIcon />}
-                                    placement="bottom"
-                                />
-                            </div>
+                                        </span>
+                                    </span>
+                                )}
+                                {cardData?.block_two?.value === GETWELL_STATUS.ANALYZING &&
+                                    cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING && (
+                                        <span className={styles.tooltip}>
+                                            <Popover
+                                                popoverClass={''}
+                                                children={
+                                                    <div className={styles.tooltipLevel}>
+                                                        <DsTypography variant="Regular_13">
+                                                            {GENERAL.RIGHTSIZING_TOOLTIP}
+                                                        </DsTypography>
+                                                    </div>
+                                                }
+                                                trigger="hover"
+                                                isAppendedToBody={false}
+                                                container={<TooltipIcon />}
+                                                placement="bottom"
+                                            />
+                                        </span>
+                                    )}
+                            </>
                         )}
-                </div>
+                    </DsTypography>
+                </>
             );
         }
     };
 
-    const calculateDays = (time: string | any) => {
-        const endTime = time;
-        const now = Date.now();
-
-        const millisecondsPerDay = 1000 * 60 * 60 * 24;
-        const diffInDays = Math.ceil((endTime - now) / millisecondsPerDay);
-
-        return diffInDays;
-    };
-
-    //Dismiss section content
-    const sectionSevenContent = (cardData: any) => {
+    const sectionSevenContentNew = (cardData: any) => {
         if (loading) {
             return (
                 <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
@@ -346,28 +313,60 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             );
         } else {
             return (
-                <div className={styles.dismissContainer}>
-                    <div>
-                        {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && (
-                            <div style={{ position: 'relative', top: '2px' }}>
-                                <InfoIcon />
-                            </div>
-                        )}
-                        {cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVATING && <Warning />}
+                <>
+                    <div
+                        className={`${styles.column} ${styles.warningColumn}`}
+                        style={{ borderRight: 'none', flex: '1 1 191px', minWidth: '193px' }}
+                    >
+                        <DsTypography variant="Semibold_14" className={styles.titleText} style={{ display: 'flex' }}>
+                            <span>
+                                {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && (
+                                    <div style={{ marginTop: '5px' }}>
+                                        <InfoIcon />
+                                    </div>
+                                )}
+                                {cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVATING && <Warning />}
+                            </span>
+                            <span style={{ marginLeft: '8px' }}>
+                                {cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED && (
+                                    <DsTypography title={GENERAL.DISMISSED_MESSAGE} variant="Regular_14">
+                                        {GENERAL.DISMISSED_MESSAGE}
+                                    </DsTypography>
+                                )}{' '}
+                                {cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <DsTypography
+                                            variant="Regular_14"
+                                            style={{ whiteSpace: 'nowrap', position: 'relative', top: '2px' }}
+                                        >
+                                            Active
+                                        </DsTypography>
+                                        <TooltipInfo>{GENERAL.ACTIVATING_MESSAGE_TWO}</TooltipInfo>
+                                    </div>
+                                )}
+                                {cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <DsTypography
+                                            variant="Regular_14"
+                                            style={{ whiteSpace: 'nowrap', position: 'relative', top: '2px' }}
+                                            title={'Analysis is postponed'}
+                                        >
+                                            Analysis is postponed
+                                        </DsTypography>
+                                        <TooltipInfo>
+                                            {`until ${formatDateAssess(cardData?.dismissedObj?.endTime)}`}
+                                        </TooltipInfo>
+                                    </div>
+                                )}
+                            </span>
+                        </DsTypography>
                     </div>
-
-                    <DsTypography variant="Regular_14" style={{ minWidth: '160px' }}>
-                        {cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED && GENERAL.DISMISSED_MESSAGE}{' '}
-                        {cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING && GENERAL.ACTIVATING_MESSAGE}{' '}
-                        {cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED &&
-                            `This issue is postponed until ${formatDateAssess(cardData?.dismissedObj?.endTime)}`}{' '}
-                    </DsTypography>
-                </div>
+                </>
             );
         }
     };
 
-    const sectionFiveContent = (cardData: any) => {
+    const sectionFiveContentNew = (cardData: any) => {
         if (loading) {
             return (
                 <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
@@ -376,29 +375,44 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             );
         } else if (cardData?.block_five?.count) {
             return (
-                <div className={styles.warningMsg}>
-                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
-                        {cardData?.block_five?.count?.totalObjectsInViolation || 0}
+                <>
+                    <DsTypography
+                        variant="Semibold_14"
+                        title={`${cardData?.block_five?.count?.totalObjectsInViolation || 0} out of ${
+                            cardData?.block_five?.count?.totalObjectsAssessed || 0
+                        }`}
+                        className={`${styles.titleText} ${styles.centerTextContainer}`}
+                    >
+                        <span>
+                            <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
+                                {cardData?.block_five?.count?.totalObjectsInViolation || 0}
+                            </DsTypography>
+                        </span>
+                        <span>
+                            <DsTypography className={styles.centerText} variant="Semibold_14" isDisabled={disableText}>
+                                {' out of '}
+                            </DsTypography>
+                        </span>
+                        <span>
+                            <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
+                                {cardData?.block_five?.count?.totalObjectsAssessed || 0}
+                            </DsTypography>
+                        </span>
                     </DsTypography>
-                    <DsTypography className={styles.centerText} variant="Semibold_14" isDisabled={disableText}>
-                        {' out of '}
-                    </DsTypography>
-                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
-                        {cardData?.block_five?.count?.totalObjectsAssessed || 0}
-                    </DsTypography>
-                </div>
+                </>
             );
         } else {
             return (
-                <div className={styles.warningMsg}>
+                <>
                     <DsTypography
-                        style={{ minWidth: '200px', width: 'fit-content' }}
                         variant="Semibold_14"
+                        title={cardData?.block_five?.value || GENERAL.NOT_AVAILABLE}
                         isDisabled={disableText}
+                        className={styles.titleText}
                     >
                         {cardData?.block_five?.value || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
-                </div>
+                </>
             );
         }
     };
@@ -410,7 +424,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsFlashingDotsLoader />
                 </div>
             );
-        } else if (cardData?.dismissedObj?.state && cardData?.dismissedObj?.state !== CONFIG_STATES.ACTIVE) {
+        } else if (
+            cardData?.dismissedObj?.configState &&
+            cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE
+        ) {
             //Condition to show n/a if state is not active
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
@@ -535,8 +552,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         }
     };
 
-    const windowSize = useResize();
-
     // This is the function that will be called when the optimize button is clicked from main cards
     const callOptimizeApi = (type: any) => {
         let payload: null | object = {};
@@ -641,7 +656,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"
@@ -752,7 +767,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === GENERAL.CLONE_MANAGEMENT
         ) {
-            return 'View & optimize';
+            return 'View & fix';
         } else if (
             type === 'Data files' ||
             type === 'Log files' ||
@@ -772,7 +787,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         const payload = {
             configurationsToDismiss: [
                 {
-                    name: cardData?.dismissedObj?.name,
+                    configurationName: cardData?.id,
                     configState: action,
                     databaseHosts: [
                         {
@@ -788,36 +803,57 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         dismissMssqlAssessment({ payload: payload })
             .then((res: any) => {
                 setDismissAction(false);
-                let updatedState = '';
-                if (
-                    action === CONFIG_STATE_ACTIONS.ACTIVE &&
-                    res?.data?.configurationsDismissed[0]?.configState === CONFIG_STATE_ACTIONS.ACTIVE
-                ) {
-                    updatedState = CONFIG_STATES.ACTIVATING;
+                if (!res.error) {
+                    let updatedState = '';
+                    if (
+                        action === CONFIG_STATE_ACTIONS.ACTIVE &&
+                        res?.data?.dismissedConfigurations?.[0]?.configState === CONFIG_STATE_ACTIONS.ACTIVE
+                    ) {
+                        updatedState = CONFIG_STATES.ACTIVATING;
+                    } else {
+                        updatedState = res?.data?.dismissedConfigurations?.[0]?.configState;
+                        updatedState = updatedState?.toUpperCase();
+                    }
+
+                    const targetId = cardData?.id;
+
+                    if (!targetId || !updatedState) return;
+
+                    let newData =
+                        updateConfigStatePerInstance(
+                            updatedState,
+                            targetId,
+                            res?.data?.dismissedConfigurations?.[0]?.endTime
+                        ) || {};
+                    dispatch(setDriftAssessmentData(newData));
+                    formatGetWellData(dispatch, newData);
+
+                    // Below code is to reset dashboard level assessment value also
+                    const perObj = {
+                        credentialId: selectedGwInstanceCredId,
+                        hostId: selectedResourceId,
+                        instanceId: selectedDatabaseInstance,
+                        regionId: selectedGwInstanceRegionId,
+                        state: updatedState,
+                        id: targetId,
+                        name: cardData?.mapName
+                    };
+                    updateConfigStateStatus([perObj], dispatch, updatedState);
+
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_SUCCESS
+                        })
+                    );
                 } else {
-                    updatedState = res?.data?.configurationsDismissed[0]?.configState;
-                    updatedState = updatedState?.toUpperCase();
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: GENERAL.ANALYSIS_STATE_CHANGE_FAILED
+                        })
+                    );
                 }
-
-                const targetId = cardData?.id;
-
-                if (!targetId || !updatedState) return;
-
-                let newData =
-                    updateConfigStatePerInstance(
-                        updatedState,
-                        targetId,
-                        res?.data?.configurationsDismissed[0]?.endTime
-                    ) || {};
-                dispatch(setDriftAssessmentData(newData));
-                formatGetWellData(dispatch, newData);
-
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: `Analysis state was changed.`
-                    })
-                );
             })
             .catch(err => {
                 dispatch(
@@ -833,9 +869,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const dismissDisableButton = () => {
         if (
-            cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED ||
-            cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED ||
-            cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING
+            cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+            cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
+            cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING
         ) {
             return true;
         }
@@ -843,207 +879,221 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
 
     return (
-        <div className={styles.storageCardComponent}>
-            {/* Section one */}
-            <div className={`${styles.commonSection} ${styles.firstSection}`}>
-                <DsTypography variant="Semibold_14">{cardData?.block_one?.value}</DsTypography>
-                <DsTypography variant="Regular_14">{cardData?.block_one?.type}</DsTypography>
-            </div>
-
-            {/* Section Two */}
-            <div className={styles.commonSection} style={{ minWidth: '160px' }}>
-                {sectionTwoContent(cardData)}
-
-                <DsTypography variant="Regular_14" isDisabled={disableText}>
-                    {cardData?.block_two?.type}
-                </DsTypography>
-            </div>
-
-            {/* Section 3 */}
-            <div className={styles.commonSection} style={{ minWidth: '80px' }}>
-                {loading && (
-                    <div style={{ height: '22px', display: 'flex', alignItems: 'center' }}>
-                        <DsFlashingDotsLoader />
-                    </div>
-                )}
-                {!loading && (
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {cardData?.block_four?.value || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                )}
-                <DsTypography variant="Regular_14" isDisabled={disableText}>
-                    {cardData?.block_four?.type}
-                </DsTypography>
-            </div>
-
-            {/* Section Resource Type - 4 */}
-            <div
-                className={styles.thirdSection}
-                style={{
-                    height: cardData?.block_three?.smallFont ? '56px' : '64px',
-                    minWidth: cardData?.block_five?.minWidth ? cardData?.block_five?.minWidth : '165px',
-                    width: 'fit-content',
-                    position: 'relative',
-                    top: '3px'
-                }}
-            >
-                {sectionFiveContent(cardData)}
-
-                <DsTypography variant="Regular_14" isDisabled={disableText}>
-                    {cardData?.block_five?.type}
-                </DsTypography>
-            </div>
-
-            {/* impacted volume section - 5 */}
-            {cardData?.block_six && (
-                <div
-                    className={styles.thirdSection}
-                    style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px', minWidth: '143px' }}
-                >
-                    {sectionSixContent(cardData)}
-
-                    <DsTypography variant="Regular_14" isDisabled={disableText}>
-                        {cardData?.block_six?.type}
-                    </DsTypography>
-                </div>
-            )}
-
-            {/* Dismiss section code */}
-            {(cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED ||
-                cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED ||
-                cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVATING) && (
-                <div className={styles.dismissSection}>{sectionSevenContent(cardData)}</div>
-            )}
-
-            {/* <div className={styles.separator} /> */}
-
-            {/* extra Section */}
-            {windowSize.width >= 1770 &&
-                (cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
-                    cardData?.dismissedObj?.state === undefined) && <div className={styles.fourthSection}></div>}
-
-            {/* 6 section */}
-            {!optimizePrintState &&
-                cardData?.block_one?.value !== 'ONTAP' &&
-                cardData?.block_one?.value !== 'Operating system' &&
-                (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
-                cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
-                    <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+        <>
+            <div className={styles.card}>
+                <div className={styles.cardContent}>
+                    {/* First Column */}
+                    <div className={`${styles.column}`}>
+                        <DsTypography
+                            variant="Semibold_14"
+                            className={styles.titleText}
+                            title={cardData?.block_one?.value}
                         >
-                            <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
-                                <DsButton variant="secondary" isDisabled={true}>
-                                    {setButtonText()}
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
+                            {cardData?.block_one?.value}
+                        </DsTypography>
+                        <DsTypography variant="Regular_14" className={styles.label} title={cardData?.block_one?.type}>
+                            {cardData?.block_one?.type}
+                        </DsTypography>
                     </div>
-                ) : optimizingInstanceData &&
-                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
-                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
-                    <TooltipComponent
-                        title={GENERAL.OPTIMIZATION_IN_PROGRESS}
-                        placement="bottom"
-                        width="310px"
-                        height="50px"
-                    >
-                        <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
-                            <DsButton variant="secondary" isDisabled={true}>
-                                {setButtonText()}
-                            </DsButton>
+
+                    {/* Status */}
+                    <div className={`${styles.column} ${styles.tooltip}`}>
+                        {sectionTwoContentNew(cardData)}
+
+                        <DsTypography variant="Regular_14" isDisabled={disableText} className={styles.label}>
+                            {cardData?.block_two?.type}
+                        </DsTypography>
+                    </div>
+
+                    {/* Severity */}
+
+                    <div className={`${styles.column}`}>
+                        {loading && (
+                            <div style={{ height: '22px', display: 'flex', alignItems: 'center' }}>
+                                <DsFlashingDotsLoader />
+                            </div>
+                        )}
+                        {!loading && (
+                            <DsTypography
+                                variant="Semibold_14"
+                                className={styles.titleText}
+                                isDisabled={disableText}
+                                title={cardData?.block_four?.value || GENERAL.NOT_AVAILABLE}
+                            >
+                                {cardData?.block_four?.value || GENERAL.NOT_AVAILABLE}
+                            </DsTypography>
+                        )}
+                        <DsTypography variant="Regular_14" className={styles.label} isDisabled={disableText}>
+                            {cardData?.block_four?.type}
+                        </DsTypography>
+                    </div>
+
+                    {/* Resource type */}
+                    <div className={`${styles.column} ${styles.tooltip}`}>
+                        {sectionFiveContentNew(cardData)}
+                        <DsTypography variant="Regular_14" className={styles.label}>
+                            {cardData?.block_five?.type}
+                        </DsTypography>
+                    </div>
+
+                    {/* Impacted Volumes */}
+                    {cardData?.block_six && (
+                        <div className={`${styles.column} ${styles.tooltip}`}>
+                            <DsTypography variant="Semibold_14" className={styles.titleText}>
+                                {sectionSixContent(cardData)}
+                            </DsTypography>
+                            <DsTypography
+                                variant="Regular_14"
+                                title={cardData?.block_six?.type}
+                                className={styles.label}
+                            >
+                                {cardData?.block_six?.type}
+                            </DsTypography>
                         </div>
-                    </TooltipComponent>
-                ) : disableOptimizeButtonTooltip ? (
-                    <Popover
-                        popoverClass={CommonStyles['popover']}
-                        isAppendedToBody={true}
-                        children={<DsTypography variant="Regular_14">{disableOptimizeButtonTooltip}</DsTypography>}
-                        trigger="hover"
-                        container={
+                    )}
+
+                    {(cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
+                        cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
+                        cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING) && (
+                        <>{sectionSevenContentNew(cardData)}</>
+                    )}
+
+                    {/* Buttons */}
+                    {!optimizePrintState &&
+                        cardData?.block_one?.value !== 'ONTAP' &&
+                        cardData?.block_one?.value !== 'Operating system' &&
+                        (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
+                        cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
+                            <div
+                                className={styles.buttonSection}
+                                // style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
+                            >
+                                <TooltipComponent
+                                    title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                                    placement="bottom"
+                                    width="120px"
+                                    height="30px"
+                                >
+                                    <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
+                                        <DsButton variant="secondary" isDisabled={true}>
+                                            {setButtonText()}
+                                        </DsButton>
+                                    </div>
+                                </TooltipComponent>
+                            </div>
+                        ) : optimizingInstanceData &&
+                          cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
+                          cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
+                            <TooltipComponent
+                                title={GENERAL.OPTIMIZATION_IN_PROGRESS}
+                                placement="bottom"
+                                width="310px"
+                                height="50px"
+                            >
+                                <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
+                                    <DsButton variant="secondary" isDisabled={true}>
+                                        {setButtonText()}
+                                    </DsButton>
+                                </div>
+                            </TooltipComponent>
+                        ) : disableOptimizeButtonTooltip ? (
+                            <Popover
+                                popoverClass={CommonStyles['popover']}
+                                isAppendedToBody={true}
+                                children={
+                                    <DsTypography variant="Regular_14">{disableOptimizeButtonTooltip}</DsTypography>
+                                }
+                                trigger="hover"
+                                container={
+                                    <div
+                                        className={
+                                            isDarkTheme
+                                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                                : styles.buttonSection
+                                        }
+                                    >
+                                        <DsButton variant="secondary" isDisabled={true}>
+                                            {setButtonText()}
+                                        </DsButton>
+                                    </div>
+                                }
+                            />
+                        ) : (
                             <div
                                 className={
-                                    isDarkTheme
+                                    isDarkTheme && (loading || disableOptimizeButton)
                                         ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
                                         : styles.buttonSection
                                 }
-                                style={{
-                                    width: windowSize.width >= 1770 ? '170px' : '20%',
-                                    position: 'relative',
-                                    left: windowSize.width >= 1770 ? '0px' : '112px'
-                                }}
+                                id={`${cardData?.id}-optimize`}
                             >
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    variant="secondary"
+                                    onClick={() => handleDifferentNavigation()}
+                                    isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
+                                >
                                     {setButtonText()}
                                 </DsButton>
                             </div>
-                        }
-                    />
-                ) : (
-                    <div
-                        className={
-                            isDarkTheme && (loading || disableOptimizeButton)
-                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
-                                : styles.buttonSection
-                        }
-                        style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
-                        id={`${cardData?.id}-optimize`}
-                    >
-                        <DsButton
-                            variant="secondary"
-                            onClick={() => handleDifferentNavigation()}
-                            isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
-                        >
-                            {setButtonText()}
-                        </DsButton>
-                    </div>
-                ))}
+                        ))}
 
-            {/* Section 7 */}
-            {cardData?.block_one?.value !== 'ONTAP' && cardData?.block_one?.value !== 'Operating system' && (
-                <>
-                    <ButtonWithDropdown
-                        variant="icon"
-                        isDisabled={loading || dismissAction}
-                        items={[
-                            {
-                                id: 'activate',
-                                children: 'Activate',
-                                isDisabled:
-                                    cardData?.dismissedObj?.state === CONFIG_STATES.ACTIVE ||
-                                    !cardData?.dismissedObj?.state,
-                                onClick: () => {
-                                    handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
-                                }
-                            },
-                            {
-                                id: 'postponeFor30Days',
-                                children: 'Postpone for 30 days',
-                                isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.POSTPONED,
-                                onClick: () => {
-                                    handleSingleAction(CONFIG_STATE_ACTIONS.POSTPONED);
-                                }
-                            },
-                            {
-                                id: 'dismiss',
-                                children: 'Dismiss',
-                                isDisabled: cardData?.dismissedObj?.state === CONFIG_STATES.DISMISSED,
-                                onClick: () => {
-                                    handleSingleAction(CONFIG_STATE_ACTIONS.DISMISS);
-                                }
-                            }
-                        ]}
-                    >
-                        <div className={loading || dismissAction ? styles.actionMenu : ''}>
-                            <ActionMenu />
-                        </div>
-                    </ButtonWithDropdown>
-                </>
-            )}
-        </div>
+                    {/* Section 7 */}
+                    {cardData?.block_one?.value !== 'ONTAP' && cardData?.block_one?.value !== 'Operating system' && (
+                        <>
+                            <ButtonWithDropdown
+                                variant="icon"
+                                isDisabled={loading || dismissAction}
+                                items={[
+                                    {
+                                        id: 'activate',
+                                        children: GENERAL.REACTIVATE,
+                                        isDisabled:
+                                            cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVE ||
+                                            cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING ||
+                                            !cardData?.dismissedObj?.configState,
+                                        onClick: () => {
+                                            handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE);
+                                        },
+                                        title: GENERAL.REACTIVATE_TOOLTIP,
+                                        titleProps: {
+                                            placement: 'left'
+                                        }
+                                    },
+                                    {
+                                        id: 'postponeFor30Days',
+                                        children: GENERAL.POSTPONE_FOR_30_DAYS,
+                                        isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED,
+                                        onClick: () => {
+                                            handleSingleAction(CONFIG_STATE_ACTIONS.POSTPONED);
+                                        },
+                                        title: GENERAL.POSTPONED_TOOLTIP,
+                                        titleProps: {
+                                            placement: 'left'
+                                        }
+                                    },
+                                    {
+                                        id: 'dismiss',
+                                        children: GENERAL.DISMISS,
+                                        isDisabled: cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED,
+                                        onClick: () => {
+                                            handleSingleAction(CONFIG_STATE_ACTIONS.DISMISS);
+                                        },
+                                        title: GENERAL.DISMISS_TOOLTIP,
+                                        titleProps: {
+                                            placement: 'left'
+                                        }
+                                    }
+                                ]}
+                            >
+                                <div className={loading || dismissAction ? styles.actionMenu : ''}>
+                                    <ActionMenu />
+                                </div>
+                            </ButtonWithDropdown>
+                        </>
+                    )}
+                </div>
+            </div>
+        </>
     );
 };
 

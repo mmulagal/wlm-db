@@ -16,7 +16,8 @@ import {
     UnmanageInstanceParams,
     DatabaseInstanceQueryString,
     DiscoverPgSqlResponseBody,
-    MultiHostManageResponseBody
+    MultiHostManageResponseBody,
+    DiscoverOracleResponseBody
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams, AccountIdParams } from '../types/generic.types';
 
@@ -149,6 +150,35 @@ const PgSqlResourceDetailsSchema = {
     }
 };
 
+const UnManagePgSqlSchema = {
+    ...DiscoveryBaseRequest,
+    params: UnmanageInstanceParams,
+    querystring: DatabaseInstanceQueryString,
+    summary: 'Unmanage PostgreSQL database instances.',
+    description: 'Unmanage PostgreSQL database instances managed by Workload Factory.',
+    response: {
+        200: MultiInstanceUnmanageResponseBody
+    }
+};
+
+const DiscoverOracleSchema = {
+    ...DiscoveryBaseRequest,
+    params: CredentialsIdParams,
+    querystring: DiscoverQuery,
+    summary: 'Discover EC2 instances hosting Oracle Server.',
+    description: `Discover AWS EC2 instances hosting Oracle Server.
+        EC2 instances meeting the following constraints are
+        considered for discovery:
+        <ul>
+            <li> Instance is in running state.
+            <li> Machines running Linux.
+            <li> Architecture is x86_64.
+        </ul>`,
+    response: {
+        200: DiscoverOracleResponseBody
+    }
+};
+
 export {
     DiscoverCredentialsSchema,
     DiscoverMsSqlSchema,
@@ -157,5 +187,7 @@ export {
     UnManageMsSqlSchema,
     ManageMsSqlSchemaV2,
     DiscoverPgSqlSchema,
-    PgSqlResourceDetailsSchema
+    PgSqlResourceDetailsSchema,
+    DiscoverOracleSchema,
+    UnManagePgSqlSchema
 };

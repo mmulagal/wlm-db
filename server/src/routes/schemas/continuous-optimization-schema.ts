@@ -20,6 +20,7 @@ import {
     OptimizeResiliencyBody,
     OptimizeGenericRequestBody,
     BulkOptimizeComputeRequestBody,
+    BulkOptimizeCloneBody,
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse
 } from '../types/continuous-optimization.types';
@@ -251,6 +252,19 @@ const BulkDismissConfigurationSchema = {
     }
 };
 
+const BulkOptimizeCloneSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Optimize clone parameters for database instances',
+    description: 'Optimize clone parameters for database instances',
+    body: BulkOptimizeCloneBody,
+    tags: [RouteTags.ASSESSMENT],
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -269,5 +283,6 @@ export {
     BulkOptimizeComputeSchema,
     BulkOptimizeMaxDopSchema,
     BulkOptimizeAwsBackupSchema,
+    BulkOptimizeCloneSchema,
     BulkDismissConfigurationSchema
 };

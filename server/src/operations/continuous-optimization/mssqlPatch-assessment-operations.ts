@@ -13,13 +13,12 @@ import {
 } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/common-types';
 import { extractKbNumber, extractVersionDetails, sqlResponseParsing } from '../../utils/utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
-import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { GET_INSTALLED_MSSQL_VERSION } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -33,7 +32,8 @@ async function calculateMSSQLPatchDrift(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string
+    databaseHostId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating MSSQL Patch drift', {
         accountId,
@@ -43,14 +43,7 @@ async function calculateMSSQLPatchDrift(
     });
     let errorMessage = '';
     let patchAssessment: MSSQLPatchAssessmentObject[] = [];
-    let metadata;
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating mssql patch drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
+
     try {
         const metadataObject = metadata as unknown as Metadata;
         const { assessment: { mssqlPatch, errors } = {} } = metadataObject;
@@ -168,19 +161,9 @@ async function managedHostMSSQLPatchAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
-        if (errorMessage) {
-            await updateAsssementErrorInResourceMetadata(
-                accountId,
-                databaseHostId,
-                credentialsId,
-                region,
-                errorMessage,
-                'mssqlPatch'
-            );
-        }
     }
 
-    return patchAssessment;
+    return { patchAssessment, errorMessage };
 }
 
 async function getTheMSSqlversion(credentialsId: string, region: string, instanceId: string) {

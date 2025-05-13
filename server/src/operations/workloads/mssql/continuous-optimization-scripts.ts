@@ -143,8 +143,9 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
         }
     
         Function Get-LunFromSerialNumber($responseObject) {
-            Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
-    
+            $responseJson = $responseObject | ConvertTo-Json -Depth 5
+            Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseJson"
+   
             $QueryFilter = ''
             $serialNumbers = @()
             $serialNumbers += $responseObject.data | ForEach-Object { $_.lunSerialNumber }
@@ -890,7 +891,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
     $apiBody = '${params.apiBody}'
-    Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
+    Write-Information "Fixing storage for FSx ID: $FSxID FSX region: $FSxRegion"
     ${ontapRestRequest}
 
     $newBody = $apiBody | ConvertFrom-Json
@@ -1137,14 +1138,14 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
                 }
                 # wait for insyance to respond back to the SSM invocation before reboot
             } catch {
-                $errMsg = "Error occurred while optimizing network adapter: $adapterName $_.Exception.Message"
+                $errMsg = "Error occurred while fixing network adapter: $adapterName $_.Exception.Message"
                 Write-Information $errMsg
                 $response['errors'][$adapterName] = $errMsg
             }          
         }
         Start-Process -FilePath "shutdown.exe" -ArgumentList @("/r", "/t 10") -Wait -NoNewWindow
     } catch {
-        $errMsg = "Error occurred while optimizing network adapters: $_.Exception.Message"
+        $errMsg = "Error occurred while fixing network adapters: $_.Exception.Message"
         Write-Information $errMsg
         $response['errors']['networkAdapters'] = $errMsg
     }
@@ -1165,12 +1166,14 @@ const OPTIMIZE_NETWORK_ADAPTERS = (networkAdapters: string[]) => `
 `;
 
 const GET_RUNNING_SQL_SERVERS = () => `
+    # Get running SQL Server instances
     $sqlServices = Get-Service | Where-Object { $_.DisplayName -like "*SQL Server (*)" -and $_.Status -eq 'Running' } | Select-Object -ExpandProperty DisplayName
     $jsonArray = @($sqlServices) | ConvertTo-Json
     Write-Output $jsonArray
 `;
 
 const CHECK_RUNNING_STATUS_WITH_RESTART = (serverNames: string[]) => `
+    # Check running status and restart if not running
     Start-Transcript -Path ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
     $serverNames = @(${serverNames.map(name => `'${name}'`).join(', ')})
     $sqlServices = Get-Service | Where-Object { $_.DisplayName -in $serverNames }
@@ -1184,11 +1187,11 @@ const CHECK_RUNNING_STATUS_WITH_RESTART = (serverNames: string[]) => `
         if ($sqlService.Status -eq 'Running') {
             $serviceResult = @{ name = $sqlService.Name; status = 'Running' }
         } else {
-            try { $sqlService.WaitForStatus('Running', '00:00:20')} catch {}
+            try { $sqlService.WaitForStatus('Running', '00:00:20') | Out-Null } catch {}
             $sqlService = Get-Service | Where-Object { $_.Name -eq $sqlService.Name }
             if ($sqlService.Status -ne 'Running') {
-                Start-Service -Name $sqlService.Name
-                try { $sqlService.WaitForStatus('Running', '00:00:20')} catch {}
+                Start-Service -Name $sqlService.Name | Out-Null
+                try { $sqlService.WaitForStatus('Running', '00:00:20') | Out-Null } catch {}
             }
             $serviceResult = @{ name = $sqlService.Name; status = $sqlService.Status.ToString() }
         }
@@ -1376,7 +1379,7 @@ const SET_VOLUME_SNAPSHOT_POLICY = (params: BulkOptimizeSnapshotPolicyParamsType
 
     foreach($volUuid in $volUuids) {
         try {
-            Write-Information "Optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid"
+            Write-Information "fixing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid"
             $body = $apiBody | ConvertFrom-Json | ConvertTo-Json
             $apiEndpointWithPathParams = $apiEndpoint + $volUuid
             $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $apiEndpointWithPathParams -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
@@ -1385,7 +1388,7 @@ const SET_VOLUME_SNAPSHOT_POLICY = (params: BulkOptimizeSnapshotPolicyParamsType
             }
         } catch {
             $errors += $_.Exception.Message
-            Write-Information "Error occurred while optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid. Error: $_.Exception.Message"
+            Write-Information "Error occurred while fixing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid. Error: $_.Exception.Message"
         }
     }
     $res['response'] = @($volRes)

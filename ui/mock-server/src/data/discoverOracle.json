@@ -1,0 +1,103 @@
+{
+    "count": 2,
+    "items": [
+        {
+            "ec2InstanceId": "i-055ed011c2068033a",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "ORACLERAC123",
+            "ec2UsageOperation": "RunInstances:0014",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "oracleServerDeploymentType": "Standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ordbsdl",
+                    "instanceId": "1",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseName": "ORDBSDL",
+                        "databaseId": "1558942727",
+                        "openMode": "READ WRITE"
+                    },
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-0b7a50ff9c4b8346b",
+                            "protocol": "NFS",
+                            "fileSystemStorageType": "SSD",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ],
+                            "nfsMountPoint": "/oracledata2"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-08d0bd2b32ead74e1",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "ORACLERAC1",
+            "ec2UsageOperation": "RunInstances:0014",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "oracleServerDeploymentType": "Standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "oradb1san",
+                    "instanceId": "1",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "MULTI_TENANT",
+                    "databaseCount": 2,
+                    "databaseDetails": {
+                        "databaseName": "ORADB1SA",
+                        "databaseId": "28096904",
+                        "openMode": "READ WRITE"
+                    },
+                    "pluggableDatabases": [
+                        {
+                            "pdbName": "ORCLPDB",
+                            "pdbId": "3",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB$SEED",
+                            "pdbId": "2",
+                            "pdbStatus": "NORMAL"
+                        }
+                    ],
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-024086825a37d1c5b",
+                            "protocol": "NFS",
+                            "fileSystemStorageType": "SSD",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ],
+                            "nfsMountPoint": "/ORADATA1"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

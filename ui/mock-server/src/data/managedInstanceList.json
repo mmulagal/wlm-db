@@ -48,6 +48,13 @@
                 "i-04deb6bbec539f866"
             ],
             "resourceId": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c46666666"
+        },
+        {
+            "instances": [
+                "i-0db20e831d1ce41e3",
+                "i-0e6a7b54b2b5951e3"
+            ],
+            "resourceId": "resource-id-11"
         }
     ]
 }

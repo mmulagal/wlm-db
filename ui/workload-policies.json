@@ -107,6 +107,7 @@
                     "logs:ListLogDeliveries",
                     "logs:PutLogEvents",
                     "logs:TagResource",
+                    "logs:PutRetentionPolicy",
                     "servicequotas:ListServiceQuotas",
                     "sns:ListTopics",
                     "sns:Publish",
@@ -237,7 +238,8 @@
                     "ssm:DescribeInstancePatchStates",
                     "ssm:ListCommands",
                     "ssm:DescribeInstanceInformation",
-                    "fsx:ListTagsForResource"
+                    "fsx:ListTagsForResource",
+                    "logs:DescribeLogGroups"
                 ],
                 "Resource": [
                     "*"
@@ -258,7 +260,8 @@
                 "Sid": "SSMResponseCloudWatch",
                 "Effect": "Allow",
                 "Action": [
-                    "logs:GetLogEvents"
+                    "logs:GetLogEvents",
+                    "logs:PutRetentionPolicy"
                 ],
                 "Resource": "arn:aws:logs:*:*:log-group:netapp/wlmdb/*"
             }

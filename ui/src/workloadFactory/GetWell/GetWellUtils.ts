@@ -48,11 +48,13 @@ import {
     getCurrentDateTime,
     sortListOfDict
 } from '../../utils/utilityFunctions';
+import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
     storage_tier: {
         id: 'performance-tier',
+        mapName: ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
         category: 'storage',
         block_one: {
             type: 'Storage sizing',
@@ -87,6 +89,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     file_system_headroom: {
         id: 'headroom',
+        mapName: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
         category: 'storage',
         block_one: {
             value: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
@@ -123,6 +126,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     transaction_log_drive_size: {
         id: 'log-drive-size',
+        mapName: ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
         category: 'storage',
         block_one: {
             value: ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
@@ -159,6 +163,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     tempdb_drive_size: {
         id: 'tempdb-drive-size',
+        mapName: ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
         category: 'storage',
         block_one: {
             value: ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
@@ -187,7 +192,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'TempDB drive size recommendation',
             description:
-                'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+                'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to well-architect performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
             valuesHeading: 'TempDB drive size percentages are as follows:',
             values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
@@ -195,6 +200,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     user_data_files: {
         id: 'data-files-location',
+        mapName: ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
         category: 'storage',
         block_one: {
             value: 'Data files (.mdf) placement',
@@ -231,6 +237,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     transaction_log_files: {
         id: 'log-files-location',
+        mapName: ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
         category: 'storage',
         block_one: {
             value: 'Log files (.ldf) placement',
@@ -267,6 +274,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     tempdb_files: {
         id: 'tempdb-files-location',
+        mapName: ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
         category: 'storage',
         block_one: {
             value: ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
@@ -303,6 +311,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     ontap_configuration: {
         category: 'storage',
+        mapName: ASSESSMENT_CONFIG_NAMES.ONTAP,
         block_one: {
             value: 'ONTAP',
             type: 'Configuration'
@@ -329,6 +338,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     os_configuration: {
         category: 'storage',
+        mapName: ASSESSMENT_CONFIG_NAMES.OS,
         block_one: {
             value: 'Operating system',
             type: 'Configuration'
@@ -352,65 +362,9 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         tags: ['Performance efficiency', 'Reliability']
     },
-    Latency: {
-        block_one: {
-            value: 'Latency',
-            type: 'Storage performance '
-        },
-        block_two: {
-            type: 'Status',
-            value: 'Not optimized'
-        },
-        block_three: {
-            type: 'Latency',
-            value: '< 20 ms'
-        },
-        block_four: {
-            type: 'Severity',
-            value: 'Critical'
-        },
-        tags: []
-    },
-    Throughput: {
-        block_one: {
-            value: 'Throughput',
-            type: 'Storage performance '
-        },
-        block_two: {
-            type: 'Status',
-            value: 'Not optimized'
-        },
-        block_three: {
-            type: 'Throughput',
-            value: '> 80%'
-        },
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        tags: []
-    },
-    IOPS: {
-        block_one: {
-            value: 'IOPS',
-            type: 'Storage performance '
-        },
-        block_two: {
-            type: 'Status',
-            value: 'Not optimized'
-        },
-        block_three: {
-            type: 'Throughput',
-            value: '> 80%'
-        },
-        block_four: {
-            type: 'Severity',
-            value: ''
-        },
-        tags: []
-    },
     compute_rightsizing: {
         id: 'compute-rightsizing',
+        mapName: ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
         category: 'compute',
         block_one: {
             type: 'Compute',
@@ -441,12 +395,13 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Compute rightsizing recommendation',
             description:
-                'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, we recommend rightsizing based on your workload demands.\nIf your current instance is under-provisioned, upgrading will enhance CPU, memory, and I/O capacity.\nIf it is over-provisioned, downgrading will maintain performance while reducing costs.\nClick Optimize to compare costs between your current and recommended instance types and to identify potential savings.'
+                'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, we recommend rightsizing based on your workload demands.\nIf your current instance is under-provisioned, upgrading will enhance CPU, memory, and I/O capacity.\nIf it is over-provisioned, downgrading will maintain performance while reducing costs.\nClick Fix to compare costs between your current and recommended instance types and to identify potential savings.'
         },
         tags: ['Cost optimization', 'Performance efficiency']
     },
     rss_config: {
         id: 'rss-config',
+        mapName: ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
         category: 'compute',
         block_one: {
             type: 'Compute',
@@ -494,6 +449,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     host_os_patch: {
         id: 'host-os-patch',
+        mapName: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
         category: 'compute',
         block_one: {
             type: 'Compute',
@@ -531,6 +487,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     sql_licenses: {
         id: 'sql-license',
+        mapName: ASSESSMENT_CONFIG_NAMES.LICENSE,
         category: 'application',
         block_one: {
             type: GENERAL.APPLICATION,
@@ -578,6 +535,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     microsoft_sql_patch: {
         id: 'microsoft-sql-patch',
+        mapName: ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
         category: 'application',
         block_one: {
             type: GENERAL.APPLICATION,
@@ -613,6 +571,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     maxdop: {
         id: 'maxdop',
+        mapName: ASSESSMENT_CONFIG_NAMES.MAXDOP,
         category: 'application',
         block_one: {
             type: GENERAL.APPLICATION,
@@ -641,7 +600,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'MAXDOP assessment recommendation',
+            title: 'MAXDOP recommendation',
             descriptionRssConfig: {
                 first: 'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nAccurate MAXDOP configuration enhances performance and efficiency. Setting MAXDOP to 4, 8, or 16 generally \nprovides the best results in most use cases. We recommend that you test your workload and monitor for any \nparallelism-related wait types such as CXPACKET.'
             }
@@ -650,6 +609,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     scheduled_local_snapshot: {
         id: 'snapshot-policy',
+        mapName: ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
         category: 'application',
         block_one: {
             type: GENERAL.RESILIENCY,
@@ -678,7 +638,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'Scheduled local snapshot assessment recommendation',
+            title: 'Scheduled local snapshot recommendation',
             description:
                 'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.\nUse local snapshots as an additional backup mechanism for quick restores or for testing.'
         },
@@ -686,6 +646,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     crr: {
         id: 'crr',
+        mapName: ASSESSMENT_CONFIG_NAMES.CRR,
         category: 'application',
         block_one: {
             type: GENERAL.RESILIENCY,
@@ -714,7 +675,7 @@ export const cardDataDefault: GwCardDataInterface = {
             smallFont: true
         },
         recommendation: {
-            title: 'Cross-Region Replication (CRR) assessment recommendation',
+            title: 'Cross-Region Replication (CRR) recommendation',
             description:
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.'
         },
@@ -722,6 +683,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     scheduled_FSx_for_ONTAP_backups: {
         id: 'aws-backup-policy',
+        mapName: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
         category: 'application',
         block_one: {
             type: GENERAL.RESILIENCY,
@@ -758,6 +720,7 @@ export const cardDataDefault: GwCardDataInterface = {
     },
     clone_management: {
         id: 'clone',
+        mapName: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
         category: 'cloning',
         block_one: {
             type: GENERAL.CLONING,
@@ -788,7 +751,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: `${GENERAL.CLONE_MANAGEMENT} recommendation`,
             description:
-                'Old clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
+                'Old clones can incur significant costs.\nConsider deleting or refreshing these clones to optimize your storage expenses.'
         },
         tags: ['Cost Efficiency']
     }
@@ -852,7 +815,7 @@ export const formatApplicationCardMainConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'sql-license',
             category: categoryVal,
             recommendationText: item?.recommendation,
             dismissedObj: data?.dismissedConfigurations?.license
@@ -914,7 +877,7 @@ export const formatMicrosoftSqlPatchCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'mssql-patch',
             category: categoryVal,
             sqlPatchMissingPatches: {
                 critical: criticalPatches,
@@ -969,7 +932,7 @@ export const formatMaxdopPatchCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'maxdop',
             category: categoryVal,
             recommendationText: item?.recommendation,
             dismissedObj: data?.dismissedConfigurations?.maxDOP
@@ -1023,7 +986,7 @@ export const formatSnapshotPolicyCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'snapshot-policy',
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             objectsInViolation: item?.objectsInViolation,
@@ -1078,7 +1041,7 @@ export const formatAWSBackUpPolicyCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'aws-backup-policy',
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             objectsInViolation: item?.objectsInViolation,
@@ -1133,7 +1096,7 @@ export const formatCRRCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'crr',
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             violations: item?.violations,
@@ -1151,7 +1114,7 @@ export const formatCloneCardConfig = (
 ) => {
     let item: any = data?.clone;
     let categoryVal = 'cloning';
-    let itemName = item?.name || 'clone';
+    let itemName = item?.name || 'clone-management';
     let status = item?.status || '';
     let severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
@@ -1189,7 +1152,7 @@ export const formatCloneCardConfig = (
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
-            id: item?.name,
+            id: item?.name || 'clone-management',
             category: categoryVal,
             recommendationText: item?.recommendation,
             cloneDetails: item?.cloneDetails,
@@ -1255,7 +1218,7 @@ export const formatOsPatchCardConfig = (
                 value: String(totalViolations)
             },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,
-            id: item?.name,
+            id: item?.name || 'host-os-patch',
             category: categoryVal,
             errorMessage: item?.errorMessage,
             osPatchMissingPatches: {
@@ -1423,7 +1386,7 @@ export const formatRssConfigCardConfig = (
                 }
             },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,
-            id: item?.name,
+            id: item?.name || 'rss-config',
             category: categoryVal,
             errorMessage: item?.errorMessage,
             rssAdapters: item?.rssAdapters,
@@ -1446,7 +1409,7 @@ const mapDismissedValues = (data: any, itemName: string | any) => {
         if (Array.isArray(section)) {
             //For sizing and layout
             for (const item of section) {
-                if (item.name === itemName) {
+                if (item?.configurationName === itemName) {
                     return item;
                 }
             }
@@ -1456,7 +1419,7 @@ const mapDismissedValues = (data: any, itemName: string | any) => {
                 const subSection = section[subKey];
                 if (Array.isArray(subSection)) {
                     for (const item of subSection) {
-                        if (item.name === itemName) {
+                        if (item?.configurationName === itemName) {
                             return item;
                         }
                     }
@@ -1758,6 +1721,18 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let optimizedCloning = 0;
     let notOptimizedCloning = 0;
 
+    //For warning and critical
+    let warningStorage = 0;
+    let criticalStorage = 0;
+    let warningCompute = 0;
+    let criticalCompute = 0;
+    let warningApplication = 0;
+    let criticalApplication = 0;
+    let warningResiliency = 0;
+    let criticalResiliency = 0;
+    let warningCloning = 0;
+    let criticalCloning = 0;
+
     let hasDismissedOrPostponedStorage = false;
     let hasDismissedOrPostponedCompute = false;
     let hasDismissedOrPostponedApplication = false;
@@ -1766,13 +1741,19 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
 
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
-        const dismissedState = nestedObject?.dismissedObj?.state;
+        const dismissedState = nestedObject?.dismissedObj?.configState;
         const isOptimizedViaDismissal =
-            dismissedState === CONFIG_STATES.DISMISSED || dismissedState === CONFIG_STATES.POSTPONED;
+            dismissedState === CONFIG_STATES.DISMISSED ||
+            dismissedState === CONFIG_STATES.POSTPONED ||
+            dismissedState === CONFIG_STATES.ACTIVATING;
         if (nestedObject?.category === 'storage') {
             if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedStorage++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalStorage++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningStorage++;
             } else {
                 notOptimizedStorage++;
             }
@@ -1784,6 +1765,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 isOptimizedViaDismissal
             ) {
                 optimizedCompute++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalCompute++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningCompute++;
             } else {
                 notOptimizedCompute++;
             }
@@ -1791,6 +1776,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isOptimizedViaDismissal) hasDismissedOrPostponedApplication = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedApplication++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalApplication++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningApplication++;
             } else {
                 notOptimizedApplication++;
             }
@@ -1798,6 +1787,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalResiliency++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningResiliency++;
             } else {
                 notOptimizedResiliency++;
             }
@@ -1805,6 +1798,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (isOptimizedViaDismissal) hasDismissedOrPostponedCloning = true;
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedCloning++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                criticalCloning++;
+            } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                warningCloning++;
             } else {
                 notOptimizedCloning++;
             }
@@ -1813,51 +1810,73 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
 
     let storageCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedStorage,
-        total: optimizedStorage + notOptimizedStorage,
+        total: optimizedStorage + notOptimizedStorage + criticalStorage + warningStorage,
+        critical: criticalStorage,
+        warning: warningStorage,
         optimized: optimizedStorage,
         notOptimized: notOptimizedStorage,
         percent: optimizedStorage
-            ? formatNumberWithCustomComma((optimizedStorage / (optimizedStorage + notOptimizedStorage)) * 100)
+            ? formatNumberWithCustomComma(
+                  (optimizedStorage / (optimizedStorage + notOptimizedStorage + criticalStorage + warningStorage)) * 100
+              )
             : 0
     };
     let computeCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedCompute,
-        total: optimizedCompute + notOptimizedCompute,
+        total: optimizedCompute + notOptimizedCompute + criticalCompute + warningCompute,
+        critical: criticalCompute,
+        warning: warningCompute,
         optimized: optimizedCompute,
         notOptimized: notOptimizedCompute,
         percent: optimizedCompute
-            ? formatNumberWithCustomComma((optimizedCompute / (optimizedCompute + notOptimizedCompute)) * 100)
+            ? formatNumberWithCustomComma(
+                  (optimizedCompute / (optimizedCompute + notOptimizedCompute + criticalCompute + warningCompute)) * 100
+              )
             : 0
     };
     let applicationCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedApplication,
-        total: optimizedApplication + notOptimizedApplication,
+        total: optimizedApplication + notOptimizedApplication + criticalApplication + warningApplication,
+        critical: criticalApplication,
+        warning: warningApplication,
         optimized: optimizedApplication,
         notOptimized: notOptimizedApplication,
         percent: optimizedApplication
             ? formatNumberWithCustomComma(
-                  (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
+                  (optimizedApplication /
+                      (optimizedApplication + notOptimizedApplication + criticalApplication + warningApplication)) *
+                      100
               )
             : 0
     };
 
     let resiliencyCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedResiliency,
-        total: optimizedResiliency + notOptimizedResiliency,
+        total: optimizedResiliency + notOptimizedResiliency + criticalResiliency + warningResiliency,
+        critical: criticalResiliency,
+        warning: warningResiliency,
         optimized: optimizedResiliency,
         notOptimized: notOptimizedResiliency,
         percent: optimizedResiliency
-            ? formatNumberWithCustomComma((optimizedResiliency / (optimizedResiliency + notOptimizedResiliency)) * 100)
+            ? formatNumberWithCustomComma(
+                  (optimizedResiliency /
+                      (optimizedResiliency + notOptimizedResiliency + criticalResiliency + warningResiliency)) *
+                      100
+              )
             : 0
     };
 
     let cloningCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedCloning,
-        total: optimizedCloning + notOptimizedCloning,
+        total: optimizedCloning + notOptimizedCloning + criticalCloning + warningCloning,
+        critical: criticalCloning,
+        warning: warningCloning,
         optimized: optimizedCloning,
         notOptimized: notOptimizedCloning,
         percent: optimizedCloning
-            ? formatNumberWithCustomComma((optimizedCloning / (optimizedCloning + notOptimizedCloning)) * 100)
+            ? formatNumberWithCustomComma(
+                  (optimizedCloning / (optimizedCloning + notOptimizedCloning + criticalCloning + warningCloning)) * 100
+              )
             : 0
     };
 
@@ -1881,6 +1900,18 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 applicationCount?.optimized +
                 resiliencyCount?.optimized +
                 cloningCount?.optimized,
+            critical:
+                storageCount?.critical +
+                computeCount?.critical +
+                applicationCount?.critical +
+                resiliencyCount?.critical +
+                cloningCount?.critical,
+            warning:
+                storageCount?.warning +
+                computeCount?.warning +
+                applicationCount?.warning +
+                resiliencyCount?.warning +
+                cloningCount?.warning,
             notOptimized:
                 storageCount?.notOptimized +
                 computeCount?.notOptimized +
@@ -2159,7 +2190,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         const checkSubCategory =
             !filters['sub-catagories'] || filters['sub-catagories']?.includes(categoryData[key]?.subCategory);
 
-        const isOptmized = cardData[key]['block_two'].value === GETWELL_VALUES.optimized;
+        const isOptmized = isOptimized(cardData[key]['block_two'].value, cardData[key]['dismissedObj']?.configState);
         const checkStatus =
             !filters.status ||
             (filters.status?.includes(GETWELL_VALUES.optimized) && isOptmized) ||
@@ -2170,12 +2201,41 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         const checkTags =
             !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags?.includes(tag)).length > 0;
 
-        const checkConfigState =
-            !filters.configState ||
-            (!cardData[key]['dismissedObj']?.state && filters.configState.includes(CONFIG_STATES.ACTIVE)) ||
-            filters.configState?.includes(cardData[key]['dismissedObj']?.state);
+        let configVal = '';
+        if (!cardData[key]['dismissedObj']?.configState) {
+            configVal = CONFIG_STATES.ACTIVE;
+        } else if (cardData[key]['dismissedObj']?.configState === CONFIG_STATES.ACTIVATING) {
+            configVal = CONFIG_STATES.ACTIVE;
+        } else {
+            configVal = cardData[key]['dismissedObj']?.configState;
+        }
+        const checkConfigState = !filters.configState || filters.configState?.includes(configVal);
 
-        if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags && checkConfigState) {
+        let resourceType = cardData[key]['block_five'].value;
+        if (
+            key === 'ontap_configuration' &&
+            filters.resourceType &&
+            (filters.resourceType.includes('Volume') || filters.resourceType.includes('LUN path'))
+        ) {
+            resourceType = filters.resourceType[0];
+        } else if (
+            key === 'os_configuration' &&
+            filters.resourceType &&
+            (filters.resourceType.includes('Drive') || filters.resourceType.includes('Storage multipath'))
+        ) {
+            resourceType = filters.resourceType[0];
+        }
+        const checkResourceType = !filters.resourceType || filters.resourceType?.includes(resourceType);
+
+        if (
+            checkCategory &&
+            checkSubCategory &&
+            checkStatus &&
+            checkSeverity &&
+            checkTags &&
+            checkConfigState &&
+            checkResourceType
+        ) {
             filteredCardData[key] = cardData[key];
             if (categoryData[key] && cardData[key]['block_two'].value) {
                 configCount++;
@@ -2195,7 +2255,7 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOptimizingInstanceData(false));
 };
 
-// This function is used to update the progress of the optimization process for assessment confif resource level jobs.
+// This function is used to update the progress of the Fixing process for assessment confif resource level jobs.
 // Currently it is only written for clone cleanup.
 const updateProgressResourceForBulk = (
     dispatch: any,
@@ -2377,7 +2437,7 @@ const updateAssessmentWithCompletedJobs = (
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                    message: `${bulkRowData?.[0]?.name} instances optimized successfully.`
+                    message: `${bulkRowData?.[0]?.name} instances fixed successfully.`
                 })
             );
         }, 0);
@@ -2402,7 +2462,7 @@ const updateAssessmentWithCompletedJobs = (
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: `${rowData?.name} optimized successfully.`
+                message: `${rowData?.name} fixed successfully.`
             })
         );
     }
@@ -2456,7 +2516,7 @@ const updateAssessmentWithWarningJobs = (
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.INFO,
-                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances optimized successfully.`
+                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances fixed successfully.`
                 })
             );
         }, 0);
@@ -2480,7 +2540,7 @@ const updateAssessmentWithWarningJobs = (
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: `${rowData?.name} optimized successfully.`
+                message: `${rowData?.name} fixed successfully.`
             })
         );
     }
@@ -2593,7 +2653,7 @@ export const handleOptimizeResourceJob = (
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                    message: `Clone databases optimized successfully.`
+                                    message: `Clone databases fixed successfully.`
                                 })
                             );
                         }, 0);
@@ -2630,7 +2690,7 @@ export const handleOptimizeResourceJob = (
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.INFO,
-                                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances optimized successfully.`
+                                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances fixed successfully.`
                                 })
                             );
                         }, 0);
@@ -2676,13 +2736,16 @@ export const handleOptimizeResourceJob = (
             }
 
             dispatch(
-                inProgressResourceOptimizeData({
+                setInProgressResourceOptimizeData({
                     ...inProgressResourceOptimizeData,
                     [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
                         const jobResource =
-                            bulkRowData?.map(
+                            bulkRowData?.flatMap(
                                 (instance: any) =>
-                                    `${instance?.hostId}_${instance?.instanceId}_${instance?.cloneDatabaseName}`
+                                    instance?.clones?.map(
+                                        (clone: any) =>
+                                            `${instance?.hostId}_${instance?.instanceId}_${clone?.cloneDatabaseName}`
+                                    ) || []
                             ) || [];
                         return !jobResource.includes(instanceId);
                     })
@@ -2964,7 +3027,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
 
-export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any) => {
+export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any) => {
     let setAction = '';
     if (action === CONFIG_STATE_ACTIONS.DISMISS) {
         setAction = CONFIG_STATES.DISMISSED;
@@ -2974,178 +3037,224 @@ export const updateConfigStateStatus = (rowData: any, dispatch: any, action: any
         setAction = CONFIG_STATES.ACTIVATING;
     }
     const state = store.getState();
-    const updatedAsessmentData = state.inventoryV2.allmssqlHostAssessmentData?.map((hostData: any) => {
-        if (
-            hostData?.databaseHostId === rowData?.hostId &&
-            hostData?.credentialId === rowData?.credentialId &&
-            hostData?.regionId === rowData?.regionId
-        ) {
-            const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
-                if (instance?.databaseInstanceId === rowData?.instanceId) {
-                    const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
-                    const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_LAYOUT_MAP;
-                    const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
-                    const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
-                    if (storageSizingMap[rowData?.name]) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                dismissedConfigurations: {
-                                    ...instance?.assessments?.dismissedConfigurations,
-                                    storage: {
-                                        ...instance?.assessments?.dismissedConfigurations?.storage,
-                                        sizing: instance?.assessments?.dismissedConfigurations?.storage?.sizing
-                                            ? instance?.assessments?.dismissedConfigurations?.storage?.sizing.map(
-                                                  (item: any) => {
-                                                      if (item?.name === storageSizingMap[rowData?.name]) {
-                                                          return {
-                                                              ...item,
-                                                              state: setAction,
-                                                              endTime: rowData?.endTime
-                                                          };
+    const { allmssqlHostAssessmentData } = state.inventoryV2;
+    let updatedAsessmentData = [...allmssqlHostAssessmentData]; // Clone the original data
+
+    rowList?.forEach((rowData: any) => {
+        updatedAsessmentData = updatedAsessmentData?.map((hostData: any) => {
+            if (
+                hostData?.databaseHostId === rowData?.hostId &&
+                hostData?.credentialId === rowData?.credentialId &&
+                hostData?.regionId === rowData?.regionId
+            ) {
+                const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
+                    if (instance?.databaseInstanceId === rowData?.instanceId) {
+                        const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
+                        const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_LAYOUT_MAP;
+                        const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
+                        const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
+                        if (storageSizingMap[rowData?.name]) {
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        storage: {
+                                            ...instance?.assessments?.dismissedConfigurations?.storage,
+                                            sizing: instance?.assessments?.dismissedConfigurations?.storage?.sizing
+                                                ? (() => {
+                                                      const existingSizing =
+                                                          instance?.assessments?.dismissedConfigurations?.storage
+                                                              ?.sizing;
+                                                      const itemIndex = existingSizing.findIndex(
+                                                          (item: any) =>
+                                                              item?.configurationName ===
+                                                              storageSizingMap[rowData?.name]
+                                                      );
+
+                                                      if (itemIndex !== -1) {
+                                                          // Update the existing item
+                                                          return existingSizing.map((item: any, index: number) =>
+                                                              index === itemIndex
+                                                                  ? {
+                                                                        ...item,
+                                                                        configState: setAction,
+                                                                        endTime: rowData?.endTime
+                                                                    }
+                                                                  : item
+                                                          );
                                                       } else {
-                                                          return item;
+                                                          // Add a new item to the list
+                                                          return [
+                                                              ...existingSizing,
+                                                              {
+                                                                  configurationName: storageSizingMap[rowData?.name],
+                                                                  configState: setAction,
+                                                                  endTime: rowData?.endTime
+                                                              }
+                                                          ];
                                                       }
-                                                  }
-                                              )
-                                            : [
-                                                  {
-                                                      name: storageSizingMap[rowData?.name],
-                                                      state: setAction,
-                                                      endTime: rowData?.endTime
-                                                  }
-                                              ]
-                                    }
-                                } || {
-                                    storage: {
-                                        sizing: [
-                                            {
-                                                name: storageSizingMap[rowData?.name],
-                                                state: setAction,
-                                                endTime: rowData?.endTime
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        };
-                    } else if (storageLayoutMap[rowData?.name]) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                dismissedConfigurations: {
-                                    ...instance?.assessments?.dismissedConfigurations,
-                                    storage: {
-                                        ...instance?.assessments?.dismissedConfigurations?.storage,
-                                        layout: instance?.assessments?.dismissedConfigurations?.storage?.layout
-                                            ? instance?.assessments?.dismissedConfigurations?.storage?.layout.map(
-                                                  (item: any) => {
-                                                      if (item?.name === storageLayoutMap[rowData?.name]) {
-                                                          return {
-                                                              ...item,
-                                                              state: setAction,
-                                                              endTime: rowData?.endTime
-                                                          };
-                                                      } else {
-                                                          return item;
-                                                      }
-                                                  }
-                                              )
-                                            : [
-                                                  {
-                                                      name: storageLayoutMap[rowData?.name],
-                                                      state: setAction,
-                                                      endTime: rowData?.endTime
-                                                  }
-                                              ]
-                                    }
-                                } || {
-                                    storage: {
-                                        layout: [
-                                            {
-                                                name: storageLayoutMap[rowData?.name],
-                                                state: setAction,
-                                                endTime: rowData?.endTime
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        };
-                    } else if (storageConfigurationMap[rowData?.id]) {
-                        const key = storageConfigurationMap[rowData?.id];
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                dismissedConfigurations: {
-                                    ...instance?.assessments?.dismissedConfigurations,
-                                    storage: {
-                                        ...instance?.assessments?.dismissedConfigurations?.storage,
-                                        configuration: {
-                                            ...instance?.assessments?.dismissedConfigurations?.storage?.configuration,
-                                            [key]: instance?.assessments?.dismissedConfigurations?.storage
-                                                ?.configuration?.[key]
-                                                ? instance?.assessments?.dismissedConfigurations?.storage?.configuration?.[
-                                                      key
-                                                  ].map((item: any) => {
-                                                      if (item.name === rowData?.id) {
-                                                          return {
-                                                              ...item,
-                                                              state: setAction,
-                                                              endTime: rowData?.endTime
-                                                          };
-                                                      } else {
-                                                          return item;
-                                                      }
-                                                  })
+                                                  })()
                                                 : [
                                                       {
-                                                          name: rowData?.id,
-                                                          state: setAction,
+                                                          configurationName: storageSizingMap[rowData?.name],
+                                                          configState: setAction,
                                                           endTime: rowData?.endTime
                                                       }
                                                   ]
                                         }
+                                    } || {
+                                        storage: {
+                                            sizing: [
+                                                {
+                                                    configurationName: storageSizingMap[rowData?.name],
+                                                    configState: setAction,
+                                                    endTime: rowData?.endTime
+                                                }
+                                            ]
+                                        }
                                     }
                                 }
-                            }
-                        };
-                    } else if (otherConfigMap[rowData?.name]) {
-                        let name = otherConfigMap[rowData?.name];
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                dismissedConfigurations: {
-                                    ...instance?.assessments?.dismissedConfigurations,
-                                    [name]: instance?.assessments?.dismissedConfigurations?.[name]
-                                        ? {
-                                              ...instance?.assessments?.dismissedConfigurations?.[name],
-                                              state: setAction,
-                                              endTime: rowData?.endTime
-                                          }
-                                        : {
-                                              name: name,
-                                              state: setAction,
-                                              endTime: rowData?.endTime
-                                          }
+                            };
+                        } else if (storageLayoutMap[rowData?.name]) {
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        storage: {
+                                            ...instance?.assessments?.dismissedConfigurations?.storage,
+                                            layout: instance?.assessments?.dismissedConfigurations?.storage?.layout
+                                                ? (() => {
+                                                      const existingLayout =
+                                                          instance?.assessments?.dismissedConfigurations?.storage
+                                                              ?.layout;
+                                                      const itemIndex = existingLayout.findIndex(
+                                                          (item: any) =>
+                                                              item?.configurationName ===
+                                                              storageLayoutMap[rowData?.name]
+                                                      );
+
+                                                      if (itemIndex !== -1) {
+                                                          // Update the existing item
+                                                          return existingLayout.map((item: any, index: number) =>
+                                                              index === itemIndex
+                                                                  ? {
+                                                                        ...item,
+                                                                        configState: setAction,
+                                                                        endTime: rowData?.endTime
+                                                                    }
+                                                                  : item
+                                                          );
+                                                      } else {
+                                                          // Add a new item to the list
+                                                          return [
+                                                              ...existingLayout,
+                                                              {
+                                                                  configurationName: storageLayoutMap[rowData?.name],
+                                                                  configState: setAction,
+                                                                  endTime: rowData?.endTime
+                                                              }
+                                                          ];
+                                                      }
+                                                  })()
+                                                : [
+                                                      {
+                                                          configurationName: storageLayoutMap[rowData?.name],
+                                                          configState: setAction,
+                                                          endTime: rowData?.endTime
+                                                      }
+                                                  ]
+                                        }
+                                    } || {
+                                        storage: {
+                                            layout: [
+                                                {
+                                                    configurationName: storageLayoutMap[rowData?.name],
+                                                    configState: setAction,
+                                                    endTime: rowData?.endTime
+                                                }
+                                            ]
+                                        }
+                                    }
                                 }
-                            }
-                        };
+                            };
+                        } else if (storageConfigurationMap[rowData?.id]) {
+                            const key = storageConfigurationMap[rowData?.id];
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        storage: {
+                                            ...instance?.assessments?.dismissedConfigurations?.storage,
+                                            configuration: {
+                                                ...instance?.assessments?.dismissedConfigurations?.storage
+                                                    ?.configuration,
+                                                [key]: instance?.assessments?.dismissedConfigurations?.storage
+                                                    ?.configuration?.[key]
+                                                    ? instance?.assessments?.dismissedConfigurations?.storage?.configuration?.[
+                                                          key
+                                                      ].map((item: any) => {
+                                                          if (item?.configurationName === rowData?.id) {
+                                                              return {
+                                                                  ...item,
+                                                                  configState: setAction,
+                                                                  endTime: rowData?.endTime
+                                                              };
+                                                          } else {
+                                                              return item;
+                                                          }
+                                                      })
+                                                    : [
+                                                          {
+                                                              configurationName: rowData?.id,
+                                                              configState: setAction,
+                                                              endTime: rowData?.endTime
+                                                          }
+                                                      ]
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+                        } else if (otherConfigMap[rowData?.name]) {
+                            let name = otherConfigMap[rowData?.name];
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        [name]: instance?.assessments?.dismissedConfigurations?.[name]
+                                            ? {
+                                                  ...instance?.assessments?.dismissedConfigurations?.[name],
+                                                  configState: setAction,
+                                                  endTime: rowData?.endTime
+                                              }
+                                            : {
+                                                  configurationName: rowData?.id,
+                                                  configState: setAction,
+                                                  endTime: rowData?.endTime
+                                              }
+                                    }
+                                }
+                            };
+                        } else {
+                            return instance;
+                        }
                     } else {
                         return instance;
                     }
-                } else {
-                    return instance;
-                }
-            });
-            return { ...hostData, instancesAssessment: updatedInstancesAssessment };
-        } else {
-            return hostData;
-        }
+                });
+                return { ...hostData, instancesAssessment: updatedInstancesAssessment };
+            } else {
+                return hostData;
+            }
+        });
     });
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
@@ -3156,18 +3265,18 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
     const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size'];
     const storageLayoutMap: any = ['data-files-location', 'log-files-location', 'tempdb-files-location'];
     const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
-    const otherConfigMap: any = [
-        'compute',
-        'max-dop',
-        'clone',
-        'rss-config',
-        'snapshot-policy',
-        'aws-backup',
-        'mssql-patch',
-        'host-os-patch',
-        'crr',
-        'license'
-    ];
+    const otherConfigMap: any = {
+        'compute-rightsizing': 'compute',
+        maxdop: 'maxDOP',
+        'clone-management': 'clone',
+        'rss-config': 'rssConfig',
+        'snapshot-policy': 'snapshotPolicy',
+        'scheduled-fsx-for-ontap-backups': 'awsBackup',
+        'mssql-patch': 'mssqlPatch',
+        'host-os-patch': 'hostOsPatch',
+        crr: 'crr',
+        'sql-license': 'license'
+    };
     if (storageSizingMap.includes(name)) {
         return {
             ...driftAssessmentData,
@@ -3176,21 +3285,39 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 storage: {
                     ...driftAssessmentData?.dismissedConfigurations?.storage,
                     sizing: driftAssessmentData?.dismissedConfigurations?.storage?.sizing
-                        ? driftAssessmentData?.dismissedConfigurations?.storage?.sizing.map((item: any) => {
-                              if (item?.name === name) {
-                                  return {
-                                      ...item,
-                                      state: setAction,
-                                      endTime: endTime
-                                  };
+                        ? (() => {
+                              const existingSizing = driftAssessmentData?.dismissedConfigurations?.storage?.sizing;
+                              const itemIndex = existingSizing.findIndex(
+                                  (item: any) => item?.configurationName === name
+                              );
+
+                              if (itemIndex !== -1) {
+                                  // Update the existing item
+                                  return existingSizing.map((item: any, index: number) =>
+                                      index === itemIndex
+                                          ? {
+                                                ...item,
+                                                configState: setAction,
+                                                endTime: endTime
+                                            }
+                                          : item
+                                  );
                               } else {
-                                  return item;
+                                  // Add a new item to the list
+                                  return [
+                                      ...existingSizing,
+                                      {
+                                          configurationName: name,
+                                          configState: setAction,
+                                          endTime: endTime
+                                      }
+                                  ];
                               }
-                          })
+                          })()
                         : [
                               {
-                                  name: name,
-                                  state: setAction,
+                                  configurationName: name,
+                                  configState: setAction,
                                   endTime: endTime
                               }
                           ]
@@ -3199,8 +3326,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 storage: {
                     sizing: [
                         {
-                            name: name,
-                            state: setAction,
+                            configurationName: name,
+                            configState: setAction,
                             endTime: endTime
                         }
                     ]
@@ -3215,21 +3342,39 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 storage: {
                     ...driftAssessmentData?.dismissedConfigurations?.storage,
                     layout: driftAssessmentData?.dismissedConfigurations?.storage?.layout
-                        ? driftAssessmentData?.dismissedConfigurations?.storage?.layout.map((item: any) => {
-                              if (item?.name === name) {
-                                  return {
-                                      ...item,
-                                      state: setAction,
-                                      endTime: endTime
-                                  };
+                        ? (() => {
+                              const existingLayout = driftAssessmentData?.dismissedConfigurations?.storage?.layout;
+                              const itemIndex = existingLayout.findIndex(
+                                  (item: any) => item?.configurationName === name
+                              );
+
+                              if (itemIndex !== -1) {
+                                  // Update the existing item
+                                  return existingLayout.map((item: any, index: number) =>
+                                      index === itemIndex
+                                          ? {
+                                                ...item,
+                                                configState: setAction,
+                                                endTime: endTime
+                                            }
+                                          : item
+                                  );
                               } else {
-                                  return item;
+                                  // Add a new item to the list
+                                  return [
+                                      ...existingLayout,
+                                      {
+                                          configurationName: name,
+                                          configState: setAction,
+                                          endTime: endTime
+                                      }
+                                  ];
                               }
-                          })
+                          })()
                         : [
                               {
-                                  name: name,
-                                  state: setAction,
+                                  configurationName: name,
+                                  configState: setAction,
                                   endTime: endTime
                               }
                           ]
@@ -3238,8 +3383,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 storage: {
                     layout: [
                         {
-                            name: name,
-                            state: setAction,
+                            configurationName: name,
+                            configState: setAction,
                             endTime: endTime
                         }
                     ]
@@ -3259,8 +3404,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                         [key]: driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key]
                             ? driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key].map(
                                   (item: any) => {
-                                      if (item.name === key) {
-                                          return { ...item, state: setAction, endTime: endTime };
+                                      if (item?.configurationName === key) {
+                                          return { ...item, configState: setAction, endTime: endTime };
                                       } else {
                                           return item;
                                       }
@@ -3268,8 +3413,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                               )
                             : [
                                   {
-                                      name: key,
-                                      state: setAction,
+                                      configurationName: key,
+                                      configState: setAction,
                                       endTime: endTime
                                   }
                               ]
@@ -3277,20 +3422,21 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 }
             }
         };
-    } else if (otherConfigMap.includes(name)) {
+    } else if (otherConfigMap[name]) {
+        let key = otherConfigMap[name];
         return {
             ...driftAssessmentData,
             dismissedConfigurations: {
                 ...driftAssessmentData?.dismissedConfigurations,
-                [name]: driftAssessmentData?.dismissedConfigurations?.[name]
+                [key]: driftAssessmentData?.dismissedConfigurations?.[key]
                     ? {
-                          ...driftAssessmentData?.dismissedConfigurations?.[name],
-                          state: setAction,
+                          ...driftAssessmentData?.dismissedConfigurations?.[key],
+                          configState: setAction,
                           endTime: endTime
                       }
                     : {
-                          name: name,
-                          state: setAction,
+                          configurationName: name,
+                          configState: setAction,
                           endTime: endTime
                       }
             }
@@ -3362,6 +3508,20 @@ export const checkIfDisableForOptimize = (
     return { isDisabled, errorMessage };
 };
 
+export const checkIfDisableForDismiss = (rowData: any, selectedRowsForDismiss?: any) => {
+    let isDisabled = false;
+    let errorMessage = '';
+    if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+        isDisabled = true;
+        errorMessage = GENERAL.ONLINE_INSTANCE_DISMISS;
+    } else if (selectedRowsForDismiss && selectedRowsForDismiss.length > 0) {
+        isDisabled = true;
+        errorMessage = '';
+    }
+
+    return { isDisabled, errorMessage };
+};
+
 export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) => {
     const state = store.getState();
     const { inProgressHostData } = state.getWellOptimize;
@@ -3369,6 +3529,26 @@ export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) 
     // If no rows are selected, reset `isDisabled` for all rows
     return tableData.map((row: any) => {
         const { isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, type, row);
+        return {
+            ...row,
+            cellProps: {
+                ...row.cellProps,
+                isDisabled: row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP || isDisabled,
+                selectionProps: {
+                    title: errorMessage,
+                    titleProps: {
+                        placement: 'bottom'
+                    }
+                }
+            }
+        };
+    });
+};
+
+export const disableDismissCheckBoxForErrCase = (tableData: any, type: string) => {
+    // If no rows are selected, reset `isDisabled` for all rows
+    return tableData.map((row: any) => {
+        const { isDisabled, errorMessage } = checkIfDisableForDismiss(row);
         return {
             ...row,
             cellProps: {

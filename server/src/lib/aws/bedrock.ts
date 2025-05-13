@@ -1,11 +1,19 @@
+import createError from 'http-errors';
 import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from '@aws-sdk/client-bedrock-runtime';
 import { Sha256 } from '@aws-crypto/sha256-js';
+import { defaultProvider } from '@aws-sdk/credential-provider-node';
+import { SignatureV4 } from '@smithy/signature-v4';
+import { HttpRequest } from '@smithy/protocol-http';
+import { NodeHttpHandler, streamCollector } from '@smithy/node-http-handler';
 import { MODEL, BEDROCK_REGION } from '../chatbot/consts';
 import getLogger from '../../utils/logger';
+import { MODEL_AVAILABILITY_STATUS } from '../../utils/logs-analyzer-consts';
+import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
+import { isDemo } from '../../utils/utils';
 
 const logger = getLogger();
 
-async function getBedrockClient() {
+async function getBedrockRuntimeClient() {
     logger.debug('Getting bedrock client:');
 
     return new BedrockRuntimeClient({
@@ -16,7 +24,7 @@ async function getBedrockClient() {
 
 async function sendPrompt(prompt: string) {
     logger.debug('Send prompt to bedrock', { prompt });
-    const client = await getBedrockClient();
+    const client = await getBedrockRuntimeClient();
 
     const command = new InvokeModelWithResponseStreamCommand({
         modelId: MODEL,
@@ -49,5 +57,60 @@ async function sendPrompt(prompt: string) {
     return { completion: resp };
 }
 
-export default sendPrompt;
-export { sendPrompt };
+async function getModelAvailability(accountId: string, credentialsId: string, region: string, modelId: string) {
+    logger.debug('Get model availability:', { accountId, credentialsId, region, modelId });
+
+    const {
+        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
+    } = await getCredentialsDetails(credentialsId, accountId);
+
+    const hostname = `bedrock.${region}.amazonaws.com`;
+    const signer = new SignatureV4({
+        region,
+        service: 'bedrock',
+        sha256: Sha256,
+        credentials: isDemo() ? defaultProvider() : { accessKeyId, secretAccessKey, sessionToken }
+    });
+    const signedRequest = await signer.sign(
+        new HttpRequest({
+            headers: {
+                'Content-Type': 'application/json',
+                host: hostname
+            },
+            hostname,
+            method: 'GET',
+            path: `/foundation-model-availability/${modelId}`
+        })
+    );
+
+    const client = new NodeHttpHandler();
+    const {
+        response: { body, statusCode, reason }
+    } = await client.handle(new HttpRequest(signedRequest));
+
+    if (statusCode === 200) {
+        if (body) {
+            const data = await streamCollector(body);
+            return JSON.parse(Buffer.from(data).toString()) as {
+                agreementAvailability: {
+                    status: MODEL_AVAILABILITY_STATUS;
+                    errorMessage: string;
+                };
+                entitlementAvailability: MODEL_AVAILABILITY_STATUS;
+                authorizationStatus: string;
+                modelId: string;
+                regionAvailability: MODEL_AVAILABILITY_STATUS;
+            };
+        }
+        logger.error(`Failed to received body for model ${modelId} - assuming not available`);
+        return {
+            agreementAvailability: {
+                status: MODEL_AVAILABILITY_STATUS.NOT_AVAILABLE
+            },
+            entitlementAvailability: MODEL_AVAILABILITY_STATUS.NOT_AVAILABLE
+        };
+    }
+    throw createError(statusCode, `AWS Bedrock Model availablity check failed ${reason}`);
+}
+
+export { sendPrompt, getModelAvailability };

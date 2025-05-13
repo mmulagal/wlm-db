@@ -139,7 +139,7 @@ const HostTable = () => {
         checkForAllFsxnManagedInstance: boolean,
         checkForAllStorageType: boolean
     ) => {
-        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
             return GENERAL.PGSQL_CTA_NA;
         }
         //Condition if installation mode is AOAG than disable manage

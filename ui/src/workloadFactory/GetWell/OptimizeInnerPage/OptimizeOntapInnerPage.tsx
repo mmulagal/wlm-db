@@ -26,18 +26,23 @@ import {
     useOptimizeStorageConfigMutation,
     useOptimizeOperatingSystemMutation
 } from '../../../utils/apiService';
-import { handleDialog, handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
+import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 
 import OntapTable from './InnerTables/OntapTable';
 import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
 import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import OntapTableWithData from './InnerTables/OntapTableWithData';
+import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
+    const [cardHeight, setCardHeight] = useState({
+        recommendationSection: '',
+        tagSection: ''
+    });
     const userNavigated = useRef(false);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
@@ -57,6 +62,43 @@ const OptimizeOntapInnerPage = () => {
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
+    useEffect(() => {
+        switch (selectedOptimizeConfig?.type) {
+            case 'OS type':
+            case 'Space reservation':
+            case 'NTFS allocation unit size':
+                setCardHeight({
+                    recommendationSection: '140px',
+                    tagSection: '236px'
+                });
+                break;
+            case 'Space allocation':
+                setCardHeight({
+                    recommendationSection: '160px',
+                    tagSection: '256px'
+                });
+                break;
+            case 'Tiering minimum cooling days':
+                setCardHeight({
+                    recommendationSection: '260px',
+                    tagSection: '356px'
+                });
+                break;
+            case 'Multipath I/O Policy':
+                setCardHeight({
+                    recommendationSection: '180px',
+                    tagSection: '276px'
+                });
+                break;
+            default:
+                setCardHeight({
+                    recommendationSection: '260px',
+                    tagSection: '356px'
+                });
+                break;
+        }
+    }, [selectedOptimizeConfig]);
+
     const buttonComponent = (rowData: any) => {
         if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
@@ -68,7 +110,7 @@ const OptimizeOntapInnerPage = () => {
                     interactive={true}
                     container={
                         <DsButton variant="secondary" isDisabled={true} isThin>
-                            Optimize
+                            Fix
                         </DsButton>
                     }
                 />
@@ -90,7 +132,7 @@ const OptimizeOntapInnerPage = () => {
                         );
                     }}
                 >
-                    Optimize
+                    Fix
                 </DsButton>
             );
         }
@@ -191,7 +233,7 @@ const OptimizeOntapInnerPage = () => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${rowData?.name}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${rowData?.name}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"
@@ -374,8 +416,14 @@ const OptimizeOntapInnerPage = () => {
                     </DsTypography>
                 </div>
 
-                <div className={styles.contentSection}>
-                    <OptimizeCard />
+                <div className={styles.mainSection}>
+                    <div className={styles.contentSection}>
+                        <OptimizeCard recommendationHeight={cardHeight.recommendationSection} />
+                    </div>
+
+                    <div className={styles.tagSection}>
+                        <TagComponent tagHeight={cardHeight.tagSection} type={selectedOptimizeConfig?.type} />
+                    </div>
                 </div>
 
                 <div className={styles.tableSection}>{renderTable()}</div>

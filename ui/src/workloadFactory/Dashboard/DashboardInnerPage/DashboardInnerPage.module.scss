@@ -9,6 +9,13 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+
+            .dismissPageMessage {
+                max-width: 69.47%;
+                min-width: 1334px;
+                text-align: center;
+                overflow-wrap: break-word;
+            }
         }
 
         .mainSection {
@@ -29,13 +36,8 @@
             }
         }
 
-        // .tableSection {
-        //     margin-top: 44px;
-        //     display: flex;
-        //     justify-content: center;
-        // }
         .tableSection {
-            margin-top: 44px;
+            margin-top: 40px;
             display: flex;
             justify-content: center;
             margin-bottom: 20px;

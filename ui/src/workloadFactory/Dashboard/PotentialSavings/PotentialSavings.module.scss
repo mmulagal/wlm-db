@@ -72,6 +72,24 @@
             width: 100%;
             justify-content: center;
             margin-top: 80px;
+
+            .potentialSavingsSwitch {
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+
+                .potentialSavingsSwitchText {
+                    .firstTile {
+                        position: relative;
+                        left: -20px;
+                    }
+
+                    .secondTile {
+                        position: relative;
+                        left: -25px;
+                    }
+                }
+            }
         }
 
         .newValueSection {
@@ -220,6 +238,32 @@
 
             .newChartSection {
                 width: 220px;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .potentialSavings {
+        width: 41.25%;
+
+        .mainSection {
+            .newValueSection {
+                .leftSide {
+                    width: 100%;
+                    .topSection {
+                        width: 100%;
+                        .subContent {
+                            width: 33.33%;
+                        }
+                    }
+                }
+
+                .chartContainer {
+                    .newChartSection {
+                        width: calc(100% - 40px);
+                    }
+                }
             }
         }
     }

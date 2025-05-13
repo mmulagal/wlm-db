@@ -11,25 +11,25 @@
                 {
                     "instanceName": "PGSQLSERVER",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": true
                 },
                 {
                     "instanceName": "PGSQLSERVER2",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER3",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER4",
                     "isManaged": false,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 }
             ],
@@ -73,7 +73,7 @@
             "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "11",
-                    "databaseInstanceName": "MSSQLSERVER",
+                    "databaseInstanceName": "PGSQLSERVER",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -89,7 +89,7 @@
                     },
                     "databaseInstanceTopology": {
                         "serverType": "Microsoft SQL Server",
-                        "serverInstallationMode": "Failover Cluster Instances",
+                        "serverInstallationMode": "HA",
                         "fileSystemType": "FSx for ONTAP",
                         "fileSystemId": "fsx-id-1",
                         "fileSystemName": "fsxname",
@@ -127,7 +127,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -197,7 +197,7 @@
                 },
                 {
                     "databaseInstanceId": "12",
-                    "databaseInstanceName": "MSSQLSERVER2",
+                    "databaseInstanceName": "PGSQLSERVER2",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -251,7 +251,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -321,7 +321,7 @@
                 },
                 {
                     "databaseInstanceId": "13",
-                    "databaseInstanceName": "MSSQLSERVER3",
+                    "databaseInstanceName": "PGSQLSERVER3",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -375,7 +375,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -445,7 +445,7 @@
                 },
                 {
                     "databaseInstanceId": "14",
-                    "databaseInstanceName": "MSSQLSERVER4",
+                    "databaseInstanceName": "PGSQLSERVER4",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -499,7 +499,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -579,25 +579,25 @@
                 {
                     "instanceName": "PGSQLSERVER",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": true
                 },
                 {
                     "instanceName": "PGSQLSERVER2",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER3",
                     "isManaged": false,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER4",
                     "isManaged": false,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 }
             ],
@@ -641,7 +641,7 @@
             "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "21",
-                    "databaseInstanceName": "MSSQLSERVER",
+                    "databaseInstanceName": "PGSQLSERVER",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -765,7 +765,7 @@
                 },
                 {
                     "databaseInstanceId": "22",
-                    "databaseInstanceName": "MSSQLSERVER2",
+                    "databaseInstanceName": "PGSQLSERVER2",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -889,7 +889,7 @@
                 },
                 {
                     "databaseInstanceId": "23",
-                    "databaseInstanceName": "MSSQLSERVER3",
+                    "databaseInstanceName": "PGSQLSERVER3",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -1013,7 +1013,7 @@
                 },
                 {
                     "databaseInstanceId": "24",
-                    "databaseInstanceName": "MSSQLSERVER4",
+                    "databaseInstanceName": "PGSQLSERVER4",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -1147,25 +1147,25 @@
                 {
                     "instanceName": "PGSQLSERVER",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": true
                 },
                 {
                     "instanceName": "PGSQLSERVER2",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER3",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER4",
                     "isManaged": false,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 }
             ],
@@ -1209,7 +1209,7 @@
             "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "31",
-                    "databaseInstanceName": "MSSQLSERVER",
+                    "databaseInstanceName": "PGSQLSERVER",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -1263,7 +1263,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -1333,7 +1333,7 @@
                 },
                 {
                     "databaseInstanceId": "32",
-                    "databaseInstanceName": "MSSQLSERVER2",
+                    "databaseInstanceName": "PGSQLSERVER2",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -1387,7 +1387,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -1457,7 +1457,7 @@
                 },
                 {
                     "databaseInstanceId": "33",
-                    "databaseInstanceName": "MSSQLSERVER3",
+                    "databaseInstanceName": "PGSQLSERVER3",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -1511,7 +1511,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -1581,7 +1581,7 @@
                 },
                 {
                     "databaseInstanceId": "34",
-                    "databaseInstanceName": "MSSQLSERVER4",
+                    "databaseInstanceName": "PGSQLSERVER4",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -1635,7 +1635,7 @@
                             "size": 0
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -1715,25 +1715,25 @@
                 {
                     "instanceName": "PGSQLSERVER",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": true
                 },
                 {
                     "instanceName": "PGSQLSERVER2",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER3",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER4",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 }
             ],
@@ -1777,7 +1777,7 @@
             "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "41",
-                    "databaseInstanceName": "MSSQLSERVER",
+                    "databaseInstanceName": "PGSQLSERVER",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -1831,7 +1831,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -1901,7 +1901,7 @@
                 },
                 {
                     "databaseInstanceId": "42",
-                    "databaseInstanceName": "MSSQLSERVER2",
+                    "databaseInstanceName": "PGSQLSERVER2",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -1955,7 +1955,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -2025,7 +2025,7 @@
                 },
                 {
                     "databaseInstanceId": "43",
-                    "databaseInstanceName": "MSSQLSERVER3",
+                    "databaseInstanceName": "PGSQLSERVER3",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -2079,7 +2079,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -2149,7 +2149,7 @@
                 },
                 {
                     "databaseInstanceId": "44",
-                    "databaseInstanceName": "MSSQLSERVER4",
+                    "databaseInstanceName": "PGSQLSERVER4",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -2203,7 +2203,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -2374,7 +2374,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -2498,7 +2498,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -2622,7 +2622,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -2746,7 +2746,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -2824,25 +2824,25 @@
                 {
                     "instanceName": "PGSQLSERVER",
                     "isManaged": true,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": true
                 },
                 {
                     "instanceName": "PGSQLSERVER2",
                     "isManaged": false,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER3",
                     "isManaged": false,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 },
                 {
                     "instanceName": "PGSQLSERVER4",
                     "isManaged": false,
-                    "instanceState": "UP",
+                    "instanceState": "Up",
                     "isDefault": false
                 }
             ],
@@ -2940,7 +2940,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -3010,7 +3010,7 @@
                 },
                 {
                     "databaseInstanceId": "62",
-                    "databaseInstanceName": "MSSQLSERVER2",
+                    "databaseInstanceName": "PGSQLSERVER2",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -3064,7 +3064,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -3134,7 +3134,7 @@
                 },
                 {
                     "databaseInstanceId": "63",
-                    "databaseInstanceName": "MSSQLSERVER3",
+                    "databaseInstanceName": "PGSQLSERVER3",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {
@@ -3188,7 +3188,7 @@
                             "size": 5530543487713.25
                         }
                     },
-                    "sqlServerDeploymentType": "FCI",
+                    "sqlServerDeploymentType": "HA",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -3258,7 +3258,7 @@
                 },
                 {
                     "databaseInstanceId": "64",
-                    "databaseInstanceName": "MSSQLSERVER4",
+                    "databaseInstanceName": "PGSQLSERVER4",
                     "status": "Up",
                     "databaseCount": 0,
                     "databaseServer": {

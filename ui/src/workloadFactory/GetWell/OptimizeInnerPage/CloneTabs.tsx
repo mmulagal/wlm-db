@@ -25,6 +25,7 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { handleOptimizeResourceJob, nameToIdConfigMapping } from '../GetWellUtils';
 import store from '../../../store/store';
+import { cloneAgeRange } from '../../../utils/utilityFunctions';
 
 const CloneTabs = ({ fromPage = '' }: any) => {
     const dispatch = useDispatch();
@@ -53,13 +54,15 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 wfDbItems.push({
                     ...item,
                     id: `${item?.resourceId}_${item?.instanceId}_${item?.cloneDatabaseName}`,
-                    sourceVolumeNamesList: sourceVolumeNames.join(',')
+                    sourceVolumeNamesList: sourceVolumeNames.join(','),
+                    cloneAgeFilterData: cloneAgeRange(item?.cloneAge)
                 });
             } else {
                 otherDbItems.push({
                     ...item,
                     id: `${item?.resourceId}_${item?.instanceId}_${item?.cloneDatabaseName}`,
-                    sourceVolumeNamesList: sourceVolumeNames.join(',')
+                    sourceVolumeNamesList: sourceVolumeNames.join(','),
+                    cloneAgeFilterData: cloneAgeRange(item?.cloneAge)
                 });
             }
         });
@@ -80,7 +83,8 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                         hostId: host.id,
                         instanceId: instance?.instanceId,
                         credentialId: host?.credentialsId,
-                        regionId: host?.region
+                        regionId: host?.region,
+                        clones: instance?.clones
                     });
                 });
             });
@@ -191,7 +195,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Optimization process initiated for ${ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT}. This process can take upto 2 minutes. Track progress in `}
+                        {`Fixing process initiated for ${ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT}. This process can take upto 2 minutes. Track progress in `}
                         <Button
                             Component="button"
                             variant="text"
@@ -208,7 +212,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
         );
 
         // Call the API with the payload
-        cloneCleanupOptimizeApi(payload).then((res: any) => {
+        cloneCleanupOptimizeApi({ payload }).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
                     {ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT} failed to optimize.

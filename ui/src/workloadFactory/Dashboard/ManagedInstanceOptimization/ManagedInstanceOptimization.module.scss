@@ -57,6 +57,18 @@
         padding: 40px 80px 40px 40px;
         display: flex;
         justify-content: space-between;
+
+        .text {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+
+            .firstBlock {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+        }
         .secondPartSmallRes {
             display: flex;
             flex-direction: column;
@@ -100,5 +112,36 @@
 @media screen and (max-width: 1700px) {
     .managedInstance {
         width: 760px;
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    [class*='subSection'] {
+        width: 48.33%;
+
+        .managedInstance {
+            width: 100%;
+
+            .mainSection {
+                [class*='contentSection'] {
+                    width: 100%;
+
+                    .firstBlock {
+                        width: 48.33%;
+                    }
+                    [class*='container'] {
+                        width: 48.33%;
+                    }
+                }
+
+                #chart-item {
+                    width: 10.41%;
+
+                    #chart-area {
+                        width: 10.41%;
+                    }
+                }
+            }
+        }
     }
 }

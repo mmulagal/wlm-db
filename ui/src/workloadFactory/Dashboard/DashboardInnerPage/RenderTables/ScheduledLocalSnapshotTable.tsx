@@ -1,8 +1,7 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
-import { GENERAL } from '../../../../utils/appConstants';
+
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
@@ -15,6 +14,10 @@ import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
+import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
+import { useTable } from '../../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../../common/Lib/Table/Table';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -29,6 +32,8 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+    const { credentialData } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const tableData = useMemo(() => {
         let snapshotAssessmentData: any = [];
         let uniqueResourceList: Array<string> = [];
@@ -42,11 +47,17 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
             }
             uniqueResourceList.push(hostData?.databaseHostId);
 
+            const matchingCredEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+
+            const matchingRegionEntry =
+                regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
+
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const snapshotObj = instanceData?.assessments?.snapshotPolicy;
                     const snapshotStateObj = instanceData?.assessments?.dismissedConfigurations?.snapshotPolicy;
-                    const isStorageTierOptimized = isOptimized(snapshotObj?.status, snapshotStateObj?.state);
+                    const isStorageTierOptimized = isOptimized(snapshotObj?.status, snapshotStateObj?.configState);
                     if (!isStorageTierOptimized) {
                         snapshotAssessmentData.push({
                             credentialId: hostData?.credentialId,
@@ -62,7 +73,10 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
                             assessmentStatus: GETWELL_VALUES[snapshotObj?.status],
                             data: instanceData,
                             objectsInViolation: snapshotObj?.objectsInViolation,
-                            configObj: snapshotStateObj
+                            configObj: snapshotStateObj,
+                            credentialName: matchingCredEntry?.name,
+                            regionName: matchingRegionEntry?.regionName,
+                            accountId: matchingCredEntry?.providerAccountId
                         });
                     }
                 }
@@ -111,18 +125,39 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
             Header: 'Host name',
             accessor: 'hostName',
             id: '2',
-            width: 'auto',
+            width: '200px',
             filterOptions: 'auto'
         },
         {
             Header: 'Impacted volumes',
             accessor: 'totalObjectsInViolation',
             id: '3',
-            width: '320px',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
             }
+        },
+        {
+            id: '4',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '5',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            filterOptions: 'auto',
+            width: '180px'
+        },
+        {
+            id: '6',
+            Header: 'Region',
+            accessor: 'regionName',
+            filterOptions: 'auto',
+            width: '180px'
         },
         lastColDetails(
             ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
@@ -135,13 +170,15 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
     const tableProps = useTable({
         //@ts-ignore
         manageColumnsProps: false,
-        isHorizontalScroll: false,
+        isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
         rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'none',
-        defaultSelectedRows: []
+        defaultSelectedRows: [],
+        isManagedColumns: true,
+        initialColumnState: initialDashboardInnerPageOptimizeColState
     });
 
     useEffect(() => {

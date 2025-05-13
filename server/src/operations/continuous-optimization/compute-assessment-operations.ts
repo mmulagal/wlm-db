@@ -2,7 +2,6 @@ import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { getEC2InstanceRecommendations } from '../../lib/aws/compute-optimizer';
-import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { checkComputeOptimizerEnrollmentStatus } from '../recommendation-operations';
 
 import getLogger from '../../utils/logger';
@@ -18,8 +17,8 @@ import {
 import { ComputeAssessment, Metadata } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
-import { updateAsssementErrorInResourceMetadata } from '../../utils/cont-opt-utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
+import { updateResourceMetaData } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -104,20 +103,12 @@ async function calculateComputeDrift(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    metadata: Metadata
 ) {
     logger.info('Calculating compute drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
     let errorMessage = '';
-    let metadata;
-
-    try {
-        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-    } catch (error) {
-        errorMessage = `Error while calculating compute drift. ${error}`;
-        logger.error({ errorMessage });
-        return { errorMessage };
-    }
 
     try {
         const { assessment: { compute, errors } = {} } = metadata as unknown as Metadata;
@@ -149,7 +140,7 @@ async function calculateComputeDrift(
             if (findingValue.includes('provisioned') || findingValue === AssessmentStatus.NOT_OPTIMIZED) {
                 // under_provisioned or over_provisioned
                 const genericRecommendationMessage =
-                    'Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.';
+                    'Click Fix to view cost comparison between current and recommended instance types to understand potential savings.';
                 recommendationMessage =
                     findingValue === AssessmentStatus.UNDER_PROVISIONED
                         ? underProvisionedRecommendationMessage
@@ -195,8 +186,7 @@ async function managedHostsComputeAssessment(
     awsAccountId: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    parentJobId: string,
-    databaseHostId: string
+    parentJobId: string
 ) {
     const { id: computeAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
         name: `Microsoft SQL Server compute assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
@@ -231,18 +221,8 @@ async function managedHostsComputeAssessment(
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
         });
-        if (errorMessage) {
-            await updateAsssementErrorInResourceMetadata(
-                accountId,
-                databaseHostId,
-                credentialsId,
-                region,
-                errorMessage,
-                'compute'
-            );
-        }
     }
-    return computeAssessment;
+    return { computeAssessment, errorMessage };
 }
 
 export { calculateComputeDrift, managedHostsComputeAssessment };

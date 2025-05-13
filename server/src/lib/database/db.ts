@@ -10,7 +10,7 @@ import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
-import { DatabaseInstanceMetadata } from '../../utils/common-types';
+import { DatabaseInstanceConfigurations, DatabaseInstanceMetadata } from '../../utils/common-types';
 import { TCO_FEATURE } from '../../utils/consts';
 
 const logger = getLogger();
@@ -81,6 +81,7 @@ interface DatabaseInstanceRecord {
     metaData?: DatabaseInstanceMetadata;
     databaseType: string;
     storageType?: string;
+    configurations?: DatabaseInstanceConfigurations;
 }
 
 async function listDeployments(
@@ -309,7 +310,8 @@ async function listResources(
     fsxId?: string,
     metaFilters?: { [x: string]: string | number | boolean },
     pageSize?: number,
-    nextToken?: string
+    nextToken?: string,
+    includeDatabaseInstances?: boolean
 ) {
     logger.info('Listing resources for params', {
         accountId,
@@ -319,7 +321,8 @@ async function listResources(
         credentialIds,
         metaFilters,
         pageSize,
-        nextToken
+        nextToken,
+        includeDatabaseInstances
     });
 
     if (accountId) {
@@ -353,6 +356,11 @@ async function listResources(
         ...(nextToken && {
             cursor: { id: nextToken },
             skip: 1
+        }),
+        ...(includeDatabaseInstances && {
+            include: {
+                database_instances: true
+            }
         })
     });
 }
@@ -546,12 +554,21 @@ async function deleteDeploymentJobById(accountId: string, jobId: string) {
     });
 }
 
-async function updateResourceMetaData(
-    accountId: string,
-    credentialsId: string | undefined = undefined,
-    resourceId: string,
-    metaData: any
-) {
+async function updateResource({
+    accountId,
+    credentialsId,
+    region,
+    resourceId,
+    metaData,
+    updatedConfigs
+}: {
+    accountId: string;
+    credentialsId?: string;
+    region?: string;
+    resourceId?: string;
+    metaData?: any;
+    updatedConfigs?: any;
+}) {
     logger.info('Updating resource metadata', { accountId, resourceId, credentialsId });
 
     accountId = checkAccount(accountId);
@@ -560,15 +577,33 @@ async function updateResourceMetaData(
         where: {
             account_id: accountId,
             resource_id: resourceId,
-            ...(credentialsId && { credentials_id: credentialsId })
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region })
         },
         data: {
-            ...(!isEmpty(metaData) && { metadata: metaData })
+            ...(!isEmpty(metaData) && { metadata: metaData }),
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
         }
     });
 }
 
-async function updateInstanceMetadata(accountId: string, instanceId: string, metaData: any) {
+async function updateDatabaseInstance({
+    accountId,
+    credentialsId,
+    region,
+    databaseHostId,
+    instanceId,
+    metaData,
+    updatedConfigs
+}: {
+    accountId: string;
+    credentialsId?: string;
+    region?: string;
+    databaseHostId?: string;
+    instanceId: string;
+    metaData?: any;
+    updatedConfigs?: any;
+}) {
     logger.info('Updating instance metadata', { accountId, instanceId });
 
     accountId = checkAccount(accountId);
@@ -576,10 +611,14 @@ async function updateInstanceMetadata(accountId: string, instanceId: string, met
     return prisma.client.database_instances.updateMany({
         where: {
             account_id: accountId,
-            database_instance_id: instanceId
+            database_instance_id: instanceId,
+            ...(databaseHostId && { resource_id: databaseHostId }),
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region })
         },
         data: {
-            ...(!isEmpty(metaData) && { metadata: metaData })
+            ...(!isEmpty(metaData) && { metadata: metaData }),
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
         }
     });
 }
@@ -645,51 +684,16 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
     });
 }
 
-async function updateDatabaseInstanceMetadata(
-    accountId: string,
-    credentialsId: string,
-    databaseInstanceId: string,
-    metaData: any
-) {
-    logger.info('Updating resource metadata', { accountId, databaseInstanceId, credentialsId });
-
-    accountId = checkAccount(accountId);
-
-    return prisma.client.database_instances.updateMany({
-        where: {
-            account_id: accountId,
-            database_instance_id: databaseInstanceId,
-            credentials_id: credentialsId
-        },
-        data: {
-            ...(!isEmpty(metaData) && { metadata: metaData })
-        }
-    });
-}
-
-async function listAllManagedInstances(accountId?: string) {
-    return prisma.client.database_instances.findMany({
-        where: {
-            ...(accountId && { account_id: accountId })
-        },
-        orderBy: {
-            id: 'asc'
-        },
-        include: {
-            resource: true
-        }
-    });
-}
-async function listDatabaseInstances(accountId: string, record: any) {
+async function listDatabaseInstances(accountId?: string, record?: any) {
     logger.info('List database instances for given account and record', { accountId, record });
 
-    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region } = record;
-    accountId = checkAccount(accountId);
+    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region } = record ?? {};
+    accountId = accountId ? checkAccount(accountId) : '';
 
     return prisma.client.database_instances.findMany({
         where: {
-            account_id: accountId,
-            credentials_id: credentialsId,
+            ...(accountId && { account_id: accountId }),
+            ...(credentialsId && { credentials_id: credentialsId }),
             ...(resourceId && { resource_id: resourceId }),
             ...(sqlInstanceId && { database_instance_id: sqlInstanceId }),
             ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
@@ -813,30 +817,6 @@ async function updateTrackedEc2Record(
     });
 }
 
-async function updateDatabaseInstanceConfigurations(
-    accountId: string,
-    credentialsId: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    updatedConfigs: any
-) {
-    logger.info('Updating resource metadata', { accountId, databaseInstanceId, updatedConfigs });
-    accountId = checkAccount(accountId);
-
-    // Update the database instance with the new configurations array.
-    return prisma.client.database_instances.updateMany({
-        where: {
-            account_id: accountId,
-            resource_id: databaseHostId,
-            credentials_id: credentialsId,
-            database_instance_id: databaseInstanceId
-        },
-        data: {
-            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
-        }
-    });
-}
-
 export {
     Resource,
     listDeployments,
@@ -858,17 +838,14 @@ export {
     deleteDeploymentJobById,
     checkAccount,
     listEvents,
-    updateResourceMetaData,
+    updateResource,
     upsertDatabaseInstance,
     listDatabaseInstances,
-    updateDatabaseInstanceMetadata,
     deleteDatabaseInstance,
     DatabaseInstanceRecord,
-    updateInstanceMetadata,
+    updateDatabaseInstance,
     createTrackedEc2Records,
     listTrackedEc2,
     removeTrackedEc2Record,
-    updateTrackedEc2Record,
-    listAllManagedInstances,
-    updateDatabaseInstanceConfigurations
+    updateTrackedEc2Record
 };

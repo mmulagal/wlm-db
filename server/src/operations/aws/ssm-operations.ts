@@ -4,6 +4,7 @@ import createError from 'http-errors';
 import throat from 'throat';
 import {
     CommandInvocationStatus,
+    ConnectionStatus,
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
@@ -36,7 +37,7 @@ import { SSMParamterObject, MultipleCommandSsmResponse } from '../../utils/commo
 import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { getLogs } from './cloud-watch-operations';
+import { getCloudWatchLogs, setLogGroupRetentionPolicy } from './cloud-watch-logs-operations';
 
 const logger = getLogger();
 
@@ -208,7 +209,11 @@ async function executeSSMDocument(
     try {
         const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
         logger.debug('SSM command commandId, Response:', commandId, response);
-        return response;
+        return {
+            commandId,
+            response,
+            instanceId: instanceIds
+        };
     } catch (error) {
         const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
         logger.error(errorMessage);
@@ -225,6 +230,7 @@ async function callSsmExecution(
     accountId?: string,
     cacheData: boolean = true,
     executionTimeout?: string,
+    shouldReadFromCloudWatchLogs: boolean = false,
     documentName: string = SSM_RUN_POWERSHELL_SCRIPT_DOC,
     documentVersion: string = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
 ) {
@@ -234,6 +240,11 @@ async function callSsmExecution(
         region,
         commands,
         activeNodeInstanceId,
+        comment,
+        accountId,
+        cacheData,
+        executionTimeout,
+        shouldReadFromCloudWatchLogs,
         documentName,
         documentVersion
     );
@@ -257,30 +268,29 @@ async function callSsmExecution(
         ...defaultParams,
         InstanceIds: [activeNodeInstanceId],
         ...(comment && { Comment: comment?.substring(0, 100) }),
-        CloudWatchOutputConfig: {
-            CloudWatchLogGroupName: CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
-            CloudWatchOutputEnabled: true
-        }
+        ...(shouldReadFromCloudWatchLogs && {
+            CloudWatchOutputConfig: {
+                CloudWatchLogGroupName: CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+                CloudWatchOutputEnabled: true
+            }
+        })
     };
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
         const response = await executeSSMDocument(credentialsId, region, params, accountId);
-        let { error, output = '' } = await extractSsmResponse({ response });
+
+        // Set the retention period for the log group to 1 day
+        // We don't want to await for this to complete, as it is not critical to the SSM command execution
+        if (shouldReadFromCloudWatchLogs) {
+            setLogGroupRetentionPolicy(credentialsId, region).catch((error: any) => {
+                logger.error('Error setting log group retention policy', error);
+            });
+        }
+        const { error, output = '' } = await extractSsmResponse(credentialsId, region, response);
         if (error) {
             throw createError(error);
         }
-        if (output.endsWith('--output truncated--')) {
-            if (!response?.CommandId) {
-                throw createError('Command Id not found');
-            }
-            const responses = await getSsmResponseFromCloudWatch(
-                credentialsId,
-                region,
-                response?.CommandId,
-                activeNodeInstanceId
-            );
-            output = responses.join('');
-        }
+
         if (cacheData) {
             logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
             writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
@@ -303,7 +313,7 @@ async function getSsmResponseFromCloudWatch(
     const logStreamName = `${commandId}/${instanceId}/${logStreamSuffix}`;
 
     try {
-        const logs = await getLogs(credentialId, region, logGroupName, logStreamName);
+        const logs = await getCloudWatchLogs(credentialId, region, logGroupName, logStreamName);
         return logs;
     } catch (error) {
         logger.error('Error getting logs from CloudWatch', error);
@@ -405,6 +415,39 @@ async function getSSMConnectionStatus(credentialId: string, region: string, inst
     );
 }
 
+async function pollSSMConnectionStatus(
+    accountId: string,
+    credentialId: string,
+    region: string,
+    instanceId: string,
+    retryCount: number = 1,
+    pollInterval: number = ms(config.get<string>('ssm.connection-poll-interval'))
+) {
+    logger.info('Polling SSM connection status', {
+        accountId,
+        credentialId,
+        region,
+        instanceId,
+        pollInterval,
+        retryCount
+    });
+    if (retryCount > 15) {
+        throw new Error(`SSM connection failure for instance: ${instanceId}`);
+    }
+
+    try {
+        const response = await getSSMConnectionStatus(credentialId, region, instanceId, accountId);
+        if (response?.Status === ConnectionStatus.CONNECTED) {
+            return response;
+        }
+        await sleep(pollInterval);
+    } catch (error) {
+        // not throwing error here as we want to retry
+        logger.error('Error polling SSM connection status', instanceId, error);
+    }
+    return pollSSMConnectionStatus(accountId, credentialId, region, instanceId, retryCount + 1, pollInterval);
+}
+
 async function ssmPutParameters(credentialsId: string, region: string, credentials: SSMParamterObject[]) {
     logger.info('Put SSM parameters', { credentialsId, region });
 
@@ -469,12 +512,16 @@ async function getSSMConnectionStatusByInstanceIds(credentialsId: string, region
     );
 }
 
-async function extractSsmResponse(ssmResponse: {
-    commandId?: string;
-    instanceId?: string;
-    response?: GetCommandInvocationCommandOutput;
-    error?: string;
-}) {
+async function extractSsmResponse(
+    credentialsId: string,
+    region: string,
+    ssmResponse: {
+        commandId?: string;
+        instanceId?: string;
+        response?: GetCommandInvocationCommandOutput;
+        error?: string;
+    }
+) {
     const { commandId, instanceId, response, error } = ssmResponse;
     logger.info(`Extract SSM response from instance ${instanceId} for command with id: ${commandId}`, { response });
 
@@ -497,7 +544,16 @@ async function extractSsmResponse(ssmResponse: {
         return { error: errorMessage };
     }
 
-    const output = await decompressSSMResponse(response?.StandardOutputContent || '');
+    if (instanceId && (response?.StandardOutputContent ?? '').endsWith('--output truncated--')) {
+        if (!response?.CommandId) {
+            throw createError('Command Id not found');
+        }
+        const responses = await getSsmResponseFromCloudWatch(credentialsId, region, response?.CommandId, instanceId);
+        return {
+            output: responses.join('')
+        };
+    }
+    const output = await decompressSSMResponse(response?.StandardOutputContent ?? '');
     return { output };
 }
 
@@ -513,5 +569,6 @@ export {
     getEc2SqlParameters,
     executeSSMDocumentMultipleInstances,
     getSSMConnectionStatusByInstanceIds,
-    extractSsmResponse
+    extractSsmResponse,
+    pollSSMConnectionStatus
 };
