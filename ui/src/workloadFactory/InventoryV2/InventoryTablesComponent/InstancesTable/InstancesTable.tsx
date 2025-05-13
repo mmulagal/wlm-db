@@ -908,8 +908,6 @@ const InstancesTable = () => {
                                 isAppendedToBody={true}
                                 children={disableMsg}
                                 trigger="hover"
-                                delayHide={200}
-                                interactive={true}
                                 container={
                                     <div className={styles.buttonContainer}>
                                         <DsButton variant="secondary" isThin isDisabled={true}>

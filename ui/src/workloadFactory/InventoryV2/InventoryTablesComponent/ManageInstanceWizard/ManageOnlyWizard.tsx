@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { handleSingleInstanceManage } from './ManageInstanceUtils';
+import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const ManageOnlyWizard = () => {
     const navigate = useNavigate();
@@ -22,6 +23,7 @@ const ManageOnlyWizard = () => {
                 closeButtonProps={{
                     onClick: () => {
                         setTimeout(() => {
+                            dispatch(setLandingFromWizard(true));
                             navigate('../databases/inventory');
                         }, 100);
                     }
@@ -42,7 +44,10 @@ const ManageOnlyWizard = () => {
                         variant="secondary"
                         isThin
                         onClick={() => {
-                            navigate('../databases/inventory');
+                            setTimeout(() => {
+                                dispatch(setLandingFromWizard(true));
+                                navigate('../databases/inventory');
+                            }, 100);
                         }}
                     >
                         Previous

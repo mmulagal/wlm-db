@@ -8,6 +8,8 @@ import ManageOnlyWizard from './ManageOnlyWizard';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useMemo } from 'react';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { useDispatch } from 'react-redux';
+import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const MANAGE_STEPS = [
     { key: 'detect-instance', label: 'Detect instance', component: DetectInstanceStep },
@@ -23,6 +25,7 @@ const stepPaths = {
 const Wizard = () => {
     const { stepsMap, currentStep }: any = useWizard();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const { Footer: StepFooter, Content: StepContent } = stepsMap[currentStep];
     return (
@@ -32,6 +35,7 @@ const Wizard = () => {
                 title={'Manage instance'}
                 onExit={() => {
                     setTimeout(() => {
+                        dispatch(setLandingFromWizard(true));
                         navigate('../databases/inventory');
                     }, 100);
                 }}

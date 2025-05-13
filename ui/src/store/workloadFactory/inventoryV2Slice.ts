@@ -6,6 +6,7 @@ import {
     initialHostsTableColState,
     initialInstanceTableColState
 } from '../../utils/manageColumnUtils';
+import { setLandingFrom } from './getWellOptimizeSlice';
 
 const initialInventoryV2State: InventorySliceData = {
     breadCrumbSelectedFrom: '',
@@ -102,13 +103,17 @@ const initialInventoryV2State: InventorySliceData = {
     manageSingleInstanceChecks: null,
     manageSingleInstanceData: null,
     wizardOperationType: '',
-    selectedDetectInstances: []
+    selectedDetectInstances: [],
+    landingFromWizard: false
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setLandingFromWizard: (state, action: PayloadAction<any>) => {
+            state.landingFromWizard = action.payload;
+        },
         setSelectedDetectInstances: (state, action: PayloadAction<any>) => {
             state.selectedDetectInstances = action.payload;
         },
@@ -380,6 +385,7 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setLandingFromWizard,
     setSelectedDetectInstances,
     setWizardOperationType,
     setInstallType,
