@@ -2,7 +2,7 @@ import styles from './WellArchitectDashboard.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
-import { FROM_DIALOG, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
+import { DETECT_HOST_VAR, FROM_DIALOG, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import {
     setDefaultFilterOptions,
@@ -33,7 +33,7 @@ import { updateResourceId } from '../../../store/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { setRefreshTime } from '../../../store/workloadFactory/headersSlice';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
-import { workloadFactoryResourceApiV2 } from '../../../utils/apiService';
+import { useRegisterResourceCredentialsMutation, workloadFactoryResourceApiV2 } from '../../../utils/apiService';
 import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetGwValuesOnRefresh } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -45,6 +45,7 @@ import {
     setAllSandboxInstanceList,
     setIsRefreshedSandboxInstance
 } from '../../../store/workloadFactory/sandboxSlice';
+import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 const WellArchitectDashboard = () => {
     const dispatch = useDispatch();
@@ -62,6 +63,10 @@ const WellArchitectDashboard = () => {
     const { refreshTime } = useAppSelector(state => state.headers);
 
     const { refreshSandboxInstanceTime } = useAppSelector(state => state.sandbox);
+
+    const { password } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
+
+    const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     const {
         resourceLoading: resourceLoadingState,
@@ -123,6 +128,39 @@ const WellArchitectDashboard = () => {
         }
     };
 
+    const createPayload = () => {
+        let credList = [];
+        credList.push({
+            resourceId: selectedResourceId,
+            resourceType: DETECT_HOST_VAR.FSX,
+            username: 'fsxadmin',
+            password: password
+        });
+
+        return { credentials: credList };
+    };
+
+    const handleFSXAdminApply = async () => {
+        try {
+            const result: any = await registerResourceCred({
+                credentialId: selectedResourceCredId,
+                regionId: selectedResourceRegionId,
+                instanceId: selectedResourceId,
+                payload: createPayload()
+            });
+            if (result && !result?.error) {
+                if (!result?.data?.sqlServerError || !result?.data?.fsxnError) {
+                    dispatch(
+                        addNotification({
+                            type: NOTIFICATION_TYPES.SUCCESS,
+                            message: 'FSxadmin password reset successfully'
+                        })
+                    );
+                }
+            }
+        } catch {}
+    };
+
     const handleFsxPassword = () => {
         setDialog(
             <DialogComponent
@@ -130,7 +168,9 @@ const WellArchitectDashboard = () => {
                 content={<FSXPasswordContent />}
                 primaryButton={GENERAL.APPLY}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => {}}
+                callback={() => {
+                    handleFSXAdminApply();
+                }}
                 closeCallback={() => {
                     closeDialog();
                 }}
