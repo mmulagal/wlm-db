@@ -1,4 +1,12 @@
+interface OptionType {
+    id: number;
+    label: string;
+    value: string;
+}
+
 export interface InventorySliceData {
+    selectedDetectInstances: OptionType[];
+    wizardOperationType: string;
     manageInstanceInstallAction: any;
     authenticationType: string;
     tableManageColumnState: any;

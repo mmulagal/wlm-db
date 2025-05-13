@@ -5,6 +5,16 @@
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
 
+    .detectInstanceSelect {
+        width: 472px;
+        margin: 0 auto;
+        margin-bottom: 80px;
+        .detectFormatOption {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
     .radio-container {
         background-color: var(--hover-background);
         padding: 16px 40px;

@@ -100,20 +100,27 @@ const initialInventoryV2State: InventorySliceData = {
         installMissingPowershell: false
     },
     manageSingleInstanceChecks: null,
-    manageSingleInstanceData: null
+    manageSingleInstanceData: null,
+    wizardOperationType: '',
+    selectedDetectInstances: []
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setSelectedDetectInstances: (state, action: PayloadAction<any>) => {
+            state.selectedDetectInstances = action.payload;
+        },
         setInstallType: (state, action: PayloadAction<Partial<typeof state.manageInstanceInstallAction>>) => {
             state.manageInstanceInstallAction = {
                 ...state.manageInstanceInstallAction,
                 ...action.payload
             };
         },
-
+        setWizardOperationType: (state, action: PayloadAction<any>) => {
+            state.wizardOperationType = action.payload;
+        },
         setAuthenticationType: (state, action: PayloadAction<any>) => {
             state.authenticationType = action.payload;
         },
@@ -373,6 +380,8 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setSelectedDetectInstances,
+    setWizardOperationType,
     setInstallType,
     setAuthenticationType,
     setSelectedFilterValue,

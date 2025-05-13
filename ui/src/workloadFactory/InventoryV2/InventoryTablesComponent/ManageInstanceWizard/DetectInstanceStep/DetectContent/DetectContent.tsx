@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { setIsDetectHostError } from '../../../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../../../utils/appConstants';
+import SelectInstances from './SelectInstances';
 
 const DetectContent = () => {
     const dispatch = useDispatch();
@@ -33,6 +34,8 @@ const DetectContent = () => {
         state => state.inventoryV2
     );
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
+
+    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
     const [textSearch, setTextSearch] = useSearchDebounce(100);
     const [ontapPasswordSearch, setOntapPasswordSearch] = useSearchDebounce(100);
@@ -91,6 +94,10 @@ const DetectContent = () => {
     }, [detectPasswordSearch]);
     return (
         <div className={styles.detectContent}>
+            {/* Only for bulk */}
+
+            {wizardOperationType === 'bulk' && <SelectInstances />}
+
             {!manageSingleInstanceData?.sqlServerAuthentication && !manageSingleInstanceData?.windowsAuthentication && (
                 <div className={styles['radio-container']}>
                     <DsTypography variant="Semibold_14">Select authentication type</DsTypography>
