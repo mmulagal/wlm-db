@@ -2313,7 +2313,8 @@
                 "instance_name": "oradb1san",
                 "host_name": "ip-172-31-48-50.ap-southeast-1.compute.internal",
                 "version": "19.0.0.0.0",
-                "instance_state": "OPEN"
+                "instance_state": "OPEN",
+                "instance_id": "28096904"
             },
             "database_details": {
                 "name": "ORADB1SA",
