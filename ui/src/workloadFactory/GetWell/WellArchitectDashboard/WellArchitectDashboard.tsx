@@ -153,13 +153,20 @@ const WellArchitectDashboard = () => {
                 payload: createPayload()
             });
             if (result && !result?.error) {
-                if (!result?.data?.sqlServerError && !result?.data?.fsxnError) {
+                if (!result?.data?.fsxnError) {
                     dispatch(setFsxAdminPassword(''));
                     dispatch(setFsxAdminConfirmPassword(''));
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.SUCCESS,
                             message: 'FSxadmin password reset successfully'
+                        })
+                    );
+                } else {
+                    dispatch(
+                        addNotification({
+                            type: NOTIFICATION_TYPES.ERROR,
+                            message: result?.data?.fsxnError || 'Failed to reset FSxadmin password. '
                         })
                     );
                 }
