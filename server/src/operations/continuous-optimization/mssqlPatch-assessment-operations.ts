@@ -228,7 +228,8 @@ async function runMSSQLPatchAssessment(
 
     const clusterNodeDetails = isPartOfCluster
         ? await getAllClusterNodeDetails(accountId, credentialsId, region, databaseHostId, nodeInstanceId)
-        : [{ ec2InstanceId: nodeInstanceId }];
+        : [{ ec2InstanceId: nodeInstanceId, ec2InstanceName: 'Unknown' }];
+
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
 
     if (!isEmpty(clusterNodeInstanceIds)) {
@@ -246,6 +247,11 @@ async function runMSSQLPatchAssessment(
         ]);
 
         const instanceInstalledPatchDetailsList = instanceInstalledPatchDetails || [];
+
+        // Map ec2InstanceId to ec2InstanceName for quick lookup
+        const ec2InstanceNameMap = new Map(
+            clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => [ec2InstanceId, ec2InstanceName])
+        );
 
         // Create the MSSQLPatchAssessmentObject structure
         const patchAssessmentObjects: MSSQLPatchAssessmentObject[] = instanceInstalledPatchDetailsList.map(
@@ -294,6 +300,7 @@ async function runMSSQLPatchAssessment(
 
                 return {
                     ec2InstanceId: instanceId,
+                    ec2InstanceName: ec2InstanceNameMap.get(instanceId) || 'Unknown',
                     criticalMissingPatchesCount,
                     importantMissingPatchesCount,
                     missingPatchesCount: missingPatchDetails.length,
