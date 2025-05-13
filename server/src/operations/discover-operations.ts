@@ -988,6 +988,7 @@ async function fetchUnmanagedHostsInformationV2(
                 fields ||
                     'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
                 resourceDetail,
+                undefined,
                 false // unmanaged host,
             )
         )
@@ -2398,6 +2399,7 @@ async function getPgSqlResourceDetails(
                 fields ||
                     'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
                 resourceDetail,
+                undefined,
                 false // unmanaged host,
             )
         )

@@ -310,7 +310,8 @@ async function listResources(
     fsxId?: string,
     metaFilters?: { [x: string]: string | number | boolean },
     pageSize?: number,
-    nextToken?: string
+    nextToken?: string,
+    includeDatabaseInstances?: boolean
 ) {
     logger.info('Listing resources for params', {
         accountId,
@@ -320,7 +321,8 @@ async function listResources(
         credentialIds,
         metaFilters,
         pageSize,
-        nextToken
+        nextToken,
+        includeDatabaseInstances
     });
 
     if (accountId) {
@@ -354,6 +356,11 @@ async function listResources(
         ...(nextToken && {
             cursor: { id: nextToken },
             skip: 1
+        }),
+        ...(includeDatabaseInstances && {
+            include: {
+                database_instances: true
+            }
         })
     });
 }
