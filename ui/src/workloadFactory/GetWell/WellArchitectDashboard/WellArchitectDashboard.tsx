@@ -163,6 +163,13 @@ const WellArchitectDashboard = () => {
                         })
                     );
                 }
+            } else {
+                dispatch(
+                    addNotification({
+                        type: NOTIFICATION_TYPES.ERROR,
+                        message: result?.error || 'Failed to reset FSxadmin password. '
+                    })
+                );
             }
         } catch (error) {
             dispatch(setFsxAdminPassword(''));
