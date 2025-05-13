@@ -9,6 +9,7 @@ import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { GENERAL } from '../../../../utils/appConstants';
 import { setInventoryTableData } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { MANAGE_STATES } from '../../../../utils/consts';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -26,6 +27,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         state;
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
+    const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
 
     const dispatch = useDispatch();
 
@@ -66,7 +68,11 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     dispatch(setIsDetectHostLoading(false));
                     // store fsx cred in register obj if payload has fsx register
                     let isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
-                    const updatedInventoryTableData = updateInstanceStatus('detect', manageSingleInstanceData, manageSingleInstanceData);
+                    const updatedInventoryTableData = updateInstanceStatus(
+                        'detect',
+                        manageSingleInstanceData,
+                        manageSingleInstanceData
+                    );
                     dispatch(setInventoryTableData(updatedInventoryTableData));
                     goToNextStep();
                 }
@@ -99,8 +105,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     const handleManage = () => {
-        //state is having all payload data
-        console.log(state);
+        manageSingleInstanceChecks(manageSingleInstanceChecks, dispatch);
     };
 
     return (

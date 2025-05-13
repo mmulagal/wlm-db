@@ -893,3 +893,10 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     }
 };
+
+export const MANAGE_STATES = {
+    READY: 'Ready',
+    MISSING_POWERSHELL: 'Missing PowerShell modules',
+    MISSING_PREREQUISITES: 'Missing prerequisites',
+    POWERSHELL7: 'powershell7'
+};

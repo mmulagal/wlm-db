@@ -78,6 +78,7 @@ export interface InventorySliceData {
         error: string;
     };
     createResourceApiLoading: boolean;
+    manageSingleInstanceChecks: any;
     manageSingleInstanceData: any;
 }
 
@@ -430,6 +431,7 @@ export interface DiscoverHostInterface {
     pgsqlServerInstances?: Array<PgsqlInstancesDiscovered>;
     oracleServerDeploymentType?: string;
     databaseInstanceDetails?: Array<OracleInstancesDiscovered>;
+    manageReadiness?: any;
     [key: string]: any;
 }
 

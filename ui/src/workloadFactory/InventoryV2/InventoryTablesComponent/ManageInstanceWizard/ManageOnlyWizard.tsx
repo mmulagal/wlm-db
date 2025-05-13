@@ -2,11 +2,18 @@ import { Button, Header, StepLayout, WizardContent, WizardFooter, WizardHeader }
 import { Content } from './ManageInstanceStep/ManageInstanceStep';
 import styles from './ManageInstanceWizard.module.scss';
 import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useDispatch } from 'react-redux';
+import { handleSingleInstanceManage } from './ManageInstanceUtils';
 
 const ManageOnlyWizard = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
 
-    const handleManage = () => {};
+    const handleManage = () => {
+        handleSingleInstanceManage(manageSingleInstanceChecks, dispatch);
+    };
     return (
         <StepLayout>
             <Header

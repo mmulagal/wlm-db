@@ -13,6 +13,7 @@ export type AccordionItem = {
     disabled?: boolean;
     content: React.ReactNode;
     image: any;
+    missingPermission?: boolean;
 };
 
 type AccordionProps = {
@@ -32,8 +33,6 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
         if (disableAll) return;
         setExpandedId((prev: any) => (prev === id ? null : id));
     };
-
-    const missingPermission = false;
 
     return (
         <div className={styles['accordion-container']}>
@@ -58,8 +57,8 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                             <div className={styles.readinessSection}>
                                 <div className={styles.valueSection}>
                                     <div className={styles.statusSection}>
-                                        {!missingPermission && <Success />}
-                                        {missingPermission && <Cross />}
+                                        {!item?.missingPermission && <Success />}
+                                        {item?.missingPermission && <Cross />}
                                         <DsTypography variant="Semibold_14">{item.readinessStatus}</DsTypography>
                                     </div>
 

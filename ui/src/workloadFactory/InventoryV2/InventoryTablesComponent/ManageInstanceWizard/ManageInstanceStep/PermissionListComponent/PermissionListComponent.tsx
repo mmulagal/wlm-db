@@ -13,19 +13,20 @@ import { ReactComponent as SandboxImageDisabled } from '../../../../../../assets
 import styles from './PermissionListComponent.module.scss';
 import { useState } from 'react';
 import { PermissionContent } from './PermissionContent/PermissionContent';
+import { MANAGE_STATES } from '../../../../../../utils/consts';
 
-const PermissionListComponent = () => {
+const PermissionListComponent = ({ manageChecks }: any) => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll, setDisableAll] = useState(false);
-    const missingPermissions = false;
 
     const items: AccordionItem[] = [
         {
             id: '1',
             title: 'Review well-architected issues and recommendations',
             subtitle: 'Capability',
-            readinessStatus: 'Ready',
-            image: missingPermissions ? <ReviewDisabled /> : <Review />,
+            readinessStatus: manageChecks?.assessment,
+            missingPermission: manageChecks?.assessment !== MANAGE_STATES.READY,
+            image: manageChecks?.assessment !== MANAGE_STATES.READY ? <ReviewDisabled /> : <Review />,
             content: (
                 <PermissionContent
                     title="Permission list"
@@ -52,8 +53,9 @@ const PermissionListComponent = () => {
             id: '2',
             title: 'Fix well-architected issues',
             subtitle: 'Capability',
-            readinessStatus: 'Ready',
-            image: missingPermissions ? <FixDisabled /> : <Fix />,
+            readinessStatus: manageChecks?.remediation,
+            missingPermission: manageChecks?.remediation !== MANAGE_STATES.READY,
+            image: manageChecks?.remediation !== MANAGE_STATES.READY ? <FixDisabled /> : <Fix />,
             content: (
                 <PermissionContent
                     title="Permission list"
@@ -102,8 +104,9 @@ const PermissionListComponent = () => {
             id: '3',
             title: 'Create database',
             subtitle: 'Capability',
-            readinessStatus: 'Ready',
-            image: missingPermissions ? <DatabaseDisabled /> : <Database />,
+            readinessStatus: manageChecks?.dbCreation,
+            missingPermission: manageChecks?.dbCreation !== MANAGE_STATES.READY,
+            image: manageChecks?.dbCreation !== MANAGE_STATES.READY ? <DatabaseDisabled /> : <Database />,
             content: (
                 <PermissionContent
                     title="Permission list"
@@ -135,8 +138,9 @@ const PermissionListComponent = () => {
             id: '4',
             title: 'Create database copies (Sandbox)',
             subtitle: 'Capability',
-            readinessStatus: 'Ready',
-            image: missingPermissions ? <SandboxImageDisabled /> : <SandboxImage />,
+            readinessStatus: manageChecks?.sandbox,
+            missingPermission: manageChecks?.sandbox !== MANAGE_STATES.READY,
+            image: manageChecks?.sandbox !== MANAGE_STATES.READY ? <SandboxImageDisabled /> : <SandboxImage />,
             content: (
                 <PermissionContent
                     title="Permission list"
@@ -170,7 +174,7 @@ const PermissionListComponent = () => {
     ];
     return (
         <div className={styles.permissionList}>
-            <DsTypography variant="Semibold_16">Permission list</DsTypography>
+            <DsTypography variant="Semibold_16">Pre-requisite validations</DsTypography>
 
             <div className={styles.accordionSection}>
                 <ManageInstanceAccordion

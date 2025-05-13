@@ -96,9 +96,10 @@ const initialInventoryV2State: InventorySliceData = {
     createResourceApiLoading: false,
     authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
     manageInstanceInstallAction: {
-        installMissingAWS: true,
-        installMissingPowershell: true
+        installMissingAWS: false,
+        installMissingPowershell: false
     },
+    manageSingleInstanceChecks: null,
     manageSingleInstanceData: null
 };
 
@@ -306,6 +307,9 @@ const inventoryV2Slice = createSlice({
         setCreateResourceApiLoading: (state, action: PayloadAction<any>) => {
             state.createResourceApiLoading = action.payload;
         },
+        setManageSingleInstanceChecks: (state, action: PayloadAction<any>) => {
+            state.manageSingleInstanceChecks = action.payload;
+        },
         setManageSingleInstanceData: (state, action: PayloadAction<any>) => {
             state.manageSingleInstanceData = action.payload;
         },
@@ -436,6 +440,7 @@ export const {
     setDashSandboxSavings,
     setCreateResourceApiLoading,
     resetInventoryLoading,
+    setManageSingleInstanceChecks,
     setManageSingleInstanceData
 } = inventoryV2Slice.actions;
 

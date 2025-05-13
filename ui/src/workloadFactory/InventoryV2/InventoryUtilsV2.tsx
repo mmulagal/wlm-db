@@ -376,6 +376,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 databaseInstanceId: perRow?.databaseInstanceId,
                 databaseInstanceName: perRow?.instanceName,
                 status: perRow?.instanceState,
+                manageReadiness: statusObj?.[0]?.manageReadiness,
                 statusColText: isManagedRow?.[0]?.isManaged
                     ? INVENTORY_STATUS.MANAGED
                     : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED
@@ -415,7 +416,8 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     storage: perRow?.storage,
                     storageSavingsText: getStorageSavingsText(perRow || {}),
                     allocatedCapacity: allocatedCapacity,
-                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
+                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                    manageReadiness: statusObj?.[0]?.manageReadiness
                 };
             } else {
                 return instRow;
@@ -1208,7 +1210,8 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         status: INVENTORY_STATUS.UNDETECTED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
-                        isFsxRegistered: !fsxCredentialValidationFailed
+                        isFsxRegistered: !fsxCredentialValidationFailed,
+                        manageReadiness: row?.manageReadiness
                     };
                 } else {
                     statusObj = {
@@ -1216,7 +1219,8 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         status: INVENTORY_STATUS.UNMANAGED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
-                        isFsxRegistered: !fsxCredentialValidationFailed
+                        isFsxRegistered: !fsxCredentialValidationFailed,
+                        manageReadiness: row?.manageReadiness
                     };
                 }
                 result = [...result, ...[statusObj]];
@@ -1493,7 +1497,8 @@ export const formatDiscoverInstanceData = (
             sqlServerAuthentication: perRow?.sqlServerAuthentication,
             windowsAuthentication: perRow?.windowsAuthentication,
             detectOption: statusObj?.[0]?.detectOption,
-            detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg
+            detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
+            manageReadiness: row?.manageReadiness
             // protection: {},
             // performance: {},
             // storageSavingsText: '',

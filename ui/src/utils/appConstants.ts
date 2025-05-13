@@ -28,6 +28,10 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    MANAGE_MIN_PERMISSION_REQUIRED: [
+        'Missing minimum prerequisites:',
+        ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To manage this SQL Server instance, please address the necessary prerequisites and try again.'
+    ],
     REACTIVATE_TOOLTIP: 'Restart the analysis for a postponed or dismissed configuration.',
     POSTPONED_TOOLTIP: 'Postpone the configuration analysis for 30 days.',
     DISMISS_TOOLTIP: 'Stop the configuration analysis.',

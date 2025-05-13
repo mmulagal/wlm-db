@@ -3,13 +3,24 @@ import styles from './ActionComponent.module.scss';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { setInstallType } from '../../../../../../store/workloadFactory/inventoryV2Slice';
+import { useEffect } from 'react';
 
-const ActionComponent = () => {
+const ActionComponent = ({ manageChecks }: any) => {
     const dispatch = useDispatch();
     const { state, setState }: any = useWizard();
     const { installMissingAWS, installMissingPowershell } = useAppSelector(
         state => state.inventoryV2.manageInstanceInstallAction
     );
+
+    useEffect(() => {
+        dispatch(
+            setInstallType({
+                installMissingAWS: manageChecks?.installMissingAWS,
+                installMissingPowershell: manageChecks?.installMissingPowershell
+            })
+        );
+    }, [manageChecks]);
+
     return (
         <div className={styles.actionComponent}>
             <DsTypography variant="Semibold_16">Action Required</DsTypography>
@@ -22,7 +33,7 @@ const ActionComponent = () => {
                         setState({ installMissingAWS: !installMissingAWS });
                     }}
                     isSelected={installMissingAWS}
-                    isDisabled={false}
+                    isDisabled={!manageChecks?.installMissingAWS}
                     className={styles.checkboxContainer}
                 />
 
@@ -34,7 +45,7 @@ const ActionComponent = () => {
                         setState({ installMissingPowershell: !installMissingPowershell });
                     }}
                     isSelected={installMissingPowershell}
-                    isDisabled={false}
+                    isDisabled={!manageChecks?.installMissingPowershell}
                     className={styles.checkboxContainer}
                 />
             </div>
