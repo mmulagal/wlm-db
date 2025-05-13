@@ -322,6 +322,8 @@ describe('MSSql Patch assessment operations', () => {
                 'i-07e76a4b916548dc0',
                 false,
                 'test-resource',
+                false,
+                'test-instance',
                 'test-job-id'
             )) || [];
         expect(response.ec2InstanceId).toBeDefined();
