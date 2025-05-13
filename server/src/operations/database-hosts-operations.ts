@@ -1558,13 +1558,16 @@ async function getDatabaseDetails(
                                 isFsxOntapSnapshotsEnabled: isDemoFlow
                                     ? true
                                     : checkKey(ontapBackup, database.databaseName),
-                                isSqlNativeEnabled: Boolean(
-                                    backedupDatabases?.[instName] &&
-                                        backedupDatabases[instName]?.find(
-                                            (e: { backedupDatabases: string }) =>
-                                                e.backedupDatabases === database.databaseName
-                                        )
-                                )
+                                isSqlNativeEnabled:
+                                    backedupDatabases?.[instName] && backedupDatabases?.[instName].includes('error')
+                                        ? false
+                                        : Boolean(
+                                              backedupDatabases?.[instName] &&
+                                                  backedupDatabases[instName]?.find(
+                                                      (e: { backedupDatabases: string }) =>
+                                                          e.backedupDatabases === database.databaseName
+                                                  )
+                                          )
                             }
                         })
                     })

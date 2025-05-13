@@ -575,7 +575,7 @@ async function updateResource({
         },
         data: {
             ...(!isEmpty(metaData) && { metadata: metaData }),
-            ...(!isEmpty(updatedConfigs) && { updated_configs: updatedConfigs })
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
         }
     });
 }
@@ -611,7 +611,7 @@ async function updateDatabaseInstance({
         },
         data: {
             ...(!isEmpty(metaData) && { metadata: metaData }),
-            ...(!isEmpty(updatedConfigs) && { updated_configs: updatedConfigs })
+            ...(!isEmpty(updatedConfigs) && { configurations: updatedConfigs })
         }
     });
 }
