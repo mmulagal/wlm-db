@@ -60,7 +60,7 @@ async function optimizeNetworkAdapters(
         );
         const { response, error: ssmError } = sqlResponseParsing(rawResponse) || {};
         if (response === 'FAILED' || !isEmpty(ssmError)) {
-            const msg = `Failed to Fix network adapters: ${databaseHostId} account: ${accountId} region: ${region} credentialsId: ${credentialsId}`;
+            const msg = `Failed to fix network adapters: ${databaseHostId} account: ${accountId} region: ${region} credentialsId: ${credentialsId}`;
             logger.error(msg, ssmError);
             throw new Error(msg);
         }

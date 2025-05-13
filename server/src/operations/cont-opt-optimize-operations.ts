@@ -294,13 +294,13 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
 
             if (objectsOptimized !== objectsToOptimize.length) {
                 if (objectsOptimized === 0) {
-                    const optimizeErrorMessage = `Failed to Fix ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
+                    const optimizeErrorMessage = `Failed to fix ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
                     logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
                     newJobStatus = JOBSTATUS.FAILED;
                     newJobError = optimizeErrorMessage;
                 } else {
                     const unOptimizedObjects = objectsToOptimize.filter(obj => !parsedResp.cli_output.includes(obj));
-                    const optimizeErrorMessage = `Failed to Fix ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                    const optimizeErrorMessage = `Failed to fix ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
                     newJobStatus = JOBSTATUS.FAILED;
                     newJobError = optimizeErrorMessage;
                 }
@@ -374,7 +374,7 @@ async function activeSqlNodeDetails(
             : false;
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Unable to Fix instance ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
+        const errorMessage = `Unable to fix instance ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -2005,7 +2005,7 @@ async function optimizeOperatingSystemSettings(
     );
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Unable to Fix host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
+        const errorMessage = `Unable to fix host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -2298,12 +2298,12 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
             const objectsOptimized = parsedResp.num_records || 0;
             if (objectsOptimized !== volumeNames.length && !isDemoFlow) {
                 if (objectsOptimized === 0) {
-                    jobError = `Failed to Fix storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
+                    jobError = `Failed to fix storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
                     logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
                     jobStatus = JOBSTATUS.FAILED;
                 } else {
                     const unOptimizedObjects = volumeNames.filter(obj => !parsedResp.cli_output.includes(obj));
-                    jobError = `Failed to Fix storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                    jobError = `Failed to fix storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
                     jobStatus = JOBSTATUS.WARNING;
                 }
             } else {
