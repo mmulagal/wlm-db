@@ -149,7 +149,7 @@ const WellArchitectDashboard = () => {
                 payload: createPayload()
             });
             if (result && !result?.error) {
-                if (!result?.data?.sqlServerError || !result?.data?.fsxnError) {
+                if (!result?.data?.sqlServerError && !result?.data?.fsxnError) {
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.SUCCESS,
@@ -158,7 +158,14 @@ const WellArchitectDashboard = () => {
                     );
                 }
             }
-        } catch {}
+        } catch (error) {
+            dispatch(
+                addNotification({
+                    type: NOTIFICATION_TYPES.ERROR,
+                    message: error || 'Failed to reset FSxadmin password. '
+                })
+            );
+        }
     };
 
     const handleFsxPassword = () => {
