@@ -1407,12 +1407,14 @@ async function fetchDriftAssessmentPerHost(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    fields?: string
+    fields?: string,
+    resourceDetail?: ResourceDetails
 ) {
     logger.info('Fetching drift assessment per host', { accountId, credentialsId, region, databaseHostId, fields });
 
-    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
-
+    if (isEmpty(resourceDetail)) {
+        [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+    }
     if (isEmpty(resourceDetail)) {
         const infoMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
         logger.info(infoMessage);
@@ -1660,7 +1662,7 @@ async function fetchDriftAssessmentPerAccount(
     nextToken?: string,
     pageSize?: number
 ) {
-    logger.info('Fetching drift assessment per host', {
+    logger.info('Fetching drift assessment per account', {
         accountId,
         credentialsId,
         region,
@@ -1706,7 +1708,8 @@ async function fetchDriftAssessmentPerAccount(
                         credentialsId,
                         region,
                         databaseHostId,
-                        fields
+                        fields,
+                        resourceDetail
                     );
                     driftAssessmentPerAccount.push(drifAssessmentPerHost);
                 } catch (error) {
