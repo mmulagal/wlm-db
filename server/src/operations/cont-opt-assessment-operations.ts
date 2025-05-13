@@ -1185,8 +1185,11 @@ async function fetchDriftAssessment(
         databaseHostId,
         databaseInstanceId
     );
+    // filter out the config data which is not required for assessment and listDatabaseInstanceConfigData returns in descending order of creation time
     const assessmentDataMap = databaseInstanceConfigData.reduce((acc, config) => {
-        acc[config.config_data_type] = config.config_data;
+        if (!acc[config.config_data_type]) {
+            acc[config.config_data_type] = config.config_data;
+        }
         return acc;
     }, {} as Record<string, unknown>);
 
