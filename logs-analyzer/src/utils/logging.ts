@@ -1,6 +1,6 @@
 import log4js from 'log4js';
-import * as fs from 'fs';
-import * as path from 'path';
+import { readdirSync, statSync, unlinkSync, existsSync } from 'fs';
+import { join } from 'path';
 
 // Configure log4js
 log4js.configure({
@@ -16,20 +16,20 @@ log4js.configure({
 const logger = log4js.getLogger();
 
 // Purge old logs from the Logs directory
-const logsDirectory = path.join(process.cwd(), 'logs-analyzer', 'Logs');
+const logsDirectory = join(process.cwd(), 'logs-analyzer', 'Logs');
 const maxLogAgeDays = 30; // Retain logs for 30 days
 
-if (fs.existsSync(logsDirectory)) {
-    const files = fs.readdirSync(logsDirectory);
+if (existsSync(logsDirectory)) {
+    const files = readdirSync(logsDirectory);
     const now = Date.now();
 
     files.forEach(file => {
-        const filePath = path.join(logsDirectory, file);
-        const stats = fs.statSync(filePath);
+        const filePath = join(logsDirectory, file);
+        const stats = statSync(filePath);
         const fileAgeDays = (now - stats.mtimeMs) / (1000 * 60 * 60 * 24);
 
         if (fileAgeDays > maxLogAgeDays) {
-            fs.unlinkSync(filePath);
+            unlinkSync(filePath);
             logger.info(`Deleted old log file: ${file}`);
         }
     });

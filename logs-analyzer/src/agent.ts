@@ -10,7 +10,7 @@ import { DATABASE_TYPE, ERROR_LOGS_ANALYZER_PROMPT, PGSQL_ERROR_LOGS_ANALYZER_PR
 import streamMessages from "../aws/bedrock";
 import collectLogs from "../operations/logs-filtering-operations";
 import { TOOLS } from "../utils/tools";
-import { getPowershellScript, getBashScript, runPowerShellScript, deflateString, deleteOlderFilesInDirectory } from "../utils/utils";
+import { getPowershellScript, getBashScript, runPowerShellScript, deleteOlderFilesInDirectory } from "../utils/utils";
 import { compact, isEmpty } from "lodash-es";
 import { execa } from "execa";
 import logger from './utils/logging';
@@ -78,7 +78,7 @@ const CW_OUTPUT_PATH = `${logGroupName}/${logStreamName}`;
 const MODEL_ID = "arn:aws:bedrock:us-east-1:464262061435:inference-profile/us.anthropic.claude-3-7-sonnet-20250219-v1:0";
 const MODEL_REGION = 'us-east-1';
 
-let remidiationRecommendation: { error: string; cause: string; count: number; severity: string|number, remediation: string; }[] = [];
+let remidiationRecommendation: { error: string; cause: string; count: number; severity: string | number, remediation: string; }[] = [];
 
 
 
@@ -139,10 +139,7 @@ async function initiateLogsAnalysis(inputText: string) {
             }
         };
 
-        logger.debug('Response before compression:', JSON.stringify(response));
-        const compressedOutput = deflateString(JSON.stringify(response));
-
-        logger.debug('Compressed output:', compressedOutput);
+        logger.info('Step 5: Writing to CloudWatch Logs.');
         await writeToCloudWatchLogGroup(JSON.stringify(response));
     } catch (err) {
         writeFileSync(statusFilePath, "Failed", "utf-8");
@@ -189,7 +186,7 @@ async function analyzeErrorLogs(databaseType: string, client: BedrockRuntimeClie
     const errorLogsWithCause: Message[] = [];
     const errorLogsWithScripts = [];
 
-    const prompt = databaseType === DATABASE_TYPE.MSSQL? ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
+    const prompt = databaseType === DATABASE_TYPE.MSSQL ? ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
 
     await Promise.all(errorLogs.map(logChunk => pLimit(5)(async () => {
         const response = await streamMessages(client, MODEL_ID, [{
@@ -201,11 +198,12 @@ async function analyzeErrorLogs(databaseType: string, client: BedrockRuntimeClie
         errorLogsWithCause.push(message);
     })));
 
-    const assistantMessages = compact(errorLogsWithCause
-        .filter((message: Message) => message.role === 'assistant')
-        .map((message: Message) => message?.content?.[0])
-        .map((content) => content?.text)
-        .flat());
+    const assistantMessages = compact(
+        errorLogsWithCause
+            .filter((message: Message) => message.role === 'assistant')
+            .flatMap(message => message.content?.[0]?.text ?? [])
+    );
+
     const scripts = parseSuggestedScripts(assistantMessages);
     errorLogsWithScripts.push(...scripts);
 
@@ -310,7 +308,6 @@ async function recommendRemediation(databaseType: string, client: BedrockRuntime
 
 async function getDatabaseDetails(logsFolderPath: string) {
     logger.info("Getting database details from logs.");
-    
     let databaseDetails: { logFile: string; databaseType: string; databaseVersion: string; } | null = null;
 
     const logFiles = readdirSync(logsFolderPath).filter(file => file.endsWith('.trc') || file.endsWith('.xel') || file.endsWith('.log') || file.startsWith('ERRORLOG'));

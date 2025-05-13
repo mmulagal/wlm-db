@@ -77,11 +77,12 @@ async function getUniquePostgresErrors(logs: PostgresLog[]) {
     logger.debug('Grouping PostgreSQL logs by message');
     const groupedLogs = groupBy(logs, 'message');
     const uniqueErrorLogs = Object.keys(groupedLogs).map(key => {
+        const [{ context: errorContext, message: errorMessage, severity }] = groupedLogs[key];
         return {
-            errorContext: groupedLogs[key][0].context,
-            errorMessage: groupedLogs[key][0].message,
+            errorContext,
+            errorMessage,
             errorCount: groupedLogs[key].length,
-            severity: groupedLogs[key][0].severity,
+            severity
         };
     });
     return { uniqueErrorLogs };

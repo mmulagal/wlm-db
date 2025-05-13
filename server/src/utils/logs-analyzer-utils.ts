@@ -3,6 +3,7 @@ import getLogger from './logger';
 const logger = getLogger();
 
 export function parseConcatenatedJSON(input: string): object[] {
+    logger.debug('Parsing concatenated JSON objects');
     try {
         // Split the input into separate JSON objects using a regex
         const jsonObjects = input.split(/(?<=})\s*(?={)/);

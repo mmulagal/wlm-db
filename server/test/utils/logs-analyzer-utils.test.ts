@@ -1,4 +1,4 @@
-import { parseConcatenatedJSON } from "../../src/utils/logs-analyzer-utils";
+import { parseConcatenatedJSON } from '../../src/utils/logs-analyzer-utils';
 
 describe('parseConcatenatedJSON', () => {
     it('parses a single JSON object', () => {

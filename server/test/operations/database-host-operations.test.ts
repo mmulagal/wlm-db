@@ -75,7 +75,7 @@ describe('Database host operations', () => {
         expect(resp).toBeDefined();
     });
 
-    it.skip('Get all cluster node details', async () => {
+    it('Get all cluster node details', async () => {
         const [response] = await getAllClusterNodeDetails(
             ACCOUNT_ID,
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',

@@ -3,6 +3,7 @@ import { readdirSync, statSync, unlinkSync } from "node:fs";
 import ms from "ms";
 import zlib from 'zlib';
 import { join } from "node:path";
+import logger from "../src/utils/logging";
 
 function getPowershellScript(sql: string[]) {
     return `
@@ -61,7 +62,7 @@ function getBashScript(sql: string[]) {
 
         # Define the list of queries
         queries=(
-            ${sql.map(sqlQuery => `"${sqlQuery.replace(/"/g, '\\"')}"`).join(" \\\n            ")}
+            ${sql.map(sqlQuery => `"${sqlQuery.replace(/"/g, '\\"')}"`).join(" \\\n")}
         )
 
         # Initialize an array to store the results
@@ -148,7 +149,9 @@ async function runBashScript(scriptContent: string): Promise<string> {
     });
 }
 
+//Function to deflate a string using zlib , currently not being used. But can be used in the future when we need to compress the data before sending it to cloud watch
 function deflateString(stringToCompress: string) {
+
     if (!stringToCompress || stringToCompress.trim() === '') {
         console.info('The string to compress is either null or empty.');
         return null;
@@ -164,162 +167,9 @@ function deflateString(stringToCompress: string) {
     return encodedString;
 }
 
-function getLogsAnalyzerSetupScript(s3SignedUrl: string, packageName: string): string {
-    return `
-        # PowerShell script to set up the Logs Analyzer package on a SQL node
-
-        # Function to check if a command exists
-        function Command-Exists {
-            param (
-                [string]$Command
-            )
-            return Get-Command $Command -ErrorAction SilentlyContinue
-        }
-
-        # Retry function for network commands
-        function Retry-Command {
-            param (
-                [scriptblock]$Command,
-                [int]$Retries = 5
-            )
-            $Count = 0
-            while ($Count -lt $Retries) {
-                try {
-                    & $Command
-                    return
-                } catch {
-                    $Count++
-                    if ($Count -ge $Retries) {
-                        Write-Host "Command failed after $Retries attempts."
-                        throw
-                    }
-                    Write-Host "Retrying... ($Count/$Retries)"
-                    Start-Sleep -Seconds 5
-                }
-            }
-        }
-
-        # Step 1: Check if Node.js is installed
-        Write-Host "Checking for Node.js installation..."
-        if (-Not (Command-Exists node)) {
-            Write-Host "Node.js is not installed. Installing Node.js..."
-            Retry-Command {
-                Invoke-WebRequest -Uri https://nodejs.org/dist/v18.16.0/node-v18.16.0-x64.msi -OutFile nodejs.msi
-            }
-            Start-Process msiexec.exe -ArgumentList '/i nodejs.msi /quiet' -Wait
-            Remove-Item -Force nodejs.msi
-        } else {
-            Write-Host "Node.js is already installed."
-        }
-
-        # Step 2: Download the latest version of the Logs Analyzer package from a signed URL
-        Write-Host "Downloading the latest version of the Logs Analyzer package..."
-        Retry-Command {
-            Invoke-WebRequest -Uri ${s3SignedUrl} -OutFile ./${packageName}
-        }
-
-        # Step 3: Set execution permissions for the package
-        Write-Host "Setting execution permissions for the package..."
-        try {
-            icacls ./${packageName} /grant Everyone:F
-        } catch {
-            Write-Host "Failed to set execution permissions for the package."
-            throw
-        }
-
-        # Step 4: Run the Logs Analyzer
-        Write-Host "Running the Logs Analyzer..."
-        if (Command-Exists node) {
-            try {
-                ./${packageName}
-            } catch {
-                Write-Host "Failed to run Logs Analyzer."
-                throw
-            }
-        } else {
-            Write-Host "Node.js is not available. Please ensure it is installed correctly."
-            throw
-        }
-    `;
-}
-
-function getLogsAnalyzerSetupScriptLinux(s3SignedUrl: string, packageName: string): string {
-    return `
-        #!/bin/bash
-        # Generic Bash script to set up the Logs Analyzer package on a Linux machine
-
-        # Function to check if a command exists
-        command_exists() {
-            command -v "$1" &> /dev/null
-        }
-
-        # Retry function for network commands
-        retry_command() {
-            local retries=5
-            local count=0
-            until "$@"; do
-                exit_code=$?
-                count=$((count + 1))
-                if [ $count -lt $retries ]; then
-                    echo "Retrying... ($count/$retries)"
-                    sleep 5
-                else
-                    echo "Command failed after $retries attempts."
-                    return $exit_code
-                fi
-            done
-            return 0
-        }
-
-        # Step 1: Check if Node.js is installed
-        echo "Checking for Node.js installation..."
-        if ! command_exists node; then
-            echo "Node.js is not installed. Installing Node.js..."
-            if command_exists apt-get; then
-                retry_command curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-                sudo apt-get install -y nodejs
-            elif command_exists yum; then
-                retry_command curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-                sudo yum install -y nodejs
-            elif command_exists dnf; then
-                retry_command curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-                sudo dnf install -y nodejs
-            else
-                echo "Unsupported package manager. Please install Node.js manually."
-                exit 1
-            fi
-        else
-            echo "Node.js is already installed."
-        fi
-
-        # Step 2: Download the latest version of the Logs Analyzer package from a signed URL
-        echo "Downloading the latest version of the Logs Analyzer package..."
-        if command_exists curl; then
-            retry_command curl -o ${packageName} "${s3SignedUrl}" || { echo "Failed to download package."; exit 1; }
-        elif command_exists wget; then
-            retry_command wget -O ${packageName} "${s3SignedUrl}" || { echo "Failed to download package."; exit 1; }
-        else
-            echo "Neither curl nor wget is available. Please install one of them to proceed."
-            exit 1
-        fi
-
-        # Step 3: Setting execution permissions for the package
-        echo "Setting execution permissions for the package..."
-        chmod +x ${packageName}
-
-
-        # Step 4: Run the Logs Analyzer
-        echo "Running the Logs Analyzer..."
-        if command_exists node; then
-            ./${packageName} || { echo "Failed to run Logs Analyzer."; exit 1; }
-        else
-            echo "Node.js is not available. Please ensure it is installed correctly."
-            exit 1
-        fi
-    `;
-}
-
 function deleteOlderFilesInDirectory(directory: string, days: number = 3) {
+    logger.info(`Deleting files older than ${days} days in directory: ${directory}`);
+
     try {
         const files = readdirSync(directory);
         const now = new Date();
@@ -327,7 +177,7 @@ function deleteOlderFilesInDirectory(directory: string, days: number = 3) {
             const filePath = join(directory, file);
             const stats = statSync(filePath);
             const fileAge = now.getTime() - stats.mtimeMs;
-            if (fileAge > ms(`${days}d`)) { // 7 days in milliseconds
+            if (fileAge > ms(`${days}d`)) { //days in milliseconds
                 unlinkSync(filePath);
             }
         }
@@ -339,7 +189,6 @@ function deleteOlderFilesInDirectory(directory: string, days: number = 3) {
 export {
     getPowershellScript, getBashScript,
     runPowerShellScript, runBashScript,
-    getLogsAnalyzerSetupScript, getLogsAnalyzerSetupScriptLinux,
     deflateString,
     deleteOlderFilesInDirectory
 }
