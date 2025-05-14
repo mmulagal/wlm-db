@@ -969,53 +969,54 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         } else {
                             // Proceeding with compute and license assessment at host level
                             const uniqueResMap = new Map(
-                                managedInstances.map(({ resource, database_instance_id: databaseInstanceId }) => [
+                                managedInstances.map(({ resource, ...databaseInstanceDetails }) => [
                                     `${resource.account_id} + ${resource.credentials_id} + ${resource.id}`,
-                                    { ...resource, databaseInstanceId }
+                                    { resource, databaseInstanceDetails } // Separate keys for resource and databaseInstanceDetails
                                 ])
                             ); // create a map with unique resources; key being (accountId,credsId,resourceId unique combination) and value being actual resource
                             const uniqueResources = Array.from(uniqueResMap.values()); // getting all the unique resources from the map
 
                             await Promise.all(
-                                uniqueResources.map(
-                                    async ({
+                                uniqueResources.map(async ({ resource, databaseInstanceDetails }) => {
+                                    const {
                                         account_id: wfAccountId,
                                         credentials_id: credentialsId,
                                         region,
                                         resource_id: databaseHostId,
-                                        resource_name: resourceName,
-                                        databaseInstanceId
-                                    }) => {
-                                        // require to get the sqlAuthEnabled flag for mssql patch assessment
-                                        const { newDatabaseInstanceDetails } = await getInstanceDetails(
-                                            accountId,
-                                            credentialsId,
-                                            region as string,
-                                            databaseHostId,
-                                            databaseInstanceId
-                                        );
-                                        const { sqlAuthEnabled } = (newDatabaseInstanceDetails ||
-                                            {}) as DatabaseInstance;
+                                        resource_name: resourceName
+                                    } = resource;
+                                    const { database_instance_id: databaseInstanceId } = databaseInstanceDetails;
 
-                                        await initiateHostLevelAssessmentDataCollection(
-                                            wfAccountId,
-                                            credentialsId,
-                                            region!,
-                                            databaseHostId,
-                                            resourceName!,
-                                            parentJobId,
-                                            [
-                                                AssessmentCategories.LICENSE,
-                                                AssessmentCategories.COMPUTE,
-                                                AssessmentCategories.HOST_OS_PATCH,
-                                                AssessmentCategories.RSS_CONFIG,
-                                                AssessmentCategories.MSSQL_PATCH
-                                            ],
-                                            databaseInstanceId,
-                                            sqlAuthEnabled as boolean
-                                        );
-                                    }
-                                )
+                                    // require to get the sqlAuthEnabled flag for mssql patch assessment
+                                    const { newDatabaseInstanceDetails } = await getInstanceDetails(
+                                        accountId,
+                                        credentialsId,
+                                        region as string,
+                                        databaseHostId,
+                                        databaseInstanceId,
+                                        resource,
+                                        databaseInstanceDetails as unknown as DatabaseInstance
+                                    );
+                                    const { sqlAuthEnabled } = (newDatabaseInstanceDetails || {}) as DatabaseInstance;
+
+                                    await initiateHostLevelAssessmentDataCollection(
+                                        wfAccountId,
+                                        credentialsId,
+                                        region!,
+                                        databaseHostId,
+                                        resourceName!,
+                                        parentJobId,
+                                        [
+                                            AssessmentCategories.LICENSE,
+                                            AssessmentCategories.COMPUTE,
+                                            AssessmentCategories.HOST_OS_PATCH,
+                                            AssessmentCategories.RSS_CONFIG,
+                                            AssessmentCategories.MSSQL_PATCH
+                                        ],
+                                        databaseInstanceId,
+                                        sqlAuthEnabled as boolean
+                                    );
+                                })
                             );
                         }
                     } catch (error: any) {
