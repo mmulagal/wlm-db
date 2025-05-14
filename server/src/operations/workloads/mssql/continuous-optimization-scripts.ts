@@ -1274,10 +1274,10 @@ const GET_INSTALLED_MSSQL_VERSION = (instanceName: string, sqlAuthEnabled: boole
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
-        
+
     $ServerInstanceName = "$env:COMPUTERNAME"
     If ($sqlInstanceName -ne "MSSQLSERVER") {
-        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName" 
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
     }
 
     $sqlVersionResult = Call-SqlCmd -SqlCredential $sqlCredential -Query "${SERVER_VERSION}" -InstanceName "$ServerInstanceName"

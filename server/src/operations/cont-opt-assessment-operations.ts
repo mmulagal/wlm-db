@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 import throat from 'throat';
 import moment from 'moment';
 import getLogger from '../utils/logger';
-import { isDemo, sqlResponseParsing } from '../utils/utils';
+import { extractSqlInstanceName, isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails } from './database-hosts-operations';
@@ -308,7 +308,7 @@ async function initiateHostLevelAssessmentDataCollection(
         }
         if (fields?.includes(AssessmentCategories.MSSQL_PATCH)) {
             const isCluster = Boolean(node2InstanceId && node2InstanceId.trim() !== '');
-
+            const sqlInstanceName = extractSqlInstanceName(instanceName);
             ({ patchAssessment: mssqlPatchAssessment, errorMessage: mssqlPatchErrorMessage } =
                 (await managedHostMSSQLPatchAssessment(
                     accountId,
@@ -319,7 +319,7 @@ async function initiateHostLevelAssessmentDataCollection(
                     isCluster, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
                     resourceName,
                     sqlAuthEnabled,
-                    instanceName,
+                    sqlInstanceName,
                     jobId
                 )) || {});
         }
