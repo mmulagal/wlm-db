@@ -143,13 +143,17 @@ const initialState: WorkloadFactoryResourceEntities = {
     fsxAdminPasswords: {
         password: '',
         confirmPassword: ''
-    }
+    },
+    passwordResetLoading: false
 };
 
 const workloadFactoryResourceSlice = createSlice({
     name: 'workloadFactoryResource',
     initialState,
     reducers: {
+        setPasswordResetLoading: (state, action: PayloadAction<any>) => {
+            state.passwordResetLoading = action.payload;
+        },
         setFsxAdminPassword: (state, action: PayloadAction<any>) => {
             state.fsxAdminPasswords.password = action.payload;
         },
@@ -204,6 +208,7 @@ const workloadFactoryResourceSlice = createSlice({
 });
 
 export const {
+    setPasswordResetLoading,
     setFsxAdminPassword,
     setFsxAdminConfirmPassword,
     setResourceLoading,

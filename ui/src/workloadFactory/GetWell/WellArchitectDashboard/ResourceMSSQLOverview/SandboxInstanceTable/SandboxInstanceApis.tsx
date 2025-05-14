@@ -25,7 +25,13 @@ const SandboxInstanceApis = () => {
         selectedResourceRegionId
     } = useAppSelector(state => state.workloadFactoryResource);
 
-    const { visitedTabs } = useAppSelector(state => state.getWellOptimize);
+    const {
+        visitedTabs,
+        credIdFromJM,
+        regionFromJM,
+        selectedResourceId: getWellResourceId,
+        selectedDatabaseInstance: getWellSelectedDatabaseInstance
+    } = useAppSelector(state => state.getWellOptimize);
 
     const [getSandboxInstanceList] = useLazyGetSandboxInstanceListQuery();
 
@@ -51,10 +57,10 @@ const SandboxInstanceApis = () => {
         dispatch(setSandboxInstanceLoading(true));
         try {
             const result = await getSandboxInstanceList({
-                credentialId: selectedResourceCredId,
-                region: selectedResourceRegionId,
-                databaseHostId: selectedResourceId,
-                databaseInstanceId: selectedDatabaseInstance,
+                credentialId: selectedResourceCredId || credIdFromJM, //|| condition is for when coming from JM
+                region: selectedResourceRegionId || regionFromJM, //|| condition is for when coming from JM
+                databaseHostId: selectedResourceId || getWellResourceId, //|| condition is for when coming from JM
+                databaseInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance, //|| condition is for when coming from JM
                 nextToken: nextToken
             });
 

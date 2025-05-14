@@ -37,7 +37,8 @@ import { useRegisterResourceCredentialsMutation, workloadFactoryResourceApiV2 } 
 import {
     setFsxAdminConfirmPassword,
     setFsxAdminPassword,
-    setIsResourceRefresh
+    setIsResourceRefresh,
+    setPasswordResetLoading
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetGwValuesOnRefresh } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -50,6 +51,7 @@ import {
     setIsRefreshedSandboxInstance
 } from '../../../store/workloadFactory/sandboxSlice';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
+import store from '../../../store/store';
 
 const WellArchitectDashboard = () => {
     const dispatch = useDispatch();
@@ -60,15 +62,14 @@ const WellArchitectDashboard = () => {
         selectedDatabaseInstanceName,
         selectedWellArchitectTab,
         visitedTabs,
-        gwRefreshTimestamp
+        gwRefreshTimestamp,
+        resetDetails
     } = useAppSelector(state => state.getWellOptimize);
     const navigate = useNavigate();
 
     const { refreshTime } = useAppSelector(state => state.headers);
 
     const { refreshSandboxInstanceTime } = useAppSelector(state => state.sandbox);
-
-    const { password } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
 
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
@@ -133,9 +134,12 @@ const WellArchitectDashboard = () => {
     };
 
     const createPayload = () => {
+        const state = store.getState();
+        const { fsxAdminPasswords } = state.workloadFactoryResource;
+        const { password } = fsxAdminPasswords;
         let credList = [];
         credList.push({
-            resourceId: selectedResourceId,
+            resourceId: resetDetails?.fsxId,
             resourceType: DETECT_HOST_VAR.FSX,
             username: 'fsxadmin',
             password: password
@@ -145,11 +149,12 @@ const WellArchitectDashboard = () => {
     };
 
     const handleFSXAdminApply = async () => {
+        dispatch(setPasswordResetLoading(true));
         try {
             const result: any = await registerResourceCred({
                 credentialId: selectedResourceCredId,
                 regionId: selectedResourceRegionId,
-                instanceId: selectedResourceId,
+                instanceId: resetDetails?.ec2InstanceId,
                 payload: createPayload()
             });
             if (result && !result?.error) {
@@ -163,6 +168,8 @@ const WellArchitectDashboard = () => {
                         })
                     );
                 } else {
+                    dispatch(setFsxAdminPassword(''));
+                    dispatch(setFsxAdminConfirmPassword(''));
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.ERROR,
@@ -171,10 +178,12 @@ const WellArchitectDashboard = () => {
                     );
                 }
             } else {
+                dispatch(setFsxAdminPassword(''));
+                dispatch(setFsxAdminConfirmPassword(''));
                 dispatch(
                     addNotification({
                         type: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error || 'Failed to reset FSxadmin password. '
+                        message: result?.error?.data?.message || 'Failed to reset FSxadmin password. '
                     })
                 );
             }
@@ -187,6 +196,9 @@ const WellArchitectDashboard = () => {
                     message: error || 'Failed to reset FSxadmin password. '
                 })
             );
+        } finally {
+            dispatch(setPasswordResetLoading(false));
+            closeDialog();
         }
     };
 
