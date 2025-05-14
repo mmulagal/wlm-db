@@ -61,6 +61,7 @@ import {
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import {
+    setFSXId,
     setGwPageLoadInstanceData,
     setLandingFrom,
     setSelectedWellArchitectTab
@@ -442,6 +443,7 @@ const InstancesTable = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
         dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+        dispatch(setFSXId({ fsxId: rowData?.fsxId, ec2InstanceId: rowData?.ec2InstanceId }));
         optimizeAction(rowData);
     };
 
@@ -1136,6 +1138,12 @@ const InstancesTable = () => {
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
                                             dispatch(
+                                                setFSXId({
+                                                    fsxId: rowData?.fsxId,
+                                                    ec2InstanceId: rowData?.ec2InstanceId
+                                                })
+                                            );
+                                            dispatch(
                                                 setSelectedWellArchitectTab(
                                                     WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
                                                 )
@@ -1161,6 +1169,12 @@ const InstancesTable = () => {
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
                                             dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
+                                            dispatch(
+                                                setFSXId({
+                                                    fsxId: rowData?.fsxId,
+                                                    ec2InstanceId: rowData?.ec2InstanceId
+                                                })
+                                            );
                                             optimizeAction(rowData);
                                         }
                                         if (menuId === 'viewDatabases') {

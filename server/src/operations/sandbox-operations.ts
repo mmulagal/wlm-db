@@ -45,7 +45,7 @@ import {
 } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getDatabaseInstanceName, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
-import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
+import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/sandbox.types';
 import { getResources, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 import { updateParentJobStatus, registerJob, updateJobDetails } from './database/job-operations';
 import {
@@ -94,7 +94,8 @@ async function getSandboxDetails(
     accountId: string,
     credentialsId: string,
     region: string,
-    resourceDetails: ResourceDetails
+    resourceDetails: ResourceDetails,
+    managedInstances?: DatabaseInstance[]
 ) {
     logger.info('Get sandbox details of host:', resourceDetails.resource_id, accountId, credentialsId, region);
     const { metadata, resource_id: resourceId, resource_name: resourceName } = resourceDetails;
@@ -108,10 +109,12 @@ async function getSandboxDetails(
         resourceId
     );
 
-    const managedInstances = await listDatabaseInstances(accountId, {
-        credentialsId,
-        resourceId
-    });
+    if (isEmpty(managedInstances)) {
+        managedInstances = await listDatabaseInstances(accountId, {
+            credentialsId,
+            resourceId
+        });
+    }
 
     const instances =
         instancesDetails
@@ -119,14 +122,14 @@ async function getSandboxDetails(
             ?.filter(
                 instance =>
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING &&
-                    managedInstances.some(
+                    managedInstances?.some(
                         managedInstance => managedInstance.database_instance_name === instance.instanceName
                     )
             )
             .map(instance => ({
                 // Add databaseInstanceId to the instance
                 ...instance,
-                databaseInstanceId: managedInstances.find(
+                databaseInstanceId: managedInstances?.find(
                     managedInstance => managedInstance.database_instance_name === instance.instanceName
                 )?.database_instance_id
             })) || [];
@@ -281,7 +284,8 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
         undefined,
         isDemoFlow ? undefined : { sandboxCreated: true },
         SANDBOX_API_SIZE,
-        nextToken
+        nextToken,
+        true
     );
 
     if (isEmpty(resourceDetails)) {
@@ -289,12 +293,22 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
         return { count: 0, items: [], nextToken: '' };
     }
 
+    const managedInstancesMap = new Map(
+        resourceDetails.map(r => [r.resource_id, (r as any)?.database_instances?.flat()])
+    );
+
     try {
         let sandboxes: SandboxInfoResponseType[] = [];
 
         await Promise.all(
             resourceDetails.map(async (resourceDetail: ResourceDetails) => {
-                const sandboxDetails = await getSandboxDetails(accountId, credentialsId, region, resourceDetail);
+                const sandboxDetails = await getSandboxDetails(
+                    accountId,
+                    credentialsId,
+                    region,
+                    resourceDetail,
+                    managedInstancesMap.get(resourceDetail?.resource_id)
+                );
                 if (sandboxDetails && sandboxDetails.length) {
                     sandboxes = sandboxes.concat(sandboxDetails);
                 }
@@ -313,6 +327,39 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
         const errorMessage = `Error fetching Sandboxes info. ${err}.`;
         logger.error(errorMessage);
     }
+}
+
+async function getSandboxInfoByInstanceId(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Get Sandboxes Info by Instance Id', accountId, credentialsId, region);
+
+    const [managedInstance] = await listDatabaseInstances(accountId, {
+        credentialsId,
+        region,
+        resourceId: databaseHostId,
+        sqlInstanceId: databaseInstanceId
+    });
+
+    if (isEmpty(managedInstance)) {
+        logger.error('No managed instance found for the given database host ID.');
+        return {
+            count: 0,
+            items: []
+        };
+    }
+    const sandboxes = await getSandboxDetails(accountId, credentialsId, region, managedInstance.resource, [
+        managedInstance
+    ]);
+
+    return {
+        count: sandboxes?.length,
+        items: sandboxes
+    };
 }
 
 async function getSandboxSavings(accountId: string, credentialsId: string, region: string) {
@@ -1818,8 +1865,12 @@ async function getDatabaseMountPointInfo(
         });
         if (isDemoFlow) {
             const updatedResult = {
-                databaseDataPath: result.databaseDataPath.map(path => path.replace('test-database', databaseName)),
-                databaseLogPath: result.databaseLogPath.map(path => path.replace('test-database', databaseName))
+                databaseDataPath: result.databaseDataPath.map((path: string) =>
+                    path.replace('test-database', databaseName)
+                ),
+                databaseLogPath: result.databaseLogPath.map((path: string) =>
+                    path.replace('test-database', databaseName)
+                )
             };
             return updatedResult;
         }
@@ -3473,5 +3524,6 @@ export {
     getProperty,
     performSandboxDeletion,
     runSandboxPreValidations,
-    performLifecycleUpdate
+    performLifecycleUpdate,
+    getSandboxInfoByInstanceId
 };

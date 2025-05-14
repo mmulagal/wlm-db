@@ -1,4 +1,10 @@
+export interface ResetDetailsInterface {
+    fsxId: string;
+    ec2InstanceId: string;
+}
+
 export interface GetWellSliceInterface {
+    resetDetails: ResetDetailsInterface;
     visitedTabs: any;
     selectedWellArchitectTab: string;
     selectedCloneTab: string;

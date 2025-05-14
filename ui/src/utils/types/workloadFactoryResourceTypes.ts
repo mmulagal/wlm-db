@@ -1,4 +1,5 @@
 export interface WorkloadFactoryResourceEntities {
+    passwordResetLoading: boolean;
     resourceLoading: boolean;
     resourceDetails: WorkloadFactoryResourceDetails;
     databaseListLoading: boolean;

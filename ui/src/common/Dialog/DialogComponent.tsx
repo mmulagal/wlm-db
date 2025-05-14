@@ -60,6 +60,7 @@ const DialogComponent = ({
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
+    const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
 
     //Managed Host table button disable
     const { manageHostSelectedRows } = useAppSelector(state => state.inventoryV2);
@@ -70,7 +71,8 @@ const DialogComponent = ({
             (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) ||
             ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) &&
                 isSaveConfigLoading) ||
-            (dialogFrom === FROM_DIALOG.DETECT_HOST && detectHostLoading)
+            (dialogFrom === FROM_DIALOG.DETECT_HOST && detectHostLoading) ||
+            (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading)
         );
     })();
 
@@ -81,7 +83,8 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.LOAD_CONFIG &&
             dialogFrom !== FROM_DIALOG.SAVE_CONFIG &&
             dialogFrom !== FROM_DIALOG.HEADER_CROSS &&
-            dialogFrom !== FROM_DIALOG.DETECT_HOST
+            dialogFrom !== FROM_DIALOG.DETECT_HOST &&
+            dialogFrom !== FROM_DIALOG.FSXADMIN
         ) {
             closeDialog();
         }

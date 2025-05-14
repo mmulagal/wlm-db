@@ -474,7 +474,8 @@ export const isValidPassword = (password: string) => {
             password.length > 50 ||
             !/[A-Za-z]/.test(password) ||
             !/\d/.test(password) ||
-            /[^A-Za-z\d]/.test(password) ||
+            !/[!@#$%^&*]/.test(password) ||
+            /[^A-Za-z\d!@#$%^&*]/.test(password) ||
             /admin/i.test(password))
     ) {
         return 'Check password criteria.';

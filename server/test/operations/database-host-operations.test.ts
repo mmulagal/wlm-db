@@ -68,6 +68,7 @@ describe('Database host operations', () => {
                     node2InstanceId: undefined
                 }
             },
+            undefined,
             false
         );
         expect(resp).toBeDefined();

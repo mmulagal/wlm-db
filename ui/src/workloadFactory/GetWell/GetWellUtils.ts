@@ -395,7 +395,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Compute rightsizing recommendation',
             description:
-                'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, we recommend rightsizing based on your workload demands.\nIf your current instance is under-provisioned, upgrading will enhance CPU, memory, and I/O capacity.\nIf it is over-provisioned, downgrading will maintain performance while reducing costs.\nClick Optimize to compare costs between your current and recommended instance types and to identify potential savings.'
+                'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, we recommend rightsizing based on your workload demands.\nIf your current instance is under-provisioned, upgrading will enhance CPU, memory, and I/O capacity.\nIf it is over-provisioned, downgrading will maintain performance while reducing costs.\nClick Fix to compare costs between your current and recommended instance types and to identify potential savings.'
         },
         tags: ['Cost optimization', 'Performance efficiency']
     },

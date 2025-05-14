@@ -1,0 +1,778 @@
+import { Table, useTable, useDialog, TableTopBar, Button, DsTypography } from '@netapp/design-system';
+import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+
+import styles from './SandboxInstanceTable.module.scss';
+import { useNavigate } from 'react-router-dom';
+import { ReactComponent as Success } from '../../../../../assets/success.svg';
+import { GENERAL } from '../../../../../utils/appConstants';
+import { useAppSelector } from '../../../../../store/storeHooks';
+import { useEffect, useRef, useState } from 'react';
+import {
+    getBaseUrl,
+    useCheckIntegrityMutation,
+    useDeleteSandboxMutation,
+    useLazyGetConnectionInfoQuery,
+    useLazyGetSplitEstimateInfoQuery,
+    useLazyGetSubTaskListQuery,
+    useSplitSandboxMutation,
+    useUpdateSandboxMutation
+} from '../../../../../utils/apiService';
+import { formatSandboxListData, getAggregatedSplitEstimate } from '../../../../Sandbox/SandboxUtility';
+import { SandboxActions } from '../../../../../utils/types/sandBoxTypes';
+import { setSelectedHeaderTab } from '../../../../../store/workloadFactory/inventoryV2Slice';
+import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
+import {
+    CRED_PLACEHOLDERS,
+    FROM_DIALOG,
+    JOB_MONITORING_STATUS,
+    SANDBOX_ACTIONS_POLLING_INTERVAL,
+    UPDATE_SANDBOX_CURL_REQ_TEMPLATE,
+    WLF_TABS
+} from '../../../../../utils/consts';
+import store from '../../../../../store/store';
+import {
+    setAggregatedSandboxInstanceList,
+    updateConnectionInfoLoading,
+    updateSplitEstimateLoading
+} from '../../../../../store/workloadFactory/sandboxSlice';
+import { useDispatch } from 'react-redux';
+
+import DialogComponent from '../../../../../common/Dialog/DialogComponent';
+import RebaseLineContent from '../../../../Sandbox/SandboxTable/RebaseLineContent/RebaseLineContent';
+import RefreshContent from '../../../../Sandbox/SandboxTable/RefreshContent/RefreshContent';
+import RebaseSplitContent from '../../../../Sandbox/SandboxTable/RebaseSplitContent/RebaseSplitContent';
+import ViewDialog from '../../../../../common/ViewDialog/ViewDialog';
+import ConnectToCiCdContent from '../../../../Sandbox/SandboxTable/ConnectToCiCdContent/ConnectToCiCdContent';
+import MenuPopover from '../../../../../common/MenuPopover/MenuPopover';
+import { formatDateWithTime } from '../../../../../utils/utilityFunctions';
+import SmallLoader from '../../../../../common/SmallLoader/SmallLoader';
+import { setSelectedSandboxHeaderValue } from '../../../../../store/workloadFactory/createSandboxSlice';
+import SandboxInstanceApis from './SandboxInstanceApis';
+
+const SandboxInstanceTable = () => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const { aggregatedSandboxInstanceList, sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
+    const { sandboxAgeRange } = useAppSelector(state => state.databaseHome);
+
+    const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
+    const [data, setData] = useState<any>();
+
+    const [menuOpenedRow, setOpenedRow] = useState(null);
+    const [deletedSandboxes, setDeletedSandboxes] = useState<any>([]);
+    const menuOpenedRowDetail: any = useRef(null);
+    const { setDialog, closeDialog } = useDialog();
+
+    const [deleteSandboxApi] = useDeleteSandboxMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
+    const [getSplitEstimateApi] = useLazyGetSplitEstimateInfoQuery();
+    const [updateSandboxApi] = useUpdateSandboxMutation();
+    const [splitSandboxApi] = useSplitSandboxMutation();
+    const [checkIntegrityApi] = useCheckIntegrityMutation();
+    const [getConnectionInfoApi] = useLazyGetConnectionInfoQuery();
+
+    SandboxInstanceApis();
+
+    useEffect(() => {
+        if (aggregatedSandboxInstanceList[0] && 'id' in aggregatedSandboxInstanceList[0]) {
+            setData(aggregatedSandboxInstanceList);
+        } else {
+            const newData = formatSandboxListData(aggregatedSandboxInstanceList);
+            setData(newData);
+        }
+    }, [aggregatedSandboxInstanceList]);
+
+    const menuItems = (row: any) => {
+        return [
+            {
+                id: 'reBaseline',
+                displayName: 'Re-baseline'
+            },
+            {
+                id: 'refresh',
+                displayName: 'Refresh'
+            },
+            {
+                id: 'connectToTools',
+                displayName: 'Connect to CI/CD tools'
+            },
+            {
+                id: 'showConnectionInfo',
+                displayName: 'Show connection info'
+            },
+            {
+                id: 'split',
+                displayName: 'Split'
+            },
+            {
+                id: 'integrityCheck',
+                displayName: 'Check integrity'
+            },
+            {
+                id: 'delete',
+                displayName: 'Delete'
+            }
+        ];
+    };
+
+    //To set initial filter when navigate from Dashboard
+    const getInitialFilter = () => {
+        if (sandboxAgeRange?.from === 'Dashboard') {
+            return {
+                textFilter: '',
+                count: 1,
+                columns: {
+                    '6': {
+                        activeCount: 1,
+                        values: {
+                            [sandboxAgeRange?.range === GENERAL.ONE_THIRTY_DAYS
+                                ? GENERAL.ONE_THIRTY_DAYS
+                                : sandboxAgeRange?.range === GENERAL.THIRTY_SIXTY_DAYS
+                                ? GENERAL.THIRTY_SIXTY_DAYS
+                                : GENERAL.SIXTY_PLUS_DAYS]: true
+                        },
+                        valuesArray: [true]
+                    }
+                }
+            };
+        } else {
+            return undefined;
+        }
+    };
+
+    const showJobInProgressNotification = (action: SandboxActions, resourceName: string) => {
+        const notificationObj = GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.IN_PROGRESS[action];
+        const msgData = (
+            <div className={styles.notification}>
+                {notificationObj[0]}
+                <span className={styles.bold}>{resourceName}</span>
+                {notificationObj[1]}
+                <Button
+                    Component="button"
+                    variant="text"
+                    onClick={() => {
+                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                        dispatch(clearNotifications());
+                    }}
+                >
+                    {GENERAL.JOB_MONITORING}.
+                </Button>
+            </div>
+        );
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: msgData
+            })
+        );
+    };
+
+    const handleJob = (res: any, rowData: any, action: SandboxActions) => {
+        if (res?.data) {
+            showJobInProgressNotification(action, rowData?.name);
+            const jobInterval = setInterval(() => {
+                getJobDetailApi({
+                    id: res?.data?.jobId
+                }).then((jobRes: any) => {
+                    const status = jobRes?.data?.status;
+                    const state = store.getState();
+                    const { aggregatedSandboxInstanceList } = state?.sandbox;
+                    const resourceName =
+                        action === 'rebaseline' || action === 'refresh' ? rowData?.source : rowData?.name;
+                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                        clearInterval(jobInterval);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                message: `${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.SUCCESS[action][0]}${resourceName}${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.SUCCESS[action][1]}`
+                            })
+                        );
+                        let output =
+                            action === 'delete'
+                                ? aggregatedSandboxInstanceList.filter((item: any) => rowData?.id !== item?.id)
+                                : aggregatedSandboxInstanceList.map((obj: any) => {
+                                      if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                          return {
+                                              ...obj,
+                                              cellProps: { isDisabled: false },
+                                              status: 'active',
+                                              menuDisable: false
+                                          };
+                                      }
+                                      return obj;
+                                  });
+                        dispatch(setAggregatedSandboxInstanceList(output));
+                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                        let output = aggregatedSandboxInstanceList.map((obj: any) => {
+                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                return {
+                                    ...obj,
+                                    cellProps: { isDisabled: false },
+                                    status: 'active',
+                                    menuDisable: false
+                                };
+                            }
+                            return obj;
+                        });
+                        dispatch(setAggregatedSandboxInstanceList(output));
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: `${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.FAILED[action][0]}${resourceName}${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.FAILED[action][1]}`
+                            })
+                        );
+                        clearInterval(jobInterval);
+                    }
+                });
+            }, SANDBOX_ACTIONS_POLLING_INTERVAL);
+        } else {
+            let output = aggregatedSandboxInstanceList.map((obj: any) => {
+                if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                    return {
+                        ...obj,
+                        cellProps: { isDisabled: false },
+                        status: 'active',
+                        menuDisable: false
+                    };
+                }
+                return obj;
+            });
+            dispatch(setAggregatedSandboxInstanceList(output));
+        }
+    };
+
+    const handleRebaseLine = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.REBASE_LINE}
+                content={<RebaseLineContent databaseName={rowData?.source} sandboxName={rowData?.name} />}
+                primaryButton={GENERAL.REBASE_LINE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    let output = data.map((obj: any) => {
+                        if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                            return { ...obj, cellProps: { isDisabled: true }, status: 'rebaseline', menuDisable: true };
+                        }
+                        return obj;
+                    });
+                    dispatch(setAggregatedSandboxInstanceList(output));
+                    updateSandboxApi({
+                        credentialsId: selectedResourceCredId,
+                        regionId: selectedResourceRegionId,
+                        databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
+                        sandboxName: rowData?.name,
+                        payload: { action: 'RE-BASELINE', snapshot: rowData?.baseSnapshot }
+                    }).then((res: any) => {
+                        handleJob(res, rowData, 'rebaseline');
+                    });
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
+    const handleRefresh = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={'Refresh'}
+                content={
+                    <RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} rowData={rowData} />
+                }
+                primaryButton={'Refresh'}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    let output = data.map((obj: any) => {
+                        if ((obj?.id === rowData?.id && obj.name) === rowData.name) {
+                            return {
+                                ...obj,
+                                cellProps: { isDisabled: true },
+                                status: 'refresh',
+                                menuDisable: true
+                            };
+                        }
+                        return obj;
+                    });
+                    dispatch(setAggregatedSandboxInstanceList(output));
+
+                    const updatedState = store.getState();
+                    const { isRollbackSelected, selectedRollbackSnapshot } = updatedState?.sandbox;
+
+                    updateSandboxApi({
+                        credentialsId: selectedResourceCredId,
+                        regionId: selectedResourceRegionId,
+                        databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
+                        sandboxName: rowData?.name,
+                        payload: isRollbackSelected
+                            ? { action: 'REFRESH', snapshot: selectedRollbackSnapshot?.value }
+                            : { action: 'REFRESH' }
+                    }).then((res: any) => {
+                        handleJob(res, rowData, 'refresh');
+                    });
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.setWidth}
+                dialogFrom={FROM_DIALOG.SANDBOX_REFRESH}
+            />
+        );
+    };
+
+    const handleDelete = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={'Delete'}
+                content={
+                    <DsTypography variant="Regular_14">
+                        Are you sure you want to delete this sandbox database{' '}
+                        <span style={{ fontWeight: '590' }}>{rowData?.name}</span>?
+                    </DsTypography>
+                }
+                primaryButton={'Delete'}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    let output = data.map((obj: any) => {
+                        if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                            return { ...obj, cellProps: { isDisabled: true }, status: 'delete', menuDisable: true };
+                        }
+                        return obj;
+                    });
+                    dispatch(setAggregatedSandboxInstanceList(output));
+                    deleteSandboxApi({
+                        credentialsId: selectedResourceCredId,
+                        regionId: selectedResourceRegionId,
+                        databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
+                        sandboxName: rowData?.name
+                    }).then((res: any) => {
+                        handleJob(res, rowData, 'delete');
+                    });
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
+    const handleSplit = (rowData: any) => {
+        dispatch(updateSplitEstimateLoading(true));
+        const { databaseHostId, name, instanceId } = rowData;
+        getSplitEstimateApi({
+            credentialsId: selectedResourceCredId,
+            regionId: selectedResourceRegionId,
+            databaseHostId: databaseHostId,
+            instanceId,
+            sandboxName: name
+        }).then((splitEstimateRes: any) => {
+            dispatch(updateSplitEstimateLoading(false));
+            if (splitEstimateRes?.data) {
+                const aggSplitEstimate = getAggregatedSplitEstimate(splitEstimateRes?.data?.volumes || []);
+                setDialog(
+                    <DialogComponent
+                        header={'Split'}
+                        content={
+                            <RebaseSplitContent
+                                databaseName={rowData?.source}
+                                sandboxName={rowData?.name}
+                                aggSplitEstimate={aggSplitEstimate}
+                            />
+                        }
+                        primaryButton={'Split'}
+                        secondaryButton={GENERAL.CANCEL}
+                        callback={() => {
+                            let output = data.map((obj: any) => {
+                                if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                    return {
+                                        ...obj,
+                                        cellProps: { isDisabled: true },
+                                        status: 'split',
+                                        menuDisable: true
+                                    };
+                                }
+                                return obj;
+                            });
+                            dispatch(setAggregatedSandboxInstanceList(output));
+                            splitSandboxApi({
+                                credentialsId: selectedResourceCredId,
+                                regionId: selectedResourceRegionId,
+                                databaseHostId: rowData?.databaseHostId,
+                                instanceId: rowData?.instanceId,
+                                sandboxName: rowData?.name
+                            }).then((res: any) => {
+                                handleJob(res, rowData, 'split');
+                            });
+                        }}
+                        closeCallback={() => {
+                            closeDialog();
+                        }}
+                        customClass={styles.setWidth}
+                    />
+                );
+            }
+        });
+    };
+
+    const handleConnectToTools = (rowData: any) => {
+        const baseUrl = getBaseUrl();
+        const credID = selectedResourceCredId;
+        const region = selectedResourceRegionId;
+        const copyResponseData = () => {
+            const payload = { action: 'REFRESH' };
+            const baseUrl = getBaseUrl();
+            const restApiPayload = UPDATE_SANDBOX_CURL_REQ_TEMPLATE(
+                baseUrl,
+                credID,
+                region || CRED_PLACEHOLDERS.REGION,
+                rowData?.databaseHostId,
+                rowData?.name,
+                CRED_PLACEHOLDERS.TOKEN,
+                JSON.stringify(payload, null, 2)
+            );
+            return restApiPayload;
+        };
+        setDialog(
+            <DialogComponent
+                header={'Connect to CI/CD tools'}
+                content={
+                    <ViewDialog
+                        data={
+                            <ConnectToCiCdContent
+                                baseUrl={baseUrl}
+                                credID={credID}
+                                region={region}
+                                databaseHostId={rowData?.databaseHostId}
+                                sandboxName={rowData?.name}
+                                actualData={{ action: 'REFRESH' }}
+                            />
+                        }
+                        copyResponseData={copyResponseData}
+                    />
+                }
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
+    const handleShowConnectionInfo = (rowData: any) => {
+        const { databaseHostId, name, instanceId } = rowData;
+        dispatch(updateConnectionInfoLoading(true));
+        getConnectionInfoApi({
+            credentialsId: selectedResourceCredId,
+            regionId: selectedResourceRegionId,
+            databaseHostId,
+            instanceId,
+            sandboxName: name
+        }).then(res => {
+            if (res?.data) {
+                const connectionInfo = res.data;
+                const connectionString = connectionInfo
+                    ? Object.keys(connectionInfo)
+                          .map((key: any) => `${key}=${connectionInfo?.[key]}`)
+                          .join(';')
+                    : '';
+                setDialog(
+                    <DialogComponent
+                        header={' Show connection info'}
+                        content={<ViewDialog data={connectionString} />}
+                        primaryButton={GENERAL.CLOSE}
+                        callback={() => {}}
+                        customClass={styles.setWidth}
+                    />
+                );
+                dispatch(updateConnectionInfoLoading(false));
+            }
+        });
+    };
+
+    const handleIntegrityCheck = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={'Check integrity'}
+                content={
+                    <DsTypography variant="Regular_14">
+                        Do you want to perform integrity check for sandbox{' '}
+                        <span style={{ fontWeight: '590' }}>{rowData.name}</span>?
+                    </DsTypography>
+                }
+                primaryButton={'Check integrity'}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    let output = data.map((obj: any) => {
+                        if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                            return {
+                                ...obj,
+                                cellProps: { isDisabled: true },
+                                status: 'integrityCheck',
+                                menuDisable: true
+                            };
+                        }
+                        return obj;
+                    });
+                    dispatch(setAggregatedSandboxInstanceList(output));
+                    checkIntegrityApi({
+                        credentialsId: selectedResourceCredId,
+                        regionId: selectedResourceRegionId,
+                        databaseHostId: rowData?.databaseHostId,
+                        instanceId: rowData?.instanceId,
+                        sandboxName: rowData?.name
+                    }).then((res: any) => {
+                        handleJob(res, rowData, 'integrityCheck');
+                    });
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
+    const lastColDetails = () => {
+        return {
+            id: '9',
+            Header: '',
+            accessor: '',
+            width: '56px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        {!rowData?.menuDisable && (
+                            <MenuPopover
+                                isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                                menuItems={menuItems(rowData)}
+                                toggleMenu={(toggleType: string, menuId: string) => {
+                                    if (toggleType === 'close') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+                                    } else if (toggleType === 'open') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(rowData.id);
+                                        menuOpenedRowDetail.current = rowData.id;
+                                    } else if (toggleType === 'selectedOption') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+
+                                        switch (menuId) {
+                                            case 'reBaseline':
+                                                handleRebaseLine(rowData);
+                                                break;
+                                            case 'refresh':
+                                                handleRefresh(rowData);
+                                                break;
+
+                                            case 'delete':
+                                                handleDelete(rowData);
+                                                break;
+                                            case 'split':
+                                                handleSplit(rowData);
+                                                break;
+                                            case 'connectToTools':
+                                                handleConnectToTools(rowData);
+                                                break;
+
+                                            case 'showConnectionInfo':
+                                                handleShowConnectionInfo(rowData);
+                                                break;
+
+                                            case 'integrityCheck':
+                                                handleIntegrityCheck(rowData);
+                                                break;
+                                        }
+                                    }
+                                }}
+                                isDisabled={rowData?.menuDisable}
+                                CustomMenu={undefined}
+                                disabledText={undefined}
+                            />
+                        )}
+
+                        {rowData?.menuDisable && (
+                            <div className={styles.menuPointerDisabled}>
+                                <span className={styles.menuPointer}>...</span>
+                            </div>
+                        )}
+                    </div>
+                );
+            },
+            showHide: true,
+            isSticky: true
+        };
+    };
+
+    const SandboxColDefs: ColumnProps[] = [
+        {
+            Header: GENERAL.SANDBOX_DB_NAME,
+            accessor: 'name',
+            id: '1',
+            isSortable: true,
+            isSticky: true,
+            width: '12.44%'
+        },
+        {
+            Header: GENERAL.SANDBOX_DB_INSTANCE_NAME,
+            accessor: 'instanceName',
+            id: '2',
+            width: 'auto',
+            filterOptions: 'auto'
+        },
+        {
+            Header: GENERAL.SANDBOX_SOURCE_DB_NAME,
+            accessor: 'source',
+            id: '3',
+            width: '13.69%',
+            isSortable: true
+        },
+        {
+            Header: GENERAL.SANDBOX_SOURCE_DB_INSTANCE_NAME,
+            accessor: 'sourceInstanceName',
+            id: '4',
+            width: '17.17%',
+            filterOptions: 'auto'
+        },
+        {
+            Header: GENERAL.SANDBOX_LAST_UPDATED,
+            accessor: 'actualUpdated',
+            id: '5',
+            width: '12.44%',
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return <DsTypography variant="Regular_14">{formatDateWithTime(cellData)}</DsTypography>;
+            }
+        },
+        {
+            Header: GENERAL.AGE,
+            accessor: 'ageByRange',
+            id: '6',
+            width: '7.96%',
+            isSortable: false,
+            filterOptions: [
+                { label: GENERAL.ONE_THIRTY_DAYS, value: GENERAL.ONE_THIRTY_DAYS },
+                { label: GENERAL.THIRTY_SIXTY_DAYS, value: GENERAL.THIRTY_SIXTY_DAYS },
+                { label: GENERAL.SIXTY_PLUS_DAYS, value: GENERAL.SIXTY_PLUS_DAYS }
+            ],
+            renderCell: (cellData: any, rowData: any) => {
+                return <DsTypography variant="Regular_14">{rowData?.age}</DsTypography>;
+            }
+        },
+
+        {
+            Header: GENERAL.SANDBOX_TAG,
+            accessor: 'tag',
+            id: '7',
+            width: '7.96%',
+            filterOptions: 'auto'
+        },
+        {
+            Header: GENERAL.SB_STATUS,
+            accessor: 'status',
+            id: '8',
+            width: '11.20%',
+            filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={styles.statusCol}>
+                        {cellData === 'active' && (
+                            <>
+                                <Success />
+                                <DsTypography variant="Regular_14">Active</DsTypography>
+                            </>
+                        )}
+                        {cellData === 'refresh' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">Refresh</DsTypography>
+                            </>
+                        )}
+                        {cellData === 'delete' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">{GENERAL.DELETING}</DsTypography>
+                            </>
+                        )}
+                        {cellData === 'rebaseline' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">{GENERAL.REBASELINE}</DsTypography>
+                            </>
+                        )}
+                        {cellData === 'split' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">{GENERAL.SPLIT}</DsTypography>
+                            </>
+                        )}
+                        {cellData === 'integrityCheck' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">{GENERAL.INTEGRITY_CHECK}</DsTypography>
+                            </>
+                        )}
+                    </div>
+                );
+            }
+        },
+        lastColDetails()
+    ];
+
+    const tableProps = useTable({
+        //@ts-ignore
+        selectAllProps: false,
+        //@ts-ignore
+        manageColumnsProps: false,
+        isHorizontalScroll: true,
+        isSorting: false,
+        columns: SandboxColDefs,
+        rows: data ? data.filter((item: any) => !deletedSandboxes.includes(item?.id)) : [],
+        pageSize: 50,
+        initialFilterState: getInitialFilter(),
+        isLazyLoading: sandboxInstanceLoading
+    });
+    return (
+        <div className={styles.sandboxTable}>
+            <TableTopBar
+                //@ts-ignore
+                tableProps={tableProps}
+                pluralTitle="Sandboxes"
+                singularTitle="Sandbox"
+                actionsRight={
+                    <div className={styles.sandboxButton}>
+                        <Button
+                            variant={'primary'}
+                            className={'continue-button'}
+                            isThin={true}
+                            onClick={() => {
+                                dispatch(
+                                    setSelectedSandboxHeaderValue({
+                                        credId: selectedResourceCredId,
+                                        regionId: selectedResourceRegionId
+                                    })
+                                );
+                                navigate('../create-new-sandbox');
+                            }}
+                            id="create-sandbox"
+                        >
+                            {GENERAL.CREATE_SANDBOX}
+                        </Button>
+                    </div>
+                }
+            />
+            <Table
+                //@ts-ignore
+                tableProps={tableProps}
+            />
+        </div>
+    );
+};
+
+export default SandboxInstanceTable;

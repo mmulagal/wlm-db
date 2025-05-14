@@ -853,13 +853,18 @@ async function getDatabaseHostsSummaryV2(
         fsxId,
         undefined,
         apiPageSize,
-        nextToken
+        nextToken,
+        true
     );
 
     if (isEmpty(resourceDetails)) {
         logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
         return { count: 0, items: [], nextToken: '' };
     }
+
+    const managedInstancesMap = new Map(
+        resourceDetails.map(r => [r.resource_id, (r as any)?.database_instances?.flat()])
+    );
 
     const databaseHosts: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
     try {
@@ -873,7 +878,8 @@ async function getDatabaseHostsSummaryV2(
                     customerCredentialsId,
                     awsRegion,
                     fields,
-                    resourceDetail
+                    resourceDetail,
+                    managedInstancesMap.get(resourceId)
                 );
                 databaseHosts.push(databaseHostDetails);
             })
@@ -949,6 +955,7 @@ async function getDatabaseHostSummaryV2(
     awsRegion: string,
     fields?: string,
     resourceDetail?: ResourceDetails,
+    instancesManaged: DatabaseInstance[] = [],
     isManagedResource: boolean = true
 ) {
     logger.info('Fetching details about a database host ', accountId, databaseHostId, fields, isManagedResource);
@@ -981,7 +988,9 @@ async function getDatabaseHostSummaryV2(
     const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLowerCase());
 
-    let instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    if (isEmpty(instancesManaged)) {
+        instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    }
 
     if (isDemo()) {
         instancesManaged.map(instance => {
@@ -1108,7 +1117,8 @@ async function getDatabaseHostSummaryV2(
                             (instance: InstanceDetails) =>
                                 instance.instanceState === ServerState.UP &&
                                 (instance.instanceName === resource.database_instance_name ||
-                                    (resourceType === DatabaseTypes.PG_SQL && resourceId === resource.resource_id))
+                                    (resourceType === DatabaseTypes.PG_SQL &&
+                                        resourceId === resource.resource.resource_id))
                         )
                     );
                 } else {
@@ -1558,13 +1568,16 @@ async function getDatabaseDetails(
                                 isFsxOntapSnapshotsEnabled: isDemoFlow
                                     ? true
                                     : checkKey(ontapBackup, database.databaseName),
-                                isSqlNativeEnabled: Boolean(
-                                    backedupDatabases?.[instName] &&
-                                        backedupDatabases[instName]?.find(
-                                            (e: { backedupDatabases: string }) =>
-                                                e.backedupDatabases === database.databaseName
-                                        )
-                                )
+                                isSqlNativeEnabled:
+                                    backedupDatabases?.[instName] && backedupDatabases?.[instName].includes('error')
+                                        ? false
+                                        : Boolean(
+                                              backedupDatabases?.[instName] &&
+                                                  backedupDatabases[instName]?.find(
+                                                      (e: { backedupDatabases: string }) =>
+                                                          e.backedupDatabases === database.databaseName
+                                                  )
+                                          )
                             }
                         })
                     })

@@ -52,7 +52,7 @@ async function optimizeNetworkAdapters(
                 region,
                 [OPTIMIZE_NETWORK_ADAPTERS(networkAdapters)],
                 instanceId,
-                `Optimize network adapters for ${resourceName}`,
+                `Fix network adapters for ${resourceName}`,
                 accountId,
                 false,
                 '300'
@@ -60,7 +60,7 @@ async function optimizeNetworkAdapters(
         );
         const { response, error: ssmError } = sqlResponseParsing(rawResponse) || {};
         if (response === 'FAILED' || !isEmpty(ssmError)) {
-            const msg = `Failed to optimize network adapters: ${databaseHostId} account: ${accountId} region: ${region} credentialsId: ${credentialsId}`;
+            const msg = `Failed to fix network adapters: ${databaseHostId} account: ${accountId} region: ${region} credentialsId: ${credentialsId}`;
             logger.error(msg, ssmError);
             throw new Error(msg);
         }
@@ -146,8 +146,8 @@ async function handleOptimizeRssOptimization(
                     region,
                     accountId,
                     JOBTYPE.WELL_ARCHITECTED,
-                    `Optimize network adapters for ${formattedInstanceName}`,
-                    `Optimize network adapters for ${formattedInstanceName}`
+                    `Fix network adapters for ${formattedInstanceName}`,
+                    `Fix network adapters for ${formattedInstanceName}`
                 );
             }
             if (node2InstanceId) {
@@ -167,7 +167,7 @@ async function handleOptimizeRssOptimization(
                 const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
                     nodeId => nodeId !== activeNodeInstanceId
                 );
-                let jobDescription = `Optimize network adapters of standby nodes for ${formattedInstanceName}`;
+                let jobDescription = `Fix network adapters of standby nodes for ${formattedInstanceName}`;
                 const jobMetadata: JobMetadata = {
                     hostsToOptimize: [
                         {
@@ -260,7 +260,7 @@ async function handleOptimizeRssOptimization(
                 }
             }
             // Optimizing network adapters of primary nodes
-            let jobDescription = `Optimize network adapters of primary node for ${formattedInstanceName}`;
+            let jobDescription = `Fix network adapters of primary node for ${formattedInstanceName}`;
             const jobMetadata: JobMetadata = {
                 hostsToOptimize: [
                     {

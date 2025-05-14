@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { getAssessmentHostListGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import {
+    setFSXId,
     setGwPageLoadInstanceData,
     setLandingFrom,
     setSelectedWellArchitectTab
@@ -72,6 +73,12 @@ const OptimizeByCategory = () => {
                 databaseInstanceName: selectedAssessmentRow?.databaseInstanceName,
                 credentialId: selectedAssessmentRow?.credentialId,
                 regionId: selectedAssessmentRow?.regionId
+            })
+        );
+        dispatch(
+            setFSXId({
+                fsxId: selectedAssessmentRow?.fsxId,
+                ec2InstanceId: selectedAssessmentRow?.ec2InstanceId
             })
         );
         setTimeout(() => {

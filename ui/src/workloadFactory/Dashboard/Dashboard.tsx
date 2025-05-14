@@ -8,7 +8,7 @@ import HostDistribution from './HostDistribution/HostDistribution';
 import InstanceDistribution from './InstanceDistribution/InstanceDistribution';
 import ManagedInstanceOptimization from './ManagedInstanceOptimization/ManagedInstanceOptimization';
 import ManagedInstanceOptimizationBreakdownByConfig from './ManagedInstanceOptimizationBreakdown/ManagedInstanceOptimizationBreakdownByConfig';
-import PotentialSavings from './PotentialSavings/PotentialSavings';
+
 import Sandboxes from './Sandboxes/Sandboxes';
 import { getTotalManagedAggrStorageSavings } from '../DatabaseHomePage/DatabaseHomeUtils';
 import OptimizeByCategory from './OptimizeByCategory/OptimizeByCategory';

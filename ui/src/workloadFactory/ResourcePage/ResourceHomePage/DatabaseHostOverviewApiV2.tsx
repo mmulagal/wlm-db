@@ -21,7 +21,13 @@ const DatabaseHostOverviewApiV2 = () => {
         selectedResourceRegionId
     } = useAppSelector(state => state.workloadFactoryResource);
 
-    const { visitedTabs } = useAppSelector(state => state.getWellOptimize);
+    const {
+        visitedTabs,
+        credIdFromJM,
+        regionFromJM,
+        selectedResourceId: getWellResourceId,
+        selectedDatabaseInstance: getWellSelectedDatabaseInstance
+    } = useAppSelector(state => state.getWellOptimize);
 
     const [resourceDetailsApi] = useLazyGetResourceDetailsV2Query();
     const [databaseListApi] = useLazyGetDatabaseListV2Query();
@@ -42,10 +48,10 @@ const DatabaseHostOverviewApiV2 = () => {
     const runResourceDetailsApi = async () => {
         try {
             const result: any = await resourceDetailsApi({
-                credentialId: selectedResourceCredId,
-                region: selectedResourceRegionId,
-                id: selectedResourceId,
-                sqlInstanceId: selectedDatabaseInstance
+                credentialId: selectedResourceCredId || credIdFromJM, //|| condition is for when coming from JM
+                region: selectedResourceRegionId || regionFromJM, //|| condition is for when coming from JM
+                id: selectedResourceId || getWellResourceId, //|| condition is for when coming from JM
+                sqlInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance //|| condition is for when coming from JM
             });
             if (result && !result?.error) {
                 let resourceData = {
@@ -68,10 +74,10 @@ const DatabaseHostOverviewApiV2 = () => {
     const runDatabaseDetailsApi = async () => {
         try {
             const result: any = await databaseListApi({
-                credentialId: selectedResourceCredId,
-                region: selectedResourceRegionId,
-                id: selectedResourceId,
-                sqlInstanceId: selectedDatabaseInstance,
+                credentialId: selectedResourceCredId || credIdFromJM, //|| condition is for when coming from JM
+                region: selectedResourceRegionId || regionFromJM, //|| condition is for when coming from JM
+                id: selectedResourceId || getWellResourceId, //|| condition is for when coming from JM
+                sqlInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance, //|| condition is for when coming from JM
                 fields: true
             });
             if (result && !result?.error) {

@@ -9,8 +9,11 @@ export const initialSandboxState: SandboxEntities = {
         sandboxListLoading: false,
         sandboxListError: ''
     },
+
     aggregatedSandboxList: [],
+    aggregatedSandboxInstanceList: [],
     allSandboxList: [],
+    allSandboxInstanceList: [],
     getSandboxSavings: {
         sandboxSavings: {
             consumedStorage: 0,
@@ -26,18 +29,33 @@ export const initialSandboxState: SandboxEntities = {
     rollbackSnapshotList: [],
     isRollbackSelected: false,
     selectedRollbackSnapshot: null,
-    isRefreshedSandbox: false
+    isRefreshedSandbox: false,
+    isRefreshSandboxInstance: false,
+    refreshSandboxInstanceTime: '',
+    sandboxInstanceLoading: false
 };
 
 const sandboxSlice = createSlice({
     name: 'sandbox',
     initialState: initialSandboxState,
     reducers: {
+        setSandboxInstanceLoading: (state, action: PayloadAction<any>) => {
+            state.sandboxInstanceLoading = action.payload;
+        },
+        setRefreshSandboxInstanceTime: (state, action: PayloadAction<any>) => {
+            state.refreshSandboxInstanceTime = action.payload;
+        },
         setSandboxListState: (state, action: PayloadAction<any>) => {
             state.getSandboxList = action.payload;
         },
+        setAggregatedSandboxInstanceList: (state, action: PayloadAction<any>) => {
+            state.aggregatedSandboxInstanceList = action.payload;
+        },
         setAggregatedSandboxList: (state, action: PayloadAction<any>) => {
             state.aggregatedSandboxList = action.payload;
+        },
+        setAllSandboxInstanceList: (state, action: PayloadAction<any>) => {
+            state.allSandboxInstanceList = action.payload;
         },
         setAllSandboxList: (state, action: PayloadAction<any>) => {
             state.allSandboxList = action.payload;
@@ -74,12 +92,20 @@ const sandboxSlice = createSlice({
         },
         setIsRefreshedSandbox: (state, action: PayloadAction<any>) => {
             state.isRefreshedSandbox = action.payload;
+        },
+        setIsRefreshedSandboxInstance: (state, action: PayloadAction<any>) => {
+            state.isRefreshSandboxInstance = action.payload;
         }
     }
 });
 
 export const {
+    setRefreshSandboxInstanceTime,
+    setIsRefreshedSandboxInstance,
+    setSandboxInstanceLoading,
+    setAggregatedSandboxInstanceList,
     setSandboxListState,
+    setAllSandboxInstanceList,
     setAggregatedSandboxList,
     setAllSandboxList,
     setSandboxSavingsState,

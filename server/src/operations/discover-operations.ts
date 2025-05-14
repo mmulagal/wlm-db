@@ -988,6 +988,7 @@ async function fetchUnmanagedHostsInformationV2(
                 fields ||
                     'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
                 resourceDetail,
+                undefined,
                 false // unmanaged host,
             )
         )
@@ -2398,6 +2399,7 @@ async function getPgSqlResourceDetails(
                 fields ||
                     'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
                 resourceDetail,
+                undefined,
                 false // unmanaged host,
             )
         )
@@ -2494,7 +2496,7 @@ async function discoverOracleResources(
     const filters = [
         {
             Name: 'platform-details',
-            Values: ['Linux/UNIX', 'Red Hat Enterprise Linux']
+            Values: ['Linux/UNIX', 'Red Hat Enterprise Linux*']
         },
         { Name: 'instance-state-name', Values: ['running'] }
     ];

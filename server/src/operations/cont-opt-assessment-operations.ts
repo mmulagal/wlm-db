@@ -761,6 +761,8 @@ async function triggerAssessment(
     let cloudProviderAccountId;
     let instanceDetails;
     let dismissedConfigurations;
+    let updatedDismissedInstanceConfigurations;
+    let updatedDismissedHostConfigurations;
 
     try {
         instanceDetails = await getInstanceDetails(
@@ -777,9 +779,32 @@ async function triggerAssessment(
         const { configurations: instanceConfigurations, resource: resourceDetail } =
             newDatabaseInstanceDetails as unknown as DatabaseInstance;
         const { configurations: hostConfigurations } = resourceDetail as unknown as ResourceDetails;
+        const dismissedInstanceConfigurations = (instanceConfigurations as unknown as DatabaseInstanceConfigurations)
+            ?.dismissedConfigurations;
+        if (dismissedInstanceConfigurations) {
+            updatedDismissedInstanceConfigurations = await checkAndUpdatePostponedEndTime(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                dismissedInstanceConfigurations,
+                databaseInstanceId
+            );
+        }
+        const dismissedHostConfigurations = (hostConfigurations as unknown as DatabaseInstanceConfigurations)
+            ?.dismissedConfigurations;
+        if (dismissedHostConfigurations) {
+            updatedDismissedHostConfigurations = await checkAndUpdatePostponedEndTime(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                dismissedHostConfigurations
+            );
+        }
         dismissedConfigurations = {
-            ...(instanceConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations,
-            ...(hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations
+            ...updatedDismissedInstanceConfigurations,
+            ...updatedDismissedHostConfigurations
         };
     } catch (error) {
         errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
@@ -1008,7 +1033,7 @@ async function hostLevelDriftData(
     databaseHostId: string,
     databaseInstanceId: string,
     metadata: Metadata,
-    fields?: string
+    fieldsValues: string[]
 ) {
     logger.info('Fetching host level drift data', {
         accountId,
@@ -1016,7 +1041,7 @@ async function hostLevelDriftData(
         region,
         databaseHostId,
         databaseInstanceId,
-        fields
+        fieldsValues
     });
 
     let shouldCalculateComputeAssessment = false;
@@ -1024,13 +1049,6 @@ async function hostLevelDriftData(
     let shouldCalculateHostOsPatchAssessment = false;
     let shouldCalculateRssConfigAssessment = false;
     let shouldCalculateMSSQLPatchAssessment = false;
-    let fieldsValues: string | string[] = [];
-
-    if (fields) {
-        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-    } else {
-        fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
-    }
 
     shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLowerCase());
     shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLowerCase());
@@ -1114,6 +1132,8 @@ async function fetchDriftAssessment(
         fields
     });
 
+    let dismissedConfigurations;
+
     const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
     let {
         configurations: instanceConfigurations,
@@ -1124,31 +1144,37 @@ async function fetchDriftAssessment(
         const [resource] = await listResources(accountId, databaseHostId, credentialsId, region);
         ({ configurations: hostConfigurations } = resource as unknown as ResourceDetails);
     }
+
+    if (!isEmpty(instanceConfigurations) || !isEmpty(hostConfigurations)) {
+        dismissedConfigurations = {
+            ...(instanceConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations,
+            ...(hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations
+        };
+    }
     // prismock does not support proper mapping of resource and database instance, hence calling resource listing again to fetch the configurations
 
-    const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    let fieldsValues = fields
+        ? fields.toLowerCase().replace(/\s+/g, '').split(',')
+        : Object.values(AssessmentCategories).map(category => category.toLowerCase());
 
-    const shouldCalculateStorageAssessment =
-        !fieldsValues || fieldsValues.includes(AssessmentCategories.STORAGE.toLowerCase());
-    const shouldCalculateComputeAssessment =
-        !fieldsValues || fieldsValues.includes(AssessmentCategories.COMPUTE.toLowerCase());
-    const shouldCalculateLicenseAssessment =
-        !fieldsValues || fieldsValues.includes(AssessmentCategories.LICENSE.toLowerCase());
-    const shouldCalculateHostOsPatchAssessment =
-        !fieldsValues || fieldsValues.includes(AssessmentCategories.HOST_OS_PATCH.toLowerCase());
-    const shouldCalculateRssConfigAssessment =
-        !fieldsValues || fieldsValues.includes(AssessmentCategories.RSS_CONFIG.toLowerCase());
-    const shouldCalculateMaxDOPAssessment =
-        !fieldsValues || fieldsValues.includes(AssessmentCategories.MAXDOP.toLowerCase());
-    const shouldCalculateMSSQLPatchAssessment =
-        !fieldsValues || fieldsValues.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase());
+    if (!isEmpty(dismissedConfigurations)) {
+        fieldsValues = updateFieldsBasedOnDismissedConfigurations(fieldsValues, dismissedConfigurations);
+    }
+
+    const shouldCalculateStorageAssessment = fieldsValues.includes(AssessmentCategories.STORAGE.toLowerCase());
+    const shouldCalculateComputeAssessment = fieldsValues.includes(AssessmentCategories.COMPUTE.toLowerCase());
+    const shouldCalculateLicenseAssessment = fieldsValues.includes(AssessmentCategories.LICENSE.toLowerCase());
+    const shouldCalculateHostOsPatchAssessment = fieldsValues.includes(
+        AssessmentCategories.HOST_OS_PATCH.toLowerCase()
+    );
+    const shouldCalculateRssConfigAssessment = fieldsValues.includes(AssessmentCategories.RSS_CONFIG.toLowerCase());
+    const shouldCalculateMaxDOPAssessment = fieldsValues.includes(AssessmentCategories.MAXDOP.toLowerCase());
+    const shouldCalculateMSSQLPatchAssessment = fieldsValues.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase());
     const shouldCalculateResilienceAssessment =
-        !fieldsValues ||
         fieldsValues.includes(AssessmentCategories.SNAPSHOT_POLICY.toLowerCase()) ||
         fieldsValues.includes(AssessmentCategories.AWS_BACKUP.toLowerCase()) ||
         fieldsValues.includes(AssessmentCategories.CRR.toLowerCase());
-    const shouldCalculateCloneAssessment =
-        !fieldsValues || fieldsValues.includes(AssessmentCategories.CLONE.toLowerCase());
+    const shouldCalculateCloneAssessment = fieldsValues.includes(AssessmentCategories.CLONE.toLowerCase());
 
     let driftAssessmentData: DriftAssessmentResponseType = {};
 
@@ -1159,8 +1185,11 @@ async function fetchDriftAssessment(
         databaseHostId,
         databaseInstanceId
     );
+    // filter out the config data which is not required for assessment and listDatabaseInstanceConfigData returns in descending order of creation time
     const assessmentDataMap = databaseInstanceConfigData.reduce((acc, config) => {
-        acc[config.config_data_type] = config.config_data;
+        if (!acc[config.config_data_type]) {
+            acc[config.config_data_type] = config.config_data;
+        }
         return acc;
     }, {} as Record<string, unknown>);
 
@@ -1223,7 +1252,7 @@ async function fetchDriftAssessment(
                   databaseHostId,
                   databaseInstanceId,
                   resourceMetadata as unknown as Metadata,
-                  fields
+                  fieldsValues
               )
             : Promise.resolve({}),
         shouldCalculateResilienceAssessment
@@ -1233,7 +1262,7 @@ async function fetchDriftAssessment(
                   region,
                   databaseHostId,
                   databaseInstanceId,
-                  fields,
+                  fieldsValues,
                   databaseInstanceConfigData
               )
             : Promise.resolve({})
@@ -1354,15 +1383,9 @@ async function fetchDriftAssessment(
     if (!isEmpty(cloneResponse)) {
         driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
     }
-
-    if (!isEmpty(instanceConfigurations) || !isEmpty(hostConfigurations)) {
-        const dismissedConfigurations = {
-            ...(instanceConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations,
-            ...(hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations
-        };
+    if (!isEmpty(dismissedConfigurations)) {
         driftAssessmentData.dismissedConfigurations = dismissedConfigurations;
     }
-
     // Get last assessed timestamp
     try {
         const [{ creation_time: latestInstanceLevelAssessedTime = 0 }] = databaseInstanceConfigData;
@@ -1384,12 +1407,14 @@ async function fetchDriftAssessmentPerHost(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    fields?: string
+    fields?: string,
+    resourceDetail?: ResourceDetails
 ) {
     logger.info('Fetching drift assessment per host', { accountId, credentialsId, region, databaseHostId, fields });
 
-    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
-
+    if (isEmpty(resourceDetail)) {
+        [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+    }
     if (isEmpty(resourceDetail)) {
         const infoMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
         logger.info(infoMessage);
@@ -1470,7 +1495,7 @@ async function fetchDriftAssessmentPerHost(
             databaseHostId,
             databaseInstanceId,
             metadata as unknown as Metadata,
-            hostFieldsToQuery.join(',')
+            hostFieldsToQuery
         );
         computeAssessmentResponse = hostLevelData.computeAssessmentResponse as ComputeDriftResponseType;
         licenseAssessmentResponse = hostLevelData.licenseAssessmentResponse as LicenseDriftResponseType;
@@ -1637,7 +1662,7 @@ async function fetchDriftAssessmentPerAccount(
     nextToken?: string,
     pageSize?: number
 ) {
-    logger.info('Fetching drift assessment per host', {
+    logger.info('Fetching drift assessment per account', {
         accountId,
         credentialsId,
         region,
@@ -1683,7 +1708,8 @@ async function fetchDriftAssessmentPerAccount(
                         credentialsId,
                         region,
                         databaseHostId,
-                        fields
+                        fields,
+                        resourceDetail
                     );
                     driftAssessmentPerAccount.push(drifAssessmentPerHost);
                 } catch (error) {
