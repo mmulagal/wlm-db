@@ -220,7 +220,7 @@ const TEST_CONNECTION_COMMAND =
 
 // ONPREM CONTINUOUS OPTIMIZATION
 const SQLSERVER_DATA_COLLECTOR_SCRIPT_PATH = `${WLMDB}/scripts/SQLServer-Data-Collector.zip`;
-const REPORTING_BUCKET = config.get('reporting.bucket-name') as string;
+const REPORTING_BUCKET = process.env.S3_BUCKET_NAME ?? (config.get('reporting.bucket-name') as string);
 
 const NETWORK_PERF = {
     UP_TO_10: 'upTo10',
