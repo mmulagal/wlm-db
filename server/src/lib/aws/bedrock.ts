@@ -7,7 +7,7 @@ import { HttpRequest } from '@smithy/protocol-http';
 import { NodeHttpHandler, streamCollector } from '@smithy/node-http-handler';
 import { MODEL, BEDROCK_REGION } from '../chatbot/consts';
 import getLogger from '../../utils/logger';
-import { MODEL_AVAILABILITY_STATUS } from '../../utils/logs-analyzer-consts';
+import { MODEL_AVAILABILITY_STATUS } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { isDemo } from '../../utils/utils';
 

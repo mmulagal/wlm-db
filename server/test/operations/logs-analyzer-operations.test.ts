@@ -1,7 +1,8 @@
-import { triggerLogsAnalysis } from '../../src/operations/logs-analyzer-operations';
+import { triggerLogsAnalysis } from '../../src/operations/logs-analyzer/logs-analyzer-operations';
 
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import { ACCOUNT_ID } from '../utils/consts';
+
 const TEST_RESOURCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
 const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
 const TEST_REGION = 'ap-southeast-1';

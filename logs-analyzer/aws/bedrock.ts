@@ -1,4 +1,4 @@
-import { BedrockRuntimeClient, ConversationRole, ConverseStreamCommand, Message, ToolConfiguration } from "@aws-sdk/client-bedrock-runtime";
+import { BedrockRuntimeClient, ConversationRole, ConverseStreamCommand, InferenceConfiguration, Message, ToolConfiguration } from "@aws-sdk/client-bedrock-runtime";
 import { Readable } from "node:stream";
 
 interface ToolUse {
@@ -12,14 +12,12 @@ interface MessageObj {
     user?: string;
 }
 
-export default async function streamMessages(client: BedrockRuntimeClient, modelId: string, messages: MessageObj[], toolConfig?: ToolConfiguration) {
+export default async function streamMessages(client: BedrockRuntimeClient, modelId: string, messages: MessageObj[], toolConfig?: ToolConfiguration, inferenceConfig?: InferenceConfiguration) {
     const command = new ConverseStreamCommand({
         modelId,
         messages: messages as Message[],
         toolConfig,
-        inferenceConfig: {
-            maxTokens: 2048, temperature: 0.5, topP: 0.9
-        }
+        inferenceConfig
     });
 
     const response = await client.send(command);

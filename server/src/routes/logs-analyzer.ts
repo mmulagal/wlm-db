@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify/types/instance';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { LogsAnalyzerSchema } from './schemas/logs-analyzer-schema';
 import castRequest from './utils';
-import { triggerLogsAnalysis } from '../operations/logs-analyzer-operations';
+import { triggerLogsAnalysis } from '../operations/logs-analyzer/logs-analyzer-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -14,7 +14,8 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
         { schema: LogsAnalyzerSchema },
         async (request, reply) => {
             const {
-                params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                body: { inferenceConfig }
             } = castRequest(request);
 
             const response = await triggerLogsAnalysis(
@@ -22,7 +23,8 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
                 credentialsId,
                 region,
                 databaseHostId,
-                databaseInstanceId
+                databaseInstanceId,
+                inferenceConfig
             );
             return reply.send(response);
         }

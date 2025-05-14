@@ -1,4 +1,4 @@
-import { WLMDB } from './consts';
+import { WLMDB } from '../consts';
 
 const LOGS_ANALYZER_BUNDLE_PATH = `${WLMDB}/scripts/LogsAnalyzer.zip`;
 const LOGS_ANALYZER_PACKAGE_NAME = 'LogsAnalyzerAgent';

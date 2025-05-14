@@ -3,10 +3,10 @@ import { join } from "node:path";
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { BedrockRuntimeClient, ConversationRole } from "@aws-sdk/client-bedrock-runtime";
+import { BedrockRuntimeClient, ConversationRole, InferenceConfiguration } from "@aws-sdk/client-bedrock-runtime";
 import { createHash } from "node:crypto";
 import { CloudWatchLogsClient, CreateLogStreamCommand, DescribeLogStreamsCommand, PutLogEventsCommand } from '@aws-sdk/client-cloudwatch-logs';
-import { DATABASE_TYPE, ERROR_LOGS_ANALYZER_PROMPT, PGSQL_ERROR_LOGS_ANALYZER_PROMPT, PGSQL_REMEDIATION_RECOMMENDATION_PROMPT, REMIDIATION_RECOMMENDATION_PROMPT } from "../utils/const";
+import { DATABASE_TYPE, MSSQL_ERROR_LOGS_ANALYZER_PROMPT, PGSQL_ERROR_LOGS_ANALYZER_PROMPT, PGSQL_REMEDIATION_RECOMMENDATION_PROMPT, REMIDIATION_RECOMMENDATION_PROMPT } from "../utils/const";
 import streamMessages from "../aws/bedrock";
 import collectLogs from "../operations/logs-filtering-operations";
 import { TOOLS } from "../utils/tools";
@@ -55,11 +55,32 @@ const argv = yargs(hideBin(process.argv))
         description: 'Timestamp of the last log statement in milliseconds',
         default: Date.now() - 1000 * 60 * 60 * 24 * 120 // Default to 24 hours ago
     })
-    .option('logs-count-to-consider',{
+    .option('logs-count-to-consider', {
         alias: 'c',
         type: 'number',
         description: 'Number of logs to consider for analysis',
         default: 1000
+    })
+    .option('temperature', {
+        alias: 'e',
+        type: 'string',
+        description: 'Temperature for the model',
+        demandOption: false,
+        default: '0.5'
+    })
+    .option('top-p', {
+        alias: 'p',
+        type: 'string',
+        description: 'Top P for the model',
+        demandOption: false,
+        default: '0.9'
+    })
+    .option('max-tokens', {
+        alias: 'm',
+        type: 'string',
+        description: 'Max tokens for the model',
+        demandOption: false,
+        default: '1000'
     })
     .option('help', {
         alias: 'h',
@@ -71,7 +92,13 @@ const argv = yargs(hideBin(process.argv))
 
 logger.info('Command line arguments:', argv);
 
-const { 'logs-path': LOGS_FOLDER, 'job-id': JOB_ID, 'instance-id': INSTANCE_ID, 'log-level': LOG_LEVEL, region: REGION, timestamp: TIMESTAMP_LAST_LOG_PROCESSED, 'logs-count-to-consider': LOGS_COUNT } = argv as any;
+const { 'logs-path': LOGS_FOLDER, 'job-id': JOB_ID, 'instance-id': INSTANCE_ID, 'log-level': LOG_LEVEL, region: REGION, timestamp: TIMESTAMP_LAST_LOG_PROCESSED, 'logs-count-to-consider': LOGS_COUNT, 'top-p': TOP_P, 'temperature': TEMP, 'max-tokens': MAX_TOKENS } = argv as any;
+
+const INFERENCE_CONFIG = {
+    temperature: parseFloat(TEMP),
+    top_p: parseFloat(TOP_P),
+    max_tokens_to_sample: parseInt(MAX_TOKENS, 10)
+};
 
 logger.level = LOG_LEVEL;
 logger.info(`Log level set to: ${LOG_LEVEL}`);
@@ -116,11 +143,11 @@ async function initiateLogsAnalysis(inputText: string) {
 
     try {
         logger.info('Step 3: Streaming messages and handling tool use.');
-        let { stopReason, message } = await streamMessages(client, MODEL_ID, messages, toolConfig);
+        let { stopReason, message } = await streamMessages(client, MODEL_ID, messages, toolConfig, INFERENCE_CONFIG);
         messages.push(message);
 
         if (stopReason === "tool_use") {
-            await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap);
+            await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, INFERENCE_CONFIG);
         }
 
         logger.info('Step 4: Writing output files.');
@@ -155,7 +182,7 @@ async function initiateLogsAnalysis(inputText: string) {
     }
 }
 
-async function handleToolUse(client: BedrockRuntimeClient, message: Message, messages: Message[], toolConfig: { tools: ToolSpec[] }, uniqueQueryMap: Map<string, string[]>) {
+async function handleToolUse(client: BedrockRuntimeClient, message: Message, messages: Message[], toolConfig: { tools: ToolSpec[] }, uniqueQueryMap: Map<string, string[]>, INFERENCE_CONFIG: InferenceConfiguration) {
 
     let stopReason = "";
     if (message?.content) {
@@ -165,7 +192,7 @@ async function handleToolUse(client: BedrockRuntimeClient, message: Message, mes
 
                 switch (tool?.name) {
                     case 'analyze_db_logs': {
-                        const result = await analyzeDatabaseApplicationLogs(tool, client, LOGS_FOLDER, messages);
+                        const result = await analyzeDatabaseApplicationLogs(tool, client, LOGS_FOLDER, messages, INFERENCE_CONFIG);
                         if (result && result.messages) {
                             logger.info("Log analysis completed. Stopping further tool use.");
 
@@ -179,26 +206,26 @@ async function handleToolUse(client: BedrockRuntimeClient, message: Message, mes
                 }
 
                 if (stopReason === "tool_use") {
-                    await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap);
+                    await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, INFERENCE_CONFIG);
                 }
             }
         }
     }
 }
 
-async function analyzeErrorLogs(databaseType: string, client: BedrockRuntimeClient, errorLogs: ErrorLg[]) {
+async function analyzeErrorLogs(databaseType: string, client: BedrockRuntimeClient, errorLogs: ErrorLg[], INFERENCE_CONFIG: InferenceConfiguration) {
     logger.info("Analyzing error logs.", { databaseType });
 
     const errorLogsWithCause: Message[] = [];
     const errorLogsWithScripts = [];
 
-    const prompt = databaseType === DATABASE_TYPE.MSSQL ? ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
+    const prompt = databaseType === DATABASE_TYPE.MSSQL ? MSSQL_ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
 
     await Promise.all(errorLogs.map(logChunk => pLimit(5)(async () => {
         const response = await streamMessages(client, MODEL_ID, [{
             role: ConversationRole.USER,
             content: [{ text: prompt + JSON.stringify(logChunk) }]
-        }]);
+        }], undefined, INFERENCE_CONFIG);
 
         const { message } = response;
         errorLogsWithCause.push(message);
@@ -289,7 +316,7 @@ async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWi
     return { result };
 }
 
-async function recommendRemediation(databaseType: string, client: BedrockRuntimeClient, result: string[]) {
+async function recommendRemediation(databaseType: string, client: BedrockRuntimeClient, result: string[], INFERENCE_CONFIG: InferenceConfiguration) {
     logger.info("Recommending remediation for errors.", { databaseType });
 
     const prompt = databaseType === DATABASE_TYPE.MSSQL ? REMIDIATION_RECOMMENDATION_PROMPT : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
@@ -298,7 +325,7 @@ async function recommendRemediation(databaseType: string, client: BedrockRuntime
         const response = await streamMessages(client, MODEL_ID, [{
             role: ConversationRole.USER,
             content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
-        }]);
+        }], undefined, INFERENCE_CONFIG);
 
         const { message } = response;
         const { content: [{ text }] = [] } = message;
@@ -352,8 +379,8 @@ async function getDatabaseDetails(logsFolderPath: string) {
     return databaseDetails;
 }
 
-async function analyzeDatabaseApplicationLogs(tool: ToolUse, client: BedrockRuntimeClient, logsFolderPath: string, messages: Message[]) {
-    logger.info("Analyzing database application logs.");
+async function analyzeDatabaseApplicationLogs(tool: ToolUse, client: BedrockRuntimeClient, logsFolderPath: string, messages: Message[], INFERENCE_CONFIG: InferenceConfiguration) {
+    logger.info("Analyzing database application logs.", { logsFolderPath });
 
     const databaseDetails = await getDatabaseDetails(logsFolderPath);
     // Collect logs based on the identified database type
@@ -367,11 +394,11 @@ async function analyzeDatabaseApplicationLogs(tool: ToolUse, client: BedrockRunt
     }
 
     // Analyze the error logs to identify the cause of the errors and find out if any additional scripts need to be run
-    const { errorLogsWithScripts } = await analyzeErrorLogs(dbType, client, errorLogs);
+    const { errorLogsWithScripts } = await analyzeErrorLogs(dbType, client, errorLogs, INFERENCE_CONFIG);
 
     if (!isEmpty(errorLogsWithScripts)) {
         const { result } = await checkAndExecuteAdditionalScript(dbType, errorLogsWithScripts);
-        await recommendRemediation(dbType || DATABASE_TYPE.MSSQL, client, result);
+        await recommendRemediation(dbType || DATABASE_TYPE.MSSQL, client, result, INFERENCE_CONFIG);
     }
 
     const toolResult = {

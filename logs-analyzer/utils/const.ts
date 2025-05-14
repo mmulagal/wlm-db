@@ -1,4 +1,4 @@
-const ERROR_LOGS_ANALYZER_PROMPT = `You are a world-class MSSQL expert. Your task is to analyze errors from SQL profiler logs and respond strictly in valid JSON format.
+const MSSQL_ERROR_LOGS_ANALYZER_PROMPT = `You are a world-class MSSQL expert. Your task is to analyze errors from SQL profiler logs and respond strictly in valid JSON format.
 
 ### Note:
 This application uses AWS FSx for NetApp ONTAP as the underlying storage.
@@ -291,7 +291,7 @@ enum DATABASE_TYPE {
 
 
 export {
-    ERROR_LOGS_ANALYZER_PROMPT,
+    MSSQL_ERROR_LOGS_ANALYZER_PROMPT,
     REMIDIATION_RECOMMENDATION_PROMPT,
     PGSQL_ERROR_LOGS_ANALYZER_PROMPT,
     PGSQL_REMEDIATION_RECOMMENDATION_PROMPT,
