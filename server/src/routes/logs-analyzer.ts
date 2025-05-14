@@ -10,7 +10,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server.post(
-        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analyzer`,
+        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`,
         { schema: LogsAnalyzerSchema },
         async (request, reply) => {
             const {
