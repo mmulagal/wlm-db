@@ -100,6 +100,7 @@ const initialInventoryV2State: InventorySliceData = {
         installMissingAWS: false,
         installMissingPowershell: false
     },
+    manageSingleInstanceReadiness: null,
     manageSingleInstanceChecks: null,
     manageSingleInstanceData: null,
     wizardOperationType: '',
@@ -319,6 +320,9 @@ const inventoryV2Slice = createSlice({
         setCreateResourceApiLoading: (state, action: PayloadAction<any>) => {
             state.createResourceApiLoading = action.payload;
         },
+        setManageSingleInstanceReadiness: (state, action: PayloadAction<any>) => {
+            state.manageSingleInstanceReadiness = action.payload;
+        },
         setManageSingleInstanceChecks: (state, action: PayloadAction<any>) => {
             state.manageSingleInstanceChecks = action.payload;
         },
@@ -456,6 +460,7 @@ export const {
     setCreateResourceApiLoading,
     resetInventoryLoading,
     setManageSingleInstanceChecks,
+    setManageSingleInstanceReadiness,
     setManageSingleInstanceData
 } = inventoryV2Slice.actions;
 

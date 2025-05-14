@@ -1211,7 +1211,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
                         isFsxRegistered: !fsxCredentialValidationFailed,
-                        manageReadiness: row?.manageReadiness
+                        manageReadiness: perRow?.manageReadiness
                     };
                 } else {
                     statusObj = {
@@ -1220,7 +1220,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
                         isFsxRegistered: !fsxCredentialValidationFailed,
-                        manageReadiness: row?.manageReadiness
+                        manageReadiness: perRow?.manageReadiness
                     };
                 }
                 result = [...result, ...[statusObj]];
@@ -1498,7 +1498,7 @@ export const formatDiscoverInstanceData = (
             windowsAuthentication: perRow?.windowsAuthentication,
             detectOption: statusObj?.[0]?.detectOption,
             detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
-            manageReadiness: row?.manageReadiness
+            manageReadiness: perRow?.manageReadiness
             // protection: {},
             // performance: {},
             // storageSavingsText: '',

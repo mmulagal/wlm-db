@@ -4,12 +4,21 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
-import { useRegisterResourceCredentialsMutation } from '../../../../utils/apiService';
+import {
+    useLazyGetSubTaskListQuery,
+    useManageBulkV2MssqlInstanceMutation,
+    useRegisterResourceCredentialsMutation
+} from '../../../../utils/apiService';
 import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { GENERAL } from '../../../../utils/appConstants';
-import { setInventoryTableData } from '../../../../store/workloadFactory/inventoryV2Slice';
+import {
+    setInventoryTableData,
+    setManageSingleInstanceReadiness
+} from '../../../../store/workloadFactory/inventoryV2Slice';
 import { MANAGE_STATES } from '../../../../utils/consts';
+import { handleSingleInstanceManage } from './ManageInstanceUtils';
+import { useNavigate } from 'react-router-dom';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -18,6 +27,7 @@ type PlanningWizardFooterProps = {
 };
 
 const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
+    const navigate = useNavigate();
     const { nextButtonProps, validation, style } = props; //onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
 
@@ -32,6 +42,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const dispatch = useDispatch();
 
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
+    const [manageBulkV2InstanceApi] = useManageBulkV2MssqlInstanceMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const goBack = () => {
         gotoPreviousStep();
@@ -39,6 +51,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const handleRegisterResourceCred = async () => {
         dispatch(setIsDetectHostLoading(true));
+        dispatch(setManageSingleInstanceReadiness(null));
         const sqlServerInstance =
             manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
         try {
@@ -64,6 +77,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         })
                     );
                     dispatch(setIsDetectHostLoading(false));
+                    if (result?.data?.manageReadiness) {
+                        dispatch(setManageSingleInstanceReadiness(result?.data?.manageReadiness));
+                    }
                 } else {
                     dispatch(setIsDetectHostLoading(false));
                     // store fsx cred in register obj if payload has fsx register
@@ -105,7 +121,13 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     const handleManage = () => {
-        manageSingleInstanceChecks(manageSingleInstanceChecks, dispatch);
+        handleSingleInstanceManage(
+            manageSingleInstanceChecks,
+            dispatch,
+            manageBulkV2InstanceApi,
+            getJobDetailApi,
+            navigate
+        );
     };
 
     return (

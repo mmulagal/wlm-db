@@ -92,7 +92,7 @@ router.get(`${BASE_URL}/v1/jobs/:jobId`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobMonitoringSubTask);
         // generateResponse(res, 200, optimizeBulkJobs);
-    }, 30);
+    }, 7000);
 });
 
 router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/discover`, async (req: {}, res: any) => {
@@ -130,7 +130,25 @@ router.post(
                 databaseCount: 10,
                 sqlServerEdition: 'Standard',
                 sqlServerError: '',
-                fsxnError: ''
+                fsxnError: '',
+                "manageReadiness": { 
+                    "assessment" : { 
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "remediation": {
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "dbCreation": {
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "sandbox": {
+                        "missingSqlPermissions":[],
+                        "missingModules": []
+                    }
+                }
             });
         }, 5000);
     }

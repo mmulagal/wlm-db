@@ -14,6 +14,7 @@ import styles from './PermissionListComponent.module.scss';
 import { useState } from 'react';
 import { PermissionContent } from './PermissionContent/PermissionContent';
 import { MANAGE_STATES } from '../../../../../../utils/consts';
+import { GENERAL } from '../../../../../../utils/appConstants';
 
 const PermissionListComponent = ({ manageChecks }: any) => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -29,7 +30,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
             image: manageChecks?.assessment !== MANAGE_STATES.READY ? <ReviewDisabled /> : <Review />,
             content: (
                 <PermissionContent
-                    title="Permission list"
+                    title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
                             label: 'AWS IAM policy permissions',
@@ -58,7 +59,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
             image: manageChecks?.remediation !== MANAGE_STATES.READY ? <FixDisabled /> : <Fix />,
             content: (
                 <PermissionContent
-                    title="Permission list"
+                    title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
                             label: 'AWS IAM policy permissions',
@@ -109,7 +110,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
             image: manageChecks?.dbCreation !== MANAGE_STATES.READY ? <DatabaseDisabled /> : <Database />,
             content: (
                 <PermissionContent
-                    title="Permission list"
+                    title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
                             label: 'AWS IAM policy permissions',
@@ -143,7 +144,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
             image: manageChecks?.sandbox !== MANAGE_STATES.READY ? <SandboxImageDisabled /> : <SandboxImage />,
             content: (
                 <PermissionContent
-                    title="Permission list"
+                    title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
                             label: 'AWS IAM policy permissions',

@@ -47,44 +47,6 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "SIGMA",
-                            "permissions": ["abc", "def"]
-                        }
-                    ],
-                    "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "SIGMA",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "SIGMA",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "SIGMA",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
-                }
-            },
             "sqlServerInstances": [
                 {
                     "sqlServerInstance": "SIGMA",
@@ -121,7 +83,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": ["Powershell 7"]
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": ["abc"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        }
+                    }
                 }
             ]
         },
@@ -171,76 +151,6 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "EAGLE",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "NEO",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "EAGLE",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "NEO",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "EAGLE",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "NEO",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "EAGLE",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "NEO",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
-            },
             "sqlServerInstances": [
                 {
                     "sqlServerInstance": "EAGLE",
@@ -267,7 +177,25 @@
                             "id": "vol-0c73fa01e4e64ba60"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":["abc", "def"],
+                            "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "NEO",
@@ -294,7 +222,25 @@
                             "id": "vol-0c73fa01e4e64ba60"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":["abc", "def"],
+                            "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -321,7 +267,25 @@
                             "id": "vol-0c73fa01e4e64ba60"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -335,76 +299,6 @@
                 "id": "vpc-84b3afe6",
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "EAGLE",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "NEO",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "EAGLE1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "NEO1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER1",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "EAGLE1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "NEO1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER1",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "EAGLE1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "NEO1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER1",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -433,7 +327,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "NEO1",
@@ -461,7 +373,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER1",
@@ -489,7 +419,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -503,44 +451,6 @@
                 "id": "vpc-046f7e26255458373",
                 "name": "kanika-vpc",
                 "cidrBlock": "10.0.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -577,7 +487,25 @@
                                 "ap-southeast-1c"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -591,44 +519,6 @@
                 "id": "vpc-046f7e26255458373",
                 "name": "kanika-vpc",
                 "cidrBlock": "10.0.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -656,7 +546,25 @@
                             "id": "vol-078ccd469b92353ad"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -670,44 +578,6 @@
                 "id": "vpc-046f7e26255458373",
                 "name": "kanika-vpc",
                 "cidrBlock": "10.0.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -736,7 +606,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -786,44 +674,6 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
-            },
             "sqlServerInstances": [
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -864,7 +714,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1019,44 +887,6 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
-            },
             "sqlServerInstances": [
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -1073,7 +903,25 @@
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": true,
                     "storage": [],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1087,44 +935,6 @@
                 "id": "vpc-84b3afe6",
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "ALPHA",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "ALPHA",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "ALPHA",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "ALPHA",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -1142,7 +952,25 @@
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": false,
                     "storage": [],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1156,44 +984,6 @@
                 "id": "vpc-046f7e26255458373",
                 "name": "kanika-vpc",
                 "cidrBlock": "10.0.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -1211,7 +1001,25 @@
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": true,
                     "storage": [],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1296,44 +1104,6 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
-            },
             "sqlServerInstances": [
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -1374,7 +1144,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1388,60 +1176,6 @@
                 "id": "vpc-84b3afe6",
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "SQL19DEV",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "SQL19DEV",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "SQL19DEV",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "SQL19DEV",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -1483,7 +1217,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -1519,7 +1271,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1533,44 +1303,6 @@
                 "id": "vpc-046f7e26255458373",
                 "name": "kanika-vpc",
                 "cidrBlock": "10.0.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -1612,7 +1344,25 @@
                                 "ap-southeast-1c"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1662,44 +1412,6 @@
                 "name": "kanika-vpc",
                 "cidrBlock": "10.0.0.0/16"
             },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
-            },
             "sqlServerInstances": [
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -1740,7 +1452,25 @@
                                 "ap-southeast-1c"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1825,44 +1555,6 @@
                 "name": "kanika-vpc",
                 "cidrBlock": "10.0.0.0/16"
             },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
-            },
             "sqlServerInstances": [
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -1902,7 +1594,25 @@
                                 "ap-southeast-1a"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1961,44 +1671,6 @@
                 "name": "wlmdb-private-vpc",
                 "cidrBlock": "10.0.0.0/16"
             },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
-            },
             "sqlServerInstances": [
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -2039,7 +1711,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -2053,44 +1743,6 @@
                 "id": "vpc-0100cefdf732ef9e9",
                 "name": "wlmdb-private-vpc",
                 "cidrBlock": "10.0.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -2132,7 +1784,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -2146,92 +1816,6 @@
                 "id": "vpc-84b3afe6",
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
-            },
-            "manageReadiness": { 
-                "assessment" : { 
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER3",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER4",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": [] 
-                },
-                "remediation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER3",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER4",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "dbCreation": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER3",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER4",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                },
-                "sandbox": {
-                    "missingSqlPermissions": [
-                        {
-                            "instanceName": "MSSQLSERVER",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER1",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER3",
-                            "permissions": []
-                        },
-                        {
-                            "instanceName": "MSSQLSERVER4",
-                            "permissions": []
-                        }
-                    ],
-                    "missingModules": []
-                }
             },
             "sqlServerInstances": [
                 {
@@ -2264,7 +1848,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER1",
@@ -2291,7 +1893,25 @@
                             "id": "vol-058229dab6d33d374"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER3",
@@ -2322,7 +1942,25 @@
                             "id": "vol-0f1ae0046501426a3"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER4",
@@ -2349,7 +1987,25 @@
                             "id": "fs123"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbCreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         }

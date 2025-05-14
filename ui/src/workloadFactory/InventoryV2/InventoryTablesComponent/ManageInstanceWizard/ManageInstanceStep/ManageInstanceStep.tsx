@@ -15,7 +15,7 @@ import { useDispatch } from 'react-redux';
 export const Content = () => {
     const dispatch = useDispatch();
     const { state, setState } = useWizard();
-    const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
+    const { manageSingleInstanceData, manageSingleInstanceReadiness } = useAppSelector(state => state.inventoryV2);
     const isAlreadyDetected = useMemo(() => {
         if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
             return true;
@@ -23,11 +23,11 @@ export const Content = () => {
         return false;
     }, [manageSingleInstanceData]);
 
-    const hasMissingPowershell7 = () => {
-        if (!manageSingleInstanceData?.manageReadiness) return false;
-        const readinessKeys = Object.keys(manageSingleInstanceData.manageReadiness);
+    const hasMissingPowershell7 = (manageReadinessData: any) => {
+        if (!manageReadinessData) return false;
+        const readinessKeys = Object.keys(manageReadinessData);
         for (const key of readinessKeys) {
-            const missingModules = manageSingleInstanceData.manageReadiness[key]?.missingModules || [];
+            const missingModules = manageReadinessData[key]?.missingModules || [];
             if (missingModules.includes(MANAGE_STATES.POWERSHELL7)) {
                 return true;
             }
@@ -35,14 +35,14 @@ export const Content = () => {
         return false;
     };
 
-    const missingModules = () => {
-        if (!manageSingleInstanceData?.manageReadiness) return [];
+    const missingModules = (manageReadinessData: any) => {
+        if (!manageReadinessData) return [];
 
-        const readinessKeys = Object.keys(manageSingleInstanceData.manageReadiness);
+        const readinessKeys = Object.keys(manageReadinessData);
         let filteredModulesSet: Set<string> = new Set();
 
         readinessKeys.forEach(key => {
-            const missingModules = manageSingleInstanceData.manageReadiness[key]?.missingModules || [];
+            const missingModules = manageReadinessData[key]?.missingModules || [];
             missingModules
                 .filter((module: string) => module !== MANAGE_STATES.POWERSHELL7)
                 .forEach((module: string) => filteredModulesSet.add(module));
@@ -53,9 +53,8 @@ export const Content = () => {
         return filteredModules;
     };
 
-    const getPermissionState = (type: string) => {
-        const readinessData = manageSingleInstanceData?.manageReadiness?.[type];
-        const instanceName = manageSingleInstanceData?.databaseInstanceName;
+    const getPermissionState = (type: string, manageReadinessData: any) => {
+        const readinessData = manageReadinessData?.[type];
 
         if (!readinessData) return GENERAL.NOT_AVAILABLE;
 
@@ -63,19 +62,29 @@ export const Content = () => {
         const hasPowershell7 = missingModules.includes(MANAGE_STATES.POWERSHELL7);
         const otherModules = missingModules.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
 
-        const permissions =
-            readinessData?.missingSqlPermissions?.find((permission: any) => permission?.instanceName === instanceName)
-                ?.permissions || [];
-
-        if (hasPowershell7) {
-            return MANAGE_STATES.MISSING_POWERSHELL;
-        }
+        const permissions = readinessData?.missingSqlPermissions;
 
         if (otherModules.length > 0 || permissions.length > 0) {
             return MANAGE_STATES.MISSING_PREREQUISITES;
         }
 
+        if (hasPowershell7) {
+            return MANAGE_STATES.MISSING_POWERSHELL;
+        }
+
         return MANAGE_STATES.READY;
+    };
+
+    const isAllowManage = (manageReadinessData: any) => {
+        let anyListEmpty = false;
+        const readinessKeys = Object.keys(manageReadinessData);
+        for (const key of readinessKeys) {
+            const missingSqlPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
+            if (missingSqlPermissions.length == 0) {
+                anyListEmpty = true;
+            }
+        }
+        return anyListEmpty;
     };
 
     const manageChecks = useMemo(() => {
@@ -86,24 +95,40 @@ export const Content = () => {
             assessment: GENERAL.NOT_AVAILABLE,
             remediation: GENERAL.NOT_AVAILABLE,
             dbCreation: GENERAL.NOT_AVAILABLE,
-            sandbox: GENERAL.NOT_AVAILABLE
+            sandbox: GENERAL.NOT_AVAILABLE,
+            ec2InstanceId: '',
+            region: '',
+            credentialsId: '',
+            databaseInstanceName: ''
         };
-        if (manageSingleInstanceData?.manageReadiness) {
-            let missingModulesList = missingModules();
+
+        let manageReadinessData: any = null;
+        if (!manageSingleInstanceData?.windowsAuthentication && !manageSingleInstanceData?.sqlServerAuthentication) {
+            manageReadinessData = manageSingleInstanceReadiness;
+        } else {
+            manageReadinessData = manageSingleInstanceData?.manageReadiness;
+        }
+        if (manageReadinessData) {
+            let missingModulesList = missingModules(manageReadinessData);
             manageCheckObj = {
                 installMissingAWS: missingModulesList.length > 0 ? true : false,
                 installMissingAWSList: missingModulesList,
-                installMissingPowershell: hasMissingPowershell7(),
-                assessment: getPermissionState('assessment'),
-                remediation: getPermissionState('remediation'),
-                dbCreation: getPermissionState('dbCreation'),
-                sandbox: getPermissionState('sandbox')
+                installMissingPowershell: hasMissingPowershell7(manageReadinessData),
+                allowManage: isAllowManage(manageReadinessData),
+                assessment: getPermissionState('assessment', manageReadinessData),
+                remediation: getPermissionState('remediation', manageReadinessData),
+                dbCreation: getPermissionState('dbCreation', manageReadinessData),
+                sandbox: getPermissionState('sandbox', manageReadinessData),
+                ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
+                region: manageSingleInstanceData?.regionId,
+                credentialsId: manageSingleInstanceData?.credentialId,
+                databaseInstanceName: manageSingleInstanceData?.databaseInstanceName
             };
             dispatch(setManageSingleInstanceChecks(manageCheckObj));
             return manageCheckObj;
         }
         return manageCheckObj;
-    }, [manageSingleInstanceData]);
+    }, [manageSingleInstanceData, manageSingleInstanceReadiness]);
 
     return (
         <div className={styles['manage-instance-step']}>

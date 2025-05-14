@@ -606,6 +606,8 @@ export const OPTIMIZE_POLLING_INTERVAL = 5000;
 
 export const MAX_IOPS_VALUE = 160000;
 
+export const MANAGE_POLLING_INTERVAL = 5000;
+
 export const INVENTORY_STATUS = {
     MANAGED: 'Managed',
     UNMANAGED: 'Unmanaged',
@@ -898,5 +900,5 @@ export const MANAGE_STATES = {
     READY: 'Ready',
     MISSING_POWERSHELL: 'Missing PowerShell modules',
     MISSING_PREREQUISITES: 'Missing prerequisites',
-    POWERSHELL7: 'powershell7'
+    POWERSHELL7: 'Powershell 7'
 };

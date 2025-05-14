@@ -6,14 +6,24 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { handleSingleInstanceManage } from './ManageInstanceUtils';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { useLazyGetSubTaskListQuery, useManageBulkV2MssqlInstanceMutation } from '../../../../utils/apiService';
 
 const ManageOnlyWizard = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const [manageBulkV2InstanceApi] = useManageBulkV2MssqlInstanceMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
 
     const handleManage = () => {
-        handleSingleInstanceManage(manageSingleInstanceChecks, dispatch);
+        handleSingleInstanceManage(
+            manageSingleInstanceChecks,
+            dispatch,
+            manageBulkV2InstanceApi,
+            getJobDetailApi,
+            navigate
+        );
     };
     return (
         <StepLayout>
