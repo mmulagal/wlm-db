@@ -1282,7 +1282,7 @@ export const GENERAL = {
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Well-architected is only available for managed instances that have been analyzed and are online. Offline and unanalyzed instances aren't available for well-architected",
+        'A well-architected score is available only for managed instances that have been analyzed and are online.',
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:
