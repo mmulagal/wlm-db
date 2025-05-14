@@ -11,10 +11,13 @@ import { useMemo } from 'react';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { setManageSingleInstanceChecks } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { useDispatch } from 'react-redux';
+import MultiInstanceHeader from '../DetectInstanceStep/DetectHeader/MultiInstanceHeader';
 
 export const Content = () => {
     const dispatch = useDispatch();
     const { state, setState } = useWizard();
+    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
+
     const { manageSingleInstanceData, manageSingleInstanceReadiness } = useAppSelector(state => state.inventoryV2);
     const isAlreadyDetected = useMemo(() => {
         if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
@@ -135,6 +138,12 @@ export const Content = () => {
             {isAlreadyDetected && (
                 <div style={{ marginBottom: '40px' }}>
                     <DetectHeader />
+                </div>
+            )}
+
+            {wizardOperationType === 'bulk' && (
+                <div style={{ marginBottom: '40px' }}>
+                    <MultiInstanceHeader />
                 </div>
             )}
 
