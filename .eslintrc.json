@@ -23,19 +23,11 @@
         "import/resolver": {
             "node": {
                 "extensions": [".js", ".jsx", ".ts", ".tsx"],
-                "moduleDirectory": [
-                    "server/src",
-                    "server/node_modules",
-                    "ui/src",
-                    "ui/node_modules"
-                ]
+                "moduleDirectory": ["server/src", "server/node_modules", "ui/src", "ui/node_modules"]
             },
             "typescript": {
                 "alwaysTryTypes": true, // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
-                "project": [
-                  "server/tsconfig.json",
-                  "ui/tsconfig.json"
-                ]
+                "project": ["server/tsconfig.json", "ui/tsconfig.json"]
             }
         }
     },
@@ -59,24 +51,15 @@
         "no-func-assign": 2,
         "no-unreachable": 2,
         "prefer-destructuring": 2,
-        "arrow-parens": [
-            "error",
-            "as-needed"
-        ],
+        "arrow-parens": ["error", "as-needed"],
         "prefer-const": [
             "error",
             {
                 "destructuring": "all"
             }
         ],
-        "quote-props": [
-            "error",
-            "as-needed"
-        ],
-        "curly": [
-            "error",
-            "all"
-        ],
+        "quote-props": ["error", "as-needed"],
+        "curly": ["error", "all"],
         "no-plusplus": [
             "error",
             {
@@ -107,5 +90,17 @@
                 "amd": true
             }
         ]
-    }
+    },
+    "overrides": [
+        {
+            "files": ["ui/src/**/*.{js,jsx,ts,tsx}"],
+            "extends": ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+            "plugins": ["react", "react-hooks"],
+            "settings": {
+                "react": {
+                    "version": "detect"
+                }
+            }
+        }
+    ]
 }
