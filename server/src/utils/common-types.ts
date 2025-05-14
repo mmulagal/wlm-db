@@ -48,6 +48,7 @@ interface HostOsPatchAssessmentObject {
 interface MSSQLPatchAssessmentObject {
     criticalMissingPatchesCount: number;
     ec2InstanceId: string;
+    ec2InstanceName: string;
     importantMissingPatchesCount: number;
     missingPatchesCount: number;
     missingPatchDetails?: PatchDetail[];

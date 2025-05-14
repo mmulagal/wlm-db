@@ -37,6 +37,7 @@ beforeAll(async () => {
                 mssqlPatch: [
                     {
                         ec2InstanceId: 'i-0a1f31a39bd2d9362',
+                        ec2InstanceName: 'SQLServer-Dev-02',
                         missingPatchDetails: [
                             {
                                 kbId: 'KB4583458',
@@ -143,6 +144,7 @@ beforeAll(async () => {
                     },
                     {
                         ec2InstanceId: 'i-0253886610c274a28',
+                        ec2InstanceName: 'SQLServer-QA-02',
                         missingPatchDetails: [
                             {
                                 kbId: 'KB4583458',
@@ -275,7 +277,9 @@ describe('MSSql Patch assessment operations', () => {
             RESOURCE_ID,
             'i-07e76a4b916548dc0',
             true,
-            'i-07e76a4b916548dc0'
+            'i-07e76a4b916548dc0',
+            false,
+            'MSSQLSERVER'
         );
         expect(result).toBeDefined();
     });
@@ -303,6 +307,8 @@ describe('MSSql Patch assessment operations', () => {
                 'i-07e76a4b916548dc0',
                 true,
                 'test-resource',
+                false,
+                'MSSQLSERVER',
                 'test-job-id'
             )) || {};
         expect(patchAssessment?.[0]?.ec2InstanceId).toBeDefined();
@@ -318,6 +324,8 @@ describe('MSSql Patch assessment operations', () => {
                 'i-07e76a4b916548dc0',
                 false,
                 'test-resource',
+                false,
+                'MSSQLSERVER',
                 'test-job-id'
             )) || [];
         expect(patchAssessment?.[0]?.ec2InstanceId).toBeDefined();

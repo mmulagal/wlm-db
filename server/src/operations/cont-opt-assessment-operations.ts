@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 import throat from 'throat';
 import moment from 'moment';
 import getLogger from '../utils/logger';
-import { isDemo, sqlResponseParsing } from '../utils/utils';
+import { extractSqlInstanceName, isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails } from './database-hosts-operations';
@@ -178,9 +178,10 @@ async function initiateHostLevelAssessmentDataCollection(
     resourceName: string,
     jobId: string,
     fields: string[],
-    databaseInstanceId?: string
+    databaseInstanceId: string,
+    sqlAuthEnabled: boolean
 ) {
-    logger.info('Initiate compute/license/host-os-patch assessment collection', {
+    logger.info('Initiate compute/license/host-os-patch/rss/mssqlpatch assessment collection', {
         accountId,
         credentialsId,
         region,
@@ -188,7 +189,8 @@ async function initiateHostLevelAssessmentDataCollection(
         resourceName,
         jobId,
         fields,
-        databaseInstanceId
+        databaseInstanceId,
+        sqlAuthEnabled
     });
 
     const [{ metadata, cloud_provider_account_id: awsAccountId, resource_id: resourceId }] = await listResources(
@@ -199,7 +201,7 @@ async function initiateHostLevelAssessmentDataCollection(
     );
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
-    const { activeNodeInstanceId = '' } = await getActiveSqlNode(
+    const { activeNodeInstanceId = '', instanceName } = await getActiveSqlNode(
         credentialsId,
         region,
         node1InstanceId,
@@ -306,7 +308,7 @@ async function initiateHostLevelAssessmentDataCollection(
         }
         if (fields?.includes(AssessmentCategories.MSSQL_PATCH)) {
             const isCluster = Boolean(node2InstanceId && node2InstanceId.trim() !== '');
-
+            const sqlInstanceName = extractSqlInstanceName(instanceName);
             ({ patchAssessment: mssqlPatchAssessment, errorMessage: mssqlPatchErrorMessage } =
                 (await managedHostMSSQLPatchAssessment(
                     accountId,
@@ -316,6 +318,8 @@ async function initiateHostLevelAssessmentDataCollection(
                     activeNodeInstanceId,
                     isCluster, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
                     resourceName,
+                    sqlAuthEnabled,
+                    sqlInstanceName,
                     jobId
                 )) || {});
         }
@@ -734,7 +738,8 @@ async function driftAssessmentDataCollection(
             databaseInstanceRecord.resourceName,
             jobId,
             fieldsValues,
-            databaseInstanceRecord.id
+            databaseInstanceRecord.id,
+            databaseInstanceRecord.sqlAuthEnabled
         );
     }
 }
@@ -964,39 +969,54 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         } else {
                             // Proceeding with compute and license assessment at host level
                             const uniqueResMap = new Map(
-                                managedInstances.map(({ resource }) => [
+                                managedInstances.map(({ resource, ...databaseInstanceDetails }) => [
                                     `${resource.account_id} + ${resource.credentials_id} + ${resource.id}`,
-                                    resource
+                                    { resource, databaseInstanceDetails } // Separate keys for resource and databaseInstanceDetails
                                 ])
                             ); // create a map with unique resources; key being (accountId,credsId,resourceId unique combination) and value being actual resource
                             const uniqueResources = Array.from(uniqueResMap.values()); // getting all the unique resources from the map
 
                             await Promise.all(
-                                uniqueResources.map(
-                                    async ({
+                                uniqueResources.map(async ({ resource, databaseInstanceDetails }) => {
+                                    const {
                                         account_id: wfAccountId,
                                         credentials_id: credentialsId,
                                         region,
                                         resource_id: databaseHostId,
                                         resource_name: resourceName
-                                    }) => {
-                                        await initiateHostLevelAssessmentDataCollection(
-                                            wfAccountId,
-                                            credentialsId,
-                                            region!,
-                                            databaseHostId,
-                                            resourceName!,
-                                            parentJobId,
-                                            [
-                                                AssessmentCategories.LICENSE,
-                                                AssessmentCategories.COMPUTE,
-                                                AssessmentCategories.HOST_OS_PATCH,
-                                                AssessmentCategories.RSS_CONFIG,
-                                                AssessmentCategories.MSSQL_PATCH
-                                            ]
-                                        );
-                                    }
-                                )
+                                    } = resource;
+                                    const { database_instance_id: databaseInstanceId } = databaseInstanceDetails;
+
+                                    // require to get the sqlAuthEnabled flag for mssql patch assessment
+                                    const { newDatabaseInstanceDetails } = await getInstanceDetails(
+                                        accountId,
+                                        credentialsId,
+                                        region as string,
+                                        databaseHostId,
+                                        databaseInstanceId,
+                                        resource,
+                                        databaseInstanceDetails as unknown as DatabaseInstance
+                                    );
+                                    const { sqlAuthEnabled } = (newDatabaseInstanceDetails || {}) as DatabaseInstance;
+
+                                    await initiateHostLevelAssessmentDataCollection(
+                                        wfAccountId,
+                                        credentialsId,
+                                        region!,
+                                        databaseHostId,
+                                        resourceName!,
+                                        parentJobId,
+                                        [
+                                            AssessmentCategories.LICENSE,
+                                            AssessmentCategories.COMPUTE,
+                                            AssessmentCategories.HOST_OS_PATCH,
+                                            AssessmentCategories.RSS_CONFIG,
+                                            AssessmentCategories.MSSQL_PATCH
+                                        ],
+                                        databaseInstanceId,
+                                        sqlAuthEnabled as boolean
+                                    );
+                                })
                             );
                         }
                     } catch (error: any) {

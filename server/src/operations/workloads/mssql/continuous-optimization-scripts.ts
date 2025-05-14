@@ -1264,9 +1264,24 @@ const GET_INSTALLED_SQL_PATCHES = () => `
     Write-Output $jsonResult
 `;
 
-const GET_INSTALLED_MSSQL_VERSION = () => `
+const GET_INSTALLED_MSSQL_VERSION = (instanceName: string, sqlAuthEnabled: boolean) => `
     # Get the installed SQL Server version
-    Sqlcmd -Q "${SERVER_VERSION}" -y 0
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $sqlInstanceName = "${instanceName}"
+
+     ${slqcmdExecutionTemplate}
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
+
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+    }
+
+    $sqlVersionResult = Call-SqlCmd -SqlCredential $sqlCredential -Query "${SERVER_VERSION}" -InstanceName "$ServerInstanceName"
+    return $sqlVersionResult
 `;
 
 const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `

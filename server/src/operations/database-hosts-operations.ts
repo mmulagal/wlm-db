@@ -1424,16 +1424,32 @@ async function getInstanceDetails(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    resource?: ResourceDetails,
+    dbInstanceDetails?: DatabaseInstance
 ) {
-    const [[resourceDetails], [instanceDetails]] = await Promise.all([
-        listResources(accountId, databaseHostId, credentialsId, region),
-        listDatabaseInstances(accountId, {
-            resourceId: databaseHostId,
-            credentialsId,
-            sqlInstanceId: databaseInstanceId
-        })
-    ]);
+    logger.info('Getting instance details', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    });
+
+    let resourceDetails = resource;
+    let instanceDetails = dbInstanceDetails;
+
+    // If either resource or databaseInstanceDetails is empty, make both DB calls
+    if (isEmpty(resource) || isEmpty(dbInstanceDetails)) {
+        [[resourceDetails], [instanceDetails]] = await Promise.all([
+            listResources(accountId, databaseHostId, credentialsId, region),
+            listDatabaseInstances(accountId, {
+                resourceId: databaseHostId,
+                credentialsId,
+                sqlInstanceId: databaseInstanceId
+            })
+        ]);
+    }
 
     if (isEmpty(resourceDetails) || isEmpty(instanceDetails)) {
         const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceId} for ${accountId} is found.`;
