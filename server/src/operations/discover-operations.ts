@@ -2837,8 +2837,11 @@ async function discoverOracleResources(
                     instancesWithSsmResponse.push(ec2Instance);
                 } catch (err: unknown) {
                     logger.warn('Failed to parse SSM response', { error: err });
-                    ec2Instance.error = err as string;
-                    return instancesWithSsmResponse.push(ec2Instance);
+                    const errString = err as string;
+                    ec2Instance.error = errString;
+                    if (!errString.includes('No /etc/oratab found on this instance')) {
+                        return instancesWithSsmResponse.push(ec2Instance);
+                    }
                 }
             })
         );
