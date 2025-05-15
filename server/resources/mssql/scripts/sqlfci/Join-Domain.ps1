@@ -3,6 +3,9 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$DomainDNSName,
 
+    [Parameter(Mandatory = $false)]
+    [string]$DCName,
+
     [Parameter(Mandatory=$true)]
     [string]$DomainAdminUser,
 
@@ -23,7 +26,17 @@ $ADAdminPassword = $SsmParameter.domain.password
 $AdminUserName = $DomainNetBIOSName+"\"+$DomainAdminUser
 $AdminUserPW = ConvertTo-SecureString ($ADAdminPassword) -AsPlainText -Force
 $Credentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ($AdminUserName, $AdminUserPW)
-Add-Computer -DomainName $DomainDNSName -Credential $Credentials -ErrorAction Stop
+
+if([string]::IsNullOrEmpty($DCName)) {
+    #Try to fetch a Domain Controller name that can connect to the directory service if preferred DC is not passed 
+    $DCName = (Get-ADDomainController -Discover -Domain $DomainName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty HostName)
+    }
+if([string]::IsNullOrEmpty($DCName)) {
+        #If not able to fetch with Get-ADDomainController join domain directly without passing Domain server
+        Add-Computer -DomainName $DomainDNSName -Credential $Credentials -ErrorAction Stop
+} else {
+        Add-Computer -DomainName $DomainDNSName -Server $DCName -Credential $Credentials -ErrorAction Stop 
+ }
 }
 catch {
     $_ | Write-AWSLaunchWizardException
