@@ -1,7 +1,6 @@
 export interface ResetDetailsInterface {
     fsxId: string;
     ec2InstanceId: string;
-    sqlServerId: string;
 }
 
 export interface GetWellSliceInterface {

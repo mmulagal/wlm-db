@@ -82,12 +82,7 @@ const OptimizeByCategory = () => {
                 ec2InstanceId: selectedAssessmentRow?.ec2InstanceId
             })
         );
-        dispatch(
-            setSqlServerId({
-                sqlServerId: selectedAssessmentRow?.sqlServerId,
-                ec2InstanceId: selectedAssessmentRow?.ec2InstanceId
-            })
-        );
+
         setTimeout(() => {
             dispatch(setSelectedAssessmentRow(null));
         }, 5);
