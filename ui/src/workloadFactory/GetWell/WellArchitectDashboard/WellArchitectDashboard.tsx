@@ -71,7 +71,7 @@ const WellArchitectDashboard = () => {
 
     const { refreshTime } = useAppSelector(state => state.headers);
 
-    const { refreshSandboxInstanceTime } = useAppSelector(state => state.sandbox);
+    const { refreshSandboxInstanceTime,sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
 
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
@@ -117,7 +117,7 @@ const WellArchitectDashboard = () => {
             dispatch(setDefaultFilterOptions({}));
             resetGwValuesOnRefresh(dispatch);
             dispatch(setGwRefreshPage(true));
-        } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.SANDBOXES) {
+        } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.SANDBOXES && !sandboxInstanceLoading) {
             dispatch(setIsRefreshedSandboxInstance(true));
         }
     };
