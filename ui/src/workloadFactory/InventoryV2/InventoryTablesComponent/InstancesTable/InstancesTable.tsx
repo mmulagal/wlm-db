@@ -60,7 +60,6 @@ import {
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import {
     setFSXId,
-    setSqlServerId,
     setGwPageLoadInstanceData,
     setLandingFrom,
     setSelectedWellArchitectTab
@@ -437,7 +436,7 @@ const InstancesTable = () => {
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
         dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
         dispatch(setFSXId({ fsxId: rowData?.fsxId, ec2InstanceId: rowData?.ec2InstanceId }));
-        dispatch(setSqlServerId({ sqlServerId: rowData?.sqlServerId, ec2InstanceId: rowData?.ec2InstanceId }));
+
         optimizeAction(rowData);
     };
 

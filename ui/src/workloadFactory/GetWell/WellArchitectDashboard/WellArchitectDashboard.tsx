@@ -156,7 +156,7 @@ const WellArchitectDashboard = () => {
         const { password } = sqlServerPasswords;
         let credList = [];
         credList.push({
-            resourceId: resetDetails?.sqlServerId,
+            resourceId: '',
             resourceType: DETECT_HOST_VAR.MSSQL,
             username: 'sqlserver',
             password: password
