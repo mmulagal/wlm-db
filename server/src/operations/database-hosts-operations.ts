@@ -862,9 +862,18 @@ async function getDatabaseHostsSummaryV2(
         return { count: 0, items: [], nextToken: '' };
     }
 
-    const managedInstancesMap = new Map(
+    const managedInstancesMap: Map<string, DatabaseInstance[]> = new Map(
         resourceDetails.map(r => [r.resource_id, (r as any)?.database_instances?.flat()])
     );
+
+    managedInstancesMap.forEach((value: DatabaseInstance[], key) => {
+        if (value && value.length > 0) {
+            value.forEach((instance: DatabaseInstance) => {
+                instance.resource =
+                    resourceDetails.find((r: ResourceDetails) => r.resource_id === key) ?? ({} as ResourceDetails);
+            });
+        }
+    });
 
     const databaseHosts: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
     try {
