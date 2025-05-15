@@ -234,7 +234,7 @@ const getWellOptimizeSlice = createSlice({
 
 export const {
     setFSXId,
-    setSqlServerId,
+
     setTabVisited,
     resetVisitedTabs,
     setSelectedWellArchitectTab,
