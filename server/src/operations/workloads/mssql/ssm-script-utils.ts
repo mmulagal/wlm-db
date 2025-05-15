@@ -5,6 +5,8 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, SQL_CASE_INSENSITIV
 import { GOOGLE_DNS, SCRIPT_VERSON_FILE } from './const';
 import {
     compressResponse,
+    disableCredSSP,
+    enableCredSSP,
     invokeOntapRequestTemplate,
     ontapRestRequest,
     ontapRestRequestBootstrap
@@ -356,7 +358,8 @@ Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 
 const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
-    sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
+    sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    windowsUser: boolean = false
 ) => ` 
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
         $ProgressPreference = 'SilentlyContinue'
@@ -398,8 +401,21 @@ const validateSQLInstanceConnectivity = (
 
             $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
             $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
-            $sqlList = $credobject.sql
-            $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+            ${
+                windowsUser
+                    ? `
+                    $domainList = $credobject.domain
+                    $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+                    if ($sqlCredentials -eq $null) {
+                        $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' }
+                    }
+                `
+                    : `
+                    $sqlList = $credobject.sql
+                    $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+                `
+            }
+
             if ($sqlCredentials -eq $null) {
                 $errorMessage = "No SQL instance found with the name $sqlinstancename"
                 throw $errorMessage
@@ -418,7 +434,18 @@ const validateSQLInstanceConnectivity = (
                 throw $errorMessage
             }
 
-            $sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlcmd -y 0 -r1 2> $null
+            ${
+                windowsUser
+                    ? `
+                    ${enableCredSSP}
+                    $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
+                    $Credential = New-Object Management.Automation.PSCredential ($username, $securePassword)
+                    $scriptblock = { Sqlcmd -S $serverInstanceName -Q $sqlcmd -y 0 -r1 2> $null }
+                    $sqlresult = Invoke-Command -ScriptBlock $scriptblock -Credential $Credential -ComputerName $env:computername -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
+                    ${disableCredSSP}
+                `
+                    : '$sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlcmd -y 0 -r1 2> $null'
+            }
 
             if([string]::IsNullOrEmpty($sqlresult)) {
                 $responseObject.add('sqlInstanceConnectivity', $False)

@@ -187,10 +187,64 @@ const compressResponse = `
     }
 `;
 
+const enableCredSSP = `
+try {
+    $ServerName = '*'
+    Start-Transcript -Path C:\\cfn\\log\\EnableCredSsp.ps1.txt -Append
+    $ErrorActionPreference = "Stop"
+
+    Enable-WSManCredSSP Client -DelegateComputer $ServerName -Force
+    if ($DomainNetBIOSName) {
+        Enable-WSManCredSSP Client -DelegateComputer *.$DomainNetBIOSName -Force
+    }
+    if ($DomainDNSName) {
+        Enable-WSManCredSSP Client -DelegateComputer *.$DomainDNSName -Force
+    }
+    Enable-WSManCredSSP Server -Force
+
+    # Sometimes Enable-WSManCredSSP doesn't get it right, so we set some registry entries by hand
+    $parentkey = "hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows"
+    $key = "$parentkey\\CredentialsDelegation"
+    $freshkey = "$key\\AllowFreshCredentials"
+    $ntlmkey = "$key\\AllowFreshCredentialsWhenNTLMOnly"
+    New-Item -Path $parentkey -Name 'CredentialsDelegation' -Force
+    New-Item -Path $key -Name 'AllowFreshCredentials' -Force
+    New-Item -Path $key -Name 'AllowFreshCredentialsWhenNTLMOnly' -Force
+    New-ItemProperty -Path $key -Name AllowFreshCredentials -Value 1 -PropertyType Dword -Force
+    New-ItemProperty -Path $key -Name ConcatenateDefaults_AllowFresh -Value 1 -PropertyType Dword -Force
+    New-ItemProperty -Path $key -Name AllowFreshCredentialsWhenNTLMOnly -Value 1 -PropertyType Dword -Force
+    New-ItemProperty -Path $key -Name ConcatenateDefaults_AllowFreshNTLMOnly -Value 1 -PropertyType Dword -Force
+    New-ItemProperty -Path $freshkey -Name 1 -Value "WSMAN/$ServerName" -PropertyType String -Force
+    New-ItemProperty -Path $ntlmkey -Name 1 -Value "WSMAN/$ServerName" -PropertyType String -Force
+} catch {
+    Write-Information "Error in EnableCredSSP: $($_.Exception.Message)"
+}
+`;
+
+const disableCredSSP = `
+try {
+    # Disable CredSSP
+    Start-Transcript -Path C:\\cfn\\log\\DisableCredSSP.ps1.txt -Append
+    $ErrorActionPreference = "Stop"
+
+    Disable-WSManCredSSP Client
+    Disable-WSManCredSSP Server
+
+    Remove-Item -Path 'hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CredentialsDelegation\\AllowFreshCredentials' -ErrorAction Ignore
+    Remove-ItemProperty -Path 'hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CredentialsDelegation' -Name 'AllowFreshCredentials' -ErrorAction Ignore
+    Remove-Item -Path 'hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CredentialsDelegation\\AllowFreshCredentialsWhenNTLMOnly' -ErrorAction Ignore
+    Remove-ItemProperty -Path 'hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CredentialsDelegation' -Name 'AllowFreshCredentialsWhenNTLMOnly' -ErrorAction Ignore
+} catch {
+    Write-Information "Error in DisableCredSSP: $($_.Exception.Message)"
+}
+`;
+
 export {
     ontapRestRequest,
     ontapJobStatusTemplate,
     compressResponse,
     ontapRestRequestBootstrap,
-    invokeOntapRequestTemplate
+    invokeOntapRequestTemplate,
+    enableCredSSP,
+    disableCredSSP
 };

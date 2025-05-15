@@ -40,7 +40,8 @@ import {
     getServerNameWithHostname,
     sqlResponseParsing,
     isValidProp,
-    generateSqlResourceId
+    generateSqlResourceId,
+    escapeBackslash
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -728,143 +729,6 @@ async function makeSsmCall(
     return commandId;
 }
 
-function prepareParametersToStore(instanceIds: string[], credentials: DiscoverCredentialsType[]) {
-    logger.debug('prepare parameters to store', { instanceIds });
-
-    return credentials.reduce((acc: SSMParamterObject[], { resourceId, resourceType, username, password }) => {
-        if (resourceType === RESOURCESTYPE.MSSQL) {
-            const sqlItem = acc.find(el => el.value.sql);
-
-            if (sqlItem && Array.isArray(sqlItem.value.sql)) {
-                sqlItem.value.sql.push({
-                    sqlinstancename: resourceId,
-                    username,
-                    password
-                });
-            } else {
-                instanceIds.forEach(instanceId =>
-                    acc.push({
-                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                        value: {
-                            sql: [
-                                {
-                                    sqlinstancename: resourceId,
-                                    username,
-                                    password
-                                }
-                            ]
-                        }
-                    })
-                );
-            }
-        } else if (resourceType === RESOURCESTYPE.FSX) {
-            acc.push({
-                path: `${SSM_PARAMETERS_BASE_PATH}/${resourceId}`,
-                value: {
-                    fsx: {
-                        username,
-                        password
-                    }
-                }
-            });
-        }
-        return acc;
-    }, []);
-}
-
-function getErrorMessage(detectResponse: Record<string, string>) {
-    logger.debug('Get detect resource error message', { detectResponse });
-
-    let errorMessage = '';
-    if (detectResponse.hasOwnProperty('requiredModuleError') && detectResponse.requiredModuleError) {
-        errorMessage += `requiredModuleError: ${detectResponse.requiredModuleError}, `;
-    }
-
-    if (detectResponse.hasOwnProperty('sqlServerError') && detectResponse.sqlServerError) {
-        errorMessage += `sqlServerError: ${detectResponse.sqlServerError}, `;
-    }
-
-    if (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError) {
-        errorMessage += `fsxnError: ${detectResponse.fsxnError}`;
-    }
-
-    errorMessage = errorMessage?.replace(', ', '');
-    return errorMessage;
-}
-
-async function validateAndStoreDiscoveredParameters(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    instanceId: string,
-    credentials: DiscoverCredentialsType[],
-    clusterNodesIpAddress?: string[]
-) {
-    logger.info('Validate and store SSM parameters', { accountId, credentialsId, region, instanceId });
-
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return {
-            databaseCount: '10',
-            sqlServerEdition: 'Standard Edition (64-bit)'
-        };
-    }
-
-    try {
-        if (!accountId || !credentialsId || !region || !instanceId) {
-            logger.error('Invalid input parameters', { accountId, credentialsId, region, instanceId });
-            throw new Error('Invalid input parameters');
-        }
-
-        credentials = uniqBy(credentials, 'resourceId');
-        const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
-        const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
-        if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials)) {
-            throw new Error('Credentials cannot be empty');
-        }
-
-        let instanceIds = [instanceId];
-        if (clusterNodesIpAddress && !isEmpty(clusterNodesIpAddress)) {
-            try {
-                const clusterNodeDetails =
-                    (await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNodesIpAddress)) || [];
-                instanceIds = clusterNodeDetails.map(e => e.ec2InstanceId);
-            } catch (error) {
-                logger.error('Error while generating resource id for SSM parameter: ', error);
-            }
-        }
-
-        const detectResponse = await validateCredentials(
-            credentialsId,
-            region,
-            instanceId,
-            fsxCredentials,
-            sqlCredentials,
-            instanceIds
-        );
-
-        if (!detectResponse?.requiredModuleError && fsxCredentials && !detectResponse?.fsxnError) {
-            await registerFsxOntapCredentials(
-                accountId,
-                credentialsId,
-                region,
-                fsxCredentials.resourceId,
-                fsxCredentials.password
-            );
-        }
-
-        const errorMessage = getErrorMessage(detectResponse);
-        if (errorMessage) {
-            logger.error('Failed to validate credentials', errorMessage);
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
-        }
-
-        return detectResponse;
-    } catch (error: any) {
-        logger.error('Failed to validate credentials', error);
-        throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
-    }
-}
-
 async function fetchUnmanagedHostsInformationV2(
     accountId: string,
     credentialsId: string,
@@ -1003,34 +867,207 @@ async function fetchUnmanagedHostsInformationV2(
     };
 }
 
+function prepareParametersToStore(instanceIds: string[], credentials: DiscoverCredentialsType[]) {
+    logger.debug('prepare parameters to store', { instanceIds });
+
+    return credentials.reduce((acc: SSMParamterObject[], { resourceId, resourceType, username, password }) => {
+        if (resourceType === RESOURCESTYPE.MSSQL) {
+            const sqlItem = acc.find(el => el.value.sql);
+
+            if (sqlItem && Array.isArray(sqlItem.value.sql)) {
+                sqlItem.value.sql.push({
+                    sqlinstancename: resourceId,
+                    username,
+                    password
+                });
+            } else {
+                instanceIds.forEach(instanceId =>
+                    acc.push({
+                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                        value: {
+                            sql: [
+                                {
+                                    sqlinstancename: resourceId,
+                                    username,
+                                    password
+                                }
+                            ]
+                        }
+                    })
+                );
+            }
+        } else if (resourceType === RESOURCESTYPE.FSX) {
+            acc.push({
+                path: `${SSM_PARAMETERS_BASE_PATH}/${resourceId}`,
+                value: {
+                    fsx: {
+                        username,
+                        password
+                    }
+                }
+            });
+        } else if (resourceType === RESOURCESTYPE.WINDOWS_USER) {
+            const windowsUserItem = acc.find(el => el.value.domain);
+
+            if (windowsUserItem && Array.isArray(windowsUserItem.value.domain)) {
+                windowsUserItem.value.domain.push({
+                    sqlinstancename: resourceId,
+                    username: escapeBackslash(username),
+                    password
+                });
+            } else {
+                instanceIds.forEach(instanceId =>
+                    acc.push({
+                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                        value: {
+                            domain: [
+                                {
+                                    sqlinstancename: resourceId,
+                                    username: escapeBackslash(username),
+                                    password
+                                }
+                            ]
+                        }
+                    })
+                );
+            }
+        }
+        return acc;
+    }, []);
+}
+
+function getErrorMessage(detectResponse: Record<string, string>) {
+    logger.debug('Get detect resource error message', { detectResponse });
+
+    let errorMessage = '';
+    if (detectResponse.hasOwnProperty('requiredModuleError') && detectResponse.requiredModuleError) {
+        errorMessage += `requiredModuleError: ${detectResponse.requiredModuleError}, `;
+    }
+
+    if (detectResponse.hasOwnProperty('sqlServerError') && detectResponse.sqlServerError) {
+        errorMessage += `sqlServerError: ${detectResponse.sqlServerError}, `;
+    }
+
+    if (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError) {
+        errorMessage += `fsxnError: ${detectResponse.fsxnError}`;
+    }
+
+    errorMessage = errorMessage?.replace(', ', '');
+    return errorMessage;
+}
+
+async function validateAndStoreDiscoveredParameters(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    credentials: DiscoverCredentialsType[],
+    clusterNodesIpAddress?: string[]
+) {
+    logger.info('Validate and store SSM parameters', { accountId, credentialsId, region, instanceId });
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        return {
+            databaseCount: '10',
+            sqlServerEdition: 'Standard Edition (64-bit)'
+        };
+    }
+
+    try {
+        if (!accountId || !credentialsId || !region || !instanceId) {
+            logger.error('Invalid input parameters', { accountId, credentialsId, region, instanceId });
+            throw new Error('Invalid input parameters');
+        }
+
+        credentials = uniqBy(credentials, 'resourceId');
+        const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
+        const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
+        const windowsUserCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.WINDOWS_USER);
+        if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials) && isEmpty(windowsUserCredentials)) {
+            throw new Error('Credentials cannot be empty');
+        }
+
+        let instanceIds = [instanceId];
+        if (clusterNodesIpAddress && !isEmpty(clusterNodesIpAddress)) {
+            try {
+                const clusterNodeDetails =
+                    (await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNodesIpAddress)) || [];
+                instanceIds = clusterNodeDetails.map(e => e.ec2InstanceId);
+            } catch (error) {
+                logger.error('Error while generating resource id for SSM parameter: ', error);
+            }
+        }
+
+        const detectResponse = await validateCredentials(
+            credentialsId,
+            region,
+            instanceId,
+            fsxCredentials,
+            sqlCredentials,
+            windowsUserCredentials,
+            instanceIds
+        );
+
+        if (!detectResponse?.requiredModuleError && fsxCredentials && !detectResponse?.fsxnError) {
+            await registerFsxOntapCredentials(
+                accountId,
+                credentialsId,
+                region,
+                fsxCredentials.resourceId,
+                fsxCredentials.password
+            );
+        }
+
+        const errorMessage = getErrorMessage(detectResponse);
+        if (errorMessage) {
+            logger.error('Failed to validate credentials', errorMessage);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+        }
+
+        return detectResponse;
+    } catch (error: any) {
+        logger.error('Failed to validate credentials', error);
+        throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
+    }
+}
+
 async function rewriteOrDeleteSSMParameter(
     credentialsId: string,
     region: string,
     instanceIds: string[],
-    paramesToDelete: string[],
+    paramsToDelete: string[],
     instancesToBeDeleted: string[],
     fsxCredentials: DiscoverCredentialsType,
-    sqlCredentials: DiscoverCredentialsType[]
+    sqlCredentials: DiscoverCredentialsType[],
+    windowsUserCredentials: DiscoverCredentialsType[]
 ) {
     logger.info('Calling rewriteOrDeleteSSMParameter', {
         credentialsId,
         region,
         instanceIds,
-        paramesToDelete,
+        paramsToDelete,
         instancesToBeDeleted,
         fsxCredentials,
-        sqlCredentials
+        sqlCredentials,
+        windowsUserCredentials
     });
-    if (sqlCredentials.length === instancesToBeDeleted.length) {
+    if (
+        sqlCredentials.length === instancesToBeDeleted.length ||
+        windowsUserCredentials.length === instancesToBeDeleted.length
+    ) {
         // Delete the parameter store all credentials are invalid
-        instanceIds.forEach(instanceId => paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
-        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+        instanceIds.forEach(instanceId => paramsToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
+        await deleteSSMParameter(credentialsId, region, paramsToDelete);
     } else {
         // Rewrite parameter store after removing invalid credentials
         const latestSqlCredentials = sqlCredentials.filter(e => !instancesToBeDeleted.includes(e.resourceId));
+        const latestWindowsUserCredentials = windowsUserCredentials.filter(
+            e => !instancesToBeDeleted.includes(e.resourceId)
+        );
         const creds = prepareParametersToStore(instanceIds, [
             ...(fsxCredentials ? [fsxCredentials] : []),
-            ...latestSqlCredentials
+            ...latestSqlCredentials,
+            ...latestWindowsUserCredentials
         ]);
         await ssmPutParameters(credentialsId, region, creds);
     }
@@ -1042,9 +1079,16 @@ async function validateCredentials(
     instanceId: string,
     fsxCredentials: DiscoverCredentialsType | undefined,
     sqlCredentials: DiscoverCredentialsType[],
+    windowsUserCredentials: DiscoverCredentialsType[],
     instanceIds: string[]
 ) {
-    logger.info('Validate credentials', { instanceId, fsxCredentials, sqlCredentials, instanceIds });
+    logger.info('Validate credentials', {
+        instanceId,
+        fsxCredentials,
+        sqlCredentials,
+        windowsUserCredentials,
+        instanceIds
+    });
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
 
@@ -1060,14 +1104,22 @@ async function validateCredentials(
     }
 
     const newSqlCredentials = cloneDeep(sqlCredentials);
-    await verifyAndCreateCredentials(credentialsId, region, instanceId, fsxCredentials, newSqlCredentials, instanceIds);
+    await verifyAndCreateCredentials(
+        credentialsId,
+        region,
+        instanceId,
+        fsxCredentials,
+        newSqlCredentials,
+        windowsUserCredentials,
+        instanceIds
+    );
 
     let parsedResponse;
 
     try {
         let command = '$WarningPreference = "SilentlyContinue";';
 
-        if (fsxCredentials || sqlCredentials.length) {
+        if (fsxCredentials || sqlCredentials.length || windowsUserCredentials) {
             // Get signed url for aws_ssm.zip to install the ps modules
             const bucketname = getArtifactsRegionBucketName(region);
             const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
@@ -1084,6 +1136,14 @@ async function validateCredentials(
         if (sqlCredentials.length) {
             command += sqlCredentials.reduce(
                 (acc: string, { resourceId }) => `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId)};\n`,
+                ''
+            );
+        }
+
+        if (!isEmpty(windowsUserCredentials)) {
+            command += windowsUserCredentials.reduce(
+                (acc: string, { resourceId }) =>
+                    `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId, true)};\n`,
                 ''
             );
         }
@@ -1111,20 +1171,20 @@ async function validateCredentials(
         }
 
         const response: Record<string, string> = {};
-        const paramesToDelete: string[] = [];
+        const paramsToDelete: string[] = [];
         const instancesToBeDeleted: string[] = [];
 
         if (parsedResponse.requiredModuleError) {
             response.requiredModuleError = parsedResponse.requiredModuleError;
         } else {
             if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
-                paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+                paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
                 response.fsxnError = parsedResponse?.ontaperror;
             }
 
-            if (sqlCredentials.length) {
+            if (sqlCredentials.length || windowsUserCredentials.length) {
                 if (parsedResponse.sqlInstanceConnectivity === false) {
-                    instancesToBeDeleted.push(sqlCredentials[0].resourceId);
+                    instancesToBeDeleted.push(sqlCredentials[0]?.resourceId ?? windowsUserCredentials[0]?.resourceId);
                     response.sqlServerError = parsedResponse?.sqlerror;
                 } else if (parsedResponse.sqlInstanceConnectivity === true) {
                     response.sqlServerEdition = parsedResponse?.sqlEdition;
@@ -1138,34 +1198,39 @@ async function validateCredentials(
                 credentialsId,
                 region,
                 instanceIds,
-                paramesToDelete,
+                paramsToDelete,
                 instancesToBeDeleted,
                 fsxCredentials!,
-                newSqlCredentials
+                newSqlCredentials,
+                windowsUserCredentials
             );
         }
         return response;
     } catch (error: any) {
         // delete the ssm parameters if its already created
-        const paramesToDelete: string[] = [];
+        const paramsToDelete: string[] = [];
         const instancesToBeDeleted: string[] = [];
 
         if (fsxCredentials) {
-            paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+            paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
         }
 
-        if (sqlCredentials.length) {
-            instancesToBeDeleted.push(sqlCredentials[0].resourceId);
+        if (sqlCredentials.length || windowsUserCredentials.length) {
+            instancesToBeDeleted.push(
+                ...(sqlCredentials ?? []).map(e => e.resourceId),
+                ...(windowsUserCredentials ?? []).map(e => e.resourceId)
+            );
         }
 
         await rewriteOrDeleteSSMParameter(
             credentialsId,
             region,
             instanceIds,
-            paramesToDelete,
+            paramsToDelete,
             instancesToBeDeleted,
             fsxCredentials!,
-            newSqlCredentials
+            newSqlCredentials,
+            windowsUserCredentials
         );
 
         throw createError(
@@ -1181,6 +1246,7 @@ async function verifyAndCreateCredentials(
     instanceId: string,
     fsxCredentials: DiscoverCredentialsType | undefined,
     sqlCredentials: DiscoverCredentialsType[],
+    windowsUserCredentials: DiscoverCredentialsType[],
     instanceIds: string[]
 ) {
     logger.info('Verify and create credentials', { instanceId });
@@ -1197,13 +1263,13 @@ async function verifyAndCreateCredentials(
         }
     }
 
-    if (sqlCredentials.length) {
+    if (sqlCredentials.length || windowsUserCredentials.length) {
         const existingParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
         if (!existingParameters) {
             const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
             setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), ...instanceIds]);
         } else {
-            const { sql } = JSON.parse(existingParameters);
+            const { sql, domain } = JSON.parse(existingParameters);
             if (sql) {
                 const newSqlInstances = sqlCredentials.map(e => e.resourceId);
                 sql.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
@@ -1217,12 +1283,26 @@ async function verifyAndCreateCredentials(
                     }
                 });
             }
+            if (domain) {
+                const newDomainUsers = windowsUserCredentials.map(e => e.resourceId);
+                domain.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
+                    if (!newDomainUsers.includes(e.sqlinstancename)) {
+                        windowsUserCredentials.push({
+                            resourceId: e.sqlinstancename,
+                            resourceType: RESOURCESTYPE.WINDOWS_USER,
+                            username: e.username,
+                            password: e.password
+                        });
+                    }
+                });
+            }
         }
     }
 
     const creds = prepareParametersToStore(instanceIds, [
         ...(fsxCredentials ? [fsxCredentials] : []),
-        ...sqlCredentials
+        ...sqlCredentials,
+        ...windowsUserCredentials
     ]);
 
     await ssmPutParameters(credentialsId, region, creds);

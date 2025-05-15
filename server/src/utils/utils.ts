@@ -1032,6 +1032,10 @@ function generateSqlResourceId(node1InstanceId: string, node2InstanceId?: string
     return node2InstanceId ? generateHash(sortedInstanceIds.join('')) : generateHash(node1InstanceId);
 }
 
+function escapeBackslash(str: string) {
+    return str && !str.includes('\\') ? str.replace(/\\/g, '\\\\') : str;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1093,5 +1097,6 @@ export {
     determineVolumeType,
     formatSsmArrayResponse,
     generateSqlResourceId,
-    extractSqlInstanceName
+    extractSqlInstanceName,
+    escapeBackslash
 };

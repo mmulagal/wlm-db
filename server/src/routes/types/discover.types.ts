@@ -214,8 +214,12 @@ type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
 type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
 
 const DiscoverCredentials = Type.Object({
-    resourceId: Type.String({ minLength: 1, description: 'SQL server instance id or FSxN file-system id' }),
-    resourceType: Type.String({ enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL] }),
+    resourceId: Type.String({
+        minLength: 1,
+        description:
+            'For types MSSQL and WINDOWS_USER, this is the sql instannce name. For FSX, this is the file system ID.'
+    }),
+    resourceType: Type.String({ enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL, RESOURCESTYPE.WINDOWS_USER] }),
     username: Type.String({ minLength: 1 }),
     password: Type.String({ minLength: 1 })
 });

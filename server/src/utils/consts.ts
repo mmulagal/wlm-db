@@ -300,7 +300,8 @@ enum AWSQueryFields {
 enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
     FSX = 'FSX',
-    PGSQL = 'PGSQL'
+    PGSQL = 'PGSQL',
+    WINDOWS_USER = 'WINDOWS_USER'
 }
 
 const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
