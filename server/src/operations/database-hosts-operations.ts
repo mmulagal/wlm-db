@@ -866,6 +866,14 @@ async function getDatabaseHostsSummaryV2(
         resourceDetails.map(r => [r.resource_id, (r as any)?.database_instances?.flat()])
     );
 
+    managedInstancesMap.forEach((value: DatabaseInstance[], key) => {
+        if (value && value.length > 0) {
+            value.forEach((instance: DatabaseInstance) => {
+                [instance.resource] = resourceDetails.filter(r => r.resource_id === key);
+            });
+        }
+    });
+
     const databaseHosts: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
     try {
         await Promise.all(
