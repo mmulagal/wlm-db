@@ -1,6 +1,6 @@
 import { createReadStream } from 'node:fs';
-import { groupBy } from "lodash-es";
-import logger from '../../logs-analyzer/src/utils/logging';
+import { groupBy } from 'lodash-es';
+import logger from '../utils/logging';
 import { MSSQL_ERROR_PATTERN } from '../utils/const';
 
 interface MsSqlErrorLog {
@@ -24,7 +24,7 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
     return new Promise<MsSqlErrorLog[]>((resolve, reject) => {
         stream.on('data', chunk => {
             buffer += chunk;
-            let lines = buffer.split('\n');
+            const lines = buffer.split('\n');
             buffer = lines.pop() || '';
 
             logger.debug(`Processing chunk from file: ${filePath}`);
@@ -37,39 +37,37 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
                 const match = MSSQL_ERROR_PATTERN.exec(line);
 
                 if (timestampLastLogProcessed && match) {
-                    const [_, timestamp] = match;
-                    const logTimestamp = new Date(timestamp).getTime();
-                    if (logTimestamp <= timestampLastLogProcessed) {
-                        continue; // Skip logs older than the last processed timestamp
+                    const [, errorLogTimestamp] = match;
+                    const logTimestamp = new Date(errorLogTimestamp).getTime();
+                    if (logTimestamp >= timestampLastLogProcessed) {
+                        if (!errorSet.has(line)) {
+                            logger.debug(`Error found in file: ${filePath}, line: ${line}`);
+                            const [, timestamp, spid, errorCode = '', severity = '', state = ''] = match;
+                            const start = Math.max(0, i - contextLines);
+                            const end = Math.min(lines.length, i + contextLines + 1);
+                            const contextData = lines
+                                .slice(start, end)
+                                .map(currLine => currLine.replace(/[^\x20-\x7E]/g, ''))
+                                .filter(currentLine => {
+                                    const contextMatch = MSSQL_ERROR_PATTERN.exec(currentLine);
+                                    if (contextMatch) {
+                                        const [, contextTimestamp, contextSpid] = contextMatch;
+                                        return contextTimestamp === timestamp && contextSpid === spid;
+                                    }
+                                    return false;
+                                });
+                            const context = contextData.join('\n');
+                            // unshift to push error to the beginning of the array so that the latest error logs are at the top
+                            errorLogs.unshift({ timestamp, spid, errorCode, severity, state, context, error: line });
+                            // errorLogs.push({ timestamp, spid, errorCode, severity, state, context, error: line });
+                            contextData.forEach(item => errorSet.add(item));
+                        }
                     }
                 }
-                if (match) {
-                    if (!errorSet.has(line)) {
-                        logger.debug(`Error found in file: ${filePath}, line: ${line}`);
-                        const [_, timestamp, spid, errorCode = '', severity = '', state = ''] = match;
-                        const start = Math.max(0, i - contextLines);
-                        const end = Math.min(lines.length, i + contextLines + 1);
-                        const contextData = lines.slice(start, end).map(currLine => currLine.replace(/[^\x20-\x7E]/g, '')).filter((currentLine) => {
-                            const contextMatch = MSSQL_ERROR_PATTERN.exec(currentLine);
-                            if (contextMatch) {
-                                const [_, contextTimestamp, contextSpid] = contextMatch;
-                                return contextTimestamp === timestamp && contextSpid === spid
-                            }
-                            return false;
-                        })
-                        const context = contextData.join('\n');
-                        // unshift to push error to the beginning of the array so that the latest error logs are at the top
-                        errorLogs.unshift({ timestamp, spid, errorCode, severity, state, context, error: line });
-                        //errorLogs.push({ timestamp, spid, errorCode, severity, state, context, error: line });
-                        contextData.forEach(item => errorSet.add(item))
-                    }
-                }
-
             }
 
             // order logs by timestamp
             errorLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
         });
 
         stream.on('end', () => {
@@ -100,8 +98,4 @@ async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[]) {
     return { uniqueErrorLogs };
 }
 
-export {
-    MsSqlErrorLog,
-    readMsSqlLogsFile,
-    getUniqueErrorAndRespectiveCount
-}
+export { MsSqlErrorLog, readMsSqlLogsFile, getUniqueErrorAndRespectiveCount };

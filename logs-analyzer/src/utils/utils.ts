@@ -1,9 +1,9 @@
-import { execa } from "execa";
-import { readdirSync, statSync, unlinkSync } from "node:fs";
-import ms from "ms";
+import { execa } from 'execa';
+import { readdirSync, statSync, unlinkSync } from 'node:fs';
+import ms from 'ms';
 import zlib from 'zlib';
-import { join } from "node:path";
-import logger from "../src/utils/logging";
+import { join } from 'node:path';
+import logger from './logging';
 
 function getPowershellScript(sql: string[]) {
     return `
@@ -11,7 +11,7 @@ function getPowershellScript(sql: string[]) {
 
         # Define the list of queries
         $queries = @(
-            ${sql.map(sqlQuery => `'${sqlQuery.replace(/'/g, "''")}'`).join(",\n  ")}
+            ${sql.map(sqlQuery => `'${sqlQuery.replace(/'/g, "''")}'`).join(',\n  ')}
         )
 
 
@@ -26,7 +26,7 @@ function getPowershellScript(sql: string[]) {
             if ($instance.Name -eq 'MSSQLSERVER') {
                 $instanceName = '$env:computername'
             } else {
-                $instanceName = $instance.Name -replace 'MSSQL\$', ''
+                $instanceName = $instance.Name -replace 'MSSQL$', ''
             }
 
             # Iterate over each query and execute it on the current instance
@@ -62,7 +62,7 @@ function getBashScript(sql: string[]) {
 
         # Define the list of queries
         queries=(
-            ${sql.map(sqlQuery => `"${sqlQuery.replace(/"/g, '\\"')}"`).join(" \\\n")}
+            ${sql.map(sqlQuery => `"${sqlQuery.replace(/"/g, '\\"')}"`).join(' \\\n')}
         )
 
         # Initialize an array to store the results
@@ -86,23 +86,22 @@ function getBashScript(sql: string[]) {
     `;
 }
 
-
 async function runPowerShellScript(scriptContent: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        const powershell = execa("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "-"]);
+        const powershell = execa('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', '-']);
 
-        let output = "";
-        let errorOutput = "";
+        let output = '';
+        let errorOutput = '';
 
-        powershell.stdout?.on("data", (data: Buffer) => {
+        powershell.stdout?.on('data', (data: Buffer) => {
             output += data.toString();
         });
 
-        powershell.stderr?.on("data", (data: Buffer) => {
+        powershell.stderr?.on('data', (data: Buffer) => {
             errorOutput += data.toString();
         });
 
-        powershell.on("close", (code: number) => {
+        powershell.on('close', (code: number) => {
             if (code === 0) {
                 resolve(output.trim());
             } else {
@@ -110,7 +109,7 @@ async function runPowerShellScript(scriptContent: string): Promise<string> {
             }
         });
 
-        powershell.on("error", (err: Error) => {
+        powershell.on('error', (err: Error) => {
             reject(err);
         });
 
@@ -119,23 +118,22 @@ async function runPowerShellScript(scriptContent: string): Promise<string> {
     });
 }
 
-
 async function runBashScript(scriptContent: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        const bash = execa("/bin/bash", ["-c", scriptContent]);
+        const bash = execa('/bin/bash', ['-c', scriptContent]);
 
-        let output = "";
-        let errorOutput = "";
+        let output = '';
+        let errorOutput = '';
 
-        bash.stdout?.on("data", (data: Buffer) => {
+        bash.stdout?.on('data', (data: Buffer) => {
             output += data.toString();
         });
 
-        bash.stderr?.on("data", (data: Buffer) => {
+        bash.stderr?.on('data', (data: Buffer) => {
             errorOutput += data.toString();
         });
 
-        bash.on("close", (code: number) => {
+        bash.on('close', (code: number) => {
             if (code === 0) {
                 resolve(output.trim());
             } else {
@@ -143,17 +141,16 @@ async function runBashScript(scriptContent: string): Promise<string> {
             }
         });
 
-        bash.on("error", (err: Error) => {
+        bash.on('error', (err: Error) => {
             reject(err);
         });
     });
 }
 
-//Function to deflate a string using zlib , currently not being used. But can be used in the future when we need to compress the data before sending it to cloud watch
+// Function to deflate a string using zlib , currently not being used. But can be used in the future when we need to compress the data before sending it to cloud watch
 function deflateString(stringToCompress: string) {
-
     if (!stringToCompress || stringToCompress.trim() === '') {
-        console.info('The string to compress is either null or empty.');
+        logger.info('The string to compress is either null or empty.');
         return null;
     }
 
@@ -177,18 +174,20 @@ function deleteOlderFilesInDirectory(directory: string, days: number = 3) {
             const filePath = join(directory, file);
             const stats = statSync(filePath);
             const fileAge = now.getTime() - stats.mtimeMs;
-            if (fileAge > ms(`${days}d`)) { //days in milliseconds
+            if (fileAge > ms(`${days}d`)) {
+                // days in milliseconds
                 unlinkSync(filePath);
             }
         }
-
     } catch (error) {
-        console.error(`Error deleting older files in directory ${directory}:`, error);
+        logger.error(`Error deleting older files in directory ${directory}:`, error);
     }
 }
 export {
-    getPowershellScript, getBashScript,
-    runPowerShellScript, runBashScript,
+    getPowershellScript,
+    getBashScript,
+    runPowerShellScript,
+    runBashScript,
     deflateString,
     deleteOlderFilesInDirectory
-}
+};

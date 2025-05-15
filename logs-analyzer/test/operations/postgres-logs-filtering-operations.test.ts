@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { readPostgresLogsFile, getUniquePostgresErrors } from '../../operations/postgres-logs-filtering-operations';
 import ms from 'ms';
+import { readPostgresLogsFile, getUniquePostgresErrors } from '../../src/operations/postgres-logs-filtering-operations';
 
 describe('readPostgresLogsFile', () => {
     it('should process valid PGSQL log files and return unique error logs', async () => {
@@ -19,6 +19,5 @@ describe('readPostgresLogsFile', () => {
         const response = await getUniquePostgresErrors(logs);
 
         expect(response.uniqueErrorLogs).toBeDefined();
-    }
-    );
+    });
 });

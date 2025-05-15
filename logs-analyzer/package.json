@@ -61,9 +61,12 @@
     "pkg:linux": "npm run bundle && npx pkg dist/agent.js --targets node20-linux-x64 --output dist/agent-linux",
     "pkg:all": "npm run pkg:win && npm run pkg:mac && npm run pkg:linux",
     "build": "rimraf dist && tsc && copyfiles -u 0 \"src/**/*.json\" dist",
-    "lint": "eslint . --ext .ts",
     "start": "tsc && node dist/app.js",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "format": "../node_modules/prettier/bin-prettier.js --write \"{src,test}/**/*.ts\"",
+    "format:check": "../node_modules/prettier/bin-prettier.js --check \"{src,test}/**/*.ts\"",
+    "lint": "../node_modules/eslint/bin/eslint.js \"{src,test}/**/*.ts\"",
+    "lint:fix": "../node_modules/eslint/bin/eslint.js \"{src,test}/**/*.ts\" --fix"
   },
   "type": "module",
   "version": "1.0.0"

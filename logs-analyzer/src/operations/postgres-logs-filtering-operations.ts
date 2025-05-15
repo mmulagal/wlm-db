@@ -1,8 +1,7 @@
 import { createReadStream } from 'node:fs';
-import { groupBy } from "lodash-es";
-import logger from '../../logs-analyzer/src/utils/logging';
+import { groupBy } from 'lodash-es';
+import logger from '../utils/logging';
 import { PGSQL_ERROR_PATTERN } from '../utils/const';
-
 
 interface PostgresLog {
     timestamp: string;
@@ -24,7 +23,7 @@ async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed:
     return new Promise<PostgresLog[]>((resolve, reject) => {
         stream.on('data', chunk => {
             buffer += chunk;
-            let lines = buffer.split('\n');
+            const lines = buffer.split('\n');
             buffer = lines.pop() || '';
 
             const contextLines = 15;
@@ -35,29 +34,28 @@ async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed:
                 const match = PGSQL_ERROR_PATTERN.exec(line);
 
                 if (timestampLastLogProcessed && match) {
-                    const [_, timestamp] = match;
-                    const logTimestamp = new Date(timestamp).getTime();
-                    if (logTimestamp <= timestampLastLogProcessed) {
-                        continue; // Skip logs older than the last processed timestamp
-                    }
-                }
-
-                if (match) {
-                    const [_, timestamp, processId, severity, message] = match;
-                    if (!logSet.has(message)) {
-                        const start = Math.max(0, i - contextLines);
-                        const end = Math.min(lines.length, i + contextLines + 1);
-                        const contextData = lines.slice(start, end).map(currLine => currLine.replace(/[^\x20-\x7E]/g, '')).filter((currentLine) => {
-                            const contextMatch = PGSQL_ERROR_PATTERN.exec(currentLine);
-                            if (contextMatch) {
-                                const [_, contextTimestamp, contextProcessId] = contextMatch;
-                                return contextTimestamp === timestamp && contextProcessId === processId;
-                            }
-                            return false;
-                        });
-                        const context = contextData.join('\n');
-                        logs.unshift({ timestamp, processId, message, context, severity });
-                        contextData.forEach(item => logSet.add(item));
+                    const [, errorLogTimestamp] = match;
+                    const logTimestamp = new Date(errorLogTimestamp).getTime();
+                    if (logTimestamp >= timestampLastLogProcessed) {
+                        const [, timestamp, processId, severity, message] = match;
+                        if (!logSet.has(message)) {
+                            const start = Math.max(0, i - contextLines);
+                            const end = Math.min(lines.length, i + contextLines + 1);
+                            const contextData = lines
+                                .slice(start, end)
+                                .map(currLine => currLine.replace(/[^\x20-\x7E]/g, ''))
+                                .filter(currentLine => {
+                                    const contextMatch = PGSQL_ERROR_PATTERN.exec(currentLine);
+                                    if (contextMatch) {
+                                        const [, contextTimestamp, contextProcessId] = contextMatch;
+                                        return contextTimestamp === timestamp && contextProcessId === processId;
+                                    }
+                                    return false;
+                                });
+                            const context = contextData.join('\n');
+                            logs.unshift({ timestamp, processId, message, context, severity });
+                            contextData.forEach(item => logSet.add(item));
+                        }
                     }
                 }
             }
@@ -90,8 +88,4 @@ async function getUniquePostgresErrors(logs: PostgresLog[]) {
     return { uniqueErrorLogs };
 }
 
-export {
-    PostgresLog,
-    readPostgresLogsFile,
-    getUniquePostgresErrors
-}
+export { PostgresLog, readPostgresLogsFile, getUniquePostgresErrors };

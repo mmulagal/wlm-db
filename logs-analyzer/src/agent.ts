@@ -1,23 +1,34 @@
-import { readdirSync, mkdirSync, existsSync, writeFileSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { BedrockRuntimeClient, ConversationRole, InferenceConfiguration } from "@aws-sdk/client-bedrock-runtime";
-import { createHash } from "node:crypto";
-import { CloudWatchLogsClient, CreateLogStreamCommand, DescribeLogStreamsCommand, PutLogEventsCommand } from '@aws-sdk/client-cloudwatch-logs';
-import { DATABASE_TYPE, MSSQL_ERROR_LOGS_ANALYZER_PROMPT, PGSQL_ERROR_LOGS_ANALYZER_PROMPT, PGSQL_REMEDIATION_RECOMMENDATION_PROMPT, REMIDIATION_RECOMMENDATION_PROMPT } from "../utils/const";
-import streamMessages from "../aws/bedrock";
-import collectLogs from "../operations/logs-filtering-operations";
-import { TOOLS } from "../utils/tools";
-import { getPowershellScript, getBashScript, runPowerShellScript, deleteOlderFilesInDirectory } from "../utils/utils";
-import { compact, isEmpty } from "lodash-es";
-import { execa } from "execa";
+import { BedrockRuntimeClient, ConversationRole, InferenceConfiguration } from '@aws-sdk/client-bedrock-runtime';
+import { createHash } from 'node:crypto';
+import {
+    CloudWatchLogsClient,
+    CreateLogStreamCommand,
+    DescribeLogStreamsCommand,
+    PutLogEventsCommand
+} from '@aws-sdk/client-cloudwatch-logs';
+import { compact, isEmpty } from 'lodash-es';
+import { execa } from 'execa';
+import pLimit from 'p-limit';
+import {
+    DATABASE_TYPE,
+    MSSQL_ERROR_LOGS_ANALYZER_PROMPT,
+    PGSQL_ERROR_LOGS_ANALYZER_PROMPT,
+    PGSQL_REMEDIATION_RECOMMENDATION_PROMPT,
+    REMIDIATION_RECOMMENDATION_PROMPT
+} from './utils/const';
+import streamMessages from './aws/bedrock';
+import collectLogs from '../operations/logs-filtering-operations';
+import TOOLS from './utils/tools';
+import { getPowershellScript, getBashScript, runPowerShellScript, deleteOlderFilesInDirectory } from './utils/utils';
 import logger from './utils/logging';
 import { ErrorLg, ToolUse, Message, ToolSpec, ErrorLogWithScript } from './utils/interfaces';
-import pLimit from 'p-limit';
 
-const argv = yargs(hideBin(process.argv))
+const { argv } = yargs(hideBin(process.argv))
     .option('logs-path', {
         alias: 'l',
         type: 'string',
@@ -97,12 +108,24 @@ const argv = yargs(hideBin(process.argv))
         type: 'boolean',
         description: 'Show help'
     })
-    .help()
-    .argv;
+    .help();
 
 logger.info('Command line arguments:', argv);
 
-const { 'logs-path': LOGS_FOLDER, 'job-id': JOB_ID, 'instance-id': INSTANCE_ID, 'log-level': LOG_LEVEL, region: REGION, 'model-id': MODEL_ID, 'model-region': MODEL_REGION, timestamp: TIMESTAMP_LAST_LOG_PROCESSED, 'logs-count-to-consider': LOGS_COUNT, 'top-p': TOP_P, 'temperature': TEMP, 'max-tokens': MAX_TOKENS } = argv as any;
+const {
+    'logs-path': LOGS_FOLDER,
+    'job-id': JOB_ID,
+    'instance-id': INSTANCE_ID,
+    'log-level': LOG_LEVEL,
+    region: REGION,
+    'model-id': MODEL_ID,
+    'model-region': MODEL_REGION,
+    timestamp: TIMESTAMP_LAST_LOG_PROCESSED,
+    'logs-count-to-consider': LOGS_COUNT,
+    'top-p': TOP_P,
+    temperature: TEMP,
+    'max-tokens': MAX_TOKENS
+} = argv as any;
 
 const INFERENCE_CONFIG = {
     temperature: parseFloat(TEMP),
@@ -118,26 +141,36 @@ const logStreamSuffix = 'aws-runPowerShellScript/stdout';
 const logStreamName = `${INSTANCE_ID}-logs-analyzer/${JOB_ID}/${logStreamSuffix}`;
 const CW_OUTPUT_PATH = `${logGroupName}/${logStreamName}`;
 
+const remidiationRecommendation: {
+    error: string;
+    cause: string;
+    count: number;
+    severity: string | number;
+    remediation: string;
+}[] = [];
 
-let remidiationRecommendation: { error: string; cause: string; count: number; severity: string | number, remediation: string; }[] = [];
-
-initiateLogsAnalysis(`Analyze the SQL profiles logs available in ${LOGS_FOLDER} and provide remediation recommendations for the errors found in the logs.`);
+initiateLogsAnalysis(
+    `Analyze the SQL profiles logs available in ${LOGS_FOLDER} and provide remediation recommendations for the errors found in the logs.`
+);
 
 async function initiateLogsAnalysis(inputText: string) {
-
     logger.info('Step 1: Initializing client and preparing messages.');
     const client = new BedrockRuntimeClient({ region: MODEL_REGION });
     const uniqueQueryMap = new Map();
-    const messages: Message[] = [{
-        role: ConversationRole.USER,
-        content: [{
-            text: inputText
-        }]
-    }];
+    const messages: Message[] = [
+        {
+            role: ConversationRole.USER,
+            content: [
+                {
+                    text: inputText
+                }
+            ]
+        }
+    ];
     const toolConfig = { tools: TOOLS };
 
     logger.info('Step 2: Creating output directory and file paths.');
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const outputDir = join(process.cwd(), 'output');
     if (!existsSync(outputDir)) {
         mkdirSync(outputDir);
@@ -145,31 +178,31 @@ async function initiateLogsAnalysis(inputText: string) {
     const conversationFilePath = join(outputDir, `conversation_history_${timestamp}.json`);
     const remediationFilePath = join(outputDir, `remediation_recommendations_${timestamp}.json`);
     const statusFilePath = join(outputDir, `status_${timestamp}.txt`);
-    writeFileSync(statusFilePath, "In Progress", "utf-8");
+    writeFileSync(statusFilePath, 'In Progress', 'utf-8');
 
     try {
         logger.info('Step 3: Streaming messages and handling tool use.');
-        let { stopReason, message } = await streamMessages(client, MODEL_ID, messages, toolConfig, INFERENCE_CONFIG);
+        const { stopReason, message } = await streamMessages(client, MODEL_ID, messages, toolConfig, INFERENCE_CONFIG);
         messages.push(message);
 
-        if (stopReason === "tool_use") {
+        if (stopReason === 'tool_use') {
             await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, INFERENCE_CONFIG);
         }
 
         logger.info('Step 4: Writing output files.');
-        writeFileSync(conversationFilePath, JSON.stringify(messages, null, 2), "utf-8");
-        writeFileSync(remediationFilePath, JSON.stringify(remidiationRecommendation, null, 2), "utf-8");
-        writeFileSync(statusFilePath, "Completed", "utf-8");
+        writeFileSync(conversationFilePath, JSON.stringify(messages, null, 2), 'utf-8');
+        writeFileSync(remediationFilePath, JSON.stringify(remidiationRecommendation, null, 2), 'utf-8');
+        writeFileSync(statusFilePath, 'Completed', 'utf-8');
 
         logger.debug('Conversation history:', JSON.stringify(messages, null, 2));
         logger.debug('Recommendations for remediation are:', JSON.stringify(remidiationRecommendation, null, 2));
 
-        //delete files older than 7 days
+        // delete files older than 7 days
         deleteOlderFilesInDirectory(outputDir, 7);
 
         const response = {
-            status: "success",
-            message: "Logs analysis complete.",
+            status: 'success',
+            message: 'Logs analysis complete.',
             data: {
                 conversationFilePath,
                 remediationFilePath,
@@ -181,28 +214,44 @@ async function initiateLogsAnalysis(inputText: string) {
         logger.info('Step 5: Writing to CloudWatch Logs.');
         await writeToCloudWatchLogGroup(JSON.stringify(response));
     } catch (err) {
-        writeFileSync(statusFilePath, "Failed", "utf-8");
+        writeFileSync(statusFilePath, 'Failed', 'utf-8');
         handleError(err);
     } finally {
-        logger.info(`Log analysis completed for ${LOGS_FOLDER}. Output files are saved in ${outputDir} of the database node. Log analysis results are available in Cloud watch logs at ${CW_OUTPUT_PATH}`);
+        logger.info(
+            `Log analysis completed for ${LOGS_FOLDER}. Output files are saved in ${outputDir} of the database node. Log analysis results are available in Cloud watch logs at ${CW_OUTPUT_PATH}`
+        );
     }
 }
 
-async function handleToolUse(client: BedrockRuntimeClient, message: Message, messages: Message[], toolConfig: { tools: ToolSpec[] }, uniqueQueryMap: Map<string, string[]>, INFERENCE_CONFIG: InferenceConfiguration) {
-    let stopReason = "";
+async function handleToolUse(
+    client: BedrockRuntimeClient,
+    message: Message,
+    messages: Message[],
+    toolConfig: { tools: ToolSpec[] },
+    uniqueQueryMap: Map<string, string[]>,
+    inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG
+) {
+    const stopReason = '';
     if (message?.content) {
-        for (const content of message?.content) {
-            if (content.toolUse) {
+        for (const content of message.content) {
+            if (content?.toolUse) {
                 const tool = content.toolUse;
 
                 switch (tool?.name) {
                     case 'analyze_db_logs': {
-                        const result = await analyzeDatabaseApplicationLogs(tool, client, LOGS_FOLDER, messages, INFERENCE_CONFIG);
+                        const result = await analyzeDatabaseApplicationLogs(
+                            tool,
+                            client,
+                            LOGS_FOLDER,
+                            messages,
+                            INFERENCE_CONFIG
+                        );
                         if (result && result.messages) {
-                            logger.info("Log analysis completed. Stopping further tool use.");
+                            logger.info('Log analysis completed. Stopping further tool use.');
 
                             return; // Stop recursion here
                         }
+                        break;
                     }
                     default: {
                         logger.info(`Tool ${tool.name} is not supported`);
@@ -210,31 +259,49 @@ async function handleToolUse(client: BedrockRuntimeClient, message: Message, mes
                     }
                 }
 
-                if (stopReason === "tool_use") {
-                    await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, INFERENCE_CONFIG);
+                if (stopReason === 'tool_use') {
+                    await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, inferenceConfig);
                 }
             }
         }
     }
 }
 
-async function analyzeErrorLogs(databaseType: string, client: BedrockRuntimeClient, errorLogs: ErrorLg[], INFERENCE_CONFIG: InferenceConfiguration) {
-    logger.info("Analyzing error logs.", { databaseType });
+async function analyzeErrorLogs(
+    databaseType: string,
+    client: BedrockRuntimeClient,
+    errorLogs: ErrorLg[],
+    inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG
+) {
+    logger.info('Analyzing error logs.', { databaseType });
 
     const errorLogsWithCause: Message[] = [];
     const errorLogsWithScripts = [];
 
-    const prompt = databaseType === DATABASE_TYPE.MSSQL ? MSSQL_ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
+    const prompt =
+        databaseType === DATABASE_TYPE.MSSQL ? MSSQL_ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
 
-    await Promise.all(errorLogs.map(logChunk => pLimit(5)(async () => {
-        const response = await streamMessages(client, MODEL_ID, [{
-            role: ConversationRole.USER,
-            content: [{ text: prompt + JSON.stringify(logChunk) }]
-        }], undefined, INFERENCE_CONFIG);
+    await Promise.all(
+        errorLogs.map(logChunk =>
+            pLimit(5)(async () => {
+                const response = await streamMessages(
+                    client,
+                    MODEL_ID,
+                    [
+                        {
+                            role: ConversationRole.USER,
+                            content: [{ text: prompt + JSON.stringify(logChunk) }]
+                        }
+                    ],
+                    undefined,
+                    inferenceConfig
+                );
 
-        const { message } = response;
-        errorLogsWithCause.push(message);
-    })));
+                const { message } = response;
+                errorLogsWithCause.push(message);
+            })
+        )
+    );
 
     const assistantMessages = compact(
         errorLogsWithCause
@@ -249,37 +316,46 @@ async function analyzeErrorLogs(databaseType: string, client: BedrockRuntimeClie
 }
 
 function parseSuggestedScripts(assistantMessages: string[]) {
-    logger.info("Parsing suggested scripts from assistant messages.");
+    logger.info('Parsing suggested scripts from assistant messages.');
 
-    return compact(assistantMessages
-        .filter((asstMsg: string) => {
-            if (asstMsg && asstMsg.includes('error')) {
-                try {
-                    const parsedMsg = JSON.parse(asstMsg);
-                    return parsedMsg.sql !== undefined;
-                } catch (error) {
-                    logger.error("Failed to parse assistant message in JSON:", { error, asstMsg });
-                    return false;
+    return compact(
+        assistantMessages
+            .filter((asstMsg: string) => {
+                if (asstMsg && asstMsg.includes('error')) {
+                    try {
+                        const parsedMsg = JSON.parse(asstMsg);
+                        return parsedMsg.sql !== undefined;
+                    } catch (error) {
+                        logger.error('Failed to parse assistant message in JSON:', { error, asstMsg });
+                        return false;
+                    }
                 }
-            }
-            return false;
-        })
-        .map((message: string) => {
-            try {
-                const { error, cause, count, severity, sql: { query } } = JSON.parse(message);
-                const filteredQueries = query.filter((queryEntry: string) => queryEntry !== 'NA');
-                return { error, cause, count, severity, sql: filteredQueries };
-            } catch (error) {
-                logger.error("Failed to parse JSON:", { message, error });
-            }
-        }));
+                return false;
+            })
+            .map((message: string) => {
+                try {
+                    const {
+                        error,
+                        cause,
+                        count,
+                        severity,
+                        sql: { query }
+                    } = JSON.parse(message);
+                    const filteredQueries = query.filter((queryEntry: string) => queryEntry !== 'NA');
+                    return { error, cause, count, severity, sql: filteredQueries };
+                } catch (error) {
+                    logger.error('Failed to parse JSON:', { message, error });
+                    return {};
+                }
+            })
+    );
 }
 
 async function runBashScript(scriptContent: string): Promise<string> {
-    logger.info("Running bash script.");
+    logger.info('Running bash script.');
 
     try {
-        const { stdout } = await execa("bash", ["-c", scriptContent]);
+        const { stdout } = await execa('bash', ['-c', scriptContent]);
         return stdout.trim();
     } catch (error) {
         if (error instanceof Error) {
@@ -291,14 +367,16 @@ async function runBashScript(scriptContent: string): Promise<string> {
 }
 
 async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWithScripts: ErrorLogWithScript[]) {
-    logger.info("Checking and executing additional scripts.");
+    logger.info('Checking and executing additional scripts.');
 
     const result = [];
 
     const uniqueQueryMap = new Map();
     errorLogsWithScripts.forEach((logWithScript: ErrorLogWithScript) => {
         const { error, cause, count, severity, sql = [] } = logWithScript;
-        const queryKey = createHash('sha256').update(sql.map((queryEntry: { query: string; }) => queryEntry?.query).join('|')).digest('hex');
+        const queryKey = createHash('sha256')
+            .update(sql.map((queryEntry: { query: string }) => queryEntry?.query).join('|'))
+            .digest('hex');
 
         if (!uniqueQueryMap.has(queryKey)) {
             uniqueQueryMap.set(queryKey, [{ error, cause, count, severity, sql }]);
@@ -307,13 +385,23 @@ async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWi
         }
     });
 
-    for (const [_, value] of uniqueQueryMap.entries()) {
+    for (const [, value] of uniqueQueryMap.entries()) {
         const [{ sql }] = value;
         if (!isEmpty(sql)) {
-            const response = databaseType === DATABASE_TYPE.MSSQL ? await runPowerShellScript(getPowershellScript(sql)) : await runBashScript(getBashScript(sql));
-            const errorAndCauseWithAdditionalInfo = value.map(({ error, cause, count, severity, sql }: ErrorLogWithScript) => ({
-                error, cause, count, severity, sql, additionalInfo: response
-            }));
+            const response =
+                databaseType === DATABASE_TYPE.MSSQL
+                    ? await runPowerShellScript(getPowershellScript(sql))
+                    : await runBashScript(getBashScript(sql));
+            const errorAndCauseWithAdditionalInfo = value.map(
+                ({ error, cause, count, severity, sql: sqlQueries }: ErrorLogWithScript) => ({
+                    error,
+                    cause,
+                    count,
+                    severity,
+                    sql: sqlQueries,
+                    additionalInfo: response
+                })
+            );
             result.push(...errorAndCauseWithAdditionalInfo);
         }
     }
@@ -321,94 +409,131 @@ async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWi
     return { result };
 }
 
-async function recommendRemediation(databaseType: string, client: BedrockRuntimeClient, result: string[], INFERENCE_CONFIG: InferenceConfiguration) {
-    logger.info("Recommending remediation for errors.", { databaseType });
+async function recommendRemediation(
+    databaseType: string,
+    client: BedrockRuntimeClient,
+    result: string[],
+    inferenceConfig: InferenceConfiguration
+) {
+    logger.info('Recommending remediation for errors.', { databaseType });
 
-    const prompt = databaseType === DATABASE_TYPE.MSSQL ? REMIDIATION_RECOMMENDATION_PROMPT : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
+    const prompt =
+        databaseType === DATABASE_TYPE.MSSQL
+            ? REMIDIATION_RECOMMENDATION_PROMPT
+            : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
 
     for (const errorWithInfo of result) {
-        const response = await streamMessages(client, MODEL_ID, [{
-            role: ConversationRole.USER,
-            content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
-        }], undefined, INFERENCE_CONFIG);
+        const response = await streamMessages(
+            client,
+            MODEL_ID,
+            [
+                {
+                    role: ConversationRole.USER,
+                    content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
+                }
+            ],
+            undefined,
+            inferenceConfig
+        );
 
         const { message } = response;
         const { content: [{ text }] = [] } = message;
-        if (!text) {
-            logger.error("No text found in the response.");
-            continue;
+        if (text) {
+            const { error, cause, count, severity, remediation } = JSON.parse(text);
+            remidiationRecommendation.push({ error, cause, count, severity, remediation });
+        } else {
+            logger.error('No text found in the response.');
         }
-        const { error, cause, count, severity, remediation } = JSON.parse(text);
-        remidiationRecommendation.push({ error, cause, count, severity, remediation });
     }
     return remidiationRecommendation;
 }
 
 async function getDatabaseDetails(logsFolderPath: string) {
-    logger.info("Getting database details from logs.");
-    let databaseDetails: { logFile: string; databaseType: string; databaseVersion: string; } | null = null;
+    logger.info('Getting database details from logs.');
+    let databaseDetails: { logFile: string; databaseType: string; databaseVersion: string } | null = null;
 
-    const logFiles = readdirSync(logsFolderPath).filter(file => file.endsWith('.trc') || file.endsWith('.xel') || file.endsWith('.log') || file.startsWith('ERRORLOG'));
+    const logFiles = readdirSync(logsFolderPath).filter(
+        file => file.endsWith('.trc') || file.endsWith('.xel') || file.endsWith('.log') || file.startsWith('ERRORLOG')
+    );
 
     const limit = pLimit(3); // Limit concurrency to 3
 
-    await Promise.all(logFiles.map(logFile => limit(async () => {
-        const filePath = join(logsFolderPath, logFile);
-        const fileContent = readFileSync(filePath, 'utf-8').replace(/[^\x20-\x7E]/g, '');
-        let databaseType = 'Unknown';
-        let databaseVersion = 'Unknown';
+    await Promise.all(
+        logFiles.map(logFile =>
+            limit(async () => {
+                const filePath = join(logsFolderPath, logFile);
+                const fileContent = readFileSync(filePath, 'utf-8').replace(/[^\x20-\x7E]/g, '');
+                let databaseType = 'Unknown';
+                let databaseVersion = 'Unknown';
 
-        if (fileContent.includes('Microsoft SQL Server')) {
-            databaseType = DATABASE_TYPE.MSSQL;
-            const versionMatch = fileContent.match(/Microsoft SQL Server\s+([\d\.]+)/);
-            if (versionMatch) {
-                databaseVersion = versionMatch[1];
-            }
-        } else if (fileContent.includes('PostgreSQL')) {
-            databaseType = DATABASE_TYPE.POSTGRESQL;
-            const versionMatch = fileContent.match(/PostgreSQL\s+([\d\.]+)/);
-            if (versionMatch) {
-                databaseVersion = versionMatch[1];
-            }
-        }
+                if (fileContent.includes('Microsoft SQL Server')) {
+                    databaseType = DATABASE_TYPE.MSSQL;
+                    const versionMatch = fileContent.match(/Microsoft SQL Server\s+([\d.]+)/);
+                    if (versionMatch) {
+                        [, databaseVersion] = versionMatch;
+                    }
+                } else if (fileContent.includes('PostgreSQL')) {
+                    databaseType = DATABASE_TYPE.POSTGRESQL;
+                    const versionMatch = fileContent.match(/PostgreSQL\s+([\d.]+)/);
+                    if (versionMatch) {
+                        [, databaseVersion] = versionMatch;
+                    }
+                }
 
-        if (!databaseDetails) {
-            databaseDetails = { logFile, databaseType, databaseVersion };
-        }
-    })));
+                if (!databaseDetails) {
+                    databaseDetails = { logFile, databaseType, databaseVersion };
+                }
+            })
+        )
+    );
     if (isEmpty(databaseDetails)) {
-        const errorMessage = "No database type or version found in the logs.";
+        const errorMessage = 'No database type or version found in the logs.';
         logger.error(errorMessage);
         throw new Error(errorMessage);
     }
     return databaseDetails;
 }
 
-async function analyzeDatabaseApplicationLogs(tool: ToolUse, client: BedrockRuntimeClient, logsFolderPath: string, messages: Message[], INFERENCE_CONFIG: InferenceConfiguration) {
-    logger.info("Analyzing database application logs.", { logsFolderPath });
+async function analyzeDatabaseApplicationLogs(
+    tool: ToolUse,
+    client: BedrockRuntimeClient,
+    logsFolderPath: string,
+    messages: Message[],
+    inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG
+) {
+    logger.info('Analyzing database application logs.', { logsFolderPath });
 
     const databaseDetails = await getDatabaseDetails(logsFolderPath);
     // Collect logs based on the identified database type
     const { databaseType: dbType = '' } = databaseDetails || {};
 
-    const { uniqueErrorLogs: errorLogs } = await collectLogs(dbType, logsFolderPath, TIMESTAMP_LAST_LOG_PROCESSED, LOGS_COUNT);
+    const { uniqueErrorLogs: errorLogs } = await collectLogs(
+        dbType,
+        logsFolderPath,
+        TIMESTAMP_LAST_LOG_PROCESSED,
+        LOGS_COUNT
+    );
 
     if (isEmpty(errorLogs)) {
-        logger.error("No error logs found in the logs.");
+        logger.error('No error logs found in the logs.');
         return;
     }
 
     // Analyze the error logs to identify the cause of the errors and find out if any additional scripts need to be run
-    const { errorLogsWithScripts } = await analyzeErrorLogs(dbType, client, errorLogs, INFERENCE_CONFIG);
+    const { errorLogsWithScripts } = await analyzeErrorLogs(dbType, client, errorLogs, inferenceConfig);
 
     if (!isEmpty(errorLogsWithScripts)) {
         const { result } = await checkAndExecuteAdditionalScript(dbType, errorLogsWithScripts);
-        await recommendRemediation(dbType || DATABASE_TYPE.MSSQL, client, result, INFERENCE_CONFIG);
+        await recommendRemediation(dbType || DATABASE_TYPE.MSSQL, client, result, inferenceConfig);
     }
 
     const toolResult = {
         toolUseId: tool.toolUseId,
-        content: [{ text: `Logs analysis done and recommendations found for logs in ${logsFolderPath}.Stop further tool use.` }],
+        content: [
+            {
+                text: `Logs analysis done and recommendations found for logs in ${logsFolderPath}.Stop further tool use.`
+            }
+        ]
     };
 
     messages.push({
@@ -428,7 +553,7 @@ async function writeToCloudWatchLogGroup(message: string) {
         // check if log stream exists
         const describeLogStreamsCommand = new DescribeLogStreamsCommand({
             logGroupName,
-            logStreamNamePrefix: logStreamName,
+            logStreamNamePrefix: logStreamName
         });
         const describeLogStreamsResponse = await client.send(describeLogStreamsCommand);
         if (describeLogStreamsResponse.logStreams && describeLogStreamsResponse.logStreams.length > 0) {
@@ -437,7 +562,7 @@ async function writeToCloudWatchLogGroup(message: string) {
             // Create the log stream if it doesn't exist
             const createLogStreamCommand = new CreateLogStreamCommand({
                 logGroupName,
-                logStreamName,
+                logStreamName
             });
             await client.send(createLogStreamCommand);
             logger.info('Log stream created:', logStreamName);
@@ -462,5 +587,5 @@ async function writeToCloudWatchLogGroup(message: string) {
 }
 
 function handleError(err: any) {
-    logger.error("A client error occurred:", err);
+    logger.error('A client error occurred:', err);
 }

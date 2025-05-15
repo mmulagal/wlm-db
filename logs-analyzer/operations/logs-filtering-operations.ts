@@ -1,10 +1,10 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { getUniqueErrorAndRespectiveCount, MsSqlErrorLog, readMsSqlLogsFile } from './mssql-logs-filtering-operations';
-import { getUniquePostgresErrors, PostgresLog, readPostgresLogsFile } from './postgres-logs-filtering-operations';
+import { getUniqueErrorAndRespectiveCount, MsSqlErrorLog, readMsSqlLogsFile } from '../src/operations/mssql-logs-filtering-operations'
+import { getUniquePostgresErrors, PostgresLog, readPostgresLogsFile } from '../src/operations/postgres-logs-filtering-operations'
 import { isEmpty } from 'lodash-es';
 import logger from '../../logs-analyzer/src/utils/logging';
-import { DATABASE_TYPE } from '../utils/const';
+import { DATABASE_TYPE } from '../src/utils/const';
 
 
 export default async function collectLogs(databaseType: string, logsFolderPath: string, timestampLastLogProcessed: number, logsCount: number) {
