@@ -121,7 +121,8 @@ export const FROM_DIALOG = {
     SANDBOX_REFRESH: 'sandbox_refresh',
     DISMISS: 'dismiss',
     OPTIMIZE: 'optimize',
-    FSXADMIN: 'fsxadmin'
+    FSXADMIN: 'fsxadmin',
+    SQLSERVER: 'sqlserver'
 };
 
 export const DBType = {

@@ -12,6 +12,7 @@ import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseH
 import { getAssessmentHostListGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import {
     setFSXId,
+    setSqlServerId,
     setGwPageLoadInstanceData,
     setLandingFrom,
     setSelectedWellArchitectTab
@@ -78,6 +79,12 @@ const OptimizeByCategory = () => {
         dispatch(
             setFSXId({
                 fsxId: selectedAssessmentRow?.fsxId,
+                ec2InstanceId: selectedAssessmentRow?.ec2InstanceId
+            })
+        );
+        dispatch(
+            setSqlServerId({
+                sqlServerId: selectedAssessmentRow?.sqlServerId,
                 ec2InstanceId: selectedAssessmentRow?.ec2InstanceId
             })
         );

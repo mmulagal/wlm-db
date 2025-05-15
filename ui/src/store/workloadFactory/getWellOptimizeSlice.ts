@@ -53,6 +53,7 @@ const initialState: GetWellSliceInterface = {
     visitedTabs: {},
     resetDetails: {
         fsxId: '',
+        sqlServerId: '',
         ec2InstanceId: ''
     }
 };
@@ -63,6 +64,9 @@ const getWellOptimizeSlice = createSlice({
     reducers: {
         setFSXId: (state, action: PayloadAction<any>) => {
             state.resetDetails = action.payload;
+        },
+        setSqlServerId: (state, action: PayloadAction<any>) => {
+            state.resetDetails.sqlServerId = action.payload;
         },
         setTabVisited: (state, action: PayloadAction<any>) => {
             state.visitedTabs[action.payload] = true;
@@ -233,6 +237,7 @@ const getWellOptimizeSlice = createSlice({
 
 export const {
     setFSXId,
+    setSqlServerId,
     setTabVisited,
     resetVisitedTabs,
     setSelectedWellArchitectTab,

@@ -12,6 +12,7 @@ export interface WorkloadFactoryResourceEntities {
     selectedHostname: string;
     isResourceRefresh: boolean;
     fsxAdminPasswords: any;
+    sqlServerPasswords: any;
 }
 
 export interface WorkloadFactoryResourceDetails {

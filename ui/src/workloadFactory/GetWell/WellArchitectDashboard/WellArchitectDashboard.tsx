@@ -37,13 +37,15 @@ import { useRegisterResourceCredentialsMutation, workloadFactoryResourceApiV2 } 
 import {
     setFsxAdminConfirmPassword,
     setFsxAdminPassword,
+    setSqlServerConfirmPassword,
+    setSqlServerPassword,
     setIsResourceRefresh,
     setPasswordResetLoading
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetGwValuesOnRefresh } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
-import FSXPasswordContent from './FSXPasswordContent/FSXPasswordContent';
+import { FSXPasswordContent, SQLServerPasswordContent } from './FSXPasswordContent/FSXPasswordContent';
 import SandboxInstanceTable from './ResourceMSSQLOverview/SandboxInstanceTable/SandboxInstanceTable';
 import {
     setAggregatedSandboxInstanceList,
@@ -148,6 +150,21 @@ const WellArchitectDashboard = () => {
         return { credentials: credList };
     };
 
+    const createSqlPayload = () => {
+        const state = store.getState();
+        const { sqlServerPasswords } = state.workloadFactoryResource;
+        const { password } = sqlServerPasswords;
+        let credList = [];
+        credList.push({
+            resourceId: resetDetails?.sqlServerId,
+            resourceType: DETECT_HOST_VAR.MSSQL,
+            username: 'sqlserver',
+            password: password
+        });
+
+        return { credentials: credList };
+    };
+
     const handleFSXAdminApply = async () => {
         dispatch(setPasswordResetLoading(true));
         try {
@@ -219,6 +236,78 @@ const WellArchitectDashboard = () => {
             />
         );
     };
+    
+    const handleSQLServerApply = async () => {
+        dispatch(setPasswordResetLoading(true));
+        try {
+            const result: any = await registerResourceCred({
+                credentialId: selectedResourceCredId,
+                regionId: selectedResourceRegionId,
+                instanceId: resetDetails?.ec2InstanceId,
+                payload: createSqlPayload()
+            });
+            if (result && !result?.error) {
+                if (!result?.data?.sqlError) {
+                    dispatch(setSqlServerPassword(''));
+                    dispatch(setSqlServerConfirmPassword(''));
+                    dispatch(
+                        addNotification({
+                            type: NOTIFICATION_TYPES.SUCCESS,
+                            message: 'SQLServer password reset successfully'
+                        })
+                    );
+                } else {
+                    dispatch(setSqlServerPassword(''));
+                    dispatch(setSqlServerConfirmPassword(''));
+                    dispatch(
+                        addNotification({
+                            type: NOTIFICATION_TYPES.ERROR,
+                            message: result?.data?.fsxnError || 'Failed to reset SQLServer password. '
+                        })
+                    );
+                }
+            } else {
+                dispatch(setSqlServerPassword(''));
+                dispatch(setSqlServerConfirmPassword(''));
+                dispatch(
+                    addNotification({
+                        type: NOTIFICATION_TYPES.ERROR,
+                        message: result?.error?.data?.message || 'Failed to reset SQLServer password. '
+                    })
+                );
+            }
+        } catch (error) {
+            dispatch(setSqlServerPassword(''));
+            dispatch(setSqlServerConfirmPassword(''));
+            dispatch(
+                addNotification({
+                    type: NOTIFICATION_TYPES.ERROR,
+                    message: error || 'Failed to reset SQLServer password. '
+                })
+            );
+        } finally {
+            dispatch(setPasswordResetLoading(false));
+            closeDialog();
+        }
+    };
+    
+    const handleSqlPassword = () => {
+        setDialog(
+            <DialogComponent
+                header={'Reset SQL Server password'}
+                content={<SQLServerPasswordContent />}
+                primaryButton={GENERAL.APPLY}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    handleSQLServerApply();
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                dialogFrom={FROM_DIALOG.SQLSERVER}
+            />
+        );
+    };
 
     return (
         <div className={styles['well-architect-dashboard']}>
@@ -283,7 +372,9 @@ const WellArchitectDashboard = () => {
                                     id: 'resetSQLServerPassword',
                                     children: 'Reset SQL server password',
 
-                                    onClick: () => {}
+                                    onClick: () => {
+                                        handleSqlPassword();
+                                    }
                                 },
                                 {
                                     id: 'resetFSxAdminPassword',

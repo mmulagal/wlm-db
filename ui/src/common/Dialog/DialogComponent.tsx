@@ -59,7 +59,15 @@ const DialogComponent = ({
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
-    const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
+    //const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
+    const { password, confirmPassword } = useAppSelector(state => {
+        if (dialogFrom === FROM_DIALOG.FSXADMIN) {
+            return state.workloadFactoryResource.fsxAdminPasswords;
+        } else if (dialogFrom === FROM_DIALOG.SQLSERVER) {
+            return state.workloadFactoryResource.sqlServerPasswords;
+        }
+        return { password: '', confirmPassword: '' }; 
+    });
     const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
 
     //Managed Host table button disable
@@ -72,7 +80,8 @@ const DialogComponent = ({
             ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) &&
                 isSaveConfigLoading) ||
             (dialogFrom === FROM_DIALOG.DETECT_HOST && detectHostLoading) ||
-            (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading)
+            (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading) ||
+            (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading)
         );
     })();
 
@@ -84,7 +93,8 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.SAVE_CONFIG &&
             dialogFrom !== FROM_DIALOG.HEADER_CROSS &&
             dialogFrom !== FROM_DIALOG.DETECT_HOST &&
-            dialogFrom !== FROM_DIALOG.FSXADMIN
+            dialogFrom !== FROM_DIALOG.FSXADMIN &&
+            dialogFrom !== FROM_DIALOG.SQLSERVER 
         ) {
             closeDialog();
         }
@@ -114,14 +124,14 @@ const DialogComponent = ({
         dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
 
     const disabledCheck = () => {
-        //Condition to disable Apply in FSX Admin password dialog
+        //Condition to disable Apply in FSX Admin and SQL Server password dialogs
         if (
-            dialogFrom === FROM_DIALOG.FSXADMIN &&
+            (dialogFrom === FROM_DIALOG.FSXADMIN || dialogFrom === FROM_DIALOG.SQLSERVER) &&
             ((password.length === 0 && confirmPassword.length === 0) ||
                 password !== confirmPassword ||
                 isValidPassword(password))
         ) {
-            return true;
+                return true;
         }
         //Condition to disable primary button for AWS backup dialog
         if (
