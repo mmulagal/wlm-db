@@ -1,7 +1,14 @@
 import { HttpResponse } from '@smithy/types';
 import nock from 'nock';
 
-nock(/https?:\/\/bedrock.(.+).amazonaws.com/)
+import { mockClient } from 'aws-sdk-client-mock';
+import { BedrockClient, InferenceProfileSummary, ListInferenceProfilesCommand } from '@aws-sdk/client-bedrock';
+
+import listInferenceProfilesResponse from '../../responses/aws/list-inference-profile.json';
+
+const bedrockMock = mockClient(BedrockClient);
+
+nock(/https?:\/\/bedrock\.(.+)\.amazonaws\.com/)
     .persist(true)
     .get(/^\/foundation-model-availability\/anthropic\.claude-3-7-sonnet-20250219-v1:0$/)
     .reply(
@@ -25,3 +32,11 @@ nock(/https?:\/\/bedrock.(.+).amazonaws.com/)
                 }
             } as HttpResponse)
     );
+
+bedrockMock.on(ListInferenceProfilesCommand).resolves({
+    inferenceProfileSummaries: (listInferenceProfilesResponse as any[]).map(item => ({
+        ...item,
+        createdAt: new Date(item.createdAt),
+        updatedAt: new Date(item.updatedAt)
+    })) as InferenceProfileSummary[]
+});

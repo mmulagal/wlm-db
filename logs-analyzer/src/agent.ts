@@ -82,6 +82,16 @@ const argv = yargs(hideBin(process.argv))
         demandOption: false,
         default: '1000'
     })
+    .option('model-id', {
+        type: 'string',
+        description: 'Model ID to use for analysis',
+        demandOption: true
+    })
+    .option('model-region', {
+        type: 'string',
+        description: 'Model ID to use for analysis',
+        demandOption: true
+    })
     .option('help', {
         alias: 'h',
         type: 'boolean',
@@ -92,7 +102,7 @@ const argv = yargs(hideBin(process.argv))
 
 logger.info('Command line arguments:', argv);
 
-const { 'logs-path': LOGS_FOLDER, 'job-id': JOB_ID, 'instance-id': INSTANCE_ID, 'log-level': LOG_LEVEL, region: REGION, timestamp: TIMESTAMP_LAST_LOG_PROCESSED, 'logs-count-to-consider': LOGS_COUNT, 'top-p': TOP_P, 'temperature': TEMP, 'max-tokens': MAX_TOKENS } = argv as any;
+const { 'logs-path': LOGS_FOLDER, 'job-id': JOB_ID, 'instance-id': INSTANCE_ID, 'log-level': LOG_LEVEL, region: REGION, 'model-id': MODEL_ID, 'model-region': MODEL_REGION, timestamp: TIMESTAMP_LAST_LOG_PROCESSED, 'logs-count-to-consider': LOGS_COUNT, 'top-p': TOP_P, 'temperature': TEMP, 'max-tokens': MAX_TOKENS } = argv as any;
 
 const INFERENCE_CONFIG = {
     temperature: parseFloat(TEMP),
@@ -108,12 +118,8 @@ const logStreamSuffix = 'aws-runPowerShellScript/stdout';
 const logStreamName = `${INSTANCE_ID}-logs-analyzer/${JOB_ID}/${logStreamSuffix}`;
 const CW_OUTPUT_PATH = `${logGroupName}/${logStreamName}`;
 
-const MODEL_ID = "arn:aws:bedrock:us-east-1:464262061435:inference-profile/us.anthropic.claude-3-7-sonnet-20250219-v1:0";
-const MODEL_REGION = 'us-east-1';
 
 let remidiationRecommendation: { error: string; cause: string; count: number; severity: string | number, remediation: string; }[] = [];
-
-
 
 initiateLogsAnalysis(`Analyze the SQL profiles logs available in ${LOGS_FOLDER} and provide remediation recommendations for the errors found in the logs.`);
 
@@ -183,7 +189,6 @@ async function initiateLogsAnalysis(inputText: string) {
 }
 
 async function handleToolUse(client: BedrockRuntimeClient, message: Message, messages: Message[], toolConfig: { tools: ToolSpec[] }, uniqueQueryMap: Map<string, string[]>, INFERENCE_CONFIG: InferenceConfiguration) {
-
     let stopReason = "";
     if (message?.content) {
         for (const content of message?.content) {

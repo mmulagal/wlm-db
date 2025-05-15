@@ -1,4 +1,6 @@
 import createError from 'http-errors';
+
+import { BedrockClient, InferenceProfileType, paginateListInferenceProfiles } from '@aws-sdk/client-bedrock';
 import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from '@aws-sdk/client-bedrock-runtime';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
@@ -13,8 +15,24 @@ import { isDemo } from '../../utils/utils';
 
 const logger = getLogger();
 
+async function getBedrockClient(accountId: string, credentialsId: string, region: string) {
+    logger.debug('Getting bedrock client:', { accountId, credentialsId, region });
+
+    const {
+        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
+    } = await getCredentialsDetails(credentialsId, accountId);
+    const credentials = { accessKeyId, secretAccessKey, sessionToken };
+
+    const client = new BedrockClient({
+        credentials,
+        region,
+        sha256: Sha256
+    });
+    return client;
+}
+
 async function getBedrockRuntimeClient() {
-    logger.debug('Getting bedrock client:');
+    logger.debug('Getting bedrock runtime client:');
 
     return new BedrockRuntimeClient({
         region: BEDROCK_REGION,
@@ -113,4 +131,19 @@ async function getModelAvailability(accountId: string, credentialsId: string, re
     throw createError(statusCode, `AWS Bedrock Model availablity check failed ${reason}`);
 }
 
-export { sendPrompt, getModelAvailability };
+async function listInferenceProfiles(accountId: string, credentialsId: string, region: string) {
+    logger.debug('List inference profile:', { accountId, credentialsId, region });
+
+    const client = await getBedrockClient(accountId, credentialsId, region);
+
+    const inferenceProfiles = [];
+
+    const paginator = paginateListInferenceProfiles({ client }, { typeEquals: InferenceProfileType.SYSTEM_DEFINED });
+
+    for await (const { inferenceProfileSummaries = [] } of paginator) {
+        inferenceProfiles.push(...inferenceProfileSummaries);
+    }
+    return inferenceProfiles;
+}
+
+export { sendPrompt, getModelAvailability, listInferenceProfiles };

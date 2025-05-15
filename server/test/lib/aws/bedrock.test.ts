@@ -1,4 +1,4 @@
-import { getModelAvailability } from '../../../src/lib/aws/bedrock';
+import { getModelAvailability, listInferenceProfiles } from '../../../src/lib/aws/bedrock';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
@@ -12,6 +12,11 @@ describe('getModelAvailability', () => {
             'us-east-1',
             'anthropic.claude-3-7-sonnet-20250219-v1:0'
         );
+        expect(result).toBeDefined();
+    });
+
+    it('Lists inference profiles', async () => {
+        const result = await listInferenceProfiles('accountId', 'credentialsId', 'us-east-1');
         expect(result).toBeDefined();
     });
 });

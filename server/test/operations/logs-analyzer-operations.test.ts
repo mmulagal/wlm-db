@@ -1,7 +1,21 @@
-import { triggerLogsAnalysis } from '../../src/operations/logs-analyzer/logs-analyzer-operations';
+import { handleLogsAnalysis, triggerLogsAnalysis } from '../../src/operations/logs-analyzer/logs-analyzer-operations';
 
-import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
+import {
+    createResource,
+    deleteResource,
+    listDatabaseInstances,
+    upsertDatabaseInstance
+} from '../../src/lib/database/db';
 import { ACCOUNT_ID } from '../utils/consts';
+
+import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
+import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
+import '../simulator/scopes/aws/ssm-scope';
+import '../simulator/scopes/aws/bedrock-scope';
+import '../simulator/scopes/aws/ec2-scope';
+import '../simulator/scopes/aws/iam-scope';
+import '../simulator/scopes/aws/s3-scope';
+import '../simulator/scopes/aws/cloud-watch-logs-scope';
 
 const TEST_RESOURCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
 const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
@@ -46,7 +60,7 @@ describe('Logs Analyzer Operations', () => {
         await deleteResource(ACCOUNT_ID, 'fs-f6082f35c1db');
     });
 
-    it('should trigger logs analysis and return a jobId', async () => {
+    it.skip('should trigger logs analysis and return a jobId', async () => {
         const result = await triggerLogsAnalysis(
             ACCOUNT_ID,
             TEST_CREDENTIALS_ID,
@@ -55,5 +69,21 @@ describe('Logs Analyzer Operations', () => {
             'f4b7c5d3-e1f6-4g2a-9b5d'
         );
         expect(result).toHaveProperty('jobId');
+    });
+
+    it('should run logs analysis and return a jobId', async () => {
+        const [managedInstance] = await listDatabaseInstances(ACCOUNT_ID, {
+            sqlInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d'
+        });
+        const { jobId } = await triggerLogsAnalysis(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            TEST_RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d'
+        );
+        const result =
+            (await handleLogsAnalysis(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, managedInstance, jobId)) || [];
+        expect((result?.[0] as any)?.status).toBeDefined();
     });
 });

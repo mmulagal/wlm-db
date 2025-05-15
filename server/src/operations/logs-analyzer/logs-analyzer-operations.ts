@@ -26,6 +26,7 @@ import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
 import { parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { InferenceConfigType } from '../../routes/types/logs-analyzer.types';
+import getInferenceProfileFromModelId from '../aws/bedrock-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -37,10 +38,25 @@ function getWindowsPrepareScript(scriptParams: {
     version: string;
     instanceId: string;
     region: string;
+    inferenceProfileArn: string;
     jobId?: string;
-    inferenceConfig: InferenceConfigType;
+    inferenceConfig?: InferenceConfigType;
 }): string {
-    const { s3SignedUrl, packageName, logsPath, version, instanceId, region, jobId, inferenceConfig } = scriptParams;
+    const {
+        s3SignedUrl,
+        packageName,
+        logsPath,
+        version,
+        instanceId,
+        region,
+        inferenceProfileArn,
+        jobId,
+        inferenceConfig = {
+            temperature: 0.5,
+            maxTokens: 1000,
+            topP: 0.9
+        }
+    } = scriptParams;
 
     const { temperature, maxTokens, topP } = inferenceConfig;
 
@@ -51,9 +67,12 @@ function getWindowsPrepareScript(scriptParams: {
     $instanceId = "${instanceId}";
     $region = "${region}";
     $jobId = "${jobId}";
+    $modelId = "${inferenceProfileArn}";
+    $modelRegion = "${region}";
     $temperature = ${temperature};
     $maxTokens = ${maxTokens};
     $topP = ${topP};
+
     
 
     function Invoke-RetryCommand {
@@ -104,7 +123,7 @@ function getWindowsPrepareScript(scriptParams: {
             throw "The specified file does not exist."
         }
 
-        Start-Process -FilePath $filePath -ArgumentList "--logs-path $logsPath --log-level info --region eu-west-3 --job-id $jobId --instance-id $instanceId --temperature $temperature --maxTokens $maxTokens --topP $topP" -NoNewWindow -Wait
+        Start-Process -FilePath $filePath -ArgumentList "--logs-path $logsPath --log-level info --region $region --model-id $modelId --model-region $modelRegion --job-id $jobId --instance-id $instanceId --temperature $temperature --maxTokens $maxTokens --topP $topP" -NoNewWindow -Wait
     } catch {
         Write-Host "Failed to run Logs Analyzer. Please check the logs for more details."
         throw
@@ -118,10 +137,25 @@ function getLinuxPrepareScript(scriptParams: {
     version: string;
     instanceId: string;
     region: string;
+    inferenceProfileArn: string;
     jobId?: string;
-    inferenceConfig: InferenceConfigType;
+    inferenceConfig?: InferenceConfigType;
 }): string {
-    const { s3SignedUrl, packageName, logsPath, version, instanceId, region, jobId, inferenceConfig } = scriptParams;
+    const {
+        s3SignedUrl,
+        packageName,
+        logsPath,
+        version,
+        instanceId,
+        region,
+        inferenceProfileArn,
+        jobId,
+        inferenceConfig = {
+            temperature: 0.5,
+            maxTokens: 1000,
+            topP: 0.9
+        }
+    } = scriptParams;
     const { temperature, maxTokens, topP } = inferenceConfig;
 
     return `#!/bin/bash
@@ -133,6 +167,8 @@ version="${version}"
 instanceId="${instanceId}"
 region="${region}"
 jobId="${jobId}"
+    $modelId = "${inferenceProfileArn}";
+    $modelRegion = "${DEFAULT_AWS_REGION}";
     $temperature = ${temperature};
     $maxTokens = ${maxTokens};
     $topP = ${topP};
@@ -173,7 +209,7 @@ if [ ! -f "$filePath" ]; then
 fi
 
 echo "Running the Logs Analyzer..."
-"$filePath" --logs-path "$logsPath" --log-level info --region "$region" --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
+"$filePath" --logs-path "$logsPath" --log-level info --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
 
 if [ $? -ne 0 ]; then
     echo "Failed to run Logs Analyzer. Please check the logs for more details."
@@ -269,72 +305,82 @@ async function handleLogsAnalysis(
     region: string,
     managedInstance: DatabaseInstancesIncludingResource,
     jobId: string,
-    inferenceConfig: InferenceConfigType
+    inferenceConfig?: InferenceConfigType
 ) {
     logger.info(
         `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`
     );
-
-    const databaseInstanceDetails = {
-        ...managedInstance,
-        storage_type: STORAGE_TYPE.FSXN,
-        isManaged: true
-    };
-
-    const { nodeId: activeNodeInstanceId, matchingInstance } = await getActiveNodeAndInstanceDetails(
-        accountId,
-        credentialsId,
-        region,
-        managedInstance.resource,
-        databaseInstanceDetails as unknown as DatabaseInstance
-    );
-
-    await checkLogAnalyzerPreRequisites(accountId, credentialsId, region, activeNodeInstanceId);
-
-    const s3SignedUrl = await getPreSignedUrl(
-        DEFAULT_AWS_REGION,
-        getArtifactsRegionBucketName(DEFAULT_AWS_REGION),
-        LOGS_ANALYZER_BUNDLE_PATH
-    );
-
-    const logsPathQuery = 'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations';
-    const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth(
-        [managedInstance?.database_instance_name],
-        logsPathQuery,
-        matchingInstance?.sqlAuthEnabled
-    );
-    const logsPath = await callSsmExecution(
-        credentialsId,
-        region,
-        [logsAnalysisSsmCommand],
-        activeNodeInstanceId,
-        'Fetch Logs Path for sql server instance'
-    );
-
-    const logsAnalyserScriptCommand =
-        managedInstance.database_type === DATABASE_TYPE.mssql
-            ? getWindowsPrepareScript({
-                  s3SignedUrl,
-                  packageName: LOGS_ANALYZER_PACKAGE_NAME,
-                  logsPath,
-                  version: LOGS_ANALYZER_PACKAGE_VERSION,
-                  instanceId: activeNodeInstanceId,
-                  region,
-                  jobId,
-                  inferenceConfig
-              })
-            : getLinuxPrepareScript({
-                  s3SignedUrl,
-                  packageName: LOGS_ANALYZER_PACKAGE_NAME,
-                  logsPath,
-                  version: LOGS_ANALYZER_PACKAGE_VERSION,
-                  instanceId: activeNodeInstanceId,
-                  region,
-                  jobId,
-                  inferenceConfig
-              });
-
+    let jobStatus;
+    let jobError;
     try {
+        const databaseInstanceDetails = {
+            ...managedInstance,
+            storage_type: STORAGE_TYPE.FSXN,
+            isManaged: true
+        };
+
+        const { nodeId: activeNodeInstanceId, matchingInstance } = await getActiveNodeAndInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            managedInstance.resource,
+            databaseInstanceDetails as unknown as DatabaseInstance
+        );
+
+        const inferenceProfileArn = await getInferenceProfileFromModelId(
+            accountId,
+            credentialsId,
+            region,
+            LOGS_ANALYZER_MODEL_ID
+        );
+
+        await checkLogAnalyzerPreRequisites(accountId, credentialsId, region, activeNodeInstanceId);
+
+        const s3SignedUrl = await getPreSignedUrl(
+            DEFAULT_AWS_REGION,
+            getArtifactsRegionBucketName(DEFAULT_AWS_REGION),
+            LOGS_ANALYZER_BUNDLE_PATH
+        );
+
+        const logsPathQuery = 'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations';
+        const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth(
+            [managedInstance?.database_instance_name],
+            logsPathQuery,
+            matchingInstance?.sqlAuthEnabled
+        );
+        const logsPath = await callSsmExecution(
+            credentialsId,
+            region,
+            [logsAnalysisSsmCommand],
+            activeNodeInstanceId,
+            'Fetch Logs Path for sql server instance'
+        );
+
+        const logsAnalyserScriptCommand =
+            managedInstance.database_type === DATABASE_TYPE.mssql
+                ? getWindowsPrepareScript({
+                      s3SignedUrl,
+                      packageName: LOGS_ANALYZER_PACKAGE_NAME,
+                      logsPath,
+                      version: LOGS_ANALYZER_PACKAGE_VERSION,
+                      instanceId: activeNodeInstanceId,
+                      region,
+                      inferenceProfileArn,
+                      jobId,
+                      inferenceConfig
+                  })
+                : getLinuxPrepareScript({
+                      s3SignedUrl,
+                      packageName: LOGS_ANALYZER_PACKAGE_NAME,
+                      logsPath,
+                      version: LOGS_ANALYZER_PACKAGE_VERSION,
+                      instanceId: activeNodeInstanceId,
+                      region,
+                      inferenceProfileArn,
+                      jobId,
+                      inferenceConfig
+                  });
+
         await callSsmExecution(
             credentialsId,
             region,
@@ -361,8 +407,16 @@ async function handleLogsAnalysis(
         return jsonSsmLogsResponse;
     } catch (error) {
         const errorMessage = `Error executing logs analysis: ${error}`;
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
         logger.error(errorMessage);
-        throw error;
+        jobStatus = JOBSTATUS.FAILED;
+        jobError = errorMessage;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            endTime: Date.now(),
+            status: jobStatus || JOBSTATUS.COMPLETED,
+            error: jobError
+        });
     }
 }
 
@@ -372,11 +426,7 @@ async function triggerLogsAnalysis(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    inferenceConfig: InferenceConfigType = {
-        temperature: 0.5,
-        maxTokens: 1000,
-        topP: 0.9
-    }
+    inferenceConfig?: InferenceConfigType
 ) {
     const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
@@ -397,7 +447,6 @@ async function triggerLogsAnalysis(
     } = managedInstance;
 
     let jobsStatus: string = JOBSTATUS.IN_PROGRESS;
-    let jobError;
     let jobId: string = 'test';
     try {
         const savedInstanceName = `${resourceName}\\${instanceName}`;
@@ -418,24 +467,12 @@ async function triggerLogsAnalysis(
         const errorMessage = `Error triggering logs analysis: ${error}`;
         logger.error(errorMessage);
         jobsStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
         if (error instanceof Error) {
             throw error;
         }
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    } finally {
-        logger.info(
-            `Log analysis operation triggered for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId} , database. Job status: ${jobsStatus}`
-        );
-        if (jobId) {
-            await updateJobDetails(accountId, jobId, {
-                endTime: Date.now(),
-                status: jobsStatus || JOBSTATUS.COMPLETED,
-                error: jobError
-            });
-        }
     }
 }
 
-export { triggerLogsAnalysis };
+export { triggerLogsAnalysis, handleLogsAnalysis };
