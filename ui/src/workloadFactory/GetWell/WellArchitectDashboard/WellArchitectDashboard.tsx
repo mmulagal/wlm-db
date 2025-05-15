@@ -165,23 +165,23 @@ const WellArchitectDashboard = () => {
         return { credentials: credList };
     };
 
-    const handleFSXAdminApply = async () => {
+    const handleFSXAdminApply = async (value: string) => {
         dispatch(setPasswordResetLoading(true));
         try {
             const result: any = await registerResourceCred({
                 credentialId: selectedResourceCredId,
                 regionId: selectedResourceRegionId,
                 instanceId: resetDetails?.ec2InstanceId,
-                payload: createPayload()
+                payload: value === 'fsxReset' ? createPayload() : createSqlPayload()
             });
             if (result && !result?.error) {
-                if (!result?.data?.fsxnError) {
+                if (!result?.data?.fsxnError && !result?.data?.sqlError) {
                     dispatch(setFsxAdminPassword(''));
                     dispatch(setFsxAdminConfirmPassword(''));
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.SUCCESS,
-                            message: 'FSxadmin password reset successfully'
+                            message: `${value === 'fsxReset' ? 'FSxadmin' : 'Sql server'} password reset successfully`
                         })
                     );
                 } else {
@@ -190,7 +190,9 @@ const WellArchitectDashboard = () => {
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.ERROR,
-                            message: result?.data?.fsxnError || 'Failed to reset FSxadmin password. '
+                            message:
+                                result?.data?.fsxnError ||
+                                `Failed to reset ${value === 'fsxReset' ? 'FSxadmin' : 'Sql server'} password. `
                         })
                     );
                 }
@@ -200,7 +202,9 @@ const WellArchitectDashboard = () => {
                 dispatch(
                     addNotification({
                         type: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message || 'Failed to reset FSxadmin password. '
+                        message:
+                            result?.error?.data?.message ||
+                            `Failed to reset ${value === 'fsxReset' ? 'FSxadmin' : 'Sql server'} password. `
                     })
                 );
             }
@@ -210,7 +214,7 @@ const WellArchitectDashboard = () => {
             dispatch(
                 addNotification({
                     type: NOTIFICATION_TYPES.ERROR,
-                    message: error || 'Failed to reset FSxadmin password. '
+                    message: error || `Failed to reset FSxadmin password. `
                 })
             );
         } finally {
@@ -227,7 +231,7 @@ const WellArchitectDashboard = () => {
                 primaryButton={GENERAL.APPLY}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    handleFSXAdminApply();
+                    handleFSXAdminApply('fsxRest');
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -236,61 +240,7 @@ const WellArchitectDashboard = () => {
             />
         );
     };
-    
-    const handleSQLServerApply = async () => {
-        dispatch(setPasswordResetLoading(true));
-        try {
-            const result: any = await registerResourceCred({
-                credentialId: selectedResourceCredId,
-                regionId: selectedResourceRegionId,
-                instanceId: resetDetails?.ec2InstanceId,
-                payload: createSqlPayload()
-            });
-            if (result && !result?.error) {
-                if (!result?.data?.sqlError) {
-                    dispatch(setSqlServerPassword(''));
-                    dispatch(setSqlServerConfirmPassword(''));
-                    dispatch(
-                        addNotification({
-                            type: NOTIFICATION_TYPES.SUCCESS,
-                            message: 'SQLServer password reset successfully'
-                        })
-                    );
-                } else {
-                    dispatch(setSqlServerPassword(''));
-                    dispatch(setSqlServerConfirmPassword(''));
-                    dispatch(
-                        addNotification({
-                            type: NOTIFICATION_TYPES.ERROR,
-                            message: result?.data?.fsxnError || 'Failed to reset SQLServer password. '
-                        })
-                    );
-                }
-            } else {
-                dispatch(setSqlServerPassword(''));
-                dispatch(setSqlServerConfirmPassword(''));
-                dispatch(
-                    addNotification({
-                        type: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message || 'Failed to reset SQLServer password. '
-                    })
-                );
-            }
-        } catch (error) {
-            dispatch(setSqlServerPassword(''));
-            dispatch(setSqlServerConfirmPassword(''));
-            dispatch(
-                addNotification({
-                    type: NOTIFICATION_TYPES.ERROR,
-                    message: error || 'Failed to reset SQLServer password. '
-                })
-            );
-        } finally {
-            dispatch(setPasswordResetLoading(false));
-            closeDialog();
-        }
-    };
-    
+
     const handleSqlPassword = () => {
         setDialog(
             <DialogComponent
@@ -299,7 +249,7 @@ const WellArchitectDashboard = () => {
                 primaryButton={GENERAL.APPLY}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    handleSQLServerApply();
+                    handleFSXAdminApply('sqlReset');
                 }}
                 closeCallback={() => {
                     closeDialog();
