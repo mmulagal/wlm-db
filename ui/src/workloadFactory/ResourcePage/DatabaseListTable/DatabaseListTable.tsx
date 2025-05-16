@@ -221,7 +221,7 @@ const DatabaseListTable = () => {
                             variant={'primary'}
                             className={'continue-button'}
                             isThin={true}
-                            disabled={resourceLoadingState}
+                            isDisabled={resourceLoadingState}
                             onClick={() => {
                                     dispatch(addInitialDBCreateData(initialCreateNewUserState));
                                     dispatch(
