@@ -7,12 +7,13 @@ import {
     setFsxAdminConfirmPassword,
     setFsxAdminPassword,
     setSqlServerConfirmPassword,
-    setSqlServerPassword
+    setSqlServerPassword,
+    setSqlServerUserName
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
-import { isValidPassword } from '../../../../utils/utilityFunctions';
+import { isValidPassword, isValidSqlUsername } from '../../../../utils/utilityFunctions';
 
 interface PasswordContentProps {
     type: 'fsx' | 'sql';
@@ -33,6 +34,7 @@ const PasswordContent = ({
     description,
     username
 }: PasswordContentProps) => {
+    const dispatch = useDispatch();
     const tooltipText = () => {
         return (
             <DsTypography variant="Regular_13" className={styles.infoMsg}>
@@ -68,12 +70,26 @@ const PasswordContent = ({
             </DsTypography>
 
             <div className={styles.textArea}>
-                <TextField
-                    label={GENERAL.USER_NAME}
-                    value={username}
-                    className={styles.textField}
-                    isDisabled={true}
-                />
+                {type === 'fsx' && (
+                    <TextField
+                        label={GENERAL.USER_NAME}
+                        value={username}
+                        className={styles.textField}
+                        isDisabled={true}
+                    />
+                )}
+                {type === 'sql' && (
+                    <TextField
+                        label={GENERAL.USER_NAME}
+                        value={username}
+                        className={styles.textField}
+                        isDisabled={false}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            dispatch(setSqlServerUserName(e.target.value))
+                        }
+                        error={useDelayedError(isValidSqlUsername(username))}
+                    />
+                )}
 
                 <div className={styles.tooltipContainer}>
                     <PasswordField
@@ -132,6 +148,7 @@ const SQLServerPasswordContent = () => {
     const { password: sqlPassword, confirmPassword: sqlConfirmPassword } = useAppSelector(
         state => state.workloadFactoryResource.sqlServerPasswords
     );
+    const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
 
     return (
         <PasswordContent
@@ -141,7 +158,7 @@ const SQLServerPasswordContent = () => {
             setPassword={(value: string) => dispatch(setSqlServerPassword(value))}
             setConfirmPassword={(value: string) => dispatch(setSqlServerConfirmPassword(value))}
             description="The password for the Microsoft SQL Server user is required to manage this instance. Enter a new password."
-            username="sqlserver"
+            username={sqlServerUserName}
         />
     );
 };

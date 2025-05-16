@@ -15,7 +15,7 @@ import styles from './DialogComponent.module.scss';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
 import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
 import { GENERAL } from '../../utils/appConstants';
-import { isValidPassword } from '../../utils/utilityFunctions';
+import { isValidPassword, isValidSqlUsername } from '../../utils/utilityFunctions';
 
 type DialogProps = {
     header: string | any;
@@ -66,8 +66,9 @@ const DialogComponent = ({
         } else if (dialogFrom === FROM_DIALOG.SQLSERVER) {
             return state.workloadFactoryResource.sqlServerPasswords;
         }
-        return { password: '', confirmPassword: '' }; 
+        return { password: '', confirmPassword: '' };
     });
+    const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
     const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
 
     //Managed Host table button disable
@@ -94,7 +95,7 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.HEADER_CROSS &&
             dialogFrom !== FROM_DIALOG.DETECT_HOST &&
             dialogFrom !== FROM_DIALOG.FSXADMIN &&
-            dialogFrom !== FROM_DIALOG.SQLSERVER 
+            dialogFrom !== FROM_DIALOG.SQLSERVER
         ) {
             closeDialog();
         }
@@ -126,12 +127,22 @@ const DialogComponent = ({
     const disabledCheck = () => {
         //Condition to disable Apply in FSX Admin and SQL Server password dialogs
         if (
-            (dialogFrom === FROM_DIALOG.FSXADMIN || dialogFrom === FROM_DIALOG.SQLSERVER) &&
+            (dialogFrom === FROM_DIALOG.SQLSERVER &&
+                ((password.length === 0 && confirmPassword.length === 0) ||
+                    sqlServerUserName.length === 0 ||
+                    password !== confirmPassword ||
+                    isValidPassword(password))) ||
+            isValidSqlUsername(sqlServerUserName)
+        ) {
+            return true;
+        }
+        if (
+            dialogFrom === FROM_DIALOG.FSXADMIN &&
             ((password.length === 0 && confirmPassword.length === 0) ||
                 password !== confirmPassword ||
                 isValidPassword(password))
         ) {
-                return true;
+            return true;
         }
         //Condition to disable primary button for AWS backup dialog
         if (

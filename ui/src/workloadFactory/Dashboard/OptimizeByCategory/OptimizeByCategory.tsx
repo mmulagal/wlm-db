@@ -12,7 +12,6 @@ import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseH
 import { getAssessmentHostListGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import {
     setFSXId,
-    setSqlServerId,
     setGwPageLoadInstanceData,
     setLandingFrom,
     setSelectedWellArchitectTab
