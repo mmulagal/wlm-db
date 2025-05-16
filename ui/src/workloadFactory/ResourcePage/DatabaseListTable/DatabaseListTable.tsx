@@ -1,4 +1,4 @@
-import { Table, useTable, TableTopBar, Typography, TooltipInfo } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, Typography, TooltipInfo, Button } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
@@ -11,13 +11,32 @@ import { GENERAL } from '../../../utils/appConstants';
 import { getProtectionText, isAwsBackupEnabledText } from '../../InventoryV2/InventoryUtilsV2';
 import { PROTECTION_TEXT_STATUS } from '../../../utils/consts';
 import DatabaseHostOverviewApiV2 from '../ResourceHomePage/DatabaseHostOverviewApiV2';
+import { addInitialDBCreateData,
+    initialCreateNewUserState,
+    setCdbPageData 
+} from '../../../store/workloadFactory/createNewDBSlice';
+import { updateResourceId } from '../../../store/authSlice';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 
 const DatabaseListTable = () => {
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
     const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
+    const {
+        selectedHostname,
+        selectedDatabaseInstanceName,
+    } = useAppSelector(state => state.getWellOptimize);
+    const {
+        resourceLoading: resourceLoadingState,
 
+        selectedDatabaseInstance,
+        selectedResourceId,
+        selectedResourceCredId,
+        selectedResourceRegionId
+    } = useAppSelector(state => state.workloadFactoryResource);
+    const use_dispatch = useDispatch();
     DatabaseHostOverviewApiV2();
-
+    const navigate = useNavigate();
     const formatData = (tableData: WorkloadFactoryDatabaseItem[]) => {
         return tableData?.map(perRow => {
             let protectionText = getProtectionText(perRow);
@@ -187,6 +206,10 @@ const DatabaseListTable = () => {
         pageSize: 50,
         isLazyLoading: databaseListLoading
     });
+    function dispatch(arg0: any) {
+        throw new Error('Function not implemented.');
+    }
+
     return (
         <div className={styles.databaseListTable}>
             <TableTopBar
@@ -194,6 +217,33 @@ const DatabaseListTable = () => {
                 tableProps={tableProps}
                 pluralTitle={'Databases'}
                 singularTitle={'Database'}
+                actionsRight={
+                    <div className={styles.databaseButton}>
+                        <Button
+                            variant={'primary'}
+                            className={'continue-button'}
+                            isThin={true}
+                            onClick={() => {
+                                // if (!resourceLoadingState) {
+                                    use_dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                    use_dispatch(
+                                    setCdbPageData({
+                                        dbHostName: selectedHostname,
+                                        instanceId: selectedDatabaseInstance,
+                                        instanceName: selectedDatabaseInstanceName,
+                                        cdbCredId: selectedResourceCredId,
+                                        cdbRegionId: selectedResourceRegionId
+                                    })
+                                );
+                                use_dispatch(updateResourceId(selectedResourceId));
+                                navigate('../create-new-user');
+                                // }
+                            }}
+                        >
+                            {GENERAL.JM_TYPE_CREATE_RESOURCE}
+                        </Button>
+                    </div>
+                }
             />
             <Table
                 //@ts-ignore
