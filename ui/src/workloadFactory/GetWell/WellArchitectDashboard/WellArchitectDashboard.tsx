@@ -107,7 +107,7 @@ const WellArchitectDashboard = () => {
     const handleRefresh = () => {
         if (
             selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW ||
-            selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES
+            (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES && !resourceLoadingState) 
         ) {
             dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(workloadFactoryResourceApiV2.util.resetApiState());
@@ -296,29 +296,7 @@ const WellArchitectDashboard = () => {
                     <div className={styles.buttonContainer}>
                         <ButtonWithDropdown
                             variant="icon"
-                            items={[
-                                {
-                                    id: 'createUserDB',
-                                    children: 'Create a user database',
-                                    // isDisabled: resourceLoadingState,
-                                    onClick: () => {
-                                        // if (!resourceLoadingState) {
-                                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                        dispatch(
-                                            setCdbPageData({
-                                                dbHostName: selectedHostname,
-                                                instanceId: selectedDatabaseInstance,
-                                                instanceName: selectedDatabaseInstanceName,
-                                                cdbCredId: selectedResourceCredId,
-                                                cdbRegionId: selectedResourceRegionId
-                                            })
-                                        );
-                                        dispatch(updateResourceId(selectedResourceId));
-                                        navigate('../create-new-user');
-                                        // }
-                                    }
-                                },
-                                {
+                            items={[{
                                     id: 'resetSQLServerPassword',
                                     children: 'Reset SQL server password',
 
