@@ -90,7 +90,8 @@ import {
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     FAILURE_INFO,
     ACTIVE_DIRECTORY,
-    GET_ACTIVE_DIRECTORY_DETAILS
+    GET_ACTIVE_DIRECTORY_DETAILS,
+    FEATURE_PREPREQUISITES
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, getParametersByPath, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
@@ -628,7 +629,9 @@ async function getHostAndSqlInfoFromPsOutput(
                         windowsOsVersion,
                         windowsClusterName,
                         windowsClusterNodes,
-                        missingSqlPermissions
+                        sqlPermissions,
+                        availablePsModules,
+                        isSqlCmdAvailable
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -642,6 +645,19 @@ async function getHostAndSqlInfoFromPsOutput(
                         (elem: { sqlinstancename: string }) =>
                             elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase()
                     );
+
+                    const featureReadiness = Object.entries(FEATURE_PREPREQUISITES).reduce((acc, [key, value]) => {
+                        acc[key.toLowerCase()] = {
+                            missingSqlPermissions: value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
+                            missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                        };
+                        return acc;
+                    }, {} as Record<string, { missingSqlPermissions: string[]; missingModules: string[] }>);
+
+                    const manageReadiness = {
+                        missingSqlCmd: !isSqlCmdAvailable,
+                        ...featureReadiness
+                    };
 
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
@@ -672,7 +688,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         ...(databaseCount && { databaseCount }),
                         ...(windowsClusterName && { windowsClusterName }),
                         ...(windowsClusterNodes && { windowsClusterNodes }),
-                        ...(missingSqlPermissions && { missingSqlPermissions })
+                        ...(manageReadiness && { manageReadiness })
                     });
                 }
             }
@@ -962,9 +978,16 @@ async function validateAndStoreDiscoveredParameters(
     region: string,
     instanceId: string,
     credentials: DiscoverCredentialsType[],
-    clusterNodesIpAddress?: string[]
+    clusterNodesIpAddress?: string[],
+    checkManageReadiness: boolean = false
 ) {
-    logger.info('Validate and store SSM parameters', { accountId, credentialsId, region, instanceId });
+    logger.info('Validate and store SSM parameters', {
+        accountId,
+        credentialsId,
+        region,
+        instanceId,
+        checkManageReadiness
+    });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return {
@@ -1005,7 +1028,8 @@ async function validateAndStoreDiscoveredParameters(
             fsxCredentials,
             sqlCredentials,
             windowsUserCredentials,
-            instanceIds
+            instanceIds,
+            checkManageReadiness
         );
 
         if (!detectResponse?.requiredModuleError && fsxCredentials && !detectResponse?.fsxnError) {
@@ -1080,14 +1104,16 @@ async function validateCredentials(
     fsxCredentials: DiscoverCredentialsType | undefined,
     sqlCredentials: DiscoverCredentialsType[],
     windowsUserCredentials: DiscoverCredentialsType[],
-    instanceIds: string[]
+    instanceIds: string[],
+    checkManageReadiness: boolean = false
 ) {
     logger.info('Validate credentials', {
         instanceId,
         fsxCredentials,
         sqlCredentials,
+        instanceIds,
         windowsUserCredentials,
-        instanceIds
+        checkManageReadiness
     });
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
@@ -1135,7 +1161,8 @@ async function validateCredentials(
 
         if (sqlCredentials.length) {
             command += sqlCredentials.reduce(
-                (acc: string, { resourceId }) => `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId)};\n`,
+                (acc: string, { resourceId }) =>
+                    `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId, false, checkManageReadiness)};\n`,
                 ''
             );
         }
@@ -1143,7 +1170,7 @@ async function validateCredentials(
         if (!isEmpty(windowsUserCredentials)) {
             command += windowsUserCredentials.reduce(
                 (acc: string, { resourceId }) =>
-                    `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId, true)};\n`,
+                    `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId, true, checkManageReadiness)};\n`,
                 ''
             );
         }
@@ -1170,7 +1197,7 @@ async function validateCredentials(
             throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
         }
 
-        const response: Record<string, string> = {};
+        const response: Record<string, any> = {};
         const paramsToDelete: string[] = [];
         const instancesToBeDeleted: string[] = [];
 
@@ -1189,6 +1216,33 @@ async function validateCredentials(
                 } else if (parsedResponse.sqlInstanceConnectivity === true) {
                     response.sqlServerEdition = parsedResponse?.sqlEdition;
                     response.databaseCount = parsedResponse?.noOfDatabases;
+                    if (checkManageReadiness) {
+                        const {
+                            sqlPermissions = [],
+                            availablePsModules = [],
+                            sqlInstanceConnectivity
+                        } = parsedResponse || {};
+
+                        const manageReadiness = Object.fromEntries(
+                            Object.entries(FEATURE_PREPREQUISITES).map(([key, value]) => [
+                                key.toLowerCase(),
+                                {
+                                    missingSqlPermissions: value.SQL_PERMISSIONS.filter(
+                                        x => !sqlPermissions.includes(x)
+                                    ),
+                                    missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                                }
+                            ])
+                        );
+
+                        response.manageReadiness = {
+                            missingSqlCmd: !sqlInstanceConnectivity,
+                            assessment: manageReadiness.assessment,
+                            remediation: manageReadiness.remediation,
+                            dbcreation: manageReadiness.dbcreation,
+                            sandbox: manageReadiness.sandbox
+                        };
+                    }
                 }
             }
         }
@@ -1950,19 +2004,10 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                     );
                                 }
 
-                                let errorMessage = '';
-                                if (
-                                    sqlInstanceInfo.missingSqlPermissions &&
-                                    sqlInstanceInfo.missingSqlPermissions?.length > 0
-                                ) {
-                                    errorMessage = `SQL Instance permissions ${sqlInstanceInfo.missingSqlPermissions} are required for managing the resource.`;
-                                }
-
                                 itemsStatus.push({
                                     databaseInstanceName: dbInst,
                                     databaseInstanceGuid: serverGuid,
-                                    status: 'success',
-                                    errorMessage
+                                    status: 'success'
                                 });
                             } catch (error) {
                                 itemsStatus.push({

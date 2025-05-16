@@ -35,6 +35,29 @@ const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
     [16, 2022]
 ]);
 
+const MINIMUM_PREPREQUISITES = {
+    SQL_PERMISSIONS: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE', 'CONNECT ANY DATABASE'],
+    MODULES: ['AWS.Tools.SimpleSystemsManagement']
+};
+
+const FEATURE_PREPREQUISITES = {
+    ASSESSMENT: {
+        ...MINIMUM_PREPREQUISITES
+    },
+    REMEDIATION: {
+        SQL_PERMISSIONS: [...MINIMUM_PREPREQUISITES.SQL_PERMISSIONS, 'ALTER SETTINGS'],
+        MODULES: [...MINIMUM_PREPREQUISITES.MODULES]
+    },
+    DBCREATION: {
+        SQL_PERMISSIONS: [...MINIMUM_PREPREQUISITES.SQL_PERMISSIONS, 'CREATE ANY DATABASE'],
+        MODULES: [...MINIMUM_PREPREQUISITES.MODULES, 'AWS.Tools.FSx', 'Powershell 7']
+    },
+    SANDBOX: {
+        SQL_PERMISSIONS: [...MINIMUM_PREPREQUISITES.SQL_PERMISSIONS, 'CONTROL SERVER', 'ALTER ANY DATABASE'],
+        MODULES: [...MINIMUM_PREPREQUISITES.MODULES, 'NetApp.ONTAP']
+    }
+};
+
 /*
 The disks in an EC2 instance can be EBS, FSxN, FSxW or from CVO.
 This script collects serial-number of EBS disks, and the iSCSI
@@ -416,7 +439,6 @@ const HOST_AND_SQL_INFO_PS1 = [
     $MappedDrivesWithPath, $RegistryErrors = GetSMBMappedDrivesWithPath
     $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
-    $sqlPermissions = @(${SQL_PERMISSIONS})
     $allSqlInstanceNamesFromRegistry = FetchAllSQLInstancesFromRegistry
   
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
@@ -440,6 +462,23 @@ const HOST_AND_SQL_INFO_PS1 = [
         $responseObject['failureInfo'] += $_
       }
     }
+
+     # Check if Powershell 7 is available
+    $isPS7Available = $False
+    $availablePsModuleList = @()
+    try {
+        If (Get-Command -Name pwsh -ErrorAction SilentlyContinue) {
+          $isPS7Available = $True
+        } 
+
+        $requiredPsModuleList = @(${REQUIRED_PS_MODULES_FOR_MANAGEMENT})
+
+        $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
+
+    } catch {
+        $responseObject['failureInfo'] += $_
+    } 
+  
   
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
       $responseObject = @{}
@@ -564,16 +603,15 @@ const HOST_AND_SQL_INFO_PS1 = [
             }
             
 
-            $missingPermissions = @()
-            if( -Not ([string]::IsNullOrEmpty($existingPermissions))) {
-              $existingPermissionsAsList = $existingPermissions | ConvertFrom-Json | ForEach-Object { $_.permission_name }
-              foreach ($permission in $sqlPermissions) {
-              if($existingPermissionsAsList -notcontains $permission){
-                $missingPermissions += $permission
-                }
-              }
+            
+            $existingPermissionsAsList = $existingPermissions | ConvertFrom-Json | ForEach-Object { $_.permission_name }
+            $responseObject['sqlPermissions'] = $existingPermissionsAsList
+
+            $responseObject['isPS7Available'] = $isPS7Available
+            if($isPS7Available -eq $True) {
+             $availablePsModuleList += 'Powershell 7'
             }
-            $responseObject['missingSqlPermissions'] = $missingPermissions
+            $responseObject['availablePsModules'] = $availablePsModuleList
 
             if(($sqlInstanceDriveLetterOrPathList.Count -eq 0) -and (-Not [string]::IsNullOrEmpty($sqlServerInfoFromRegistry)) -and $sqlServerInfoFromRegistry.ContainsKey('driveDetails')) {
               $sqlInstanceDriveLetterOrPathList = $sqlServerInfoFromRegistry['driveDetails']
@@ -596,6 +634,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
       Echo $responseObject
     }
+
     $response = $instancesInfoList | ConvertTo-Json
     if([string]::IsNullOrEmpty($response)) {
       Write-Information "Failed to compress the response because the response is either null or empty. $response"
@@ -890,5 +929,7 @@ export {
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
     FAILURE_INFO,
     ACTIVE_DIRECTORY,
-    GET_ACTIVE_DIRECTORY_DETAILS
+    GET_ACTIVE_DIRECTORY_DETAILS,
+    FEATURE_PREPREQUISITES,
+    SQL_PERMISSIONS
 };
