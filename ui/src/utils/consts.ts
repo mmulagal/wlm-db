@@ -487,6 +487,11 @@ export const DETECT_HOST_VAR = {
     HIDE: 'hide'
 };
 
+export const RESET_PASSWORD_TYPE = {
+    FSXADMIN: 'fsxadmin',
+    SQLSERVER: 'sqlserver'
+};
+
 export const DB_VERSIONS = [
     { label: GENERAL.SQL_SERVER_2016, value: GENERAL.SQL_SERVER_2016_VERSION },
     { label: GENERAL.SQL_SERVER_2019, value: GENERAL.SQL_SERVER_2019_VERSION },

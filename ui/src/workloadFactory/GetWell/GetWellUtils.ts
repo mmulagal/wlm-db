@@ -19,6 +19,7 @@ import {
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
+import { setInstanceDetailsData } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -2063,11 +2064,23 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
     const state = store.getState();
     const optimizingData = state.getWellOptimize.optimizingData || {};
     if (!data) {
-        data = state.getWellOptimize.driftAssessmentData || {};
+        data = state.getWellOptimize.driftAssessmentData || undefined;
     }
-    let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(data, optimizingData);
+    let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(
+        data || ({} as AssessmentResponseInterface),
+        optimizingData
+    );
 
     let optBreakDown = formatOptimizationBreakDown(cardsData);
+
+    //For Reset Password data
+    dispatch(
+        setInstanceDetailsData({
+            fsxId: data?.fileSystemId,
+            ec2InstanceId: data?.ec2InstanceId,
+            databaseInstanceName: data?.databaseInstanceName
+        })
+    );
 
     // Dispatch the formatted cards data to the store
     dispatch(setCardData(cardsData));

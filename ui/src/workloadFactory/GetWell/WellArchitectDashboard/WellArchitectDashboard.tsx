@@ -2,7 +2,13 @@ import styles from './WellArchitectDashboard.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DETECT_HOST_VAR, FROM_DIALOG, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
+import {
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    RESET_PASSWORD_TYPE,
+    WELL_ARCHITECTED_TABS,
+    WLF_TABS
+} from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import {
     setDefaultFilterOptions,
@@ -24,7 +30,7 @@ import { useEffect } from 'react';
 import ResourceMSSQLOverview from './ResourceMSSQLOverview/ResourceMSSQLOverview';
 import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
 import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
-import { useNavigate } from 'react-router-dom';
+
 import { setRefreshTime } from '../../../store/workloadFactory/headersSlice';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
 import { useRegisterResourceCredentialsMutation, workloadFactoryResourceApiV2 } from '../../../utils/apiService';
@@ -61,21 +67,20 @@ const WellArchitectDashboard = () => {
         gwRefreshTimestamp,
         resetDetails
     } = useAppSelector(state => state.getWellOptimize);
-    const navigate = useNavigate();
 
     const { refreshTime } = useAppSelector(state => state.headers);
 
-    const { refreshSandboxInstanceTime,sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
+    const { refreshSandboxInstanceTime, sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
 
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     const {
         resourceLoading: resourceLoadingState,
 
-        selectedDatabaseInstance,
-        selectedResourceId,
         selectedResourceCredId,
-        selectedResourceRegionId
+        selectedResourceRegionId,
+
+        instanceDetailsData: { databaseInstanceName, fsxId, ec2InstanceId }
     } = useAppSelector(state => state.workloadFactoryResource);
 
     // Reset visited tabs when leaving the dashboard
@@ -101,7 +106,7 @@ const WellArchitectDashboard = () => {
     const handleRefresh = () => {
         if (
             selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW ||
-            (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES && !resourceLoadingState) 
+            (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES && !resourceLoadingState)
         ) {
             dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(workloadFactoryResourceApiV2.util.resetApiState());
@@ -135,7 +140,7 @@ const WellArchitectDashboard = () => {
         const { password } = fsxAdminPasswords;
         let credList = [];
         credList.push({
-            resourceId: resetDetails?.fsxId,
+            resourceId: fsxId || resetDetails?.fsxId,
             resourceType: DETECT_HOST_VAR.FSX,
             username: 'fsxadmin',
             password: password
@@ -146,17 +151,24 @@ const WellArchitectDashboard = () => {
 
     const createSqlPayload = () => {
         const state = store.getState();
-        const { sqlServerPasswords } = state.workloadFactoryResource;
+        const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
         const { password } = sqlServerPasswords;
         let credList = [];
         credList.push({
-            resourceId: '',
+            resourceId: databaseInstanceName,
             resourceType: DETECT_HOST_VAR.MSSQL,
-            username: 'sqlserver',
+            username: sqlServerUserName,
             password: password
         });
 
         return { credentials: credList };
+    };
+
+    const resetPasswords = () => {
+        dispatch(setFsxAdminPassword(''));
+        dispatch(setFsxAdminConfirmPassword(''));
+        dispatch(setSqlServerPassword(''));
+        dispatch(setSqlServerConfirmPassword(''));
     };
 
     const handleFSXAdminApply = async (value: string) => {
@@ -165,13 +177,11 @@ const WellArchitectDashboard = () => {
             const result: any = await registerResourceCred({
                 credentialId: selectedResourceCredId,
                 regionId: selectedResourceRegionId,
-                instanceId: resetDetails?.ec2InstanceId,
+                instanceId: ec2InstanceId || resetDetails?.ec2InstanceId,
                 payload: value === 'fsxReset' ? createPayload() : createSqlPayload()
             });
             if (result && !result?.error) {
                 if (!result?.data?.fsxnError && !result?.data?.sqlError) {
-                    dispatch(setFsxAdminPassword(''));
-                    dispatch(setFsxAdminConfirmPassword(''));
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.SUCCESS,
@@ -179,8 +189,6 @@ const WellArchitectDashboard = () => {
                         })
                     );
                 } else {
-                    dispatch(setFsxAdminPassword(''));
-                    dispatch(setFsxAdminConfirmPassword(''));
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.ERROR,
@@ -191,8 +199,6 @@ const WellArchitectDashboard = () => {
                     );
                 }
             } else {
-                dispatch(setFsxAdminPassword(''));
-                dispatch(setFsxAdminConfirmPassword(''));
                 dispatch(
                     addNotification({
                         type: NOTIFICATION_TYPES.ERROR,
@@ -203,8 +209,6 @@ const WellArchitectDashboard = () => {
                 );
             }
         } catch (error) {
-            dispatch(setFsxAdminPassword(''));
-            dispatch(setFsxAdminConfirmPassword(''));
             dispatch(
                 addNotification({
                     type: NOTIFICATION_TYPES.ERROR,
@@ -212,16 +216,17 @@ const WellArchitectDashboard = () => {
                 })
             );
         } finally {
+            resetPasswords();
             dispatch(setPasswordResetLoading(false));
             closeDialog();
         }
     };
 
-    const handleFsxPassword = () => {
+    const handleFsxPassword = (type: string) => {
         setDialog(
             <DialogComponent
-                header={'Reset FSxadmin password '}
-                content={<FSXPasswordContent />}
+                header={type === RESET_PASSWORD_TYPE.FSXADMIN ? 'Reset FSxadmin password' : 'Reset SQL Server password'}
+                content={type === RESET_PASSWORD_TYPE.FSXADMIN ? <FSXPasswordContent /> : <SQLServerPasswordContent />}
                 primaryButton={GENERAL.APPLY}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -230,25 +235,7 @@ const WellArchitectDashboard = () => {
                 closeCallback={() => {
                     closeDialog();
                 }}
-                dialogFrom={FROM_DIALOG.FSXADMIN}
-            />
-        );
-    };
-
-    const handleSqlPassword = () => {
-        setDialog(
-            <DialogComponent
-                header={'Reset SQL Server password'}
-                content={<SQLServerPasswordContent />}
-                primaryButton={GENERAL.APPLY}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    handleFSXAdminApply('sqlReset');
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                dialogFrom={FROM_DIALOG.SQLSERVER}
+                dialogFrom={type === RESET_PASSWORD_TYPE.FSXADMIN ? FROM_DIALOG.FSXADMIN : FROM_DIALOG.SQLSERVER}
             />
         );
     };
@@ -290,12 +277,13 @@ const WellArchitectDashboard = () => {
                     <div className={styles.buttonContainer}>
                         <ButtonWithDropdown
                             variant="icon"
-                            items={[{
+                            items={[
+                                {
                                     id: 'resetSQLServerPassword',
                                     children: 'Reset SQL server password',
 
                                     onClick: () => {
-                                        handleSqlPassword();
+                                        handleFsxPassword(RESET_PASSWORD_TYPE.SQLSERVER);
                                     }
                                 },
                                 {
@@ -303,7 +291,7 @@ const WellArchitectDashboard = () => {
                                     children: 'Reset FSxadmin password',
 
                                     onClick: () => {
-                                        handleFsxPassword();
+                                        handleFsxPassword(RESET_PASSWORD_TYPE.FSXADMIN);
                                     }
                                 }
                             ]}

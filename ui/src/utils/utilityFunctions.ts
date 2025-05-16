@@ -1,4 +1,4 @@
-import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
+import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import { get, sortBy, compact, uniqBy, map } from 'lodash';
 import { css } from '@emotion/css';
@@ -57,7 +57,7 @@ export interface OptionsWithData extends optionType {
     data?: Object;
 }
 
-export interface OptionsWitMultipleData extends optionTypeMulti {
+export interface OptionsWitMultipleData {
     data?: Object;
 }
 
@@ -88,7 +88,7 @@ export const generateMultipleOptionType = (
     disabledTitle: string,
     data?: Object
 ) => {
-    const option: OptionsWitMultipleData = {
+    const option: any = {
         value: value,
         label: label,
         id: id,
@@ -479,6 +479,12 @@ export const isValidPassword = (password: string) => {
             /admin/i.test(password))
     ) {
         return 'Check password criteria.';
+    }
+};
+
+export const isValidSqlUsername = (username: string) => {
+    if (/[^A-Za-z0-9_]/.test(username)) {
+        return 'Username should not contain special characters.';
     }
 };
 

@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WorkloadFactoryResourceEntities } from '../../utils/types/workloadFactoryResourceTypes';
-import { set } from 'lodash';
 
 const initialState: WorkloadFactoryResourceEntities = {
     resourceLoading: true,
@@ -148,13 +147,25 @@ const initialState: WorkloadFactoryResourceEntities = {
         password: '',
         confirmPassword: ''
     },
-    passwordResetLoading: false
+    passwordResetLoading: false,
+    sqlServerUserName: '',
+    instanceDetailsData: {
+        fsxId: '',
+        ec2InstanceId: '',
+        databaseInstanceName: ''
+    }
 };
 
 const workloadFactoryResourceSlice = createSlice({
     name: 'workloadFactoryResource',
     initialState,
     reducers: {
+        setInstanceDetailsData: (state, action: PayloadAction<any>) => {
+            state.instanceDetailsData = action.payload;
+        },
+        setSqlServerUserName: (state, action: PayloadAction<any>) => {
+            state.sqlServerUserName = action.payload;
+        },
         setPasswordResetLoading: (state, action: PayloadAction<any>) => {
             state.passwordResetLoading = action.payload;
         },
@@ -218,6 +229,8 @@ const workloadFactoryResourceSlice = createSlice({
 });
 
 export const {
+    setInstanceDetailsData,
+    setSqlServerUserName,
     setPasswordResetLoading,
     setFsxAdminPassword,
     setFsxAdminConfirmPassword,
