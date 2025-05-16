@@ -334,7 +334,7 @@ const getInstanceStorageDetails = `
 const discoverOracleHosts = `
     # Check if oratab exists
     if [ ! -f /etc/oratab ]; then
-        echo "No /etc/oratab found on this instance."
+        echo "[]"
         exit 0
     fi
 
