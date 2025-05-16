@@ -1751,8 +1751,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedStorage++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                notOptimizedStorage++;
                 criticalStorage++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                notOptimizedStorage++;
                 warningStorage++;
             } else {
                 notOptimizedStorage++;
@@ -1766,8 +1768,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             ) {
                 optimizedCompute++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                notOptimizedCompute++;
                 criticalCompute++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                notOptimizedCompute++;
                 warningCompute++;
             } else {
                 notOptimizedCompute++;
@@ -1777,8 +1781,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedApplication++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                notOptimizedApplication++;
                 criticalApplication++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                notOptimizedApplication++;
                 warningApplication++;
             } else {
                 notOptimizedApplication++;
@@ -1788,8 +1794,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                notOptimizedResiliency++;
                 criticalResiliency++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                notOptimizedResiliency++;
                 warningResiliency++;
             } else {
                 notOptimizedResiliency++;
@@ -1799,8 +1807,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedCloning++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
+                notOptimizedCloning++;
                 criticalCloning++;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.WARNING) {
+                notOptimizedCloning++;
                 warningCloning++;
             } else {
                 notOptimizedCloning++;
@@ -1810,73 +1820,61 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
 
     let storageCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedStorage,
-        total: optimizedStorage + notOptimizedStorage + criticalStorage + warningStorage,
+        total: optimizedStorage + notOptimizedStorage,
         critical: criticalStorage,
         warning: warningStorage,
         optimized: optimizedStorage,
         notOptimized: notOptimizedStorage,
         percent: optimizedStorage
-            ? formatNumberWithCustomComma(
-                  (optimizedStorage / (optimizedStorage + notOptimizedStorage + criticalStorage + warningStorage)) * 100
-              )
+            ? formatNumberWithCustomComma((optimizedStorage / (optimizedStorage + notOptimizedStorage)) * 100)
             : 0
     };
     let computeCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedCompute,
-        total: optimizedCompute + notOptimizedCompute + criticalCompute + warningCompute,
+        total: optimizedCompute + notOptimizedCompute,
         critical: criticalCompute,
         warning: warningCompute,
         optimized: optimizedCompute,
         notOptimized: notOptimizedCompute,
         percent: optimizedCompute
-            ? formatNumberWithCustomComma(
-                  (optimizedCompute / (optimizedCompute + notOptimizedCompute + criticalCompute + warningCompute)) * 100
-              )
+            ? formatNumberWithCustomComma((optimizedCompute / (optimizedCompute + notOptimizedCompute)) * 100)
             : 0
     };
     let applicationCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedApplication,
-        total: optimizedApplication + notOptimizedApplication + criticalApplication + warningApplication,
+        total: optimizedApplication + notOptimizedApplication,
         critical: criticalApplication,
         warning: warningApplication,
         optimized: optimizedApplication,
         notOptimized: notOptimizedApplication,
         percent: optimizedApplication
             ? formatNumberWithCustomComma(
-                  (optimizedApplication /
-                      (optimizedApplication + notOptimizedApplication + criticalApplication + warningApplication)) *
-                      100
+                  (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
               )
             : 0
     };
 
     let resiliencyCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedResiliency,
-        total: optimizedResiliency + notOptimizedResiliency + criticalResiliency + warningResiliency,
+        total: optimizedResiliency + notOptimizedResiliency,
         critical: criticalResiliency,
         warning: warningResiliency,
         optimized: optimizedResiliency,
         notOptimized: notOptimizedResiliency,
         percent: optimizedResiliency
-            ? formatNumberWithCustomComma(
-                  (optimizedResiliency /
-                      (optimizedResiliency + notOptimizedResiliency + criticalResiliency + warningResiliency)) *
-                      100
-              )
+            ? formatNumberWithCustomComma((optimizedResiliency / (optimizedResiliency + notOptimizedResiliency)) * 100)
             : 0
     };
 
     let cloningCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedCloning,
-        total: optimizedCloning + notOptimizedCloning + criticalCloning + warningCloning,
+        total: optimizedCloning + notOptimizedCloning,
         critical: criticalCloning,
         warning: warningCloning,
         optimized: optimizedCloning,
         notOptimized: notOptimizedCloning,
         percent: optimizedCloning
-            ? formatNumberWithCustomComma(
-                  (optimizedCloning / (optimizedCloning + notOptimizedCloning + criticalCloning + warningCloning)) * 100
-              )
+            ? formatNumberWithCustomComma((optimizedCloning / (optimizedCloning + notOptimizedCloning)) * 100)
             : 0
     };
 
