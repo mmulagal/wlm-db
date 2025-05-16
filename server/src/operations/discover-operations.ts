@@ -2554,8 +2554,11 @@ async function discoverOracleResources(
                 }
                 let parsedResponse;
                 try {
-                    parsedResponse = sqlResponseParsing(output || '{}');
+                    parsedResponse = sqlResponseParsing(output || '[]');
                     logger.debug('Parsed SSM ORACLE response', { parsedResponse });
+                    if (!parsedResponse || parsedResponse.length === 0) {
+                        return;
+                    }
                     ec2Instance = {
                         ...ec2Instance,
                         oracleServerDeploymentType: 'Standalone'
@@ -2636,12 +2639,9 @@ async function discoverOracleResources(
                     ec2Instance.databaseInstanceDetails = databaseInstanceDetails;
                     instancesWithSsmResponse.push(ec2Instance);
                 } catch (err: unknown) {
+                    ec2Instance.error = err as string;
                     logger.warn('Failed to parse SSM response', { error: err });
-                    const errString = err as string;
-                    ec2Instance.error = errString;
-                    if (!errString.includes('No /etc/oratab found on this instance')) {
-                        return instancesWithSsmResponse.push(ec2Instance);
-                    }
+                    instancesWithSsmResponse.push(ec2Instance);
                 }
             })
         );
@@ -2650,7 +2650,7 @@ async function discoverOracleResources(
     }
 
     return {
-        count: ec2Instances.length || 0,
+        count: (ssmNotConnectedEc2Instances.length || 0) + (instancesWithSsmResponse.length || 0),
         items: [...ssmNotConnectedEc2Instances, ...instancesWithSsmResponse],
         nextToken: NextToken as string
     };
