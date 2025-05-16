@@ -26,6 +26,7 @@ $ADAdminPassword = $SsmParameter.domain.password
 $AdminUserName = $DomainNetBIOSName+"\"+$DomainAdminUser
 $AdminUserPW = ConvertTo-SecureString ($ADAdminPassword) -AsPlainText -Force
 $Credentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ($AdminUserName, $AdminUserPW)
+Import-Module ActiveDirectory *>$null
 
 if([string]::IsNullOrEmpty($DCName)) {
     #Try to fetch a Domain Controller name that can connect to the directory service if preferred DC is not passed 
