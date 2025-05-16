@@ -1156,6 +1156,8 @@ async function fetchDriftAssessment(
 
     const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
     let {
+        database_instance_name: databaseInstanceName,
+        fsxn_ids: fileSystemId,
         configurations: instanceConfigurations,
         resource: { configurations: hostConfigurations, metadata: resourceMetadata }
     } = instanceDetail as unknown as DatabaseInstance;
@@ -1419,6 +1421,10 @@ async function fetchDriftAssessment(
     } catch (error) {
         logger.error('Error while fetching last assessment timestamp:', error);
     }
+
+    driftAssessmentData.fileSystemId = fileSystemId;
+    driftAssessmentData.databaseInstanceName = databaseInstanceName;
+    driftAssessmentData.ec2InstanceId = (resourceMetadata as unknown as Metadata)?.node1InstanceId;
     return driftAssessmentData;
 }
 

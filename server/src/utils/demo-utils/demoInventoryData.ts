@@ -555,7 +555,9 @@ const ASSESMENT_CONFIG_DATA = {
             uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         }
     ],
-    filesystemId: 'fs-07a22f282fd4f5a20'
+    filesystemId: 'fs-07a22f282fd4f5a20',
+    ec2InstanceId: 'i-0abcd1234efgh5678',
+    databaseInstanceName: 'MSSQLSERVER'
 };
 
 const ASSESSMENT_CRR_CONFIG_DATA = {
