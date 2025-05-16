@@ -79,7 +79,7 @@ const WellArchitectDashboard = () => {
 
         selectedResourceCredId,
         selectedResourceRegionId,
-
+        resourceDetails,
         instanceDetailsData: { databaseInstanceName, fsxId, ec2InstanceId }
     } = useAppSelector(state => state.workloadFactoryResource);
 
@@ -140,7 +140,7 @@ const WellArchitectDashboard = () => {
         const { password } = fsxAdminPasswords;
         let credList = [];
         credList.push({
-            resourceId: fsxId || resetDetails?.fsxId,
+            resourceId: fsxId || resourceDetails?.topology?.fileSystemId || resetDetails?.fsxId,
             resourceType: DETECT_HOST_VAR.FSX,
             username: 'fsxadmin',
             password: password
@@ -155,7 +155,8 @@ const WellArchitectDashboard = () => {
         const { password } = sqlServerPasswords;
         let credList = [];
         credList.push({
-            resourceId: databaseInstanceName,
+            //@ts-ignore
+            resourceId: databaseInstanceName || resourceDetails?.databaseInstanceName,
             resourceType: DETECT_HOST_VAR.MSSQL,
             username: sqlServerUserName,
             password: password
@@ -177,15 +178,19 @@ const WellArchitectDashboard = () => {
             const result: any = await registerResourceCred({
                 credentialId: selectedResourceCredId,
                 regionId: selectedResourceRegionId,
-                instanceId: ec2InstanceId || resetDetails?.ec2InstanceId,
-                payload: value === 'fsxReset' ? createPayload() : createSqlPayload()
+                instanceId:
+                    //@ts-ignore
+                    ec2InstanceId || resourceDetails?.nodeTopology?.ec2Details[0]?.id || resetDetails?.ec2InstanceId,
+                payload: value === RESET_PASSWORD_TYPE.FSXADMIN ? createPayload() : createSqlPayload()
             });
             if (result && !result?.error) {
                 if (!result?.data?.fsxnError && !result?.data?.sqlError) {
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.SUCCESS,
-                            message: `${value === 'fsxReset' ? 'FSxadmin' : 'Sql server'} password reset successfully`
+                            message: `${
+                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'FSxadmin' : 'Sql server'
+                            } password reset successfully`
                         })
                     );
                 } else {
@@ -194,7 +199,9 @@ const WellArchitectDashboard = () => {
                             type: NOTIFICATION_TYPES.ERROR,
                             message:
                                 result?.data?.fsxnError ||
-                                `Failed to reset ${value === 'fsxReset' ? 'FSxadmin' : 'Sql server'} password. `
+                                `Failed to reset ${
+                                    value === RESET_PASSWORD_TYPE.FSXADMIN ? 'FSxadmin' : 'Sql server'
+                                } password. `
                         })
                     );
                 }
@@ -204,7 +211,9 @@ const WellArchitectDashboard = () => {
                         type: NOTIFICATION_TYPES.ERROR,
                         message:
                             result?.error?.data?.message ||
-                            `Failed to reset ${value === 'fsxReset' ? 'FSxadmin' : 'Sql server'} password. `
+                            `Failed to reset ${
+                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'FSxadmin' : 'Sql server'
+                            } password. `
                     })
                 );
             }
@@ -230,7 +239,7 @@ const WellArchitectDashboard = () => {
                 primaryButton={GENERAL.APPLY}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    handleFSXAdminApply('fsxRest');
+                    handleFSXAdminApply(RESET_PASSWORD_TYPE.FSXADMIN);
                 }}
                 closeCallback={() => {
                     closeDialog();
