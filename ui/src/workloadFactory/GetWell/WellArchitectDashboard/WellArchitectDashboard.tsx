@@ -24,12 +24,6 @@ import { useEffect } from 'react';
 import ResourceMSSQLOverview from './ResourceMSSQLOverview/ResourceMSSQLOverview';
 import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
 import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
-import {
-    addInitialDBCreateData,
-    initialCreateNewUserState,
-    setCdbPageData
-} from '../../../store/workloadFactory/createNewDBSlice';
-import { updateResourceId } from '../../../store/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { setRefreshTime } from '../../../store/workloadFactory/headersSlice';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
