@@ -34,7 +34,7 @@ const DatabaseListTable = () => {
         selectedResourceCredId,
         selectedResourceRegionId
     } = useAppSelector(state => state.workloadFactoryResource);
-    const use_dispatch = useDispatch();
+    const dispatch = useDispatch();
     DatabaseHostOverviewApiV2();
     const navigate = useNavigate();
     const formatData = (tableData: WorkloadFactoryDatabaseItem[]) => {
@@ -206,9 +206,7 @@ const DatabaseListTable = () => {
         pageSize: 50,
         isLazyLoading: databaseListLoading
     });
-    function dispatch(arg0: any) {
-        throw new Error('Function not implemented.');
-    }
+    
 
     return (
         <div className={styles.databaseListTable}>
@@ -223,10 +221,10 @@ const DatabaseListTable = () => {
                             variant={'primary'}
                             className={'continue-button'}
                             isThin={true}
+                            disabled={resourceLoadingState}
                             onClick={() => {
-                                // if (!resourceLoadingState) {
-                                    use_dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                    use_dispatch(
+                                    dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                    dispatch(
                                     setCdbPageData({
                                         dbHostName: selectedHostname,
                                         instanceId: selectedDatabaseInstance,
@@ -235,9 +233,8 @@ const DatabaseListTable = () => {
                                         cdbRegionId: selectedResourceRegionId
                                     })
                                 );
-                                use_dispatch(updateResourceId(selectedResourceId));
+                                dispatch(updateResourceId(selectedResourceId));
                                 navigate('../create-new-user');
-                                // }
                             }}
                         >
                             {GENERAL.JM_TYPE_CREATE_RESOURCE}
