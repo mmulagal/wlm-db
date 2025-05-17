@@ -245,7 +245,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         {cardData?.block_two?.value && cardData?.block_two?.value !== GENERAL.UNAVAILABLE ? (
                             <>
-                                <span className={styles.svgSection}>
+                                <span
+                                    className={styles.svgSection}
+                                    style={{ top: cardData?.block_two?.value === 'Under-provisioned' ? '2px' : '8px' }}
+                                >
                                     {setImage(cardData?.block_two?.value || GENERAL.UNAVAILABLE)}
                                 </span>
                                 <span
@@ -826,6 +829,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             res?.data?.dismissedConfigurations?.[0]?.endTime
                         ) || {};
                     dispatch(setDriftAssessmentData(newData));
+                    //@ts-ignore
                     formatGetWellData(dispatch, newData);
 
                     // Below code is to reset dashboard level assessment value also
