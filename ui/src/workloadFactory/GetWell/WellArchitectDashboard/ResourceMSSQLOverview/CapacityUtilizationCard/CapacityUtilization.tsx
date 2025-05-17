@@ -5,7 +5,10 @@ import _ from 'lodash';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
 const CapacityUtilization = () => {
-    const loading = false; // Replace with actual loading state
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+    const color1 = isDarkTheme ? '#DE9EFF' : '#A815F3';
+    const color2 = isDarkTheme ? '#A855B8' : '#DE9EFF';
+    const color3 = isDarkTheme ? '#CBD4DA' : '#550057';
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
 
     function bytesToTB(bytes: number) {
@@ -40,7 +43,7 @@ const CapacityUtilization = () => {
                                 bytesToTB(resourceDetails?.storage?.fsxn?.size ?? 0) -
                                     bytesToTB(resourceDetails?.storage?.fsxn?.used ?? 0)
                             ]}
-                            colors={['#A815F3', '#DE9EFF']}
+                            colors={[color1, color2]}
                             includeTotalRing
                             totalRingColor={'chart-10'}
                         />
@@ -62,7 +65,7 @@ const CapacityUtilization = () => {
                     </DsTypography>
                     <div className={styles.individualRow}>
                         <div className={styles.squareSetup}>
-                            <div className={styles.square} style={{ backgroundColor: '#A815F3' }} />
+                            <div className={styles.square} style={{ backgroundColor: color1 }} />
                             <DsTypography variant="Regular_14" className={styles.days}>
                                 {'Used'}
                             </DsTypography>
@@ -83,7 +86,7 @@ const CapacityUtilization = () => {
 
                     <div className={styles.individualRow}>
                         <div className={styles.squareSetup}>
-                            <div className={styles.square} style={{ backgroundColor: '#DE9EFF' }} />
+                            <div className={styles.square} style={{ backgroundColor: color2 }} />
                             <DsTypography variant="Regular_14" className={styles.days}>
                                 {'Available'}
                             </DsTypography>
@@ -108,7 +111,7 @@ const CapacityUtilization = () => {
 
                     <div className={styles.individualRow}>
                         <div className={styles.squareSetup}>
-                            <div className={styles.square} style={{ backgroundColor: '#550057' }} />
+                            <div className={styles.square} style={{ backgroundColor: color3 }} />
                             <DsTypography variant="Regular_14" className={styles.days}>
                                 {'Size (allocated)'}
                             </DsTypography>
