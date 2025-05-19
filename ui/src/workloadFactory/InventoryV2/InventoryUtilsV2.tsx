@@ -1768,6 +1768,40 @@ export const getUnmanagedHostInstances = (
     return instanceList;
 };
 
+export const getUnmanagedPgsqlHostInstances = (
+    databaseHostsData: { [key: string]: InventoryTableData },
+    runningPgsqlInstanceListRef: Array<string>
+) => {
+    let instanceList: Array<string> = [];
+    Object.keys(databaseHostsData).map((key: string) => {
+        if (
+            runningPgsqlInstanceListRef.includes(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            )
+        ) {
+            return;
+        }
+        if (
+            databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE &&
+            !databaseHostsData[key]?.actionDisable &&
+            databaseHostsData[key]?.ssmState === STATUS_CONST.ONLINE
+        ) {
+            instanceList.push(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            );
+        }
+    });
+    return instanceList;
+};
+
 export const updateInstancesApiResponse = (
     mssqlInstancesData: { [key: string]: InstancesObjectInterface },
     inventoryTableData: { [key: string]: InventoryTableData }

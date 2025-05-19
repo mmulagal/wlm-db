@@ -31,6 +31,7 @@ import {
     setIsPgSqlDatabaseHostsLoading,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
+    setPgsqlInstancesData,
     setPotentialSavingsHostData,
     setRemoveSecNodeDiscoveredList,
     setResetManagedData,
@@ -39,6 +40,7 @@ import {
 import {
     useCreateDemoResourcesMutation,
     useGetMssqlInstanceDataV2Mutation,
+    useGetPgsqlInstanceDataMutation,
     useGetStorageSavingsMutation,
     useLazyDiscoverHostsQuery,
     useLazyDiscoverOracleHostsQuery,
@@ -67,6 +69,7 @@ import {
     getPrimaryClusterNode,
     getPrimaryPgsqlNode,
     getUnmanagedHostInstances,
+    getUnmanagedPgsqlHostInstances,
     uniqueHostRow,
     updateInstancesApiResponse
 } from './InventoryUtilsV2';
@@ -100,9 +103,11 @@ const InventoryApisV3 = () => {
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const fsxCredentialStatusObj = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObj);
     const mssqlInstancesData = useAppSelector(state => state.inventoryV2.mssqlInstancesData);
+    const pgsqlInstancesData = useAppSelector(state => state.inventoryV2.pgsqlInstancesData);
     const detectedInstanceId = useAppSelector(state => state.inventoryV2.detectedInstanceId);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
+    const [runningPgsqlInstanceList, setRunningPgsqlInstanceList] = useState<Array<string>>([]);
     const [runningPerfInstanceList, setRunningPerfInstanceList] = useState<Array<string>>([]);
     const [runningManagedAssessmentList, setRunningManagedAssessmentList] = useState<Array<string>>([]);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -158,6 +163,7 @@ const InventoryApisV3 = () => {
 
     // Get Instance data mutation. This will be called to get unmanaged rows full data - ToDo
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataV2Mutation();
+    const [getPgsqlInstanceDataApi] = useGetPgsqlInstanceDataMutation();
 
     // Get all managed hosts assessment data
     const [getAllMssqlHostAssessmentAPI] = useLazyGetAllMssqlHostsAssessmentDataQuery();
@@ -172,9 +178,11 @@ const InventoryApisV3 = () => {
 
     const fsxCredentialStatusObjRef: any = useRef(null);
     const mssqlInstancesDataRef: any = useRef(null);
+    const pgsqlInstancesDataRef: any = useRef(null);
     const perfMssqlInstancesDataRef: any = useRef(null);
     const managedAssessmentHostDataRef: any = useRef(null);
     const runningInstanceListRef: any = useRef(null);
+    const runningPgsqlInstanceListRef: any = useRef(null);
 
     const runningPerfInstanceListRef: any = useRef(null);
     const runningManagedAssessmentRef: any = useRef(null);
@@ -196,12 +204,20 @@ const InventoryApisV3 = () => {
     }, [runningInstanceList]);
 
     useEffect(() => {
+        runningPgsqlInstanceListRef.current = runningPgsqlInstanceList;
+    }, [runningPgsqlInstanceList]);
+
+    useEffect(() => {
         fsxCredentialStatusObjRef.current = fsxCredentialStatusObj;
     }, [fsxCredentialStatusObj]);
 
     useEffect(() => {
         mssqlInstancesDataRef.current = mssqlInstancesData;
     }, [mssqlInstancesData]);
+
+    useEffect(() => {
+        pgsqlInstancesDataRef.current = pgsqlInstancesData;
+    }, [pgsqlInstancesData]);
 
     useEffect(() => {
         inventoryTableDataRef.current = inventoryTableData;
@@ -880,6 +896,77 @@ const InventoryApisV3 = () => {
         }
     };
 
+    // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance for pgsql
+    const getPgsqlData = async (
+        instanceIdComb: any,
+        isManagedHost: boolean,
+        fields: Array<string>,
+        nextToken: string | null = ''
+    ) => {
+        let [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
+        try {
+            const result: any = await getPgsqlInstanceDataApi({
+                credentialId: instanceCredId,
+                regionId: instanceRegionId,
+                instances: instanceId,
+                fields: fields.join(','),
+                nextToken: nextToken
+            });
+            if (result && !result?.error) {
+                let pgsqlInstancesDataRes: any = {};
+                result?.data?.items?.map((host: any) => {
+                    if (pgsqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
+                        pgsqlInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
+                            isManagedHost:
+                                mssqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]
+                                    ?.isManagedHost,
+                            loading: false,
+                            data: host,
+                            error: host?.errors,
+                            fields: mssqlInstancesDataRef.current[
+                                uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                            ]?.fields
+                        };
+                    }
+                });
+                if (!pgsqlInstancesDataRes?.[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]) {
+                    pgsqlInstancesDataRes[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
+                        isManagedHost:
+                            mssqlInstancesDataRef.current[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]
+                                ?.isManagedHost,
+                        loading: false,
+                        data: null,
+                        error: null,
+                        fields: mssqlInstancesDataRef.current[
+                            uniqueHostRow(instanceId, instanceCredId, instanceRegionId)
+                        ]?.fields
+                    };
+                }
+                dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataRes }));
+            } else {
+                let pgsqlInstancesDataErr: any = {};
+                pgsqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
+                    isManagedHost: isManagedHost,
+                    loading: false,
+                    data: null,
+                    error: result?.error?.data?.message,
+                    fields: fields
+                };
+                dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataErr }));
+            }
+        } catch (error) {
+            let pgsqlInstancesDataErr: any = {};
+            pgsqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
+                isManagedHost: isManagedHost,
+                loading: false,
+                data: null,
+                error: error,
+                fields: fields
+            };
+            dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataErr }));
+        }
+    };
+
     // If any new row added than it will trigger getMssqlData (API2) function to get unmanagaed row data.
     const callInstanceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
         let mssqlInstancesDataLoad: any = {};
@@ -903,6 +990,34 @@ const InventoryApisV3 = () => {
             noRunningList?.map((ec2InstanceIdComb: any) => {
                 setTimeout(() => {
                     getMssqlData(ec2InstanceIdComb, isManagedHost, fields);
+                }, 1);
+            });
+        }
+    };
+
+    // If any new row added than it will trigger getMssqlData (API2) function to get unmanagaed row data.
+    const callPgsqlResourceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
+        let pgsqlInstancesDataLoad: any = {};
+        let noRunningList: Array<string> = [];
+        if (instancesList && instancesList.length > 0) {
+            instancesList?.map((ec2InstanceIdComb: any) => {
+                if (runningPgsqlInstanceListRef.current.includes(ec2InstanceIdComb)) {
+                    return;
+                }
+                pgsqlInstancesDataLoad[ec2InstanceIdComb] = {
+                    isManagedHost: isManagedHost,
+                    loading: true,
+                    data: null,
+                    error: null,
+                    fields: fields
+                };
+                noRunningList.push(ec2InstanceIdComb);
+            });
+            dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataLoad }));
+            setRunningPgsqlInstanceList([...runningPgsqlInstanceListRef.current, ...noRunningList]);
+            noRunningList?.map((ec2InstanceIdComb: any) => {
+                setTimeout(() => {
+                    getPgsqlData(ec2InstanceIdComb, isManagedHost, fields);
                 }, 1);
             });
         }
@@ -1599,6 +1714,14 @@ const InventoryApisV3 = () => {
             const state = store.getState();
             const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
             dispatch(setRemoveSecNodeDiscoveredList([...removeSecNodeDiscoveredList, ...removeRows]));
+
+            let unmanagedPgsqlHostList = getUnmanagedPgsqlHostInstances(
+                formattedDiscoveredInventoryTableData,
+                runningPgsqlInstanceListRef.current
+            );
+            if (unmanagedPgsqlHostList && unmanagedPgsqlHostList?.length > 0) {
+                callPgsqlResourceApi(unmanagedPgsqlHostList, false, INSTANCE_API_FIELDS.UNMANAGED_PGSQL_DEFAULT);
+            }
 
             // To Avoid overriding
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };

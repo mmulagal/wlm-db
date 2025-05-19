@@ -652,7 +652,8 @@ export const INSTANCE_API_FIELDS = {
         'nodeTopology',
         'usageEstimation',
         'dbCount'
-    ]
+    ],
+    UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation']
 };
 
 export const PROTECTION_TEXT_STATUS = {

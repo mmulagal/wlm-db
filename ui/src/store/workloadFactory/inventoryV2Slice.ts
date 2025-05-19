@@ -39,6 +39,7 @@ const initialInventoryV2State: InventorySliceData = {
     fsxCredentialStatusObj: {},
     fsxCredentialStatusLoading: false,
     mssqlInstancesData: null,
+    pgsqlInstancesData: null,
     perfMssqlInstancesData: null,
     inProgressInstances: new Set(),
     manageHostSelectedRows: [],
@@ -191,6 +192,9 @@ const inventoryV2Slice = createSlice({
         setMssqlInstancesData: (state, action: PayloadAction<any>) => {
             state.mssqlInstancesData = action.payload;
         },
+        setPgsqlInstancesData: (state, action: PayloadAction<any>) => {
+            state.pgsqlInstancesData = action.payload;
+        },
         setPerfMssqlInstancesData: (state, action: PayloadAction<any>) => {
             state.perfMssqlInstancesData = action.payload;
         },
@@ -332,6 +336,7 @@ const inventoryV2Slice = createSlice({
             state.potentialSavingsHostData = {};
 
             state.mssqlInstancesData = null;
+            state.pgsqlInstancesData = null;
             state.perfMssqlInstancesData = {};
             state.unManagedPerfInstanceIdsList = [];
         },
@@ -381,6 +386,7 @@ export const {
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
     setMssqlInstancesData,
+    setPgsqlInstancesData,
     setPerfMssqlInstancesData,
     setInProgressInstances,
     setManageHostSelectedRows,
