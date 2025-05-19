@@ -74,7 +74,21 @@ catch {
 }
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${Username}:${Password}"))
 $FSxHostName = "management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com"
+try {
+    $FSxNHTTP_Request = [System.Net.WebRequest]::Create("https://$FSxHostName")
+    $FSxNHTTP_Response = $FSxNHTTP_Request.GetResponse()
+    $FSxNHTTP_Response.Close()
+}
+catch {
+    write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
+    Write-Information "FSxN Management domain $FSxHostName is not resolved. Switching to management IP."
+    $fslist = Get-FSXFileSystem -FileSystemId $FSxFileSystemId
+    $FSxHostName = $fslist.ontapconfiguration.Endpoints.Management.IpAddresses
+    if ($FSxHostName -is [array]) {
+        $FSxHostName = $FSxHostName[0]
+    }
 
+}
 # Get region Certificateificate for FSx
 $isprivatesubnet = $False
 $FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
