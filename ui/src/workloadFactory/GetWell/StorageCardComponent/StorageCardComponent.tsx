@@ -27,6 +27,7 @@ import {
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
+    RESPONSE_STATUS,
     WLF_TABS
 } from '../../../utils/consts';
 import { useEffect, useMemo, useState } from 'react';
@@ -813,7 +814,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     !res.error &&
                     dismissedConfigs?.length > 0 &&
                     databaseHosts?.length > 0 &&
-                    status.toUpperCase() === 'SUCCESS'
+                    status.toUpperCase() === RESPONSE_STATUS.SUCCESS
                 ) {
                     let updatedState = '';
                     if (

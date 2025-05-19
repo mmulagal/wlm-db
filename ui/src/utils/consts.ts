@@ -899,3 +899,8 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     }
 };
+
+export const RESPONSE_STATUS = {
+    SUCCESS: 'SUCCESS',
+    FAILED: 'FAILED'
+};
