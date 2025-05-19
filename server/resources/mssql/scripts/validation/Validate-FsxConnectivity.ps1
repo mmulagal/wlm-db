@@ -72,6 +72,18 @@ catch {
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
 }
+# Get region Certificateificate for FSx
+$isprivatesubnet = $False
+$FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
+try {
+    Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
+    $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
+    $regionCertificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+}
+catch {
+    $isprivatesubnet = $True 
+    $regionCertificate = $null     
+}
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${Username}:${Password}"))
 $FSxHostName = "management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com"
 try {
@@ -87,22 +99,14 @@ catch {
     if ($FSxHostName -is [array]) {
         $FSxHostName = $FSxHostName[0]
     }
+    $isprivatesubnet = $True
+    $regionCertificate = $null
 
 }
-# Get region Certificateificate for FSx
-$isprivatesubnet = $False
-$FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
-try {
-    Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
-    $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
-    $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-}
-catch {
-    $isprivatesubnet = $True      
-}
+
 
 $Params = @{
-    "URI"         = "https://management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com/api/cluster?fields=version"
+    "URI"         = "https://${FSxHostName}/api/cluster?fields=version"
     "Method"      = "GET"
     "Headers"     = @{"Authorization" = "Basic $FSxCredentialsInBase64" }
     "ContentType" = "application/json"
@@ -110,7 +114,7 @@ $Params = @{
 
 try {
     if ($isprivatesubnet -eq $False) {
-        Invoke-RestMethod @Params -Certificate $regionCertificateificate
+        Invoke-RestMethod @Params -Certificate $regionCertificate
     }
     else {
         Invoke-RestMethod @Params 
