@@ -51,6 +51,19 @@ try {
     }
 
     $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
+    try {
+    $FSxNHTTP_Request = [System.Net.WebRequest]::Create("https://$MgmtDNS")
+    $FSxNHTTP_Response = $FSxNHTTP_Request.GetResponse()
+    $FSxNHTTP_Response.Close()
+}
+catch {
+    write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
+    Write-Information "FSxN Management domain $MgmtDNS is not resolved. Switching to management IP."
+    $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.IpAddresses
+    if ($MgmtDNS -is [array]) {
+        $MgmtDNS = $MgmtDNS[0]
+    }
+  }
     $nodeiqn = (Get-InitiatorPort).NodeAddress
     Connect-NcController -Name $MgmtDNS -Credential $fsxadmincreds -Vserver $sqlvmname
     Write-Output "Connected to NetApp controller at $MgmtDNS"
