@@ -11,9 +11,10 @@ import { GENERAL } from '../../../utils/appConstants';
 import { getProtectionText, isAwsBackupEnabledText } from '../../InventoryV2/InventoryUtilsV2';
 import { PROTECTION_TEXT_STATUS } from '../../../utils/consts';
 import DatabaseHostOverviewApiV2 from '../ResourceHomePage/DatabaseHostOverviewApiV2';
-import { addInitialDBCreateData,
+import {
+    addInitialDBCreateData,
     initialCreateNewUserState,
-    setCdbPageData 
+    setCdbPageData
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../store/authSlice';
 import { useNavigate } from 'react-router-dom';
@@ -22,10 +23,7 @@ import { useDispatch } from 'react-redux';
 const DatabaseListTable = () => {
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
     const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
-    const {
-        selectedHostname,
-        selectedDatabaseInstanceName,
-    } = useAppSelector(state => state.getWellOptimize);
+    const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
     const {
         resourceLoading: resourceLoadingState,
 
@@ -206,7 +204,6 @@ const DatabaseListTable = () => {
         pageSize: 50,
         isLazyLoading: databaseListLoading
     });
-    
 
     return (
         <div className={styles.databaseListTable}>
@@ -223,8 +220,8 @@ const DatabaseListTable = () => {
                             isThin={true}
                             isDisabled={resourceLoadingState}
                             onClick={() => {
-                                    dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                    dispatch(
+                                dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                dispatch(
                                     setCdbPageData({
                                         dbHostName: selectedHostname,
                                         instanceId: selectedDatabaseInstance,
@@ -237,7 +234,7 @@ const DatabaseListTable = () => {
                                 navigate('../create-new-user');
                             }}
                         >
-                            {GENERAL.JM_TYPE_CREATE_RESOURCE}
+                            {GENERAL.ADD_DATABASE}
                         </Button>
                     </div>
                 }
