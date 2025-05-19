@@ -1,7 +1,11 @@
 {
     "env": {
-        "browser": true,
         "es2021": true
+    },
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
     },
     "extends": [
         "airbnb-base",
@@ -10,11 +14,6 @@
         "plugin:@typescript-eslint/recommended",
         "prettier"
     ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaVersion": "latest",
-        "sourceType": "module"
-    },
     "plugins": ["@typescript-eslint"],
     "settings": {
         "import/parsers": {
@@ -26,65 +25,48 @@
                 "moduleDirectory": ["server/src", "server/node_modules", "ui/src", "ui/node_modules"]
             },
             "typescript": {
-                "alwaysTryTypes": true, // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
+                "alwaysTryTypes": true,
                 "project": ["server/tsconfig.json", "ui/tsconfig.json"]
             }
         }
     },
     "rules": {
-        "indent": [
-            "off",
-            4,
-            {
-                "SwitchCase": 1,
-                "ignoredNodes": ["ConditionalExpression"]
-            }
-        ],
+        "indent": ["off", 4, { "SwitchCase": 1, "ignoredNodes": ["ConditionalExpression"] }],
         "linebreak-style": ["error", "unix"],
         "quotes": ["error", "single"],
         "semi": ["error", "always"],
-        "no-console": 2,
-        "@typescript-eslint/no-explicit-any": 1,
-        "no-unused-expressions": 2,
-        "no-const-assign": 2,
-        "no-duplicate-imports": 2,
-        "no-func-assign": 2,
-        "no-unreachable": 2,
-        "prefer-destructuring": 2,
+        "no-console": "error",
+        "@typescript-eslint/no-explicit-any": "warn",
+        "no-unused-expressions": "error",
+        "no-const-assign": "error",
+        "no-duplicate-imports": "error",
+        "no-func-assign": "error",
+        "no-unreachable": "error",
+        "prefer-destructuring": "error",
         "arrow-parens": ["error", "as-needed"],
-        "prefer-const": [
-            "error",
-            {
-                "destructuring": "all"
-            }
-        ],
+        "prefer-const": ["error", { "destructuring": "all" }],
         "quote-props": ["error", "as-needed"],
         "curly": ["error", "all"],
-        "no-plusplus": [
-            "error",
-            {
-                "allowForLoopAfterthoughts": true
-            }
-        ],
-        "no-shadow": 0,
-        "@typescript-eslint/no-shadow": 2,
-        "consistent-return": 0,
-        "no-param-reassign": 0,
-        "no-await-in-loop": 0,
-        "no-restricted-syntax": 0,
-        "default-param-last": 0,
-        "no-use-before-define": 0,
-        "no-underscore-dangle": 0,
-        "no-nested-ternary": 0,
-        "no-trailing-spaces": 2,
-        "no-prototype-builtins": 0,
-        "import/group-exports": 2,
-        "import/prefer-default-export": 1,
-        "import/no-duplicates": 1,
-        "import/extensions": 0,
-        "import/no-extraneous-dependencies": 0,
+        "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+        "no-shadow": "off",
+        "@typescript-eslint/no-shadow": "error",
+        "consistent-return": "off",
+        "no-param-reassign": "off",
+        "no-await-in-loop": "warn",
+        "no-restricted-syntax": "off",
+        "default-param-last": "off",
+        "no-use-before-define": "off",
+        "no-underscore-dangle": "off",
+        "no-nested-ternary": "warn",
+        "no-trailing-spaces": "error",
+        "no-prototype-builtins": "off",
+        "import/group-exports": "error",
+        "import/prefer-default-export": "warn",
+        "import/no-duplicates": "warn",
+        "import/extensions": "off",
+        "import/no-extraneous-dependencies": "off",
         "import/no-unresolved": [
-            2,
+            "error",
             {
                 "commonjs": true,
                 "amd": true
@@ -93,13 +75,167 @@
     },
     "overrides": [
         {
-            "files": ["ui/src/**/*.{js,jsx,ts,tsx}"],
-            "extends": ["plugin:react/recommended", "plugin:react-hooks/recommended"],
-            "plugins": ["react", "react-hooks"],
+            "files": ["ui/**/*.{js,jsx,ts,tsx}"],
+            "env": {
+                "browser": true,
+                "node": true,
+                "es2021": true
+            },
+            "parserOptions": {
+                "ecmaFeatures": {
+                    "jsx": true
+                },
+                "ecmaVersion": 2021,
+                "sourceType": "module"
+            },
+            "extends": [
+                "eslint:recommended",
+                "plugin:react/recommended",
+                "plugin:react-hooks/recommended",
+                "plugin:@typescript-eslint/recommended",
+                "plugin:jsx-a11y/recommended",
+                "airbnb",
+                "airbnb/hooks",
+                "prettier"
+            ],
+            "plugins": ["react", "react-hooks", "@typescript-eslint", "jsx-a11y"],
             "settings": {
                 "react": {
                     "version": "detect"
                 }
+            },
+            "rules": {
+                // Any UI-specific rules go here.
+                "indent": ["off", 4, { "SwitchCase": 1, "ignoredNodes": ["ConditionalExpression"] }],
+                "linebreak-style": ["error", "unix"],
+                "quotes": ["error", "single"],
+                "semi": ["error", "always"],
+                "no-console": "error",
+                "@typescript-eslint/no-explicit-any": "warn",
+                "no-unused-expressions": "error",
+                "no-const-assign": "error",
+                "no-duplicate-imports": "error",
+                "no-func-assign": "error",
+                "no-unreachable": "error",
+                "prefer-destructuring": "error",
+                "arrow-parens": ["error", "as-needed"],
+                "prefer-const": ["error", { "destructuring": "all" }],
+                "quote-props": ["error", "as-needed"],
+                "curly": ["error", "all"],
+                "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+                "no-shadow": "off",
+                "@typescript-eslint/no-shadow": "error",
+                "consistent-return": "off",
+                "no-param-reassign": "off",
+                "no-await-in-loop": "warn",
+                "no-restricted-syntax": "off",
+                "default-param-last": "off",
+                "no-use-before-define": "off",
+                "@typescript-eslint/no-use-before-define": "error",
+                "no-underscore-dangle": "off",
+                "no-nested-ternary": "warn",
+                "no-trailing-spaces": "error",
+                "no-prototype-builtins": "off",
+                "import/group-exports": "error",
+                "import/prefer-default-export": "warn",
+                "import/no-duplicates": "warn",
+                "import/extensions": [
+                    "error",
+                    "ignorePackages",
+                    {
+                        "ts": "never",
+                        "tsx": "never",
+                        "js": "never",
+                        "jsx": "never"
+                    }
+                ],
+                "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
+                "import/no-unresolved": ["error", { "commonjs": true, "amd": true }],
+                "react/react-in-jsx-scope": "off",
+                "react/prop-types": "off",
+                "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+                "jsx-a11y/no-autofocus": "off",
+                "react/jsx-filename-extension": "off"
+            }
+        },
+        {
+            "files": ["server/**/*.{js,jsx,ts,tsx}"],
+            "env": {
+                "node": true,
+                "es2021": true
+            },
+            "parserOptions": {
+                "ecmaVersion": 2021,
+                "sourceType": "module"
+            },
+            "extends": [
+                "airbnb-base",
+                "eslint:recommended",
+                "plugin:import/typescript",
+                "plugin:@typescript-eslint/recommended",
+                "prettier"
+            ],
+            "plugins": ["@typescript-eslint"],
+            "rules": {
+                // Any server-specific rules go here.
+                "indent": [
+                    "off",
+                    4,
+                    {
+                        "SwitchCase": 1,
+                        "ignoredNodes": ["ConditionalExpression"]
+                    }
+                ],
+                "linebreak-style": "error",
+                "quotes": "error",
+                "semi": "error",
+                "no-console": "error",
+                "@typescript-eslint/no-explicit-any": "warn",
+                "no-unused-expressions": "error",
+                "no-const-assign": "error",
+                "no-duplicate-imports": "error",
+                "no-func-assign": "error",
+                "no-unreachable": "error",
+                "prefer-destructuring": "error",
+                "arrow-parens": "error",
+                "prefer-const": [
+                    "error",
+                    {
+                        "destructuring": "all"
+                    }
+                ],
+                "quote-props": "error",
+                "curly": "error",
+                "no-plusplus": [
+                    "error",
+                    {
+                        "allowForLoopAfterthoughts": true
+                    }
+                ],
+                "no-shadow": "off",
+                "@typescript-eslint/no-shadow": "error",
+                "consistent-return": "off",
+                "no-param-reassign": "off",
+                "no-await-in-loop": "warn",
+                "no-restricted-syntax": "off",
+                "default-param-last": "off",
+                "no-use-before-define": "off",
+                "no-underscore-dangle": "off",
+                "no-nested-ternary": "warn",
+                "no-trailing-spaces": "error",
+                "no-prototype-builtins": "off",
+                "import/group-exports": "error",
+                "import/prefer-default-export": "warn",
+                "import/no-duplicates": "warn",
+                "import/extensions": "off",
+                "import/no-extraneous-dependencies": "off",
+                "import/no-unresolved": [
+                    "error",
+                    {
+                        "commonjs": true,
+                        "amd": true
+                    }
+                ]
             }
         }
     ]
