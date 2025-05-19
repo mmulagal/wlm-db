@@ -862,6 +862,7 @@ async function getDatabaseHostsSummaryV2(
         return { count: 0, items: [], nextToken: '' };
     }
 
+    const resourcesMap: Map<string, ResourceDetails> = new Map(resourceDetails.map(r => [r.resource_id, r]));
     const managedInstancesMap: Map<string, DatabaseInstance[]> = new Map(
         resourceDetails.map(r => [r.resource_id, (r as any)?.database_instances?.flat()])
     );
@@ -869,8 +870,7 @@ async function getDatabaseHostsSummaryV2(
     managedInstancesMap.forEach((value: DatabaseInstance[], key) => {
         if (value && value.length > 0) {
             value.forEach((instance: DatabaseInstance) => {
-                instance.resource =
-                    resourceDetails.find((r: ResourceDetails) => r.resource_id === key) ?? ({} as ResourceDetails);
+                instance.resource = resourcesMap.get(key) ?? ({} as ResourceDetails);
             });
         }
     });

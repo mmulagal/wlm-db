@@ -2068,7 +2068,8 @@ async function discoverEc2Instances(
     filters: Filter[] = [],
     pageSize?: number,
     nextToken?: string,
-    ec2InstanceIds: string[] = []
+    ec2InstanceIds: string[] = [],
+    discoveryDbType: string = DatabaseTypes.MS_SQL_SERVER
 ) {
     logger.info('Discover EC2 resources', { accountId, credentialsId, region, pageSize, nextToken });
 
@@ -2110,10 +2111,14 @@ async function discoverEc2Instances(
         compact(ec2InstanceList.map(({ InstanceId }) => InstanceId))
     );
 
-    const ec2Instances = ec2InstanceList?.map(ec2Instance => {
-        const name = isDemo() ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(ec2Instance?.Tags);
+    let ec2Instances = ec2InstanceList?.map(ec2Instance => {
+        const name = isDemoFlow
+            ? discoveryDbType === DatabaseTypes.ORACLE
+                ? `oracle-${randomize('0', 5)}`
+                : `sqlnode-${randomize('0', 5)}`
+            : getResourceNameFromTags(ec2Instance?.Tags);
         return {
-            ec2InstanceId: ec2Instance?.InstanceId || '',
+            ec2InstanceId: isDemoFlow ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
             ec2InstanceType: ec2Instance?.InstanceType || '',
             ec2InstanceName: name || '',
             ec2UsageOperation: ec2Instance?.UsageOperation || '',
@@ -2129,6 +2134,11 @@ async function discoverEc2Instances(
         };
     });
 
+    if (isDemoFlow) {
+        ec2Instances = ec2Instances.filter(
+            ec2InstanceDetails => ec2InstanceDetails.ssmState === ConnectionStatus.CONNECTED
+        );
+    }
     return { ec2Instances, NextToken };
 }
 
@@ -2588,7 +2598,8 @@ async function discoverOracleResources(
         filters,
         pageSize,
         nextToken,
-        ec2InstanceIds
+        ec2InstanceIds,
+        DatabaseTypes.ORACLE
     );
 
     const ssmNotConnectedEc2Instances: DiscoveredEc2InstanceType[] = ec2Instances.filter(
