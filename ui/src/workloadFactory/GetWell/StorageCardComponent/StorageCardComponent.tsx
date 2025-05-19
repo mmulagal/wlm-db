@@ -806,7 +806,15 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         dismissMssqlAssessment({ payload: payload })
             .then((res: any) => {
                 setDismissAction(false);
-                if (!res.error) {
+                const dismissedConfigs = res?.data?.dismissedConfigurations;
+                const databaseHosts = dismissedConfigs?.[0]?.databaseHosts;
+                const status = databaseHosts?.[0].status;
+                if (
+                    !res.error &&
+                    dismissedConfigs?.length > 0 &&
+                    databaseHosts?.length > 0 &&
+                    status.toUpperCase() === 'SUCCESS'
+                ) {
                     let updatedState = '';
                     if (
                         action === CONFIG_STATE_ACTIONS.ACTIVE &&
