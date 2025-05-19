@@ -50,7 +50,11 @@
         "build:preprod": "dotenv -e .env.production vite build && dotenv -e .env.production -- ejs workload-config.json -o build/workload-config.json && ejs workload-policies.json -o build/workload-policies.json",
         "build:production": "dotenv -e .env.production vite build && dotenv -e .env.production -- ejs workload-config.json -o build/workload-config.json && ejs workload-policies.json -o build/workload-policies.json",
         "test": "vitest run",
-        "test-dev": "vitest watch"
+        "test-dev": "vitest watch",
+        "format": "../node_modules/prettier/bin-prettier.js --write \"src/**/*.{js,jsx,ts,tsx,css,scss,md,json}\"",
+        "format:check": "../node_modules/prettier/bin-prettier.js --check \"src/**/*.{js,jsx,ts,tsx,css,scss,md,json}\"",
+        "lint": "../node_modules/eslint/bin/eslint.js \"src/**/*.{js,jsx,ts,tsx}\"",
+        "lint:fix": "../node_modules/eslint/bin/eslint.js \"src/**/*.{js,jsx,ts,tsx}\" --fix"
     },
     "browserslist": {
         "production": [
