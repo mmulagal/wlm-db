@@ -3,6 +3,7 @@ import DoughnutChartComponent from '../../Doughnut/DoughnutChartComponent';
 import styles from './CapacityUtilization.module.scss';
 import _ from 'lodash';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { GENERAL } from '../../../../../utils/appConstants';
 
 const CapacityUtilization = () => {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
@@ -19,7 +20,7 @@ const CapacityUtilization = () => {
         <div className={styles.capacityUtilization}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Capacity utilization
+                    {GENERAL.CAPACITY_UTILIZATION}
                 </DsTypography>
             </div>
 

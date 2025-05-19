@@ -28,6 +28,9 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    WELL_ARCHITECTED_BREAKDOWN_BY_CATEGORY: 'Well-architected breakdown by category',
+    CPU_UTILIZATION: 'CPU utilization',
+    CAPACITY_UTILIZATION: 'Capacity utilization',
     REACTIVATE_TOOLTIP: 'Restart the analysis for a postponed or dismissed configuration.',
     POSTPONED_TOOLTIP: 'Postpone the configuration analysis for 30 days.',
     DISMISS_TOOLTIP: 'Stop the configuration analysis.',
@@ -52,6 +55,7 @@ export const GENERAL = {
     OPTIMIZE: 'Fix',
     REBASE_LINE: 'Re-baseline',
     APPLY: 'Apply',
+    WELL_ARCHITECTED_STATUS: 'Well-architected status',
     MICROSOFT_SQL: 'Microsoft SQL',
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
     LOADING_DATA: 'Loading data',
@@ -610,6 +614,7 @@ export const GENERAL = {
     JM_RUNNING: 'Running',
     JM_TYPE_DEPLOYMENT: 'Deployment',
     JM_TYPE_CREATE_RESOURCE: 'Create database',
+    ADD_DATABASE: 'Add database',
     JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
@@ -1065,6 +1070,9 @@ export const GENERAL = {
     ES_HEADER:
         'You can identify potential savings by automatically comparing your database workloads to SQL Server using FSx for ONTAP file systems. Choose a SQL Server host and explore savings.',
     ES_SAVINGS: 'Explore savings',
+    POTENTIAL_SAVINGS: 'Potential savings',
+    SQL_SERVER_HOSTS_EBS: 'SQL Server hosts on Elastic Block Store (EBS)',
+    SQL_SERVER_HOSTS_FSXW: 'SQL Server hosts on FSx for Windows',
     MANUAL_EXLORE_SAVINGS: 'Custom configuration cost analysis',
     EXPLORE_SAVING_MANUALLY: 'Analyze custom configuration for Elastic Block Store (EBS)',
     EXPLORE_SAVING_MANUALLY_FSX: 'Analyze custom configuration for FSx for Windows File Server',

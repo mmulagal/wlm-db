@@ -4,7 +4,6 @@ import { ReactComponent as Applications } from '../../../assets/Application.svg'
 import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
 import { ReactComponent as Cloning } from '../../../assets/Cloning.svg';
 import { ReactComponent as Compute } from '../../../assets/Compute.svg';
-import { ReactComponent as ComingSoon2 } from '../../../assets/comingSoon2.svg';
 import styles from './OptimizeByCategory.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
@@ -117,7 +116,7 @@ const OptimizeByCategory = () => {
         <div className={styles.optimizeByCategory}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Well-architected breakdown by category
+                    {GENERAL.WELL_ARCHITECTED_BREAKDOWN_BY_CATEGORY}
                 </DsTypography>
 
                 <div className={styles.rightSection}>
@@ -148,7 +147,7 @@ const OptimizeByCategory = () => {
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
 
-                            <DsTypography variant="Semibold_14">Storage</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.STORAGE}</DsTypography>
                         </div>
                         <div className={styles.section3}></div>
                     </div>
@@ -163,7 +162,7 @@ const OptimizeByCategory = () => {
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Semibold_14">Compute</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.COMPUTE}</DsTypography>
                         </div>
                         <div className={styles.section3}></div>
                     </div>
@@ -212,7 +211,7 @@ const OptimizeByCategory = () => {
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Semibold_14">Cloning</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.CLONING}</DsTypography>
                         </div>
                         <div className={styles.section3}></div>
                     </div>

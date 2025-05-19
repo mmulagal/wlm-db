@@ -57,3 +57,7 @@
         }
     }
 }
+
+[class*='ButtonWithDropdown-module_dropdown-container'] {
+    z-index: 2 !important;
+}
