@@ -108,7 +108,8 @@
                 // Any UI-specific rules go here.
                 "indent": ["off", 4, { "SwitchCase": 1, "ignoredNodes": ["ConditionalExpression"] }],
                 "linebreak-style": ["error", "unix"],
-                "quotes": ["error", "single"],
+                "quotes": ["error", "single", { "avoidEscape": true }],
+                "jsx-quotes": ["error", "prefer-double"],
                 "semi": ["error", "always"],
                 "no-console": "error",
                 "@typescript-eslint/no-explicit-any": "warn",
