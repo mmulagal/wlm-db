@@ -81,11 +81,11 @@ try {
 }
 catch {
     write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
-    Write-Information "FSxN Management domain $MgmtDNS is not resolved. Switching to management IP."
+    Write-Information "FSxN Management domain $FSxHostName is not resolved. Switching to management IP."
     $fslist = Get-FSXFileSystem -FileSystemId $FSxFileSystemId
     $FSxHostName = $fslist.ontapconfiguration.Endpoints.Management.IpAddresses
     if ($FSxHostName -is [array]) {
-        $FSxHostName = $MgmtDNS[0]
+        $FSxHostName = $FSxHostName[0]
     }
 
 }
