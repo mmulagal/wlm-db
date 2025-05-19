@@ -136,7 +136,13 @@ async function getDataBasesSummary(
     credentialsId?: string,
     databaseInstances?: string[]
 ) {
-    logger.info('Get databases summary for resource:', resourceId, sqlAuthEnabled, accountId, databaseInstances);
+    logger.info(
+        'Get databases summary for resource:',
+        resourceId,
+        sqlAuthEnabled,
+        accountId,
+        databaseInstances?.length
+    );
 
     const [resourceDetail] = await listResources(accountId, resourceId, credentialsId);
     if (!resourceDetail) {
@@ -826,15 +832,6 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
                 instances.push(...parsedResponse);
             }
         }
-        // ****TO-DO: for debugging DBS-4089****
-        const instanceStateCounts = instances.reduce((acc: { [key: string]: number }, instance: InstanceDetails) => {
-            if (instance.instanceState) {
-                acc[instance.instanceState] = (acc[instance.instanceState] || 0) + 1;
-            }
-            return acc;
-        }, {});
-        logger.info('DBS-4089: MSSQL instance states', nodeIds, instanceStateCounts);
-        // ****TO-DO: for debugging DBS-4089****
         instances = instances.filter(res => res?.instanceState !== SQL_SERVICE_STATE.STOPPED);
 
         return instances;
@@ -1142,7 +1139,6 @@ async function getDatabaseEnvironmentDetails(
         fsxId = databaseInstanceInfo[0].fsxn_ids;
         const temp = databaseInstanceInfo[0].fsx_svm_id || '';
         svmId = temp![fsxId as keyof typeof temp];
-        logger.info(svmId);
     }
 
     return {
@@ -1271,7 +1267,6 @@ async function getMssqlInstanceGuid(
 
         for (const nodeId of nodeIds) {
             const ssmComment = 'Fetching MSSQL instance GUID';
-            logger.info(ssmComment, nodeId);
             response = await callSsmExecution(credentialsId, region, commands, nodeId, ssmComment, accountId);
             if (response) {
                 [{ instance_guid: sqlInstanceGuid }] = sqlResponseParsing(response);
