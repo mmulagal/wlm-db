@@ -664,7 +664,7 @@ async function getStorageDataFromOntap(
     isSqlAuthEnabled: boolean
 ) {
     const ssmComment = 'Get storage data from ONTAP';
-    logger.info(ssmComment, ':', { activeNodeInstanceId, instanceDetails, isSqlAuthEnabled });
+    logger.info(ssmComment, ':', { activeNodeInstanceId, instancesLength: instanceDetails.length, isSqlAuthEnabled });
 
     try {
         const managedInstances = instanceDetails.filter(

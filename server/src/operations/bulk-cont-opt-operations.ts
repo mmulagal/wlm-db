@@ -64,7 +64,9 @@ async function bulkOptimization(
     optimizationCategory: string,
     hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]
 ) {
-    logger.info(`Bulk optimization: ${accountId},  ${optimizationCategory}, ${hostsToOptimize}`);
+    logger.info(
+        `Bulk optimization: ${accountId},  ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}`
+    );
 
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
@@ -114,7 +116,7 @@ async function bulkOptimization(
 }
 
 async function bulkCloneOptimization(accountId: string, hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[]) {
-    logger.info(`Bulk clone optimization: ${accountId}, ${hostsToOptimize}`);
+    logger.info(`Bulk clone optimization: ${accountId}, hostsToOptimize: ${hostsToOptimize?.length}`);
 
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
@@ -160,7 +162,9 @@ async function handleBulkCloneOptimization(
     hostsToOptimize: BulkOptimizeCloneInHostRequestBodyType[],
     parentJobId: string
 ) {
-    logger.info(`Handle bulk optimizing clone: ${accountId}, ${hostsToOptimize}, ${parentJobId}`);
+    logger.info(
+        `Handle bulk optimizing clone: ${accountId}, hostsToOptimize: ${hostsToOptimize?.length}, parentJobId: ${parentJobId}`
+    );
 
     const flattenedInstances = extractInstancesToOptimize(hostsToOptimize);
     // Process all instances and their clones with a concurrency limit of 3
@@ -306,7 +310,7 @@ async function handleBulkOptimization(
     masterOptimizeParentId: string
 ) {
     logger.info(
-        `Handle bulk optimizing : ${accountId}, ${optimizationCategory}, ${hostsToOptimize}, ${masterOptimizeParentId}`
+        `Handle bulk optimizing : ${accountId}, ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}, ${masterOptimizeParentId}`
     );
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     try {
@@ -363,7 +367,7 @@ async function bulkComputeOptimization(
     accountId: string,
     hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType[]
 ) {
-    logger.info(`Bulk optimizing compute: ${accountId}, ${hostsToOptimize}`);
+    logger.info(`Bulk optimizing compute: ${accountId}, hostsToOptimize: ${hostsToOptimize?.length}`);
 
     if (isEmpty(hostsToOptimize)) {
         const errorMessage = 'databaseHosts cannot be empty.';
@@ -400,7 +404,9 @@ async function handleBulkComputeOptimization(
     hostsToOptimize: BulkOptimizeComputePerHostRequestBodyType[],
     masterOptimizeJobParentId: string
 ) {
-    logger.info(`Handle bulk optimizing compute: ${accountId},  ${hostsToOptimize}, ${masterOptimizeJobParentId}`);
+    logger.info(
+        `Handle bulk optimizing compute: ${accountId},  hostsToOptimize: ${hostsToOptimize?.length}, ${masterOptimizeJobParentId}`
+    );
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
     try {

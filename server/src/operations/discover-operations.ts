@@ -438,8 +438,6 @@ async function getHostAndSqlInfoFromPsOutput(
         )
     );
 
-    logger.info(`SQL Parameter details for ${ssmTarget.ec2InstanceId}: ${ec2SqlParametersInfo}`);
-
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
 
@@ -478,7 +476,6 @@ async function getHostAndSqlInfoFromPsOutput(
             }
 
             let responseInJson = JSON.parse(powerShellScriptOutput);
-            logger.info(`SSM response for ${ssmTarget.ec2InstanceId}: ${JSON.stringify(responseInJson)}`);
 
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
@@ -712,7 +709,7 @@ async function makeSsmCall(
     targets: string[],
     accountId: string
 ): Promise<string | undefined> {
-    logger.info('makeSsmCall():', credentialsId, region, commands, targets, accountId);
+    logger.info('Discovery makeSsmCall():', credentialsId, region, targets, accountId);
 
     const params = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -1192,7 +1189,6 @@ async function validateCredentials(
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
         parsedResponse = attempt(JSON.parse, cleanResponse);
-        logger.info('Parsed response for credential validation: ', parsedResponse);
 
         parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
 
@@ -1544,7 +1540,7 @@ async function prepareDbScriptsForManage(
     try {
         const copyScriptResponse = await copyScriptsToHost(accountId, credentialsId, region, ec2InstanceId);
 
-        logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${copyScriptResponse}`);
+        logger.debug(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${copyScriptResponse}`);
 
         if (copyScriptResponse?.includes('failureInfo')) {
             const responseInJson = JSON.parse(copyScriptResponse);
@@ -1689,7 +1685,7 @@ async function preparePsModulesForManage(
             3,
             5000
         );
-        logger.info(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
+        logger.debug(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
 
         if (ssmPsModuleInstallResponse?.includes(FAILURE_INFO)) {
             const responseInJson = JSON.parse(ssmPsModuleInstallResponse);
@@ -1726,7 +1722,7 @@ async function preparePsModulesForManage(
 async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstanceManageMsSqlRequestBodyType[]) {
     logger.info('Manage SQL Server instances (v2):', {
         accountId,
-        itemsTobeManged
+        instancesToBeManagedLength: itemsTobeManged.length
     });
 
     const manageResponse: MultiInstanceManageResponseBodyType = [];
@@ -2891,7 +2887,6 @@ async function fetchFsxResourceMappings(
                 : Promise.resolve([])
         ]);
 
-    // logger.info('FSX LIST', { fsxList, svmList, subnetList, ebsVolumeList });
     const extractedSsmResponseList = await Promise.all(
         ssmResponseList.map(async ssmResponse => extractSsmResponse(credentialsId, region, ssmResponse))
     );
