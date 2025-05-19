@@ -2243,12 +2243,20 @@
     },
     "discoverPgsqlServer": {
         "version": "psql (PostgreSQL) 16.5",
-        "ip_address": "10.0.132.47",
+        "nfs_ip_address": "10.0.132.47",
         "status": "running",
         "hostname": "pgsqlservermm",
-        "mount_point": "/wlmdb_pgsqldata_1742007997310",
+        "nfs_mount_point": "/wlmdb_pgsqldata_1742007997310",
         "postgres_server": "localhost",
-        "database_count": "1"
+        "database_count": "1",
+        "deployment_type": "standalone",
+        "replica_type": "primary",
+        "replica_info": {},
+        "primary_host": "pgsqlservermm",
+        "ebs_volume": "",
+        "server_instance_id": "",
+        "default_auth": "unknown"
+
     },
     "getPgsqlDatabasesCommandResponse": {
         "$metadata": {
