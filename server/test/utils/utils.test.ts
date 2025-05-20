@@ -1,7 +1,8 @@
 import { isEmpty } from 'lodash-es';
 import { faker } from '@faker-js/faker';
+import { Instance } from '@aws-sdk/client-ec2';
 import { createSecrets } from '../../src/operations/aws/secrets-manager-operations';
-import { DEFAULT_AWS_REGION, FCI } from '../../src/utils/consts';
+import { DatabaseTypes, DEFAULT_AWS_REGION, FCI } from '../../src/utils/consts';
 import '../simulator/scopes/aws/secrets-manager-scope';
 import secretManagerResponse from '../simulator/responses/aws/secrets-manager-create.json';
 import {
@@ -20,7 +21,8 @@ import {
     parseMultipleCommandResponse,
     decompressSSMResponse,
     divideArrayIntoChunks,
-    extractVersionDetails
+    extractVersionDetails,
+    getEc2Hostname
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -190,5 +192,19 @@ ervisor)\n`;
 
         const { releaseDate } = extractVersionDetails(sqlVersion);
         expect(releaseDate).toEqual('Unknown');
+    });
+
+    it('should return correct mock hostname', () => {
+        const instance: Instance = {
+            Tags: [{ Key: 'Other', Value: 'not-the-name' }]
+        };
+        let hostname = getEc2Hostname(instance, DatabaseTypes.PG_SQL);
+        expect(hostname).toMatch(/^pgsqlnode-\d{4}$/);
+        hostname = getEc2Hostname(instance, DatabaseTypes.ORACLE);
+        expect(hostname).toMatch(/^oracle-\d{5}$/);
+        hostname = getEc2Hostname(instance, DatabaseTypes.MS_SQL_SERVER);
+        expect(hostname).toMatch(/^sqlnode-\d{5}$/);
+        hostname = getEc2Hostname(instance, 'UNKNOWN' as any);
+        expect(hostname).toMatch(/^sqlnode-\d{5}$/);
     });
 });

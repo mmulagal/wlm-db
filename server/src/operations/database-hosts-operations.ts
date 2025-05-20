@@ -1,5 +1,4 @@
 import { STORAGE_TYPE } from '@prisma/client';
-import randomize from 'randomatic';
 import numeral from 'numeral';
 import {
     DescribeInstancesCommandOutput,
@@ -94,7 +93,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getResourceNameFromTags, isDemo } from '../utils/utils';
+import { getEc2Hostname, isDemo } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
@@ -730,9 +729,10 @@ async function getNodeTopology(
                         activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
                         activeSubnetId = activeNode.SubnetId;
                         activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                        activeNodeInstanceName = isDemo()
-                            ? `sqlnode-${randomize('0', 5)}`
-                            : getResourceNameFromTags(activeNode.Tags);
+                        activeNodeInstanceName = getEc2Hostname(
+                            activeNode,
+                            resourceData.resource_type as DatabaseTypes
+                        );
                         vpcId = activeNode.VpcId;
                         vpcCidr = activeNode.VpcId;
                         activeNodeStatus = activeNode.State?.Name;
@@ -753,9 +753,10 @@ async function getNodeTopology(
                             standbyNodeStatus = standbyNode.State?.Name;
                             const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
                             ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
-                            standbyNodeInstanceName = isDemo()
-                                ? `sqlnode-${randomize('0', 5)}`
-                                : getResourceNameFromTags(standbyNode.Tags);
+                            standbyNodeInstanceName = getEc2Hostname(
+                                standbyNode,
+                                resourceData.resource_type as DatabaseTypes
+                            );
                         }
                     }
                 } else {

@@ -5,12 +5,13 @@
 import { attempt, trimEnd, trimStart, camelCase, isEmpty } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { Tag } from '@aws-sdk/client-ec2';
+import { Instance, Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import numeral from 'numeral';
 import isBase64 from 'is-base64';
 import { inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
+import randomize from 'randomatic';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { RegionDetailsType } from '../routes/types/generic.types';
 
@@ -51,6 +52,7 @@ import { REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
 import { readFromCacheByKey, writeToCache } from './cache';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 const subJobRegex = /-([^-\s]+)-[^-\s]+$/;
 const subJobNames = ['SQLStandaloneStack', 'SQLServerStack', 'NewFSxStack', 'ExistingFSxStack'];
@@ -406,7 +408,7 @@ function derivePropertiesFromARN(awsResourceArn: string) {
 }
 
 async function sleep(ms: number) {
-    if (isDemo()) {
+    if (isDemoFlow) {
         return;
     }
     await new Promise(resolve => {
@@ -701,7 +703,7 @@ function getMonthlyPriceFromHourlyPrice(hourlyPrice?: number) {
 function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {
     logger.info('Generate database instance name', { instanceName, isDefault });
 
-    if (isDemo() || isDefault) {
+    if (isDemoFlow || isDefault) {
         return DEFAULT_MSSQL_INSTANCE_NAME;
     }
 
@@ -714,7 +716,7 @@ function extractSqlInstanceName(serverName: string): string {
     const defaultInstancePattern = /^\$env:COMPUTERNAME$/i; // Case-insensitive match for $env:COMPUTERNAME
     const namedInstancePattern = /^\$env:COMPUTERNAME\\(.+)$/i; // Case-insensitive match for $env:COMPUTERNAME\instanceName
 
-    if (isDemo() || defaultInstancePattern.test(serverName)) {
+    if (isDemoFlow || defaultInstancePattern.test(serverName)) {
         return DEFAULT_INSTANCE_NAME; // Default instance
     }
 
@@ -738,7 +740,7 @@ function getOriginalDatabaseInstanceName(instanceName: string | undefined): stri
  * Returns formatted instance name with hostname for MSSQL
  */
 function getServerNameWithHostname(sqlServerName?: string, instanceName?: string, databaseName?: string) {
-    if (isDemo()) {
+    if (isDemoFlow) {
         // In ssm-scope, the instance name is appended with the hostname. (like below)
         // instanceName: "MSSQL$SQL-Managed-Host-ProdPROD-MarketingCampaigns"
         // check this
@@ -760,11 +762,26 @@ function getServerNameWithHostname(sqlServerName?: string, instanceName?: string
     return `${DEFAULT_INSTANCE_NAME}`;
 }
 
+function getEc2Hostname(ec2Instance: Instance, dbEngine: DatabaseTypes) {
+    if (isDemoFlow) {
+        switch (dbEngine) {
+            case DatabaseTypes.PG_SQL:
+                return `pgsqlnode-${randomize('0', 4)}`;
+            case DatabaseTypes.ORACLE:
+                return `oracle-${randomize('0', 5)}`;
+            case DatabaseTypes.MS_SQL_SERVER:
+            default:
+                return `sqlnode-${randomize('0', 5)}`;
+        }
+    }
+    return getResourceNameFromTags(ec2Instance?.Tags);
+}
+
 async function decompressSSMResponse(response: string) {
     logger.debug('Decompressing SSM response', { response });
 
     response = response.replaceAll('\r\n', '');
-    if (isDemo() || isEmpty(response) || !isBase64(response)) {
+    if (isDemoFlow || isEmpty(response) || !isBase64(response)) {
         return response;
     }
 
@@ -1098,5 +1115,6 @@ export {
     formatSsmArrayResponse,
     generateSqlResourceId,
     extractSqlInstanceName,
-    escapeBackslash
+    escapeBackslash,
+    getEc2Hostname
 };

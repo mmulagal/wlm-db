@@ -41,7 +41,8 @@ import {
     sqlResponseParsing,
     isValidProp,
     generateSqlResourceId,
-    escapeBackslash
+    escapeBackslash,
+    getEc2Hostname
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -200,7 +201,8 @@ async function getHostAndSqlServerInfo(
         filters,
         pageSize,
         nextToken,
-        instances
+        instances,
+        DatabaseTypes.MS_SQL_SERVER
     );
 
     const ssmConnectedEc2ResponseInfo: DiscoverResponseInfoType[] = [];
@@ -2069,7 +2071,7 @@ async function discoverEc2Instances(
     pageSize?: number,
     nextToken?: string,
     ec2InstanceIds: string[] = [],
-    discoveryDbType: string = DatabaseTypes.MS_SQL_SERVER
+    discoveryDbType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
 ) {
     logger.info('Discover EC2 resources', { accountId, credentialsId, region, pageSize, nextToken });
 
@@ -2112,11 +2114,7 @@ async function discoverEc2Instances(
     );
 
     let ec2Instances = ec2InstanceList?.map(ec2Instance => {
-        const name = isDemoFlow
-            ? discoveryDbType === DatabaseTypes.ORACLE
-                ? `oracle-${randomize('0', 5)}`
-                : `sqlnode-${randomize('0', 5)}`
-            : getResourceNameFromTags(ec2Instance?.Tags);
+        const name = getEc2Hostname(ec2Instance, discoveryDbType);
         return {
             ec2InstanceId: isDemoFlow ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
             ec2InstanceType: ec2Instance?.InstanceType || '',
@@ -2176,7 +2174,8 @@ async function discoverPgSqlResources(
         filters,
         pageSize,
         nextToken,
-        ec2InstanceIds
+        ec2InstanceIds,
+        DatabaseTypes.PG_SQL
     );
 
     logger.debug('Discovered PostgreSQL resources', { ec2Instances, NextToken });
