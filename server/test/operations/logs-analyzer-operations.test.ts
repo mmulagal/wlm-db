@@ -84,6 +84,6 @@ describe('Logs Analyzer Operations', () => {
         );
         const result =
             (await handleLogsAnalysis(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, managedInstance, jobId)) || [];
-        expect((result?.[0] as any)?.status).toBeDefined();
+        expect((result?.[0] as any)?.status)?.toBeDefined();
     });
 });
