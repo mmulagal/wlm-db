@@ -652,6 +652,11 @@ Resources:
           Ref: IsCustomAmi
         SQLDeploymentMode:
           Ref: SQLDeploymentMode
+        PreferredDomainController: 
+          Fn::If:
+            - HasPreferredDomainController
+            - Ref: PreferredDomainController
+            - !Ref AWS::NoValue
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -663,11 +668,6 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
-      PreferredDomainController: 
-        Fn::If:
-          - HasPreferredDomainController
-          - Ref: PreferredDomainController
-          - !Ref AWS::NoValue
       {{{Tags}}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
@@ -949,6 +949,11 @@ Resources:
           Ref: FSxLogVolumeName
         FsxVolumeSnapshotPolicy:
           Ref: FsxVolumeSnapshotPolicy
+        PreferredDomainController: 
+          Fn::If:
+            - HasPreferredDomainController
+            - Ref: PreferredDomainController
+            - !Ref AWS::NoValue
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -960,11 +965,6 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
-      PreferredDomainController: 
-        Fn::If:
-          - HasPreferredDomainController
-          - Ref: PreferredDomainController
-          - !Ref AWS::NoValue
       {{{Tags}}}
   SQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
@@ -1050,6 +1050,11 @@ Resources:
           Ref: EBSVolumeSize
         FsxVolumeSnapshotPolicy:
           Ref: FsxVolumeSnapshotPolicy
+        PreferredDomainController: 
+          Fn::If:
+            - HasPreferredDomainController
+            - Ref: PreferredDomainController
+            - !Ref AWS::NoValue
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -1061,11 +1066,6 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
-      PreferredDomainController: 
-        Fn::If:
-          - HasPreferredDomainController
-          - Ref: PreferredDomainController
-          - !Ref AWS::NoValue
       {{{Tags}}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
