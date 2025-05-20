@@ -41,32 +41,32 @@ const getActionName = (request: FastifyRequest) => {
             if (body && body?.configurationName) {
                 param = storageSizingDescriptions[body.configurationName] || 'storage sizing';
             }
-            return `Optimize ${param} parameters as per the best practice for the selected database instance.`;
+            return `Fix ${param} parameters as per the best practice for the selected database instance.`;
         }
 
         case request.url.includes('/optimize/storage-configuration'): {
             if (body && body.assessments.length > 0) {
                 param = storageConfigDescriptions[body.assessments[0]?.configurationName];
             }
-            return `Optimize storage parameters ${param} as per the best practice for the selected database instance.`;
+            return `Fix storage parameters ${param} as per the best practice for the selected database instance.`;
         }
 
         case request.url.includes('/optimize/storage-operating-system'): {
             if (body && body.configurationName) {
                 param = storageOSDescriptions[body.configurationName];
             }
-            return `Optimize MPIO settings ${param} parameters as per the best practice for the selected database instance.`;
+            return `Fix MPIO settings ${param} parameters as per the best practice for the selected database instance.`;
         }
 
         case request.url.includes('/optimize/resiliency'): {
             if (body && body.configurationName && body.configurationName.length > 0) {
                 param = resiliencyDescriptions[body.configurationName[0]];
             }
-            return `Optimize resiliency ${param} parameters as per the best practice for the selected database instance.`;
+            return `Fix resiliency ${param} parameters as per the best practice for the selected database instance.`;
         }
 
         case request.url.includes('/resiliency/aws-backup'): {
-            return 'return `Optimize scheduled FSx for ONTAP backups parameters as per the best practice for the selected database instance.';
+            return 'return `Fix scheduled FSx for ONTAP backups parameters as per the best practice for the selected database instance.';
         }
         default:
     }

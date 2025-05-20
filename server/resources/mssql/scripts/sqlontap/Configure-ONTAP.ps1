@@ -51,6 +51,18 @@ $ScriptsPath = Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -
 $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
 $username = $SsmParameter.fsx.username
 $password = $SsmParameter.fsx.password
+# Get FSx certificate
+$isprivatesubnet = $False
+$certuri = "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+try {
+    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
+    $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
+    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root | ? { $_.Subject -like $cert.Subject }
+}
+catch {
+    $isprivatesubnet = $True
+    $restcert = ''
+}
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 $fslist = Invoke-WithRetry -Command { Get-FSXFileSystem -FileSystemId $FileSystemId }
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
@@ -66,6 +78,8 @@ catch {
     if ($MgmtDNS -is [array]) {
         $MgmtDNS = $MgmtDNS[0]
     }
+    $isprivatesubnet = $True
+    $restcert = ''
 }
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
@@ -79,18 +93,7 @@ $nodeiqn = (Get-InitiatorPort).NodeAddress
 #get Instance ID
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
-# Get FSx certificate
-$isprivatesubnet = $False
-$certuri = "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-try {
-    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
-    $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root | ? { $_.Subject -like $cert.Subject }
-}
-catch {
-    $isprivatesubnet = $True
-    $restcert = ''
-}
+
 
 Write-output "Private subnet $isprivatesubnet"
 

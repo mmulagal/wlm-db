@@ -7,6 +7,7 @@ import {
     compressResponse,
     disableCredSSP,
     enableCredSSP,
+    invokeCommandWithCredSSP,
     invokeOntapRequestTemplate,
     ontapRestRequest,
     ontapRestRequestBootstrap
@@ -394,7 +395,7 @@ const validateSQLInstanceConnectivity = (
             $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed,,  ensure the "Path" environment variable contains the path of the command and retry the operation')
             $responseObject.add('sqlInstanceConnectivity', $False)
         } else {
-            $sqlcmd = @"
+            $sqlquery = @"
             SET NOCOUNT ON;
                 SELECT 
                     SERVERPROPERTY('edition') AS sqlEdition,
@@ -451,13 +452,10 @@ const validateSQLInstanceConnectivity = (
                 windowsUser
                     ? `
                     ${enableCredSSP}
-                    $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
-                    $Credential = New-Object Management.Automation.PSCredential ($username, $securePassword)
-                    $scriptblock = { Sqlcmd -S $serverInstanceName -Q $sqlcmd -y 0 -r1 2> $null }
-                    $sqlresult = Invoke-Command -ScriptBlock $scriptblock -Credential $Credential -ComputerName $env:computername -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
+                    ${invokeCommandWithCredSSP}
                     ${disableCredSSP}
                 `
-                    : '$sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlcmd -y 0 -r1 2> $null'
+                    : '$sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlquery -y 0 -r1 2> $null'
             }
 
             if([string]::IsNullOrEmpty($sqlresult)) {
