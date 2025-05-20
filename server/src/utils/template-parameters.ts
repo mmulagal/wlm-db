@@ -1,4 +1,3 @@
-import { de } from '@faker-js/faker';
 import { DatabaseTypes } from './consts';
 import getLogger from './logger';
 
