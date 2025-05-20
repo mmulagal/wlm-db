@@ -47,6 +47,7 @@ Metadata:
           - DomainAdminPassword
           - DNSIpAddresses
           - DomainMemberSGID
+          - PreferredDomainController
       - Label:
           default: Amazon FSx for ONTAP configuration
         Parameters: 
@@ -197,7 +198,9 @@ Metadata:
         default: Does AWS FSx endpoint exist in the VPC?
       Ec2EndpointExists:
         default: Does AWS EC2 endpoint exist in the VPC?
-      
+      PreferredDomainController:
+        default: (optional) Preferred domain controller to use for AD join
+
 Parameters: 
   UniqueID:
     Description: Automation execution unique ID.
@@ -348,6 +351,8 @@ Parameters:
   {{{PrivateSubnet1Cidrblock}}}
 
   {{{PrivateSubnet2Cidrblock}}}
+
+  {{{PreferredDomainController}}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -363,6 +368,7 @@ Conditions:
   IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
   IsFailoverCluster: !Not [Condition: IsStandalone]
   ShouldSendSaasNotification: !Not [!Equals [!Ref "RoleCredentialsId", ""]]
+  HasPreferredDomainController: !Not [!Equals [!Ref PreferredDomainController, ""]]
 Resources:
   CredentialsSsmParameter:
     Type: AWS::SSM::Parameter
@@ -657,6 +663,11 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
+      PreferredDomainController: 
+        Fn::If:
+          - HasPreferredDomainController
+          - Ref: PreferredDomainController
+          - !Ref AWS::NoValue
       {{{Tags}}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
@@ -949,6 +960,11 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
+      PreferredDomainController: 
+        Fn::If:
+          - HasPreferredDomainController
+          - Ref: PreferredDomainController
+          - !Ref AWS::NoValue
       {{{Tags}}}
   SQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
@@ -1045,6 +1061,11 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
+      PreferredDomainController: 
+        Fn::If:
+          - HasPreferredDomainController
+          - Ref: PreferredDomainController
+          - !Ref AWS::NoValue
       {{{Tags}}}
   PostStackDeployment:
     Type: Custom::MyCustomResource

@@ -646,7 +646,8 @@ const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
     privateSubnet1Id: 'PrivateSubnet1ID',
     routeTable1Id: 'RouteTable1Id',
     privateSubnet2Id: 'PrivateSubnet2ID',
-    routeTable2Id: 'RouteTable2Id'
+    routeTable2Id: 'RouteTable2Id',
+    preferredDomainController: 'PreferredDomainController'
 };
 
 const WLM_ASSETS: Record<string, string> = {
