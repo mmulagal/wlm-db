@@ -116,10 +116,12 @@ async function handleLogsAnalysis(
     region: string,
     managedInstance: DatabaseInstancesIncludingResource,
     jobId: string,
-    inferenceConfig?: InferenceConfigType
+    inferenceConfig?: InferenceConfigType,
+    logsAnalyzerS3SignedUrl?: string
 ) {
     logger.info(
-        `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`
+        `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`,
+        { logsAnalyzerS3SignedUrl, inferenceConfig }
     );
     let jobStatus;
     let jobError;
@@ -143,7 +145,7 @@ async function handleLogsAnalysis(
         const inferenceProfileArn = await getInferenceProfileFromModelId(
             accountId,
             credentialsId,
-            region,
+            LOGS_ANALYZER_BEDROCK_REGION, // TODO: Decide on instance region/static region. For now, we are configuring static region as Sonnet 3.7 inference profile is not available in all regions
             LOGS_ANALYZER_MODEL_ID
         );
 
@@ -156,11 +158,13 @@ async function handleLogsAnalysis(
             inferenceProfileArn
         );
 
-        const s3SignedUrl = await getPreSignedUrl(
-            DEFAULT_AWS_REGION,
-            getArtifactsRegionBucketName(DEFAULT_AWS_REGION),
-            LOGS_ANALYZER_BUNDLE_PATH
-        );
+        const s3SignedUrl =
+            logsAnalyzerS3SignedUrl ||
+            (await getPreSignedUrl(
+                DEFAULT_AWS_REGION,
+                getArtifactsRegionBucketName(DEFAULT_AWS_REGION),
+                LOGS_ANALYZER_BUNDLE_PATH
+            ));
 
         const logsPathQuery = 'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations';
         const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth(
@@ -246,7 +250,8 @@ async function triggerLogsAnalysis(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    inferenceConfig?: InferenceConfigType
+    inferenceConfig?: InferenceConfigType,
+    logsAnalyzerS3SignedUrl?: string
 ) {
     const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
@@ -281,7 +286,15 @@ async function triggerLogsAnalysis(
             status: jobsStatus,
             type: JOBTYPE.LOGS_ANALYSIS
         }));
-        handleLogsAnalysis(accountId, credentialsId, region, managedInstance, jobId, inferenceConfig);
+        handleLogsAnalysis(
+            accountId,
+            credentialsId,
+            region,
+            managedInstance,
+            jobId,
+            inferenceConfig,
+            logsAnalyzerS3SignedUrl
+        );
         return { jobId };
     } catch (error) {
         const errorMessage = `Error triggering logs analysis: ${error}`;

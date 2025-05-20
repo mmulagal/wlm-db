@@ -282,7 +282,7 @@ Respond strictly in valid JSON format as a single JSON object. The JSON object s
 Here's the error details for your reference:`;
 
 const PGSQL_ERROR_PATTERN =
-    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} UTC \[\d+\] (?<severity>ERROR|FATAL|PANIC|WARNING): (.+)$/;
+    /^(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) UTC \[\d+\] (?<severity>ERROR|FATAL|PANIC|WARNING): (.+)$/;
 const MSSQL_ERROR_PATTERN =
     /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{2}) (\w+) +(?:Error: (\d+), Severity: (\d+), State: (\d+)|.*?\b(deadlock|error|failed|bottleneck)\b.*?)/i;
 
