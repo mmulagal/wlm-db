@@ -188,55 +188,75 @@ const compressResponse = `
 `;
 
 const enableCredSSP = `
-try {
-    $ServerName = '*'
-    Start-Transcript -Path C:\\cfn\\log\\EnableCredSsp.ps1.txt -Append
-    $ErrorActionPreference = "Stop"
-
-    Enable-WSManCredSSP Client -DelegateComputer $ServerName -Force
-    if ($DomainNetBIOSName) {
-        Enable-WSManCredSSP Client -DelegateComputer *.$DomainNetBIOSName -Force
+function Is-CredSSPEnabled {
+    try {
+        $credsspStatus = Get-WSManCredSSP
+        if ($credsspStatus -match "The machine is configured to allow delegating fresh credentials") {
+            return $true
+        } else {
+            return $false
+        }
+    } catch {
+        Write-Information "Error checking CredSSP status: $($_.Exception.Message)"
+        return $false
     }
-    if ($DomainDNSName) {
-        Enable-WSManCredSSP Client -DelegateComputer *.$DomainDNSName -Force
-    }
-    Enable-WSManCredSSP Server -Force
+}
 
-    # Sometimes Enable-WSManCredSSP doesn't get it right, so we set some registry entries by hand
-    $parentkey = "hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows"
-    $key = "$parentkey\\CredentialsDelegation"
-    $freshkey = "$key\\AllowFreshCredentials"
-    $ntlmkey = "$key\\AllowFreshCredentialsWhenNTLMOnly"
-    New-Item -Path $parentkey -Name 'CredentialsDelegation' -Force
-    New-Item -Path $key -Name 'AllowFreshCredentials' -Force
-    New-Item -Path $key -Name 'AllowFreshCredentialsWhenNTLMOnly' -Force
-    New-ItemProperty -Path $key -Name AllowFreshCredentials -Value 1 -PropertyType Dword -Force
-    New-ItemProperty -Path $key -Name ConcatenateDefaults_AllowFresh -Value 1 -PropertyType Dword -Force
-    New-ItemProperty -Path $key -Name AllowFreshCredentialsWhenNTLMOnly -Value 1 -PropertyType Dword -Force
-    New-ItemProperty -Path $key -Name ConcatenateDefaults_AllowFreshNTLMOnly -Value 1 -PropertyType Dword -Force
-    New-ItemProperty -Path $freshkey -Name 1 -Value "WSMAN/$ServerName" -PropertyType String -Force
-    New-ItemProperty -Path $ntlmkey -Name 1 -Value "WSMAN/$ServerName" -PropertyType String -Force
-} catch {
-    Write-Information "Error in EnableCredSSP: $($_.Exception.Message)"
+# Enable CredSSP
+if (-not (Is-CredSSPEnabled)) {
+    try {
+        $ServerName = '*'
+        Start-Transcript -Path C:\\cfn\\log\\EnableCredSSP.ps1.txt -Append | Out-Null
+        Enable-WSManCredSSP -Role Client -DelegateComputer $ServerName -Force | Out-Null
+        Enable-WSManCredSSP -Role Server -Force | Out-Null
+
+        # Verify CredSSP is enabled
+        if (-not (Is-CredSSPEnabled)) {
+            throw "Failed to enable CredSSP."
+        }
+    } catch {
+        Write-Error "Error enabling CredSSP: $($_.Exception.Message)"
+    }
 }
 `;
 
 const disableCredSSP = `
 try {
     # Disable CredSSP
-    Start-Transcript -Path C:\\cfn\\log\\DisableCredSSP.ps1.txt -Append
+    Start-Transcript -Path C:\\cfn\\log\\DisableCredSSP.ps1.txt -Append | Out-Null
     $ErrorActionPreference = "Stop"
 
-    Disable-WSManCredSSP Client
-    Disable-WSManCredSSP Server
-
-    Remove-Item -Path 'hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CredentialsDelegation\\AllowFreshCredentials' -ErrorAction Ignore
-    Remove-ItemProperty -Path 'hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CredentialsDelegation' -Name 'AllowFreshCredentials' -ErrorAction Ignore
-    Remove-Item -Path 'hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CredentialsDelegation\\AllowFreshCredentialsWhenNTLMOnly' -ErrorAction Ignore
-    Remove-ItemProperty -Path 'hklm:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CredentialsDelegation' -Name 'AllowFreshCredentialsWhenNTLMOnly' -ErrorAction Ignore
+    Disable-WSManCredSSP Client | Out-Null
+    Disable-WSManCredSSP Server | Out-Null
+    # Verify CredSSP is disabled
+    if (Is-CredSSPEnabled) {
+        throw "Failed to disable CredSSP."
+    }
 } catch {
     Write-Information "Error in DisableCredSSP: $($_.Exception.Message)"
 }
+`;
+
+const invokeCommandWithCredSSP = `
+    $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
+    $Credential = New-Object Management.Automation.PSCredential ($username, $securePassword)
+
+    $scriptblock = {
+        param ($sqlquery)
+        Sqlcmd -S $using:serverInstanceName -Q $sqlquery -y 0 -r1 2> $null
+    }
+
+    $job = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery -Credential $Credential -ComputerName $env:computername -Authentication credssp -AsJob
+    Wait-Job -Job $job -Timeout 5 | Out-Null
+
+    # Check job status
+    if ($job.State -ne 'Completed') {
+        Remove-Job -Job $job | Out-Null
+        throw "Invoke-Command job did not complete successfully."
+    }
+
+    $sqlresult = Receive-Job -Job $job
+    Remove-Job -Job $job | Out-Null
 `;
 
 export {
@@ -246,5 +266,6 @@ export {
     ontapRestRequestBootstrap,
     invokeOntapRequestTemplate,
     enableCredSSP,
-    disableCredSSP
+    disableCredSSP,
+    invokeCommandWithCredSSP
 };
