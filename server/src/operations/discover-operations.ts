@@ -2114,7 +2114,7 @@ async function discoverEc2Instances(
     );
 
     let ec2Instances = ec2InstanceList?.map(ec2Instance => {
-        const name = getEc2Hostname(ec2Instance, discoveryDbType);
+        const name = getEc2Hostname(discoveryDbType, ec2Instance?.Tags);
         return {
             ec2InstanceId: isDemoFlow ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
             ec2InstanceType: ec2Instance?.InstanceType || '',

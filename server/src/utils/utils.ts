@@ -5,7 +5,7 @@
 import { attempt, trimEnd, trimStart, camelCase, isEmpty } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { Instance, Tag } from '@aws-sdk/client-ec2';
+import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import numeral from 'numeral';
 import isBase64 from 'is-base64';
@@ -762,7 +762,7 @@ function getServerNameWithHostname(sqlServerName?: string, instanceName?: string
     return `${DEFAULT_INSTANCE_NAME}`;
 }
 
-function getEc2Hostname(ec2Instance: Instance, dbEngine: DatabaseTypes) {
+function getEc2Hostname(dbEngine: DatabaseTypes, ec2InstanceTags?: Tag[]) {
     if (isDemoFlow) {
         switch (dbEngine) {
             case DatabaseTypes.PG_SQL:
@@ -774,7 +774,7 @@ function getEc2Hostname(ec2Instance: Instance, dbEngine: DatabaseTypes) {
                 return `sqlnode-${randomize('0', 5)}`;
         }
     }
-    return getResourceNameFromTags(ec2Instance?.Tags);
+    return getResourceNameFromTags(ec2InstanceTags);
 }
 
 async function decompressSSMResponse(response: string) {

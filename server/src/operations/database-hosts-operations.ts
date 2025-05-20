@@ -730,8 +730,8 @@ async function getNodeTopology(
                         activeSubnetId = activeNode.SubnetId;
                         activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
                         activeNodeInstanceName = getEc2Hostname(
-                            activeNode,
-                            resourceData.resource_type as DatabaseTypes
+                            resourceData.resource_type as DatabaseTypes,
+                            activeNode?.Tags
                         );
                         vpcId = activeNode.VpcId;
                         vpcCidr = activeNode.VpcId;
@@ -754,8 +754,8 @@ async function getNodeTopology(
                             const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
                             ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
                             standbyNodeInstanceName = getEc2Hostname(
-                                standbyNode,
-                                resourceData.resource_type as DatabaseTypes
+                                resourceData.resource_type as DatabaseTypes,
+                                standbyNode?.Tags
                             );
                         }
                     }

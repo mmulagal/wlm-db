@@ -198,13 +198,13 @@ ervisor)\n`;
         const instance: Instance = {
             Tags: [{ Key: 'Other', Value: 'not-the-name' }]
         };
-        let hostname = getEc2Hostname(instance, DatabaseTypes.PG_SQL);
+        let hostname = getEc2Hostname(DatabaseTypes.PG_SQL, instance?.Tags);
         expect(hostname).toMatch(/^pgsqlnode-\d{4}$/);
-        hostname = getEc2Hostname(instance, DatabaseTypes.ORACLE);
+        hostname = getEc2Hostname(DatabaseTypes.ORACLE, instance?.Tags);
         expect(hostname).toMatch(/^oracle-\d{5}$/);
-        hostname = getEc2Hostname(instance, DatabaseTypes.MS_SQL_SERVER);
+        hostname = getEc2Hostname(DatabaseTypes.MS_SQL_SERVER, instance?.Tags);
         expect(hostname).toMatch(/^sqlnode-\d{5}$/);
-        hostname = getEc2Hostname(instance, 'UNKNOWN' as any);
+        hostname = getEc2Hostname('UNKNOWN' as any, instance?.Tags);
         expect(hostname).toMatch(/^sqlnode-\d{5}$/);
     });
 });
