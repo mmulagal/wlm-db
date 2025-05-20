@@ -1787,7 +1787,7 @@ export const getUnmanagedPgsqlHostInstances = (
         }
         if (
             databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE &&
-            !databaseHostsData[key]?.actionDisable &&
+            // !databaseHostsData[key]?.actionDisable &&
             databaseHostsData[key]?.ssmState === STATUS_CONST.ONLINE
         ) {
             instanceList.push(

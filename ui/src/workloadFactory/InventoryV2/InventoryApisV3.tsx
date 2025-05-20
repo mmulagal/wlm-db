@@ -124,6 +124,7 @@ const InventoryApisV3 = () => {
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.data?.regionCode || '');
     const [partnerInstanceList, setPartnerInstanceList] = useState<any>([]);
+    const [partnerPgsqlInstanceList, setPartnerPgsqlInstanceList] = useState<any>([]);
 
     // getManagedHostList function values update
     const [getManagedHostListAPI] = useLazyGetManagedHostDataQuery();
@@ -915,15 +916,33 @@ const InventoryApisV3 = () => {
             if (result && !result?.error) {
                 let pgsqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
+                    let partnerInstanceId = getPartnerInstanceId(host, host?.id);
+                    if (
+                        partnerInstanceId &&
+                        !runningPgsqlInstanceListRef.current.includes(
+                            uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)
+                        ) &&
+                        !pgsqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]
+                            ?.isManagedHost &&
+                        !partnerInstanceList.includes(
+                            uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)
+                        )
+                    ) {
+                        setPartnerPgsqlInstanceList([
+                            ...partnerInstanceList,
+                            ...[uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)]
+                        ]);
+                    }
+
                     if (pgsqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
                         pgsqlInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
                             isManagedHost:
-                                mssqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]
+                                pgsqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]
                                     ?.isManagedHost,
                             loading: false,
                             data: host,
                             error: host?.errors,
-                            fields: mssqlInstancesDataRef.current[
+                            fields: pgsqlInstancesDataRef.current[
                                 uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
                             ]?.fields
                         };
@@ -932,12 +951,12 @@ const InventoryApisV3 = () => {
                 if (!pgsqlInstancesDataRes?.[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]) {
                     pgsqlInstancesDataRes[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
                         isManagedHost:
-                            mssqlInstancesDataRef.current[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]
+                            pgsqlInstancesDataRef.current[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]
                                 ?.isManagedHost,
                         loading: false,
                         data: null,
                         error: null,
-                        fields: mssqlInstancesDataRef.current[
+                        fields: pgsqlInstancesDataRef.current[
                             uniqueHostRow(instanceId, instanceCredId, instanceRegionId)
                         ]?.fields
                     };
@@ -1477,6 +1496,13 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         // if partner instance ID
+        if (partnerPgsqlInstanceList?.length > 0) {
+            callPgsqlResourceApi(partnerPgsqlInstanceList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
+        }
+    }, [partnerPgsqlInstanceList]);
+
+    useEffect(() => {
+        // if partner instance ID
         if (unManagedPerfInstanceIdsList?.length) {
             callUnmanagedPerfInstanceApi(unManagedPerfInstanceIdsList, false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
         }
@@ -1661,8 +1687,9 @@ const InventoryApisV3 = () => {
 
             // To Avoid overriding
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
-            if (mssqlInstancesDataRef.current) {
-                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, updatedResult);
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) {
+                const mergedData = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+                const updatedInventoryData = updateInstancesApiResponse(mergedData, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
             } else {
                 dispatch(setInventoryTableData(updatedResult));
@@ -1725,8 +1752,9 @@ const InventoryApisV3 = () => {
 
             // To Avoid overriding
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
-            if (mssqlInstancesDataRef.current) {
-                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, updatedResult);
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) {
+                const mergedData = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+                const updatedInventoryData = updateInstancesApiResponse(mergedData, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
             } else {
                 dispatch(setInventoryTableData(updatedResult));
@@ -1753,8 +1781,11 @@ const InventoryApisV3 = () => {
             // To Avoid overriding
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
             // dispatch(setInventoryTableData(updatedResult));
-            if (mssqlInstancesDataRef.current) {
-                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, updatedResult);
+
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) {
+                const mergedData = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+                //@ts-ignore
+                const updatedInventoryData = updateInstancesApiResponse(mergedData, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
             } else {
                 dispatch(setInventoryTableData(updatedResult));
@@ -1771,8 +1802,9 @@ const InventoryApisV3 = () => {
 
             // To Avoid overriding
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
-            if (mssqlInstancesDataRef.current) {
-                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, updatedResult);
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) {
+                const mergedDataArray = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+                const updatedInventoryData = updateInstancesApiResponse(mergedDataArray, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
             } else {
                 dispatch(setInventoryTableData(updatedResult));
@@ -1783,14 +1815,16 @@ const InventoryApisV3 = () => {
     useEffect(() => {
         const state = store.getState();
         const resetManagedData = state.inventoryV2.resetManagedData;
-        if (!resetManagedData && mssqlInstancesDataRef.current && inventoryTableDataRef.current) {
-            const updatedInventoryData = updateInstancesApiResponse(
-                mssqlInstancesDataRef.current,
-                inventoryTableDataRef.current
-            );
+        if (
+            !resetManagedData &&
+            (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) &&
+            inventoryTableDataRef.current
+        ) {
+            const mergedData = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+            const updatedInventoryData = updateInstancesApiResponse(mergedData, inventoryTableDataRef.current);
             dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
         }
-    }, [mssqlInstancesData, perfMssqlInstancesData]);
+    }, [mssqlInstancesData, pgsqlInstancesData, perfMssqlInstancesData]);
 
     useEffect(() => {
         const state = store.getState();
