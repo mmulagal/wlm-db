@@ -127,7 +127,9 @@
                     "compute-optimizer:GetEffectiveRecommendationPreferences",
                     "compute-optimizer:GetEC2InstanceRecommendations",
                     "autoscaling:DescribeAutoScalingGroups",
-                    "autoscaling:DescribeAutoScalingInstances"
+                    "autoscaling:DescribeAutoScalingInstances",
+                    "bedrock:GetFoundationModelAvailability",
+                    "bedrock:ListInferenceProfiles"
                 ],
                 "Resource": "*"
             },
@@ -239,7 +241,9 @@
                     "ssm:ListCommands",
                     "ssm:DescribeInstanceInformation",
                     "fsx:ListTagsForResource",
-                    "logs:DescribeLogGroups"
+                    "logs:DescribeLogGroups",
+                    "bedrock:GetFoundationModelAvailability",
+                    "bedrock:ListInferenceProfiles"
                 ],
                 "Resource": [
                     "*"

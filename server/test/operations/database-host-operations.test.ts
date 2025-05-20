@@ -8,6 +8,7 @@ import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
 import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/cloud-watch-scope';
+import '../simulator/scopes/aws/pricing-scope';
 import { ACCOUNT_ID, SECRETS } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
 

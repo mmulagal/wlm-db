@@ -28,6 +28,14 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    DATABASE_MANAGEMENT: 'Database management',
+    DATABASE_OPTIMIZATION: 'Database optimization',
+    INVENTORY_CARD_TEXT1:
+        'Manage database resources and perform day-to-day operations with FSx for ONTAP. You can check the status of hosts, instances, and databases, deploy new resources, and stay on top of resource usage, data protection, and performance.',
+    INVENTORY_CARD_TEXT2:
+        'Plus, get optimization recommendations to make sure your database resources are well-architected.',
+    INVENTORY_CARD_TEXT3:
+        'Automatically assess and mitigate issues in database infrastructure to keep your databases running smoothly and cost-effectively. Continuously scan deployments to get insights and recommendations to make sure everything aligns with vendor and industry best practices.',
     WELL_ARCHITECTED_BREAKDOWN_BY_CATEGORY: 'Well-architected breakdown by category',
     CPU_UTILIZATION: 'CPU utilization',
     CAPACITY_UTILIZATION: 'Capacity utilization',
