@@ -4,6 +4,7 @@ import { LogsAnalyzerBody, LogsAnalyzerParams } from '../types/logs-analyzer.typ
 
 const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
+    description: 'Trigger logs analysis for a specific database instance in a remote database host machine',
     params: LogsAnalyzerParams,
     body: LogsAnalyzerBody,
     summary: 'Trigger logs analysis for a specific database instance in a remote database host machine',
