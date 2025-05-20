@@ -497,19 +497,6 @@ function checkAccount(accountId: string) {
     return accountId;
 }
 
-// For Demo use only
-function removeUnassociatedInstances(resources: any[]) {
-    if (!isEmpty(resources) && isDemo()) {
-        resources.forEach(resource => {
-            resource.database_instances =
-                resource?.database_instances?.filter(
-                    (instance: any) => instance?.resourceId === resource?.resource_id
-                ) || [];
-        });
-    }
-    return resources;
-}
-
 function calculateSQLandWindowsVersion(sqlAmiName: string) {
     logger.info('Calculate sql and windows version from the sql AMI name', sqlAmiName);
 
@@ -1111,6 +1098,5 @@ export {
     formatSsmArrayResponse,
     generateSqlResourceId,
     extractSqlInstanceName,
-    escapeBackslash,
-    removeUnassociatedInstances
+    escapeBackslash
 };

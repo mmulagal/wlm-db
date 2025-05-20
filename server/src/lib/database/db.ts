@@ -9,7 +9,7 @@ import {
 import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
-import { checkAccount, removeUnassociatedInstances } from '../../utils/utils';
+import { checkAccount } from '../../utils/utils';
 import { TCO_FEATURE } from '../../utils/consts';
 import { DatabaseInstanceConfigurations, DatabaseInstanceMetadata } from '../../utils/common-types';
 
@@ -341,7 +341,7 @@ async function listResources(
     region = region ? (isArray(region) ? region : [region]) : undefined;
     credentialIds = credentialIds ? (isArray(credentialIds) ? credentialIds : [credentialIds]) : undefined;
 
-    let resources = await prisma.client.resource.findMany({
+    return prisma.client.resource.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
             ...(resourceId && { resource_id: resourceId }),
@@ -372,11 +372,6 @@ async function listResources(
             }
         })
     });
-    // for Demo: Prismock has some issues with relational mappings with "includes"
-    if (includeDatabaseInstances) {
-        resources = removeUnassociatedInstances(resources);
-    }
-    return resources;
 }
 
 async function countResources(accountId: string, credentialsId?: string, region?: string, resourceType?: string) {

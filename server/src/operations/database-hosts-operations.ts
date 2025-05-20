@@ -854,7 +854,7 @@ async function getDatabaseHostsSummaryV2(
         undefined,
         apiPageSize,
         nextToken,
-        true
+        !isDemoFlow
     );
 
     if (isEmpty(resourceDetails)) {
