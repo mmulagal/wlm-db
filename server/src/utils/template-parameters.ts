@@ -1,3 +1,4 @@
+import { de } from '@faker-js/faker';
 import { DatabaseTypes } from './consts';
 import getLogger from './logger';
 
@@ -477,7 +478,8 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
         {
             name: 'PreferredDomainController',
             description: '(optional) Preferred domain controller to use to join AD Domain',
-            type: 'String'
+            type: 'String',
+            default: 'no-value'
         }
     ];
 
