@@ -650,8 +650,12 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     const featureReadiness = Object.entries(FEATURE_PREPREQUISITES).reduce((acc, [key, value]) => {
                         acc[key.toLowerCase()] = {
-                            missingSqlPermissions: value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
-                            missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                            missingSqlPermissions: !isEmpty(sqlPermissions)
+                                ? value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x))
+                                : [],
+                            missingModules: !isEmpty(availablePsModules)
+                                ? value.MODULES.filter(x => !availablePsModules.includes(x))
+                                : []
                         };
                         return acc;
                     }, {} as Record<string, { missingSqlPermissions: string[]; missingModules: string[] }>);
@@ -1228,10 +1232,12 @@ async function validateCredentials(
                             Object.entries(FEATURE_PREPREQUISITES).map(([key, value]) => [
                                 key.toLowerCase(),
                                 {
-                                    missingSqlPermissions: value.SQL_PERMISSIONS.filter(
-                                        x => !sqlPermissions.includes(x)
-                                    ),
-                                    missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                                    missingSqlPermissions: !isEmpty(sqlPermissions)
+                                        ? value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x))
+                                        : [],
+                                    missingModules: !isEmpty(availablePsModules)
+                                        ? value.MODULES.filter(x => !availablePsModules.includes(x))
+                                        : []
                                 }
                             ])
                         );

@@ -473,6 +473,12 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             description: 'Size of the EBS Volume in GiB.',
             type: 'Number',
             minValue: 100
+        },
+        {
+            name: 'PreferredDomainController',
+            description: '(optional) Preferred domain controller to use to join AD Domain',
+            type: 'String',
+            default: 'no-value'
         }
     ];
 
