@@ -5,50 +5,38 @@ const logger = getLogger();
 
 function getWindowsBedrockAvailabilityCheckScript(region: string, modelId: string) {
     return `
-# Ensure AWS CLI is installed
-if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
-    Write-Host "AWS CLI not found. Downloading and installing AWS CLI v2..."
-    $installer = "$env:TEMP\\AWSCLIV2.msi"
-    Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -OutFile $installer
-    Start-Process msiexec.exe -ArgumentList "/i \`"$installer\`" /qn" -Wait
-    Remove-Item $installer
-    $env:Path += ";C:\\Program Files\\Amazon\\AWSCLIV2"
-}
 
+# Ensure AWS.Tools.BedrockRuntime is installed and imported
+if (-not (Get-Module -ListAvailable -Name AWS.Tools.BedrockRuntime)) {
+    Install-Module -Name AWS.Tools.BedrockRuntime -Force -Scope CurrentUser
+}
+Import-Module AWS.Tools.BedrockRuntime
 $region = "${region}"
 $modelId = "${modelId}"
 
 try {
-   $messagesPath = "$env:TEMP\\messages.json"
-$messagesJson = '[{"role":"user","content":[{"text":"Hello"}]}]'
-$sw = New-Object System.IO.StreamWriter($messagesPath, $false, (New-Object System.Text.UTF8Encoding($false)))
-$sw.Write($messagesJson)
-$sw.Close()
+    # Construct the ContentBlock and Message objects as required by the AWS PowerShell module
+    $contentBlock = New-Object Amazon.BedrockRuntime.Model.ContentBlock
+    $contentBlock.Text = "Hello"
 
-$response = aws bedrock-runtime converse --region $region --model-id $modelId --messages file://$messagesPath
+    $message = New-Object Amazon.BedrockRuntime.Model.Message
+    $message.Role = "user"
+    $message.Content = $contentBlock
 
-    if ($LASTEXITCODE -eq 0) {
-        $result = @{
-            success = $true
-            response = $response
-            error = $null
-        }
-    } else {
-        $result = @{
-            success = $false
-            response = $null
-            error = $response
-        }
+    $response = Invoke-BDRRConverse -ModelId $modelId -Messages $message -Region $region
+    $result = @{
+        success = $true
+        response = $response | ConvertTo-Json -Depth 10
+        error = $null
     }
-    $result | ConvertTo-Json -Depth 5
 } catch {
     $result = @{
         success = $false
         response = $null
         error = $_.Exception.Message
     }
-    $result | ConvertTo-Json -Depth 5
 }
+    $result | ConvertTo-Json -Depth 5
 `;
 }
 
