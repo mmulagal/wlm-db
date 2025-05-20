@@ -28,11 +28,13 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    BULK_INSTANCE_SELECT_TEXT:
+        'Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials.',
     MANAGE_MIN_PERMISSION_REQUIRED: [
         'Missing minimum prerequisites:',
         ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To manage this SQL Server instance, please address the necessary prerequisites and try again.'
     ],
-    PREREQUISITE_LIST: 'Pre-requisite list',
+    PREREQUISITE_LIST: 'Prerequisites list',
     DATABASE_MANAGEMENT: 'Database management',
     DATABASE_OPTIMIZATION: 'Database optimization',
     INVENTORY_CARD_TEXT1:
@@ -44,7 +46,6 @@ export const GENERAL = {
     WELL_ARCHITECTED_BREAKDOWN_BY_CATEGORY: 'Well-architected breakdown by category',
     CPU_UTILIZATION: 'CPU utilization',
     CAPACITY_UTILIZATION: 'Capacity utilization',
->>>>>>> origin/master
     REACTIVATE_TOOLTIP: 'Restart the analysis for a postponed or dismissed configuration.',
     POSTPONED_TOOLTIP: 'Postpone the configuration analysis for 30 days.',
     DISMISS_TOOLTIP: 'Stop the configuration analysis.',

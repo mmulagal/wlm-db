@@ -3,28 +3,84 @@ import styles from './DetectHeader.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
+import { useAppSelector } from '../../../../../../store/storeHooks';
+import { useEffect, useState } from 'react';
+import { GENERAL } from '../../../../../../utils/appConstants';
+import {
+    checkOverallManageState,
+    getPermissionState,
+    hasMissingPowershell7,
+    isAllowManage,
+    missingModules
+} from '../../ManageInstanceUtils';
 
 const DetectedInstanceTable = () => {
-    const mockData = [
-        {
-            id: '1',
-            instanceName: 'instance1',
-            hostName: 'host1',
-            readinessStatus: 'Ready'
-        },
-        {
-            id: '2',
-            instanceName: 'instance2',
-            hostName: 'host2',
-            readinessStatus: 'Not Ready'
-        },
-        {
-            id: '3',
-            instanceName: 'instance3',
-            hostName: 'host3',
-            readinessStatus: 'Ready'
+    const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
+    const [tableData, setTableData] = useState<any>([]);
+
+    const manageCheck = (instance: any) => {
+        let manageCheckObj: any = {
+            installMissingAWS: false,
+            installMissingAWSList: [],
+            installMissingPowershell: false,
+            assessment: GENERAL.NOT_AVAILABLE,
+            remediation: GENERAL.NOT_AVAILABLE,
+            dbCreation: GENERAL.NOT_AVAILABLE,
+            sandbox: GENERAL.NOT_AVAILABLE,
+            ec2InstanceId: '',
+            region: '',
+            credentialsId: '',
+            databaseInstanceName: '',
+            overallState: GENERAL.NOT_AVAILABLE
+        };
+
+        let manageReadinessData: any = null;
+        if (!instance?.data?.windowsAuthentication && !instance?.data?.sqlServerAuthentication) {
+            manageReadinessData = instance?.manageReadiness;
+        } else {
+            manageReadinessData = instance?.data?.manageReadiness;
         }
-    ];
+        if (manageReadinessData) {
+            let missingModulesList = missingModules(manageReadinessData);
+            let assessment = getPermissionState('assessment', manageReadinessData);
+            let remediation = getPermissionState('remediation', manageReadinessData);
+            let dbCreation = getPermissionState('dbCreation', manageReadinessData);
+            let sandbox = getPermissionState('sandbox', manageReadinessData);
+            let overallState = checkOverallManageState(assessment, remediation, dbCreation, sandbox);
+            manageCheckObj = {
+                installMissingAWS: missingModulesList.length > 0 ? true : false,
+                installMissingAWSList: missingModulesList,
+                installMissingPowershell: hasMissingPowershell7(manageReadinessData),
+                allowManage: isAllowManage(manageReadinessData),
+                assessment: assessment,
+                remediation: remediation,
+                dbCreation: dbCreation,
+                sandbox: sandbox,
+                ec2InstanceId: instance?.data?.ec2InstanceId,
+                region: instance?.data?.regionId,
+                credentialsId: instance?.data?.credentialId,
+                databaseInstanceName: instance?.data?.databaseInstanceName,
+                overallState: overallState
+            };
+            return manageCheckObj;
+        }
+        return manageCheckObj;
+    };
+
+    useEffect(() => {
+        let newTableData: any = [];
+        selectedMultiDetectInstances?.forEach((item: any) => {
+            if (item?.authorized) {
+                newTableData.push({
+                    id: item?.id,
+                    instanceName: item?.data?.databaseInstanceName,
+                    hostName: item?.data?.name,
+                    readinessStatus: manageCheck(item)?.overallState
+                });
+            }
+        });
+        setTableData(newTableData);
+    }, [selectedMultiDetectInstances]);
 
     const ColDefs: ColumnProps[] = [
         {
@@ -66,7 +122,7 @@ const DetectedInstanceTable = () => {
         isSorting: false,
         selectionType: 'none',
         columns: ColDefs,
-        rows: mockData,
+        rows: tableData,
         isHorizontalScroll: false,
         isVerticalScroll: true,
         isLazyLoading: false

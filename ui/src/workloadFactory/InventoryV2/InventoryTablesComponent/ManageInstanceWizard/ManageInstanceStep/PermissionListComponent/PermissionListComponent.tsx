@@ -15,10 +15,12 @@ import { useState } from 'react';
 import { PermissionContent } from './PermissionContent/PermissionContent';
 import { MANAGE_STATES } from '../../../../../../utils/consts';
 import { GENERAL } from '../../../../../../utils/appConstants';
+import { useAppSelector } from '../../../../../../store/storeHooks';
 
 const PermissionListComponent = ({ manageChecks }: any) => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll, setDisableAll] = useState(false);
+    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
     const items: AccordionItem[] = [
         {
@@ -27,15 +29,20 @@ const PermissionListComponent = ({ manageChecks }: any) => {
             subtitle: 'Capability',
             readinessStatus: manageChecks?.assessment,
             missingPermission: manageChecks?.assessment !== MANAGE_STATES.READY,
-            image: manageChecks?.assessment !== MANAGE_STATES.READY ? <ReviewDisabled /> : <Review />,
+            image:
+                wizardOperationType !== 'bulk' && manageChecks?.assessment !== MANAGE_STATES.READY ? (
+                    <ReviewDisabled />
+                ) : (
+                    <Review />
+                ),
             content: (
                 <PermissionContent
                     title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
                             label: 'AWS IAM policy permissions',
-                            values: ['Databases workload - Read - only permissions'],
-                            showCopy: true
+                            values: ['Databases workload - Read-only permissions'],
+                            showCopy: false
                         },
                         {
                             label: 'SQL Server permissions',
@@ -56,7 +63,12 @@ const PermissionListComponent = ({ manageChecks }: any) => {
             subtitle: 'Capability',
             readinessStatus: manageChecks?.remediation,
             missingPermission: manageChecks?.remediation !== MANAGE_STATES.READY,
-            image: manageChecks?.remediation !== MANAGE_STATES.READY ? <FixDisabled /> : <Fix />,
+            image:
+                wizardOperationType !== 'bulk' && manageChecks?.remediation !== MANAGE_STATES.READY ? (
+                    <FixDisabled />
+                ) : (
+                    <Fix />
+                ),
             content: (
                 <PermissionContent
                     title={GENERAL.PREREQUISITE_LIST}
@@ -64,13 +76,13 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                         {
                             label: 'AWS IAM policy permissions',
                             values: [
-                                'Databases workload - Read - only permissions',
+                                'Databases workload - Read-only permissions',
                                 {
-                                    title: 'Additional FSx permissions',
+                                    title: 'Additional FSx for ONTAP permissions',
                                     items: ['fsx:UpdateFileSystem', 'fsx:UpdateVolume']
                                 },
                                 {
-                                    title: 'Compute optimizer permissions',
+                                    title: 'AWS Compute Optimizer',
                                     items: [
                                         'compute-optimizer:GetEnrollmentStatus',
                                         'compute-optimizer:PutRecommendationPreferences',
@@ -81,7 +93,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                                     ]
                                 }
                             ],
-                            showCopy: true
+                            showCopy: false
                         },
                         {
                             label: 'SQL Server permissions',
@@ -107,15 +119,20 @@ const PermissionListComponent = ({ manageChecks }: any) => {
             subtitle: 'Capability',
             readinessStatus: manageChecks?.dbCreation,
             missingPermission: manageChecks?.dbCreation !== MANAGE_STATES.READY,
-            image: manageChecks?.dbCreation !== MANAGE_STATES.READY ? <DatabaseDisabled /> : <Database />,
+            image:
+                wizardOperationType !== 'bulk' && manageChecks?.dbCreation !== MANAGE_STATES.READY ? (
+                    <DatabaseDisabled />
+                ) : (
+                    <Database />
+                ),
             content: (
                 <PermissionContent
                     title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
                             label: 'AWS IAM policy permissions',
-                            values: ['Databases workload - Read - only permissions'],
-                            showCopy: true
+                            values: ['Databases workload - Read-only permissions'],
+                            showCopy: false
                         },
                         {
                             label: 'SQL Server permissions',
@@ -141,15 +158,20 @@ const PermissionListComponent = ({ manageChecks }: any) => {
             subtitle: 'Capability',
             readinessStatus: manageChecks?.sandbox,
             missingPermission: manageChecks?.sandbox !== MANAGE_STATES.READY,
-            image: manageChecks?.sandbox !== MANAGE_STATES.READY ? <SandboxImageDisabled /> : <SandboxImage />,
+            image:
+                wizardOperationType !== 'bulk' && manageChecks?.sandbox !== MANAGE_STATES.READY ? (
+                    <SandboxImageDisabled />
+                ) : (
+                    <SandboxImage />
+                ),
             content: (
                 <PermissionContent
                     title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
                             label: 'AWS IAM policy permissions',
-                            values: ['Databases workload - Read - only permissions'],
-                            showCopy: true
+                            values: ['Databases workload - Read-only permissions'],
+                            showCopy: false
                         },
                         {
                             label: 'SQL Server permissions',
@@ -175,7 +197,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
     ];
     return (
         <div className={styles.permissionList}>
-            <DsTypography variant="Semibold_16">Pre-requisite validations</DsTypography>
+            <DsTypography variant="Semibold_16">Prerequisite check</DsTypography>
 
             <div className={styles.accordionSection}>
                 <ManageInstanceAccordion

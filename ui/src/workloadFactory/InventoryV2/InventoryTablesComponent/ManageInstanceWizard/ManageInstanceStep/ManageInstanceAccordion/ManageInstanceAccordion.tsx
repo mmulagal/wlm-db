@@ -4,6 +4,7 @@ import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as Arrow } from '../../../../../../assets/row arrow2.svg';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
+import { useAppSelector } from '../../../../../../store/storeHooks';
 
 export type AccordionItem = {
     id: string;
@@ -29,6 +30,7 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
     setExpandedId,
     disableAll = false
 }) => {
+    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
     const handleToggle = (id: string) => {
         if (disableAll) return;
         setExpandedId((prev: any) => (prev === id ? null : id));
@@ -41,37 +43,58 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                     key={item.id}
                     className={`${styles['accordion-item']} 
             ${expandedId === item.id ? styles['expanded'] : ''} 
-            ${disableAll || item.disabled ? styles['disabled'] : ''}`}
+            ${wizardOperationType !== 'bulk' ? disableAll || item.disabled : false ? styles['disabled'] : ''}`}
                 >
                     <div className={styles['accordion-header-wrapper']}>
-                        <div className={styles['accordion-header']} onClick={() => handleToggle(item.id)}>
-                            <div className={styles['accordion-title']}>
-                                <div className={styles.imageContainer}>{item.image}</div>
+                        {wizardOperationType !== 'bulk' && (
+                            <div className={styles['accordion-header']} onClick={() => handleToggle(item.id)}>
+                                <div className={styles['accordion-title']}>
+                                    <div className={styles.imageContainer}>{item.image}</div>
 
-                                <div className={styles.valueSection}>
-                                    <DsTypography variant="Semibold_14">{item.title}</DsTypography>
-                                    <DsTypography variant="Regular_14">{item.subtitle}</DsTypography>
-                                </div>
-                            </div>
-
-                            <div className={styles.readinessSection}>
-                                <div className={styles.valueSection}>
-                                    <div className={styles.statusSection}>
-                                        {!item?.missingPermission && <Success />}
-                                        {item?.missingPermission && <Cross />}
-                                        <DsTypography variant="Semibold_14">{item.readinessStatus}</DsTypography>
+                                    <div className={styles.valueSection}>
+                                        <DsTypography variant="Semibold_14">{item.title}</DsTypography>
+                                        <DsTypography variant="Regular_14">{item.subtitle}</DsTypography>
                                     </div>
+                                </div>
 
-                                    <DsTypography variant="Regular_14">Readiness</DsTypography>
+                                <div className={styles.readinessSection}>
+                                    <div className={styles.valueSection}>
+                                        <div className={styles.statusSection}>
+                                            {!item?.missingPermission && <Success />}
+                                            {item?.missingPermission && <Cross />}
+                                            <DsTypography variant="Semibold_14">{item.readinessStatus}</DsTypography>
+                                        </div>
+
+                                        <DsTypography variant="Regular_14">Readiness</DsTypography>
+                                    </div>
+                                </div>
+                                <div className={styles['accordion-status']}>
+                                    <DsTypography className={styles.text} variant="Semibold_14">
+                                        View prerequisites list
+                                    </DsTypography>
+                                    <Arrow />
                                 </div>
                             </div>
-                            <div className={styles['accordion-status']}>
-                                <DsTypography className={styles.text} variant="Semibold_14">
-                                    View prerequisites list
-                                </DsTypography>
-                                <Arrow />
+                        )}
+                        {wizardOperationType === 'bulk' && (
+                            <div className={styles['accordion-header-bulk']} onClick={() => handleToggle(item.id)}>
+                                <div className={styles['accordion-title-bulk']}>
+                                    <div className={styles.imageContainer}>{item.image}</div>
+
+                                    <div className={styles.valueSection}>
+                                        <DsTypography variant="Semibold_14">{item.title}</DsTypography>
+                                        <DsTypography variant="Regular_14">{item.subtitle}</DsTypography>
+                                    </div>
+                                </div>
+
+                                <div className={styles['accordion-status']}>
+                                    <DsTypography className={styles.text} variant="Semibold_14">
+                                        View prerequisites list
+                                    </DsTypography>
+                                    <Arrow />
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                     {expandedId === item.id && <div className={styles['accordion-content']}>{item.content}</div>}
                 </div>

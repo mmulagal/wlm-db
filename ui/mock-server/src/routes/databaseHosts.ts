@@ -155,6 +155,41 @@ router.post(
 );
 
 router.post(
+    `${BASE_URL}/v1/mssql/discover/resource-credentials`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, [{
+                credentialsId: "3ad8702c-a2fd-48d2-be50-1ba6ce83acd5",
+                ec2InstanceId: "i-0db20e831d1ce41e3",
+                region: "ap-south-1",
+                databaseCount: 10,
+                sqlServerEdition: 'Standard',
+                sqlServerError: '',
+                fsxnError: '',
+                "manageReadiness": { 
+                    "assessment" : { 
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "remediation": {
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "dbCreation": {
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "sandbox": {
+                        "missingSqlPermissions":[],
+                        "missingModules": []
+                    }
+                }
+            }]);
+        }, 5000);
+    }
+);
+
+router.post(
     `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/manage`,
     async (req: {}, res: any) => {
         setTimeout(() => {

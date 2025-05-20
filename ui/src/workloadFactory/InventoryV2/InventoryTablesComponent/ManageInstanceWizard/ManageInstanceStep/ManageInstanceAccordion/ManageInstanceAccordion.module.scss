@@ -25,11 +25,24 @@
         height: 100%;
     }
 
+    .accordion-header-bulk {
+        display: flex;
+        justify-content: space-between;
+        cursor: pointer;
+        height: 100%;
+    }
+
     .accordion-title {
         display: flex;
         gap: 16px;
         width: 480px;
         border-right: 1px solid var(--border);
+    }
+
+    .accordion-title-bulk {
+        display: flex;
+        gap: 16px;
+        width: 480px;
     }
 
     .readinessSection {

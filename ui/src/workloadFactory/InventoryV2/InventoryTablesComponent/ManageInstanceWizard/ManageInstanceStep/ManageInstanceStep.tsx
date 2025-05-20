@@ -12,6 +12,7 @@ import { GENERAL } from '../../../../../utils/appConstants';
 import { setManageSingleInstanceChecks } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { useDispatch } from 'react-redux';
 import MultiInstanceHeader from '../DetectInstanceStep/DetectHeader/MultiInstanceHeader';
+import { getPermissionState, hasMissingPowershell7, isAllowManage, missingModules } from '../ManageInstanceUtils';
 
 export const Content = () => {
     const dispatch = useDispatch();
@@ -25,70 +26,6 @@ export const Content = () => {
         }
         return false;
     }, [manageSingleInstanceData]);
-
-    const hasMissingPowershell7 = (manageReadinessData: any) => {
-        if (!manageReadinessData) return false;
-        const readinessKeys = Object.keys(manageReadinessData);
-        for (const key of readinessKeys) {
-            const missingModules = manageReadinessData[key]?.missingModules || [];
-            if (missingModules.includes(MANAGE_STATES.POWERSHELL7)) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    const missingModules = (manageReadinessData: any) => {
-        if (!manageReadinessData) return [];
-
-        const readinessKeys = Object.keys(manageReadinessData);
-        let filteredModulesSet: Set<string> = new Set();
-
-        readinessKeys.forEach(key => {
-            const missingModules = manageReadinessData[key]?.missingModules || [];
-            missingModules
-                .filter((module: string) => module !== MANAGE_STATES.POWERSHELL7)
-                .forEach((module: string) => filteredModulesSet.add(module));
-        });
-
-        const filteredModules = Array.from(filteredModulesSet);
-
-        return filteredModules;
-    };
-
-    const getPermissionState = (type: string, manageReadinessData: any) => {
-        const readinessData = manageReadinessData?.[type];
-
-        if (!readinessData) return GENERAL.NOT_AVAILABLE;
-
-        const missingModules = readinessData?.missingModules || [];
-        const hasPowershell7 = missingModules.includes(MANAGE_STATES.POWERSHELL7);
-        const otherModules = missingModules.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
-
-        const permissions = readinessData?.missingSqlPermissions;
-
-        if (otherModules.length > 0 || permissions.length > 0) {
-            return MANAGE_STATES.MISSING_PREREQUISITES;
-        }
-
-        if (hasPowershell7) {
-            return MANAGE_STATES.MISSING_POWERSHELL;
-        }
-
-        return MANAGE_STATES.READY;
-    };
-
-    const isAllowManage = (manageReadinessData: any) => {
-        let anyListEmpty = false;
-        const readinessKeys = Object.keys(manageReadinessData);
-        for (const key of readinessKeys) {
-            const missingSqlPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
-            if (missingSqlPermissions.length == 0) {
-                anyListEmpty = true;
-            }
-        }
-        return anyListEmpty;
-    };
 
     const manageChecks = useMemo(() => {
         let manageCheckObj: any = {
@@ -135,7 +72,7 @@ export const Content = () => {
 
     return (
         <div className={styles['manage-instance-step']}>
-            {isAlreadyDetected && (
+            {wizardOperationType !== 'bulk' && isAlreadyDetected && (
                 <div style={{ marginBottom: '40px' }}>
                     <DetectHeader />
                 </div>

@@ -11,44 +11,83 @@ const ActionComponent = ({ manageChecks }: any) => {
     const { installMissingAWS, installMissingPowershell } = useAppSelector(
         state => state.inventoryV2.manageInstanceInstallAction
     );
+    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
     useEffect(() => {
-        dispatch(
-            setInstallType({
-                installMissingAWS: manageChecks?.installMissingAWS,
-                installMissingPowershell: manageChecks?.installMissingPowershell
-            })
-        );
-    }, [manageChecks]);
+        if (wizardOperationType === 'bulk') {
+            dispatch(
+                setInstallType({
+                    installMissingAWS: true,
+                    installMissingPowershell: true
+                })
+            );
+        } else {
+            dispatch(
+                setInstallType({
+                    installMissingAWS: manageChecks?.installMissingAWS,
+                    installMissingPowershell: manageChecks?.installMissingPowershell
+                })
+            );
+        }
+    }, [wizardOperationType, manageChecks]);
 
     return (
         <div className={styles.actionComponent}>
             <DsTypography variant="Semibold_16">Action Required</DsTypography>
-            <div className={styles.selectContainer}>
-                <DsCheckbox
-                    id="wlm-db-install-missing-aws"
-                    title="Install missing AWS and NetApp PowerShell modules"
-                    onSelect={() => {
-                        dispatch(setInstallType({ installMissingAWS: !installMissingAWS }));
-                        setState({ installMissingAWS: !installMissingAWS });
-                    }}
-                    isSelected={installMissingAWS}
-                    isDisabled={!manageChecks?.installMissingAWS}
-                    className={styles.checkboxContainer}
-                />
 
-                <DsCheckbox
-                    id="wlm-db-install-missing-powershell"
-                    title="Install missing PowerShell 7"
-                    onSelect={() => {
-                        dispatch(setInstallType({ installMissingPowershell: !installMissingPowershell }));
-                        setState({ installMissingPowershell: !installMissingPowershell });
-                    }}
-                    isSelected={installMissingPowershell}
-                    isDisabled={!manageChecks?.installMissingPowershell}
-                    className={styles.checkboxContainer}
-                />
-            </div>
+            {wizardOperationType === 'bulk' ? (
+                <div className={styles.selectContainer}>
+                    <DsCheckbox
+                        id="wlm-db-install-missing-aws"
+                        title="Install missing AWS and NetApp PowerShell modules"
+                        onSelect={() => {
+                            dispatch(setInstallType({ installMissingAWS: !installMissingAWS }));
+                            setState({ installMissingAWS: !installMissingAWS });
+                        }}
+                        isSelected={installMissingAWS}
+                        isDisabled={false}
+                        className={styles.checkboxContainer}
+                    />
+
+                    <DsCheckbox
+                        id="wlm-db-install-missing-powershell"
+                        title="Install missing PowerShell 7"
+                        onSelect={() => {
+                            dispatch(setInstallType({ installMissingPowershell: !installMissingPowershell }));
+                            setState({ installMissingPowershell: !installMissingPowershell });
+                        }}
+                        isSelected={installMissingPowershell}
+                        isDisabled={false}
+                        className={styles.checkboxContainer}
+                    />
+                </div>
+            ) : (
+                <div className={styles.selectContainer}>
+                    <DsCheckbox
+                        id="wlm-db-install-missing-aws"
+                        title="Install missing AWS and NetApp PowerShell modules"
+                        onSelect={() => {
+                            dispatch(setInstallType({ installMissingAWS: !installMissingAWS }));
+                            setState({ installMissingAWS: !installMissingAWS });
+                        }}
+                        isSelected={installMissingAWS}
+                        isDisabled={!manageChecks?.installMissingAWS}
+                        className={styles.checkboxContainer}
+                    />
+
+                    <DsCheckbox
+                        id="wlm-db-install-missing-powershell"
+                        title="Install missing PowerShell 7"
+                        onSelect={() => {
+                            dispatch(setInstallType({ installMissingPowershell: !installMissingPowershell }));
+                            setState({ installMissingPowershell: !installMissingPowershell });
+                        }}
+                        isSelected={installMissingPowershell}
+                        isDisabled={!manageChecks?.installMissingPowershell}
+                        className={styles.checkboxContainer}
+                    />
+                </div>
+            )}
         </div>
     );
 };

@@ -5,9 +5,29 @@ import styles from './DetectHeader.module.scss';
 import DialogComponent from '../../../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../../../utils/appConstants';
 import DetectedInstanceTable from './DetectedInstanceTable';
+import { useAppSelector } from '../../../../../../store/storeHooks';
+import { useEffect, useState } from 'react';
 
 const MultiInstanceHeader = () => {
     const { setDialog, closeDialog } = useDialog();
+    const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
+    const [countSummary, setCountSummary] = useState<any>({});
+
+    useEffect(() => {
+        let newCountSummary = {
+            total: 0,
+            success: 0,
+            readyForManagement: 0
+        };
+        selectedMultiDetectInstances.forEach((item: any) => {
+            newCountSummary.total += 1;
+            if (item?.authorized) {
+                newCountSummary.success += 1;
+                newCountSummary.readyForManagement += 1;
+            }
+        });
+        setCountSummary(newCountSummary);
+    }, [selectedMultiDetectInstances]);
 
     const handleManageDialog = () => {
         setDialog(
@@ -31,7 +51,7 @@ const MultiInstanceHeader = () => {
 
                 <div className={styles.textSection}>
                     <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
-                        28
+                        {countSummary.total}
                     </DsTypography>
                     <DsTypography variant="Regular_14">Selected instances</DsTypography>
                 </div>
@@ -39,14 +59,14 @@ const MultiInstanceHeader = () => {
 
             <div className={styles.commonBlock}>
                 <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
-                    26 / 28
+                    {countSummary.success} / {countSummary.total}
                 </DsTypography>
                 <DsTypography variant="Regular_14">Successfully detected</DsTypography>
             </div>
 
             <div className={styles.commonBlock}>
                 <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
-                    20 / 28
+                    {countSummary.readyForManagement} / {countSummary.total}
                 </DsTypography>
                 <DsTypography variant="Regular_14">Ready for management</DsTypography>
             </div>

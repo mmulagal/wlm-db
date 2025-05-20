@@ -104,7 +104,7 @@ const initialInventoryV2State: InventorySliceData = {
     manageSingleInstanceChecks: null,
     manageSingleInstanceData: null,
     wizardOperationType: '',
-    selectedDetectInstances: [],
+    selectedMultiDetectInstances: [],
     landingFromWizard: false
 };
 
@@ -115,8 +115,8 @@ const inventoryV2Slice = createSlice({
         setLandingFromWizard: (state, action: PayloadAction<any>) => {
             state.landingFromWizard = action.payload;
         },
-        setSelectedDetectInstances: (state, action: PayloadAction<any>) => {
-            state.selectedDetectInstances = action.payload;
+        setSelectedMultiDetectInstances: (state, action: PayloadAction<any>) => {
+            state.selectedMultiDetectInstances = action.payload;
         },
         setInstallType: (state, action: PayloadAction<Partial<typeof state.manageInstanceInstallAction>>) => {
             state.manageInstanceInstallAction = {
@@ -390,7 +390,7 @@ const inventoryV2Slice = createSlice({
 
 export const {
     setLandingFromWizard,
-    setSelectedDetectInstances,
+    setSelectedMultiDetectInstances,
     setWizardOperationType,
     setInstallType,
     setAuthenticationType,

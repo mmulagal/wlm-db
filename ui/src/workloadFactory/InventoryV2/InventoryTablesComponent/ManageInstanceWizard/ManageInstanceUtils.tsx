@@ -101,25 +101,22 @@ export const callManageSingleInstanceApi = async (
             );
             dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
             const manageInstanceMsg = (
-                <DsTypography variant="Regular_14" style={{ display: 'flex', flexDirection: 'column' }}>
-                    {`Process management for instance ${manageSingleInstanceChecks?.databaseInstanceName} has begun.`}
-                    <div>
-                        {'For more details, please refer to '}
-                        {
-                            <>
-                                <Button
-                                    Component="button"
-                                    variant="text"
-                                    onClick={() => {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                        dispatch(clearNotifications());
-                                    }}
-                                >
-                                    {'Job Monitoring'}
-                                </Button>
-                            </>
-                        }
-                    </div>
+                <DsTypography variant="Regular_14">
+                    {`${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${manageSingleInstanceChecks?.databaseInstanceName} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`}
+                    {
+                        <>
+                            <Button
+                                Component="button"
+                                variant="text"
+                                onClick={() => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                    dispatch(clearNotifications());
+                                }}
+                            >
+                                {' Track progress.'}
+                            </Button>
+                        </>
+                    }
                 </DsTypography>
             );
             setTimeout(() => {
@@ -188,4 +185,87 @@ export const manageJobStatus = (
             }
         });
     }, MANAGE_POLLING_INTERVAL);
+};
+
+export const hasMissingPowershell7 = (manageReadinessData: any) => {
+    if (!manageReadinessData) return false;
+    const readinessKeys = Object.keys(manageReadinessData);
+    for (const key of readinessKeys) {
+        const missingModules = manageReadinessData[key]?.missingModules || [];
+        if (missingModules.includes(MANAGE_STATES.POWERSHELL7)) {
+            return true;
+        }
+    }
+    return false;
+};
+
+export const missingModules = (manageReadinessData: any) => {
+    if (!manageReadinessData) return [];
+
+    const readinessKeys = Object.keys(manageReadinessData);
+    let filteredModulesSet: Set<string> = new Set();
+
+    readinessKeys.forEach(key => {
+        const missingModules = manageReadinessData[key]?.missingModules || [];
+        missingModules
+            .filter((module: string) => module !== MANAGE_STATES.POWERSHELL7)
+            .forEach((module: string) => filteredModulesSet.add(module));
+    });
+
+    const filteredModules = Array.from(filteredModulesSet);
+
+    return filteredModules;
+};
+
+export const getPermissionState = (type: string, manageReadinessData: any) => {
+    const readinessData = manageReadinessData?.[type];
+
+    if (!readinessData) return GENERAL.NOT_AVAILABLE;
+
+    const missingModules = readinessData?.missingModules || [];
+    const hasPowershell7 = missingModules.includes(MANAGE_STATES.POWERSHELL7);
+    const otherModules = missingModules.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
+
+    const permissions = readinessData?.missingSqlPermissions;
+
+    if (otherModules.length > 0 || permissions.length > 0) {
+        return MANAGE_STATES.MISSING_PREREQUISITES;
+    }
+
+    if (hasPowershell7) {
+        return MANAGE_STATES.MISSING_POWERSHELL;
+    }
+
+    return MANAGE_STATES.READY;
+};
+
+export const checkOverallManageState = (
+    assessment: string,
+    remediation: string,
+    dbCreation: string,
+    sandbox: string
+) => {
+    let overallState = '';
+
+    if ([assessment, remediation, dbCreation, sandbox].includes(MANAGE_STATES.READY)) {
+        overallState = MANAGE_STATES.READY;
+    } else if ([assessment, remediation, dbCreation, sandbox].includes(MANAGE_STATES.MISSING_PREREQUISITES)) {
+        overallState = MANAGE_STATES.MISSING_PREREQUISITES;
+    } else if ([assessment, remediation, dbCreation, sandbox].includes(MANAGE_STATES.MISSING_POWERSHELL)) {
+        overallState = MANAGE_STATES.MISSING_POWERSHELL;
+    }
+
+    return overallState;
+};
+
+export const isAllowManage = (manageReadinessData: any) => {
+    let anyListEmpty = false;
+    const readinessKeys = Object.keys(manageReadinessData);
+    for (const key of readinessKeys) {
+        const missingSqlPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
+        if (missingSqlPermissions.length == 0) {
+            anyListEmpty = true;
+        }
+    }
+    return anyListEmpty;
 };

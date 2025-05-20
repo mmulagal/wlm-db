@@ -6,7 +6,7 @@ interface OptionType {
 
 export interface InventorySliceData {
     landingFromWizard: boolean;
-    selectedDetectInstances: OptionType[];
+    selectedMultiDetectInstances: OptionType[];
     wizardOperationType: string;
     manageInstanceInstallAction: any;
     authenticationType: string;

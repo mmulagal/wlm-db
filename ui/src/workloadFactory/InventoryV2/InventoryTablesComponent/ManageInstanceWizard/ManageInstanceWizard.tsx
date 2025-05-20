@@ -57,6 +57,7 @@ const Wizard = () => {
 const ManageInstanceWizard = () => {
     const initialState: any = {};
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
+    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
     const isAlreadyDetected = useMemo(() => {
         if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
             return true;
@@ -66,12 +67,12 @@ const ManageInstanceWizard = () => {
 
     return (
         <>
-            {isAlreadyDetected && (
+            {wizardOperationType !== 'bulk' && isAlreadyDetected && (
                 <>
                     <ManageOnlyWizard />
                 </>
             )}
-            {!isAlreadyDetected && (
+            {(wizardOperationType === 'bulk' || !isAlreadyDetected) && (
                 <WizardContextProvider
                     stepsMap={stepsMap}
                     stepPaths={stepPaths}

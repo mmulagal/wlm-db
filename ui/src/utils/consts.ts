@@ -909,6 +909,11 @@ export const MANAGE_STATES = {
     POWERSHELL7: 'Powershell 7'
 };
 
+export const ACTION_CTA = {
+    FIX_ISSUES: 'Fix issues',
+    MANAGE_INSTANCES: 'Manage instances'
+};
+
 export const RESPONSE_STATUS = {
     SUCCESS: 'SUCCESS',
     FAILED: 'FAILED'

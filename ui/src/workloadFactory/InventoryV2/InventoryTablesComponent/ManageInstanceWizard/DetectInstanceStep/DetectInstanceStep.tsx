@@ -6,6 +6,7 @@ import DetectContent from './DetectContent/DetectContent';
 import ManageWizardFooter from '../ManageWizardFooter';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { DsTypography } from '@netapp/design-system';
+import { GENERAL } from '../../../../../utils/appConstants';
 
 export const Content = () => {
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
@@ -15,8 +16,7 @@ export const Content = () => {
 
             {wizardOperationType === 'bulk' && (
                 <DsTypography variant="Regular_14" className={styles.note}>
-                    Select multiple Microsoft SQL Server instances that share the same authentication credentials and
-                    FSx for ONTAP credentials.
+                    {GENERAL.BULK_INSTANCE_SELECT_TEXT}
                 </DsTypography>
             )}
 

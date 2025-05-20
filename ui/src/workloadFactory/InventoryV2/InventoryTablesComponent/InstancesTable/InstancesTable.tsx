@@ -13,6 +13,7 @@ import {
     detectFieldsValidation,
     handleManageInstances,
     handleManageInstancesBulk,
+    manageActionCol,
     saveFsxInCredRegisteredObj,
     uniqueHostRow,
     updateInstanceStatus
@@ -25,6 +26,7 @@ import {
     isSmbProtocol
 } from '../../../../utils/utilityFunctions';
 import {
+    ACTION_CTA,
     DETECT_HOST_VAR,
     FROM_DIALOG,
     INVENTORY_STATUS,
@@ -47,6 +49,7 @@ import {
     setSelectedFilterValue,
     setSelectedHeaderTab,
     setSelectedInventoryTab,
+    setSelectedMultiDetectInstances,
     setSelectedRowsForManage,
     setTableManageColumnState,
     setUnManagedPerfInstanceIdsList,
@@ -90,11 +93,6 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
-
-const ACTION_CTA = {
-    FIX_ISSUES: 'Fix issues',
-    MANAGE_INSTANCES: 'Manage instances'
-};
 
 const InstancesTable = () => {
     const disptach = useDispatch();
@@ -371,10 +369,7 @@ const InstancesTable = () => {
                         error.push(result?.data?.sqlServerError || '');
                         error.push(result?.data?.fsxnError || '');
                         dispatch(setIsDetectHostError(error.join(' ')));
-                        dispatch(setIsDetectHostLoading(false));
                     } else {
-                        dispatch(setIsDetectHostLoading(false));
-
                         // store fsx cred in register obj if payload has fsx register
                         let isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
 
@@ -405,10 +400,10 @@ const InstancesTable = () => {
                     }
                 } else {
                     dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
-                    dispatch(setIsDetectHostLoading(false));
                 }
             } catch (error) {
                 dispatch(setIsDetectHostError(error || GENERAL.FAILED_TO_DETECT_HOST));
+            } finally {
                 dispatch(setIsDetectHostLoading(false));
             }
         }
@@ -517,45 +512,6 @@ const InstancesTable = () => {
             };
         });
     }, [instanceTableRows, selectedRowsForManage]);
-
-    const manageActionCol = (rowData?: any) => {
-        let colText = '';
-        let disableMsg = '';
-        if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-            colText = ACTION_CTA.FIX_ISSUES;
-        } else {
-            colText = ACTION_CTA.MANAGE_INSTANCES;
-        }
-
-        if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
-            disableMsg = GENERAL.HOST_DOWN;
-        } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
-            disableMsg = GENERAL.SSM_DOWN;
-        } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
-            disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
-        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
-            disableMsg = GENERAL.PGSQL_CTA_NA;
-        } else if (
-            rowData?.detectOption === DETECT_HOST_VAR.DISABLE ||
-            rowData?.detectOption === DETECT_HOST_VAR.HIDE
-        ) {
-            disableMsg = rowData?.detectOptionDisableMsg;
-        } else if (
-            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-            rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
-        ) {
-            disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
-        } else if (
-            rowData?.serverInstallationMode === GENERAL.AOAG &&
-            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
-        ) {
-            disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
-        }
-        return {
-            colText: colText,
-            disableMsg: disableMsg
-        };
-    };
 
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
@@ -952,8 +908,8 @@ const InstancesTable = () => {
         columns: managedHostSubTableColDefs,
         rows: updatedTableData,
         pageSize: 50,
-        selectionType: 'multiple',
-        defaultSelectedRows: [],
+        // selectionType: 'multiple',
+        // defaultSelectedRows: [],
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
@@ -1268,6 +1224,7 @@ const InstancesTable = () => {
     };
 
     const handleManageBulk = () => {
+        dispatch(setSelectedMultiDetectInstances([]));
         dispatch(setWizardOperationType('bulk'));
         navigate('../manage-wizard');
     };
@@ -1286,17 +1243,17 @@ const InstancesTable = () => {
                         singularTitle="Instance"
                         exportToCsvOptions={{ fileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
-                        actionsRight={
-                            <div className={styles.manageInstanceButton}>
-                                <DsButton isThin onClick={() => handleManageBulk()}>
-                                    Manage multiple instances
-                                </DsButton>
-                            </div>
-                        }
+                        // actionsRight={
+                        //     <div className={styles.manageInstanceButton}>
+                        //         <DsButton isThin onClick={() => handleManageBulk()}>
+                        //             Manage multiple instances
+                        //         </DsButton>
+                        //     </div>
+                        // }
                     />
-                    {selectedRowsForManage.length > 0 && (
+                    {/* {selectedRowsForManage.length > 0 && (
                         <BulkActionContainer action={'Manage'} onClick={handleBulkOperation} />
-                    )}
+                    )} */}
                     <Table
                         //@ts-ignore
                         tableProps={tableProps}

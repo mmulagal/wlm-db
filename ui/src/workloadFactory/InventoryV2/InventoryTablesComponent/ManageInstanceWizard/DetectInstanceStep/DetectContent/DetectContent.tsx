@@ -98,7 +98,9 @@ const DetectContent = () => {
 
             {wizardOperationType === 'bulk' && <SelectInstances />}
 
-            {!manageSingleInstanceData?.sqlServerAuthentication && !manageSingleInstanceData?.windowsAuthentication && (
+            {(wizardOperationType === 'bulk' ||
+                (!manageSingleInstanceData?.sqlServerAuthentication &&
+                    !manageSingleInstanceData?.windowsAuthentication)) && (
                 <div className={styles['radio-container']}>
                     <DsTypography variant="Semibold_14">Select authentication type</DsTypography>
                     <RadioButton
@@ -125,7 +127,9 @@ const DetectContent = () => {
                 </div>
             )}
 
-            {!manageSingleInstanceData?.sqlServerAuthentication && !manageSingleInstanceData?.windowsAuthentication && (
+            {(wizardOperationType === 'bulk' ||
+                (!manageSingleInstanceData?.sqlServerAuthentication &&
+                    !manageSingleInstanceData?.windowsAuthentication)) && (
                 <div className={styles.firstSection}>
                     <DsTypography variant="Semibold_14">{GENERAL.DETECT_MSSQL_HEADING}</DsTypography>
                     <div className={styles.textFieldContainer}>
@@ -156,7 +160,8 @@ const DetectContent = () => {
                 </div>
             )}
 
-            {manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered && (
+            {(wizardOperationType === 'bulk' ||
+                (manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered)) && (
                 <div className={styles.secondSection}>
                     <DsTypography variant="Semibold_14">{GENERAL.DETECT_FSX_HEADING}</DsTypography>
                     <div className={styles.textFieldContainer}>

@@ -12,6 +12,7 @@ import {
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
+    ACTION_CTA,
     DBType,
     DETECT_HOST_VAR,
     INVENTORY_ACTIONS,
@@ -3389,4 +3390,40 @@ export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any,
     });
 
     return triggeredPrepare;
+};
+
+export const manageActionCol = (rowData?: any) => {
+    let colText = '';
+    let disableMsg = '';
+    if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+        colText = ACTION_CTA.FIX_ISSUES;
+    } else {
+        colText = ACTION_CTA.MANAGE_INSTANCES;
+    }
+
+    if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
+        disableMsg = GENERAL.HOST_DOWN;
+    } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+        disableMsg = GENERAL.SSM_DOWN;
+    } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+        disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+    } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+        disableMsg = GENERAL.PGSQL_CTA_NA;
+    } else if (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) {
+        disableMsg = rowData?.detectOptionDisableMsg;
+    } else if (
+        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
+    ) {
+        disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
+    } else if (
+        rowData?.serverInstallationMode === GENERAL.AOAG &&
+        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+    ) {
+        disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
+    }
+    return {
+        colText: colText,
+        disableMsg: disableMsg
+    };
 };

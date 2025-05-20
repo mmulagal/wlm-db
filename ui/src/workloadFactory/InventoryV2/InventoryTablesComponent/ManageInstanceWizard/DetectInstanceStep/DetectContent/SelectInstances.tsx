@@ -1,8 +1,11 @@
 import { DsSelect, DsTypography } from '@netapp/design-system';
 import styles from './DetectContent.module.scss';
 import { useDispatch } from 'react-redux';
-import { setSelectedDetectInstances } from '../../../../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedMultiDetectInstances } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../../../../store/storeHooks';
+import { useMemo } from 'react';
+import { ACTION_CTA } from '../../../../../../utils/consts';
+import { manageActionCol } from '../../../../InventoryUtilsV2';
 
 interface OptionType {
     id: number;
@@ -12,30 +15,45 @@ interface OptionType {
 
 const SelectInstances = () => {
     const dispatch = useDispatch();
-    const { selectedDetectInstances } = useAppSelector(state => state.inventoryV2);
-    const options: OptionType[] = [
-        {
-            id: 0,
-            label: 'instance name 1',
-            value: 'host name 1'
-        },
-        {
-            id: 1,
-            label: 'instance name 2',
-            value: 'host name 2'
-        }
-    ];
+    const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
+    const { instanceTableRows } = useAppSelector(state => state.inventoryV2);
+
+    const options = useMemo(() => {
+        let optionsList: any = [];
+        instanceTableRows?.map((row: any) => {
+            const { colText, disableMsg } = manageActionCol(row);
+            if (colText === ACTION_CTA.MANAGE_INSTANCES && disableMsg === '') {
+                let isAuthorized = false;
+                if (
+                    (row?.sqlServerAuthentication || row?.windowsAuthentication) &&
+                    (!row?.fsxId || (row?.fsxId && row?.isFsxRegistered))
+                ) {
+                    isAuthorized = true;
+                }
+                optionsList.push({
+                    id: row.id,
+                    label: row.databaseInstanceName,
+                    value: row.name,
+                    data: row,
+                    authorized: isAuthorized
+                });
+            }
+        });
+        return optionsList;
+    }, [instanceTableRows]);
+
     const handleSelect = (option: OptionType) => {
-        dispatch(setSelectedDetectInstances(option));
+        dispatch(setSelectedMultiDetectInstances(option));
     };
+
     return (
         <div className={styles.detectInstanceSelect}>
             <DsSelect
                 title="Instances"
                 isCleanable={false}
                 formatLabel={() =>
-                    selectedDetectInstances.length > 0
-                        ? `${selectedDetectInstances.length} instances selected`
+                    selectedMultiDetectInstances.length > 0
+                        ? `${selectedMultiDetectInstances.length} instances selected`
                         : 'Select instances'
                 }
                 placeholder="Select instances"
@@ -43,6 +61,9 @@ const SelectInstances = () => {
                 selectionType="multi"
                 isWithActions={true}
                 onSelect={(option: any) => handleSelect(option)}
+                searchMethod={{
+                    method: 'smart'
+                }}
                 formatOptionLabel={(option: any) => {
                     return (
                         <div className={styles.detectFormatOption}>

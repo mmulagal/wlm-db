@@ -683,6 +683,13 @@ export const inventoryApi = createApi({
                     body: payload
                 })
             }),
+            registerResourceCredentialsBulk: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/discover/resource-credentials`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getMssqlInstanceData: builder.mutation({
                 query: ({ credentialId, regionId, instances, nextToken = null }) => ({
                     url: nextToken
@@ -1245,6 +1252,7 @@ export const {
     useLazyDiscoverPgsqlHostsQuery,
     useLazyGetFsxCredentialStatusQuery,
     useRegisterResourceCredentialsMutation,
+    useRegisterResourceCredentialsBulkMutation,
     useGetMssqlInstanceDataMutation,
     usePrepareHostMutation
 } = inventoryApi;

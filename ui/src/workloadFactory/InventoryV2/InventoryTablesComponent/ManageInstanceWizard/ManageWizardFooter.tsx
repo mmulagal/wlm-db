@@ -7,6 +7,7 @@ import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice
 import {
     useLazyGetSubTaskListQuery,
     useManageBulkV2MssqlInstanceMutation,
+    useRegisterResourceCredentialsBulkMutation,
     useRegisterResourceCredentialsMutation
 } from '../../../../utils/apiService';
 import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
@@ -14,7 +15,8 @@ import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificat
 import { GENERAL } from '../../../../utils/appConstants';
 import {
     setInventoryTableData,
-    setManageSingleInstanceReadiness
+    setManageSingleInstanceReadiness,
+    setSelectedMultiDetectInstances
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { MANAGE_STATES } from '../../../../utils/consts';
 import { handleSingleInstanceManage } from './ManageInstanceUtils';
@@ -38,15 +40,106 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
+    const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
 
     const dispatch = useDispatch();
 
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
+    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const [manageBulkV2InstanceApi] = useManageBulkV2MssqlInstanceMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const goBack = () => {
+        setState({ hitNext: false });
         gotoPreviousStep();
+    };
+
+    const handleMultiRegisterResourceCred = async () => {
+        dispatch(setIsDetectHostLoading(true));
+        dispatch(setManageSingleInstanceReadiness(null));
+        let payload: Array<any> = [];
+        selectedMultiDetectInstances?.forEach((instance: any) => {
+            const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
+            let cred = createDetectHostPayload(sqlServerInstance, instance?.data?.fsxId, instance?.data);
+            let perPayload = {
+                ...cred,
+                credentialsId: instance?.data?.credentialId,
+                region: instance?.data?.regionId,
+                ec2InstanceId: instance?.data?.ec2InstanceId
+            };
+            payload.push(perPayload);
+        });
+        try {
+            const result: any = await registerResourceCredBulk({ payload });
+            if (result && !result?.error) {
+                let newSelectedMultiDetectInstances = selectedMultiDetectInstances;
+                result?.data?.forEach((res: any) => {
+                    if (res?.sqlServerError || res?.fsxnError) {
+                        newSelectedMultiDetectInstances = newSelectedMultiDetectInstances.map((instance: any) => {
+                            if (
+                                instance?.data?.credentialId === res?.credentialsId &&
+                                instance?.data?.regionId === res?.region &&
+                                instance?.data?.ec2InstanceId === res?.ec2InstanceId
+                            ) {
+                                return {
+                                    ...instance,
+                                    authorized: false
+                                };
+                            }
+                            return instance;
+                        });
+                    } else {
+                        // store fsx cred in register obj if payload has fsx register
+                        let filterRow: any = newSelectedMultiDetectInstances.filter((instance: any) => {
+                            return (
+                                instance?.data?.credentialId === res?.credentialsId &&
+                                instance?.data?.regionId === res?.region &&
+                                instance?.data?.ec2InstanceId === res?.ec2InstanceId
+                            );
+                        });
+                        let isFsxRegister = saveFsxInCredRegisteredObj(filterRow?.[0]?.data?.fsxId, dispatch);
+                        const updatedInventoryTableData = updateInstanceStatus(
+                            'detect',
+                            filterRow?.[0]?.data,
+                            filterRow?.[0]?.data
+                        );
+                        dispatch(setInventoryTableData(updatedInventoryTableData));
+                        newSelectedMultiDetectInstances = newSelectedMultiDetectInstances.map((instance: any) => {
+                            if (
+                                instance?.data?.credentialId === res?.credentialsId &&
+                                instance?.data?.regionId === res?.region &&
+                                instance?.data?.ec2InstanceId === res?.ec2InstanceId
+                            ) {
+                                return {
+                                    ...instance,
+                                    authorized: true,
+                                    manageReadiness: res?.manageReadiness || null
+                                };
+                            }
+                            return instance;
+                        });
+                    }
+                });
+                dispatch(setSelectedMultiDetectInstances(newSelectedMultiDetectInstances));
+                goToNextStep();
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                    })
+                );
+            }
+        } catch (error) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                })
+            );
+        } finally {
+            dispatch(setIsDetectHostLoading(false));
+        }
     };
 
     const handleRegisterResourceCred = async () => {
@@ -76,12 +169,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             message: error.join(' ') || GENERAL.MANAGE_DETECT_FAIL_MESSAGE
                         })
                     );
-                    dispatch(setIsDetectHostLoading(false));
-                    if (result?.data?.manageReadiness) {
-                        dispatch(setManageSingleInstanceReadiness(result?.data?.manageReadiness));
-                    }
                 } else {
-                    dispatch(setIsDetectHostLoading(false));
                     // store fsx cred in register obj if payload has fsx register
                     let isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
                     const updatedInventoryTableData = updateInstanceStatus(
@@ -90,6 +178,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         manageSingleInstanceData
                     );
                     dispatch(setInventoryTableData(updatedInventoryTableData));
+                    if (result?.data?.manageReadiness) {
+                        dispatch(setManageSingleInstanceReadiness(result?.data?.manageReadiness));
+                    }
                     goToNextStep();
                 }
             } else {
@@ -99,7 +190,6 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         message: result?.error?.data?.message || GENERAL.MANAGE_DETECT_FAIL_MESSAGE
                     })
                 );
-                dispatch(setIsDetectHostLoading(false));
             }
         } catch (error) {
             dispatch(
@@ -108,26 +198,44 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
                 })
             );
+        } finally {
             dispatch(setIsDetectHostLoading(false));
         }
     };
 
     const goForward = () => {
-        setState({ hitNext: true });
-        const fieldsCorrect = detectFieldsValidation(manageSingleInstanceData);
-        if (fieldsCorrect) {
-            handleRegisterResourceCred();
+        if (wizardOperationType === 'bulk') {
+            if (selectedMultiDetectInstances.length > 0) {
+                handleMultiRegisterResourceCred();
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: GENERAL.BULK_INSTANCE_SELECT_TEXT
+                    })
+                );
+            }
+        } else {
+            setState({ hitNext: true });
+            const fieldsCorrect = detectFieldsValidation(manageSingleInstanceData);
+            if (fieldsCorrect) {
+                handleRegisterResourceCred();
+            }
         }
     };
 
     const handleManage = () => {
-        handleSingleInstanceManage(
-            manageSingleInstanceChecks,
-            dispatch,
-            manageBulkV2InstanceApi,
-            getJobDetailApi,
-            navigate
-        );
+        if (wizardOperationType === 'bulk') {
+            // ToDo
+        } else {
+            handleSingleInstanceManage(
+                manageSingleInstanceChecks,
+                dispatch,
+                manageBulkV2InstanceApi,
+                getJobDetailApi,
+                navigate
+            );
+        }
     };
 
     return (
