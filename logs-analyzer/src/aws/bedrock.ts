@@ -23,7 +23,7 @@ export default async function streamMessages(
     });
 
     const response = await client.send(command);
-    let stopReason = response.stopReason;
+    const { stopReason } = response;
     const message: MessageObj = { content: [] };
 
     message.role = response?.output?.message?.role;
@@ -31,19 +31,23 @@ export default async function streamMessages(
     message.content = response?.output?.message?.content?.map((msgContent: ContentBlock) => {
         if (msgContent.text) {
             return { text: msgContent.text };
-        } else if (msgContent.toolUse) {
+        }
+        if (msgContent.toolUse) {
             return {
                 toolUse: {
                     ...msgContent.toolUse,
-                    input: typeof msgContent.toolUse.input === 'string' ? msgContent.toolUse.input : JSON.stringify(msgContent.toolUse.input)
+                    input:
+                        typeof msgContent.toolUse.input === 'string'
+                            ? msgContent.toolUse.input
+                            : JSON.stringify(msgContent.toolUse.input)
                 } as ToolUse
             };
-        } else if (msgContent.toolResult) {
+        }
+        if (msgContent.toolResult) {
             return { toolResult: msgContent.toolResult };
         }
         return {};
     });
-
 
     return { stopReason, message };
 }

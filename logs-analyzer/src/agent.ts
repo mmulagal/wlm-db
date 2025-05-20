@@ -239,13 +239,7 @@ async function handleToolUse(
 
                 switch (tool?.name) {
                     case 'analyze_db_logs': {
-                        await analyzeDatabaseApplicationLogs(
-                            tool,
-                            client,
-                            LOGS_FOLDER,
-                            messages,
-                            INFERENCE_CONFIG
-                        );
+                        await analyzeDatabaseApplicationLogs(tool, client, LOGS_FOLDER, messages, INFERENCE_CONFIG);
                         stopReason = 'end_turn'; // Stop further tool use
                         logger.info('Log analysis completed. Stopping further tool use.');
 

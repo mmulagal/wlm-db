@@ -7,7 +7,6 @@ interface ErrorLg {
     severity: string;
 }
 
-
 interface Content {
     text?: string;
     toolUse?: ToolUse;
