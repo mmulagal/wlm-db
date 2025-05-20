@@ -105,7 +105,8 @@ const RESOURCE_CLASS = 'STORAGE_SERVICES';
 const WLMDB_RESOURCE_CLASS = 'WLMDB';
 enum DatabaseTypes {
     MS_SQL_SERVER = 'MSSQL',
-    PG_SQL = 'PGSQL'
+    PG_SQL = 'PGSQL',
+    ORACLE = 'ORACLE'
 }
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
