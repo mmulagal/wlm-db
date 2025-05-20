@@ -50,6 +50,7 @@ import storageSavingsRoutes from './routes/storage-savings';
 import onpremTcoRoutes from './routes/onprem-tco';
 import continuousOptimizationRoutes from './routes/continuous-optimization';
 import notificationRoutes from './routes/notification';
+import logsAnalyzerRoutes from './routes/logs-analyzer';
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -229,6 +230,7 @@ const app = fastify({
             continuousOptimizationRoutes(instance);
             onpremTcoRoutes(instance);
             notificationRoutes(instance);
+            logsAnalyzerRoutes(instance);
             sandboxRoutes(instance);
             next();
         },

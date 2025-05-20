@@ -2046,5 +2046,6 @@ export {
     getDatabasesV2,
     getInstanceDetails,
     getAllClusterNodeDetails,
-    getInstanceOntapDetails
+    getInstanceOntapDetails,
+    getEc2ResourceInfo
 };

@@ -44,6 +44,7 @@ async function initiateSimulator() {
     await import('./scopes/aws/cloud-watch-scope');
     await import('./scopes/aws/cloud-watch-logs-scope');
     await import('./scopes/aws/compute-optimizer-scope');
+    await import('./scopes/aws/bedrock-scope');
     // Load server
     await import('../../src/index');
 }
