@@ -434,7 +434,6 @@ async function calculateStorageDrift(
             });
         });
     }
-
     if (errors && errors['mpio-policy']) {
         driftAssessmentData.configuration.os.push({ name: 'mpio-policy', errorMessage: errors['mpio-policy'] });
     }
@@ -468,6 +467,21 @@ async function calculateStorageDrift(
                     .map(policyDetail => ({
                         objectName: policyDetail.accessPath || policyDetail.disk || '',
                         value: policyDetail.policy,
+                        objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
+                    }));
+            } else if (key === 'mpio-timeout') {
+                assessmentDetails = Object.entries(os)
+                    .filter(([type]) => type === 'mpio-timeout')
+                    .map(([, data]) => data)
+                    .flat();
+                objectsInViolation = assessmentDetails
+                    .filter(
+                        timeoutDetail =>
+                            timeoutDetail['mpio-timeout'] && timeoutDetail['mpio-timeout'] !== goldenData.value
+                    )
+                    .map(timeoutDetail => ({
+                        objectName: timeoutDetail.accessPath || timeoutDetail.disk || '',
+                        value: timeoutDetail.timeout.toString(),
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
                     }));
             }

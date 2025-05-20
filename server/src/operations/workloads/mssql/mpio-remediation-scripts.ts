@@ -267,6 +267,21 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (sessionsCountPerTarget: SessionsCountPerI
     ConvertTo-Json -InputObject $result
 `;
 
+const MPIO_TIMEOUT = `
+    Start-Transcript -Path "C:\\cfn\\log\\mpio-timeout-configuration.log.txt" -Append | Out-Null
+    try {
+        Write-Information "Setting MPIO Disk Timeout to 100"
+        Set-MPIOSetting -NewDiskTimeout 100
+        return @{"status" = "success"
+                 "error" = $null} | ConvertTo-Json
+    } catch {
+        Write-Information "Failed to set MPIO Disk Timeout. Error message: $_.Exception.Message"
+        return @{"status" = "failed"
+                 "error" = $_.Exception.Message} | ConvertTo-Json
+    }
+    Stop-Transcript | Out-Null
+`;
+
 export {
     REMEDIATE_MPIO_POLICY,
     CHECK_MPIO_POLICY,
@@ -274,5 +289,6 @@ export {
     CHECK_IF_MPIO_INSTALLED,
     ENABLE_MPIO_AND_CONFIGURE,
     MPIO_ISCSI_SESSIONS,
-    REMEDIATE_MPIO_ISCSI_SESSIONS
+    REMEDIATE_MPIO_ISCSI_SESSIONS,
+    MPIO_TIMEOUT
 };

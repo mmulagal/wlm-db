@@ -465,6 +465,7 @@ interface OSAssessment {
     'ntfs-allocation-details': Array<{ Key?: string; Value?: string }>;
     'mpio-load-balance-policy': string;
     'ntfs-allocation-unit-size': number;
+    'mpio-timeout': number;
 }
 interface StorageAssessment {
     filesystemId: string;
