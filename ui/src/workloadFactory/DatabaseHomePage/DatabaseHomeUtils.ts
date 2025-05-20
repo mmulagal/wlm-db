@@ -1184,6 +1184,9 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
                 updatedAssessmentData.loadingStatus = isLoading;
             } else {
                 updatedAssessmentData.status = instance.status;
+                updatedAssessmentData.ec2InstanceId = host?.ec2InstanceId;
+                updatedAssessmentData.fsxId = instance?.fsxId;
+                updatedAssessmentData.sqlServerId = instance?.sqlServerId;
                 updatedAssessmentData.loadingStatus = false;
             }
         }

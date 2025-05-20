@@ -99,10 +99,7 @@ async function handleOptimizeJobCreation(
     if (job) {
         const timeDifferenceInMinutes = getTimeDifferenceInMinutes(job.startTime);
         if (timeDifferenceInMinutes <= 5) {
-            throw createError(
-                412,
-                `The following optimization is running: Job ID:  ${job.id}. Wait until it completes.`
-            );
+            throw createError(412, `The following fixing is running: Job ID:  ${job.id}. Wait until it completes.`);
         }
     }
 
@@ -248,7 +245,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         configurations.map(async config => {
             const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
             const startTime = Date.now();
-            const thirtyDaysInMs = moment.duration(1, 'days').asMilliseconds(); // update to 1 day for testing will be reverted to 30 days after testing
+            const thirtyDaysInMs = moment.duration(1, 'hours').asMilliseconds(); // update to 1 day for testing will be reverted to 30 days after testing
             const endTime = startTime + thirtyDaysInMs;
             const response = {
                 configurationName: configName,

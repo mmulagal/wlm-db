@@ -301,7 +301,8 @@ enum AWSQueryFields {
 enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
     FSX = 'FSX',
-    PGSQL = 'PGSQL'
+    PGSQL = 'PGSQL',
+    WINDOWS_USER = 'WINDOWS_USER'
 }
 
 const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
@@ -1438,6 +1439,7 @@ const FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL = '1h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
 const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
 const PREPARE_PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/dependent-packages.zip`;
+const POWERSHELL_7_RELATIVE_PATH = `${WLMDB}/Installer/powershell.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
 const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
 const MAX_DATA_LUN_SIZE_IN_GIB = 86049.3;
@@ -2079,6 +2081,7 @@ export {
     RESTRICTED_FSX_REGIONS,
     CLONE_AGE,
     PGSQL_DEFAULT_INSTANCE_NAME,
+    POWERSHELL_7_RELATIVE_PATH,
     CLONE_ACTION,
     OTHER_CLONE
 };

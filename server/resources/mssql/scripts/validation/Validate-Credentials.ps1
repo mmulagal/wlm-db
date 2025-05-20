@@ -10,7 +10,7 @@ param(
     [boolean]$isSecretManagerSupported,
 
     [Parameter(Mandatory = $false)]
-    [string]$UserCredentials,
+    [string]$DCName,
 
     [Parameter(Mandatory = $true)]
     [string]$Stackname,
@@ -68,7 +68,7 @@ try {
             $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
                 
             $secure = $SsmParameter.domain.password
-            # $secure = (Get-SSMParameterValue -Names $DomainAdminSecretName -WithDecryption $True).Parameters[0].Value
+
         }
         catch {
             $Failed = $true
@@ -84,55 +84,23 @@ try {
     }
     $pass = ConvertTo-SecureString $secure -AsPlainText -Force
     $cred = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $pass
+
     Import-Module ActiveDirectory *>$null
-    $domain = (Get-ADDomain -Server $DomainName -Credential $cred).DNSRoot
-    if ($UserCredentials -ne $null) {
-        # Convert the credentials to Hashtable
-        # Example of user credentials: "{"SQL Server Account": {"user":"sqlsa", "password":"ssm.parameter.store.key1"}, "Some other account": {"user": "someuser", "password":"ssm.parameter.store.key2"}}"
-        $UserCredentialsJson = ConvertFrom-Json $UserCredentials
-        $UserCredentialsHashTable = @{}
-        foreach ($property in $UserCredentialsJson.PSObject.Properties) {
-            $UserCredentialsHashTable[$property.Name] = $property.Value
-        }
-        foreach ($Account in $UserCredentialsHashTable.Keys) {
-            $credentials = @{}
-            foreach ($property in $UserCredentialsHashTable[$Account].PSObject.Properties) {
-                $credentials[$property.Name] = $property.Value
-            }
 
-            $User = $credentials["user"]
-            $PasswordKey = $credentials["password"]
-
-            try {
-                # Check if user exists in AD
-                if (Get-ADUser -Server $domain -Filter { sAMAccountName -eq $User } -Credential $cred) {
-                    # If user exists in AD, check for it credentials. If the user does not exist, provisioning process will create new user
-                    $usersecure = (Get-SSMParameterValue -Names $PasswordKey -WithDecryption $True).Parameters[0].Value
-                    $userpass = ConvertTo-SecureString $usersecure -AsPlainText -Force
-                    $usercred = New-Object System.Management.Automation.PSCredential -ArgumentList $User, $userpass
-
-
-                    $user = (Get-ADUser -Server $domain -Filter { sAMAccountName -eq $User } -Credential $usercred).Name
-
-                    if (-Not $user) {
-                        $Failed = $true
-                        $FailedUsers += "$Account (username - $User)"
-                    }
-
-                }
-                else {
-                    # Did not find the user in AD, we will create it during Provisioning process
-                }
-            }
-            catch {
-                $Failed = $true
-                $FailedUsers += "$Account (username - $User)"
-            }
-        }
+    if([string]::IsNullOrEmpty($DCName)) {
+        #Try to fetch a Domain Controller name that can connect to the directory service if preferred DC is not passed 
+        $DCName = (Get-ADDomainController -Discover -Domain $DomainName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty HostName)
+        }       
+    if([string]::IsNullOrEmpty($DCName)) {
+        #If not able to fetch with Get-ADDomainController revert to using main domain DNS name as DC server
+        $domain = (Get-ADDomain -Server $DomainName -Credential $cred).DNSRoot
+    } else {
+         $domain = (Get-ADDomain -Server $DCName -Credential $cred).DNSRoot
     }
+
 }
 catch {
-    $FailureReason = '"{0}"' -f "Failed to join domain with provided Active Directory credentials. Exception: $_" 
+    $FailureReason = '"{0}"' -f "Failed to fetch domain with provided Active Directory credentials(Domain:$DomainName,PreferredDC:$DCName). Exception: $_" 
     Write-Output @{ status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
     if ($IsTerraform) {
         throw $FailureReason
@@ -143,7 +111,8 @@ catch {
 }
 
 if ($Failed -ne $true) {
-    Write-Output @{ status = "Completed"; reason = "Done." } | ConvertTo-Json -Compress
+    $SuccessReason = '"{0}"' -f "Validation completed for Active Directory connectivity(Domain:$DomainName,PreferredDC:$DCName)"
+    Write-Output @{ status = "Completed"; reason = $SuccessReason } | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
 }
 else {

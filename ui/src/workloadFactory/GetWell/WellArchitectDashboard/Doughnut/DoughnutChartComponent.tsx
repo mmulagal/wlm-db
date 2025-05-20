@@ -137,7 +137,7 @@ const DonutChart = React.memo(
                       datasets: [
                           {
                               data: [1],
-                              backgroundColor: [tokens['--chart-disabled']]
+                              backgroundColor: '#e0e0e0'
                           }
                       ]
                   }

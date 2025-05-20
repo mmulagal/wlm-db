@@ -334,7 +334,7 @@ const getInstanceStorageDetails = `
 const discoverOracleHosts = `
     # Check if oratab exists
     if [ ! -f /etc/oratab ]; then
-        echo "No /etc/oratab found on this instance."
+        echo "[]"
         exit 0
     fi
 
@@ -429,7 +429,7 @@ EOF
 
             if [ "$is_cdb" == "YES" ]; then
                 PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
-                pdb_names=$(echo "$PDB_DATABASE_DETAILS" | jq -r '.[] | .pdb_name')
+                pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
             else
                 PDB_DATABASE_DETAILS="null"
             fi

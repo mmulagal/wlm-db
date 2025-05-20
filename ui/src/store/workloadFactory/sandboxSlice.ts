@@ -31,13 +31,17 @@ export const initialSandboxState: SandboxEntities = {
     selectedRollbackSnapshot: null,
     isRefreshedSandbox: false,
     isRefreshSandboxInstance: false,
-    refreshSandboxInstanceTime: ''
+    refreshSandboxInstanceTime: '',
+    sandboxInstanceLoading: false
 };
 
 const sandboxSlice = createSlice({
     name: 'sandbox',
     initialState: initialSandboxState,
     reducers: {
+        setSandboxInstanceLoading: (state, action: PayloadAction<any>) => {
+            state.sandboxInstanceLoading = action.payload;
+        },
         setRefreshSandboxInstanceTime: (state, action: PayloadAction<any>) => {
             state.refreshSandboxInstanceTime = action.payload;
         },
@@ -98,7 +102,7 @@ const sandboxSlice = createSlice({
 export const {
     setRefreshSandboxInstanceTime,
     setIsRefreshedSandboxInstance,
-
+    setSandboxInstanceLoading,
     setAggregatedSandboxInstanceList,
     setSandboxListState,
     setAllSandboxInstanceList,

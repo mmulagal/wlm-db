@@ -210,9 +210,9 @@ async function getPgSqlDatabaseInstancesSummary(
         credentialsId,
         activeNodeInstanceId,
         region,
-        databaseInstances,
+        databaseInstancesLength: databaseInstances.length,
         fields,
-        resourceDetails,
+        resourceId: resourceDetails?.resource_id,
         standbyNodeInstanceId
     });
 
@@ -368,9 +368,9 @@ async function getPgSqlDatabaseInstancesDetails(
     logger.info('Getting pgsql database Instances details for resource', {
         credentialsId,
         region,
-        instancesManaged,
+        instancesManagedLength: instancesManaged.length,
         resourceId,
-        instanceDetails
+        pgsqlInstanceDetailsLength: instanceDetails?.length
     });
 
     const managedInstancesName = instancesManaged.map((item: DatabaseInstance) => ({

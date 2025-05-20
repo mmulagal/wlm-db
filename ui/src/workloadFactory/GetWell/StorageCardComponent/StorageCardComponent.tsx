@@ -27,6 +27,7 @@ import {
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
+    RESPONSE_STATUS,
     WLF_TABS
 } from '../../../utils/consts';
 import { useEffect, useMemo, useState } from 'react';
@@ -245,7 +246,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         {cardData?.block_two?.value && cardData?.block_two?.value !== GENERAL.UNAVAILABLE ? (
                             <>
-                                <span className={styles.svgSection}>
+                                <span
+                                    className={styles.svgSection}
+                                    style={{ top: cardData?.block_two?.value === 'Under-provisioned' ? '2px' : '8px' }}
+                                >
                                     {setImage(cardData?.block_two?.value || GENERAL.UNAVAILABLE)}
                                 </span>
                                 <span
@@ -803,7 +807,15 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         dismissMssqlAssessment({ payload: payload })
             .then((res: any) => {
                 setDismissAction(false);
-                if (!res.error) {
+                const dismissedConfigs = res?.data?.dismissedConfigurations;
+                const databaseHosts = dismissedConfigs?.[0]?.databaseHosts;
+                const status = databaseHosts?.[0].status;
+                if (
+                    !res.error &&
+                    dismissedConfigs?.length > 0 &&
+                    databaseHosts?.length > 0 &&
+                    status.toUpperCase() === RESPONSE_STATUS.SUCCESS
+                ) {
                     let updatedState = '';
                     if (
                         action === CONFIG_STATE_ACTIONS.ACTIVE &&
@@ -826,6 +838,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             res?.data?.dismissedConfigurations?.[0]?.endTime
                         ) || {};
                     dispatch(setDriftAssessmentData(newData));
+                    //@ts-ignore
                     formatGetWellData(dispatch, newData);
 
                     // Below code is to reset dashboard level assessment value also

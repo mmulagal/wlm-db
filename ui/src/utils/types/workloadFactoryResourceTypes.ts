@@ -1,4 +1,13 @@
+export interface InstanceDetailsData {
+    databaseInstanceName: string;
+    fsxId: string;
+    ec2InstanceId: string;
+}
+
 export interface WorkloadFactoryResourceEntities {
+    instanceDetailsData: InstanceDetailsData;
+    sqlServerUserName: string;
+    passwordResetLoading: boolean;
     resourceLoading: boolean;
     resourceDetails: WorkloadFactoryResourceDetails;
     databaseListLoading: boolean;
@@ -11,6 +20,7 @@ export interface WorkloadFactoryResourceEntities {
     selectedHostname: string;
     isResourceRefresh: boolean;
     fsxAdminPasswords: any;
+    sqlServerPasswords: any;
 }
 
 export interface WorkloadFactoryResourceDetails {

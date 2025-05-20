@@ -3481,6 +3481,7 @@ const mockResourceAssessmentData = {
         mssqlPatch: [
             {
                 ec2InstanceId: 'i-0a1f31a39bd2d9362',
+                ec2InstanceName: 'SQLServer-Dev-02',
                 missingPatchDetails: [
                     {
                         kbId: 'KB4583458',
@@ -3587,6 +3588,7 @@ const mockResourceAssessmentData = {
             },
             {
                 ec2InstanceId: 'i-0253886610c274a28',
+                ec2InstanceName: 'SQLServer-QA-02',
                 missingPatchDetails: [
                     {
                         kbId: 'KB4583458',

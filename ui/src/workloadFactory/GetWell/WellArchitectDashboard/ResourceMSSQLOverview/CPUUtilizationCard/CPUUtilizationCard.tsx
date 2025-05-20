@@ -2,6 +2,7 @@ import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import styles from './CPUUtilizationCard.module.scss';
 import LineGraph from '../../LineGraph/LineGraph';
 import { twoFractionDigits } from '../../../../../utils/utilityFunctions';
+import { GENERAL } from '../../../../../utils/appConstants';
 
 const CPUUtilizationCard = () => {
     const loading = false; // Replace with actual loading state
@@ -60,7 +61,7 @@ const CPUUtilizationCard = () => {
         <div className={styles.cpuUtilization}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    CPU utilization
+                    {GENERAL.CPU_UTILIZATION}
                 </DsTypography>
 
                 <div className={styles.rightTopValue}>

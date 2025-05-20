@@ -4,12 +4,14 @@ import {
     setAggregatedSandboxInstanceList,
     setAllSandboxInstanceList,
     setIsRefreshedSandboxInstance,
-    setRefreshSandboxInstanceTime
+    setRefreshSandboxInstanceTime,
+    setSandboxInstanceLoading
 } from '../../../../../store/workloadFactory/sandboxSlice';
 import { useAppDispatch, useAppSelector } from '../../../../../store/storeHooks';
 import { useLazyGetSandboxInstanceListQuery } from '../../../../../utils/apiService';
 import { getCurrentDateTime } from '../../../../../utils/utilityFunctions';
 import store from '../../../../../store/store';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
 
 const SandboxInstanceApis = () => {
     const dispatch = useAppDispatch();
@@ -23,7 +25,13 @@ const SandboxInstanceApis = () => {
         selectedResourceRegionId
     } = useAppSelector(state => state.workloadFactoryResource);
 
-    const { visitedTabs } = useAppSelector(state => state.getWellOptimize);
+    const {
+        visitedTabs,
+        credIdFromJM,
+        regionFromJM,
+        selectedResourceId: getWellResourceId,
+        selectedDatabaseInstance: getWellSelectedDatabaseInstance
+    } = useAppSelector(state => state.getWellOptimize);
 
     const [getSandboxInstanceList] = useLazyGetSandboxInstanceListQuery();
 
@@ -46,12 +54,13 @@ const SandboxInstanceApis = () => {
 
     // Function to call the API
     const runApiDetails = async (nextToken: string | null = null) => {
+        dispatch(setSandboxInstanceLoading(true));
         try {
             const result = await getSandboxInstanceList({
-                credentialId: selectedResourceCredId,
-                region: selectedResourceRegionId,
-                databaseHostId: selectedResourceId,
-                databaseInstanceId: selectedDatabaseInstance,
+                credentialId: selectedResourceCredId || credIdFromJM, //|| condition is for when coming from JM
+                region: selectedResourceRegionId || regionFromJM, //|| condition is for when coming from JM
+                databaseHostId: selectedResourceId || getWellResourceId, //|| condition is for when coming from JM
+                databaseInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance, //|| condition is for when coming from JM
                 nextToken: nextToken
             });
 
@@ -73,7 +82,16 @@ const SandboxInstanceApis = () => {
                     runApiDetails(result.data.nextToken);
                 }
             }
-        } catch (error) {}
+        } catch (error) {
+            dispatch(
+                addNotification({
+                    type: NOTIFICATION_TYPES.ERROR,
+                    message: error || 'Error fetching sandbox instance list'
+                })
+            );
+        } finally {
+            dispatch(setSandboxInstanceLoading(false));
+        }
     };
 
     return <></>;

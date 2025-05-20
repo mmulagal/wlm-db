@@ -50,13 +50,21 @@ const initialState: GetWellSliceInterface = {
     cloneIsOptimizedRows: {}, // To maintain optimized rows in clone assessment (resourceId + instanceId + cloneDatabasename)
     inProgressStateData: {},
     selectedWellArchitectTab: WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS,
-    visitedTabs: {}
+    visitedTabs: {},
+    resetDetails: {
+        fsxId: '',
+        ec2InstanceId: ''
+    }
 };
 
 const getWellOptimizeSlice = createSlice({
     name: 'getWellOptimize',
     initialState,
     reducers: {
+        setFSXId: (state, action: PayloadAction<any>) => {
+            state.resetDetails = action.payload;
+        },
+
         setTabVisited: (state, action: PayloadAction<any>) => {
             state.visitedTabs[action.payload] = true;
         },
@@ -225,6 +233,8 @@ const getWellOptimizeSlice = createSlice({
 });
 
 export const {
+    setFSXId,
+
     setTabVisited,
     resetVisitedTabs,
     setSelectedWellArchitectTab,

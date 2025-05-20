@@ -2,11 +2,9 @@ import { useDispatch } from 'react-redux';
 import styles from './WellArchitectTabs.module.scss';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
-import {
-    setLandingFromInnerPage,
-    setSelectedWellArchitectTab
-} from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { DsTypography } from '@netapp/design-system';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const WellArchitectTabs = () => {
     const dispatch = useDispatch();
@@ -39,7 +37,7 @@ const WellArchitectTabs = () => {
                     }
                     onClick={() => handleClick('Overview')}
                 >
-                    Overview
+                    {GENERAL.OVERVIEW}
                 </DsTypography>
             </div>
             <div
@@ -58,7 +56,7 @@ const WellArchitectTabs = () => {
                     }
                     onClick={() => handleClick('Well-architected status')}
                 >
-                    Well-architected status
+                    {GENERAL.WELL_ARCHITECTED_STATUS}
                 </DsTypography>
             </div>
 
@@ -78,7 +76,7 @@ const WellArchitectTabs = () => {
                     }
                     onClick={() => handleClick('Databases')}
                 >
-                    Databases
+                    {GENERAL.DATABASES}
                 </DsTypography>
             </div>
 
@@ -98,7 +96,7 @@ const WellArchitectTabs = () => {
                     }
                     onClick={() => handleClick('Sandboxes')}
                 >
-                    Sandboxes
+                    {GENERAL.SANDBOXES}
                 </DsTypography>
             </div>
         </div>

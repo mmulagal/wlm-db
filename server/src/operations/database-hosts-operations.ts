@@ -153,7 +153,11 @@ async function getStorageData(
     databaseInstanceDetails?: DatabaseInstance,
     version?: string
 ): Promise<StoragePerStorageTypeResponseType | undefined> {
-    logger.info('Getting storage data:', { resourceDetail, databaseInstanceDetails, version });
+    logger.info('Getting storage data:', {
+        resourceId: resourceDetail?.resource_id,
+        databaseInstanceId: databaseInstanceDetails?.database_instance_id,
+        version
+    });
 
     try {
         let region;
@@ -242,7 +246,7 @@ async function getProtectionStatus(
     version?: string,
     isSqlAuth: boolean = false
 ): Promise<ProtectionPerStorageTypeResponseType | ProtectionPerStorageTypeResponseType[] | undefined> {
-    logger.info('Get protection status', { resourceDetail, instanceName });
+    logger.info('Get protection status', { resourceId: resourceDetail?.resource_id, instanceName });
 
     let region;
     let fsxnId;
@@ -318,7 +322,7 @@ async function getBillingOrPriceEstimation(
     isManagedResource?: boolean
 ) {
     logger.info('Get AWS resources billing or cost data:', {
-        resourceDetail,
+        resourceId: resourceDetail?.resource_id,
         activeNodeInstanceId,
         isManagedResource
     });
@@ -346,7 +350,7 @@ async function getBillingOrPriceEstimation(
 }
 
 async function getBilling(resourceDetail: ResourceDetails) {
-    logger.info('Get AWS resources billing data:', resourceDetail);
+    logger.info('Get AWS resources billing data:', { resourceId: resourceDetail?.resource_id });
     try {
         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -401,7 +405,10 @@ async function validationForCostExplorer(resourceDetail: ResourceDetails) {
 }
 
 async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNodeInstanceId: string) {
-    logger.info('Get AWS resources estimation data:', { resourceDetail, activeNodeInstanceId });
+    logger.info('Get AWS resources estimation data:', {
+        resourceId: resourceDetail?.resource_id,
+        activeNodeInstanceId
+    });
 
     try {
         const {
@@ -528,7 +535,6 @@ async function getEc2ResourceInfo(
     const ec2Info: DescribeInstancesCommandOutput = await describeInstance(credentialsId, region!, {
         InstanceIds: [activeNodeInstanceId]
     });
-    logger.info('Estimation info for EC2:', ec2Info);
     const { Reservations: [{ Instances: [instance] = [] } = {}] = [] } = ec2Info;
     let getRootVolumePromise = Promise.resolve({});
     if (instance.RootDeviceType === DeviceType.ebs) {
@@ -586,7 +592,6 @@ async function getFsxResourceInfo(
     logger.info('Getting FSx resource info:', { credentialsId, region, filesystemIds });
 
     const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: filesystemIds });
-    logger.info('Estimation info for FSx:', fsxInfo);
 
     const filesystems = fsxInfo?.FileSystems || [];
     const response = filesystems.map(
@@ -619,7 +624,12 @@ async function getEbsResourceInfo(
     ebsVolumeIds: string[],
     databaseInstanceDetails?: any
 ): Promise<EstimationEbsType> {
-    logger.info('Getting EBS resource info:', { credentialsId, region, ebsVolumeIds, databaseInstanceDetails });
+    logger.info('Getting EBS resource info:', {
+        credentialsId,
+        region,
+        ebsVolumeIds,
+        databaseInstanceId: databaseInstanceDetails?.database_instance_id
+    });
 
     let volumes;
     if (isDemo()) {
@@ -668,7 +678,6 @@ async function getNodeTopology(
         accountId,
         region,
         resourceId,
-        resourceData,
         activeNodeInstanceId,
         standbyNodeInstanceId
     });
@@ -862,9 +871,18 @@ async function getDatabaseHostsSummaryV2(
         return { count: 0, items: [], nextToken: '' };
     }
 
-    const managedInstancesMap = new Map(
+    const managedInstancesMap: Map<string, DatabaseInstance[]> = new Map(
         resourceDetails.map(r => [r.resource_id, (r as any)?.database_instances?.flat()])
     );
+
+    managedInstancesMap.forEach((value: DatabaseInstance[], key) => {
+        if (value && value.length > 0) {
+            value.forEach((instance: DatabaseInstance) => {
+                instance.resource =
+                    resourceDetails.find((r: ResourceDetails) => r.resource_id === key) ?? ({} as ResourceDetails);
+            });
+        }
+    });
 
     const databaseHosts: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
     try {
@@ -911,7 +929,7 @@ async function getDatabaseInstancesDetails(
     logger.info('Getting database Instances details for resource', {
         credentialsId,
         region,
-        instancesManaged,
+        instancesManagedLength: instancesManaged.length,
         resourceId
     });
     const managedInstancesName = instancesManaged.map((item: DatabaseInstance) => ({
@@ -1424,16 +1442,32 @@ async function getInstanceDetails(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    resource?: ResourceDetails,
+    dbInstanceDetails?: DatabaseInstance
 ) {
-    const [[resourceDetails], [instanceDetails]] = await Promise.all([
-        listResources(accountId, databaseHostId, credentialsId, region),
-        listDatabaseInstances(accountId, {
-            resourceId: databaseHostId,
-            credentialsId,
-            sqlInstanceId: databaseInstanceId
-        })
-    ]);
+    logger.info('Getting instance details', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    });
+
+    let resourceDetails = resource;
+    let instanceDetails = dbInstanceDetails;
+
+    // If either resource or databaseInstanceDetails is empty, make both DB calls
+    if (isEmpty(resource) || isEmpty(dbInstanceDetails)) {
+        [[resourceDetails], [instanceDetails]] = await Promise.all([
+            listResources(accountId, databaseHostId, credentialsId, region),
+            listDatabaseInstances(accountId, {
+                resourceId: databaseHostId,
+                credentialsId,
+                sqlInstanceId: databaseInstanceId
+            })
+        ]);
+    }
 
     if (isEmpty(resourceDetails) || isEmpty(instanceDetails)) {
         const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceId} for ${accountId} is found.`;
@@ -1498,7 +1532,7 @@ async function getDatabaseDetails(
         activeNodeInstanceId,
         getProtection,
         sqlAuthEnabled,
-        databaseInstances
+        databaseInstancesLength: databaseInstances.length
     });
     try {
         const newinstanceNames = databaseInstances.map(instance => instance.database_instance_name);
@@ -1644,9 +1678,9 @@ async function getDatabaseInstancesSummary(
         credentialsId,
         activeNodeInstanceId,
         region,
-        databaseInstances,
+        databaseInstancesLength: databaseInstances.length,
         fields,
-        resourceDetails,
+        resourceId: resourceDetails?.resource_id,
         standbyNodeInstanceId
     });
 
@@ -1936,7 +1970,6 @@ async function getDatabaseInstancesSummary(
                 isAwsBackupEnabled,
                 protectedDatabases
             };
-            logger.info('Protection data', protectionData);
             databaseInstanceDetails.protection = protectionData;
         }
 

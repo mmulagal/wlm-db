@@ -3,6 +3,9 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$DomainDNSName,
 
+    [Parameter(Mandatory = $false)]
+    [string]$DCName,
+
     [Parameter(Mandatory=$true)]
     [string]$DomainAdminUser,
 
@@ -14,6 +17,13 @@ try {
 $ErrorActionPreference = "Stop"
 Start-Transcript -Path C:\cfn\log\$($MyInvocation.MyCommand.Name).log -Append
 
+Start-Transcript -Path C:\cfn\log\$($MyInvocation.MyCommand.Name).log -Append
+$env:PSModulePath += ';C:\Windows\system32\WindowsPowerShell\v1.0\Modules\aws_ssm'
+    if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
+        Install-WindowsFeature RSAT-AD-PowerShell -ErrorAction SilentlyContinue *>$null
+    } 
+
+
 # Getting Password from SSM parameter store for AD Admin User
 $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
 . "$ScriptsPath\common\InvokeRetryCommand.ps1" 
@@ -23,7 +33,18 @@ $ADAdminPassword = $SsmParameter.domain.password
 $AdminUserName = $DomainNetBIOSName+"\"+$DomainAdminUser
 $AdminUserPW = ConvertTo-SecureString ($ADAdminPassword) -AsPlainText -Force
 $Credentials = New-Object -TypeName 'System.Management.Automation.PSCredential' ($AdminUserName, $AdminUserPW)
-Add-Computer -DomainName $DomainDNSName -Credential $Credentials -ErrorAction Stop
+Import-Module ActiveDirectory *>$null
+
+if([string]::IsNullOrEmpty($DCName)) {
+    #Try to fetch a Domain Controller name that can connect to the directory service if preferred DC is not passed 
+    $DCName = (Get-ADDomainController -Discover -Domain $DomainName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty HostName)
+    }
+if([string]::IsNullOrEmpty($DCName)) {
+        #If not able to fetch with Get-ADDomainController join domain directly without passing Domain server
+        Add-Computer -DomainName $DomainDNSName -Credential $Credentials -ErrorAction Stop
+} else {
+        Add-Computer -DomainName $DomainDNSName -Server $DCName -Credential $Credentials -ErrorAction Stop 
+ }
 }
 catch {
     $_ | Write-AWSLaunchWizardException

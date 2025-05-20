@@ -121,7 +121,8 @@ export const FROM_DIALOG = {
     SANDBOX_REFRESH: 'sandbox_refresh',
     DISMISS: 'dismiss',
     OPTIMIZE: 'optimize',
-    FSXADMIN: 'fsxadmin'
+    FSXADMIN: 'fsxadmin',
+    SQLSERVER: 'sqlserver'
 };
 
 export const DBType = {
@@ -484,6 +485,11 @@ export const DETECT_HOST_VAR = {
     DISABLE: 'disable',
     SHOW: 'show',
     HIDE: 'hide'
+};
+
+export const RESET_PASSWORD_TYPE = {
+    FSXADMIN: 'fsxadmin',
+    SQLSERVER: 'sqlserver'
 };
 
 export const DB_VERSIONS = [
@@ -892,4 +898,9 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     }
+};
+
+export const RESPONSE_STATUS = {
+    SUCCESS: 'SUCCESS',
+    FAILED: 'FAILED'
 };

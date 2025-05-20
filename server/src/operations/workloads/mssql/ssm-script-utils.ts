@@ -5,10 +5,14 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, SQL_CASE_INSENSITIV
 import { GOOGLE_DNS, SCRIPT_VERSON_FILE } from './const';
 import {
     compressResponse,
+    disableCredSSP,
+    enableCredSSP,
+    invokeCommandWithCredSSP,
     invokeOntapRequestTemplate,
     ontapRestRequest,
     ontapRestRequestBootstrap
 } from './common-templates';
+import { REQUIRED_PS_MODULES_FOR_MANAGEMENT } from './discover-consts';
 
 const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
   'C:\\SSM\\Cleanup-ONTAP.ps1',
@@ -356,10 +360,13 @@ Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 
 const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
-    sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
+    sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    windowsUser: boolean = false,
+    checkManageReadiness: boolean = false
 ) => ` 
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
         $ProgressPreference = 'SilentlyContinue'
+        $checkManageReadiness = [System.Convert]::ToBoolean('${checkManageReadiness}')
 
         $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
         if ($connection -ne $True) {
@@ -388,18 +395,40 @@ const validateSQLInstanceConnectivity = (
             $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed,,  ensure the "Path" environment variable contains the path of the command and retry the operation')
             $responseObject.add('sqlInstanceConnectivity', $False)
         } else {
-            $sqlcmd = @"
+            $sqlquery = @"
             SET NOCOUNT ON;
                 SELECT 
                     SERVERPROPERTY('edition') AS sqlEdition,
                     (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
                 FOR JSON PATH
 "@
-
+            if($checkManageReadiness -eq $True) {
+                $sqlcmd = @"
+                SET NOCOUNT ON;
+                    SELECT 
+                        SERVERPROPERTY('edition') AS sqlEdition,
+                        (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases,
+                        (SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH) as permissions
+                    FOR JSON PATH
+"@
+            }
             $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
             $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
-            $sqlList = $credobject.sql
-            $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+            ${
+                windowsUser
+                    ? `
+                    $domainList = $credobject.domain
+                    $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+                    if ($sqlCredentials -eq $null) {
+                        $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' }
+                    }
+                `
+                    : `
+                    $sqlList = $credobject.sql
+                    $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+                `
+            }
+
             if ($sqlCredentials -eq $null) {
                 $errorMessage = "No SQL instance found with the name $sqlinstancename"
                 throw $errorMessage
@@ -419,16 +448,36 @@ const validateSQLInstanceConnectivity = (
             }
 
             $sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlcmd -y 0 -r1 2> $null
+            ${
+                windowsUser
+                    ? `
+                    ${enableCredSSP}
+                    ${invokeCommandWithCredSSP}
+                    ${disableCredSSP}
+                `
+                    : '$sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlquery -y 0 -r1 2> $null'
+            }
 
             if([string]::IsNullOrEmpty($sqlresult)) {
                 $responseObject.add('sqlInstanceConnectivity', $False)
                 $responseObject.add('sqlerror', "SQLCMD execution failed. Verify credentials.")
             }
             else {
-                $sqlresult | ConvertFrom-Json | ForEach-Object {
-                    $responseObject.add('sqlEdition', $_.sqlEdition)
-                    $responseObject.add('noOfDatabases', $_.noOfDatabases)
-                }
+                $sqlresult = $sqlresult | ConvertFrom-Json
+                $responseObject.add('sqlEdition', $sqlresult.sqlEdition)
+                $responseObject.add('noOfDatabases', $sqlresult.noOfDatabases)
+                
+                if($checkManageReadiness -eq $True) {
+                    $unavailablePsModuleList = @()
+                    $currentSqlPermissions = $sqlresult.permissions | ForEach-Object { $_.permission_name }
+                    $responseObject.add('sqlPermissions', $currentSqlPermissions)
+                    $requiredPsModuleList = @(${REQUIRED_PS_MODULES_FOR_MANAGEMENT})
+                    $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
+                    If (Get-Command -Name pwsh -ErrorAction SilentlyContinue) {
+                        $availablePsModuleList += 'Powershell 7'
+                    }
+                    $responseObject.add('availablePsModules', $availablePsModuleList)
+                    }
                 $responseObject.add('sqlInstanceConnectivity', $True)
             }
         }

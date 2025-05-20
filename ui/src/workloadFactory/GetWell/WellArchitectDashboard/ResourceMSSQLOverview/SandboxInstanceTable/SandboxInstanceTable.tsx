@@ -53,7 +53,7 @@ const SandboxInstanceTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const { aggregatedSandboxInstanceList } = useAppSelector(state => state.sandbox);
+    const { aggregatedSandboxInstanceList, sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
     const { sandboxAgeRange } = useAppSelector(state => state.databaseHome);
 
     const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
@@ -735,7 +735,8 @@ const SandboxInstanceTable = () => {
         columns: SandboxColDefs,
         rows: data ? data.filter((item: any) => !deletedSandboxes.includes(item?.id)) : [],
         pageSize: 50,
-        initialFilterState: getInitialFilter()
+        initialFilterState: getInitialFilter(),
+        isLazyLoading: sandboxInstanceLoading
     });
     return (
         <div className={styles.sandboxTable}>

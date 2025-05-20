@@ -90,6 +90,7 @@ export interface SandboxItemEntities {
 }
 
 export interface SandboxEntities {
+    sandboxInstanceLoading: boolean;
     showBanner: boolean;
     refreshSandboxInstanceTime: any;
     isNA: boolean;

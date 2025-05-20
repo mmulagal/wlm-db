@@ -35,6 +35,29 @@ const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
     [16, 2022]
 ]);
 
+const MINIMUM_PREPREQUISITES = {
+    SQL_PERMISSIONS: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE', 'CONNECT ANY DATABASE'],
+    MODULES: ['AWS.Tools.SimpleSystemsManagement']
+};
+
+const FEATURE_PREPREQUISITES = {
+    ASSESSMENT: {
+        ...MINIMUM_PREPREQUISITES
+    },
+    REMEDIATION: {
+        SQL_PERMISSIONS: [...MINIMUM_PREPREQUISITES.SQL_PERMISSIONS, 'ALTER SETTINGS'],
+        MODULES: [...MINIMUM_PREPREQUISITES.MODULES]
+    },
+    DBCREATION: {
+        SQL_PERMISSIONS: [...MINIMUM_PREPREQUISITES.SQL_PERMISSIONS, 'CREATE ANY DATABASE'],
+        MODULES: [...MINIMUM_PREPREQUISITES.MODULES, 'AWS.Tools.FSx', 'Powershell 7']
+    },
+    SANDBOX: {
+        SQL_PERMISSIONS: [...MINIMUM_PREPREQUISITES.SQL_PERMISSIONS, 'CONTROL SERVER', 'ALTER ANY DATABASE'],
+        MODULES: [...MINIMUM_PREPREQUISITES.MODULES, 'NetApp.ONTAP']
+    }
+};
+
 /*
 The disks in an EC2 instance can be EBS, FSxN, FSxW or from CVO.
 This script collects serial-number of EBS disks, and the iSCSI
@@ -416,7 +439,6 @@ const HOST_AND_SQL_INFO_PS1 = [
     $MappedDrivesWithPath, $RegistryErrors = GetSMBMappedDrivesWithPath
     $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
-    $sqlPermissions = @(${SQL_PERMISSIONS})
     $allSqlInstanceNamesFromRegistry = FetchAllSQLInstancesFromRegistry
   
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
@@ -440,6 +462,23 @@ const HOST_AND_SQL_INFO_PS1 = [
         $responseObject['failureInfo'] += $_
       }
     }
+
+     # Check if Powershell 7 is available
+    $isPS7Available = $False
+    $availablePsModuleList = @()
+    try {
+        If (Get-Command -Name pwsh -ErrorAction SilentlyContinue) {
+          $isPS7Available = $True
+        } 
+
+        $requiredPsModuleList = @(${REQUIRED_PS_MODULES_FOR_MANAGEMENT})
+
+        $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
+
+    } catch {
+        $responseObject['failureInfo'] += $_
+    } 
+  
   
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
       $responseObject = @{}
@@ -564,16 +603,15 @@ const HOST_AND_SQL_INFO_PS1 = [
             }
             
 
-            $missingPermissions = @()
-            if( -Not ([string]::IsNullOrEmpty($existingPermissions))) {
-              $existingPermissionsAsList = $existingPermissions | ConvertFrom-Json | ForEach-Object { $_.permission_name }
-              foreach ($permission in $sqlPermissions) {
-              if($existingPermissionsAsList -notcontains $permission){
-                $missingPermissions += $permission
-                }
-              }
+            
+            $existingPermissionsAsList = $existingPermissions | ConvertFrom-Json | ForEach-Object { $_.permission_name }
+            $responseObject['sqlPermissions'] = $existingPermissionsAsList
+
+            $responseObject['isPS7Available'] = $isPS7Available
+            if($isPS7Available -eq $True) {
+             $availablePsModuleList += 'Powershell 7'
             }
-            $responseObject['missingSqlPermissions'] = $missingPermissions
+            $responseObject['availablePsModules'] = $availablePsModuleList
 
             if(($sqlInstanceDriveLetterOrPathList.Count -eq 0) -and (-Not [string]::IsNullOrEmpty($sqlServerInfoFromRegistry)) -and $sqlServerInfoFromRegistry.ContainsKey('driveDetails')) {
               $sqlInstanceDriveLetterOrPathList = $sqlServerInfoFromRegistry['driveDetails']
@@ -596,6 +634,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       $responseObject['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
       Echo $responseObject
     }
+
     $response = $instancesInfoList | ConvertTo-Json
     if([string]::IsNullOrEmpty($response)) {
       Write-Information "Failed to compress the response because the response is either null or empty. $response"
@@ -877,6 +916,89 @@ const GET_ACTIVE_DIRECTORY_DETAILS = [
 `
 ];
 
+/**
+ * Generates a PowerShell script to download and install PowerShell 7 from a given S3 signed URL.
+ *
+ * The script performs the following steps:
+ * 1. Downloads a ZIP file containing the PowerShell 7 installer from the provided S3 signed URL.
+ * 2. Extracts the ZIP file to a temporary directory.
+ * 3. Executes the MSI installer with specific options to install PowerShell 7.
+ * 4. Adds the installation path to the system's environment PATH variable if the installation is successful.
+ * 5. Above step adds path to the registry. $env:path will not be updated until reboot.
+ * 6. Captures and logs any errors encountered during the process.
+ * 7. Outputs the script execution time and any failure information as a JSON object.
+ *
+ * @param s3SignedURL - The signed URL to the S3 location of the PowerShell 7 ZIP file.
+ * @returns A PowerShell script as a string array that performs the installation.
+ */
+const INSTALL_POWERSHELL_7 = (s3SignedURL: string) => [
+    `
+  function Add-EnvPath {
+      param([string] $Path)
+
+      $envPaths = [Environment]::GetEnvironmentVariable('Path', [EnvironmentVariableTarget]::Machine) -split ';'
+      if ($envPaths -notcontains $Path) {
+        [Environment]::SetEnvironmentVariable('Path', ($envPaths + $Path) -join ';', [EnvironmentVariableTarget]::Machine)
+        }
+      }
+
+  $ProgressPreference = 'SilentlyContinue'
+  $ErrorActionPreference = "Stop"
+  $responseObject = @{}
+  $scriptStartTime = Get-Date
+
+  try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri '${s3SignedURL}' -OutFile "$Env:Temp\\powershell.zip"
+    Expand-Archive -Path "$Env:Temp\\powershell.zip" -DestinationPath $Env:Temp -Force
+    msiexec.exe /package "$Env:Temp\\powershell\\powershell7.msi"  /quiet ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1 ADD_FILE_CONTEXT_MENU_RUNPOWERSHELL=1 ENABLE_PSREMOTING=1 REGISTER_MANIFEST=1 USE_MU=1 ENABLE_MU=1 ADD_PATH=1
+    Start-Sleep -Seconds 5
+    if (Test-Path "C:\\Program Files\\PowerShell\\7") {
+      Add-EnvPath -Path "C:\\Program Files\\PowerShell\\7"
+    } else {
+      throw "Failed to install PowerShell 7.5.0"
+      }
+  } catch {
+    $responseObject['${FAILURE_INFO}'] = $_.Exception.Message
+  } finally {
+    $responseObject['scriptExecutionTime'] = ((Get-Date) - $scriptStartTime).TotalMilliseconds
+    Echo $responseObject | ConvertTo-Json -Compress
+  }
+`
+];
+
+/**
+ * A PowerShell script embedded as a string array to check the availability of PowerShell 7 (pwsh).
+ *
+ * The script performs the following actions:
+ * - Appends the PowerShell 7 installation path (`C:\Program Files\PowerShell\7`) to the system's PATH environment variable.
+ * - Checks if the `pwsh` command is available using `Get-Command`.
+ * - Captures the result in a response object with the key `${IS_PS7_AVAILABLE}` indicating the availability of PowerShell 7.
+ * - Handles any exceptions by storing the failure information in the response object.
+ * - Measures the script execution time and includes it in the response object.
+ * - Outputs the response object as a compressed JSON string.
+ *
+ * This script is useful for environments where the presence of PowerShell 7 needs to be programmatically verified.
+ */
+const CHECK_POWERSHELL7_AVAILABLE = [
+    `
+  $ErrorActionPreference = "Stop"
+  $responseObject = @{}
+  $scriptStartTime = Get-Date
+
+  try {
+  $env:path = $env:path + ";C:\\Program Files\\PowerShell\\7"
+  $isPS7Available = [bool](Get-Command -Name pwsh -ErrorAction SilentlyContinue)
+  $responseObject['${IS_PS7_AVAILABLE}'] = $isPS7Available
+  } catch {
+  $responseObject['failureInfo'] = $_.Exception.Message
+  } finally {
+  $responseObject['scriptExecutionTime'] = ((Get-Date) - $scriptStartTime).TotalMilliseconds
+  Echo $responseObject | ConvertTo-Json -Compress
+  }
+`
+];
+
 export {
     HOST_AND_SQL_INFO_PS1,
     SQL_SERVER_VERSION_TO_YEAR,
@@ -890,5 +1012,9 @@ export {
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
     FAILURE_INFO,
     ACTIVE_DIRECTORY,
-    GET_ACTIVE_DIRECTORY_DETAILS
+    GET_ACTIVE_DIRECTORY_DETAILS,
+    INSTALL_POWERSHELL_7,
+    CHECK_POWERSHELL7_AVAILABLE,
+    FEATURE_PREPREQUISITES,
+    SQL_PERMISSIONS
 };

@@ -57,7 +57,7 @@ async function sendSSMCommand(
     params: SendCommandCommandInput,
     accountId?: string
 ) {
-    logger.info('Send SSM Command', params);
+    logger.info('Send SSM Command', { credentialsId, region, params: params?.Comment });
 
     const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const sendCommand = new SendCommandCommand(params);
@@ -118,7 +118,7 @@ async function getConnectionStatus(
 
     const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const response: GetConnectionStatusCommandOutput = await ssmClient.send(new GetConnectionStatusCommand(params));
-    logger.info('SSM Command response', response);
+    logger.debug('SSM Command response', response);
     return response;
 }
 

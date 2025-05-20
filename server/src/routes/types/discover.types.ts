@@ -17,6 +17,11 @@ const DiscoverQuery = Type.Object({
     )
 });
 
+const ManageReadinessObject = Type.Object({
+    missingSqlPermissions: Type.Array(Type.String({ description: 'Missing SQL permissions' })),
+    missingModules: Type.Array(Type.String({ description: 'Missing powershell modules' }))
+});
+
 const SqlServerInstanceInfo = Type.Object({
     sqlServerEdition: Type.Optional(Type.String({ description: 'MS SQL Server edition' })),
     sqlServerEngineEdition: Type.Optional(
@@ -124,7 +129,17 @@ const SqlServerInstanceInfo = Type.Object({
             })
         )
     ),
-    missingSqlPermissions: Type.Optional(Type.Array(Type.String({ description: 'Missing SQL permissions' })))
+    manageReadiness: Type.Optional(
+        Type.Object({
+            missingSqlCmd: Type.Boolean({
+                description: 'Is SQLCMD missing on the database host instance?'
+            }),
+            assessment: ManageReadinessObject,
+            remediation: ManageReadinessObject,
+            dbcreation: ManageReadinessObject,
+            sandbox: ManageReadinessObject
+        })
+    )
 });
 
 const DiscoverResponseInfo = Type.Object({
@@ -214,8 +229,12 @@ type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
 type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
 
 const DiscoverCredentials = Type.Object({
-    resourceId: Type.String({ minLength: 1, description: 'SQL server instance id or FSxN file-system id' }),
-    resourceType: Type.String({ enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL] }),
+    resourceId: Type.String({
+        minLength: 1,
+        description:
+            'For types MSSQL and WINDOWS_USER, this is the sql instannce name. For FSX, this is the file system ID.'
+    }),
+    resourceType: Type.String({ enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL, RESOURCESTYPE.WINDOWS_USER] }),
     username: Type.String({ minLength: 1 }),
     password: Type.String({ minLength: 1 })
 });
@@ -224,6 +243,12 @@ const DiscoverCredentialsRequestBody = Type.Object({
     credentials: Type.Array(DiscoverCredentials),
     clusterNodesIpAddress: Type.Optional(
         Type.Array(Type.String({ description: 'Private ips of nodes in a clustered deployment' }))
+    ),
+    checkManageReadiness: Type.Optional(
+        Type.Boolean({
+            description: 'Check if the instance is ready for management. Default is false.',
+            default: false
+        })
     )
 });
 
@@ -231,8 +256,22 @@ const DiscoverCredentialsResponse = Type.Object({
     databaseCount: Type.Optional(Type.String()),
     sqlServerEdition: Type.Optional(Type.String()),
     sqlServerError: Type.Optional(Type.String()),
-    fsxnError: Type.Optional(Type.String())
+    fsxnError: Type.Optional(Type.String()),
+    requiredModuleError: Type.Optional(Type.String()),
+    manageReadiness: Type.Optional(
+        Type.Object({
+            missingSqlCmd: Type.Boolean({
+                description: 'Is SQLCMD missing on the database host instance?'
+            }),
+            assessment: ManageReadinessObject,
+            remediation: ManageReadinessObject,
+            dbcreation: ManageReadinessObject,
+            sandbox: ManageReadinessObject
+        })
+    )
 });
+
+type DiscoverCredentialsResponseType = Static<typeof DiscoverCredentialsResponse>;
 
 type DiscoverCredentialsType = Static<typeof DiscoverCredentials>;
 
@@ -480,5 +519,6 @@ export {
     DiscoverOracleResponseBody,
     DiscoverOracleInstanceType,
     DiscoverOracleResponseBodyType,
-    DiscoverOracleResponseType
+    DiscoverOracleResponseType,
+    DiscoverCredentialsResponseType
 };

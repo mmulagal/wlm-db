@@ -708,6 +708,24 @@ function getDatabaseInstanceName(instanceName: string, isDefault: boolean = true
     return `${DEFAULT_MSSQL_INSTANCE_NAME}\\${instanceName.replace(/^.+\$/, '')}`;
 }
 
+function extractSqlInstanceName(serverName: string): string {
+    logger.info('Extract SQL Server instance name', { serverName });
+
+    const defaultInstancePattern = /^\$env:COMPUTERNAME$/i; // Case-insensitive match for $env:COMPUTERNAME
+    const namedInstancePattern = /^\$env:COMPUTERNAME\\(.+)$/i; // Case-insensitive match for $env:COMPUTERNAME\instanceName
+
+    if (isDemo() || defaultInstancePattern.test(serverName)) {
+        return DEFAULT_INSTANCE_NAME; // Default instance
+    }
+
+    const match = serverName.match(namedInstancePattern);
+    if (match && match[1]) {
+        return match[1]; // Named instance
+    }
+
+    throw createError(HttpErrorCodes.BAD_REQUEST, `Invalid server name format: ${serverName}`);
+}
+
 function isDemo() {
     return process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
 }
@@ -1014,6 +1032,10 @@ function generateSqlResourceId(node1InstanceId: string, node2InstanceId?: string
     return node2InstanceId ? generateHash(sortedInstanceIds.join('')) : generateHash(node1InstanceId);
 }
 
+function escapeBackslash(str: string) {
+    return str && !str.includes('\\') ? str.replace(/\\/g, '\\\\') : str;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1074,5 +1096,7 @@ export {
     calculateDaysSince,
     determineVolumeType,
     formatSsmArrayResponse,
-    generateSqlResourceId
+    generateSqlResourceId,
+    extractSqlInstanceName,
+    escapeBackslash
 };
