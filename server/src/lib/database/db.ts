@@ -10,8 +10,8 @@ import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
-import { DatabaseInstanceConfigurations, DatabaseInstanceMetadata } from '../../utils/common-types';
 import { TCO_FEATURE } from '../../utils/consts';
+import { DatabaseInstanceConfigurations, DatabaseInstanceMetadata } from '../../utils/common-types';
 
 const logger = getLogger();
 

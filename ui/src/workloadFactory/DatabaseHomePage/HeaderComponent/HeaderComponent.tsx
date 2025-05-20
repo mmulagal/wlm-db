@@ -167,6 +167,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const { loading: dashSandboxListLoading } = useAppSelector(state => state.inventoryV2.dashSandboxList);
     const { loading: dashSandboxSavingsLoading } = useAppSelector(state => state.inventoryV2.dashSandboxSavings);
     const { discoverHostLoading } = useAppSelector(state => state.inventoryV2.discoveredHosts);
+    const { discoverOracleHostLoading } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
+    const { discoverPgsqlHostLoading } = useAppSelector(state => state.inventoryV2.discoveredPgsqlHosts);
     //Added for widget
     const [currentCred, setCurrentCred] = useState<string | null>(null);
     const [currentRegion, setCurrentRegion] = useState<string | null>(null);
@@ -473,6 +475,8 @@ const HeaderComponent = ({ tab }: Tab) => {
             !dashSandboxListLoading &&
             !dashSandboxSavingsLoading &&
             !discoverHostLoading &&
+            !discoverOracleHostLoading &&
+            !discoverPgsqlHostLoading &&
             !fsxCredentialStatusLoading
         ) {
             let currentCredId = headerSelectedCred?.data?.credentialsId;

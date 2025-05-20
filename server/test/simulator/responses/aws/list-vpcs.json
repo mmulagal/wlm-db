@@ -67,6 +67,23 @@
             ],
             "IsDefault": false,
             "Tags": [{ "Key": "Name", "Value": "VPC-4" }]
+        },
+        {
+            "CidrBlock": "192.168.16.0/20",
+            "DhcpOptionsId": "dopt-37dcc655",
+            "State": "available",
+            "VpcId": "vpc-0100cefdf732ef9e9",
+            "OwnerId": "210811600188",
+            "InstanceTenancy": "default",
+            "CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-d63dc1bf",
+                    "CidrBlock": "192.168.16.0/20",
+                    "CidrBlockState": { "State": "associated" }
+                }
+            ],
+            "IsDefault": false,
+            "Tags": [{ "Key": "Name", "Value": "VPC-5" }]
         }
     ]
 }

@@ -40,7 +40,9 @@ import {
     getServerNameWithHostname,
     sqlResponseParsing,
     isValidProp,
-    generateSqlResourceId
+    generateSqlResourceId,
+    escapeBackslash,
+    getEc2Hostname
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -75,6 +77,7 @@ import {
     AMAZON_LINUX_AMI_PATH,
     HA,
     PGSQL_DEFAULT_INSTANCE_NAME,
+    POWERSHELL_7_RELATIVE_PATH,
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE
 } from '../utils/consts';
 import {
@@ -89,7 +92,10 @@ import {
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     FAILURE_INFO,
     ACTIVE_DIRECTORY,
-    GET_ACTIVE_DIRECTORY_DETAILS
+    GET_ACTIVE_DIRECTORY_DETAILS,
+    INSTALL_POWERSHELL_7,
+    CHECK_POWERSHELL7_AVAILABLE,
+    FEATURE_PREPREQUISITES
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, getParametersByPath, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
@@ -199,7 +205,8 @@ async function getHostAndSqlServerInfo(
         filters,
         pageSize,
         nextToken,
-        instances
+        instances,
+        DatabaseTypes.MS_SQL_SERVER
     );
 
     const ssmConnectedEc2ResponseInfo: DiscoverResponseInfoType[] = [];
@@ -433,8 +440,6 @@ async function getHostAndSqlInfoFromPsOutput(
         )
     );
 
-    logger.info(`SQL Parameter details for ${ssmTarget.ec2InstanceId}: ${ec2SqlParametersInfo}`);
-
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
 
@@ -473,7 +478,6 @@ async function getHostAndSqlInfoFromPsOutput(
             }
 
             let responseInJson = JSON.parse(powerShellScriptOutput);
-            logger.info(`SSM response for ${ssmTarget.ec2InstanceId}: ${JSON.stringify(responseInJson)}`);
 
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
@@ -627,7 +631,9 @@ async function getHostAndSqlInfoFromPsOutput(
                         windowsOsVersion,
                         windowsClusterName,
                         windowsClusterNodes,
-                        missingSqlPermissions
+                        sqlPermissions,
+                        availablePsModules,
+                        isSqlCmdAvailable
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -641,6 +647,19 @@ async function getHostAndSqlInfoFromPsOutput(
                         (elem: { sqlinstancename: string }) =>
                             elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase()
                     );
+
+                    const featureReadiness = Object.entries(FEATURE_PREPREQUISITES).reduce((acc, [key, value]) => {
+                        acc[key.toLowerCase()] = {
+                            missingSqlPermissions: value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
+                            missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                        };
+                        return acc;
+                    }, {} as Record<string, { missingSqlPermissions: string[]; missingModules: string[] }>);
+
+                    const manageReadiness = {
+                        missingSqlCmd: !isSqlCmdAvailable,
+                        ...featureReadiness
+                    };
 
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
@@ -671,7 +690,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         ...(databaseCount && { databaseCount }),
                         ...(windowsClusterName && { windowsClusterName }),
                         ...(windowsClusterNodes && { windowsClusterNodes }),
-                        ...(missingSqlPermissions && { missingSqlPermissions })
+                        ...(manageReadiness && { manageReadiness })
                     });
                 }
             }
@@ -692,7 +711,7 @@ async function makeSsmCall(
     targets: string[],
     accountId: string
 ): Promise<string | undefined> {
-    logger.info('makeSsmCall():', credentialsId, region, commands, targets, accountId);
+    logger.info('Discovery makeSsmCall():', credentialsId, region, targets, accountId);
 
     const params = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -726,143 +745,6 @@ async function makeSsmCall(
         );
     }
     return commandId;
-}
-
-function prepareParametersToStore(instanceIds: string[], credentials: DiscoverCredentialsType[]) {
-    logger.debug('prepare parameters to store', { instanceIds });
-
-    return credentials.reduce((acc: SSMParamterObject[], { resourceId, resourceType, username, password }) => {
-        if (resourceType === RESOURCESTYPE.MSSQL) {
-            const sqlItem = acc.find(el => el.value.sql);
-
-            if (sqlItem && Array.isArray(sqlItem.value.sql)) {
-                sqlItem.value.sql.push({
-                    sqlinstancename: resourceId,
-                    username,
-                    password
-                });
-            } else {
-                instanceIds.forEach(instanceId =>
-                    acc.push({
-                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                        value: {
-                            sql: [
-                                {
-                                    sqlinstancename: resourceId,
-                                    username,
-                                    password
-                                }
-                            ]
-                        }
-                    })
-                );
-            }
-        } else if (resourceType === RESOURCESTYPE.FSX) {
-            acc.push({
-                path: `${SSM_PARAMETERS_BASE_PATH}/${resourceId}`,
-                value: {
-                    fsx: {
-                        username,
-                        password
-                    }
-                }
-            });
-        }
-        return acc;
-    }, []);
-}
-
-function getErrorMessage(detectResponse: Record<string, string>) {
-    logger.debug('Get detect resource error message', { detectResponse });
-
-    let errorMessage = '';
-    if (detectResponse.hasOwnProperty('requiredModuleError') && detectResponse.requiredModuleError) {
-        errorMessage += `requiredModuleError: ${detectResponse.requiredModuleError}, `;
-    }
-
-    if (detectResponse.hasOwnProperty('sqlServerError') && detectResponse.sqlServerError) {
-        errorMessage += `sqlServerError: ${detectResponse.sqlServerError}, `;
-    }
-
-    if (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError) {
-        errorMessage += `fsxnError: ${detectResponse.fsxnError}`;
-    }
-
-    errorMessage = errorMessage?.replace(', ', '');
-    return errorMessage;
-}
-
-async function validateAndStoreDiscoveredParameters(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    instanceId: string,
-    credentials: DiscoverCredentialsType[],
-    clusterNodesIpAddress?: string[]
-) {
-    logger.info('Validate and store SSM parameters', { accountId, credentialsId, region, instanceId });
-
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return {
-            databaseCount: '10',
-            sqlServerEdition: 'Standard Edition (64-bit)'
-        };
-    }
-
-    try {
-        if (!accountId || !credentialsId || !region || !instanceId) {
-            logger.error('Invalid input parameters', { accountId, credentialsId, region, instanceId });
-            throw new Error('Invalid input parameters');
-        }
-
-        credentials = uniqBy(credentials, 'resourceId');
-        const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
-        const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
-        if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials)) {
-            throw new Error('Credentials cannot be empty');
-        }
-
-        let instanceIds = [instanceId];
-        if (clusterNodesIpAddress && !isEmpty(clusterNodesIpAddress)) {
-            try {
-                const clusterNodeDetails =
-                    (await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNodesIpAddress)) || [];
-                instanceIds = clusterNodeDetails.map(e => e.ec2InstanceId);
-            } catch (error) {
-                logger.error('Error while generating resource id for SSM parameter: ', error);
-            }
-        }
-
-        const detectResponse = await validateCredentials(
-            credentialsId,
-            region,
-            instanceId,
-            fsxCredentials,
-            sqlCredentials,
-            instanceIds
-        );
-
-        if (!detectResponse?.requiredModuleError && fsxCredentials && !detectResponse?.fsxnError) {
-            await registerFsxOntapCredentials(
-                accountId,
-                credentialsId,
-                region,
-                fsxCredentials.resourceId,
-                fsxCredentials.password
-            );
-        }
-
-        const errorMessage = getErrorMessage(detectResponse);
-        if (errorMessage) {
-            logger.error('Failed to validate credentials', errorMessage);
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
-        }
-
-        return detectResponse;
-    } catch (error: any) {
-        logger.error('Failed to validate credentials', error);
-        throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
-    }
 }
 
 async function fetchUnmanagedHostsInformationV2(
@@ -1003,34 +885,215 @@ async function fetchUnmanagedHostsInformationV2(
     };
 }
 
+function prepareParametersToStore(instanceIds: string[], credentials: DiscoverCredentialsType[]) {
+    logger.debug('prepare parameters to store', { instanceIds });
+
+    return credentials.reduce((acc: SSMParamterObject[], { resourceId, resourceType, username, password }) => {
+        if (resourceType === RESOURCESTYPE.MSSQL) {
+            const sqlItem = acc.find(el => el.value.sql);
+
+            if (sqlItem && Array.isArray(sqlItem.value.sql)) {
+                sqlItem.value.sql.push({
+                    sqlinstancename: resourceId,
+                    username,
+                    password
+                });
+            } else {
+                instanceIds.forEach(instanceId =>
+                    acc.push({
+                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                        value: {
+                            sql: [
+                                {
+                                    sqlinstancename: resourceId,
+                                    username,
+                                    password
+                                }
+                            ]
+                        }
+                    })
+                );
+            }
+        } else if (resourceType === RESOURCESTYPE.FSX) {
+            acc.push({
+                path: `${SSM_PARAMETERS_BASE_PATH}/${resourceId}`,
+                value: {
+                    fsx: {
+                        username,
+                        password
+                    }
+                }
+            });
+        } else if (resourceType === RESOURCESTYPE.WINDOWS_USER) {
+            const windowsUserItem = acc.find(el => el.value.domain);
+
+            if (windowsUserItem && Array.isArray(windowsUserItem.value.domain)) {
+                windowsUserItem.value.domain.push({
+                    sqlinstancename: resourceId,
+                    username: escapeBackslash(username),
+                    password
+                });
+            } else {
+                instanceIds.forEach(instanceId =>
+                    acc.push({
+                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                        value: {
+                            domain: [
+                                {
+                                    sqlinstancename: resourceId,
+                                    username: escapeBackslash(username),
+                                    password
+                                }
+                            ]
+                        }
+                    })
+                );
+            }
+        }
+        return acc;
+    }, []);
+}
+
+function getErrorMessage(detectResponse: Record<string, string>) {
+    logger.debug('Get detect resource error message', { detectResponse });
+
+    let errorMessage = '';
+    if (detectResponse.hasOwnProperty('requiredModuleError') && detectResponse.requiredModuleError) {
+        errorMessage += `requiredModuleError: ${detectResponse.requiredModuleError}, `;
+    }
+
+    if (detectResponse.hasOwnProperty('sqlServerError') && detectResponse.sqlServerError) {
+        errorMessage += `sqlServerError: ${detectResponse.sqlServerError}, `;
+    }
+
+    if (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError) {
+        errorMessage += `fsxnError: ${detectResponse.fsxnError}`;
+    }
+
+    errorMessage = errorMessage?.replace(', ', '');
+    return errorMessage;
+}
+
+async function validateAndStoreDiscoveredParameters(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    credentials: DiscoverCredentialsType[],
+    clusterNodesIpAddress?: string[],
+    checkManageReadiness: boolean = false
+) {
+    logger.info('Validate and store SSM parameters', {
+        accountId,
+        credentialsId,
+        region,
+        instanceId,
+        checkManageReadiness
+    });
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        return {
+            databaseCount: '10',
+            sqlServerEdition: 'Standard Edition (64-bit)'
+        };
+    }
+
+    try {
+        if (!accountId || !credentialsId || !region || !instanceId) {
+            logger.error('Invalid input parameters', { accountId, credentialsId, region, instanceId });
+            throw new Error('Invalid input parameters');
+        }
+
+        credentials = uniqBy(credentials, 'resourceId');
+        const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
+        const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
+        const windowsUserCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.WINDOWS_USER);
+        if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials) && isEmpty(windowsUserCredentials)) {
+            throw new Error('Credentials cannot be empty');
+        }
+
+        let instanceIds = [instanceId];
+        if (clusterNodesIpAddress && !isEmpty(clusterNodesIpAddress)) {
+            try {
+                const clusterNodeDetails =
+                    (await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNodesIpAddress)) || [];
+                instanceIds = clusterNodeDetails.map(e => e.ec2InstanceId);
+            } catch (error) {
+                logger.error('Error while generating resource id for SSM parameter: ', error);
+            }
+        }
+
+        const detectResponse = await validateCredentials(
+            credentialsId,
+            region,
+            instanceId,
+            fsxCredentials,
+            sqlCredentials,
+            windowsUserCredentials,
+            instanceIds,
+            checkManageReadiness
+        );
+
+        if (!detectResponse?.requiredModuleError && fsxCredentials && !detectResponse?.fsxnError) {
+            await registerFsxOntapCredentials(
+                accountId,
+                credentialsId,
+                region,
+                fsxCredentials.resourceId,
+                fsxCredentials.password
+            );
+        }
+
+        const errorMessage = getErrorMessage(detectResponse);
+        if (errorMessage) {
+            logger.error('Failed to validate credentials', errorMessage);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+        }
+
+        return detectResponse;
+    } catch (error: any) {
+        logger.error('Failed to validate credentials', error);
+        throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
+    }
+}
+
 async function rewriteOrDeleteSSMParameter(
     credentialsId: string,
     region: string,
     instanceIds: string[],
-    paramesToDelete: string[],
+    paramsToDelete: string[],
     instancesToBeDeleted: string[],
     fsxCredentials: DiscoverCredentialsType,
-    sqlCredentials: DiscoverCredentialsType[]
+    sqlCredentials: DiscoverCredentialsType[],
+    windowsUserCredentials: DiscoverCredentialsType[]
 ) {
     logger.info('Calling rewriteOrDeleteSSMParameter', {
         credentialsId,
         region,
         instanceIds,
-        paramesToDelete,
+        paramsToDelete,
         instancesToBeDeleted,
         fsxCredentials,
-        sqlCredentials
+        sqlCredentials,
+        windowsUserCredentials
     });
-    if (sqlCredentials.length === instancesToBeDeleted.length) {
+    if (
+        sqlCredentials.length === instancesToBeDeleted.length ||
+        windowsUserCredentials.length === instancesToBeDeleted.length
+    ) {
         // Delete the parameter store all credentials are invalid
-        instanceIds.forEach(instanceId => paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
-        await deleteSSMParameter(credentialsId, region, paramesToDelete);
+        instanceIds.forEach(instanceId => paramsToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
+        await deleteSSMParameter(credentialsId, region, paramsToDelete);
     } else {
         // Rewrite parameter store after removing invalid credentials
         const latestSqlCredentials = sqlCredentials.filter(e => !instancesToBeDeleted.includes(e.resourceId));
+        const latestWindowsUserCredentials = windowsUserCredentials.filter(
+            e => !instancesToBeDeleted.includes(e.resourceId)
+        );
         const creds = prepareParametersToStore(instanceIds, [
             ...(fsxCredentials ? [fsxCredentials] : []),
-            ...latestSqlCredentials
+            ...latestSqlCredentials,
+            ...latestWindowsUserCredentials
         ]);
         await ssmPutParameters(credentialsId, region, creds);
     }
@@ -1042,9 +1105,18 @@ async function validateCredentials(
     instanceId: string,
     fsxCredentials: DiscoverCredentialsType | undefined,
     sqlCredentials: DiscoverCredentialsType[],
-    instanceIds: string[]
+    windowsUserCredentials: DiscoverCredentialsType[],
+    instanceIds: string[],
+    checkManageReadiness: boolean = false
 ) {
-    logger.info('Validate credentials', { instanceId, fsxCredentials, sqlCredentials, instanceIds });
+    logger.info('Validate credentials', {
+        instanceId,
+        fsxCredentials,
+        sqlCredentials,
+        instanceIds,
+        windowsUserCredentials,
+        checkManageReadiness
+    });
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
 
@@ -1060,14 +1132,22 @@ async function validateCredentials(
     }
 
     const newSqlCredentials = cloneDeep(sqlCredentials);
-    await verifyAndCreateCredentials(credentialsId, region, instanceId, fsxCredentials, newSqlCredentials, instanceIds);
+    await verifyAndCreateCredentials(
+        credentialsId,
+        region,
+        instanceId,
+        fsxCredentials,
+        newSqlCredentials,
+        windowsUserCredentials,
+        instanceIds
+    );
 
     let parsedResponse;
 
     try {
         let command = '$WarningPreference = "SilentlyContinue";';
 
-        if (fsxCredentials || sqlCredentials.length) {
+        if (fsxCredentials || sqlCredentials.length || windowsUserCredentials) {
             // Get signed url for aws_ssm.zip to install the ps modules
             const bucketname = getArtifactsRegionBucketName(region);
             const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
@@ -1083,7 +1163,16 @@ async function validateCredentials(
 
         if (sqlCredentials.length) {
             command += sqlCredentials.reduce(
-                (acc: string, { resourceId }) => `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId)};\n`,
+                (acc: string, { resourceId }) =>
+                    `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId, false, checkManageReadiness)};\n`,
+                ''
+            );
+        }
+
+        if (!isEmpty(windowsUserCredentials)) {
+            command += windowsUserCredentials.reduce(
+                (acc: string, { resourceId }) =>
+                    `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId, true, checkManageReadiness)};\n`,
                 ''
             );
         }
@@ -1102,7 +1191,6 @@ async function validateCredentials(
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
         parsedResponse = attempt(JSON.parse, cleanResponse);
-        logger.info('Parsed response for credential validation: ', parsedResponse);
 
         parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
 
@@ -1110,25 +1198,52 @@ async function validateCredentials(
             throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
         }
 
-        const response: Record<string, string> = {};
-        const paramesToDelete: string[] = [];
+        const response: Record<string, any> = {};
+        const paramsToDelete: string[] = [];
         const instancesToBeDeleted: string[] = [];
 
         if (parsedResponse.requiredModuleError) {
             response.requiredModuleError = parsedResponse.requiredModuleError;
         } else {
             if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
-                paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+                paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
                 response.fsxnError = parsedResponse?.ontaperror;
             }
 
-            if (sqlCredentials.length) {
+            if (sqlCredentials.length || windowsUserCredentials.length) {
                 if (parsedResponse.sqlInstanceConnectivity === false) {
-                    instancesToBeDeleted.push(sqlCredentials[0].resourceId);
+                    instancesToBeDeleted.push(sqlCredentials[0]?.resourceId ?? windowsUserCredentials[0]?.resourceId);
                     response.sqlServerError = parsedResponse?.sqlerror;
                 } else if (parsedResponse.sqlInstanceConnectivity === true) {
                     response.sqlServerEdition = parsedResponse?.sqlEdition;
                     response.databaseCount = parsedResponse?.noOfDatabases;
+                    if (checkManageReadiness) {
+                        const {
+                            sqlPermissions = [],
+                            availablePsModules = [],
+                            sqlInstanceConnectivity
+                        } = parsedResponse || {};
+
+                        const manageReadiness = Object.fromEntries(
+                            Object.entries(FEATURE_PREPREQUISITES).map(([key, value]) => [
+                                key.toLowerCase(),
+                                {
+                                    missingSqlPermissions: value.SQL_PERMISSIONS.filter(
+                                        x => !sqlPermissions.includes(x)
+                                    ),
+                                    missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                                }
+                            ])
+                        );
+
+                        response.manageReadiness = {
+                            missingSqlCmd: !sqlInstanceConnectivity,
+                            assessment: manageReadiness.assessment,
+                            remediation: manageReadiness.remediation,
+                            dbcreation: manageReadiness.dbcreation,
+                            sandbox: manageReadiness.sandbox
+                        };
+                    }
                 }
             }
         }
@@ -1138,34 +1253,39 @@ async function validateCredentials(
                 credentialsId,
                 region,
                 instanceIds,
-                paramesToDelete,
+                paramsToDelete,
                 instancesToBeDeleted,
                 fsxCredentials!,
-                newSqlCredentials
+                newSqlCredentials,
+                windowsUserCredentials
             );
         }
         return response;
     } catch (error: any) {
         // delete the ssm parameters if its already created
-        const paramesToDelete: string[] = [];
+        const paramsToDelete: string[] = [];
         const instancesToBeDeleted: string[] = [];
 
         if (fsxCredentials) {
-            paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+            paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
         }
 
-        if (sqlCredentials.length) {
-            instancesToBeDeleted.push(sqlCredentials[0].resourceId);
+        if (sqlCredentials.length || windowsUserCredentials.length) {
+            instancesToBeDeleted.push(
+                ...(sqlCredentials ?? []).map(e => e.resourceId),
+                ...(windowsUserCredentials ?? []).map(e => e.resourceId)
+            );
         }
 
         await rewriteOrDeleteSSMParameter(
             credentialsId,
             region,
             instanceIds,
-            paramesToDelete,
+            paramsToDelete,
             instancesToBeDeleted,
             fsxCredentials!,
-            newSqlCredentials
+            newSqlCredentials,
+            windowsUserCredentials
         );
 
         throw createError(
@@ -1181,6 +1301,7 @@ async function verifyAndCreateCredentials(
     instanceId: string,
     fsxCredentials: DiscoverCredentialsType | undefined,
     sqlCredentials: DiscoverCredentialsType[],
+    windowsUserCredentials: DiscoverCredentialsType[],
     instanceIds: string[]
 ) {
     logger.info('Verify and create credentials', { instanceId });
@@ -1197,13 +1318,13 @@ async function verifyAndCreateCredentials(
         }
     }
 
-    if (sqlCredentials.length) {
+    if (sqlCredentials.length || windowsUserCredentials.length) {
         const existingParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
         if (!existingParameters) {
             const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
             setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), ...instanceIds]);
         } else {
-            const { sql } = JSON.parse(existingParameters);
+            const { sql, domain } = JSON.parse(existingParameters);
             if (sql) {
                 const newSqlInstances = sqlCredentials.map(e => e.resourceId);
                 sql.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
@@ -1217,12 +1338,26 @@ async function verifyAndCreateCredentials(
                     }
                 });
             }
+            if (domain) {
+                const newDomainUsers = windowsUserCredentials.map(e => e.resourceId);
+                domain.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
+                    if (!newDomainUsers.includes(e.sqlinstancename)) {
+                        windowsUserCredentials.push({
+                            resourceId: e.sqlinstancename,
+                            resourceType: RESOURCESTYPE.WINDOWS_USER,
+                            username: e.username,
+                            password: e.password
+                        });
+                    }
+                });
+            }
         }
     }
 
     const creds = prepareParametersToStore(instanceIds, [
         ...(fsxCredentials ? [fsxCredentials] : []),
-        ...sqlCredentials
+        ...sqlCredentials,
+        ...windowsUserCredentials
     ]);
 
     await ssmPutParameters(credentialsId, region, creds);
@@ -1407,7 +1542,7 @@ async function prepareDbScriptsForManage(
     try {
         const copyScriptResponse = await copyScriptsToHost(accountId, credentialsId, region, ec2InstanceId);
 
-        logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${copyScriptResponse}`);
+        logger.debug(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${copyScriptResponse}`);
 
         if (copyScriptResponse?.includes('failureInfo')) {
             const responseInJson = JSON.parse(copyScriptResponse);
@@ -1437,6 +1572,76 @@ async function prepareDbScriptsForManage(
     await updateJobDetails(accountId, childJobId, jobStatusRecord);
 
     return jobStatusRecord.status;
+}
+
+async function installPowershell7(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    parentJobId: string
+) {
+    logger.info(`Installing PowerShell 7.5.0 on ${ec2InstanceId}`);
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.PREPARE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: ec2InstanceId,
+        name: 'Install PowerShell 7.5.0',
+        description: 'Install PowerShell 7.5.0 for Workload Factory database operations.',
+        parentJobId,
+        startTime: Date.now()
+    });
+
+    try {
+        // Get signed url for dependent-packages.zip to install the ps modules
+        const bucketname = getArtifactsRegionBucketName(region);
+        const copyPowershell7SignedUrl = await getPreSignedUrl(region, bucketname, POWERSHELL_7_RELATIVE_PATH);
+
+        const installResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                INSTALL_POWERSHELL_7(copyPowershell7SignedUrl),
+                ec2InstanceId,
+                'Install PowerShell 7.5.0',
+                accountId,
+                false
+            )
+        );
+
+        if (installResponse?.includes(FAILURE_INFO)) {
+            throw new Error(JSON.parse(installResponse)[FAILURE_INFO]);
+        }
+
+        const checkResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                CHECK_POWERSHELL7_AVAILABLE,
+                ec2InstanceId,
+                'Check PowerShell 7 availability',
+                accountId,
+                false
+            )
+        );
+
+        const isPS7Available = JSON.parse(checkResponse)[IS_PS7_AVAILABLE];
+        const status = isPS7Available ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
+
+        await updateJobDetails(accountId, childJobId, { status, endTime: Date.now() });
+        return status;
+    } catch (error: any) {
+        logger.error(`Failed to install PowerShell 7.5.0 on ${ec2InstanceId}: ${error.message}`);
+        await updateJobDetails(accountId, childJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: error.message
+        });
+        return JOBSTATUS.FAILED;
+    }
 }
 
 async function preparePsModulesForManage(
@@ -1482,7 +1687,7 @@ async function preparePsModulesForManage(
             3,
             5000
         );
-        logger.info(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
+        logger.debug(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
 
         if (ssmPsModuleInstallResponse?.includes(FAILURE_INFO)) {
             const responseInJson = JSON.parse(ssmPsModuleInstallResponse);
@@ -1519,7 +1724,7 @@ async function preparePsModulesForManage(
 async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstanceManageMsSqlRequestBodyType[]) {
     logger.info('Manage SQL Server instances (v2):', {
         accountId,
-        itemsTobeManged
+        instancesToBeManagedLength: itemsTobeManged.length
     });
 
     const manageResponse: MultiInstanceManageResponseBodyType = [];
@@ -1870,19 +2075,10 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                     );
                                 }
 
-                                let errorMessage = '';
-                                if (
-                                    sqlInstanceInfo.missingSqlPermissions &&
-                                    sqlInstanceInfo.missingSqlPermissions?.length > 0
-                                ) {
-                                    errorMessage = `SQL Instance permissions ${sqlInstanceInfo.missingSqlPermissions} are required for managing the resource.`;
-                                }
-
                                 itemsStatus.push({
                                     databaseInstanceName: dbInst,
                                     databaseInstanceGuid: serverGuid,
-                                    status: 'success',
-                                    errorMessage
+                                    status: 'success'
                                 });
                             } catch (error) {
                                 itemsStatus.push({
@@ -1988,7 +2184,8 @@ async function discoverEc2Instances(
     filters: Filter[] = [],
     pageSize?: number,
     nextToken?: string,
-    ec2InstanceIds: string[] = []
+    ec2InstanceIds: string[] = [],
+    discoveryDbType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
 ) {
     logger.info('Discover EC2 resources', { accountId, credentialsId, region, pageSize, nextToken });
 
@@ -2030,10 +2227,10 @@ async function discoverEc2Instances(
         compact(ec2InstanceList.map(({ InstanceId }) => InstanceId))
     );
 
-    const ec2Instances = ec2InstanceList?.map(ec2Instance => {
-        const name = isDemo() ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(ec2Instance?.Tags);
+    let ec2Instances = ec2InstanceList?.map(ec2Instance => {
+        const name = getEc2Hostname(discoveryDbType, ec2Instance?.Tags);
         return {
-            ec2InstanceId: ec2Instance?.InstanceId || '',
+            ec2InstanceId: isDemoFlow ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
             ec2InstanceType: ec2Instance?.InstanceType || '',
             ec2InstanceName: name || '',
             ec2UsageOperation: ec2Instance?.UsageOperation || '',
@@ -2049,6 +2246,11 @@ async function discoverEc2Instances(
         };
     });
 
+    if (isDemoFlow) {
+        ec2Instances = ec2Instances.filter(
+            ec2InstanceDetails => ec2InstanceDetails.ssmState === ConnectionStatus.CONNECTED
+        );
+    }
     return { ec2Instances, NextToken };
 }
 
@@ -2086,7 +2288,8 @@ async function discoverPgSqlResources(
         filters,
         pageSize,
         nextToken,
-        ec2InstanceIds
+        ec2InstanceIds,
+        DatabaseTypes.PG_SQL
     );
 
     logger.debug('Discovered PostgreSQL resources', { ec2Instances, NextToken });
@@ -2508,7 +2711,8 @@ async function discoverOracleResources(
         filters,
         pageSize,
         nextToken,
-        ec2InstanceIds
+        ec2InstanceIds,
+        DatabaseTypes.ORACLE
     );
 
     const ssmNotConnectedEc2Instances: DiscoveredEc2InstanceType[] = ec2Instances.filter(
@@ -2556,8 +2760,11 @@ async function discoverOracleResources(
                 }
                 let parsedResponse;
                 try {
-                    parsedResponse = sqlResponseParsing(output || '{}');
+                    parsedResponse = sqlResponseParsing(output || '[]');
                     logger.debug('Parsed SSM ORACLE response', { parsedResponse });
+                    if (!parsedResponse || parsedResponse.length === 0) {
+                        return;
+                    }
                     ec2Instance = {
                         ...ec2Instance,
                         oracleServerDeploymentType: 'Standalone'
@@ -2638,9 +2845,9 @@ async function discoverOracleResources(
                     ec2Instance.databaseInstanceDetails = databaseInstanceDetails;
                     instancesWithSsmResponse.push(ec2Instance);
                 } catch (err: unknown) {
-                    logger.warn('Failed to parse SSM response', { error: err });
                     ec2Instance.error = err as string;
-                    return instancesWithSsmResponse.push(ec2Instance);
+                    logger.warn('Failed to parse SSM response', { error: err });
+                    instancesWithSsmResponse.push(ec2Instance);
                 }
             })
         );
@@ -2649,7 +2856,7 @@ async function discoverOracleResources(
     }
 
     return {
-        count: ec2Instances.length || 0,
+        count: (ssmNotConnectedEc2Instances.length || 0) + (instancesWithSsmResponse.length || 0),
         items: [...ssmNotConnectedEc2Instances, ...instancesWithSsmResponse],
         nextToken: NextToken as string
     };
@@ -2690,7 +2897,6 @@ async function fetchFsxResourceMappings(
                 : Promise.resolve([])
         ]);
 
-    // logger.info('FSX LIST', { fsxList, svmList, subnetList, ebsVolumeList });
     const extractedSsmResponseList = await Promise.all(
         ssmResponseList.map(async ssmResponse => extractSsmResponse(credentialsId, region, ssmResponse))
     );
@@ -2763,5 +2969,6 @@ export {
     discoverPgSqlResources,
     prepareDbScriptsForManage,
     getPgSqlResourceDetails,
-    discoverOracleResources
+    discoverOracleResources,
+    installPowershell7
 };

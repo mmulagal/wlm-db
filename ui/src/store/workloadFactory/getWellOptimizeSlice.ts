@@ -64,6 +64,7 @@ const getWellOptimizeSlice = createSlice({
         setFSXId: (state, action: PayloadAction<any>) => {
             state.resetDetails = action.payload;
         },
+
         setTabVisited: (state, action: PayloadAction<any>) => {
             state.visitedTabs[action.payload] = true;
         },
@@ -233,6 +234,7 @@ const getWellOptimizeSlice = createSlice({
 
 export const {
     setFSXId,
+
     setTabVisited,
     resetVisitedTabs,
     setSelectedWellArchitectTab,

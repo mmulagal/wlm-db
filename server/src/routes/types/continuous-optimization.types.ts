@@ -175,6 +175,7 @@ const AdditionalMSSQLPatchParameterDriftResponse = Type.Optional(
                     criticalMissingPatchesCount: Type.Number(),
                     importantMissingPatchesCount: Type.Number(),
                     ec2InstanceId: Type.String(),
+                    ec2InstanceName: Type.String(),
                     missingPatchesCount: Type.Number(),
                     missingPatchDetails: Type.Array(
                         Type.Object({
@@ -303,7 +304,10 @@ const DriftAssessmentResponse = Type.Object({
     crr: Type.Optional(GenericAssessmentResponse),
     awsBackup: Type.Optional(GenericAssessmentResponse),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
-    dismissedConfigurations: Type.Optional(dismissedConfigurationsResponse)
+    dismissedConfigurations: Type.Optional(dismissedConfigurationsResponse),
+    fileSystemId: Type.Optional(Type.String()),
+    ec2InstanceId: Type.Optional(Type.String()),
+    databaseInstanceName: Type.Optional(Type.String())
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 

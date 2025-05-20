@@ -1642,38 +1642,39 @@ export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
     }
 
     const databasesWeights: any = {
-        [DBType.MSSQL]: 30000,
-        [DBType.ORACLE]: 20000,
-        [DBType.POSTGRESQL]: 10000
+        [DBType.MSSQL.toLowerCase()]: 30000,
+        [DBType.ORACLE.toLowerCase()]: 20000,
+        [DBType.POSTGRESQL.toLowerCase()]: 10000
     };
 
     const statusWeights: any = {
-        [INVENTORY_STATUS.CASE_SENSITIVE_UP]: 3000,
-        [INVENTORY_STATUS.RUNNING]: 3000,
-        [INVENTORY_STATUS.RUNNING_LOWER]: 3000,
-        [INVENTORY_STATUS.CASE_SENSITIVE_DOWN]: 2000,
-        [INVENTORY_STATUS.STOPPED]: 2000,
-        [INVENTORY_STATUS.UNKNOWN]: 1000,
+        [INVENTORY_STATUS.CASE_SENSITIVE_UP.toLowerCase()]: 3000,
+        [INVENTORY_STATUS.RUNNING.toLowerCase()]: 3000,
+        [INVENTORY_STATUS.CASE_SENSITIVE_DOWN.toLowerCase()]: 2000,
+        [INVENTORY_STATUS.STOPPED.toLowerCase()]: 2000,
+        [INVENTORY_STATUS.UNKNOWN.toLowerCase()]: 1000,
+
         '': 0
     };
 
     const isManagedWeights: any = {
-        [INVENTORY_STATUS.MANAGED]: 300,
-        [INVENTORY_STATUS.UNMANAGED]: 200,
-        [INVENTORY_STATUS.IN_PROGRESS]: 200,
-        [INVENTORY_STATUS.UNDETECTED]: 100,
+        [INVENTORY_STATUS.MANAGED.toLowerCase()]: 300,
+        [INVENTORY_STATUS.UNMANAGED.toLowerCase()]: 200,
+        [INVENTORY_STATUS.IN_PROGRESS.toLowerCase()]: 200,
+        [INVENTORY_STATUS.UNDETECTED.toLowerCase()]: 100,
         '': 0
     };
 
     const result = data.slice().sort((a, b) => {
         const weightA =
-            databasesWeights[a?.hostType || ''] +
-            statusWeights[a.status || ''] +
-            isManagedWeights[a?.statusColText || ''];
+            (databasesWeights[(a?.hostType || '').toLowerCase()] || 0) +
+            (statusWeights[(a?.status || '').toLowerCase()] || 0) +
+            (isManagedWeights[(a?.statusColText || '').toLowerCase()] || 0);
+
         const weightB =
-            databasesWeights[b?.hostType || ''] +
-            statusWeights[b.status || ''] +
-            isManagedWeights[b?.statusColText || ''];
+            (databasesWeights[(b?.hostType || '').toLowerCase()] || 0) +
+            (statusWeights[(b?.status || '').toLowerCase()] || 0) +
+            (isManagedWeights[(b?.statusColText || '').toLowerCase()] || 0);
 
         return weightB - weightA;
     });

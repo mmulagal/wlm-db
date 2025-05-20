@@ -113,6 +113,8 @@ async function managedHostMSSQLPatchAssessment(
     activeNodeInstanceId: string,
     isPartOfCluster: boolean = false,
     resourceName: string,
+    sqlAuthEnabled: boolean,
+    instanceName: string,
     parentJobId?: string
 ) {
     logger.info('Managed host mssql patch assessment', {
@@ -123,6 +125,8 @@ async function managedHostMSSQLPatchAssessment(
         resourceName,
         databaseHostId,
         isPartOfCluster,
+        sqlAuthEnabled,
+        instanceName,
         parentJobId
     });
 
@@ -147,7 +151,9 @@ async function managedHostMSSQLPatchAssessment(
             databaseHostId,
             activeNodeInstanceId,
             isPartOfCluster,
-            activeNodeInstanceId
+            activeNodeInstanceId,
+            sqlAuthEnabled,
+            instanceName
         );
         logger.info('managed host mssql patch response', patchAssessment);
     } catch (error) {
@@ -166,8 +172,22 @@ async function managedHostMSSQLPatchAssessment(
     return { patchAssessment, errorMessage };
 }
 
-async function getTheMSSqlversion(credentialsId: string, region: string, instanceId: string) {
-    const ssmCommand = GET_INSTALLED_MSSQL_VERSION();
+async function getTheMSSqlversion(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    sqlAuthEnabled: boolean,
+    instanceName: string
+) {
+    logger.info('Getting the MSSQL version', {
+        credentialsId,
+        region,
+        instanceId,
+        sqlAuthEnabled,
+        instanceName
+    });
+
+    const ssmCommand = GET_INSTALLED_MSSQL_VERSION(instanceName, sqlAuthEnabled);
 
     const response = await callSsmExecution(
         credentialsId,
@@ -190,7 +210,9 @@ async function runMSSQLPatchAssessment(
     databaseHostId: string,
     nodeInstanceId: string,
     isPartOfCluster: boolean = false,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    sqlAuthEnabled: boolean,
+    instanceName: string
 ): Promise<MSSQLPatchAssessmentObject[]> {
     logger.info('Running MsSql Patch assessment', {
         accountId,
@@ -199,19 +221,24 @@ async function runMSSQLPatchAssessment(
         databaseHostId,
         nodeInstanceId,
         isPartOfCluster,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        sqlAuthEnabled,
+        instanceName
     });
 
     const clusterNodeDetails = isPartOfCluster
         ? await getAllClusterNodeDetails(accountId, credentialsId, region, databaseHostId, nodeInstanceId)
-        : [{ ec2InstanceId: nodeInstanceId }];
+        : [{ ec2InstanceId: nodeInstanceId, ec2InstanceName: 'Unknown' }];
+
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
 
     if (!isEmpty(clusterNodeInstanceIds)) {
         const { releaseDate: currentVersionReleaseDate, versionYear: sqlServerYear } = await getTheMSSqlversion(
             credentialsId,
             region,
-            activeNodeInstanceId
+            activeNodeInstanceId,
+            sqlAuthEnabled,
+            instanceName
         );
 
         const [availableCriticalSQLPatches, instanceInstalledPatchDetails] = await Promise.all([
@@ -220,6 +247,11 @@ async function runMSSQLPatchAssessment(
         ]);
 
         const instanceInstalledPatchDetailsList = instanceInstalledPatchDetails || [];
+
+        // Map ec2InstanceId to ec2InstanceName for quick lookup
+        const ec2InstanceNameMap = new Map(
+            clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => [ec2InstanceId, ec2InstanceName])
+        );
 
         // Create the MSSQLPatchAssessmentObject structure
         const patchAssessmentObjects: MSSQLPatchAssessmentObject[] = instanceInstalledPatchDetailsList.map(
@@ -268,6 +300,7 @@ async function runMSSQLPatchAssessment(
 
                 return {
                     ec2InstanceId: instanceId,
+                    ec2InstanceName: ec2InstanceNameMap.get(instanceId) || 'Unknown',
                     criticalMissingPatchesCount,
                     importantMissingPatchesCount,
                     missingPatchesCount: missingPatchDetails.length,

@@ -104,7 +104,7 @@ const NewPotentialSavings = () => {
         <div className={styles.potentialSavings}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Potential savings
+                    {GENERAL.POTENTIAL_SAVINGS}
                 </DsTypography>
 
                 {/* {loading && <FlashingDotsLoader />} */}
@@ -118,7 +118,7 @@ const NewPotentialSavings = () => {
                         onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}
                         isDisabled={loading}
                     >
-                        Explore savings
+                        {GENERAL.ES_SAVINGS}
                     </DsButton>
                 </div>
             </div>
@@ -163,7 +163,7 @@ const NewPotentialSavings = () => {
                                             {loading && <DsFlashingDotsLoader />}
                                         </div>
 
-                                        <DsTypography variant="Regular_14">Potential savings</DsTypography>
+                                        <DsTypography variant="Regular_14">{GENERAL.POTENTIAL_SAVINGS}</DsTypography>
                                     </div>
                                 </div>
                             )}
@@ -173,9 +173,7 @@ const NewPotentialSavings = () => {
                                         <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                             24
                                         </DsTypography>
-                                        <DsTypography variant="Regular_14">
-                                            SQL server hosts on Elastic Block Store (EBS)
-                                        </DsTypography>
+                                        <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_EBS}</DsTypography>
                                     </div>
 
                                     <SeparatorComponent variant="vertical" height="54px" />
@@ -185,7 +183,7 @@ const NewPotentialSavings = () => {
                                             12
                                         </DsTypography>
                                         <DsTypography variant="Regular_14">
-                                            SQL server hosts on FSx for Windows
+                                            {GENERAL.SQL_SERVER_HOSTS_FSXW}
                                         </DsTypography>
                                     </div>
                                 </div>
@@ -253,7 +251,7 @@ const NewPotentialSavings = () => {
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
 
-                                    <DsTypography variant="Regular_14">Potential savings</DsTypography>
+                                    <DsTypography variant="Regular_14">{GENERAL.POTENTIAL_SAVINGS}</DsTypography>
                                 </div>
                             </div>
 
@@ -307,9 +305,7 @@ const NewPotentialSavings = () => {
                                 <div className={styles.textSection}>
                                     <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
                                     <DsTypography variant="Semibold_20">{esCount?.ebs}</DsTypography>
-                                    <DsTypography variant="Regular_14">
-                                        SQL Server hosts on Elastic Block Store (EBS)
-                                    </DsTypography>
+                                    <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_EBS}</DsTypography>
                                 </div>
                             </div>
                             <div className={styles.rightSide}>
@@ -357,9 +353,7 @@ const NewPotentialSavings = () => {
                                 <div className={styles.textSection}>
                                     <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
                                     <DsTypography variant="Semibold_20">{esCount?.fsxw}</DsTypography>
-                                    <DsTypography variant="Regular_14">
-                                        SQL Server hosts on FSx for Windows
-                                    </DsTypography>
+                                    <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_FSXW}</DsTypography>
                                 </div>
                             </div>
                         </div>

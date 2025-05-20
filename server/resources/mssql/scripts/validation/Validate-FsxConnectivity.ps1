@@ -72,23 +72,41 @@ catch {
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
 }
-$FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${Username}:${Password}"))
-$FSxHostName = "management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com"
-
 # Get region Certificateificate for FSx
 $isprivatesubnet = $False
 $FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
 try {
     Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
     $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
-    $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+    $regionCertificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
 }
 catch {
-    $isprivatesubnet = $True      
+    $isprivatesubnet = $True 
+    $regionCertificate = $null     
+}
+$FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${Username}:${Password}"))
+$FSxHostName = "management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com"
+try {
+    $FSxNHTTP_Request = [System.Net.WebRequest]::Create("https://$FSxHostName")
+    $FSxNHTTP_Response = $FSxNHTTP_Request.GetResponse()
+    $FSxNHTTP_Response.Close()
+}
+catch {
+    write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
+    Write-Information "FSxN Management domain $FSxHostName is not resolved. Switching to management IP."
+    $fslist = Get-FSXFileSystem -FileSystemId $FSxFileSystemId
+    $FSxHostName = $fslist.ontapconfiguration.Endpoints.Management.IpAddresses
+    if ($FSxHostName -is [array]) {
+        $FSxHostName = $FSxHostName[0]
+    }
+    $isprivatesubnet = $True
+    $regionCertificate = $null
+
 }
 
+
 $Params = @{
-    "URI"         = "https://management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com/api/cluster?fields=version"
+    "URI"         = "https://${FSxHostName}/api/cluster?fields=version"
     "Method"      = "GET"
     "Headers"     = @{"Authorization" = "Basic $FSxCredentialsInBase64" }
     "ContentType" = "application/json"
@@ -96,7 +114,7 @@ $Params = @{
 
 try {
     if ($isprivatesubnet -eq $False) {
-        Invoke-RestMethod @Params -Certificate $regionCertificateificate
+        Invoke-RestMethod @Params -Certificate $regionCertificate
     }
     else {
         Invoke-RestMethod @Params 

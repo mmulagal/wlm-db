@@ -1,10 +1,13 @@
 import {
+    GetInstanceProfileCommand,
     IAMClient,
     PolicyEvaluationDecisionType,
     SimulatePrincipalPolicyCommand,
     SimulatePrincipalPolicyCommandOutput
 } from '@aws-sdk/client-iam';
 import { mockClient } from 'aws-sdk-client-mock';
+
+import GetInstanceProfileCommandResponse from '../../responses/aws/get-instance-profile.json';
 
 const iamMock = mockClient(IAMClient);
 
@@ -76,3 +79,15 @@ const IamSimulatePolicyResponse: Partial<SimulatePrincipalPolicyCommandOutput> =
 };
 
 iamMock.on(SimulatePrincipalPolicyCommand).resolves(IamSimulatePolicyResponse);
+
+iamMock.on(GetInstanceProfileCommand).resolves({
+    ...GetInstanceProfileCommandResponse,
+    InstanceProfile: {
+        ...GetInstanceProfileCommandResponse.InstanceProfile,
+        CreateDate: new Date(GetInstanceProfileCommandResponse.InstanceProfile.CreateDate),
+        Roles: GetInstanceProfileCommandResponse.InstanceProfile.Roles.map(role => ({
+            ...role,
+            CreateDate: new Date(role.CreateDate)
+        }))
+    }
+});

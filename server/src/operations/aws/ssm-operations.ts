@@ -195,7 +195,7 @@ async function executeSSMDocument(
     accountId?: string,
     pollDuration?: number
 ) {
-    logger.info('Execute SSM document', { credentialsId, region, params, accountId, pollDuration });
+    logger.info('Execute SSM document', { credentialsId, region, params: params?.Comment, accountId, pollDuration });
 
     const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
     const [instanceIds] = params?.InstanceIds ?? [];

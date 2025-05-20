@@ -2,7 +2,13 @@ import styles from './WellArchitectDashboard.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DETECT_HOST_VAR, FROM_DIALOG, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
+import {
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    RESET_PASSWORD_TYPE,
+    WELL_ARCHITECTED_TABS,
+    WLF_TABS
+} from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import {
     setDefaultFilterOptions,
@@ -24,26 +30,22 @@ import { useEffect } from 'react';
 import ResourceMSSQLOverview from './ResourceMSSQLOverview/ResourceMSSQLOverview';
 import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
 import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
-import {
-    addInitialDBCreateData,
-    initialCreateNewUserState,
-    setCdbPageData
-} from '../../../store/workloadFactory/createNewDBSlice';
-import { updateResourceId } from '../../../store/authSlice';
-import { useNavigate } from 'react-router-dom';
+
 import { setRefreshTime } from '../../../store/workloadFactory/headersSlice';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
 import { useRegisterResourceCredentialsMutation, workloadFactoryResourceApiV2 } from '../../../utils/apiService';
 import {
     setFsxAdminConfirmPassword,
     setFsxAdminPassword,
+    setSqlServerConfirmPassword,
+    setSqlServerPassword,
     setIsResourceRefresh,
     setPasswordResetLoading
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetGwValuesOnRefresh } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
-import FSXPasswordContent from './FSXPasswordContent/FSXPasswordContent';
+import { FSXPasswordContent, SQLServerPasswordContent } from './FSXPasswordContent/FSXPasswordContent';
 import SandboxInstanceTable from './ResourceMSSQLOverview/SandboxInstanceTable/SandboxInstanceTable';
 import {
     setAggregatedSandboxInstanceList,
@@ -65,21 +67,20 @@ const WellArchitectDashboard = () => {
         gwRefreshTimestamp,
         resetDetails
     } = useAppSelector(state => state.getWellOptimize);
-    const navigate = useNavigate();
 
     const { refreshTime } = useAppSelector(state => state.headers);
 
-    const { refreshSandboxInstanceTime } = useAppSelector(state => state.sandbox);
+    const { refreshSandboxInstanceTime, sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
 
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     const {
         resourceLoading: resourceLoadingState,
 
-        selectedDatabaseInstance,
-        selectedResourceId,
         selectedResourceCredId,
-        selectedResourceRegionId
+        selectedResourceRegionId,
+        resourceDetails,
+        instanceDetailsData: { databaseInstanceName, fsxId, ec2InstanceId }
     } = useAppSelector(state => state.workloadFactoryResource);
 
     // Reset visited tabs when leaving the dashboard
@@ -105,7 +106,7 @@ const WellArchitectDashboard = () => {
     const handleRefresh = () => {
         if (
             selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW ||
-            selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES
+            (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES && !resourceLoadingState)
         ) {
             dispatch(setRefreshTime(getCurrentDateTime()));
             dispatch(workloadFactoryResourceApiV2.util.resetApiState());
@@ -115,7 +116,7 @@ const WellArchitectDashboard = () => {
             dispatch(setDefaultFilterOptions({}));
             resetGwValuesOnRefresh(dispatch);
             dispatch(setGwRefreshPage(true));
-        } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.SANDBOXES) {
+        } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.SANDBOXES && !sandboxInstanceLoading) {
             dispatch(setIsRefreshedSandboxInstance(true));
         }
     };
@@ -139,7 +140,7 @@ const WellArchitectDashboard = () => {
         const { password } = fsxAdminPasswords;
         let credList = [];
         credList.push({
-            resourceId: resetDetails?.fsxId,
+            resourceId: fsxId || resourceDetails?.topology?.fileSystemId || resetDetails?.fsxId,
             resourceType: DETECT_HOST_VAR.FSX,
             username: 'fsxadmin',
             password: password
@@ -148,74 +149,102 @@ const WellArchitectDashboard = () => {
         return { credentials: credList };
     };
 
-    const handleFSXAdminApply = async () => {
+    const createSqlPayload = () => {
+        const state = store.getState();
+        const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
+        const { password } = sqlServerPasswords;
+        let credList = [];
+        credList.push({
+            //@ts-ignore
+            resourceId: databaseInstanceName || resourceDetails?.databaseInstanceName,
+            resourceType: DETECT_HOST_VAR.MSSQL,
+            username: sqlServerUserName,
+            password: password
+        });
+
+        return { credentials: credList };
+    };
+
+    const resetPasswords = () => {
+        dispatch(setFsxAdminPassword(''));
+        dispatch(setFsxAdminConfirmPassword(''));
+        dispatch(setSqlServerPassword(''));
+        dispatch(setSqlServerConfirmPassword(''));
+    };
+
+    const handleFSXAdminApply = async (value: string) => {
         dispatch(setPasswordResetLoading(true));
         try {
             const result: any = await registerResourceCred({
                 credentialId: selectedResourceCredId,
                 regionId: selectedResourceRegionId,
-                instanceId: resetDetails?.ec2InstanceId,
-                payload: createPayload()
+                instanceId:
+                    //@ts-ignore
+                    ec2InstanceId || resourceDetails?.nodeTopology?.ec2Details[0]?.id || resetDetails?.ec2InstanceId,
+                payload: value === RESET_PASSWORD_TYPE.FSXADMIN ? createPayload() : createSqlPayload()
             });
             if (result && !result?.error) {
-                if (!result?.data?.fsxnError) {
-                    dispatch(setFsxAdminPassword(''));
-                    dispatch(setFsxAdminConfirmPassword(''));
+                if (!result?.data?.fsxnError && !result?.data?.sqlError) {
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.SUCCESS,
-                            message: 'FSxadmin password reset successfully'
+                            message: `${
+                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'FSxadmin' : 'Sql server'
+                            } password reset successfully`
                         })
                     );
                 } else {
-                    dispatch(setFsxAdminPassword(''));
-                    dispatch(setFsxAdminConfirmPassword(''));
                     dispatch(
                         addNotification({
                             type: NOTIFICATION_TYPES.ERROR,
-                            message: result?.data?.fsxnError || 'Failed to reset FSxadmin password. '
+                            message:
+                                result?.data?.fsxnError ||
+                                `Failed to reset ${
+                                    value === RESET_PASSWORD_TYPE.FSXADMIN ? 'FSxadmin' : 'Sql server'
+                                } password. `
                         })
                     );
                 }
             } else {
-                dispatch(setFsxAdminPassword(''));
-                dispatch(setFsxAdminConfirmPassword(''));
                 dispatch(
                     addNotification({
                         type: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message || 'Failed to reset FSxadmin password. '
+                        message:
+                            result?.error?.data?.message ||
+                            `Failed to reset ${
+                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'FSxadmin' : 'Sql server'
+                            } password. `
                     })
                 );
             }
         } catch (error) {
-            dispatch(setFsxAdminPassword(''));
-            dispatch(setFsxAdminConfirmPassword(''));
             dispatch(
                 addNotification({
                     type: NOTIFICATION_TYPES.ERROR,
-                    message: error || 'Failed to reset FSxadmin password. '
+                    message: error || `Failed to reset FSxadmin password. `
                 })
             );
         } finally {
+            resetPasswords();
             dispatch(setPasswordResetLoading(false));
             closeDialog();
         }
     };
 
-    const handleFsxPassword = () => {
+    const handleFsxPassword = (type: string) => {
         setDialog(
             <DialogComponent
-                header={'Reset FSxadmin password '}
-                content={<FSXPasswordContent />}
+                header={type === RESET_PASSWORD_TYPE.FSXADMIN ? 'Reset FSxadmin password' : 'Reset SQL Server password'}
+                content={type === RESET_PASSWORD_TYPE.FSXADMIN ? <FSXPasswordContent /> : <SQLServerPasswordContent />}
                 primaryButton={GENERAL.APPLY}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    handleFSXAdminApply();
+                    handleFSXAdminApply(RESET_PASSWORD_TYPE.FSXADMIN);
                 }}
                 closeCallback={() => {
                     closeDialog();
                 }}
-                dialogFrom={FROM_DIALOG.FSXADMIN}
+                dialogFrom={type === RESET_PASSWORD_TYPE.FSXADMIN ? FROM_DIALOG.FSXADMIN : FROM_DIALOG.SQLSERVER}
             />
         );
     };
@@ -259,38 +288,19 @@ const WellArchitectDashboard = () => {
                             variant="icon"
                             items={[
                                 {
-                                    id: 'createUserDB',
-                                    children: 'Create a user database',
-                                    // isDisabled: resourceLoadingState,
-                                    onClick: () => {
-                                        // if (!resourceLoadingState) {
-                                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                        dispatch(
-                                            setCdbPageData({
-                                                dbHostName: selectedHostname,
-                                                instanceId: selectedDatabaseInstance,
-                                                instanceName: selectedDatabaseInstanceName,
-                                                cdbCredId: selectedResourceCredId,
-                                                cdbRegionId: selectedResourceRegionId
-                                            })
-                                        );
-                                        dispatch(updateResourceId(selectedResourceId));
-                                        navigate('../create-new-user');
-                                        // }
-                                    }
-                                },
-                                {
                                     id: 'resetSQLServerPassword',
                                     children: 'Reset SQL server password',
 
-                                    onClick: () => {}
+                                    onClick: () => {
+                                        handleFsxPassword(RESET_PASSWORD_TYPE.SQLSERVER);
+                                    }
                                 },
                                 {
                                     id: 'resetFSxAdminPassword',
                                     children: 'Reset FSxadmin password',
 
                                     onClick: () => {
-                                        handleFsxPassword();
+                                        handleFsxPassword(RESET_PASSWORD_TYPE.FSXADMIN);
                                     }
                                 }
                             ]}

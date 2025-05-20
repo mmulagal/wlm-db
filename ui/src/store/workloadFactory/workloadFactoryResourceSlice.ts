@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WorkloadFactoryResourceEntities } from '../../utils/types/workloadFactoryResourceTypes';
-import { set } from 'lodash';
 
 const initialState: WorkloadFactoryResourceEntities = {
     resourceLoading: true,
@@ -144,13 +143,29 @@ const initialState: WorkloadFactoryResourceEntities = {
         password: '',
         confirmPassword: ''
     },
-    passwordResetLoading: false
+    sqlServerPasswords: {
+        password: '',
+        confirmPassword: ''
+    },
+    passwordResetLoading: false,
+    sqlServerUserName: '',
+    instanceDetailsData: {
+        fsxId: '',
+        ec2InstanceId: '',
+        databaseInstanceName: ''
+    }
 };
 
 const workloadFactoryResourceSlice = createSlice({
     name: 'workloadFactoryResource',
     initialState,
     reducers: {
+        setInstanceDetailsData: (state, action: PayloadAction<any>) => {
+            state.instanceDetailsData = action.payload;
+        },
+        setSqlServerUserName: (state, action: PayloadAction<any>) => {
+            state.sqlServerUserName = action.payload;
+        },
         setPasswordResetLoading: (state, action: PayloadAction<any>) => {
             state.passwordResetLoading = action.payload;
         },
@@ -159,6 +174,12 @@ const workloadFactoryResourceSlice = createSlice({
         },
         setFsxAdminConfirmPassword: (state, action: PayloadAction<any>) => {
             state.fsxAdminPasswords.confirmPassword = action.payload;
+        },
+        setSqlServerPassword: (state, action: PayloadAction<any>) => {
+            state.sqlServerPasswords.password = action.payload;
+        },
+        setSqlServerConfirmPassword: (state, action: PayloadAction<any>) => {
+            state.sqlServerPasswords.confirmPassword = action.payload;
         },
         setResourceLoading: (state, action: PayloadAction<any>) => {
             state.resourceLoading = action.payload;
@@ -208,9 +229,13 @@ const workloadFactoryResourceSlice = createSlice({
 });
 
 export const {
+    setInstanceDetailsData,
+    setSqlServerUserName,
     setPasswordResetLoading,
     setFsxAdminPassword,
     setFsxAdminConfirmPassword,
+    setSqlServerPassword,
+    setSqlServerConfirmPassword,
     setResourceLoading,
     setResourceDetails,
     setDatabaseListLoading,

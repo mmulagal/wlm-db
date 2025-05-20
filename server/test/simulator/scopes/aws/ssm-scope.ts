@@ -563,7 +563,7 @@ const getRunningSqlServers = {
 };
 
 const getInstalledSQLVersion = {
-    commands: [GET_INSTALLED_MSSQL_VERSION()]
+    commands: [GET_INSTALLED_MSSQL_VERSION('MSSQLSERVER', false)]
 };
 
 const getInstalledSQLPatches = {

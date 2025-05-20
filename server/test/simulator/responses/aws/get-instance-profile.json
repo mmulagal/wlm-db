@@ -1,0 +1,26 @@
+{
+    "$metadata": {
+      "httpStatusCode": 200,
+      "requestId": "a74feb86-9e4a-4135-812e-63d74474dd2f",
+      "attempts": 1,
+      "totalRetryDelay": 0
+    },
+    "InstanceProfile": {
+      "Path": "/",
+      "InstanceProfileName": "WLMDB-SqlStandaloneStack-1742880721338-SQLStandaloneStack-17700AI3XQKN4-LaunchWizardSqlFSxProfile-sLMUD6geCV2J",
+      "InstanceProfileId": "AIPAWYGBM3V5ZUXDUPMUG",
+      "Arn": "arn:aws:iam::464262061435:instance-profile/WLMDB-SqlStandaloneStack-1742880721338-SQLStandaloneStack-17700AI3XQKN4-LaunchWizardSqlFSxProfile-sLMUD6geCV2J",
+      "CreateDate": "2025-03-25T05:52:26.000Z",
+      "Roles": [
+        {
+          "Path": "/",
+          "RoleName": "WLMDB-SqlStandaloneStack-1742880721338",
+          "RoleId": "AROAWYGBM3V55GTW6RY3N",
+          "Arn": "arn:aws:iam::464262061435:role/WLMDB-SqlStandaloneStack-1742880721338",
+          "CreateDate": "2025-03-25T05:32:10.000Z",
+          "AssumeRolePolicyDocument": "%7B%22Version%22%3A%222012-10-17%22%2C%22Statement%22%3A%5B%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Service%22%3A%22ec2.amazonaws.com%22%7D%2C%22Action%22%3A%22sts%3AAssumeRole%22%7D%5D%7D"
+        }
+      ],
+      "Tags": []
+    }
+  }

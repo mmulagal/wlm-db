@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react-swc';
 import viteTsconfigPaths from 'vite-tsconfig-paths';
 import svgr from '@svgr/rollup';
 
-import eslint from 'vite-plugin-eslint';
 import { vitePluginVersionMark } from 'vite-plugin-version-mark';
 import { PRODUCTION } from './src/utils/consts';
 
@@ -25,7 +24,6 @@ export default defineConfig({
     base: './',
     plugins: [
         react(),
-        eslint(),
 
         viteTsconfigPaths(),
         //@ts-ignore

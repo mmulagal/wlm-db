@@ -27,7 +27,7 @@ describe('MSSQL Patch SSM operations', () => {
 
     it('Get the MSSQL version', async () => {
         const instanceId = 'i-test-ec2-1';
-        const { versionYear } = await getTheMSSqlversion(credentialsId, 'us-east-1', instanceId);
+        const { versionYear } = await getTheMSSqlversion(credentialsId, 'us-east-1', instanceId, false, 'MSSQLSERVER');
         expect(versionYear).toMatch(/20\d{2}/);
     });
 });

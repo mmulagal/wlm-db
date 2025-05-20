@@ -121,7 +121,8 @@ export const FROM_DIALOG = {
     SANDBOX_REFRESH: 'sandbox_refresh',
     DISMISS: 'dismiss',
     OPTIMIZE: 'optimize',
-    FSXADMIN: 'fsxadmin'
+    FSXADMIN: 'fsxadmin',
+    SQLSERVER: 'sqlserver'
 };
 
 export const DBType = {
@@ -484,6 +485,11 @@ export const DETECT_HOST_VAR = {
     DISABLE: 'disable',
     SHOW: 'show',
     HIDE: 'hide'
+};
+
+export const RESET_PASSWORD_TYPE = {
+    FSXADMIN: 'fsxadmin',
+    SQLSERVER: 'sqlserver'
 };
 
 export const DB_VERSIONS = [
@@ -901,4 +907,9 @@ export const MANAGE_STATES = {
     MISSING_POWERSHELL: 'Missing PowerShell modules',
     MISSING_PREREQUISITES: 'Missing prerequisites',
     POWERSHELL7: 'Powershell 7'
+};
+
+export const RESPONSE_STATUS = {
+    SUCCESS: 'SUCCESS',
+    FAILED: 'FAILED'
 };

@@ -67,6 +67,9 @@ interface CountBreakDown {
 
 export interface AssessmentResponseInterface {
     dismissedConfigurations?: any;
+    fileSystemId: string;
+    ec2InstanceId: string;
+    databaseInstanceName: string;
     lastAssessmentTimestamp?: string;
     storage?: {
         timestamp?: string;

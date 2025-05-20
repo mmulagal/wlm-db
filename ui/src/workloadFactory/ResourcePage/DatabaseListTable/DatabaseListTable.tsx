@@ -1,4 +1,4 @@
-import { Table, useTable, TableTopBar, Typography, TooltipInfo } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, Typography, TooltipInfo, Button } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
@@ -11,13 +11,30 @@ import { GENERAL } from '../../../utils/appConstants';
 import { getProtectionText, isAwsBackupEnabledText } from '../../InventoryV2/InventoryUtilsV2';
 import { PROTECTION_TEXT_STATUS } from '../../../utils/consts';
 import DatabaseHostOverviewApiV2 from '../ResourceHomePage/DatabaseHostOverviewApiV2';
+import {
+    addInitialDBCreateData,
+    initialCreateNewUserState,
+    setCdbPageData
+} from '../../../store/workloadFactory/createNewDBSlice';
+import { updateResourceId } from '../../../store/authSlice';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 
 const DatabaseListTable = () => {
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
     const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
+    const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
+    const {
+        resourceLoading: resourceLoadingState,
 
+        selectedDatabaseInstance,
+        selectedResourceId,
+        selectedResourceCredId,
+        selectedResourceRegionId
+    } = useAppSelector(state => state.workloadFactoryResource);
+    const dispatch = useDispatch();
     DatabaseHostOverviewApiV2();
-
+    const navigate = useNavigate();
     const formatData = (tableData: WorkloadFactoryDatabaseItem[]) => {
         return tableData?.map(perRow => {
             let protectionText = getProtectionText(perRow);
@@ -108,16 +125,16 @@ const DatabaseListTable = () => {
                 let awsBackup = isAwsBackupEnabledText(rowData, '');
                 if (
                     protectionData?.isFsxOntapSnapshotsEnabled &&
-                    protectionData?.isFsxOntapSnapshotsEnabled !== GENERAL.NOT_AVAILABLE
+                    String(protectionData?.isFsxOntapSnapshotsEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
                 ) {
                     protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
                 }
-                if (awsBackup && awsBackup !== GENERAL.NOT_AVAILABLE) {
+                if (awsBackup && String(awsBackup)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) {
                     protectedByList.push(GENERAL.AWS_BACKUP);
                 }
                 if (
                     protectionData?.isSqlNativeEnabled &&
-                    protectionData?.isSqlNativeEnabled !== GENERAL.NOT_AVAILABLE
+                    String(protectionData?.isSqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
                 ) {
                     protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
                 }
@@ -187,6 +204,7 @@ const DatabaseListTable = () => {
         pageSize: 50,
         isLazyLoading: databaseListLoading
     });
+
     return (
         <div className={styles.databaseListTable}>
             <TableTopBar
@@ -194,6 +212,32 @@ const DatabaseListTable = () => {
                 tableProps={tableProps}
                 pluralTitle={'Databases'}
                 singularTitle={'Database'}
+                actionsRight={
+                    <div className={styles.databaseButton}>
+                        <Button
+                            variant={'primary'}
+                            className={'continue-button'}
+                            isThin={true}
+                            isDisabled={resourceLoadingState}
+                            onClick={() => {
+                                dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                dispatch(
+                                    setCdbPageData({
+                                        dbHostName: selectedHostname,
+                                        instanceId: selectedDatabaseInstance,
+                                        instanceName: selectedDatabaseInstanceName,
+                                        cdbCredId: selectedResourceCredId,
+                                        cdbRegionId: selectedResourceRegionId
+                                    })
+                                );
+                                dispatch(updateResourceId(selectedResourceId));
+                                navigate('../create-new-user');
+                            }}
+                        >
+                            {GENERAL.ADD_DATABASE}
+                        </Button>
+                    </div>
+                }
             />
             <Table
                 //@ts-ignore

@@ -33,6 +33,18 @@ export const GENERAL = {
         ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To manage this SQL Server instance, please address the necessary prerequisites and try again.'
     ],
     PREREQUISITE_LIST: 'Pre-requisite list',
+    DATABASE_MANAGEMENT: 'Database management',
+    DATABASE_OPTIMIZATION: 'Database optimization',
+    INVENTORY_CARD_TEXT1:
+        'Manage database resources and perform day-to-day operations with FSx for ONTAP. You can check the status of hosts, instances, and databases, deploy new resources, and stay on top of resource usage, data protection, and performance.',
+    INVENTORY_CARD_TEXT2:
+        'Plus, get optimization recommendations to make sure your database resources are well-architected.',
+    INVENTORY_CARD_TEXT3:
+        'Automatically assess and mitigate issues in database infrastructure to keep your databases running smoothly and cost-effectively. Continuously scan deployments to get insights and recommendations to make sure everything aligns with vendor and industry best practices.',
+    WELL_ARCHITECTED_BREAKDOWN_BY_CATEGORY: 'Well-architected breakdown by category',
+    CPU_UTILIZATION: 'CPU utilization',
+    CAPACITY_UTILIZATION: 'Capacity utilization',
+>>>>>>> origin/master
     REACTIVATE_TOOLTIP: 'Restart the analysis for a postponed or dismissed configuration.',
     POSTPONED_TOOLTIP: 'Postpone the configuration analysis for 30 days.',
     DISMISS_TOOLTIP: 'Stop the configuration analysis.',
@@ -57,6 +69,7 @@ export const GENERAL = {
     OPTIMIZE: 'Fix',
     REBASE_LINE: 'Re-baseline',
     APPLY: 'Apply',
+    WELL_ARCHITECTED_STATUS: 'Well-architected status',
     MICROSOFT_SQL: 'Microsoft SQL',
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
     LOADING_DATA: 'Loading data',
@@ -615,6 +628,7 @@ export const GENERAL = {
     JM_RUNNING: 'Running',
     JM_TYPE_DEPLOYMENT: 'Deployment',
     JM_TYPE_CREATE_RESOURCE: 'Create database',
+    ADD_DATABASE: 'Add database',
     JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
@@ -1072,6 +1086,9 @@ export const GENERAL = {
     ES_HEADER:
         'You can identify potential savings by automatically comparing your database workloads to SQL Server using FSx for ONTAP file systems. Choose a SQL Server host and explore savings.',
     ES_SAVINGS: 'Explore savings',
+    POTENTIAL_SAVINGS: 'Potential savings',
+    SQL_SERVER_HOSTS_EBS: 'SQL Server hosts on Elastic Block Store (EBS)',
+    SQL_SERVER_HOSTS_FSXW: 'SQL Server hosts on FSx for Windows',
     MANUAL_EXLORE_SAVINGS: 'Custom configuration cost analysis',
     EXPLORE_SAVING_MANUALLY: 'Analyze custom configuration for Elastic Block Store (EBS)',
     EXPLORE_SAVING_MANUALLY_FSX: 'Analyze custom configuration for FSx for Windows File Server',
@@ -1289,7 +1306,7 @@ export const GENERAL = {
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        "Well-architected is only available for managed instances that have been analyzed and are online. Offline and unanalyzed instances aren't available for well-architected",
+        'A well-architected score is available only for managed instances that have been analyzed and are online.',
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:
