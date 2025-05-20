@@ -7,11 +7,6 @@ interface ErrorLg {
     severity: string;
 }
 
-interface ToolUse {
-    toolUseId?: string;
-    name?: string;
-    input?: string;
-}
 
 interface Content {
     text?: string;
@@ -22,7 +17,13 @@ interface Content {
     };
 }
 
-export interface Message {
+interface ToolUse {
+    toolUseId?: string;
+    name?: string;
+    input?: string;
+}
+
+interface MessageObj {
     role?: ConversationRole;
     content?: Array<Content>;
     user?: string;
@@ -69,4 +70,4 @@ interface ErrorLogWithScript {
     sql: { query: string }[];
 }
 
-export { ErrorLg, ToolUse, Content, ToolSpec, MsSqlErrorLog, ErrorLogWithScript };
+export { MessageObj, ToolUse, ErrorLg, ToolSpec, MsSqlErrorLog, ErrorLogWithScript };

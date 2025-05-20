@@ -1,12 +1,12 @@
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { DATABASE_TYPE, JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
-import { GetInstanceProfileCommandInput } from '@aws-sdk/client-iam';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
 import { AuditStatus, DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
-import { derivePropertiesFromARN, getArtifactsRegionBucketName } from '../../utils/utils';
+import { getArtifactsRegionBucketName } from '../../utils/utils';
 import {
+    LOGS_ANALYZER_BEDROCK_REGION,
     LOGS_ANALYZER_BUNDLE_PATH,
     LOGS_ANALYZER_MODEL_ID,
     LOGS_ANALYZER_PACKAGE_NAME,
@@ -18,8 +18,6 @@ import { DatabaseInstance, DatabaseInstancesIncludingResource } from '../../util
 import getLogger from '../../utils/logger';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getActiveNodeAndInstanceDetails } from '../workloads/mssql/mssql-operations';
-import simulatePrincipalPolicy, { getInstanceProfile } from '../../lib/aws/iam';
-import { describeInstance } from '../../lib/aws/ec2';
 import { sqlQueryExecutionWithAuth } from '../workloads/mssql/ssm-script-utils';
 import { getModelAvailability } from '../../lib/aws/bedrock';
 import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
@@ -27,7 +25,13 @@ import { parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-u
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { InferenceConfigType } from '../../routes/types/logs-analyzer.types';
 import getInferenceProfileFromModelId from '../aws/bedrock-operations';
-import { getLinuxPrepareScript, getWindowsPrepareScript } from './remote-script-functions';
+import {
+    getLinuxBedrockAvailabilityCheckScript,
+    getLinuxPrepareScript,
+    getWindowsBedrockAvailabilityCheckScript,
+    getWindowsPrepareScript
+} from './remote-script-functions';
+import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../workloads/pgsql/const';
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -37,23 +41,30 @@ async function checkLogAnalyzerPreRequisites(
     accountId: string,
     credentialsId: string,
     region: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    databaseType: string,
+    inferenceProfileArn: string
 ) {
-    logger.info(`Checking prerequisites for logs analysis with credentialsId: ${credentialsId}, region: ${region}`);
+    logger.info(`Checking prerequisites for logs analysis with credentialsId: ${credentialsId}, region: ${region}`, {
+        accountId,
+        activeNodeInstanceId,
+        databaseType,
+        inferenceProfileArn
+    });
 
     // Check if the AWS Bedrock Inference Profile is available for the account
     try {
         const availabilityResponse = await getModelAvailability(
             accountId,
             credentialsId,
-            region,
+            LOGS_ANALYZER_BEDROCK_REGION,
             LOGS_ANALYZER_MODEL_ID
         );
 
         const isSupported =
             availabilityResponse?.agreementAvailability?.status === MODEL_AVAILABILITY_STATUS.AVAILABLE &&
             availabilityResponse?.entitlementAvailability === MODEL_AVAILABILITY_STATUS.AVAILABLE;
-        if (isSupported) {
+        if (!isSupported) {
             throw createError(
                 HttpErrorCodes.BAD_REQUEST,
                 'Unable to continue with logs analysis, the AWS Bedrock model cannot be used.'
@@ -66,51 +77,36 @@ async function checkLogAnalyzerPreRequisites(
         );
     }
 
-    // Check if instance profile has the required permissions -> the following approach needs an additional permissions to get instance profile
-    /*
-     * DescribeInstance to get the instance profile ARN, use the ARN to get the instance profile details containing the role ARN, use the role ARN to simulate the policy
-     */
     try {
-        const {
-            Reservations: [
-                { Instances: [{ IamInstanceProfile: { Arn: instanceProfileArn } = {} } = {}] = [] } = {}
-            ] = []
-        } = await describeInstance(credentialsId, region, {
-            InstanceIds: [activeNodeInstanceId]
-        });
-
-        if (isEmpty(instanceProfileArn)) {
-            throw createError(
-                HttpErrorCodes.BAD_REQUEST,
-                'Unable to continue with logs analysis, the instance profile is not attached to the SQL node.'
-            );
-        }
-        const { resourceName } = derivePropertiesFromARN(instanceProfileArn!) || {};
-        const params: GetInstanceProfileCommandInput = {
-            InstanceProfileName: resourceName?.split('/').pop() || ''
-        };
-        const { InstanceProfile: { Roles: [{ Arn: instanceIamRoleArn } = {}] = [] } = {} } = await getInstanceProfile(
+        const bedrockCheckScript =
+            databaseType === DATABASE_TYPE.mssql
+                ? getWindowsBedrockAvailabilityCheckScript(LOGS_ANALYZER_BEDROCK_REGION, inferenceProfileArn)
+                : getLinuxBedrockAvailabilityCheckScript(LOGS_ANALYZER_BEDROCK_REGION, inferenceProfileArn);
+        const response = await callSsmExecution(
             credentialsId,
             region,
-            params
+            [bedrockCheckScript!],
+            activeNodeInstanceId,
+            'Check Bedrock Availability',
+            accountId,
+            false,
+            '600',
+            false, // Cloud watch logs disabled
+            databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC : undefined,
+            databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC_VERSION : undefined
         );
-        const { EvaluationResults: [{ EvalDecision: evaluationDecision } = {}] = [] } =
-            (await simulatePrincipalPolicy(credentialsId, region, {
-                PolicySourceArn: instanceIamRoleArn,
-                ActionNames: ['bedrock:InvokeModelWithResponseStream']
-            })) || {};
 
-        if (evaluationDecision !== 'allowed') {
+        const [jsonResponse] = parseConcatenatedJSON(response);
+        if ((jsonResponse as { success?: boolean })?.success === false) {
             throw createError(
                 HttpErrorCodes.BAD_REQUEST,
-                'Unable to continue with logs analysis, the instance profile does not have the required permissions.'
+                `Unable to continue with logs analysis, the AWS Bedrock model cannot be used. ${
+                    (jsonResponse as any)?.error ?? ''
+                }`
             );
         }
     } catch (error) {
-        throw createError(
-            HttpErrorCodes.BAD_REQUEST,
-            `Unable to continue with logs analysis, we could not get the instance profile details. ${error}`
-        );
+        throw createError(HttpErrorCodes.BAD_REQUEST, `Unable to continue with logs analysis ${error}`);
     }
 }
 
@@ -134,6 +130,8 @@ async function handleLogsAnalysis(
             isManaged: true
         };
 
+        const { database_type: databaseType } = managedInstance;
+
         const { nodeId: activeNodeInstanceId, matchingInstance } = await getActiveNodeAndInstanceDetails(
             accountId,
             credentialsId,
@@ -149,7 +147,14 @@ async function handleLogsAnalysis(
             LOGS_ANALYZER_MODEL_ID
         );
 
-        await checkLogAnalyzerPreRequisites(accountId, credentialsId, region, activeNodeInstanceId);
+        await checkLogAnalyzerPreRequisites(
+            accountId,
+            credentialsId,
+            region,
+            activeNodeInstanceId,
+            databaseType,
+            inferenceProfileArn
+        );
 
         const s3SignedUrl = await getPreSignedUrl(
             DEFAULT_AWS_REGION,
@@ -172,7 +177,7 @@ async function handleLogsAnalysis(
         );
 
         const logsAnalyserScriptCommand =
-            managedInstance.database_type === DATABASE_TYPE.mssql
+            databaseType === DATABASE_TYPE.mssql
                 ? getWindowsPrepareScript({
                       s3SignedUrl,
                       packageName: LOGS_ANALYZER_PACKAGE_NAME,

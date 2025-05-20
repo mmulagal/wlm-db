@@ -3,6 +3,86 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
+function getWindowsBedrockAvailabilityCheckScript(region: string, modelId: string) {
+    return `
+# Ensure AWS CLI is installed
+if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+    Write-Host "AWS CLI not found. Downloading and installing AWS CLI v2..."
+    $installer = "$env:TEMP\\AWSCLIV2.msi"
+    Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -OutFile $installer
+    Start-Process msiexec.exe -ArgumentList "/i \`"$installer\`" /qn" -Wait
+    Remove-Item $installer
+    $env:Path += ";C:\\Program Files\\Amazon\\AWSCLIV2"
+}
+
+$region = "${region}"
+$modelId = "${modelId}"
+
+try {
+   $messagesPath = "$env:TEMP\\messages.json"
+$messagesJson = '[{"role":"user","content":[{"text":"Hello"}]}]'
+$sw = New-Object System.IO.StreamWriter($messagesPath, $false, (New-Object System.Text.UTF8Encoding($false)))
+$sw.Write($messagesJson)
+$sw.Close()
+
+$response = aws bedrock-runtime converse --region $region --model-id $modelId --messages file://$messagesPath
+
+    if ($LASTEXITCODE -eq 0) {
+        $result = @{
+            success = $true
+            response = $response
+            error = $null
+        }
+    } else {
+        $result = @{
+            success = $false
+            response = $null
+            error = $response
+        }
+    }
+    $result | ConvertTo-Json -Depth 5
+} catch {
+    $result = @{
+        success = $false
+        response = $null
+        error = $_.Exception.Message
+    }
+    $result | ConvertTo-Json -Depth 5
+}
+`;
+}
+
+function getLinuxBedrockAvailabilityCheckScript(region: string, modelId: string): string {
+    return `#!/bin/bash
+
+# Check for AWS CLI v2, install if not present
+
+
+REGION="${region}"
+MODEL_ID="${modelId}"
+
+# Prepare the request body as a JSON string
+REQUEST_BODY='[{"role":"user","content":"Hello, how are you?"}]'
+
+# Invoke the model using the inference profile ARN and JSON string body
+RESPONSE=$(
+aws bedrock-runtime converse \
+  --region $REGION \
+  --model-id $MODEL_ID \
+  --messages '[{"role":"user","content":[{"text":"Hello, how are you?"}]}]' 2>&1)
+
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -eq 0 ]; then
+    echo '{"success": true, "response": '"$RESPONSE"', "error": null}'
+else
+    # Escape double quotes and backslashes in error message for valid JSON
+    ESCAPED_ERROR=$(echo "$RESPONSE" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')
+    echo '{"success": false, "response": null, "error": '"$ESCAPED_ERROR"'}'
+fi
+`;
+}
+
 function getWindowsPrepareScript(scriptParams: {
     s3SignedUrl: string;
     packageName: string;
@@ -192,4 +272,9 @@ fi
 `;
 }
 
-export { getWindowsPrepareScript, getLinuxPrepareScript };
+export {
+    getWindowsBedrockAvailabilityCheckScript,
+    getLinuxBedrockAvailabilityCheckScript,
+    getWindowsPrepareScript,
+    getLinuxPrepareScript
+};

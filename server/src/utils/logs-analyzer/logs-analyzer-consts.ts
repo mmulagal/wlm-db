@@ -3,6 +3,7 @@ import { WLMDB } from '../consts';
 const LOGS_ANALYZER_BUNDLE_PATH = `${WLMDB}/scripts/LogsAnalyzer.zip`;
 const LOGS_ANALYZER_PACKAGE_NAME = 'LogsAnalyzerAgent';
 const LOGS_ANALYZER_PACKAGE_VERSION = '1.0.0';
+const LOGS_ANALYZER_BEDROCK_REGION = 'us-east-1';
 
 const LOGS_ANALYZER_MODEL_ID = 'anthropic.claude-3-7-sonnet-20250219-v1:0';
 
@@ -16,5 +17,6 @@ export {
     LOGS_ANALYZER_BUNDLE_PATH,
     LOGS_ANALYZER_PACKAGE_NAME,
     LOGS_ANALYZER_PACKAGE_VERSION,
+    LOGS_ANALYZER_BEDROCK_REGION,
     LOGS_ANALYZER_MODEL_ID
 };

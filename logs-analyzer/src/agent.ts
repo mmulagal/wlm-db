@@ -26,7 +26,7 @@ import collectLogs from '../operations/logs-filtering-operations';
 import TOOLS from './utils/tools';
 import { getPowershellScript, getBashScript, runPowerShellScript, deleteOlderFilesInDirectory } from './utils/utils';
 import logger from './utils/logging';
-import { ErrorLg, ToolUse, Message, ToolSpec, ErrorLogWithScript } from './utils/interfaces';
+import { ErrorLg, ToolUse, ToolSpec, ErrorLogWithScript, MessageObj } from './utils/interfaces';
 
 const { argv } = yargs(hideBin(process.argv))
     .option('logs-path', {
@@ -157,7 +157,7 @@ async function initiateLogsAnalysis(inputText: string) {
     logger.info('Step 1: Initializing client and preparing messages.');
     const client = new BedrockRuntimeClient({ region: MODEL_REGION });
     const uniqueQueryMap = new Map();
-    const messages: Message[] = [
+    const messages: MessageObj[] = [
         {
             role: ConversationRole.USER,
             content: [
@@ -225,13 +225,13 @@ async function initiateLogsAnalysis(inputText: string) {
 
 async function handleToolUse(
     client: BedrockRuntimeClient,
-    message: Message,
-    messages: Message[],
+    message: MessageObj,
+    messages: MessageObj[],
     toolConfig: { tools: ToolSpec[] },
     uniqueQueryMap: Map<string, string[]>,
     inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG
 ) {
-    const stopReason = '';
+    let stopReason = '';
     if (message?.content) {
         for (const content of message.content) {
             if (content?.toolUse) {
@@ -239,18 +239,16 @@ async function handleToolUse(
 
                 switch (tool?.name) {
                     case 'analyze_db_logs': {
-                        const result = await analyzeDatabaseApplicationLogs(
+                        await analyzeDatabaseApplicationLogs(
                             tool,
                             client,
                             LOGS_FOLDER,
                             messages,
                             INFERENCE_CONFIG
                         );
-                        if (result && result.messages) {
-                            logger.info('Log analysis completed. Stopping further tool use.');
+                        stopReason = 'end_turn'; // Stop further tool use
+                        logger.info('Log analysis completed. Stopping further tool use.');
 
-                            return; // Stop recursion here
-                        }
                         break;
                     }
                     default: {
@@ -275,7 +273,7 @@ async function analyzeErrorLogs(
 ) {
     logger.info('Analyzing error logs.', { databaseType });
 
-    const errorLogsWithCause: Message[] = [];
+    const errorLogsWithCause: MessageObj[] = [];
     const errorLogsWithScripts = [];
 
     const prompt =
@@ -305,7 +303,7 @@ async function analyzeErrorLogs(
 
     const assistantMessages = compact(
         errorLogsWithCause
-            .filter((message: Message) => message.role === 'assistant')
+            .filter((message: MessageObj) => message.role === 'assistant')
             .flatMap(message => message.content?.[0]?.text ?? [])
     );
 
@@ -315,7 +313,7 @@ async function analyzeErrorLogs(
     return { errorLogsWithScripts, databaseType };
 }
 
-function parseSuggestedScripts(assistantMessages: string[]) {
+function parseSuggestedScripts(assistantMessages: string[]): ErrorLogWithScript[] {
     logger.info('Parsing suggested scripts from assistant messages.');
 
     return compact(
@@ -345,7 +343,7 @@ function parseSuggestedScripts(assistantMessages: string[]) {
                     return { error, cause, count, severity, sql: filteredQueries };
                 } catch (error) {
                     logger.error('Failed to parse JSON:', { message, error });
-                    return {};
+                    return undefined;
                 }
             })
     );
@@ -498,7 +496,7 @@ async function analyzeDatabaseApplicationLogs(
     tool: ToolUse,
     client: BedrockRuntimeClient,
     logsFolderPath: string,
-    messages: Message[],
+    messages: MessageObj[],
     inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG
 ) {
     logger.info('Analyzing database application logs.', { logsFolderPath });

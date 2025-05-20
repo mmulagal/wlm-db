@@ -1,10 +1,4 @@
-import {
-    IAMClient,
-    GetInstanceProfileCommandInput,
-    GetInstanceProfileCommand,
-    SimulatePrincipalPolicyCommand,
-    SimulatePrincipalPolicyCommandInput
-} from '@aws-sdk/client-iam'; // ES Modules import
+import { IAMClient, SimulatePrincipalPolicyCommand, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 
@@ -21,17 +15,6 @@ async function getIAM(credentialsId: string, region: string) {
     return new IAMClient({ credentials, region });
 }
 
-async function getInstanceProfile(credentialsId: string, region: string, params: GetInstanceProfileCommandInput) {
-    logger.info('Getting IAM instance profile', { credentialsId, region, params });
-
-    const iamClient = await getIAM(credentialsId, region);
-    const command = new GetInstanceProfileCommand(params);
-
-    const response = await iamClient.send(command);
-    logger.debug('GetInstanceProfileCommand response:', response);
-
-    return response;
-}
 export default async function simulatePrincipalPolicy(
     credentialsId: string,
     region: string,
@@ -46,5 +29,3 @@ export default async function simulatePrincipalPolicy(
 
     return response;
 }
-
-export { getInstanceProfile };
