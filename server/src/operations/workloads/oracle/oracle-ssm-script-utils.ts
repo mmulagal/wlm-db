@@ -37,9 +37,7 @@ const getMappedOntapDataVolume = (
 
         svmName=$(echo "$response" | jq -r '.records[0].svm.name')
         
-        # svmName=$(echo "$response" | grep -o '"svm":[^{]*{[^}]*"name":"[^"]*"' | sed 's/.*"name":"\\([^"]*\\)".*/\\1/')
         # Extract volume name (part after /vol/ and before the next /)
-        # mountedVolume=$(echo "$response" | grep -o '"name":"\\/vol\\/[^/]*\\/[^"]*"' | sed 's/.*\\/vol\\/\\([^/]*\\)\\/.*/\\1/')
         mountedVolume=$(echo "$response" | jq -r '.records[0].name | capture("/vol/(?<vol>[^/]+)") | .vol')
         check_status "Failed to extract mounted volume name"
     else
@@ -54,7 +52,6 @@ const getMappedOntapDataVolume = (
         check_status "Failed to get matching SVM with IP address"
 
         svmName=$(echo "$svmResult" | jq -r '.name')
-        # svmName=$(echo "$result" | grep -o '"name":"[^"]*"' | head -1 | sed 's/.*"name":"\\([^"]*\\)".*/\\1/')
         check_status "Failed to extract SVM name"
 
         volEndpoint="storage/volumes?svm.name=$svmName&nas.path=$junctionPath"
@@ -62,7 +59,6 @@ const getMappedOntapDataVolume = (
         check_status "Failed to fetch volume endpoint data"
 
         mountedVolume=$(echo "$response" | jq -r '.records[0].name')
-        # mountedVolume=$(echo "$response" | grep -o '"name":"\\/vol\\/[^/]*\\/[^"]*"' | sed 's/.*\\/vol\\/\\([^/]*\\)\\/.*/\\1/')
         check_status "Failed to extract mounted volume name"
     fi
 `;
