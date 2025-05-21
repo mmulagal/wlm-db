@@ -2208,10 +2208,12 @@ async function optimizeOperatingSystemSettings(
         }
         case OptimizeOperatingSystemParams.MPIO_TIMEOUT: {
             try {
-                // Call the MPIO_TIMEOUT script on the active node
+                // Call the MPIO_TIMEOUT script on both active and standby nodes (if FCI)
                 const { MPIO_TIMEOUT } = await import('./workloads/mssql/mpio-remediation-scripts');
                 const ssmCommand = MPIO_TIMEOUT;
                 const ssmComment = 'Set MPIO timeout';
+
+                // Always run on active node
                 await retryWithDelay(
                     callSsmExecution.bind(
                         null,
@@ -2226,6 +2228,25 @@ async function optimizeOperatingSystemSettings(
                     3,
                     50
                 );
+
+                // If FCI, also run on standby node
+                if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT && standbyNodeInstanceId) {
+                    await retryWithDelay(
+                        callSsmExecution.bind(
+                            null,
+                            credentialsId,
+                            region,
+                            [ssmCommand],
+                            standbyNodeInstanceId,
+                            ssmComment,
+                            accountId,
+                            false
+                        ),
+                        3,
+                        50
+                    );
+                }
+
                 await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
                 const errorMessage = `Error while setting MPIO timeout: ${error}`;
