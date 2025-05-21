@@ -1972,6 +1972,13 @@ export const handleURLFromDashboard = (value: string, isWorkloadFactory: boolean
         }
     }
     navigate(path);
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${path}`,
+            replace: true
+        }
+    });
 };
 
 export const handleURL = (value: string, isWorkloadFactory: boolean) => {
@@ -2018,7 +2025,7 @@ export const handleURL = (value: string, isWorkloadFactory: boolean) => {
         type: BlueXPListeners.navigate,
         payload: {
             pathname: `${path}`,
-            replace: false
+            replace: true
         }
     });
 };
