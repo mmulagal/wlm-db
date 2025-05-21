@@ -790,12 +790,14 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
     let awsBackupDb = 0;
     let fsxOntapSnapshotsDb = 0;
     let sqlServerBackupDb = 0;
+    let crrEnabled = 0;
 
     data?.map((val: any) => {
         if (
             isAwsBackupEnabled(val) ||
             val?.protection?.isFsxOntapSnapshotsEnabled ||
-            val?.protection?.isSqlNativeEnabled
+            val?.protection?.isSqlNativeEnabled ||
+            val?.protection?.isCrrEnabled
         ) {
             protectedDb += 1;
         } else if (
@@ -820,6 +822,9 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
         if (val?.protection?.isSqlNativeEnabled) {
             sqlServerBackupDb += 1;
         }
+        if (val?.protection?.isCRREnabled) {
+            crrEnabled += 1;
+        }
     });
 
     const totalHost = protectedDb + unprotectedDb;
@@ -831,7 +836,9 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
         unprotectedPercent: (unprotectedDb / totalHost) * 100 || 0,
         awsBackupDb: awsBackupDb,
         fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
-        sqlServerBackupDb: sqlServerBackupDb
+        sqlServerBackupDb: sqlServerBackupDb,
+        crrEnabled: crrEnabled,
+        crrEnabledPercent: (crrEnabled / totalHost) * 100 || 0
     };
 };
 
