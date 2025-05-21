@@ -360,7 +360,7 @@ const DatabasesTable = () => {
 
                 if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
                     disableOption = true;
-                    disableMessage = 'Coming soon';
+                    disableMessage = GENERAL.COMING_SOON;
                 } else if (rowData?.type === GENERAL.SYSTEM_DATABASE) {
                     disableOption = true;
                     disableMessage = 'Create sandbox option is not available for system database.';
