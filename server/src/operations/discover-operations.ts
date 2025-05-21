@@ -2547,7 +2547,7 @@ async function getPgSqlResourceDetails(
         const resourceDetails: ResourceDetails = {
             id: null,
             account_id: accountId,
-            resource_id: generateSqlResourceId(ec2Instance.ec2InstanceId),
+            resource_id: ec2Instance.ec2InstanceId,
             resource_type: RESOURCESTYPE.PGSQL,
             resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
             cloud_provider_name: CloudProviders.AWS,
