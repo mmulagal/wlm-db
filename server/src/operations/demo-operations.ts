@@ -208,7 +208,8 @@ async function createDeploymentMockDataInDB(
                     protection: {
                         isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
                         isFsxOntapSnapshotsEnabled: false,
-                        isSqlNativeEnabled: false
+                        isSqlNativeEnabled: false,
+                        isCRREnabled: false
                     },
                     collation: SQL_DEFAULT_COLLATION
                 }
@@ -253,7 +254,8 @@ async function createDeploymentMockDataInDB(
                 protection: {
                     isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
                     isFsxOntapSnapshotsEnabled: false,
-                    isSqlNativeEnabled: false
+                    isSqlNativeEnabled: false,
+                    isCRREnabled: false
                 },
                 collation: SQL_DEFAULT_COLLATION
             }
@@ -370,7 +372,8 @@ async function updateUserDBIntoResourceData(
                     ebs: false
                 },
                 isFsxOntapSnapshotsEnabled: false,
-                isSqlNativeEnabled: false
+                isSqlNativeEnabled: false,
+                isCRREnabled: false
             },
             collation: SQL_DEFAULT_COLLATION
         };
@@ -404,7 +407,8 @@ async function updateUserDBIntoInstanceTable(
                     ebs: false
                 },
                 isFsxOntapSnapshotsEnabled: false,
-                isSqlNativeEnabled: false
+                isSqlNativeEnabled: false,
+                isCRREnabled: false
             },
             collation: SQL_DEFAULT_COLLATION
         };

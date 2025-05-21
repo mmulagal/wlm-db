@@ -220,7 +220,12 @@ interface UserDatabase {
     size: number;
     status: string;
     type: string;
-    protection?: { isAwsBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
+    protection?: {
+        isAwsBackupEnabled: IsAWSBackup;
+        isFsxOntapSnapshotsEnabled: boolean;
+        isSqlNativeEnabled: boolean;
+        isCRREnabled: boolean;
+    };
     collation: string;
 }
 
@@ -373,6 +378,7 @@ interface DatabaseInstance {
     isManaged?: boolean;
     resource: ResourceDetails;
     configurations?: DatabaseInstanceConfigurations | JsonValue;
+    crrConfigData?: { crrDetails: CrrDetails[] };
 }
 
 interface InstanceDetails {

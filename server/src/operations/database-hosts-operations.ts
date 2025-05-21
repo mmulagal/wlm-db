@@ -81,7 +81,8 @@ import {
     MappedOnTapVolumeResponse,
     Metadata,
     ResourceDetails,
-    UserDatabase
+    UserDatabase,
+    VolumeRecord
 } from '../utils/common-types';
 import { getBillByResourceIds, getCostAllocationTags } from './aws/cost-explorer-operations';
 import {
@@ -99,6 +100,8 @@ import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
 import getDatabaseInstanceTopology from '../utils/sql-utils';
+import { AssessmentCategories } from '../utils/continous-optimization-consts';
+import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 
 const logger = getLogger();
 
@@ -146,6 +149,43 @@ interface DatabaseDetails {
 }
 
 const isDemoFlow = isDemo();
+
+async function getUniqueCrrDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId?: string
+) {
+    logger.info('Getting unique CRR details:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    });
+
+    const crrConfigData = await listDatabaseInstanceConfigData(
+        accountId,
+        region!,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId,
+        AssessmentCategories.CRR
+    );
+
+    const uniqueCrrConfigData = Object.values(
+        crrConfigData.reduce((acc: Record<string, any>, entry: any) => {
+            const { database_instance_id: instanceId, last_updated: lastUpdated } = entry;
+            if (!acc[instanceId] || new Date(acc[instanceId].updated_at) < new Date(lastUpdated)) {
+                acc[instanceId] = entry;
+            }
+            return acc;
+        }, {})
+    );
+
+    return uniqueCrrConfigData;
+}
 
 async function getStorageData(
     resourceDetail?: ResourceDetails,
@@ -289,22 +329,29 @@ async function getProtectionStatus(
 
         const awsBackup = protectionResponse ? protectionResponse.awsBackup : {};
         const ontapBackup = protectionResponse ? protectionResponse.ontapBackup : {};
+        const crrBackup = protectionResponse ? protectionResponse.crrBackup : {};
 
-        const commonResult = {
-            isAwsBackupEnabled: {
-                fsxn: isDemoFlow ? true : checkAllTrue(awsBackup),
-                fsxw: Boolean(fsxwBackup),
-                ebs: Boolean(ebsBackup)
-            },
-            isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup)
-        };
+        const commonResult = instanceNames.reduce((acc, instName) => {
+            acc[instName] = {
+                isAwsBackupEnabled: {
+                    fsxn: isDemoFlow ?? checkAllTrue(awsBackup[instName]),
+                    fsxw: Boolean(fsxwBackup),
+                    ebs: Boolean(ebsBackup)
+                },
+                isFsxOntapSnapshotsEnabled: isDemoFlow ?? checkAllTrue(ontapBackup[instName]),
+                isCRREnabled: isDemoFlow ?? checkAllTrue(crrBackup[instName])
+            };
+            return acc;
+        }, {} as Record<string, any>);
 
         return instanceNames.map(iName => {
             const nativeBackupCount = nativeSqlProtection?.[iName]?.backupCount;
             return {
                 isSqlNativeEnabled: Boolean(nativeBackupCount),
                 protectedDatabases: Number.isNaN(Number(nativeBackupCount)) ? 0 : Number(nativeBackupCount),
-                ...commonResult
+                isAwsBackupEnabled: commonResult[iName]?.isAwsBackupEnabled ?? { fsxn: 'N/A', fsxw: false, ebs: false },
+                isFsxOntapSnapshotsEnabled: commonResult[iName]?.isFsxOntapSnapshotsEnabled ?? 'N/A',
+                isCRREnabled: commonResult[iName]?.isCRREnabled ?? 'N/A'
             };
         });
     } catch (error) {
@@ -1006,6 +1053,7 @@ async function getDatabaseHostSummaryV2(
 
     const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLowerCase());
+    const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
     if (isEmpty(instancesManaged)) {
         instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
@@ -1021,10 +1069,24 @@ async function getDatabaseHostSummaryV2(
             return instance;
         });
     }
+
+    const uniqueCrrConfigData = getProtection
+        ? await getUniqueCrrDetails(accountId, credentialsId, region!, resourceId)
+        : [];
+
     // Update the database instances detail to include storage type as FSXN
     instancesManaged = instancesManaged.map(instance => ({
         ...instance,
         storage_type: STORAGE_TYPE.FSXN,
+        crrConfigData: uniqueCrrConfigData.find(
+            (config: any) => config.database_instance_id === instance.database_instance_id
+        )
+            ? {
+                  crrDetails: uniqueCrrConfigData.find(
+                      (config: any) => config.database_instance_id === instance.database_instance_id
+                  )?.config_data
+              }
+            : undefined,
         isManaged: true
     }));
     const errormessages: { [index: string]: string } = {};
@@ -1339,6 +1401,14 @@ async function getDatabasesV2(
 
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
+    const uniqueCrrConfigData = getProtection
+        ? await getUniqueCrrDetails(accountId, credentialsId, region!, databaseHostId, databaseInstanceId)
+        : [];
+    // Attach CRR config data if available
+    if (uniqueCrrConfigData?.length) {
+        newDatabaseInstanceDetails.crrConfigData = uniqueCrrConfigData[0]?.config_data;
+    }
+
     try {
         const response = await getDatabaseDetails(
             accountId,
@@ -1361,6 +1431,32 @@ async function getDatabasesV2(
     }
 }
 
+async function fetchCrrBackupDetails(
+    instanceDetails: DatabaseInstance[],
+    volumeRecords: VolumeRecord[],
+    volumeDBMap: any
+) {
+    logger.info('Fetching CRR backup details', { instanceDetails, volumeDBMap, volumeRecords });
+    if (isEmpty(instanceDetails)) {
+        logger.warn('Instance details array is empty. Returning an empty mapping.');
+        return [];
+    }
+    const { crrConfigData } = instanceDetails[0];
+    const crrDetails = crrConfigData?.crrDetails || [];
+    const crrMapping = volumeRecords.map(volumeRecord => {
+        const crrDetail = crrDetails.find((detail: { volumeName: string }) => detail.volumeName === volumeRecord.name);
+        const volumeDB = volumeDBMap.find(
+            (dbMap: { ontapVolumeuuid: string }) => dbMap.ontapVolumeuuid === volumeRecord.uuid
+        );
+        return {
+            databaseName: volumeDB ? volumeDB.databaseName : null,
+            isCRREnabled: crrDetail ? crrDetail.isCRREnabled : null
+        };
+    });
+
+    return crrMapping;
+}
+
 async function getProtectionDetails(
     credentialsId: string,
     region: string,
@@ -1369,7 +1465,11 @@ async function getProtectionDetails(
     activeNodeInstanceId?: string,
     instanceDetails?: DatabaseInstance[],
     isSqlAuthEnabled = false
-): Promise<{ awsBackup: BackupType; ontapBackup: BackupType }> {
+): Promise<{
+    awsBackup: Record<string, BackupType>;
+    ontapBackup: Record<string, BackupType>;
+    crrBackup: Record<string, BackupType>;
+}> {
     logger.info('Getting Proteciton details', {
         credentialsId,
         region,
@@ -1400,22 +1500,66 @@ async function getProtectionDetails(
         instanceOntapDetails
     )) as MappedOnTapVolumeResponse[]) || [{ volumeRecords: [], volumeDBMap: {} }];
 
-    const volumeRecords =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeRecords)
-            .flat() || [];
-    const volumeDBMap =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i?.volumeDBMap)
-            .flat() || {};
-    const volumeUuids = volumeRecords.map(volume => volume.uuid as string);
+    const volumeRecords = Object.fromEntries(
+        Object.entries(instanceVolumeMapping).map(([instanceName, data]) => [instanceName, data?.volumeRecords || []])
+    );
 
-    const [awsBackup = {}, ontapBackup = {}] = await Promise.all([
-        isFsxnAwsBackupEnabled(credentialsId, region, fileSystemId, volumeUuids, volumeDBMap, activeNodeInstanceId),
-        getOntapVolumesSnapshotCount(credentialsId, region, fileSystemId, volumeRecords, volumeDBMap)
-    ]);
+    const volumeDBMap = Object.fromEntries(
+        Object.entries(instanceVolumeMapping).map(([instanceName, data]) => [instanceName, data?.volumeDBMap || {}])
+    );
 
-    return { awsBackup, ontapBackup };
+    const volumeUuids = Object.fromEntries(
+        Object.entries(instanceVolumeMapping).map(([instanceName, data]) => [
+            instanceName,
+            (data?.volumeRecords || []).map(volume => volume.uuid as string)
+        ])
+    );
+
+    const awsBackup: Record<string, BackupType> = {};
+    const ontapBackup: Record<string, BackupType> = {};
+    const crrBackup: Record<string, BackupType> = {};
+
+    await Promise.all(
+        Object.entries(instanceVolumeMapping).map(async ([instanceName]) => {
+            const [awsBackupInstance, ontapBackupInstance, crrBackupInstance] = await Promise.all([
+                isFsxnAwsBackupEnabled(
+                    credentialsId,
+                    region,
+                    fileSystemId,
+                    volumeUuids[instanceName],
+                    volumeDBMap[instanceName],
+                    activeNodeInstanceId
+                ),
+                getOntapVolumesSnapshotCount(
+                    credentialsId,
+                    region,
+                    fileSystemId,
+                    volumeRecords[instanceName],
+                    volumeDBMap[instanceName]
+                ),
+                fetchCrrBackupDetails(
+                    instanceDetails?.filter(instance => instance.database_instance_name === instanceName) || [],
+                    volumeRecords[instanceName],
+                    volumeDBMap[instanceName]
+                )
+            ]);
+
+            awsBackup[instanceName] = {
+                ...awsBackupInstance,
+                volumeUuidsInBackups: Boolean(awsBackupInstance?.volumeUuidsInBackups)
+            };
+            ontapBackup[instanceName] = ontapBackupInstance || {};
+            crrBackup[instanceName] = crrBackupInstance.reduce(
+                (acc: BackupType, item: { databaseName: string; isCRREnabled: boolean | null }) => {
+                    acc[item.databaseName] = item.isCRREnabled === null ? false : item.isCRREnabled;
+                    return acc;
+                },
+                {}
+            );
+        })
+    );
+
+    return { awsBackup, ontapBackup, crrBackup };
 }
 
 async function getInstanceOntapDetails(
@@ -1537,48 +1681,51 @@ async function getDatabaseDetails(
     });
     try {
         const newinstanceNames = databaseInstances.map(instance => instance.database_instance_name);
-        const [{ databases } = { databases: [] }, backedupDatabases, { awsBackup = [], ontapBackup = [] } = {}] =
-            await Promise.all(
-                [
-                    getDataBasesSummary(
-                        databaseHostId,
-                        activeNodeInstanceId!,
-                        sqlAuthEnabled,
-                        accountId,
-                        credentialsId,
-                        newinstanceNames
-                    ),
-                    ...(getProtection
-                        ? [
-                              getNativeSQLBackedupDatabases(
-                                  databaseHostId,
-                                  activeNodeInstanceId,
-                                  newinstanceNames,
-                                  sqlAuthEnabled,
-                                  accountId,
-                                  credentialsId
-                              )
-                          ]
-                        : [Promise.resolve()]), // Fetch native sql protection status
-                    ...(activeNodeInstanceId && getProtection
-                        ? [
-                              getProtectionDetails(
-                                  credentialsId,
-                                  region,
-                                  fileSystemId,
-                                  false,
-                                  activeNodeInstanceId,
-                                  databaseInstances,
-                                  sqlAuthEnabled
-                              )
-                          ]
-                        : [Promise.resolve()]) // Fetch protection status
-                ].map(p =>
-                    p.catch(error => {
-                        logger.error(`Error while fetching database details: ${error?.message}.`);
-                    })
-                )
-            );
+        const [
+            { databases } = { databases: [] },
+            backedupDatabases,
+            { awsBackup = [], ontapBackup = [], crrBackup = [] } = {}
+        ] = await Promise.all(
+            [
+                getDataBasesSummary(
+                    databaseHostId,
+                    activeNodeInstanceId!,
+                    sqlAuthEnabled,
+                    accountId,
+                    credentialsId,
+                    newinstanceNames
+                ),
+                ...(getProtection
+                    ? [
+                          getNativeSQLBackedupDatabases(
+                              databaseHostId,
+                              activeNodeInstanceId,
+                              newinstanceNames,
+                              sqlAuthEnabled,
+                              accountId,
+                              credentialsId
+                          )
+                      ]
+                    : [Promise.resolve()]), // Fetch native sql protection status
+                ...(activeNodeInstanceId && getProtection
+                    ? [
+                          getProtectionDetails(
+                              credentialsId,
+                              region,
+                              fileSystemId,
+                              false,
+                              activeNodeInstanceId,
+                              databaseInstances,
+                              sqlAuthEnabled
+                          )
+                      ]
+                    : [Promise.resolve()]) // Fetch protection status
+            ].map(p =>
+                p.catch(error => {
+                    logger.error(`Error while fetching database details: ${error?.message}.`);
+                })
+            )
+        );
 
         const response = Object.entries(databases).reduce((acc, [instName, dbs]) => {
             if (Array.isArray(dbs)) {
@@ -1596,13 +1743,16 @@ async function getDatabaseDetails(
                                 isAwsBackupEnabled: {
                                     fsxn: isDemoFlow
                                         ? true
-                                        : checkKey(awsBackup.volumeDBMapWithBackupFlag, database.databaseName),
+                                        : checkKey(
+                                              awsBackup[instName].volumeDBMapWithBackupFlag,
+                                              database.databaseName
+                                          ),
                                     fsxw: false,
                                     ebs: false
                                 },
                                 isFsxOntapSnapshotsEnabled: isDemoFlow
                                     ? true
-                                    : checkKey(ontapBackup, database.databaseName),
+                                    : checkKey(ontapBackup[instName], database.databaseName),
                                 isSqlNativeEnabled:
                                     backedupDatabases?.[instName] && backedupDatabases?.[instName].includes('error')
                                         ? false
@@ -1612,7 +1762,8 @@ async function getDatabaseDetails(
                                                       (e: { backedupDatabases: string }) =>
                                                           e.backedupDatabases === database.databaseName
                                                   )
-                                          )
+                                          ),
+                                isCRREnabled: isDemoFlow ? true : checkKey(crrBackup[instName], database.databaseName)
                             }
                         })
                     })
