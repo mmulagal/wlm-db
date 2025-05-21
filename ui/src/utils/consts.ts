@@ -634,6 +634,15 @@ export const INVENTORY_STATUS = {
     RUNNING_LOWER: 'running'
 };
 
+export const WELL_ARCHITECT_FINDINGS = {
+    OPTIMIZED: 'Optimized',
+    NOT_OPTIMIZED: 'Not optimized',
+    OVER_PROVISIONED: 'Over-provisioned',
+    INSUFFICIENT_DATA: 'n/a',
+    UNDER_PROVISIONED: 'Under-provisioned',
+    INSUFFICIENT_PERMISSIONS: 'n/a'
+};
+
 export const INVENTORY_ACTIONS = {
     MANAGE: 'Manage',
     EXPLORE_SAVINGS: 'Explore savings'
