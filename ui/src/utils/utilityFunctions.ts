@@ -1932,6 +1932,48 @@ export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolea
     });
 };
 
+export const handleURLFromDashboard = (value: string, isWorkloadFactory: boolean, navigate?: any) => {
+    let path = '';
+    if (isWorkloadFactory) {
+        switch (value) {
+            case 'Inventory':
+                path = '../databases/inventory';
+                break;
+            case 'Dashboard':
+                path = '../databases/dashboard';
+                break;
+            case 'Sandboxes':
+                path = '../databases/sandboxes';
+                break;
+            case 'Explore savings':
+                path = '../databases/explore-savings';
+                break;
+            case 'Job monitoring':
+                path = '../databases/job-monitoring';
+                break;
+        }
+    } else {
+        switch (value) {
+            case 'Inventory':
+                path = '../../fsxdb/inventory';
+                break;
+            case 'Dashboard':
+                path = '../../fsxdb/dashboard';
+                break;
+            case 'Sandboxes':
+                path = '../../fsxdb/sandboxes';
+                break;
+            case 'Explore savings':
+                path = '../../fsxdb/explore-savings';
+                break;
+            case 'Job monitoring':
+                path = '../../fsxdb/job-monitoring';
+                break;
+        }
+    }
+    navigate(path);
+};
+
 export const handleURL = (value: string, isWorkloadFactory: boolean) => {
     let path = '';
     if (isWorkloadFactory) {
@@ -1971,11 +2013,12 @@ export const handleURL = (value: string, isWorkloadFactory: boolean) => {
                 break;
         }
     }
+
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
         payload: {
             pathname: `${path}`,
-            replace: true
+            replace: false
         }
     });
 };

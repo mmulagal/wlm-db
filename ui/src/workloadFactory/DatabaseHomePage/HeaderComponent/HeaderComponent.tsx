@@ -23,6 +23,7 @@ import {
     generateOptionType,
     getCurrentDateTime,
     handleURL,
+    handleURLFromDashboard,
     regionsSort,
     resetDBHomePageState,
     setExploreSavingsSubTab,
@@ -790,7 +791,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
         dispatch(addExploreSavingsInitialData(null));
-        handleURL(value, isWorkloadFactory);
+        handleURLFromDashboard(value, isWorkloadFactory, navigate);
     };
 
     useEffect(() => {
