@@ -849,7 +849,13 @@ export const formatMicrosoftSqlPatchCardConfig = (
         totalPatches += perInstance?.importantMissingPatchesCount || 0;
         criticalPatches += perInstance?.criticalMissingPatchesCount || 0;
         importantPatches += perInstance?.importantMissingPatchesCount || 0;
-        missingPatchList = [...missingPatchList, ...(perInstance?.missingPatchDetails || [])];
+        missingPatchList = [
+            ...missingPatchList,
+            ...(perInstance?.missingPatchDetails || []).map(patch => ({
+                ...patch,
+                instanceName: perInstance.ec2InstanceName
+            }))
+        ];
     });
 
     cardsData = {
