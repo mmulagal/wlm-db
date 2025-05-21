@@ -124,7 +124,6 @@ const InventoryApisV3 = () => {
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.data?.regionCode || '');
     const [partnerInstanceList, setPartnerInstanceList] = useState<any>([]);
-    const [partnerPgsqlInstanceList, setPartnerPgsqlInstanceList] = useState<any>([]);
 
     // getManagedHostList function values update
     const [getManagedHostListAPI] = useLazyGetManagedHostDataQuery();
@@ -916,24 +915,6 @@ const InventoryApisV3 = () => {
             if (result && !result?.error) {
                 let pgsqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    let partnerInstanceId = getPartnerInstanceId(host, host?.id);
-                    if (
-                        partnerInstanceId &&
-                        !runningPgsqlInstanceListRef.current.includes(
-                            uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)
-                        ) &&
-                        !pgsqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]
-                            ?.isManagedHost &&
-                        !partnerInstanceList.includes(
-                            uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)
-                        )
-                    ) {
-                        setPartnerPgsqlInstanceList([
-                            ...partnerInstanceList,
-                            ...[uniqueHostRow(partnerInstanceId, instanceCredId, instanceRegionId)]
-                        ]);
-                    }
-
                     if (pgsqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
                         pgsqlInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
                             isManagedHost:
@@ -1493,13 +1474,6 @@ const InventoryApisV3 = () => {
             callInstanceApi(partnerInstanceList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
         }
     }, [partnerInstanceList]);
-
-    useEffect(() => {
-        // if partner instance ID
-        if (partnerPgsqlInstanceList?.length > 0) {
-            callPgsqlResourceApi(partnerPgsqlInstanceList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
-        }
-    }, [partnerPgsqlInstanceList]);
 
     useEffect(() => {
         // if partner instance ID

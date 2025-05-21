@@ -565,6 +565,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         dashSandboxListLoading,
         dashSandboxSavingsLoading,
         discoverHostLoading,
+        discoverOracleHostLoading,
+        discoverPgsqlHostLoading,
         fsxCredentialStatusLoading,
         mssqlInstancesData,
         pgsqlInstancesData,

@@ -2287,12 +2287,27 @@ export const getPerfUnmanagedData = (
     partnerId?: string
 ) => {
     const updatedState = store.getState();
-    const perfMssqlInstancesData = updatedState.inventoryV2.perfMssqlInstancesData;
+    // perfMssqlInstancesData - This is used for MSSQL as we get MSSQL protection and perf data seperately
+    // pgsqlInstancesData - This is used for PGSQL as we get PGSQL protection and perf data together with cost
+    // Will handle oracle also
+    const { perfMssqlInstancesData, pgsqlInstancesData } = updatedState.inventoryV2;
     let uniqueInstanceId = uniqueHostRow(instanceId, credentialId, regionId);
     let uniquePartnerId = uniqueHostRow(partnerId || '', credentialId, regionId);
+    let perfData1: any = null;
+    let perfData2: any = null;
+    let perfData: any = null;
     if (perfMssqlInstancesData?.[uniqueInstanceId] && partnerId && perfMssqlInstancesData?.[uniquePartnerId]) {
-        let perfData1 = perfMssqlInstancesData?.[uniqueInstanceId];
-        let perfData2 = perfMssqlInstancesData?.[uniquePartnerId];
+        perfData1 = perfMssqlInstancesData?.[uniqueInstanceId];
+        perfData2 = perfMssqlInstancesData?.[uniquePartnerId];
+    } else if (perfMssqlInstancesData?.[uniqueInstanceId]) {
+        perfData = perfMssqlInstancesData?.[uniqueInstanceId];
+    } else if (pgsqlInstancesData?.[uniqueInstanceId] && partnerId && pgsqlInstancesData?.[uniquePartnerId]) {
+        perfData1 = pgsqlInstancesData?.[uniqueInstanceId];
+        perfData2 = pgsqlInstancesData?.[uniquePartnerId];
+    } else if (pgsqlInstancesData?.[uniqueInstanceId]) {
+        perfData = pgsqlInstancesData?.[uniqueInstanceId];
+    }
+    if (perfData1 && partnerId && perfData2) {
         const perRow1 = perfData1?.data?.databaseInstancesSummary?.find(
             (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
         );
@@ -2318,8 +2333,7 @@ export const getPerfUnmanagedData = (
                 performance: null
             };
         }
-    } else if (perfMssqlInstancesData?.[uniqueInstanceId]) {
-        let perfData = perfMssqlInstancesData?.[uniqueInstanceId];
+    } else if (perfData) {
         if (perfData?.loading) {
             return {
                 loading: true,
