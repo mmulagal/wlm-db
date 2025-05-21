@@ -239,7 +239,7 @@ const WellArchitectDashboard = () => {
                 primaryButton={GENERAL.APPLY}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    handleFSXAdminApply(RESET_PASSWORD_TYPE.FSXADMIN);
+                    handleFSXAdminApply(type);
                 }}
                 closeCallback={() => {
                     closeDialog();

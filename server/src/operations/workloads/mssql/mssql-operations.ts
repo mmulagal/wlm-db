@@ -768,7 +768,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 const parsedResponse = sqlResponseParsing(response);
 
                 const instancesDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
-                const sql = await getSQLAuthFromSSMParameterStore(credentialsId, region, nodeId);
+                const { sql, domain } = await getSQLAuthFromSSMParameterStore(credentialsId, region, nodeId);
 
                 instancesDetails.forEach(obj => {
                     (obj as any).isDefault = !obj.instanceName.includes('$');
@@ -780,6 +780,14 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                                       sqlinstancename &&
                                       sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase()
                               )
+                          )
+                        : !isEmpty(domain)
+                        ? Boolean(
+                              domain?.find(({ sqlinstancename }: { sqlinstancename: string }) => {
+                                  sqlinstancename &&
+                                      (sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase() ||
+                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME);
+                              })
                           )
                         : false;
                 });
@@ -1315,7 +1323,7 @@ async function getActiveSqlNodeAndInstanceDetails(
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId, accountId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId], accountId);
-                const sql = await getSQLAuthFromSSMParameterStore(credentialsId, region, nodeId);
+                const { sql, domain } = await getSQLAuthFromSSMParameterStore(credentialsId, region, nodeId);
 
                 instanceDetails?.forEach((obj: { instanceName: string; sqlAuthEnabled: boolean }) => {
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
@@ -1328,6 +1336,14 @@ async function getActiveSqlNodeAndInstanceDetails(
                                       sqlinstancename &&
                                       sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase()
                               )
+                          )
+                        : !isEmpty(domain)
+                        ? Boolean(
+                              domain?.find(({ sqlinstancename }: { sqlinstancename: string }) => {
+                                  sqlinstancename &&
+                                      (sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase() ||
+                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME);
+                              })
                           )
                         : false;
                 });
@@ -1415,12 +1431,13 @@ async function getSQLAuthFromSSMParameterStore(credentialsId: string, region: st
     }
 
     let sql = [];
+    let domain = [];
     try {
-        ({ sql = [] } = JSON.parse(ssmParameter ?? '{}'));
+        ({ sql = [], domain = [] } = JSON.parse(ssmParameter ?? '{}'));
     } catch (error) {
         logger.error('Error parsing SSM parameter store', { error }, { ssmParameter });
     }
-    return sql;
+    return { sql, domain };
 }
 
 export {

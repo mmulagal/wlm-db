@@ -105,7 +105,8 @@ const RESOURCE_CLASS = 'STORAGE_SERVICES';
 const WLMDB_RESOURCE_CLASS = 'WLMDB';
 enum DatabaseTypes {
     MS_SQL_SERVER = 'MSSQL',
-    PG_SQL = 'PGSQL'
+    PG_SQL = 'PGSQL',
+    ORACLE = 'ORACLE'
 }
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
@@ -645,7 +646,8 @@ const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
     privateSubnet1Id: 'PrivateSubnet1ID',
     routeTable1Id: 'RouteTable1Id',
     privateSubnet2Id: 'PrivateSubnet2ID',
-    routeTable2Id: 'RouteTable2Id'
+    routeTable2Id: 'RouteTable2Id',
+    preferredDomainController: 'PreferredDomainController'
 };
 
 const WLM_ASSETS: Record<string, string> = {

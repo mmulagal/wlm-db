@@ -41,7 +41,8 @@ import {
     sqlResponseParsing,
     isValidProp,
     generateSqlResourceId,
-    escapeBackslash
+    escapeBackslash,
+    getEc2Hostname
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -204,7 +205,8 @@ async function getHostAndSqlServerInfo(
         filters,
         pageSize,
         nextToken,
-        instances
+        instances,
+        DatabaseTypes.MS_SQL_SERVER
     );
 
     const ssmConnectedEc2ResponseInfo: DiscoverResponseInfoType[] = [];
@@ -648,8 +650,12 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     const featureReadiness = Object.entries(FEATURE_PREPREQUISITES).reduce((acc, [key, value]) => {
                         acc[key.toLowerCase()] = {
-                            missingSqlPermissions: value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
-                            missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                            missingSqlPermissions: !isEmpty(sqlPermissions)
+                                ? value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x))
+                                : [],
+                            missingModules: !isEmpty(availablePsModules)
+                                ? value.MODULES.filter(x => !availablePsModules.includes(x))
+                                : []
                         };
                         return acc;
                     }, {} as Record<string, { missingSqlPermissions: string[]; missingModules: string[] }>);
@@ -1226,10 +1232,12 @@ async function validateCredentials(
                             Object.entries(FEATURE_PREPREQUISITES).map(([key, value]) => [
                                 key.toLowerCase(),
                                 {
-                                    missingSqlPermissions: value.SQL_PERMISSIONS.filter(
-                                        x => !sqlPermissions.includes(x)
-                                    ),
-                                    missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                                    missingSqlPermissions: !isEmpty(sqlPermissions)
+                                        ? value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x))
+                                        : [],
+                                    missingModules: !isEmpty(availablePsModules)
+                                        ? value.MODULES.filter(x => !availablePsModules.includes(x))
+                                        : []
                                 }
                             ])
                         );
@@ -2182,7 +2190,8 @@ async function discoverEc2Instances(
     filters: Filter[] = [],
     pageSize?: number,
     nextToken?: string,
-    ec2InstanceIds: string[] = []
+    ec2InstanceIds: string[] = [],
+    discoveryDbType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
 ) {
     logger.info('Discover EC2 resources', { accountId, credentialsId, region, pageSize, nextToken });
 
@@ -2224,10 +2233,10 @@ async function discoverEc2Instances(
         compact(ec2InstanceList.map(({ InstanceId }) => InstanceId))
     );
 
-    const ec2Instances = ec2InstanceList?.map(ec2Instance => {
-        const name = isDemo() ? `sqlnode-${randomize('0', 5)}` : getResourceNameFromTags(ec2Instance?.Tags);
+    let ec2Instances = ec2InstanceList?.map(ec2Instance => {
+        const name = getEc2Hostname(discoveryDbType, ec2Instance?.Tags);
         return {
-            ec2InstanceId: ec2Instance?.InstanceId || '',
+            ec2InstanceId: isDemoFlow ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
             ec2InstanceType: ec2Instance?.InstanceType || '',
             ec2InstanceName: name || '',
             ec2UsageOperation: ec2Instance?.UsageOperation || '',
@@ -2243,6 +2252,11 @@ async function discoverEc2Instances(
         };
     });
 
+    if (isDemoFlow) {
+        ec2Instances = ec2Instances.filter(
+            ec2InstanceDetails => ec2InstanceDetails.ssmState === ConnectionStatus.CONNECTED
+        );
+    }
     return { ec2Instances, NextToken };
 }
 
@@ -2280,7 +2294,8 @@ async function discoverPgSqlResources(
         filters,
         pageSize,
         nextToken,
-        ec2InstanceIds
+        ec2InstanceIds,
+        DatabaseTypes.PG_SQL
     );
 
     logger.debug('Discovered PostgreSQL resources', { ec2Instances, NextToken });
@@ -2532,7 +2547,7 @@ async function getPgSqlResourceDetails(
         const resourceDetails: ResourceDetails = {
             id: null,
             account_id: accountId,
-            resource_id: generateSqlResourceId(ec2Instance.ec2InstanceId),
+            resource_id: ec2Instance.ec2InstanceId,
             resource_type: RESOURCESTYPE.PGSQL,
             resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
             cloud_provider_name: CloudProviders.AWS,
@@ -2702,7 +2717,8 @@ async function discoverOracleResources(
         filters,
         pageSize,
         nextToken,
-        ec2InstanceIds
+        ec2InstanceIds,
+        DatabaseTypes.ORACLE
     );
 
     const ssmNotConnectedEc2Instances: DiscoveredEc2InstanceType[] = ec2Instances.filter(

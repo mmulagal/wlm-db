@@ -1,5 +1,4 @@
 import { STORAGE_TYPE } from '@prisma/client';
-import randomize from 'randomatic';
 import numeral from 'numeral';
 import {
     DescribeInstancesCommandOutput,
@@ -94,7 +93,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getResourceNameFromTags, isDemo } from '../utils/utils';
+import { getEc2Hostname, isDemo } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
@@ -739,9 +738,10 @@ async function getNodeTopology(
                         activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
                         activeSubnetId = activeNode.SubnetId;
                         activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                        activeNodeInstanceName = isDemo()
-                            ? `sqlnode-${randomize('0', 5)}`
-                            : getResourceNameFromTags(activeNode.Tags);
+                        activeNodeInstanceName = getEc2Hostname(
+                            resourceData.resource_type as DatabaseTypes,
+                            activeNode?.Tags
+                        );
                         vpcId = activeNode.VpcId;
                         vpcCidr = activeNode.VpcId;
                         activeNodeStatus = activeNode.State?.Name;
@@ -762,9 +762,10 @@ async function getNodeTopology(
                             standbyNodeStatus = standbyNode.State?.Name;
                             const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
                             ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
-                            standbyNodeInstanceName = isDemo()
-                                ? `sqlnode-${randomize('0', 5)}`
-                                : getResourceNameFromTags(standbyNode.Tags);
+                            standbyNodeInstanceName = getEc2Hostname(
+                                resourceData.resource_type as DatabaseTypes,
+                                standbyNode?.Tags
+                            );
                         }
                     }
                 } else {
@@ -863,7 +864,7 @@ async function getDatabaseHostsSummaryV2(
         undefined,
         apiPageSize,
         nextToken,
-        true
+        !isDemoFlow
     );
 
     if (isEmpty(resourceDetails)) {
@@ -871,6 +872,7 @@ async function getDatabaseHostsSummaryV2(
         return { count: 0, items: [], nextToken: '' };
     }
 
+    const resourcesMap: Map<string, ResourceDetails> = new Map(resourceDetails.map(r => [r.resource_id, r]));
     const managedInstancesMap: Map<string, DatabaseInstance[]> = new Map(
         resourceDetails.map(r => [r.resource_id, (r as any)?.database_instances?.flat()])
     );
@@ -878,8 +880,7 @@ async function getDatabaseHostsSummaryV2(
     managedInstancesMap.forEach((value: DatabaseInstance[], key) => {
         if (value && value.length > 0) {
             value.forEach((instance: DatabaseInstance) => {
-                instance.resource =
-                    resourceDetails.find((r: ResourceDetails) => r.resource_id === key) ?? ({} as ResourceDetails);
+                instance.resource = resourcesMap.get(key) ?? ({} as ResourceDetails);
             });
         }
     });
