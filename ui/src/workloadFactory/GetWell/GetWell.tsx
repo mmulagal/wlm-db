@@ -90,7 +90,8 @@ const GetWell = () => {
         selectedDatabaseInstance,
         selectedGwInstanceCredId,
         selectedGwInstanceRegionId,
-        isInnerPageOptimize
+        isInnerPageOptimize,
+        gwTimestamp
     } = useAppSelector(state => state.getWellOptimize);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -472,7 +473,8 @@ const GetWell = () => {
 
                 {/* Assessment Section here */}
                 <AssessmentContainer onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress} />
-
+                {gwTimestamp && gwTimestamp !== '0' && (
+                <>
                 <div className={styles.getWellSecondLevel}>
                     <TotalOptimizationScore />
                     <OptimizationBreakdown />
@@ -2556,6 +2558,8 @@ const GetWell = () => {
                         </div>
                     )}
                 </div>
+            </>
+            )}
             </div>
         </div>
     );

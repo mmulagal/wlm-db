@@ -20,8 +20,16 @@ const AssessmentContainer = ({ onClick, isLoading }: any) => {
                         <DsTypography variant="Regular_14">{GENERAL.ASSESSMENT_PERFORMED}</DsTypography>
                         <SeparatorComponent variant="vertical" height="16px" />
                         <div className={styles.dateSection}>
-                            <DsTypography variant="Regular_14">{GENERAL.LAST_UPDATE}</DsTypography>
-                            <DsTypography variant="Semibold_14">{gwTimestamp}</DsTypography>
+                            {gwTimestamp && gwTimestamp !== '0' ? (
+                                <>
+                                    <DsTypography variant="Regular_14">{GENERAL.LAST_UPDATE}</DsTypography>
+                                    <DsTypography variant="Semibold_14">{gwTimestamp}</DsTypography>
+                                </>
+                            ) : (
+                                <>
+                                    <DsTypography variant="Regular_14">{GENERAL.NO_ANALYSIS_PERFORMED}</DsTypography>
+                                </>
+                            )}
                         </div>
                     </div>
                     {gwAdhocError && (
