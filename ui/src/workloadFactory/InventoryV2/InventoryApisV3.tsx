@@ -82,6 +82,9 @@ import {
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
 
+// Shared limiter and processing set to ensure only 10 concurrent API calls globally for getStorageSavings Api
+const storageSavingsApiLimit = pLimit(10);
+
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
     const { databaseHostsData, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
@@ -1281,23 +1284,20 @@ const InventoryApisV3 = () => {
     };
 
     const callPotentialSavings = async (exploreSavingsRows: any, runningCredId: string, runningRegionId: string) => {
-        const limit = pLimit(10); // Set concurrency limit to 10 for now, can be changed later accordingly
         const instanceData: any = {};
-
-        // Use distinct variable names to avoid shadowing
         const currentPotentialSavingsHostData = potentialSavingsHostDataRef.current;
         const currentMultiCredIds = headerSelectedMultiCredIdsListRef.current;
         const currentMultiRegionIds = headerSelectedMultiRegionIdsListRef.current;
 
         const promises = exploreSavingsRows?.map((row: any) =>
-            limit(async () => {
+            storageSavingsApiLimit(async () => {
                 const { id, credentialId, regionId: rowRegionId, storageType, isDetected } = row;
-
                 if (credentialId !== runningCredId || rowRegionId !== runningRegionId) {
                     return;
                 }
                 const uniqueKey = uniqueHostRow(id, credId, rowRegionId);
 
+                // Only process if not already done or in progress
                 if (storageType && !currentPotentialSavingsHostData?.[uniqueKey] && isDetected) {
                     if (
                         currentMultiCredIds.includes(runningCredId) &&
