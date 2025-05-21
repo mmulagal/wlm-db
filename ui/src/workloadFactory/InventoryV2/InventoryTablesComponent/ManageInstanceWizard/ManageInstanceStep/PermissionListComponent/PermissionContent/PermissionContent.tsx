@@ -1,7 +1,8 @@
 import styles from './PermissionContent.module.scss';
 import { ReactComponent as Copy } from '../../../../../../../assets/code snippets copy.svg';
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, Popover } from '@netapp/design-system';
 import React from 'react';
+import CopyToClipboardCommon from '../../../../../../../common/CopyToClipboard/copyToClipboard';
 
 type PermissionBlock = {
     label: string;
@@ -63,7 +64,13 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                             );
                         })()}
                     </div>
-                    {block.showCopy && <Copy />}
+                    {block.showCopy && (
+                        <Popover
+                            popoverClass={styles['copy-popover']}
+                            children={'Copied to clipboard'}
+                            container={<CopyToClipboardCommon value={block.values} iconProvided={<Copy />} />}
+                        />
+                    )}
                 </div>
             ))}
         </div>
