@@ -155,6 +155,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         allmssqlHostAssessmentLoading,
         fsxCredentialStatusLoading,
         mssqlInstancesData,
+        pgsqlInstancesData,
         perfMssqlInstancesData,
         potentialSavingsHostData,
         createResourceApiLoading
@@ -477,6 +478,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             const state = store.getState();
             const {
                 mssqlInstancesData: mssqlInstancesDataLatest,
+                pgsqlInstancesData: pgsqlInstancesDataLatest,
                 perfMssqlInstancesData: perfMssqlInstancesDataLatest,
                 potentialSavingsHostData: potentialSavingsHostDataLatest
             } = state.inventoryV2;
@@ -492,6 +494,21 @@ const HeaderComponent = ({ tab }: Tab) => {
                         mssqlInstancesDataLatest?.[key]?.loading
                     ) {
                         isMssqlInstanceDataLoading = true;
+                    }
+                });
+            }
+
+            let isPgsqlInstanceDataLoading = false;
+            if (pgsqlInstancesDataLatest) {
+                Object.keys(pgsqlInstancesDataLatest)?.map((key: any) => {
+                    let keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[1] === currentCredId &&
+                        keyList[2] === currentRegionId &&
+                        pgsqlInstancesDataLatest?.[key]?.loading
+                    ) {
+                        isPgsqlInstanceDataLoading = true;
                     }
                 });
             }
@@ -526,7 +543,12 @@ const HeaderComponent = ({ tab }: Tab) => {
                 });
             }
 
-            if (!isMssqlInstanceDataLoading && !perfMssqlInstancesDataLoading && !potentialSavingsHostDataLoading) {
+            if (
+                !isMssqlInstanceDataLoading &&
+                !perfMssqlInstancesDataLoading &&
+                !potentialSavingsHostDataLoading &&
+                !isPgsqlInstanceDataLoading
+            ) {
                 let newStatus = { ...multiDataStatusRef.current };
                 newStatus[currentCredId + '_' + currentRegionId] = true;
                 dispatch(setMultiDataStatus(newStatus));
@@ -543,8 +565,11 @@ const HeaderComponent = ({ tab }: Tab) => {
         dashSandboxListLoading,
         dashSandboxSavingsLoading,
         discoverHostLoading,
+        discoverOracleHostLoading,
+        discoverPgsqlHostLoading,
         fsxCredentialStatusLoading,
         mssqlInstancesData,
+        pgsqlInstancesData,
         perfMssqlInstancesData,
         potentialSavingsHostData
     ]);

@@ -1,31 +1,30 @@
-
 #############################################################
 
 # Deployment configs
-namespace: "wlmdb"
+namespace: 'wlmdb'
 
 # image (both init and app)
 image:
-  registry: "718273455463.dkr.ecr.us-east-1.amazonaws.com/wlmdb"
+    registry: '718273455463.dkr.ecr.us-east-1.amazonaws.com/wlmdb'
 
 imagePullPolicy: IfNotPresent
 
 # app resources
 resources:
-  limits:
-    cpu: "2000m"
-    memory: "2Gi"
-  requests:
-    cpu: "250m"
-    memory: "1Gi"
+    limits:
+        cpu: '2000m'
+        memory: '2Gi'
+    requests:
+        cpu: '250m'
+        memory: '1Gi'
 
 resourcesaudit:
-  limits:
-    cpu: "150m"
-    memory: "150Mi"
-  requests:
-    cpu: "100m"
-    memory: "100Mi"
+    limits:
+        cpu: '150m'
+        memory: '150Mi'
+    requests:
+        cpu: '100m'
+        memory: '100Mi'
 
 infraversion: development-8369503-2400
 UseExternalIP: true
