@@ -46,15 +46,14 @@ const ProtectedDatabases = () => {
                 <div className={styles.barContainer}>
                     <div className={styles.valueSection}>
                         <DsTypography variant="Semibold_14">Remote protection (replicated volumes)</DsTypography>
-                        {protectionData?.crrEnabled && (
-                            <div className={styles.count}>
-                                <DsTypography variant="Regular_20">{protectionData?.crrEnabled}</DsTypography>
-                                <DsTypography variant="Regular_14">out of</DsTypography>
-                                <DsTypography variant="Regular_20">
-                                    {protectionData.protectedDb + protectionData.unprotectedDb}
-                                </DsTypography>
-                            </div>
-                        )}
+
+                        <div className={styles.count}>
+                            <DsTypography variant="Regular_20">{protectionData?.crrEnabled}</DsTypography>
+                            <DsTypography variant="Regular_14">out of</DsTypography>
+                            <DsTypography variant="Regular_20">
+                                {protectionData.protectedDb + protectionData.unprotectedDb}
+                            </DsTypography>
+                        </div>
                     </div>
 
                     <div className={styles.barSection}>
