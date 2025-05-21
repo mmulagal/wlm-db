@@ -188,75 +188,91 @@ const compressResponse = `
 `;
 
 const enableCredSSP = `
-function Is-CredSSPEnabled {
-    try {
-        $credsspStatus = Get-WSManCredSSP
-        if ($credsspStatus -match "The machine is configured to allow delegating fresh credentials") {
-            return $true
-        } else {
+    Function Is-CredSSPEnabled {
+        try {
+            $credsspStatus = Get-WSManCredSSP
+            if ($credsspStatus -match "The machine is configured to allow delegating fresh credentials") {
+                return $true
+            } else {
+                return $false
+            }
+        } catch {
+            Write-Information "Error checking CredSSP status: $($_.Exception.Message)"
             return $false
         }
-    } catch {
-        Write-Information "Error checking CredSSP status: $($_.Exception.Message)"
-        return $false
     }
-}
 
-# Enable CredSSP
-if (-not (Is-CredSSPEnabled)) {
-    try {
-        $ServerName = '*'
-        Start-Transcript -Path C:\\cfn\\log\\EnableCredSSP.ps1.txt -Append | Out-Null
-        Enable-WSManCredSSP -Role Client -DelegateComputer $ServerName -Force | Out-Null
-        Enable-WSManCredSSP -Role Server -Force | Out-Null
+    # Enable CredSSP
+    if (-not (Is-CredSSPEnabled)) {
+        try {
+            $ServerName = '*'
+            Start-Transcript -Path C:\\cfn\\log\\EnableCredSSP.ps1.txt -Append | Out-Null
+            Enable-WSManCredSSP -Role Client -DelegateComputer $ServerName -Force | Out-Null
+            Enable-WSManCredSSP -Role Server -Force | Out-Null
 
-        # Verify CredSSP is enabled
-        if (-not (Is-CredSSPEnabled)) {
-            throw "Failed to enable CredSSP."
+            # Verify CredSSP is enabled
+            if (-not (Is-CredSSPEnabled)) {
+                throw "Failed to enable CredSSP."
+            }
+        } catch {
+            Write-Error "Error enabling CredSSP: $($_.Exception.Message)"
         }
-    } catch {
-        Write-Error "Error enabling CredSSP: $($_.Exception.Message)"
     }
-}
 `;
 
 const disableCredSSP = `
-try {
-    # Disable CredSSP
-    Start-Transcript -Path C:\\cfn\\log\\DisableCredSSP.ps1.txt -Append | Out-Null
-    $ErrorActionPreference = "Stop"
+    try {
+        # Disable CredSSP
+        Start-Transcript -Path C:\\cfn\\log\\DisableCredSSP.ps1.txt -Append | Out-Null
+        $ErrorActionPreference = "Stop"
 
-    Disable-WSManCredSSP Client | Out-Null
-    Disable-WSManCredSSP Server | Out-Null
-    # Verify CredSSP is disabled
-    if (Is-CredSSPEnabled) {
-        throw "Failed to disable CredSSP."
+        Disable-WSManCredSSP Client | Out-Null
+        Disable-WSManCredSSP Server | Out-Null
+        # Verify CredSSP is disabled
+        if (Is-CredSSPEnabled) {
+            throw "Failed to disable CredSSP."
+        }
+    } catch {
+        Write-Information "Error in DisableCredSSP: $($_.Exception.Message)"
     }
-} catch {
-    Write-Information "Error in DisableCredSSP: $($_.Exception.Message)"
-}
 `;
 
 const invokeCommandWithCredSSP = `
-    $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
-    $Credential = New-Object Management.Automation.PSCredential ($username, $securePassword)
+    Function Invoke-CommandWithCredSSP {
+        param (
+            [Parameter(Mandatory = $true)]
+            [string]$sqlquery,
+            [Parameter(Mandatory = $false)]
+            [string]$extraArguments
+        )
 
-    $scriptblock = {
-        param ($sqlquery)
-        Sqlcmd -S $using:serverInstanceName -Q $sqlquery -y 0 -r1 2> $null
-    }
+        if ($extraArguments -ne $null) {
+            $extraArguments = $extraArguments
+        } else {
+            $extraArguments = ''
+        }
 
-    $job = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery -Credential $Credential -ComputerName $env:computername -Authentication credssp -AsJob
-    Wait-Job -Job $job -Timeout 5 | Out-Null
+        $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
+        $Credential = New-Object Management.Automation.PSCredential ($username, $securePassword)
 
-    # Check job status
-    if ($job.State -ne 'Completed') {
+        $scriptblock = {
+            param ($sqlquery, $extraArguments)
+            Sqlcmd -S $using:serverInstanceName -Q $sqlquery -y 0 $extraArguments 2> $null
+        }
+
+        $job = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments -Credential $Credential -ComputerName $env:computername -Authentication credssp -AsJob
+        Wait-Job -Job $job -Timeout 5 | Out-Null
+
+        # Check job status
+        if ($job.State -ne 'Completed') {
+            Remove-Job -Job $job | Out-Null
+            throw "Invoke-Command job did not complete successfully."
+        }
+
+        $sqlresult = Receive-Job -Job $job
         Remove-Job -Job $job | Out-Null
-        throw "Invoke-Command job did not complete successfully."
+        return $sqlresult
     }
-
-    $sqlresult = Receive-Job -Job $job
-    Remove-Job -Job $job | Out-Null
 `;
 
 export {
