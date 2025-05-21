@@ -693,25 +693,25 @@ Resources:
                                     - !Join
                                         - ''
                                         - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
-                                                -DomainDNSName '
-                                            - !Ref 'DomainDNSName'
-                                            - "' -Parentstackname '"
-                                            - !Ref 'ParentStackName'
-                                            - "' -DomainAdminUser '"
-                                            - !Ref 'DomainAdminUser'
-                                            - "' -DCName '"
-                                            - !Ref 'PreferredDomainController'
-                                            - '''"'
+                                            -DomainDNSName '
+                                          - !Ref 'DomainDNSName'
+                                          - "' -Parentstackname '"
+                                          - !Ref 'ParentStackName'
+                                          - "' -DomainAdminUser '"
+                                          - !Ref 'DomainAdminUser'
+                                          - "' -DCName '"
+                                          - !Ref 'PreferredDomainController'
+                                          - '''"'
                                     - !Join
                                         - ''
                                         - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
-                                                -DomainDNSName '
-                                            - !Ref 'DomainDNSName'
-                                            - "' -Parentstackname '"
-                                            - !Ref 'ParentStackName'
-                                            - "' -DomainAdminUser '"
-                                            - !Ref 'DomainAdminUser'
-                                            - '''"'
+                                            -DomainDNSName '
+                                          - !Ref 'DomainDNSName'
+                                          - "' -Parentstackname '"
+                                          - !Ref 'ParentStackName'
+                                          - "' -DomainAdminUser '"
+                                          - !Ref 'DomainAdminUser'
+                                          - '''"'
                                 waitAfterCompletion: forever                 
                         f-add-domadmin-user-to-group:
                             command: !Join
