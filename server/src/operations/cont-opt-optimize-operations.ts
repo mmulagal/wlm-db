@@ -2053,6 +2053,8 @@ async function optimizeOperatingSystemSettings(
             ? `Fix operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
             : configurationName === OptimizeOperatingSystemParams.MPIO_ENABLE
             ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
+            : configurationName === OptimizeOperatingSystemParams.MPIO_TIMEOUT
+            ? `Set MPIO timeout for ${serverNameWithHostName}`
             : '';
     const jobMetadata: JobMetadata = {
         hostsToOptimize: [
@@ -2202,6 +2204,40 @@ async function optimizeOperatingSystemSettings(
                 throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
             }
 
+            break;
+        }
+        case OptimizeOperatingSystemParams.MPIO_TIMEOUT: {
+            try {
+                // Call the MPIO_TIMEOUT script on the active node
+                const { MPIO_TIMEOUT } = await import('./workloads/mssql/mpio-remediation-scripts');
+                const ssmCommand = MPIO_TIMEOUT;
+                const ssmComment = 'Set MPIO timeout';
+                await retryWithDelay(
+                    callSsmExecution.bind(
+                        null,
+                        credentialsId,
+                        region,
+                        [ssmCommand],
+                        activeNodeInstanceId!,
+                        ssmComment,
+                        accountId,
+                        false
+                    ),
+                    3,
+                    50
+                );
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            } catch (error) {
+                const errorMessage = `Error while setting MPIO timeout: ${error}`;
+                logger.error(errorMessage);
+                await updateJobDetails(accountId, parentJobId, {
+                    status: JOBSTATUS.FAILED,
+                    endTime: Date.now(),
+                    error: errorMessage
+                });
+                updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
             break;
         }
         default: {

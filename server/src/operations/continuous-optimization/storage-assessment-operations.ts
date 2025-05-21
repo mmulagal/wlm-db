@@ -481,9 +481,10 @@ async function calculateStorageDrift(
                     )
                     .map(timeoutDetail => ({
                         objectName: timeoutDetail.accessPath || timeoutDetail.disk || '',
-                        value: timeoutDetail.timeout.toString(),
+                        value: timeoutDetail.timeout,
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
                     }));
+                value = Number(value);
             }
             const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
             driftAssessmentData.configuration.os.push({

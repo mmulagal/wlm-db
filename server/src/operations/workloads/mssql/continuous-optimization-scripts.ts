@@ -832,9 +832,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             Write-Warning "Failed to retrieve DiskTimeoutValue: $_"
             $MpioTimeout = $null
         }
-       
         $DriftAssessmentData['os']['mpio-timeout'] = $MpioTimeout
-        Write-Host "Updated DriftAssessmentData['os']['mpio-timeout'] with value: $MpioTimeout"
         
         # Fetch load balancing policy for all NetApp disks
         $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number
