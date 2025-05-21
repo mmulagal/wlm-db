@@ -11,7 +11,8 @@ import {
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
     UnManagePgSqlSchema,
-    JobBasedManageSchema
+    JobBasedManageSchema,
+    OracleResourceDetailsSchema
 } from './schemas/discover-schemas';
 import {
     getHostAndSqlServerInfo,
@@ -22,7 +23,8 @@ import {
     unmanageDatabaseInstance,
     discoverPgSqlResources,
     getPgSqlResourceDetails,
-    discoverOracleResources
+    discoverOracleResources,
+    getOracleResourceDetails
 } from '../operations/discover-operations';
 
 import getLogger from '../utils/logger';
@@ -186,4 +188,18 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         const response = await manageSqlInstances(accountId, items);
         return response;
     });
+
+    server.get(
+        `${DISCOVER_ORACLE_API_PATH}/resource-details`,
+        { schema: OracleResourceDetailsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                query: { instances, fields }
+            } = castRequest(request);
+
+            const apiInfo = await getOracleResourceDetails(accountId, credentialsId, region, instances, fields);
+            return reply.send(apiInfo);
+        }
+    );
 }

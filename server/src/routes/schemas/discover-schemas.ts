@@ -1,6 +1,7 @@
 import { RouteTags } from '../../utils/consts';
 import {
     DatabaseHostSummaryForMultiInstanceListResponse,
+    OracleDbHostSummaryListResponse,
     PgSqlDbHostSummaryListResponse
 } from '../types/database-hosts.types';
 import {
@@ -191,6 +192,17 @@ const DiscoverOracleSchema = {
     }
 };
 
+const OracleResourceDetailsSchema = {
+    ...DiscoveryBaseRequest,
+    params: CredentialsIdParams,
+    querystring: SqlInstancesRequestQuery,
+    summary: 'Get resource details of non-NetApp deployed Oracle instances.',
+    description: 'Get resource details of non-NetApp deployed Oracle instances.',
+    response: {
+        200: OracleDbHostSummaryListResponse
+    }
+};
+
 export {
     DiscoverCredentialsSchema,
     DiscoverMsSqlSchema,
@@ -202,5 +214,6 @@ export {
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
     UnManagePgSqlSchema,
-    JobBasedManageSchema
+    JobBasedManageSchema,
+    OracleResourceDetailsSchema
 };

@@ -303,7 +303,8 @@ enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
     FSX = 'FSX',
     PGSQL = 'PGSQL',
-    WINDOWS_USER = 'WINDOWS_USER'
+    WINDOWS_USER = 'WINDOWS_USER',
+    ORACLE = 'ORACLE'
 }
 
 const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
@@ -1220,6 +1221,12 @@ const PGSQL_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     5: 'protection'
 };
 
+const ORACLE_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
+    0: 'databaseInstancetopologyData',
+    1: 'performance',
+    2: 'protection'
+};
+
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
     DISK = 'disk',
@@ -2058,6 +2065,7 @@ export {
     CF_STACK_COUNT_QUOTACODE,
     MSSQL_DATABASE_INSTANCE_INDEX_MAPPING,
     PGSQL_DATABASE_INSTANCE_INDEX_MAPPING,
+    ORACLE_DATABASE_INSTANCE_INDEX_MAPPING,
     PGSQL_CW_CONFIG,
     SQL_CASE_INSENSITIVE,
     MAX_EMAIL_ATTACHMENT_SIZE,

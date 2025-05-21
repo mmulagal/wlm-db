@@ -470,7 +470,8 @@ const oracleDatabaseInstance = Type.Object({
                             mountPoint: Type.String({ description: 'mount point info' }),
                             protocol: Type.String({
                                 description: 'Data sharing protocol, NFS or iSCSI'
-                            })
+                            }),
+                            mountIp: Type.String({ description: 'mount ip info' })
                         })
                     )
                 )
