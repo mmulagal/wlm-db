@@ -148,6 +148,7 @@ export interface PerConfigInterface {
     }>;
     missingPatchesInEc2Instances?: Array<{
         ec2InstanceId?: string;
+        ec2InstanceName?: string;
         criticalMissingPatchesCount?: number;
         importantMissingPatchesCount?: number;
         missingPatchesCount?: number;

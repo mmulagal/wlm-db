@@ -1,51 +1,58 @@
-import { Button, DsTypography } from '@netapp/design-system';
-import { Table, useTable, Typography } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
+import { Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useMemo } from 'react';
 import styles from './DialogContent.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useMemo } from 'react';
 
 type MSSQLPatchDialogProps = {
     type: string;
     missingPatchList?: Array<any>;
 };
 
-const MSSQLPatchDialog = ({ type, missingPatchList = [] }: MSSQLPatchDialogProps) => {
-    const tableData = useMemo(() => {
-        return missingPatchList?.map((item, index) => {
-            return {
+function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps) {
+    const tableData = useMemo(
+        () =>
+            missingPatchList?.map((item, index) => ({
                 ...item,
                 id: index
-            };
-        });
-    }, [missingPatchList]);
+            })),
+        [missingPatchList]
+    );
 
     const EncryptionColDefs: ColumnProps[] = [
         {
+            Header: 'Instance Name',
+            accessor: 'instanceName',
+            id: '1',
+            isSortable: true,
+            width: '180px'
+        },
+        {
             Header: 'KB',
             accessor: 'kbId',
-            id: '1',
+            id: '2',
             isSortable: true,
             width: '137px'
         },
         {
             Header: 'Name',
             accessor: 'title',
-            id: '2',
+            id: '3',
             isSortable: true,
             width: '262px'
         },
         {
             Header: 'Classification',
             accessor: 'classification',
-            id: '3',
+            id: '4',
             isSortable: true,
             width: '164px'
         },
         {
             Header: 'Severity',
             accessor: 'severity',
-            id: '4',
+            id: '5',
             isSortable: true,
             width: '144px'
         }
@@ -267,6 +274,6 @@ const MSSQLPatchDialog = ({ type, missingPatchList = [] }: MSSQLPatchDialogProps
             </div>
         </div>
     );
-};
+}
 
 export default MSSQLPatchDialog;

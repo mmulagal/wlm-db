@@ -318,9 +318,7 @@
                     "recommended": "optimized",
                     "severity": "warning",
                     "recommendation": "When Workload Factory detects that your database infrastructure is not meeting the best practices for RSS Config Settings, the database instance is considered not optimized. A database instance that is not optimized might result in sub-optimal network performances.",
-                    "tags": [
-                        "Cost optimization"
-                    ],
+                    "tags": ["Cost optimization"],
                     "rssAdapters": [
                         {
                             "adapterName": "Ethernet 3",
@@ -383,7 +381,7 @@
                         }
                     ]
                 },
-                "maxDOP" : {
+                "maxDOP": {
                     "name": "maxdop",
                     "status": "not-optimized",
                     "recommended": 4,
@@ -392,52 +390,48 @@
                     "tags": ["Performance efficiency"],
                     "current": 3
                 },
-                "mssqlPatch" : {
+                "mssqlPatch": {
                     "name": "mssql-patch",
                     "status": "not-optimized",
                     "recommended": "optimized",
                     "missingPatchesInEc2Instances": [
-                      {
-                        "ec2InstanceId": "i-p9o5n2m4l8k6j7h",
-                        "criticalMissingPatchesCount": 0,
-                        "importantMissingPatchesCount": 1,
-                        "missingPatchesCount": 1,
-                        "missingPatchDetails": [
-                          {
-                            "classification": "SecurityUpdates",
-                            "severity": "Important",
-                            "state": "Missing",
-                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                            "kbId": "KB5044099"
-                          }
-                        ]
-                      },
-                      {
-                        "ec2InstanceId": "i-p9o5n2m4l8k6byol",
-                        "criticalMissingPatchesCount": 0,
-                        "importantMissingPatchesCount": 1,
-                        "missingPatchesCount": 1,
-                        "missingPatchDetails": [
-                          {
-                            "classification": "SecurityUpdates",
-                            "severity": "Important",
-                            "state": "Missing",
-                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                            "kbId": "KB5044099"
-                          }
-                        ]
-                      }
+                        {
+                            "ec2InstanceId": "i-p9o5n2m4l8k6j7h",
+                            "ec2InstanceName": "SQLServer-01",
+                            "criticalMissingPatchesCount": 0,
+                            "importantMissingPatchesCount": 1,
+                            "missingPatchesCount": 1,
+                            "missingPatchDetails": [
+                                {
+                                    "classification": "SecurityUpdates",
+                                    "severity": "Important",
+                                    "state": "Missing",
+                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
+                                    "kbId": "KB5044099"
+                                }
+                            ]
+                        },
+                        {
+                            "ec2InstanceId": "i-p9o5n2m4l8k6byol",
+                            "ec2InstanceName": "SQLServer-02",
+                            "criticalMissingPatchesCount": 0,
+                            "importantMissingPatchesCount": 1,
+                            "missingPatchesCount": 1,
+                            "missingPatchDetails": [
+                                {
+                                    "classification": "SecurityUpdates",
+                                    "severity": "Important",
+                                    "state": "Missing",
+                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
+                                    "kbId": "KB5044099"
+                                }
+                            ]
+                        }
                     ],
                     "severity": "critical",
                     "recommendation": "Critical (0) and important (2) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.",
-                    "tags": [
-                      "Security",
-                      "Reliability"
-                    ],
-                    "objectsInViolation": [
-                      "i-p9o5n2m4l8k6j7h",
-                      "i-p9o5n2m4l8k6byol"
-                    ]
+                    "tags": ["Security", "Reliability"],
+                    "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                 }
             }
         },
@@ -757,9 +751,7 @@
                     "recommended": "optimized",
                     "severity": "warning",
                     "recommendation": "When Workload Factory detects that your database infrastructure is not meeting the best practices for RSS Config Settings, the database instance is considered not optimized. A database instance that is not optimized might result in sub-optimal network performances.",
-                    "tags": [
-                        "Cost optimization"
-                    ],
+                    "tags": ["Cost optimization"],
                     "rssAdapters": [
                         {
                             "adapterName": "Ethernet 3",
@@ -822,7 +814,7 @@
                         }
                     ]
                 },
-                "maxDOP" : {
+                "maxDOP": {
                     "name": "maxdop",
                     "status": "optimized",
                     "recommended": 4,
@@ -831,52 +823,48 @@
                     "tags": ["Performance efficiency"],
                     "current": 3
                 },
-                "mssqlPatch" : {
+                "mssqlPatch": {
                     "name": "mssql-patch",
                     "status": "not-optimized",
                     "recommended": "optimized",
                     "missingPatchesInEc2Instances": [
-                      {
-                        "ec2InstanceId": "i-p9o5n2m4l8k6j7h",
-                        "criticalMissingPatchesCount": 0,
-                        "importantMissingPatchesCount": 1,
-                        "missingPatchesCount": 1,
-                        "missingPatchDetails": [
-                          {
-                            "classification": "SecurityUpdates",
-                            "severity": "Important",
-                            "state": "Missing",
-                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                            "kbId": "KB5044099"
-                          }
-                        ]
-                      },
-                      {
-                        "ec2InstanceId": "i-p9o5n2m4l8k6byol",
-                        "criticalMissingPatchesCount": 0,
-                        "importantMissingPatchesCount": 1,
-                        "missingPatchesCount": 1,
-                        "missingPatchDetails": [
-                          {
-                            "classification": "SecurityUpdates",
-                            "severity": "Important",
-                            "state": "Missing",
-                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                            "kbId": "KB5044099"
-                          }
-                        ]
-                      }
+                        {
+                            "ec2InstanceId": "i-p9o5n2m4l8k6j7h",
+                            "ec2InstanceName": "SQLServer-01",
+                            "criticalMissingPatchesCount": 0,
+                            "importantMissingPatchesCount": 1,
+                            "missingPatchesCount": 1,
+                            "missingPatchDetails": [
+                                {
+                                    "classification": "SecurityUpdates",
+                                    "severity": "Important",
+                                    "state": "Missing",
+                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
+                                    "kbId": "KB5044099"
+                                }
+                            ]
+                        },
+                        {
+                            "ec2InstanceId": "i-p9o5n2m4l8k6byol",
+                            "ec2InstanceName": "SQLServer-02",
+                            "criticalMissingPatchesCount": 0,
+                            "importantMissingPatchesCount": 1,
+                            "missingPatchesCount": 1,
+                            "missingPatchDetails": [
+                                {
+                                    "classification": "SecurityUpdates",
+                                    "severity": "Important",
+                                    "state": "Missing",
+                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
+                                    "kbId": "KB5044099"
+                                }
+                            ]
+                        }
                     ],
                     "severity": "critical",
                     "recommendation": "Critical (0) and important (2) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.",
-                    "tags": [
-                      "Security",
-                      "Reliability"
-                    ],
-                    "objectsInViolation": [
-                      "i-p9o5n2m4l8k6j7h",
-                      "i-p9o5n2m4l8k6byol"
-                    ]
+                    "tags": ["Security", "Reliability"],
+                    "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                 }
             }
         },
@@ -1196,9 +1184,7 @@
                     "recommended": "optimized",
                     "severity": "warning",
                     "recommendation": "When Workload Factory detects that your database infrastructure is not meeting the best practices for RSS Config Settings, the database instance is considered not optimized. A database instance that is not optimized might result in sub-optimal network performances.",
-                    "tags": [
-                        "Cost optimization"
-                    ],
+                    "tags": ["Cost optimization"],
                     "rssAdapters": [
                         {
                             "adapterName": "Ethernet 3",
@@ -1261,7 +1247,7 @@
                         }
                     ]
                 },
-                "maxDOP" : {
+                "maxDOP": {
                     "name": "maxdop",
                     "status": "optimized",
                     "recommended": 4,
@@ -1270,52 +1256,48 @@
                     "tags": ["Performance efficiency"],
                     "current": 3
                 },
-                "mssqlPatch" : {
+                "mssqlPatch": {
                     "name": "mssql-patch",
                     "status": "not-optimized",
                     "recommended": "optimized",
                     "missingPatchesInEc2Instances": [
-                      {
-                        "ec2InstanceId": "i-p9o5n2m4l8k6j7h",
-                        "criticalMissingPatchesCount": 0,
-                        "importantMissingPatchesCount": 1,
-                        "missingPatchesCount": 1,
-                        "missingPatchDetails": [
-                          {
-                            "classification": "SecurityUpdates",
-                            "severity": "Important",
-                            "state": "Missing",
-                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                            "kbId": "KB5044099"
-                          }
-                        ]
-                      },
-                      {
-                        "ec2InstanceId": "i-p9o5n2m4l8k6byol",
-                        "criticalMissingPatchesCount": 0,
-                        "importantMissingPatchesCount": 1,
-                        "missingPatchesCount": 1,
-                        "missingPatchDetails": [
-                          {
-                            "classification": "SecurityUpdates",
-                            "severity": "Important",
-                            "state": "Missing",
-                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                            "kbId": "KB5044099"
-                          }
-                        ]
-                      }
+                        {
+                            "ec2InstanceId": "i-p9o5n2m4l8k6j7h",
+                            "ec2InstanceName": "SQLServer-01",
+                            "criticalMissingPatchesCount": 0,
+                            "importantMissingPatchesCount": 1,
+                            "missingPatchesCount": 1,
+                            "missingPatchDetails": [
+                                {
+                                    "classification": "SecurityUpdates",
+                                    "severity": "Important",
+                                    "state": "Missing",
+                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
+                                    "kbId": "KB5044099"
+                                }
+                            ]
+                        },
+                        {
+                            "ec2InstanceId": "i-p9o5n2m4l8k6byol",
+                            "ec2InstanceName": "SQLServer-02",
+                            "criticalMissingPatchesCount": 0,
+                            "importantMissingPatchesCount": 1,
+                            "missingPatchesCount": 1,
+                            "missingPatchDetails": [
+                                {
+                                    "classification": "SecurityUpdates",
+                                    "severity": "Important",
+                                    "state": "Missing",
+                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
+                                    "kbId": "KB5044099"
+                                }
+                            ]
+                        }
                     ],
                     "severity": "critical",
                     "recommendation": "Critical (0) and important (2) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.",
-                    "tags": [
-                      "Security",
-                      "Reliability"
-                    ],
-                    "objectsInViolation": [
-                      "i-p9o5n2m4l8k6j7h",
-                      "i-p9o5n2m4l8k6byol"
-                    ]
+                    "tags": ["Security", "Reliability"],
+                    "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                 }
             }
         },

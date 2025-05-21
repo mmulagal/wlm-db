@@ -1064,6 +1064,7 @@
         "missingPatchesInEc2Instances": [
             {
                 "ec2InstanceId": "i-p9o5n2m4l8k6j7h",
+                "ec2InstanceName": "SQLServer-01",
                 "criticalMissingPatchesCount": 0,
                 "importantMissingPatchesCount": 1,
                 "missingPatchesCount": 1,
@@ -1149,6 +1150,7 @@
             },
             {
                 "ec2InstanceId": "i-p9o5n2m4l8k6byol",
+                "ec2InstanceName": "SQLServer-02",
                 "criticalMissingPatchesCount": 0,
                 "importantMissingPatchesCount": 1,
                 "missingPatchesCount": 1,
