@@ -479,6 +479,7 @@ export const GENERAL = {
     KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value.",
     NOT_AVAILABLE: 'n/a',
     UNAVAILABLE: 'Unavailable',
+    NO_ANALYSIS_PERFORMED: 'No analysis performed',
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
