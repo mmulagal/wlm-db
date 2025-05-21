@@ -603,9 +603,13 @@ const HOST_AND_SQL_INFO_PS1 = [
             }
             
 
-            
-            $existingPermissionsAsList = $existingPermissions | ConvertFrom-Json | ForEach-Object { $_.permission_name }
-            $responseObject['sqlPermissions'] = $existingPermissionsAsList
+            if( -Not ([string]::IsNullOrEmpty($existingPermissions))) {
+              $existingPermissionsAsList = $existingPermissions | ConvertFrom-Json | ForEach-Object { $_.permission_name }
+              $responseObject['sqlPermissions'] = $existingPermissionsAsList
+            }
+            else {
+              $responseObject['sqlPermissions'] = @()
+            }
 
             $responseObject['isPS7Available'] = $isPS7Available
             if($isPS7Available -eq $True) {

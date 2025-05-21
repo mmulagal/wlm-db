@@ -1,5 +1,24 @@
 import { DiscoverMsSqlResponseBodyType } from '../../routes/types/discover.types';
 
+const MANAGE_READINESS = {
+    missingSqlCmd: false,
+    assessment: {
+        missingSqlPermissions: [],
+        missingModules: []
+    },
+    remediation: {
+        missingSqlPermissions: [],
+        missingModules: []
+    },
+    dbcreation: {
+        missingSqlPermissions: [],
+        missingModules: []
+    },
+    sandbox: {
+        missingSqlPermissions: [],
+        missingModules: []
+    }
+};
 function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlResponseBodyType {
     return {
         count: 11,
@@ -45,7 +64,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -73,7 +93,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             },
@@ -117,7 +138,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'SINGLE_AZ_1',
                                 zones: ['availability-zone-3']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             },
@@ -171,7 +193,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 Node: 'sql-node2',
                                 Address: '10.0.18.80'
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ],
                 vpc: {
@@ -219,7 +242,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -248,7 +272,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             },
@@ -292,7 +317,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             },
@@ -339,7 +365,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'SINGLE_AZ_1',
                                 zones: ['availability-zone-3']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -373,7 +400,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'SINGLE_AZ_1',
                                 zones: ['availability-zone-3']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             }
