@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import pLimit from 'p-limit';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAllMssqlHostAssessmentData,
@@ -83,6 +84,9 @@ import {
     setPotentialSavingsValues
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
+
+// Shared limiter and processing set to ensure only 10 concurrent API calls globally for getStorageSavings Api
+const storageSavingsApiLimit = pLimit(10);
 
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
@@ -1313,6 +1317,14 @@ const InventoryApisV3 = () => {
         runningRegionId: string,
         isEbsProtected: string
     ) => {
+        // Use distinct variable names to avoid shadowing
+        const currentPotentialSavingsHostData = potentialSavingsHostDataRef.current;
+        const currentMultiCredIds = headerSelectedMultiCredIdsListRef.current;
+        const currentMultiRegionIds = headerSelectedMultiRegionIdsListRef.current;
+        const { data: { credentialsId: headerSelectedCredId } = {} } = headerSelectedCred || {};
+        const { data: { regionCode: headerSelectedRegionId } = {} } = headerSelectedRegion || {};
+
+        // Compute snapshotFrequency
         let snapshotFrequency = '';
         if (savingsCalculatorType === GENERAL.FSX_FOR_WINDOWS) {
             // For FSXW it is default set to Daily
@@ -1329,8 +1341,10 @@ const InventoryApisV3 = () => {
                 snapshotFrequency = SNAPSHOT_FREQUENCY[0]?.value;
             }
         }
+
+        // Build payload
         let payload: any = {
-            snapshotFrequency: snapshotFrequency,
+            snapshotFrequency,
             clonedCopiesCount: 1, // clonedCopiesCount default to 1 for dashboard potential
             monthlyChangeRatePercentage: savingsCalculatorType === GENERAL.FSX_FOR_WINDOWS ? 3 : 8 // monthlyChangeRatePercentage default to 3 for FSxW and 8 for EBS
         };
@@ -1340,21 +1354,21 @@ const InventoryApisV3 = () => {
                 cloneRefreshFrequency: 'Daily' // cloneRefreshFrequency default to Daily for dashboard potential EBS
             };
         }
-        let instanceData: any = {};
+
+        const instanceData: any = {};
+        const uniqueKey = uniqueHostRow(selectedInstanceId, headerSelectedCredId, headerSelectedRegionId);
+
         try {
             const result: any = await getStorageSavingsApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.data?.regionCode,
+                credentialId: headerSelectedCredId,
+                regionId: headerSelectedRegionId,
                 instanceId: selectedInstanceId,
-                payload: payload,
+                payload,
                 type: savingsCalculatorType === GENERAL.EBS ? 'ebs' : 'fsxw'
             });
-            if (
-                headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
-                headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
-            ) {
+            if (currentMultiCredIds.includes(runningCredId) && currentMultiRegionIds.includes(runningRegionId)) {
                 if (result && !result?.error) {
-                    instanceData[uniqueHostRow(selectedInstanceId, credId, regionId)] = {
+                    instanceData[uniqueKey] = {
                         error: null,
                         data: result?.data,
                         loading: false,
@@ -1362,102 +1376,97 @@ const InventoryApisV3 = () => {
                     };
                     // Potential savings data is stored in inventoryV2 slice and
                     // it will be used in DatabaseHomeApis to format data for dashboard potential card UI.
-                    dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+                    dispatch(setPotentialSavingsHostData({ ...currentPotentialSavingsHostData, ...instanceData }));
                 } else {
-                    instanceData[uniqueHostRow(selectedInstanceId, credId, regionId)] = {
+                    instanceData[uniqueKey] = {
                         error: result?.error?.data?.message,
                         data: null,
                         loading: false,
                         storageType: savingsCalculatorType
                     };
-                    dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+                    dispatch(setPotentialSavingsHostData({ ...currentPotentialSavingsHostData, ...instanceData }));
                 }
             }
         } catch (error) {
-            instanceData[uniqueHostRow(selectedInstanceId, credId, regionId)] = {
-                error: error,
+            instanceData[uniqueKey] = {
+                error,
                 data: null,
                 loading: false,
                 storageType: savingsCalculatorType
             };
-            dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+            dispatch(setPotentialSavingsHostData({ ...currentPotentialSavingsHostData, ...instanceData }));
         }
     };
 
-    const callPotentialSavings = (exploreSavingsRows: any, runningCredId: string, runningRegionId: string) => {
-        let instanceData: any = {};
-        // This will loop all unamanged EBS/FSXW rows
-        exploreSavingsRows?.map((row: any) => {
-            if (row?.credentialId !== runningCredId || row?.regionId !== runningRegionId) {
-                return;
-            }
-            if (
-                row?.storageType &&
-                !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)] &&
-                row?.isDetected
-            ) {
-                if (
-                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
-                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
-                ) {
-                    let isEbsProtected = null;
-                    // For EBS first checking is it is protected or not.
-                    // If not that first we need to call instance protection API to get protection.
-                    if (row?.storageType === GENERAL.EBS) {
-                        isEbsProtected = checkIfEbsProtected(row, null);
+    const callPotentialSavings = async (exploreSavingsRows: any, runningCredId: string, runningRegionId: string) => {
+        const instanceData: any = {};
+        const currentPotentialSavingsHostData = potentialSavingsHostDataRef.current;
+        const currentMultiCredIds = headerSelectedMultiCredIdsListRef.current;
+        const currentMultiRegionIds = headerSelectedMultiRegionIdsListRef.current;
+
+        const promises = exploreSavingsRows?.map((row: any) =>
+            storageSavingsApiLimit(async () => {
+                const { id, credentialId, regionId: rowRegionId, storageType, isDetected } = row;
+                if (credentialId !== runningCredId || rowRegionId !== runningRegionId) {
+                    return;
+                }
+                const uniqueKey = uniqueHostRow(id, credId, rowRegionId);
+
+                // Only process if not already done or in progress
+                if (storageType && !currentPotentialSavingsHostData?.[uniqueKey] && isDetected) {
+                    if (
+                        currentMultiCredIds.includes(runningCredId) &&
+                        currentMultiRegionIds.includes(runningRegionId)
+                    ) {
+                        let isEbsProtected = null;
+                        if (storageType === GENERAL.EBS) {
+                            isEbsProtected = checkIfEbsProtected(row, null);
+                        }
+                        instanceData[uniqueKey] = {
+                            error: null,
+                            data: null,
+                            loading: true,
+                            storageType,
+                            isProtected: isEbsProtected
+                        };
+                        dispatch(setPotentialSavingsHostData({ ...currentPotentialSavingsHostData, ...instanceData }));
+                        if (storageType === GENERAL.EBS) {
+                            if (isEbsProtected) {
+                                await getStorageSavingsData(
+                                    storageType,
+                                    id,
+                                    runningCredId,
+                                    runningRegionId,
+                                    isEbsProtected
+                                );
+                            } else {
+                                addInstanceIdToGetPerf(row, dispatch);
+                            }
+                        } else if (storageType === GENERAL.FSX_FOR_WINDOWS) {
+                            await getStorageSavingsData(storageType, id, runningCredId, runningRegionId, '');
+                        }
                     }
-                    instanceData[uniqueHostRow(row?.id, credId, regionId)] = {
+                } else if (
+                    storageType === GENERAL.EBS &&
+                    currentPotentialSavingsHostData?.[uniqueKey]?.loading &&
+                    !currentPotentialSavingsHostData?.[uniqueKey]?.isProtected
+                ) {
+                    const isEbsProtected = checkIfEbsProtected(row, null);
+                    instanceData[uniqueKey] = {
                         error: null,
                         data: null,
                         loading: true,
-                        storageType: row?.storageType,
-                        isProtected: isEbsProtected // If already protected that set protection info along with loading true
+                        storageType,
+                        isProtected: isEbsProtected
                     };
-                    dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
-                    if (row?.storageType === GENERAL.EBS) {
-                        // Protection check is required to set snapshotFrequency in storage savings API.
-                        if (isEbsProtected) {
-                            // If protected than directly we can call storage savings API.
-                            getStorageSavingsData(
-                                row?.storageType,
-                                row?.id,
-                                runningCredId,
-                                runningRegionId,
-                                isEbsProtected
-                            );
-                        } else {
-                            // If not protected than first we need to call instance protection API to get protection.
-                            // This same flow is used to call instance API to get perf and protection data as well as in ES page.
-                            addInstanceIdToGetPerf(row, dispatch);
-                        }
-                    } else if (row?.storageType === GENERAL.FSX_FOR_WINDOWS) {
-                        // For FSxW snapshotFrequency in default Daily in storage savings API.
-                        getStorageSavingsData(row?.storageType, row?.id, runningCredId, runningRegionId, '');
+                    dispatch(setPotentialSavingsHostData({ ...currentPotentialSavingsHostData, ...instanceData }));
+                    if (isEbsProtected) {
+                        await getStorageSavingsData(storageType, id, runningCredId, runningRegionId, isEbsProtected);
                     }
                 }
-            } else if (
-                row?.storageType === GENERAL.EBS &&
-                potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]?.loading &&
-                !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]?.isProtected
-            ) {
-                // In above if we protection data is missing for EBS than we trigger instance API.
-                // This else is used to capture response once instance API is loaded for protection.
-                let isEbsProtected = checkIfEbsProtected(row, null);
-                // Again check if instance EBS is protected or not.
-                instanceData[uniqueHostRow(row?.id, credId, regionId)] = {
-                    error: null,
-                    data: null,
-                    loading: true,
-                    storageType: row?.storageType,
-                    isProtected: isEbsProtected
-                };
-                dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
-                if (isEbsProtected) {
-                    // If protection data available after instance API call in EBS than call storage savings API.
-                    getStorageSavingsData(row?.storageType, row?.id, runningCredId, runningRegionId, isEbsProtected);
-                }
-            }
-        });
+            })
+        );
+        await Promise.all(promises);
     };
 
     useEffect(() => {

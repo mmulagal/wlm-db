@@ -100,7 +100,8 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         if (
             (api.endpoint === 'deploySqlTemplate' ||
                 api.endpoint === 'discoverHosts' ||
-                api.endpoint === 'deployPgsqlTemplate') &&
+                api.endpoint === 'deployPgsqlTemplate' ||
+                api.endpoint === 'getStorageSavings') &&
             result.error?.data &&
             result.error.data?.message.toLowerCase().includes(API_ERRORS.RATE_EXCEEDED)
         ) {
