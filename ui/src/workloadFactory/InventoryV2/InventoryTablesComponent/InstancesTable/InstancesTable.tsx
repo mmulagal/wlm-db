@@ -727,9 +727,6 @@ const InstancesTable = () => {
                         ) : (
                             <div className={styles.statusCol}>
                                 <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                                <DsButton type="text" onClick={() => redirectToAction(rowData)}>
-                                    View
-                                </DsButton>
                             </div>
                         )}
                     </>
