@@ -72,7 +72,7 @@ import {
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import DatabaseHomeApis from '../DatabaseHomeApis';
-import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
+
 import ExploreSavings from '../../ExploreSavings/ExploreSavings';
 import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCalulator';
 import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
@@ -90,9 +90,9 @@ import { updateRefreshBlocked } from '../../../store/authSlice';
 
 import SavingsCalculatorManualApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorManualAPI';
 import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useNavigationType, NavigationType } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
-import GetWell from '../../GetWell/GetWell';
+
 import {
     resetInventoryLoading,
     resetRefreshData,
@@ -186,6 +186,8 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     const multiDataStatusRef: any = useRef(null);
 
+    const navType = useNavigationType();
+
     useEffect(() => {
         multiDataStatusRef.current = multiDataStatus;
     }, [multiDataStatus]);
@@ -207,6 +209,10 @@ const HeaderComponent = ({ tab }: Tab) => {
             tabValue === WLF_TABS.EXPLORE_SAVINGS_ONPREM
         ) {
             setExploreSavingsSubTab(tabValue, dispatch);
+        }
+
+        if (navType === NavigationType.Pop) {
+            handleURL(tab, isWorkloadFactory);
         }
     }, [tab]);
 
