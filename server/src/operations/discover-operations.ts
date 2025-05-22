@@ -77,7 +77,6 @@ import {
     AMAZON_LINUX_AMI_PATH,
     HA,
     PGSQL_DEFAULT_INSTANCE_NAME,
-    POWERSHELL_7_RELATIVE_PATH,
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
     DEFAULT_INSTANCE_NAME
 } from '../utils/consts';
@@ -94,8 +93,6 @@ import {
     FAILURE_INFO,
     ACTIVE_DIRECTORY,
     GET_ACTIVE_DIRECTORY_DETAILS,
-    INSTALL_POWERSHELL_7,
-    CHECK_POWERSHELL7_AVAILABLE,
     FEATURE_PREPREQUISITES
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, getParametersByPath, sendSSMCommand } from '../lib/aws/ssm';
@@ -742,7 +739,7 @@ async function makeSsmCall(
     let commandId;
     try {
         commandId = await sendSSMCommand(credentialsId, region, params, accountId);
-        logger.info(`SSM command ID is ${commandId} for commands ${commands}`);
+        logger.info(`SSM command ID is ${commandId} for discovery call`);
     } catch (error) {
         logger.error(`Failed to start EC2 instance information retrieval using sendSSMCommand. Reason: ${error}`);
         throw createError(
@@ -1580,76 +1577,6 @@ async function prepareDbScriptsForManage(
     await updateJobDetails(accountId, childJobId, jobStatusRecord);
 
     return jobStatusRecord.status;
-}
-
-async function installPowershell7(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    ec2InstanceId: string,
-    parentJobId: string
-) {
-    logger.info(`Installing PowerShell 7.5.0 on ${ec2InstanceId}`);
-
-    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
-        type: JOBTYPE.PREPARE_RESOURCE,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: ec2InstanceId,
-        name: 'Install PowerShell 7.5.0',
-        description: 'Install PowerShell 7.5.0 for Workload Factory database operations.',
-        parentJobId,
-        startTime: Date.now()
-    });
-
-    try {
-        // Get signed url for dependent-packages.zip to install the ps modules
-        const bucketname = getArtifactsRegionBucketName(region);
-        const copyPowershell7SignedUrl = await getPreSignedUrl(region, bucketname, POWERSHELL_7_RELATIVE_PATH);
-
-        const installResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
-                credentialsId,
-                region,
-                INSTALL_POWERSHELL_7(copyPowershell7SignedUrl),
-                ec2InstanceId,
-                'Install PowerShell 7.5.0',
-                accountId,
-                false
-            )
-        );
-
-        if (installResponse?.includes(FAILURE_INFO)) {
-            throw new Error(JSON.parse(installResponse)[FAILURE_INFO]);
-        }
-
-        const checkResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
-                credentialsId,
-                region,
-                CHECK_POWERSHELL7_AVAILABLE,
-                ec2InstanceId,
-                'Check PowerShell 7 availability',
-                accountId,
-                false
-            )
-        );
-
-        const isPS7Available = JSON.parse(checkResponse)[IS_PS7_AVAILABLE];
-        const status = isPS7Available ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
-
-        await updateJobDetails(accountId, childJobId, { status, endTime: Date.now() });
-        return status;
-    } catch (error: any) {
-        logger.error(`Failed to install PowerShell 7.5.0 on ${ec2InstanceId}: ${error.message}`);
-        await updateJobDetails(accountId, childJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: error.message
-        });
-        return JOBSTATUS.FAILED;
-    }
 }
 
 async function preparePsModulesForManage(
@@ -2986,6 +2913,5 @@ export {
     discoverPgSqlResources,
     prepareDbScriptsForManage,
     getPgSqlResourceDetails,
-    discoverOracleResources,
-    installPowershell7
+    discoverOracleResources
 };

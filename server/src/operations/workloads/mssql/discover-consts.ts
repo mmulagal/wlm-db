@@ -873,12 +873,12 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
     } catch {
       $exceptionInfo = $_.Exception.Message
     } finally {
+      $finallyAvailableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
+      $responseObject['availablePSModules'] = $finallyAvailableModuleList
       if ($exceptionInfo) {
         $responseObject['${FAILURE_INFO}'] = $exceptionInfo
       } else {
-        $finallyAvailableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
         $finallyUnavailableModuleList = $requiredModuleList | ? { $_ -NotIn $finallyAvailableModuleList}
-  
         if ($finallyUnavailableModuleList.Count -gt 0) {
           $responseObject['${FAILURE_INFO}'] = 'PowerShell module(s) "{0}" could not be installed.' -f $finallyUnavailableModuleList
         }
@@ -951,7 +951,13 @@ const INSTALL_POWERSHELL_7 = (s3SignedURL: string) => [
   $responseObject = @{}
   $scriptStartTime = Get-Date
 
+
+
   try {
+    $isPS7Available = [bool](Get-Command -Name pwsh -ErrorAction SilentlyContinue)
+    if ($isPS7Available -eq $True) {
+      throw "PowerShell 7 is already installed"
+    }
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Invoke-WebRequest -Uri '${s3SignedURL}' -OutFile "$Env:Temp\\powershell.zip"
     Expand-Archive -Path "$Env:Temp\\powershell.zip" -DestinationPath $Env:Temp -Force
@@ -964,8 +970,13 @@ const INSTALL_POWERSHELL_7 = (s3SignedURL: string) => [
       }
   } catch {
     $responseObject['${FAILURE_INFO}'] = $_.Exception.Message
+    $responseObject['status'] = "failed"
+    if($_.Exception.Message -like "*PowerShell 7 is already installed*") {
+      $responseObject['status'] = "warning"
+    }
   } finally {
     $responseObject['scriptExecutionTime'] = ((Get-Date) - $scriptStartTime).TotalMilliseconds
+    $responseObject['status'] = "success"
     Echo $responseObject | ConvertTo-Json -Compress
   }
 `
@@ -996,8 +1007,10 @@ const CHECK_POWERSHELL7_AVAILABLE = [
   $responseObject['${IS_PS7_AVAILABLE}'] = $isPS7Available
   } catch {
   $responseObject['failureInfo'] = $_.Exception.Message
+  $responseObject['status'] = "failed"
   } finally {
   $responseObject['scriptExecutionTime'] = ((Get-Date) - $scriptStartTime).TotalMilliseconds
+  $responseObject['status'] = "success"
   Echo $responseObject | ConvertTo-Json -Compress
   }
 `

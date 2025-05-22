@@ -164,7 +164,8 @@ async function updateJob(
     description?: string,
     status?: JOBSTATUS,
     endTime?: number,
-    error?: string
+    error?: string,
+    metadata?: any
 ) {
     logger.info('Updating a job', { accountId, jobId, description, status, endTime, error });
 
@@ -183,7 +184,8 @@ async function updateJob(
             ...(description && { description }),
             ...(status && { status }),
             ...{ end_time: newEndTime },
-            ...(error && { error })
+            ...(error && { error }),
+            ...(metadata && { metadata })
         }
     });
 }

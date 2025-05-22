@@ -10,7 +10,8 @@ import {
     DiscoverPgSqlSchema,
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
-    UnManagePgSqlSchema
+    UnManagePgSqlSchema,
+    JobBasedManageSchema
 } from './schemas/discover-schemas';
 import {
     getHostAndSqlServerInfo,
@@ -26,6 +27,7 @@ import {
 
 import getLogger from '../utils/logger';
 import castRequest from './utils';
+import { manageSqlInstances } from '../operations/manage-operations';
 
 const logger = getLogger();
 
@@ -173,5 +175,15 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         } = castRequest(request);
         const apiInfo = await discoverOracleResources(accountId, credentialsId, region, pageSize, nextToken);
         return apiInfo;
+    });
+
+    // Manage job based
+    server.post(`/v2/mssql/manage`, { schema: JobBasedManageSchema }, async request => {
+        const {
+            params: { accountId },
+            body: { items }
+        } = castRequest(request);
+        const response = await manageSqlInstances(accountId, items);
+        return response;
     });
 }
