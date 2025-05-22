@@ -81,6 +81,10 @@
         border-right: 1px solid var(--border);
     }
 
+    .columnWidth {
+        flex: 1 1 220px;
+    }
+
     .column.wide {
         flex: 2 1 240px;
     }

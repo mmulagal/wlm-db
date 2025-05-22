@@ -822,7 +822,7 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
         if (val?.protection?.isSqlNativeEnabled) {
             sqlServerBackupDb += 1;
         }
-        if (val?.protection?.isCRREnabled  === true) {
+        if (val?.protection?.isCRREnabled === true) {
             crrEnabled += 1;
         }
     });
@@ -2072,6 +2072,12 @@ export const compareDataAndCalculateDifference = (arrays: any) => {
             message: 'First sum is not greater than second sum.'
         };
     }
+};
+
+export const formatString = (s: string) => {
+    s = s.toLowerCase();
+    // Capitalize the first letter and return the result
+    return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
 export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {

@@ -7,6 +7,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Success } from '../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../assets/error-icon.svg';
 import styles from './StorageCompute.module.scss';
+import { formatString } from '../../../../utils/utilityFunctions';
 
 type accordionType = {
     handleToggle: any;
@@ -86,7 +87,7 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                             className={commonStyles.valueCSS}
                             title={resourceDetails?.topology?.fileSystemStatus || ''}
                         >
-                            {resourceDetails?.topology?.fileSystemStatus}
+                            {formatString(resourceDetails?.topology?.fileSystemStatus)}
                         </Typography>
                     </div>
                 </div>

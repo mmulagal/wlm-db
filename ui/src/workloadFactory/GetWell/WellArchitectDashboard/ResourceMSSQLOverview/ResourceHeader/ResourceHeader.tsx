@@ -20,13 +20,14 @@ const ResourceHeader = () => {
                         <DescriptionIcon />
                     </div>
 
-                    <div className={`${styles.column}`}>
+                    <div className={`${styles.column} ${styles.columnWidth}`}>
                         {resourceLoading ? (
                             <DsFlashingDotsLoader />
                         ) : (
                             <DsTypography
                                 variant="Semibold_14"
                                 className={styles.titleText}
+                                style={{ paddingRight: '8px' }}
                                 title={selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
                             >
                                 {selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
