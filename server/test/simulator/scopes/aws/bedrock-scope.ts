@@ -10,7 +10,7 @@ const bedrockMock = mockClient(BedrockClient);
 
 nock(/https?:\/\/bedrock\.(.+)\.amazonaws\.com/)
     .persist(true)
-    .get(/^\/foundation-model-availability\/anthropic\.claude-3-7-sonnet-20250219-v1:0$/)
+    .get(/^\/foundation-model-availability\/anthropic\.claude-(.+)$/)
     .reply(
         200,
         () =>

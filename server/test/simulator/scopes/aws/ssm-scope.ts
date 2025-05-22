@@ -863,6 +863,20 @@ ssmMock
         return /# Check running status and restart if not running/.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
+    .on(SendCommandCommand, params => {
+        return /SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH/.test(
+            params.Parameters.commands?.[0]
+        );
+    })
+    .resolves(getSampleCommandResponse('logsPathCommand'))
+    .on(SendCommandCommand, params => {
+        return /# Bedrock Availability Check Script/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('bedrockAvailabilityCheck'))
+    .on(SendCommandCommand, params => {
+        return /# Logs Analysis Windows Prepare Script/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('logsAnalysisWindowsPrepare'))
     .on(SendCommandCommand, params => params.Comment === 'Discover Oracle resources')
     .resolves(getSampleCommandResponse('getOracleDiscoveryCommand'));
 
@@ -1199,6 +1213,35 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'getOracleDiscoveryCommand',
             JSON.stringify(getCommandInvocationResponse.discoverOracleServer)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-logsPathCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'logsPathCommand',
+            JSON.stringify({
+                MSSQLSERVER: [{ path: 'C:\\Program Files\\Microsoft SQL Server\\MSSQL15.MSSQLSERVER\\MSSQL\\Log' }]
+            })
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-logsAnalysisWindowsPrepare'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'logsAnalysisWindowsPrepare',
+            JSON.stringify([{ status: 'success', error: '' }])
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-bedrockAvailabilityCheck'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'bedrockAvailabilityCheck',
+            JSON.stringify([{ status: 'success', error: '' }])
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
