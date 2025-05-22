@@ -15,7 +15,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
-                body: { inferenceConfig }
+                body: { inferenceConfig, logsAnalyzerS3SignedUrl }
             } = castRequest(request);
 
             const response = await triggerLogsAnalysis(
@@ -24,7 +24,8 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
                 region,
                 databaseHostId,
                 databaseInstanceId,
-                inferenceConfig
+                inferenceConfig,
+                logsAnalyzerS3SignedUrl
             );
             return reply.send(response);
         }

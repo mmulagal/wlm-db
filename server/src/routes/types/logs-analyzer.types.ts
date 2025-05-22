@@ -10,7 +10,8 @@ const InferenceConfig = Type.Object({
 });
 const LogsAnalyzerBody = Type.Optional(
     Type.Object({
-        inferenceConfig: InferenceConfig
+        inferenceConfig: InferenceConfig,
+        logsAnalyzerS3SignedUrl: Type.Optional(Type.String())
     })
 );
 

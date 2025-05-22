@@ -40,7 +40,7 @@
   },
   "license": "ISC",
   "main": "dist/src/agent.js",
-  "name": "agentic-systen",
+  "name": "logs-analyzer",
   "pkg": {
     "assets": [
       "dist/**/*",

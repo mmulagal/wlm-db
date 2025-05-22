@@ -4,11 +4,10 @@ import { DATABASE_TYPE, JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client'
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
 import { AuditStatus, DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
-import { getArtifactsRegionBucketName } from '../../utils/utils';
+import { getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
 import {
-    LOGS_ANALYZER_BEDROCK_REGION,
     LOGS_ANALYZER_BUNDLE_PATH,
-    LOGS_ANALYZER_MODEL_ID,
+    LOGS_ANALYZER_MODEL_IDS,
     LOGS_ANALYZER_PACKAGE_NAME,
     LOGS_ANALYZER_PACKAGE_VERSION,
     MODEL_AVAILABILITY_STATUS
@@ -37,52 +36,72 @@ const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
 
+async function findFirstAvailableModel(accountId: string, credentialsId: string, region: string, modelIds: string[]) {
+    logger.debug('Finding first available model:', {
+        accountId,
+        credentialsId,
+        region,
+        modelIds
+    });
+
+    for (const modelId of modelIds) {
+        try {
+            const response = await getModelAvailability(accountId, credentialsId, region, modelId);
+            if (!isEmpty(response)) {
+                return { modelId, response };
+            }
+        } catch (error) {
+            logger.error(`Failed to retrieve AWS Bedrock model ${modelId} not available. Error: ${error}`);
+        }
+    }
+}
+
 async function checkLogAnalyzerPreRequisites(
     accountId: string,
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    databaseType: string,
-    inferenceProfileArn: string
+    databaseType: string
 ) {
     logger.info(`Checking prerequisites for logs analysis with credentialsId: ${credentialsId}, region: ${region}`, {
         accountId,
         activeNodeInstanceId,
-        databaseType,
-        inferenceProfileArn
+        databaseType
     });
 
-    // Check if the AWS Bedrock Inference Profile is available for the account
-    try {
-        const availabilityResponse = await getModelAvailability(
-            accountId,
-            credentialsId,
-            LOGS_ANALYZER_BEDROCK_REGION,
-            LOGS_ANALYZER_MODEL_ID
-        );
+    const {
+        modelId,
+        response,
+        response: { agreementAvailability, entitlementAvailability } = {}
+    } = (await findFirstAvailableModel(accountId, credentialsId, region, LOGS_ANALYZER_MODEL_IDS)) || {};
 
-        const isSupported =
-            availabilityResponse?.agreementAvailability?.status === MODEL_AVAILABILITY_STATUS.AVAILABLE &&
-            availabilityResponse?.entitlementAvailability === MODEL_AVAILABILITY_STATUS.AVAILABLE;
-        if (!isSupported) {
-            throw createError(
-                HttpErrorCodes.BAD_REQUEST,
-                'Unable to continue with logs analysis, the AWS Bedrock model cannot be used.'
-            );
-        }
-    } catch (error) {
+    if (!modelId || (response && isEmpty(response))) {
         throw createError(
-            HttpErrorCodes.BAD_REQUEST,
-            `Unable to continue with logs analysis, failed to retrieve AWS Bedrock model not available. ${error}`
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Unable to continue with logs analysis, the AWS Bedrock model cannot be used in this region.'
         );
     }
+
+    const isSupported =
+        agreementAvailability?.status === MODEL_AVAILABILITY_STATUS.AVAILABLE &&
+        entitlementAvailability === MODEL_AVAILABILITY_STATUS.AVAILABLE;
+    if (!isSupported) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            `Unable to continue with logs analysis, the AWS Bedrock model ${JSON.stringify(
+                LOGS_ANALYZER_MODEL_IDS
+            )} is not enabled for your account in this region.`
+        );
+    }
+
+    const inferenceProfileArn = await getInferenceProfileFromModelId(accountId, credentialsId, region, modelId);
 
     try {
         const bedrockCheckScript =
             databaseType === DATABASE_TYPE.mssql
-                ? getWindowsBedrockAvailabilityCheckScript(LOGS_ANALYZER_BEDROCK_REGION, inferenceProfileArn)
-                : getLinuxBedrockAvailabilityCheckScript(LOGS_ANALYZER_BEDROCK_REGION, inferenceProfileArn);
-        const response = await callSsmExecution(
+                ? getWindowsBedrockAvailabilityCheckScript(region, inferenceProfileArn)
+                : getLinuxBedrockAvailabilityCheckScript(region, inferenceProfileArn);
+        const bedrockAvailabilityCheckResponse = await callSsmExecution(
             credentialsId,
             region,
             [bedrockCheckScript!],
@@ -96,18 +115,20 @@ async function checkLogAnalyzerPreRequisites(
             databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC_VERSION : undefined
         );
 
-        const [jsonResponse] = parseConcatenatedJSON(response);
+        const [jsonResponse] = parseConcatenatedJSON(bedrockAvailabilityCheckResponse);
         if ((jsonResponse as { success?: boolean })?.success === false) {
             throw createError(
-                HttpErrorCodes.BAD_REQUEST,
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
                 `Unable to continue with logs analysis, the AWS Bedrock model cannot be used. ${
                     (jsonResponse as any)?.error ?? ''
                 }`
             );
         }
     } catch (error) {
-        throw createError(HttpErrorCodes.BAD_REQUEST, `Unable to continue with logs analysis ${error}`);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Unable to continue with logs analysis ${error}`);
     }
+
+    return { inferenceProfileArn, modelId };
 }
 
 async function handleLogsAnalysis(
@@ -116,10 +137,12 @@ async function handleLogsAnalysis(
     region: string,
     managedInstance: DatabaseInstancesIncludingResource,
     jobId: string,
-    inferenceConfig?: InferenceConfigType
+    inferenceConfig?: InferenceConfigType,
+    logsAnalyzerS3SignedUrl?: string
 ) {
     logger.info(
-        `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`
+        `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`,
+        { logsAnalyzerS3SignedUrl, inferenceConfig }
     );
     let jobStatus;
     let jobError;
@@ -130,8 +153,8 @@ async function handleLogsAnalysis(
             isManaged: true
         };
 
-        const { database_type: databaseType } = managedInstance;
-
+        const { database_type: dbType } = managedInstance;
+        const databaseType = dbType?.toLowerCase();
         const { nodeId: activeNodeInstanceId, matchingInstance } = await getActiveNodeAndInstanceDetails(
             accountId,
             credentialsId,
@@ -140,42 +163,40 @@ async function handleLogsAnalysis(
             databaseInstanceDetails as unknown as DatabaseInstance
         );
 
-        const inferenceProfileArn = await getInferenceProfileFromModelId(
-            accountId,
-            credentialsId,
-            region,
-            LOGS_ANALYZER_MODEL_ID
-        );
-
-        await checkLogAnalyzerPreRequisites(
+        const { inferenceProfileArn } = await checkLogAnalyzerPreRequisites(
             accountId,
             credentialsId,
             region,
             activeNodeInstanceId,
-            databaseType,
-            inferenceProfileArn
+            databaseType
         );
+        if (!inferenceProfileArn) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Inference profile not found');
+        }
+        const s3SignedUrl =
+            logsAnalyzerS3SignedUrl ||
+            (await getPreSignedUrl(
+                DEFAULT_AWS_REGION,
+                getArtifactsRegionBucketName(DEFAULT_AWS_REGION),
+                LOGS_ANALYZER_BUNDLE_PATH
+            ));
 
-        const s3SignedUrl = await getPreSignedUrl(
-            DEFAULT_AWS_REGION,
-            getArtifactsRegionBucketName(DEFAULT_AWS_REGION),
-            LOGS_ANALYZER_BUNDLE_PATH
-        );
-
-        const logsPathQuery = 'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations';
+        const logsPathQuery =
+            'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH';
         const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth(
             [managedInstance?.database_instance_name],
             logsPathQuery,
             matchingInstance?.sqlAuthEnabled
         );
-        const logsPath = await callSsmExecution(
+        const logsPathResponse = await callSsmExecution(
             credentialsId,
             region,
             [logsAnalysisSsmCommand],
             activeNodeInstanceId,
             'Fetch Logs Path for sql server instance'
         );
-
+        const parsedResponse = logsPathResponse ? sqlResponseParsing(logsPathResponse) : {};
+        const [{ path: logsPath } = {}] = parsedResponse?.[managedInstance?.database_instance_name] || [];
         const logsAnalyserScriptCommand =
             databaseType === DATABASE_TYPE.mssql
                 ? getWindowsPrepareScript({
@@ -218,7 +239,8 @@ async function handleLogsAnalysis(
         const [ssmLogsResponse] = await getCloudWatchLogs(credentialsId, region, logGroupName, logStreamName);
         const jsonSsmLogsResponse = parseConcatenatedJSON(ssmLogsResponse);
 
-        logger.info(`Logs analysis response: ${jsonSsmLogsResponse}`);
+        logger.info('Logs analysis compleeted successfully for jobId:', jobId);
+        logger.debug(`Logs analysis response: ${JSON.stringify(jsonSsmLogsResponse)}`);
 
         await updateJobDetails(accountId, jobId, {
             endTime: Date.now(),
@@ -246,7 +268,8 @@ async function triggerLogsAnalysis(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    inferenceConfig?: InferenceConfigType
+    inferenceConfig?: InferenceConfigType,
+    logsAnalyzerS3SignedUrl?: string
 ) {
     const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
@@ -281,7 +304,15 @@ async function triggerLogsAnalysis(
             status: jobsStatus,
             type: JOBTYPE.LOGS_ANALYSIS
         }));
-        handleLogsAnalysis(accountId, credentialsId, region, managedInstance, jobId, inferenceConfig);
+        handleLogsAnalysis(
+            accountId,
+            credentialsId,
+            region,
+            managedInstance,
+            jobId,
+            inferenceConfig,
+            logsAnalyzerS3SignedUrl
+        );
         return { jobId };
     } catch (error) {
         const errorMessage = `Error triggering logs analysis: ${error}`;
