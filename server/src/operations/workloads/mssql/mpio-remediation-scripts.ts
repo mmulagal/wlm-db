@@ -278,8 +278,9 @@ const MPIO_TIMEOUT = `
         Write-Information "Failed to set MPIO Disk Timeout. Error message: $_.Exception.Message"
         return @{"status" = "failed"
                  "error" = $_.Exception.Message} | ConvertTo-Json
+    } finally {
+        Stop-Transcript | Out-Null
     }
-    Stop-Transcript | Out-Null
 `;
 
 export {
