@@ -122,7 +122,6 @@ const getOracleProtectionData = (
     protocol: string,
     dbSid: string
 ) => `
-    #!/bin/bash
     #oracle protection script
  
     ${getMappedOntapDataVolume(fsxnId, region, mountIp, junctionPath, protocol)}

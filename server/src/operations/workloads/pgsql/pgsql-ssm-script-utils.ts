@@ -55,7 +55,7 @@ const getPgSqlStorageSavings = (fsxnId: string, region: string, endpoint: string
     #PG SQL Storage Savings
  
     ${getMappedOntapDataVolume(fsxnId, region)}
-    endpoint="${endpoint}&name=$mountedVolume"
+    endpoint="${endpoint}&svm.name=$svmName&name=$mountedVolume"
     result=$(ontap_request 'GET' $endpoint)
     echo $result
 `;
@@ -65,7 +65,7 @@ const getPgSqlProtection = (fsxnId: string, region: string) => `
     #pgsql protection script
  
     ${getMappedOntapDataVolume(fsxnId, region)}
-    endpoint="storage/volumes?fields=snapshot_count&name=$mountedVolume"
+    endpoint="storage/volumes?fields=snapshot_count&svm.name=$svmName&name=$mountedVolume"
     result=$(ontap_request 'GET' $endpoint)
     check_status "Failed to fetch protection data"
     echo $result

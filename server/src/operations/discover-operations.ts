@@ -78,7 +78,9 @@ import {
     HA,
     PGSQL_DEFAULT_INSTANCE_NAME,
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    STANDALONE,
+    ORACLE_INSTANCE_STATE
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -2975,9 +2977,9 @@ async function getOracleResourceDetails(
                 fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
             });
 
-            const mountPointDetails = storage?.[storage.length - 1]?.mountDetails?.[0];
+            const [mountPointDetails] = storage?.[storage.length - 1]?.mountDetails || [];
             const dbInstanceState =
-                oracleDbInstance.instanceState === 'OPEN' || oracleDbInstance.instanceState === 'STARTED'
+                oracleDbInstance.instanceState === ORACLE_INSTANCE_STATE.OPEN
                     ? 'RUNNING'
                     : oracleDbInstance.instanceState;
 
@@ -2991,7 +2993,7 @@ async function getOracleResourceDetails(
                 credentials_id: credentialsId,
                 metadata: { mountPointDetails },
                 fsxn_ids: fsxnId || '',
-                database_deployment_type: 'standalone',
+                database_deployment_type: STANDALONE,
                 storage_type: fsxnId ? STORAGE_TYPE.FSXN : NOT_AVAILABLE,
                 resource: clonedResourceDetails
             });

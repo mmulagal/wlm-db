@@ -1502,6 +1502,11 @@ const SQL_SERVICE_STATE = {
     STOPPED: 'Stopped'
 };
 
+const ORACLE_INSTANCE_STATE = {
+    STARTED: 'STARTED',
+    OPEN: 'OPEN'
+};
+
 const WIN_SQL_EC2_USAGE_OPERATION = ['RunInstances:0102', 'RunInstances:0006', 'RunInstances:0202'];
 
 const DEMO_STANADLONE_SQL_SERVER_ID = 'f4b7c5d3-e1f6-4g2a-9c4l';
@@ -2093,5 +2098,6 @@ export {
     PGSQL_DEFAULT_INSTANCE_NAME,
     POWERSHELL_7_RELATIVE_PATH,
     CLONE_ACTION,
-    OTHER_CLONE
+    OTHER_CLONE,
+    ORACLE_INSTANCE_STATE
 };

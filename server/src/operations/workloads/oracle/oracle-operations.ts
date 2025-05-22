@@ -377,4 +377,10 @@ async function getOracleDatabaseInstancesSummary(
     return results;
 }
 
-export { getOracleInstanceDetails, getOracleDatabaseInstancesSummary, getOracleDatabaseInstancesDetails };
+export {
+    getOracleInstanceDetails,
+    getOracleDatabaseInstancesSummary,
+    getOracleDatabaseInstancesDetails,
+    getOraclePerformanceMetrics,
+    getOracleProtectionStatus
+};
