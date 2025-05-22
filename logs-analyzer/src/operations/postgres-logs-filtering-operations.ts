@@ -11,7 +11,8 @@ interface PostgresLog {
     severity: string;
 }
 
-async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed: number = 1): Promise<PostgresLog[]> { // default to 1 to process all logs
+async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed: number = 1): Promise<PostgresLog[]> {
+    // default to 1 to process all logs
     logger.info(`Starting to read PostgreSQL logs from file: ${filePath}`, { timestampLastLogProcessed });
 
     const stream = createReadStream(filePath, { encoding: 'utf-8' });

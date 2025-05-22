@@ -13,7 +13,8 @@ interface MsSqlErrorLog {
     error: string;
 }
 
-async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: number = 1): Promise<MsSqlErrorLog[]> { // default to 1 to process all logs
+async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: number = 1): Promise<MsSqlErrorLog[]> {
+    // default to 1 to process all logs
     logger.debug(`Starting to read SQL logs from file: ${filePath}`, { timestampLastLogProcessed });
     const stream = createReadStream(filePath, { encoding: 'utf-8' });
 

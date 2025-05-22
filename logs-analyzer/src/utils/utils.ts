@@ -11,7 +11,7 @@ function getPowershellScript(sql: string[]) {
 
         # Define the list of queries
         $queries = @(
-            ${sql.map(sqlQuery => `'${sqlQuery.replace(/'/g, "''")}'`).join(',\n  ')}
+            ${sql.map(sqlQuery => `'${sqlQuery.replace(/'/g, '\'\'')}'`).join(',\n  ')}
         )
 
 
