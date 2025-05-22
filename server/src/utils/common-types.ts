@@ -560,6 +560,10 @@ interface OptimizeMpioIscsiSessionsParams extends OptimizeParams {
     currentMpioSessionsCount: SessionsCountPerIscsiTarget[];
 }
 
+interface OptimizeMpioTimeoutParams extends OptimizeParams {
+    ssmCommand: string;
+}
+
 interface DatabaseInstancesIncludingResource extends DatabaseInstances {
     resource: Resource;
 }
@@ -721,5 +725,6 @@ export {
     DatabaseInstanceConfigurations,
     DatabaseHostConfigurations,
     CrrAssessment,
-    CrrDetails
+    CrrDetails,
+    OptimizeMpioTimeoutParams
 };
