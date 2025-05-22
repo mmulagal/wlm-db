@@ -93,7 +93,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -187,7 +187,7 @@
                             "missingSqlPermissions": ["abc", "def"],
                             "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": ["abc", "def"],
                             "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
                         },
@@ -232,7 +232,7 @@
                             "missingSqlPermissions": ["abc", "def"],
                             "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": ["abc", "def"],
                             "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
                         },
@@ -277,7 +277,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -337,7 +337,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -383,7 +383,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -429,7 +429,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -497,7 +497,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -556,7 +556,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -616,7 +616,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -724,7 +724,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -913,7 +913,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -962,7 +962,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1011,7 +1011,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1154,7 +1154,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1227,7 +1227,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1281,7 +1281,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1354,7 +1354,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1462,7 +1462,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1604,7 +1604,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1721,7 +1721,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1794,7 +1794,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1858,7 +1858,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1903,7 +1903,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1952,7 +1952,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
@@ -1997,7 +1997,7 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },
-                        "dbCreation": {
+                        "dbcreation": {
                             "missingSqlPermissions": [],
                             "missingModules": []
                         },

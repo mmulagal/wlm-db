@@ -886,7 +886,10 @@ const InventoryApisV3 = () => {
         let noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList?.map((ec2InstanceIdComb: any) => {
-                if (runningInstanceListRef.current.includes(ec2InstanceIdComb)) {
+                if (
+                    runningInstanceListRef.current.includes(ec2InstanceIdComb) ||
+                    mssqlInstancesDataRef.current?.[ec2InstanceIdComb]
+                ) {
                     return;
                 }
                 mssqlInstancesDataLoad[ec2InstanceIdComb] = {
@@ -1169,7 +1172,10 @@ const InventoryApisV3 = () => {
         let noRunningList: Array<string> = [];
         if (instancesListComb && instancesListComb.length > 0) {
             instancesListComb?.map((ec2InstanceIdComb: any) => {
-                if (runningPerfInstanceListRef.current.includes(ec2InstanceIdComb)) {
+                if (
+                    runningPerfInstanceListRef.current.includes(ec2InstanceIdComb) ||
+                    perfMssqlInstancesDataRef.current?.[ec2InstanceIdComb]
+                ) {
                     return;
                 }
                 mssqlInstancesDataLoad[ec2InstanceIdComb] = {

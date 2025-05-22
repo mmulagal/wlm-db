@@ -117,10 +117,10 @@ const PermissionListComponent = ({ manageChecks }: any) => {
             id: '3',
             title: 'Create database',
             subtitle: 'Capability',
-            readinessStatus: manageChecks?.dbCreation,
-            missingPermission: manageChecks?.dbCreation !== MANAGE_STATES.READY,
+            readinessStatus: manageChecks?.dbcreation,
+            missingPermission: manageChecks?.dbcreation !== MANAGE_STATES.READY,
             image:
-                wizardOperationType !== 'bulk' && manageChecks?.dbCreation !== MANAGE_STATES.READY ? (
+                wizardOperationType !== 'bulk' && manageChecks?.dbcreation !== MANAGE_STATES.READY ? (
                     <DatabaseDisabled />
                 ) : (
                     <Database />

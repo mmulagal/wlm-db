@@ -34,7 +34,7 @@ export const Content = () => {
             installMissingPowershell: false,
             assessment: GENERAL.NOT_AVAILABLE,
             remediation: GENERAL.NOT_AVAILABLE,
-            dbCreation: GENERAL.NOT_AVAILABLE,
+            dbcreation: GENERAL.NOT_AVAILABLE,
             sandbox: GENERAL.NOT_AVAILABLE,
             ec2InstanceId: '',
             region: '',
@@ -57,7 +57,7 @@ export const Content = () => {
                 allowManage: isAllowManage(manageReadinessData),
                 assessment: getPermissionState('assessment', manageReadinessData),
                 remediation: getPermissionState('remediation', manageReadinessData),
-                dbCreation: getPermissionState('dbCreation', manageReadinessData),
+                dbcreation: getPermissionState('dbcreation', manageReadinessData),
                 sandbox: getPermissionState('sandbox', manageReadinessData),
                 ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
                 region: manageSingleInstanceData?.regionId,
@@ -69,6 +69,15 @@ export const Content = () => {
         }
         return manageCheckObj;
     }, [manageSingleInstanceData, manageSingleInstanceReadiness]);
+
+    const isAllReady = useMemo(() => {
+        return (
+            manageChecks?.assessment === MANAGE_STATES.READY &&
+            manageChecks?.remediation === MANAGE_STATES.READY &&
+            manageChecks?.dbcreation === MANAGE_STATES.READY &&
+            manageChecks?.sandbox === MANAGE_STATES.READY
+        );
+    }, [manageChecks]);
 
     return (
         <div className={styles['manage-instance-step']}>
@@ -101,7 +110,7 @@ export const Content = () => {
             <PermissionListComponent manageChecks={manageChecks} />
 
             {/* Note */}
-            <NoteComponent />
+            {!isAllReady && <NoteComponent />}
         </div>
     );
 };

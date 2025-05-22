@@ -3407,7 +3407,7 @@ export const manageActionCol = (rowData?: any) => {
         disableMsg = GENERAL.SSM_DOWN;
     } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
         disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
-    } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+    } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
         disableMsg = GENERAL.PGSQL_CTA_NA;
     } else if (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) {
         disableMsg = rowData?.detectOptionDisableMsg;
@@ -3421,6 +3421,10 @@ export const manageActionCol = (rowData?: any) => {
         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
     ) {
         disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
+    }
+
+    if (colText === ACTION_CTA.FIX_ISSUES && !rowData?.optimizationStatus && !rowData?.optimizationStatusLoading) {
+        disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
     }
     return {
         colText: colText,

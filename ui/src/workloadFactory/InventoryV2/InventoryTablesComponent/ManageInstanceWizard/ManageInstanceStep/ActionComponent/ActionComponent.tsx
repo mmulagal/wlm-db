@@ -70,7 +70,7 @@ const ActionComponent = ({ manageChecks }: any) => {
                             dispatch(setInstallType({ installMissingAWS: !installMissingAWS }));
                             setState({ installMissingAWS: !installMissingAWS });
                         }}
-                        isSelected={installMissingAWS}
+                        isSelected={installMissingAWS || !manageChecks?.installMissingAWS}
                         isDisabled={!manageChecks?.installMissingAWS}
                         className={styles.checkboxContainer}
                     />
@@ -82,7 +82,7 @@ const ActionComponent = ({ manageChecks }: any) => {
                             dispatch(setInstallType({ installMissingPowershell: !installMissingPowershell }));
                             setState({ installMissingPowershell: !installMissingPowershell });
                         }}
-                        isSelected={installMissingPowershell}
+                        isSelected={installMissingPowershell || !manageChecks?.installMissingAWS}
                         isDisabled={!manageChecks?.installMissingPowershell}
                         className={styles.checkboxContainer}
                     />

@@ -22,7 +22,7 @@ export const handleSingleInstanceManage = (
     if (
         manageSingleInstanceChecks?.assessment === GENERAL.NOT_AVAILABLE &&
         manageSingleInstanceChecks?.remediation === GENERAL.NOT_AVAILABLE &&
-        manageSingleInstanceChecks?.dbCreation === GENERAL.NOT_AVAILABLE &&
+        manageSingleInstanceChecks?.dbcreation === GENERAL.NOT_AVAILABLE &&
         manageSingleInstanceChecks?.sandbox === GENERAL.NOT_AVAILABLE
     ) {
         dispatch(
@@ -66,25 +66,23 @@ export const callManageSingleInstanceApi = async (
     getJobDetailApi: any,
     navigate: any
 ) => {
+    const state = store.getState();
+    const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
     let installModules: Array<string> = [];
-    if (manageSingleInstanceChecks?.installMissingAWS) {
-        installModules = manageSingleInstanceChecks?.installMissingAWSList;
+    if (manageSingleInstanceChecks?.installMissingAWS && installMissingAWS) {
+        installModules = [...installModules, ...manageSingleInstanceChecks?.installMissingAWSList];
     }
-    if (manageSingleInstanceChecks?.installMissingPowershell) {
+    if (manageSingleInstanceChecks?.installMissingPowershell && installMissingPowershell) {
         installModules = [...installModules, MANAGE_STATES.POWERSHELL7];
     }
     let payload = {
-        hosts: [
+        items: [
             {
                 ec2InstanceId: manageSingleInstanceChecks?.ec2InstanceId,
                 region: manageSingleInstanceChecks?.region,
                 credentialsId: manageSingleInstanceChecks?.credentialsId,
-                instances: [
-                    {
-                        databaseInstanceName: manageSingleInstanceChecks?.databaseInstanceName
-                    }
-                ],
-                installModules: installModules
+                databaseInstanceNames: [manageSingleInstanceChecks?.databaseInstanceName],
+                modulesToInstall: installModules
             }
         ]
     };
@@ -157,19 +155,14 @@ export const manageJobStatus = (
                 const updatedState = store.getState();
                 const { manageSingleInstanceData } = updatedState.inventoryV2;
                 // ToDo: parametes will update once manage Jobs data will be available
+                const instanceObj = jobRes?.data?.subJobs?.[0]?.metadata?.instanceManagementStatus;
+                const resourceId = jobRes?.data?.subJobs?.[0]?.metadata?.resourceId;
                 const updatedInventoryTableData = updateInstanceStatus(
                     'manage',
                     manageSingleInstanceData,
                     [manageSingleInstanceChecks?.databaseInstanceName],
-                    [
-                        {
-                            databaseInstanceName: manageSingleInstanceChecks?.databaseInstanceName,
-                            databaseInstanceGuid: '',
-                            status: 'success',
-                            errorMessage: ''
-                        }
-                    ],
-                    ''
+                    instanceObj,
+                    resourceId
                 );
                 dispatch(setInventoryTableData(updatedInventoryTableData));
                 const { inProgressInstances } = updatedState.inventoryV2;
@@ -242,16 +235,16 @@ export const getPermissionState = (type: string, manageReadinessData: any) => {
 export const checkOverallManageState = (
     assessment: string,
     remediation: string,
-    dbCreation: string,
+    dbcreation: string,
     sandbox: string
 ) => {
     let overallState = '';
 
-    if ([assessment, remediation, dbCreation, sandbox].includes(MANAGE_STATES.READY)) {
+    if ([assessment, remediation, dbcreation, sandbox].includes(MANAGE_STATES.READY)) {
         overallState = MANAGE_STATES.READY;
-    } else if ([assessment, remediation, dbCreation, sandbox].includes(MANAGE_STATES.MISSING_PREREQUISITES)) {
+    } else if ([assessment, remediation, dbcreation, sandbox].includes(MANAGE_STATES.MISSING_PREREQUISITES)) {
         overallState = MANAGE_STATES.MISSING_PREREQUISITES;
-    } else if ([assessment, remediation, dbCreation, sandbox].includes(MANAGE_STATES.MISSING_POWERSHELL)) {
+    } else if ([assessment, remediation, dbcreation, sandbox].includes(MANAGE_STATES.MISSING_POWERSHELL)) {
         overallState = MANAGE_STATES.MISSING_POWERSHELL;
     }
 

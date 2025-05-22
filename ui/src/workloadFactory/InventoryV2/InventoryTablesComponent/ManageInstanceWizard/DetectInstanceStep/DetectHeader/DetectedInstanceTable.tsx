@@ -25,7 +25,7 @@ const DetectedInstanceTable = () => {
             installMissingPowershell: false,
             assessment: GENERAL.NOT_AVAILABLE,
             remediation: GENERAL.NOT_AVAILABLE,
-            dbCreation: GENERAL.NOT_AVAILABLE,
+            dbcreation: GENERAL.NOT_AVAILABLE,
             sandbox: GENERAL.NOT_AVAILABLE,
             ec2InstanceId: '',
             region: '',
@@ -44,9 +44,9 @@ const DetectedInstanceTable = () => {
             let missingModulesList = missingModules(manageReadinessData);
             let assessment = getPermissionState('assessment', manageReadinessData);
             let remediation = getPermissionState('remediation', manageReadinessData);
-            let dbCreation = getPermissionState('dbCreation', manageReadinessData);
+            let dbcreation = getPermissionState('dbcreation', manageReadinessData);
             let sandbox = getPermissionState('sandbox', manageReadinessData);
-            let overallState = checkOverallManageState(assessment, remediation, dbCreation, sandbox);
+            let overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
             manageCheckObj = {
                 installMissingAWS: missingModulesList.length > 0 ? true : false,
                 installMissingAWSList: missingModulesList,
@@ -54,7 +54,7 @@ const DetectedInstanceTable = () => {
                 allowManage: isAllowManage(manageReadinessData),
                 assessment: assessment,
                 remediation: remediation,
-                dbCreation: dbCreation,
+                dbcreation: dbcreation,
                 sandbox: sandbox,
                 ec2InstanceId: instance?.data?.ec2InstanceId,
                 region: instance?.data?.regionId,

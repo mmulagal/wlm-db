@@ -140,7 +140,7 @@ router.post(
                         "missingSqlPermissions": [],
                         "missingModules": []
                     },
-                    "dbCreation": {
+                    "dbcreation": {
                         "missingSqlPermissions": [],
                         "missingModules": []
                     },
@@ -175,7 +175,7 @@ router.post(
                         "missingSqlPermissions": [],
                         "missingModules": []
                     },
-                    "dbCreation": {
+                    "dbcreation": {
                         "missingSqlPermissions": [],
                         "missingModules": []
                     },
