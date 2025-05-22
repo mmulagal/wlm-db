@@ -2207,39 +2207,19 @@ async function optimizeOperatingSystemSettings(
 
             break;
         }
-       case OptimizeOperatingSystemParams.MPIO_TIMEOUT: {
-        const jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-        try {
-            const ssmCommand = MPIO_TIMEOUT;
-            const ssmComment = 'Set MPIO timeout';
-
-            // Always run on active node and, if FCI, also on standby node in parallel
-            const promises = [
-                retryWithDelay(
-                    callSsmExecution.bind(
-                        null,
-                        credentialsId,
-                        region,
-                        [ssmCommand],
-                        activeNodeInstanceId!,
-                        ssmComment,
-                        accountId,
-                        false
-                    ),
-                    3,
-                    50
-                )
-            ];
-
-            if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT && standbyNodeInstanceId) {
-                promises.push(
+        case OptimizeOperatingSystemParams.MPIO_TIMEOUT: {
+            const jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+            try {
+                const ssmCommand = MPIO_TIMEOUT;
+                const ssmComment = 'Set MPIO timeout';
+                const promises = [
                     retryWithDelay(
                         callSsmExecution.bind(
                             null,
                             credentialsId,
                             region,
                             [ssmCommand],
-                            standbyNodeInstanceId,
+                            activeNodeInstanceId!,
                             ssmComment,
                             accountId,
                             false
@@ -2247,30 +2227,69 @@ async function optimizeOperatingSystemSettings(
                         3,
                         50
                     )
+                ];
+
+                if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT && standbyNodeInstanceId) {
+                    promises.push(
+                        retryWithDelay(
+                            callSsmExecution.bind(
+                                null,
+                                credentialsId,
+                                region,
+                                [ssmCommand],
+                                standbyNodeInstanceId,
+                                ssmComment,
+                                accountId,
+                                false
+                            ),
+                            3,
+                            50
+                        )
+                    );
+                }
+
+                await Promise.all(promises);
+                // Trigger assessment after optimization
+                const instanceToAssess: WorkloadInstance = {
+                    id: instanceId,
+                    name: instanceName,
+                    type: databaseType,
+                    region,
+                    sqlAuthEnabled: sqlAuthEnabled || false,
+                    fsxFileSystem: fsxId,
+                    activeNodeInstanceid: activeNodeInstanceId!,
+                    resourceName: serverNameWithHostName,
+                    cloudProviderAccountId: accountId
+                };
+                await triggerAssessmentAfterOptimization(
+                    credentialsId,
+                    region,
+                    accountId,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    instanceToAssess,
+                    AssessmentCategories.STORAGE
                 );
+                updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            } catch (error) {
+                const errorMessage = `Error while setting MPIO timeout: ${error}`;
+                logger.error(errorMessage);
+                await updateJobDetails(accountId, parentJobId, {
+                    status: JOBSTATUS.FAILED,
+                    endTime: Date.now(),
+                    error: errorMessage
+                });
+                updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            } finally {
+                await updateJobDetails(accountId, parentJobId, {
+                    status: jobStatus,
+                    endTime: Date.now()
+                });
             }
-
-            await Promise.all(promises);
-
-            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
-        } catch (error) {
-            const errorMessage = `Error while setting MPIO timeout: ${error}`;
-            logger.error(errorMessage);
-            await updateJobDetails(accountId, parentJobId, {
-                status: JOBSTATUS.FAILED,
-                endTime: Date.now(),
-                error: errorMessage
-            });
-            updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-        } finally {
-            await updateJobDetails(accountId, parentJobId, {
-                status: jobStatus,
-                endTime: Date.now()
-            });
+            break;
         }
-        break;
-    }
         default: {
             const errorMessage = `Invalid configuration name ${configurationName}`;
             logger.error(errorMessage);
