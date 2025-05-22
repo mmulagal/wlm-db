@@ -220,6 +220,16 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         }
     };
 
+    const statusValue = (cellData: string) => {
+        if (cellData === GETWELL_STATUS.OPTIMIZED) {
+            return GETWELL_STATUS.OPTIMIZED;
+        } else if (cellData === GETWELL_STATUS.OPTIMIZING) {
+            return GETWELL_STATUS.OPTIMIZING;
+        } else {
+            return cellData || GENERAL.NOT_AVAILABLE;
+        }
+    };
+
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
@@ -247,13 +257,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                 <InProgress className={styles.statusIcon} />
                             )}
                         </div>
-                        <div>
-                            {cellData === GETWELL_STATUS.OPTIMIZED
-                                ? GETWELL_STATUS.WELL_ARCHITECTED
-                                : cellData === GETWELL_STATUS.OPTIMIZING
-                                ? GETWELL_STATUS.FIXING
-                                : cellData || GENERAL.NOT_AVAILABLE}
-                        </div>
+                        <div>{statusValue(cellData)}</div>
                     </div>
                 );
             }

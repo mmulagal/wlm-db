@@ -2841,7 +2841,7 @@ export const getOptimizationStatus = (
                 ? optBreakDown?.total?.notOptimized === 1
                     ? optBreakDown?.total?.notOptimized + ' issues'
                     : optBreakDown?.total?.notOptimized + ' issues'
-                : 'Well architected';
+                : 'Well-architected';
     } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     } else if (instanceRow?.assessments && !instanceRow?.assessments?.lastAssessmentTimestamp) {
