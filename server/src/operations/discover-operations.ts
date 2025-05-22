@@ -997,7 +997,26 @@ async function validateAndStoreDiscoveredParameters(
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return {
             databaseCount: '10',
-            sqlServerEdition: 'Standard Edition (64-bit)'
+            sqlServerEdition: 'Standard Edition (64-bit)',
+            manageReadiness: {
+                missingSqlCmd: false,
+                assessment: {
+                    missingSqlPermissions: [],
+                    missingModules: []
+                },
+                remediation: {
+                    missingSqlPermissions: [],
+                    missingModules: []
+                },
+                dbcreation: {
+                    missingSqlPermissions: [],
+                    missingModules: []
+                },
+                sandbox: {
+                    missingSqlPermissions: [],
+                    missingModules: []
+                }
+            }
         };
     }
 

@@ -535,6 +535,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         
           $editionDBCountMachineInfoGuid = $null
           $existingPermissions = $null
+          $sqlInstanceDriveLetterOrPathList = $null
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" } 
 
           $responseObject['isSqlCmdAvailable'] = $True
