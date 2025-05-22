@@ -901,7 +901,7 @@ const InstancesTable = () => {
                     menu.push(
                         {
                             id: 'optimize',
-                            displayName: 'Well-architect',
+                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
                             disabled: disableOption,
                             infoText: disableMessage
                         },

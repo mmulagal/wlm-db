@@ -778,7 +778,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === GENERAL.CLONE_MANAGEMENT
         ) {
-            return 'View & fix';
+            return GENERAL.VIEW_AND_FIX;
         } else if (
             type === 'Data files' ||
             type === 'Log files' ||
@@ -788,7 +788,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         ) {
             return 'View';
         } else {
-            return GENERAL.OPTIMIZE;
+            return GENERAL.VIEW_AND_FIX;
         }
     };
 

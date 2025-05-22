@@ -28,6 +28,14 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    WELL_ARCHITECTED_STATUS: 'Well-architected status',
+    UPDATE: 'Update',
+    UPDATE_FSX_ADMIN_PASSWORD: 'Update FSxadmin password',
+    FSX_PASSWORD_CONTENT:
+        'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Microsoft SQL Server instance.',
+    SQL_PASSWORD_CONTENT:
+        'The password for your Windows login might have changed. Update credentials to manage this Microsoft SQL Server instance.',
+    UPDATE_SQL_SERVER_PASSWORD: 'Update SQL Server password',
     DATABASE_MANAGEMENT: 'Database management',
     DATABASE_OPTIMIZATION: 'Database optimization',
     INVENTORY_CARD_TEXT1:
@@ -61,6 +69,7 @@ export const GENERAL = {
     SYSTEM_DATABASE: 'System Database',
     MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Fix',
+    VIEW_AND_FIX: 'View and fix',
     REBASE_LINE: 'Re-baseline',
     APPLY: 'Apply',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',

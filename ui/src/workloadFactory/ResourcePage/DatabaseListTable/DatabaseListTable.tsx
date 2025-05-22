@@ -234,7 +234,7 @@ const DatabaseListTable = () => {
                                 navigate('../create-new-user');
                             }}
                         >
-                            {GENERAL.ADD_DATABASE}
+                            {GENERAL.JM_TYPE_CREATE_RESOURCE}
                         </Button>
                     </div>
                 }

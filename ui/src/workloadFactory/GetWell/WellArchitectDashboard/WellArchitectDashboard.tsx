@@ -234,9 +234,13 @@ const WellArchitectDashboard = () => {
     const handleFsxPassword = (type: string) => {
         setDialog(
             <DialogComponent
-                header={type === RESET_PASSWORD_TYPE.FSXADMIN ? 'Reset FSxadmin password' : 'Reset SQL Server password'}
+                header={
+                    type === RESET_PASSWORD_TYPE.FSXADMIN
+                        ? GENERAL.UPDATE_FSX_ADMIN_PASSWORD
+                        : GENERAL.UPDATE_SQL_SERVER_PASSWORD
+                }
                 content={type === RESET_PASSWORD_TYPE.FSXADMIN ? <FSXPasswordContent /> : <SQLServerPasswordContent />}
-                primaryButton={GENERAL.APPLY}
+                primaryButton={GENERAL.UPDATE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
                     handleFSXAdminApply(type);
