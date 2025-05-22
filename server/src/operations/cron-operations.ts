@@ -336,7 +336,7 @@ function scheduledAssessment() {
 async function purgeAssessmentData() {
     setInterval(async () => {
         await purgeOlderAssessmentRecords();
-    }, Number(ms(config.get('db.assessment.purge-interval'))));
+    }, Number(ms(config.get('db.assessment.purge.interval'))));
 }
 
 export {

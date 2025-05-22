@@ -92,7 +92,9 @@
             }
         },
         "assessment": {
-            "interval": "24h"
+             "purge": {
+                "interval": "24h"
+            }
         }
     },
     "redis": {
