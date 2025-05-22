@@ -48,6 +48,7 @@ export interface InventorySliceData {
     fsxCredentialStatusObj: any;
     fsxCredentialStatusLoading: boolean;
     mssqlInstancesData: any;
+    pgsqlInstancesData: any;
     perfMssqlInstancesData: any;
     inProgressInstances: any;
     manageHostSelectedRows: any;

@@ -723,9 +723,6 @@ const InstancesTable = () => {
                         ) : (
                             <div className={styles.statusCol}>
                                 <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                                <DsButton type="text" onClick={() => redirectToAction(rowData)}>
-                                    View
-                                </DsButton>
                             </div>
                         )}
                     </>
@@ -950,7 +947,7 @@ const InstancesTable = () => {
                     menu.push(
                         {
                             id: 'optimize',
-                            displayName: 'Well-architect',
+                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
                             disabled: disableOption,
                             infoText: disableMessage
                         },

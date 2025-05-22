@@ -23,7 +23,6 @@ import {
     JobSummaryByTimeRecordType,
     JobSummaryResponseType,
     ListJobsQueryType,
-    UpdateJobRecordType,
     JobSummaryQueryType
 } from '../../routes/types/jobs.types';
 import { GERERIC_JOB_ERROR_MESSAGE, JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
@@ -51,6 +50,14 @@ interface JobGroup {
     _count: {
         _all: number;
     };
+}
+
+interface UpdateJobRecord {
+    status: string;
+    description?: string;
+    endTime?: number;
+    error?: string;
+    metadata?: any;
 }
 
 type JobWithSubJobsDbSchema = jobDbSchema & { subJobs?: jobDbSchema[] };
@@ -277,8 +284,8 @@ async function getSubJobs(
     return subJobs;
 }
 
-async function updateJobDetails(accountId: string, jobId: string, params: UpdateJobRecordType) {
-    const { description, status, endTime, error } = params;
+async function updateJobDetails(accountId: string, jobId: string, params: UpdateJobRecord) {
+    const { description, status, endTime, error, metadata } = params;
     logger.info(' Modifying job details', {
         accountId,
         jobId,
@@ -287,7 +294,7 @@ async function updateJobDetails(accountId: string, jobId: string, params: Update
         endTime,
         error
     });
-    const response = await updateJob(accountId, jobId, description, status as JOBSTATUS, endTime, error);
+    const response = await updateJob(accountId, jobId, description, status as JOBSTATUS, endTime, error, metadata);
     if (response) {
         return formatJob(response);
     }
@@ -461,7 +468,7 @@ async function updateParentJobStatus(
                 jobStatus = JOBSTATUS.WARNING;
             } else if (isSandboxJob && allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
                 jobStatus = JOBSTATUS.FAILED;
-            } else if (allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
+            } else if (allSubJobs.some(job => job.status === JOBSTATUS.FAILED || job.status === JOBSTATUS.WARNING)) {
                 jobStatus = JOBSTATUS.WARNING;
             } else {
                 jobStatus = JOBSTATUS.IN_PROGRESS;

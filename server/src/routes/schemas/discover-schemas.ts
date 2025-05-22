@@ -17,7 +17,8 @@ import {
     DatabaseInstanceQueryString,
     DiscoverPgSqlResponseBody,
     MultiHostManageResponseBody,
-    DiscoverOracleResponseBody
+    DiscoverOracleResponseBody,
+    JobBasedManageResponseBody
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams, AccountIdParams } from '../types/generic.types';
 
@@ -94,6 +95,17 @@ const ManageMsSqlSchemaV2 = {
     description: 'Manage SQL Server instances',
     response: {
         200: MultiHostManageResponseBody
+    }
+};
+
+const JobBasedManageSchema = {
+    ...DiscoveryBaseRequest,
+    params: AccountIdParams,
+    body: MultiInstanceManageMsSqlRequestBody,
+    summary: 'Manage SQL Server instances',
+    description: 'Manage SQL Server instances',
+    response: {
+        200: JobBasedManageResponseBody
     }
 };
 
@@ -189,5 +201,6 @@ export {
     DiscoverPgSqlSchema,
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
-    UnManagePgSqlSchema
+    UnManagePgSqlSchema,
+    JobBasedManageSchema
 };

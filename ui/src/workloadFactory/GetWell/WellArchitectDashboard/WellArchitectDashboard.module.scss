@@ -31,11 +31,8 @@
         gap: 24px;
 
         .buttonContainer {
-            svg {
-                path {
-                    fill: var(--text-button-secondary);
-                }
-            }
+            position: relative;
+            top: 3px;
         }
         .refreshIcon {
             cursor: pointer;

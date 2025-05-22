@@ -23,6 +23,7 @@ import {
     generateOptionType,
     getCurrentDateTime,
     handleURL,
+    handleURLFromDashboard,
     regionsSort,
     resetDBHomePageState,
     setExploreSavingsSubTab,
@@ -71,7 +72,7 @@ import {
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import DatabaseHomeApis from '../DatabaseHomeApis';
-import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
+
 import ExploreSavings from '../../ExploreSavings/ExploreSavings';
 import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCalulator';
 import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
@@ -89,9 +90,9 @@ import { updateRefreshBlocked } from '../../../store/authSlice';
 
 import SavingsCalculatorManualApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorManualAPI';
 import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useNavigationType, NavigationType } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
-import GetWell from '../../GetWell/GetWell';
+
 import {
     resetInventoryLoading,
     resetRefreshData,
@@ -156,6 +157,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         allmssqlHostAssessmentLoading,
         fsxCredentialStatusLoading,
         mssqlInstancesData,
+        pgsqlInstancesData,
         perfMssqlInstancesData,
         potentialSavingsHostData,
         createResourceApiLoading,
@@ -186,6 +188,8 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     const multiDataStatusRef: any = useRef(null);
 
+    const navType = useNavigationType();
+
     useEffect(() => {
         multiDataStatusRef.current = multiDataStatus;
     }, [multiDataStatus]);
@@ -213,6 +217,10 @@ const HeaderComponent = ({ tab }: Tab) => {
             tabValue === WLF_TABS.EXPLORE_SAVINGS_ONPREM
         ) {
             setExploreSavingsSubTab(tabValue, dispatch);
+        }
+
+        if (navType === NavigationType.Pop) {
+            handleURL(tab, isWorkloadFactory);
         }
     }, [tab]);
 
@@ -485,6 +493,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             const state = store.getState();
             const {
                 mssqlInstancesData: mssqlInstancesDataLatest,
+                pgsqlInstancesData: pgsqlInstancesDataLatest,
                 perfMssqlInstancesData: perfMssqlInstancesDataLatest,
                 potentialSavingsHostData: potentialSavingsHostDataLatest
             } = state.inventoryV2;
@@ -500,6 +509,21 @@ const HeaderComponent = ({ tab }: Tab) => {
                         mssqlInstancesDataLatest?.[key]?.loading
                     ) {
                         isMssqlInstanceDataLoading = true;
+                    }
+                });
+            }
+
+            let isPgsqlInstanceDataLoading = false;
+            if (pgsqlInstancesDataLatest) {
+                Object.keys(pgsqlInstancesDataLatest)?.map((key: any) => {
+                    let keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[1] === currentCredId &&
+                        keyList[2] === currentRegionId &&
+                        pgsqlInstancesDataLatest?.[key]?.loading
+                    ) {
+                        isPgsqlInstanceDataLoading = true;
                     }
                 });
             }
@@ -534,7 +558,12 @@ const HeaderComponent = ({ tab }: Tab) => {
                 });
             }
 
-            if (!isMssqlInstanceDataLoading && !perfMssqlInstancesDataLoading && !potentialSavingsHostDataLoading) {
+            if (
+                !isMssqlInstanceDataLoading &&
+                !perfMssqlInstancesDataLoading &&
+                !potentialSavingsHostDataLoading &&
+                !isPgsqlInstanceDataLoading
+            ) {
                 let newStatus = { ...multiDataStatusRef.current };
                 newStatus[currentCredId + '_' + currentRegionId] = true;
                 dispatch(setMultiDataStatus(newStatus));
@@ -551,8 +580,11 @@ const HeaderComponent = ({ tab }: Tab) => {
         dashSandboxListLoading,
         dashSandboxSavingsLoading,
         discoverHostLoading,
+        discoverOracleHostLoading,
+        discoverPgsqlHostLoading,
         fsxCredentialStatusLoading,
         mssqlInstancesData,
+        pgsqlInstancesData,
         perfMssqlInstancesData,
         potentialSavingsHostData
     ]);
@@ -773,7 +805,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
         dispatch(addExploreSavingsInitialData(null));
-        handleURL(value, isWorkloadFactory);
+        handleURLFromDashboard(value, isWorkloadFactory, navigate);
     };
 
     useEffect(() => {

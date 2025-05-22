@@ -790,12 +790,14 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
     let awsBackupDb = 0;
     let fsxOntapSnapshotsDb = 0;
     let sqlServerBackupDb = 0;
+    let crrEnabled = 0;
 
     data?.map((val: any) => {
         if (
             isAwsBackupEnabled(val) ||
             val?.protection?.isFsxOntapSnapshotsEnabled ||
-            val?.protection?.isSqlNativeEnabled
+            val?.protection?.isSqlNativeEnabled ||
+            val?.protection?.isCrrEnabled
         ) {
             protectedDb += 1;
         } else if (
@@ -820,6 +822,9 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
         if (val?.protection?.isSqlNativeEnabled) {
             sqlServerBackupDb += 1;
         }
+        if (val?.protection?.isCRREnabled === true) {
+            crrEnabled += 1;
+        }
     });
 
     const totalHost = protectedDb + unprotectedDb;
@@ -831,7 +836,9 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
         unprotectedPercent: (unprotectedDb / totalHost) * 100 || 0,
         awsBackupDb: awsBackupDb,
         fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
-        sqlServerBackupDb: sqlServerBackupDb
+        sqlServerBackupDb: sqlServerBackupDb,
+        crrEnabled: crrEnabled,
+        crrEnabledPercent: (crrEnabled / totalHost) * 100 || 0
     };
 };
 
@@ -1929,6 +1936,55 @@ export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolea
     });
 };
 
+export const handleURLFromDashboard = (value: string, isWorkloadFactory: boolean, navigate?: any) => {
+    let path = '';
+    if (isWorkloadFactory) {
+        switch (value) {
+            case 'Inventory':
+                path = '../databases/inventory';
+                break;
+            case 'Dashboard':
+                path = '../databases/dashboard';
+                break;
+            case 'Sandboxes':
+                path = '../databases/sandboxes';
+                break;
+            case 'Explore savings':
+                path = '../databases/explore-savings';
+                break;
+            case 'Job monitoring':
+                path = '../databases/job-monitoring';
+                break;
+        }
+    } else {
+        switch (value) {
+            case 'Inventory':
+                path = '../../fsxdb/inventory';
+                break;
+            case 'Dashboard':
+                path = '../../fsxdb/dashboard';
+                break;
+            case 'Sandboxes':
+                path = '../../fsxdb/sandboxes';
+                break;
+            case 'Explore savings':
+                path = '../../fsxdb/explore-savings';
+                break;
+            case 'Job monitoring':
+                path = '../../fsxdb/job-monitoring';
+                break;
+        }
+    }
+    navigate(path);
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${path}`,
+            replace: true
+        }
+    });
+};
+
 export const handleURL = (value: string, isWorkloadFactory: boolean) => {
     let path = '';
     if (isWorkloadFactory) {
@@ -1968,6 +2024,7 @@ export const handleURL = (value: string, isWorkloadFactory: boolean) => {
                 break;
         }
     }
+
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
         payload: {
@@ -2021,6 +2078,12 @@ export const compareDataAndCalculateDifference = (arrays: any) => {
     }
 };
 
+export const formatString = (s: string) => {
+    s = s.toLowerCase();
+    // Capitalize the first letter and return the result
+    return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
 export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
     switch (tab) {
         case WLF_TABS.INVENTORY:
@@ -2037,6 +2100,8 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
             return WLF_TABS.EXPLORE_SAVINGS;
         case WLF_TABS.JOB_MONITORING:
             return WLF_TABS.JOB_MONITORING;
+        case WLF_TABS.DASHBOARD:
+            return WLF_TABS.DASHBOARD;
         default:
             return selectedHeaderTab;
     }

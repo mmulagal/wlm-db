@@ -99,7 +99,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <SquareComponent
                                     value={String(instanceOptimizationSummary?.optimizedInstances)}
                                     color="var(--chart-4)"
-                                    text={'Well architected instances'}
+                                    text={'Well-architected instances'}
                                     isLoading={false}
                                     loadingInFirstRow={loading}
                                 />
@@ -141,7 +141,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                     <div className={styles.bottomRow}>
                                         <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
                                         <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
-                                            Well architected instances
+                                            Well-architected instances
                                         </DsTypography>
                                     </div>
                                     <div className={styles.loadingState}>

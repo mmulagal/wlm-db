@@ -10,7 +10,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": true
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -23,7 +24,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": false
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -36,7 +38,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
-                "isSqlNativeEnabled": true
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -49,7 +52,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": true
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": false
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -62,7 +66,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
-                "isSqlNativeEnabled": true
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -75,7 +80,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": false
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -88,7 +94,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -101,7 +108,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
-                "isSqlNativeEnabled": true
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -114,7 +122,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -127,7 +136,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
-                "isSqlNativeEnabled": true
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": false
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -140,7 +150,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -153,7 +164,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -166,7 +178,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
-                "isSqlNativeEnabled": true
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": false
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -179,7 +192,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -192,7 +206,8 @@
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
-                "isSqlNativeEnabled": true
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": true
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         }

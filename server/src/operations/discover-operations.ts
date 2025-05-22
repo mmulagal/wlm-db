@@ -77,8 +77,8 @@ import {
     AMAZON_LINUX_AMI_PATH,
     HA,
     PGSQL_DEFAULT_INSTANCE_NAME,
-    POWERSHELL_7_RELATIVE_PATH,
-    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE
+    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+    DEFAULT_INSTANCE_NAME
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -93,8 +93,6 @@ import {
     FAILURE_INFO,
     ACTIVE_DIRECTORY,
     GET_ACTIVE_DIRECTORY_DETAILS,
-    INSTALL_POWERSHELL_7,
-    CHECK_POWERSHELL7_AVAILABLE,
     FEATURE_PREPREQUISITES
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, getParametersByPath, sendSSMCommand } from '../lib/aws/ssm';
@@ -137,7 +135,7 @@ import discoverOracleHosts from './workloads/oracle/oracle-discover-scripts';
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
 const isDemoFlow = isDemo();
-
+const NO_PGSQL = 'no_pgsql';
 interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
@@ -425,20 +423,14 @@ async function getHostAndSqlInfoFromPsOutput(
 
     api1StartTime = performance.now();
 
-    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all(
-        [
-            pollCommandStatus(credentialsId, region, commandInvocationParam),
-            getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
-        ].map((p, index) =>
-            p.catch(error => {
-                if (index === 0) {
-                    const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
-                    logger.error(errorMessage);
-                    throw createError(errorMessage);
-                }
-            })
-        )
-    );
+    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
+        pollCommandStatus(credentialsId, region, commandInvocationParam).catch(error => {
+            const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }),
+        getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
+    ]);
 
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
@@ -643,15 +635,25 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes = [sqlServerNodes];
                     }
 
-                    const sqlServerAuthentication = ec2SqlParametersInfo?.some(
+                    const sqlServerAuthentication = ec2SqlParametersInfo?.sql?.some(
                         (elem: { sqlinstancename: string }) =>
                             elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase()
                     );
 
+                    const windowsDomainUserAuthentication = ec2SqlParametersInfo?.domain?.some(
+                        (elem: { sqlinstancename: string }) =>
+                            elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase() ||
+                            elem.sqlinstancename.toUpperCase() === DEFAULT_INSTANCE_NAME
+                    );
+
                     const featureReadiness = Object.entries(FEATURE_PREPREQUISITES).reduce((acc, [key, value]) => {
                         acc[key.toLowerCase()] = {
-                            missingSqlPermissions: value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
-                            missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                            missingSqlPermissions: !isEmpty(sqlPermissions)
+                                ? value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x))
+                                : [],
+                            missingModules: !isEmpty(availablePsModules)
+                                ? value.MODULES.filter(x => !availablePsModules.includes(x))
+                                : []
                         };
                         return acc;
                     }, {} as Record<string, { missingSqlPermissions: string[]; missingModules: string[] }>);
@@ -679,6 +681,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         windowsOsVersion:
                             windowsOsVersion.match(/(Microsoft Windows Server \d+)/)[1] || windowsOsVersion,
                         sqlServerAuthentication,
+                        windowsDomainUserAuthentication,
                         storage: compact(uniqBy(storageTypes, v => [v.id, v.svmId, v.protocol].join())),
                         deploymentTypes: compact(
                             uniqBy(deploymentTypes, 'ids').map(({ type, zones, storageType }) => ({
@@ -736,7 +739,7 @@ async function makeSsmCall(
     let commandId;
     try {
         commandId = await sendSSMCommand(credentialsId, region, params, accountId);
-        logger.info(`SSM command ID is ${commandId} for commands ${commands}`);
+        logger.info(`SSM command ID is ${commandId} for discovery call`);
     } catch (error) {
         logger.error(`Failed to start EC2 instance information retrieval using sendSSMCommand. Reason: ${error}`);
         throw createError(
@@ -994,7 +997,26 @@ async function validateAndStoreDiscoveredParameters(
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return {
             databaseCount: '10',
-            sqlServerEdition: 'Standard Edition (64-bit)'
+            sqlServerEdition: 'Standard Edition (64-bit)',
+            manageReadiness: {
+                missingSqlCmd: false,
+                assessment: {
+                    missingSqlPermissions: [],
+                    missingModules: []
+                },
+                remediation: {
+                    missingSqlPermissions: [],
+                    missingModules: []
+                },
+                dbcreation: {
+                    missingSqlPermissions: [],
+                    missingModules: []
+                },
+                sandbox: {
+                    missingSqlPermissions: [],
+                    missingModules: []
+                }
+            }
         };
     }
 
@@ -1228,10 +1250,12 @@ async function validateCredentials(
                             Object.entries(FEATURE_PREPREQUISITES).map(([key, value]) => [
                                 key.toLowerCase(),
                                 {
-                                    missingSqlPermissions: value.SQL_PERMISSIONS.filter(
-                                        x => !sqlPermissions.includes(x)
-                                    ),
-                                    missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                                    missingSqlPermissions: !isEmpty(sqlPermissions)
+                                        ? value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x))
+                                        : [],
+                                    missingModules: !isEmpty(availablePsModules)
+                                        ? value.MODULES.filter(x => !availablePsModules.includes(x))
+                                        : []
                                 }
                             ])
                         );
@@ -1572,76 +1596,6 @@ async function prepareDbScriptsForManage(
     await updateJobDetails(accountId, childJobId, jobStatusRecord);
 
     return jobStatusRecord.status;
-}
-
-async function installPowershell7(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    ec2InstanceId: string,
-    parentJobId: string
-) {
-    logger.info(`Installing PowerShell 7.5.0 on ${ec2InstanceId}`);
-
-    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
-        type: JOBTYPE.PREPARE_RESOURCE,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: ec2InstanceId,
-        name: 'Install PowerShell 7.5.0',
-        description: 'Install PowerShell 7.5.0 for Workload Factory database operations.',
-        parentJobId,
-        startTime: Date.now()
-    });
-
-    try {
-        // Get signed url for dependent-packages.zip to install the ps modules
-        const bucketname = getArtifactsRegionBucketName(region);
-        const copyPowershell7SignedUrl = await getPreSignedUrl(region, bucketname, POWERSHELL_7_RELATIVE_PATH);
-
-        const installResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
-                credentialsId,
-                region,
-                INSTALL_POWERSHELL_7(copyPowershell7SignedUrl),
-                ec2InstanceId,
-                'Install PowerShell 7.5.0',
-                accountId,
-                false
-            )
-        );
-
-        if (installResponse?.includes(FAILURE_INFO)) {
-            throw new Error(JSON.parse(installResponse)[FAILURE_INFO]);
-        }
-
-        const checkResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
-                credentialsId,
-                region,
-                CHECK_POWERSHELL7_AVAILABLE,
-                ec2InstanceId,
-                'Check PowerShell 7 availability',
-                accountId,
-                false
-            )
-        );
-
-        const isPS7Available = JSON.parse(checkResponse)[IS_PS7_AVAILABLE];
-        const status = isPS7Available ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
-
-        await updateJobDetails(accountId, childJobId, { status, endTime: Date.now() });
-        return status;
-    } catch (error: any) {
-        logger.error(`Failed to install PowerShell 7.5.0 on ${ec2InstanceId}: ${error.message}`);
-        await updateJobDetails(accountId, childJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: error.message
-        });
-        return JOBSTATUS.FAILED;
-    }
 }
 
 async function preparePsModulesForManage(
@@ -2329,84 +2283,95 @@ async function discoverPgSqlResources(
             pageSize
         );
 
-        instancesWithSsmResponse = await Promise.all(
-            ssmConnectedEc2Instances.map(async ec2Instance => {
-                const ssmResponse = ssmResponseMap.get(ec2Instance.ec2InstanceId);
-                const output = ssmResponse?.output;
-                const error = ssmResponse?.error;
-                if (error) {
-                    return {
-                        ...ec2Instance,
-                        error
-                    };
-                }
+        instancesWithSsmResponse = compact(
+            await Promise.all(
+                ssmConnectedEc2Instances.map(async ec2Instance => {
+                    const ssmResponse = ssmResponseMap.get(ec2Instance.ec2InstanceId);
+                    const output = ssmResponse?.output;
+                    const error = ssmResponse?.error;
+                    if (error) {
+                        return {
+                            ...ec2Instance,
+                            error
+                        };
+                    }
 
-                let parsedResponse;
-                try {
-                    parsedResponse = sqlResponseParsing(output || '{}');
-                    const {
-                        version,
-                        nfs_ip_address: nfsIpAddress,
-                        ebs_volume: ebsVolume,
-                        status,
-                        hostname,
-                        nfs_mount_point: nfsMountPoint,
-                        postgres_server: pgSqlServer,
-                        database_count: databaseCount,
-                        deployment_type: deploymentType,
-                        replica_info: replicaInfo,
-                        replica_type: replicaType,
-                        primary_host: primaryHostIp,
-                        server_instance_id: serverInstanceId,
-                        default_auth: defaultAuth
-                    } = parsedResponse;
+                    let parsedResponse;
+                    try {
+                        parsedResponse = sqlResponseParsing(output || '{}');
+                        const {
+                            version,
+                            nfs_ip_address: nfsIpAddress,
+                            ebs_volume: ebsVolume,
+                            status,
+                            hostname,
+                            nfs_mount_point: nfsMountPoint,
+                            postgres_server: pgSqlServer,
+                            database_count: databaseCount,
+                            deployment_type: deploymentType,
+                            replica_info: replicaInfo,
+                            replica_type: replicaType,
+                            primary_host: primaryHostIp,
+                            server_instance_id: serverInstanceId,
+                            default_auth: defaultAuth,
+                            error: discoverScriptError
+                        } = parsedResponse;
 
-                    const pgsqlServerInstance: PgSqlServerInstaceType = {
-                        pgsqlServerVersion: isValidProp(version) ? version : undefined,
-                        pgsqlServerState: isValidProp(status) ? status : undefined,
-                        pgsqlServerName: getPgSqlHostName(hostname, pgSqlServer),
-                        pgsqlServerDeploymentType: isValidProp(deploymentType) ? deploymentType : undefined,
-                        databaseCount: isValidProp(databaseCount) ? databaseCount : 0,
-                        pgsqlServerInstanceId: isValidProp(serverInstanceId) ? serverInstanceId : undefined,
-                        defaultAuth: isValidProp(defaultAuth) ? !defaultAuth : false,
-                        ...(deploymentType === HA && {
-                            isPrimary: replicaType === 'primary',
-                            primaryNode: await getPrimaryHostDetails(credentialsId, region, primaryHostIp),
-                            nodes: await getReplicaNodes(credentialsId, region, replicaInfo, replicaType)
-                        })
-                    };
+                        if (status === NO_PGSQL) {
+                            logger.warn('PostgreSQL server not found', {
+                                ec2InstanceId: ec2Instance.ec2InstanceId,
+                                discoverScriptError
+                            });
+                            return;
+                        }
 
-                    pgsqlServerInstance.storage = getDiscoveredPgSqlStorageDetails(
-                        ec2Instance.ebsVolumes!,
-                        endPointIpWithFsxInfo,
-                        fsIdWithFsxInfo,
-                        subnetListMap,
-                        ebsVolumeToAvailabilityZoneMap,
-                        nfsIpAddress,
-                        ebsVolume,
-                        nfsMountPoint
-                    );
+                        const pgsqlServerInstance: PgSqlServerInstaceType = {
+                            pgsqlServerVersion: isValidProp(version) ? version : undefined,
+                            pgsqlServerState: isValidProp(status) ? status : undefined,
+                            pgsqlServerName: getPgSqlHostName(hostname, pgSqlServer),
+                            pgsqlServerDeploymentType: isValidProp(deploymentType) ? deploymentType : undefined,
+                            databaseCount: isValidProp(databaseCount) ? databaseCount : 0,
+                            pgsqlServerInstanceId: isValidProp(serverInstanceId) ? serverInstanceId : undefined,
+                            defaultAuth: isValidProp(defaultAuth) ? !defaultAuth : false,
+                            ...(deploymentType === HA && {
+                                isPrimary: replicaType === 'primary',
+                                primaryNode: await getPrimaryHostDetails(credentialsId, region, primaryHostIp),
+                                nodes: await getReplicaNodes(credentialsId, region, replicaInfo, replicaType)
+                            })
+                        };
 
-                    return {
-                        ...ec2Instance,
-                        pgsqlServerInstances: [pgsqlServerInstance]
-                    };
-                } catch (err: unknown) {
-                    logger.warn('Failed to parse SSM response', { error: err });
-                    ec2Instance.error = err as string;
-                    return {
-                        ...ec2Instance,
-                        error: `Failed to parse SSM response: ${err}`
-                    };
-                }
-            })
+                        pgsqlServerInstance.storage = getDiscoveredPgSqlStorageDetails(
+                            ec2Instance.ebsVolumes!,
+                            endPointIpWithFsxInfo,
+                            fsIdWithFsxInfo,
+                            subnetListMap,
+                            ebsVolumeToAvailabilityZoneMap,
+                            nfsIpAddress,
+                            ebsVolume,
+                            nfsMountPoint
+                        );
+
+                        return {
+                            ...ec2Instance,
+                            pgsqlServerInstances: [pgsqlServerInstance]
+                        };
+                    } catch (err: unknown) {
+                        logger.warn('Failed to parse SSM response', { error: err });
+                        ec2Instance.error = err as string;
+                        return {
+                            ...ec2Instance,
+                            error: `Failed to parse SSM response: ${err}`
+                        };
+                    }
+                })
+            )
         );
     } catch (error: any) {
         logger.error('Failed to discover PostgreSQL resources', { error: error.message });
     }
 
     return {
-        count: ec2Instances.length || 0,
+        count: (ssmNotConnectedEc2Instances?.length ?? 0) + (instancesWithSsmResponse?.length ?? 0),
         items: [...ssmNotConnectedEc2Instances, ...instancesWithSsmResponse],
         nextToken: NextToken as string
     };
@@ -2475,9 +2440,7 @@ function getEbsVolumeId(ebsVolumeIDs: (InstanceBlockDeviceMapping | undefined)[]
         if (/vol-\w+/.test(ebsVolume)) {
             return ebsVolumeIDs?.find(elem => elem?.Ebs?.VolumeId === ebsVolume)?.Ebs?.VolumeId;
         }
-        const ebsVolumeId = ebsVolumeIDs?.find(
-            elem => ebsVolume?.includes(elem?.DeviceName || '') && elem?.Ebs?.VolumeId === ebsVolume
-        )?.Ebs?.VolumeId;
+        const ebsVolumeId = ebsVolumeIDs?.find(elem => ebsVolume?.includes(elem?.DeviceName || ''))?.Ebs?.VolumeId;
         if (ebsVolumeId) {
             return ebsVolumeId;
         }
@@ -2541,7 +2504,7 @@ async function getPgSqlResourceDetails(
         const resourceDetails: ResourceDetails = {
             id: null,
             account_id: accountId,
-            resource_id: generateSqlResourceId(ec2Instance.ec2InstanceId),
+            resource_id: ec2Instance.ec2InstanceId,
             resource_type: RESOURCESTYPE.PGSQL,
             resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
             cloud_provider_name: CloudProviders.AWS,
@@ -2969,6 +2932,5 @@ export {
     discoverPgSqlResources,
     prepareDbScriptsForManage,
     getPgSqlResourceDetails,
-    discoverOracleResources,
-    installPowershell7
+    discoverOracleResources
 };

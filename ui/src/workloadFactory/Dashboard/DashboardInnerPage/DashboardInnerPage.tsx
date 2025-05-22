@@ -773,7 +773,7 @@ const DashboardInnerPage = () => {
         } else {
             setDialog(
                 <DialogComponent
-                    header={`${type} optimization`}
+                    header={`${type}`}
                     content={
                         <DialogContent
                             type={type}

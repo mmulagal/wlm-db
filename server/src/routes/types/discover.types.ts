@@ -103,6 +103,9 @@ const SqlServerInstanceInfo = Type.Object({
             default: false
         })
     ),
+    windowsDomainUserAuthentication: Type.Boolean({
+        description: 'Is Windows domain user authentication possible for SQL Server?'
+    }),
     storage: Type.Optional(
         Type.Array(
             Type.Object({
@@ -187,7 +190,20 @@ const BulkManageMsSqlRequestBody = Type.Object({
     region: Type.String({ description: API_DESCRIPTION.AWS_REGION_DESC }),
     ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
     databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' })),
-    databaseHostId: Type.Optional(Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC }))
+    databaseHostId: Type.Optional(Type.String({ description: API_DESCRIPTION.DATABASE_HOST_ID_DESC })),
+    modulesToInstall: Type.Optional(
+        Type.Array(
+            Type.Union(
+                [
+                    Type.Literal('Powershell 7'),
+                    Type.Literal('AWS.Tools.SimpleSystemsManagement'),
+                    Type.Literal('AWS.Tools.FSx'),
+                    Type.Literal('NetApp.ONTAP')
+                ],
+                { description: 'List of modules to install' }
+            )
+        )
+    )
 });
 const MultiInstanceManageMsSqlRequestBody = Type.Object({
     items: Type.Array(BulkManageMsSqlRequestBody)
@@ -222,6 +238,10 @@ type MultiInstanceManageResponseBodyType = Static<typeof MultiInstanceManageResp
 
 const PrepareResourceResponseBody = Type.Object({
     jobId: Type.String({ description: 'Resource preparation job ID' })
+});
+
+const JobBasedManageResponseBody = Type.Object({
+    jobId: Type.String({ description: 'Job ID for the management operation' })
 });
 
 type DiscoverMsSqlResponseBodyType = Static<typeof DiscoverMsSqlResponseBody>;
@@ -520,5 +540,6 @@ export {
     DiscoverOracleInstanceType,
     DiscoverOracleResponseBodyType,
     DiscoverOracleResponseType,
-    DiscoverCredentialsResponseType
+    DiscoverCredentialsResponseType,
+    JobBasedManageResponseBody
 };

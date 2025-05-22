@@ -198,7 +198,7 @@ describe('executeSsmDocument', () => {
         const response1 = await getEc2SqlParameters(credentialsId, 'us-east-1', 'i-test-ec2');
         const response2 = JSON.parse(getParameterResponse.Parameter.Value);
 
-        expect(response1).toEqual(response2.sql);
+        expect(response1?.sql).toEqual(response2.sql);
     });
 
     it('Get generic Amazon FSx for NetApp ONTAP regions', async () => {

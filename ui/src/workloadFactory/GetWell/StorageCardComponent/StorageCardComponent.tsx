@@ -28,6 +28,7 @@ import {
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
     RESPONSE_STATUS,
+    WELL_ARCHITECT_FINDINGS,
     WLF_TABS
 } from '../../../utils/consts';
 import { useEffect, useMemo, useState } from 'react';
@@ -248,7 +249,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             <>
                                 <span
                                     className={styles.svgSection}
-                                    style={{ top: cardData?.block_two?.value === 'Under-provisioned' ? '2px' : '8px' }}
+                                    style={{
+                                        top:
+                                            cardData?.block_two?.value === WELL_ARCHITECT_FINDINGS.UNDER_PROVISIONED ||
+                                            cardData?.block_two?.value === WELL_ARCHITECT_FINDINGS.OVER_PROVISIONED
+                                                ? '2px'
+                                                : '8px'
+                                    }}
                                 >
                                     {setImage(cardData?.block_two?.value || GENERAL.UNAVAILABLE)}
                                 </span>
@@ -771,7 +778,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === GENERAL.CLONE_MANAGEMENT
         ) {
-            return 'View & fix';
+            return GENERAL.VIEW_AND_FIX;
         } else if (
             type === 'Data files' ||
             type === 'Log files' ||
@@ -781,7 +788,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         ) {
             return 'View';
         } else {
-            return GENERAL.OPTIMIZE;
+            return GENERAL.VIEW_AND_FIX;
         }
     };
 

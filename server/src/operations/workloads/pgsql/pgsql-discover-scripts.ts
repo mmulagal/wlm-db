@@ -1,7 +1,14 @@
 const discoverPgsqlHosts = `
     # Checking for PostgreSQL server
     set -e
-    data_dir=$(sudo systemctl cat postgresql | grep Environment=PGDATA | awk -F= '/Environment=PGDATA=/ {print $3}')
+    data_dir=$(sudo systemctl cat postgresql 2>/dev/null | grep Environment=PGDATA | awk -F= '/Environment=PGDATA=/ {print $3}')
+    if [[ $? -ne 0 ]]; then
+        echo "{
+            \\"error\\": \\"Either PostgreSQL is not installed, or the service is not configured properly.\\",
+            \\"status\\": \\"no_pgsql\\"
+        }"
+        exit 1
+    fi
     if [[ -z $data_dir ]]; then
         echo "{
             \\"error\\": \\"PostgreSQL data directory not found\\",
@@ -23,30 +30,28 @@ const discoverPgsqlHosts = `
     }
 
     get_mount_details() {
-        if [[ -z $data_dir ]]; then
-            echo "Error: Data directory not found"
-        else
-            is_nfs="false"
-            nfs_string=$(sudo findmnt -n -o SOURCE $data_dir)
-            if [[ -z $nfs_string ]]; then
-                DEVICE=$(sudo df --output=source "$data_dir" | tail -n 1)
-                if [[ $DEVICE == *"nvme"* ]]; then
-                    if ! command -v nvme &> /dev/null; then
-                        # echo "nvme-cli is not installed. Installing..."
-                        sudo yum install -y nvme-cli
-                    fi
-                    VOLUME_ID=$(sudo /usr/sbin/ebsnvme-id $DEVICE | grep "Volume ID" | awk '{print $3}')
-                    echo $is_nfs,$VOLUME_ID
-                else
-                    echo $is_nfs,$DEVICE
+        is_nfs="false"
+        mount_response=$(sudo findmnt -n -o FSTYPE,SOURCE --target $data_dir)
+        fs_type=$(echo "$mount_response" | awk '{print $1}')
+        if [[ -z $mount_response || -z $fs_type || $fs_type != "nfs" ]]; then
+            DEVICE=$(sudo df --output=source "$data_dir" | tail -n 1)
+            if [[ $DEVICE == *"nvme"* ]]; then
+                if ! command -v nvme &> /dev/null; then
+                    # echo "nvme-cli is not installed. Installing..."
+                    sudo yum install -y nvme-cli
                 fi
+                VOLUME_ID=$(sudo /usr/sbin/ebsnvme-id $DEVICE | grep "Volume ID" | awk '{print $3}')
+                echo $is_nfs,$VOLUME_ID
             else
-                dns_name=$(echo "$nfs_string" | cut -d':' -f1)
-                nfs_mount_point=$(echo "$nfs_string" | cut -d':' -f2-)
-                nfs_ip_address=$(dig +short $dns_name)
-                is_nfs="true"
-                echo "$is_nfs,$nfs_ip_address,$nfs_mount_point"
+                echo $is_nfs,$DEVICE
             fi
+        else
+            nfs_string=$(echo "$mount_response" | awk '{print $2}')
+            dns_name=$(echo "$nfs_string" | cut -d':' -f1)
+            nfs_mount_point=$(echo "$nfs_string" | cut -d':' -f2-)
+            nfs_ip_address=$(dig +short $dns_name)
+            is_nfs="true"
+            echo "$is_nfs,$nfs_ip_address,$nfs_mount_point"
         fi
     }
 

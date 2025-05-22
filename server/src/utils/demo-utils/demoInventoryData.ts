@@ -1,5 +1,24 @@
 import { DiscoverMsSqlResponseBodyType } from '../../routes/types/discover.types';
 
+const MANAGE_READINESS = {
+    missingSqlCmd: false,
+    assessment: {
+        missingSqlPermissions: [],
+        missingModules: []
+    },
+    remediation: {
+        missingSqlPermissions: [],
+        missingModules: []
+    },
+    dbcreation: {
+        missingSqlPermissions: [],
+        missingModules: []
+    },
+    sandbox: {
+        missingSqlPermissions: [],
+        missingModules: []
+    }
+};
 function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlResponseBodyType {
     return {
         count: 11,
@@ -30,6 +49,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerName: 'SQLServer-PreProd-02',
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         sqlServerDeploymentType: 'FCI',
@@ -45,7 +65,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -58,6 +79,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
@@ -73,7 +95,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             },
@@ -103,6 +126,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         sqlServerDeploymentType: 'AOAG',
@@ -117,7 +141,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'SINGLE_AZ_1',
                                 zones: ['availability-zone-3']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             },
@@ -145,6 +170,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         isDefaultInstance: true,
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2022',
                         storage: [
                             {
@@ -171,7 +197,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 Node: 'sql-node2',
                                 Address: '10.0.18.80'
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ],
                 vpc: {
@@ -204,6 +231,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-UAT-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
@@ -219,7 +247,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -233,6 +262,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-UAT-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
@@ -248,7 +278,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             },
@@ -276,6 +307,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLserver-PLM',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUZ'],
@@ -292,7 +324,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             },
@@ -320,6 +353,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLserver-Finance-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
@@ -339,7 +373,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'SINGLE_AZ_1',
                                 zones: ['availability-zone-3']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -353,6 +388,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         databaseCount: 8,
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
 
                         sqlServerName: 'SQLserver-Finance-03',
@@ -373,7 +409,8 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 type: 'SINGLE_AZ_1',
                                 zones: ['availability-zone-3']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     }
                 ]
             }

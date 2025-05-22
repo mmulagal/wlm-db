@@ -122,6 +122,7 @@ type TopologyResponseType = Static<typeof TopologyResponse>;
 
 const ProtectionPerStorageTypeResponse = Type.Object({
     isSqlNativeEnabled: Type.Boolean({ default: false }),
+    isCRREnabled: Type.Optional(Type.Union([Type.Boolean({ default: false }), Type.String({ enum: ['N/A'] })])), // Marked as optional since CRR is not validated for PostgreSQL
     isAwsBackupEnabled: Type.Object({
         fsxn: Type.Union([Type.Boolean({ default: false }), Type.String({ enum: ['N/A'] })]),
         fsxw: Type.Boolean({ default: false }),

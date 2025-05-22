@@ -137,7 +137,7 @@ const FSXPasswordContent = () => {
             confirmPassword={confirmPassword}
             setPassword={(value: string) => dispatch(setFsxAdminPassword(value))}
             setConfirmPassword={(value: string) => dispatch(setFsxAdminConfirmPassword(value))}
-            description="The password for the fsxadmin user is required to manage the FSx for ONTAP serving this Microsoft SQL Server instance. Enter a new password."
+            description={GENERAL.FSX_PASSWORD_CONTENT}
             username="fsxadmin"
         />
     );
@@ -157,7 +157,7 @@ const SQLServerPasswordContent = () => {
             confirmPassword={sqlConfirmPassword}
             setPassword={(value: string) => dispatch(setSqlServerPassword(value))}
             setConfirmPassword={(value: string) => dispatch(setSqlServerConfirmPassword(value))}
-            description="The password for the Microsoft SQL Server user is required to manage this instance. Enter a new password."
+            description={GENERAL.SQL_PASSWORD_CONTENT}
             username={sqlServerUserName}
         />
     );

@@ -8,7 +8,7 @@ export interface GetWellSliceInterface {
     visitedTabs: any;
     selectedWellArchitectTab: string;
     selectedCloneTab: string;
-    optimizePageLoading: boolean;
+    optimizePageLoading: boolean | null;
     driftAssessmentData: AssessmentResponseInterface | null;
     isAssessmentAvailable: boolean;
     selectedHostname: string;
@@ -148,6 +148,7 @@ export interface PerConfigInterface {
     }>;
     missingPatchesInEc2Instances?: Array<{
         ec2InstanceId?: string;
+        ec2InstanceName?: string;
         criticalMissingPatchesCount?: number;
         importantMissingPatchesCount?: number;
         missingPatchesCount?: number;

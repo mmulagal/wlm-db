@@ -100,7 +100,8 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         if (
             (api.endpoint === 'deploySqlTemplate' ||
                 api.endpoint === 'discoverHosts' ||
-                api.endpoint === 'deployPgsqlTemplate') &&
+                api.endpoint === 'deployPgsqlTemplate' ||
+                api.endpoint === 'getStorageSavings') &&
             result.error?.data &&
             result.error.data?.message.toLowerCase().includes(API_ERRORS.RATE_EXCEEDED)
         ) {
@@ -814,6 +815,14 @@ export const inventoryApiV2 = createApi({
                     method: 'GET'
                 })
             }),
+            getPgsqlInstanceData: builder.mutation({
+                query: ({ credentialId, regionId, instances, fields, nextToken = null }) => ({
+                    url: nextToken
+                        ? `v1/pgsql/credentials/${credentialId}/regions/${regionId}/resource-details?instances=${instances}&fields=${fields}&nextToken=${nextToken}`
+                        : `v1/pgsql/credentials/${credentialId}/regions/${regionId}/resource-details?instances=${instances}&fields=${fields}`,
+                    method: 'GET'
+                })
+            }),
             unmanageMssqlInstance: builder.mutation({
                 query: ({ credentialsId, resourceId, dbInstanceId }) => ({
                     url: `v1/mssql/credentials/${credentialsId}/resources/${resourceId}/instances?databaseInstanceIds=${dbInstanceId}`,
@@ -1263,6 +1272,7 @@ export const {
     useLazyGetDatabaseHostsListV2Query,
     useLazyGetPgSqlDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
+    useGetPgsqlInstanceDataMutation,
     useUnmanageMssqlInstanceMutation,
     useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,

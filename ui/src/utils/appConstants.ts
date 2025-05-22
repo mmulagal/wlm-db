@@ -35,6 +35,14 @@ export const GENERAL = {
         ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To manage this SQL Server instance, please address the necessary prerequisites and try again.'
     ],
     PREREQUISITE_LIST: 'Prerequisites list',
+    WELL_ARCHITECTED_STATUS: 'Well-architected status',
+    UPDATE: 'Update',
+    UPDATE_FSX_ADMIN_PASSWORD: 'Update FSxadmin password',
+    FSX_PASSWORD_CONTENT:
+        'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Microsoft SQL Server instance.',
+    SQL_PASSWORD_CONTENT:
+        'The password for your Windows login might have changed. Update credentials to manage this Microsoft SQL Server instance.',
+    UPDATE_SQL_SERVER_PASSWORD: 'Update SQL Server password',
     DATABASE_MANAGEMENT: 'Database management',
     DATABASE_OPTIMIZATION: 'Database optimization',
     INVENTORY_CARD_TEXT1:
@@ -68,9 +76,9 @@ export const GENERAL = {
     SYSTEM_DATABASE: 'System Database',
     MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Fix',
+    VIEW_AND_FIX: 'View and fix',
     REBASE_LINE: 'Re-baseline',
     APPLY: 'Apply',
-    WELL_ARCHITECTED_STATUS: 'Well-architected status',
     MICROSOFT_SQL: 'Microsoft SQL',
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
     LOADING_DATA: 'Loading data',
@@ -486,6 +494,7 @@ export const GENERAL = {
     KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value.",
     NOT_AVAILABLE: 'n/a',
     UNAVAILABLE: 'Unavailable',
+    NO_ANALYSIS_PERFORMED: 'No analysis performed',
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',

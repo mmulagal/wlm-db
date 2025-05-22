@@ -47,6 +47,7 @@ Metadata:
           - DomainAdminPassword
           - DNSIpAddresses
           - DomainMemberSGID
+          - PreferredDomainController
       - Label:
           default: Amazon FSx for ONTAP configuration
         Parameters: 
@@ -197,7 +198,9 @@ Metadata:
         default: Does AWS FSx endpoint exist in the VPC?
       Ec2EndpointExists:
         default: Does AWS EC2 endpoint exist in the VPC?
-      
+      PreferredDomainController:
+        default: (optional) Preferred domain controller to use for AD join
+
 Parameters: 
   UniqueID:
     Description: Automation execution unique ID.
@@ -348,6 +351,8 @@ Parameters:
   {{{PrivateSubnet1Cidrblock}}}
 
   {{{PrivateSubnet2Cidrblock}}}
+
+  {{{PreferredDomainController}}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -363,6 +368,7 @@ Conditions:
   IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
   IsFailoverCluster: !Not [Condition: IsStandalone]
   ShouldSendSaasNotification: !Not [!Equals [!Ref "RoleCredentialsId", ""]]
+  HasPreferredDomainController: !Not [!Equals [!Ref PreferredDomainController, ""]]
 Resources:
   CredentialsSsmParameter:
     Type: AWS::SSM::Parameter
@@ -646,6 +652,11 @@ Resources:
           Ref: IsCustomAmi
         SQLDeploymentMode:
           Ref: SQLDeploymentMode
+        PreferredDomainController: 
+          Fn::If:
+            - HasPreferredDomainController
+            - Ref: PreferredDomainController
+            - !Ref AWS::NoValue
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -938,6 +949,11 @@ Resources:
           Ref: FSxLogVolumeName
         FsxVolumeSnapshotPolicy:
           Ref: FsxVolumeSnapshotPolicy
+        PreferredDomainController: 
+          Fn::If:
+            - HasPreferredDomainController
+            - Ref: PreferredDomainController
+            - !Ref AWS::NoValue
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -1034,6 +1050,11 @@ Resources:
           Ref: EBSVolumeSize
         FsxVolumeSnapshotPolicy:
           Ref: FsxVolumeSnapshotPolicy
+        PreferredDomainController: 
+          Fn::If:
+            - HasPreferredDomainController
+            - Ref: PreferredDomainController
+            - !Ref AWS::NoValue
       NotificationARNs:
         Fn::If:
         - IncludeNotification

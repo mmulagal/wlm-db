@@ -4,7 +4,7 @@
     "description": "The server serves mock data for the UI",
     "main": "src/index.ts",
     "scripts": {
-        "start": "node src/index.ts",
+        "start": "ts-node src/index.ts",
         "dev": "nodemon src/index.ts",
         "lint:check": "eslint ./src",
         "lint:fix": "eslint --fix ./src",
@@ -20,11 +20,11 @@
         "haikunator": "^2.1.2",
         "morgan": "^1.10.0",
         "simple-node-logger": "^18.12.24",
-        "ts-node": "^10.9.1",
         "typescript": "^4.9.5"
     },
     "devDependencies": {
         "@types/cors": "^2.8.13",
+        "@types/express": "^5.0.2",
         "@types/node": "^20.4.5",
         "eslint": "^7.27.0",
         "eslint-config-prettier": "^8.3.0",
@@ -33,7 +33,8 @@
         "jest": "^27.0.1",
         "lint-staged": "^11.0.0",
         "nodemon": "^2.0.13",
-        "prettier": "^2.3.0"
+        "prettier": "^2.3.0",
+        "ts-node": "^10.9.2"
     },
     "author": "NETAPP",
     "license": "ISC"

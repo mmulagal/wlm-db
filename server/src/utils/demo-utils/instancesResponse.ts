@@ -1,3 +1,23 @@
+const MANAGE_READINESS = {
+    missingSqlCmd: false,
+    assessment: {
+        missingSqlPermissions: [],
+        missingModules: []
+    },
+    remediation: {
+        missingSqlPermissions: [],
+        missingModules: []
+    },
+    dbcreation: {
+        missingSqlPermissions: [],
+        missingModules: []
+    },
+    sandbox: {
+        missingSqlPermissions: [],
+        missingModules: []
+    }
+};
+
 function instanceDemoData(fsxId: string, ec2InstanceId: string) {
     return {
         count: 1,
@@ -36,7 +56,8 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -64,7 +85,8 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -92,7 +114,8 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -120,7 +143,8 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -148,7 +172,8 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -216,7 +241,8 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -244,7 +270,8 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -272,7 +299,8 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -300,7 +328,8 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
-                        ]
+                        ],
+                        manageReadiness: MANAGE_READINESS
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',

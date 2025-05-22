@@ -2,6 +2,7 @@ import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 import DatabaseHostsV2 from '../data/databaseHostsV2.json';
 import PgSqlDatabaseHosts from '../data/pgsqlDatabaseHosts.json';
 import MssqlInstancesV2 from '../data/mssqlInstancesV2.json';
+import PgsqlInstancesV2 from '../data/pgsqlInstances.json';
 
 const router = require('express').Router();
 
@@ -26,6 +27,14 @@ router.get(
 router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/instances`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, MssqlInstancesV2);
+
+        // generateResponse(res, 400, {'error': 'error'});
+    }, 100);
+});
+
+router.get(`${BASE_URL}/v1/pgsql/credentials/:credentialsId/regions/:region/resource-details`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, PgsqlInstancesV2);
 
         // generateResponse(res, 400, {'error': 'error'});
     }, 100);

@@ -70,7 +70,8 @@ import {
     failLongRunningResourcePrepareJobs,
     updateTcoInstanceRecommendationPreferences,
     scheduledAssessment,
-    updateManagedInstanceRecommendationPreferences
+    updateManagedInstanceRecommendationPreferences,
+    purgeAssessmentData
 } from './operations/cron-operations';
 import { isActiveInstance, isDemo } from './utils/utils';
 import { resetCache } from './utils/cache';
@@ -389,6 +390,7 @@ logger.info('Initializing cron jobs');
 try {
     if (isActiveInstance()) {
         purgeOlderJobs();
+        purgeAssessmentData();
         if (!isDemoFlow) {
             failLongRunningDeploymentJobs();
             failLongRunningResourcePrepareJobs();
