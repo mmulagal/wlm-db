@@ -348,3 +348,167 @@ describe('Continuous optimization optimize operations', () => {
         expect(response.jobId).toBeDefined();
     });
 });
+describe('Continuous optimization optimizeOperatingSystemSettings', () => {
+    const databaseHostId = RESOURCE_ID;
+    const databaseInstanceId = 'f4b7c5d3-e1f6-4g2a-9b5d';
+
+    it('should optimize MPIO policy', async () => {
+        const { optimizeOperatingSystemSettings } = await import('../../src/operations/cont-opt-optimize-operations');
+       try{ const response = await optimizeOperatingSystemSettings(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            databaseHostId,
+            databaseInstanceId,
+            'mpio-load-balance-policy'
+        );
+        expect(response.jobId).toBeDefined();
+        await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });}
+         catch (err: any) {
+            // If PreconditionFailedError, extract jobId and mark as completed, then retry once
+            if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
+                const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
+                if (match) {
+                    const jobId = match[1];
+                    await updateJobDetails(ACCOUNT_ID, jobId, { status: 'COMPLETED', endTime: Date.now() });
+                    // Retry after marking previous job as completed
+                    const response = await optimizeOperatingSystemSettings(
+                        ACCOUNT_ID,
+                        CREDENTIALS_ID,
+                        DEFAULT_AWS_REGION,
+                        databaseHostId,
+                        databaseInstanceId,
+                        'mpio-load-balance-policy'
+                    );
+                    expect(response.jobId).toBeDefined();
+                    await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+                } else {
+                    throw err;
+                }
+            } else {
+                throw err;
+            }
+        }
+    });
+
+    it('should optimize MPIO sessions', async () => {
+        const { optimizeOperatingSystemSettings } = await import('../../src/operations/cont-opt-optimize-operations');
+       try{ const response = await optimizeOperatingSystemSettings(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            databaseHostId,
+            databaseInstanceId,
+            'mpio-iscsi-count'
+        );
+        expect(response.jobId).toBeDefined();
+        await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });}
+     catch (err: any) {
+            // If PreconditionFailedError, extract jobId and mark as completed, then retry once
+            if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
+                const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
+                if (match) {
+                    const jobId = match[1];
+                    await updateJobDetails(ACCOUNT_ID, jobId, { status: 'COMPLETED', endTime: Date.now() });
+                    // Retry after marking previous job as completed
+                    const response = await optimizeOperatingSystemSettings(
+                        ACCOUNT_ID,
+                        CREDENTIALS_ID,
+                        DEFAULT_AWS_REGION,
+                        databaseHostId,
+                        databaseInstanceId,
+                        'mpio-iscsi-count'
+                    );
+                    expect(response.jobId).toBeDefined();
+                    await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+                } else {
+                    throw err;
+                }
+            } else {
+                throw err;
+            }
+        }
+    });
+
+    it('should enable MPIO and configure sessions', async () => {
+        const { optimizeOperatingSystemSettings } = await import('../../src/operations/cont-opt-optimize-operations');
+        try{
+        const response = await optimizeOperatingSystemSettings(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            databaseHostId,
+            databaseInstanceId,
+            'mpio-enabled'
+        );
+        expect(response.jobId).toBeDefined();
+        await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });}
+        catch (err: any) {
+            // If PreconditionFailedError, extract jobId and mark as completed, then retry once
+            if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
+                const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
+                if (match) {
+                    const jobId = match[1];
+                    await updateJobDetails(ACCOUNT_ID, jobId, { status: 'COMPLETED', endTime: Date.now() });
+                    // Retry after marking previous job as completed
+                    const response = await optimizeOperatingSystemSettings(
+                        ACCOUNT_ID,
+                        CREDENTIALS_ID,
+                        DEFAULT_AWS_REGION,
+                        databaseHostId,
+                        databaseInstanceId,
+                        'mpio-enabled'
+                    );
+                    expect(response.jobId).toBeDefined();
+                    await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+                } else {
+                    throw err;
+                }
+            } else {
+                throw err;
+            }
+        }
+    });
+
+    it('should set MPIO timeout', async () => {
+        const { optimizeOperatingSystemSettings } = await import('../../src/operations/cont-opt-optimize-operations');
+        // Ensure any previous job is marked as completed before running this test
+        // This is a workaround for PreconditionFailedError due to running jobs
+        try {
+            const response = await optimizeOperatingSystemSettings(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                databaseHostId,
+                databaseInstanceId,
+                'mpio-timeout'
+            );
+            expect(response.jobId).toBeDefined();
+            await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+        } catch (err: any) {
+            // If PreconditionFailedError, extract jobId and mark as completed, then retry once
+            if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
+                const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
+                if (match) {
+                    const jobId = match[1];
+                    await updateJobDetails(ACCOUNT_ID, jobId, { status: 'COMPLETED', endTime: Date.now() });
+                    // Retry after marking previous job as completed
+                    const response = await optimizeOperatingSystemSettings(
+                        ACCOUNT_ID,
+                        CREDENTIALS_ID,
+                        DEFAULT_AWS_REGION,
+                        databaseHostId,
+                        databaseInstanceId,
+                        'mpio-timeout'
+                    );
+                    expect(response.jobId).toBeDefined();
+                    await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+                } else {
+                    throw err;
+                }
+            } else {
+                throw err;
+            }
+        }
+    });
+});

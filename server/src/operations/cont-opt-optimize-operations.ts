@@ -2041,7 +2041,7 @@ async function optimizeOperatingSystemSettings(
             InstanceIds: [activeNodeInstanceId!, standbyNodeInstanceId!]
         });
         activeNodeName = getResourceNameFromTags(Reservations?.[0].Instances?.[0].Tags);
-        standbyNodeName = getResourceNameFromTags(Reservations?.[1].Instances?.[0].Tags);
+        standbyNodeName = getResourceNameFromTags(Reservations?.[1]?.Instances?.[0].Tags);
     }
 
     const svmDetailsObject = svmDetails as Record<string, string>;
