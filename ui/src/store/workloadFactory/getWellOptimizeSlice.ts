@@ -5,7 +5,7 @@ import { GENERAL } from '../../utils/appConstants';
 import { WELL_ARCHITECTED_TABS } from '../../utils/consts';
 
 const initialState: GetWellSliceInterface = {
-    optimizePageLoading: false,
+    optimizePageLoading: null,
     driftAssessmentData: null,
     isAssessmentAvailable: false,
     selectedHostname: '',

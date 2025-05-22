@@ -8,7 +8,7 @@ export interface GetWellSliceInterface {
     visitedTabs: any;
     selectedWellArchitectTab: string;
     selectedCloneTab: string;
-    optimizePageLoading: boolean;
+    optimizePageLoading: boolean | null;
     driftAssessmentData: AssessmentResponseInterface | null;
     isAssessmentAvailable: boolean;
     selectedHostname: string;
