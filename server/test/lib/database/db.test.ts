@@ -13,7 +13,6 @@ import {
     listRelationshipsResources,
     updateConfig,
     listEvents,
-    DatabaseInstanceRecord,
     upsertDatabaseInstance,
     listDatabaseInstances,
     deleteDatabaseInstance,
@@ -24,6 +23,7 @@ import {
     updateResource
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
+import { DatabaseInstanceRecord } from '../../../src/lib/database/db-types';
 
 describe('List deployments', () => {
     it('should return a list of deployments', async () => {
