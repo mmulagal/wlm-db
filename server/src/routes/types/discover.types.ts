@@ -103,6 +103,9 @@ const SqlServerInstanceInfo = Type.Object({
             default: false
         })
     ),
+    windowsDomainUserAuthentication: Type.Boolean({
+        description: 'Is Windows domain user authentication possible for SQL Server?'
+    }),
     storage: Type.Optional(
         Type.Array(
             Type.Object({

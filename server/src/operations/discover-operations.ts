@@ -78,7 +78,8 @@ import {
     HA,
     PGSQL_DEFAULT_INSTANCE_NAME,
     POWERSHELL_7_RELATIVE_PATH,
-    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE
+    CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+    DEFAULT_INSTANCE_NAME
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -425,20 +426,14 @@ async function getHostAndSqlInfoFromPsOutput(
 
     api1StartTime = performance.now();
 
-    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all(
-        [
-            pollCommandStatus(credentialsId, region, commandInvocationParam),
-            getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
-        ].map((p, index) =>
-            p.catch(error => {
-                if (index === 0) {
-                    const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
-                    logger.error(errorMessage);
-                    throw createError(errorMessage);
-                }
-            })
-        )
-    );
+    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
+        pollCommandStatus(credentialsId, region, commandInvocationParam).catch(error => {
+            const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }),
+        getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
+    ]);
 
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
@@ -643,9 +638,15 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes = [sqlServerNodes];
                     }
 
-                    const sqlServerAuthentication = ec2SqlParametersInfo?.some(
+                    const sqlServerAuthentication = ec2SqlParametersInfo?.sql?.some(
                         (elem: { sqlinstancename: string }) =>
                             elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase()
+                    );
+
+                    const windowsDomainUserAuthentication = ec2SqlParametersInfo?.domain?.some(
+                        (elem: { sqlinstancename: string }) =>
+                            elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase() ||
+                            elem.sqlinstancename.toUpperCase() === DEFAULT_INSTANCE_NAME
                     );
 
                     const featureReadiness = Object.entries(FEATURE_PREPREQUISITES).reduce((acc, [key, value]) => {
@@ -683,6 +684,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         windowsOsVersion:
                             windowsOsVersion.match(/(Microsoft Windows Server \d+)/)[1] || windowsOsVersion,
                         sqlServerAuthentication,
+                        windowsDomainUserAuthentication,
                         storage: compact(uniqBy(storageTypes, v => [v.id, v.svmId, v.protocol].join())),
                         deploymentTypes: compact(
                             uniqBy(deploymentTypes, 'ids').map(({ type, zones, storageType }) => ({
