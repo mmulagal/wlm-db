@@ -822,7 +822,7 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
         if (val?.protection?.isSqlNativeEnabled) {
             sqlServerBackupDb += 1;
         }
-        if (val?.protection?.isCRREnabled) {
+        if (val?.protection?.isCRREnabled  === true) {
             crrEnabled += 1;
         }
     });
