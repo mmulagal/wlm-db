@@ -396,6 +396,14 @@ interface PgSqlInstanceDetails {
     isDefault: boolean;
 }
 
+interface OracleInstanceDetails {
+    databaseInstanceId: string;
+    instanceName: string;
+    isManaged: boolean;
+    instanceState: string;
+    isDefault: boolean;
+}
+
 interface WorkloadInstance {
     id: string;
     name: string;
@@ -705,6 +713,7 @@ export {
     OptimizeMpioIscsiSessionsParams,
     SessionsCountPerIscsiTarget,
     PgSqlInstanceDetails,
+    OracleInstanceDetails,
     RssConfigAssesment,
     MaxDOPAssesment,
     PatchDetail,

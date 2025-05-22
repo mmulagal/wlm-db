@@ -102,6 +102,10 @@ import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } fr
 import getDatabaseInstanceTopology from '../utils/sql-utils';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import {
+    getOracleDatabaseInstancesDetails,
+    getOracleDatabaseInstancesSummary
+} from './workloads/oracle/oracle-operations';
 
 const logger = getLogger();
 
@@ -1141,6 +1145,14 @@ async function getDatabaseHostSummaryV2(
                           resourceId,
                           instancesDetails
                       )
+                    : resourceType === DatabaseTypes.ORACLE
+                    ? await getOracleDatabaseInstancesDetails(
+                          credentialsId,
+                          region,
+                          instancesManaged,
+                          resourceId,
+                          instancesDetails
+                      )
                     : await getDatabaseInstancesDetails(
                           credentialsId,
                           region,
@@ -1226,6 +1238,18 @@ async function getDatabaseHostSummaryV2(
                                 region,
                                 runningDatabaseInstances,
                                 fields
+                            )
+                        );
+                    } else if (resourceType === DatabaseTypes.ORACLE) {
+                        promises.push(
+                            getOracleDatabaseInstancesSummary(
+                                accountId,
+                                credentialsId,
+                                activeNodeInstanceId!,
+                                region,
+                                runningDatabaseInstances,
+                                fields,
+                                resourceDetail
                             )
                         );
                     } else {

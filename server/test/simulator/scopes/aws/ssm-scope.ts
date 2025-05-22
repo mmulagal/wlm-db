@@ -878,7 +878,13 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('logsAnalysisWindowsPrepare'))
     .on(SendCommandCommand, params => params.Comment === 'Discover Oracle resources')
-    .resolves(getSampleCommandResponse('getOracleDiscoveryCommand'));
+    .resolves(getSampleCommandResponse('getOracleDiscoveryCommand'))
+    .on(SendCommandCommand, params => params.Comment === 'oracle protection status')
+    .resolves(getSampleCommandResponse('oracleProtectionDetails'))
+    .on(SendCommandCommand, params => params.Comment === 'oracle performance metrics')
+    .resolves(getSampleCommandResponse('oraclePerformanceMetrics'))
+    .on(SendCommandCommand, params => params.Comment === 'oracle instance info')
+    .resolves(getSampleCommandResponse('oracleInstanceInfo'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1242,6 +1248,33 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'bedrockAvailabilityCheck',
             JSON.stringify([{ status: 'success', error: '' }])
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleProtectionDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleProtectionDetails',
+            '{"ontapProtectionDetails":{"records":[{"uuid":"db3ed9f2-eee7-11ef-8fbb-837e18df6f7a","name":"oracledata2","snapshot_count":22,"svm":{"name":"wlmdb_sqlsvm_1735809893269"},"_links":{"self":{"href":"/api/storage/volumes/db3ed9f2-eee7-11ef-8fbb-837e18df6f7a"}}}],"num_records":1,"_links":{"self":{"href":"/api/storage/volumes?fields=snapshot_count&name=oracledata2&svm=wlmdb_sqlsvm_1735809893269"}}},"isNativeProtectionEnabled":"false"}'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oraclePerformanceMetrics'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oraclePerformanceMetrics',
+            '{"READ_IOPS":0.11,"WRITE_IOPS":0.6,"READ_THROUGHPUT":0.001,"WRITE_THROUGHPUT":0.005,"READ_LATENCY":0,"WRITE_LATENCY":0,"SERVER_IO_LATENCY":0,"assessment":"Excellent (<=1 ms)"}'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleInstanceInfo'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleInstanceInfo',
+            '[{"sid":"ordbsdl","instance_details":{"instance_id":1,"instance_name":"ordbsdl","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"}},{"sid":"oraclesan1","instance_details":{"instance_id":1,"instance_name":"oraclesan1","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"STARTED"}},{"sid":"oraclesan2","instance_details":{"instance_id":1,"instance_name":"oraclesan2","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"}}]'
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

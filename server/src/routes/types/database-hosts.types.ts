@@ -517,6 +517,18 @@ const PgSqlDbHostSummaryListResponse = Type.Object({
     items: Type.Array(PgSqlDbHostsSummaryResponse),
     nextToken: Type.Optional(Type.String())
 });
+
+const OracleDbHostsSummaryResponse = Type.Omit(DatabaseHostSummaryForMultiInstanceResponse, [
+    'ebsResourceInfo',
+    'sqlLicenseIncluded',
+    'fsxwResourceInfo'
+]);
+
+const OracleDbHostSummaryListResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(OracleDbHostsSummaryResponse),
+    nextToken: Type.Optional(Type.String())
+});
 const DatabaseHostSummaryForMultiInstanceListResponse = Type.Object({
     count: Type.Number(),
     items: Type.Array(DatabaseHostSummaryForMultiInstanceResponse),
@@ -601,5 +613,6 @@ export {
     DatabaseHostOptionalInstanceSummaryParams,
     DatabaseQueryString,
     PgSqlDbHostsSummaryResponse,
-    PgSqlDbHostSummaryListResponse
+    PgSqlDbHostSummaryListResponse,
+    OracleDbHostSummaryListResponse
 };

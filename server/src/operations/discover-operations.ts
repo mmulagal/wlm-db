@@ -78,7 +78,9 @@ import {
     HA,
     PGSQL_DEFAULT_INSTANCE_NAME,
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    STANDALONE,
+    ORACLE_INSTANCE_STATE
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -2613,14 +2615,16 @@ function getDiscoveredOracleInstancesStorageDetails(
         if (fsxInfo) {
             const { fsxId, svmId } = fsxInfo;
             const { deploymentType, subnetIds, fileSystemStorageType } = fsIdWithFsxInfo.get(fsxId!) || {};
-            const uniqueMountDetails = mountDetails.reduce((acc: any[], current: any) => {
-                const currentItem = JSON.stringify(current);
-                const exists = acc.some(item => JSON.stringify(item) === currentItem);
-                if (!exists) {
-                    acc.push(current);
-                }
-                return acc;
-            }, []);
+            const uniqueMountDetails = mountDetails
+                .reduce((acc: any[], current: any) => {
+                    const currentItem = JSON.stringify(current);
+                    const exists = acc.some(item => JSON.stringify(item) === currentItem);
+                    if (!exists) {
+                        acc.push(current);
+                    }
+                    return acc;
+                }, [])
+                .map((detail: any) => ({ ...detail, mountIp: mountIP }));
             storageTypes.push({
                 type: STORAGE_TYPE.FSXN,
                 id: fsxId!,
@@ -2730,7 +2734,7 @@ async function discoverOracleResources(
                     }
                     ec2Instance = {
                         ...ec2Instance,
-                        oracleServerDeploymentType: 'Standalone'
+                        oracleServerDeploymentType: 'standalone'
                     };
 
                     const databaseInstanceDetails: DiscoverOracleInstanceType[] = [];
@@ -2922,6 +2926,106 @@ async function fetchFsxResourceMappings(
     };
 }
 
+async function getOracleResourceDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instancesString: string,
+    fields?: string
+) {
+    logger.info('Get Oracle resource details', { accountId, credentialsId, region, instancesString, fields });
+    const instances = Array.isArray(instancesString) ? instancesString : instancesString?.split(',');
+    const { items: ec2Instances } = await discoverOracleResources(
+        accountId,
+        credentialsId,
+        region,
+        undefined,
+        undefined,
+        instances
+    );
+
+    const errorInstances: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
+
+    const resourceDetailsList: ResourceDetails[] = ec2Instances?.map(ec2Instance => {
+        const resourceDetails: ResourceDetails = {
+            id: null,
+            account_id: accountId,
+            resource_id: ec2Instance.ec2InstanceId,
+            resource_type: RESOURCESTYPE.ORACLE,
+            resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
+            cloud_provider_name: CloudProviders.AWS,
+            cloud_provider_account_id: null,
+            region,
+            credentials_id: credentialsId,
+            metadata: {
+                creationDate: Date.now(),
+                node1InstanceId: ec2Instance.ec2InstanceId
+            },
+            databaseInstanceDetails: [],
+            co_relation_id: null,
+            ebsVolumeIds: [],
+            ec2UsageOperation: ec2Instance.ec2UsageOperation
+        };
+        const clonedResourceDetails = cloneDeep(resourceDetails);
+
+        for (const oracleDbInstance of ec2Instance?.databaseInstanceDetails || []) {
+            const { storage } = oracleDbInstance;
+            let fsxnId: string | undefined;
+            storage?.forEach(({ type, id }: { type: string; id: string }) => {
+                // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
+                // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
+                fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
+            });
+
+            const [mountPointDetails] = storage?.[storage.length - 1]?.mountDetails || [];
+            const dbInstanceState =
+                oracleDbInstance.instanceState === ORACLE_INSTANCE_STATE.OPEN
+                    ? 'RUNNING'
+                    : oracleDbInstance.instanceState;
+
+            resourceDetails.databaseInstanceDetails?.push({
+                database_instance_id: oracleDbInstance.instanceId || '',
+                database_instance_name: oracleDbInstance.instanceName || '',
+                database_type: RESOURCESTYPE.ORACLE,
+                is_default: true,
+                instanceState: dbInstanceState,
+                region,
+                credentials_id: credentialsId,
+                metadata: { mountPointDetails },
+                fsxn_ids: fsxnId || '',
+                database_deployment_type: STANDALONE,
+                storage_type: fsxnId ? STORAGE_TYPE.FSXN : NOT_AVAILABLE,
+                resource: clonedResourceDetails
+            });
+        }
+        return resourceDetails;
+    });
+
+    let response = await Promise.all(
+        resourceDetailsList.map(async resourceDetail =>
+            getDatabaseHostSummaryV2(
+                accountId,
+                resourceDetail.resource_id,
+                credentialsId,
+                region,
+                fields ||
+                    'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
+                resourceDetail,
+                undefined,
+                false // unmanaged host,
+            )
+        )
+    );
+
+    if (errorInstances.length > 0) {
+        response = response.concat(errorInstances);
+    }
+    return {
+        count: response.length,
+        items: response
+    };
+}
+
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
@@ -2932,5 +3036,6 @@ export {
     discoverPgSqlResources,
     prepareDbScriptsForManage,
     getPgSqlResourceDetails,
-    discoverOracleResources
+    discoverOracleResources,
+    getOracleResourceDetails
 };
