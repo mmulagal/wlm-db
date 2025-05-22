@@ -147,61 +147,73 @@ function getWindowsPrepareScript(scriptParams: {
 
     return `
     # Logs Analysis Windows Prepare Script
-    $s3SignedUrl = "${s3SignedUrl}";
-    $packageName = "${packageName}";
-    $logsPath = "${logsPath}";
-    $version = "${version}";
-    $instanceId = "${instanceId}";
-    $region = "${region}";
-    $jobId = "${jobId}";
-    $modelId = "${inferenceProfileArn}";
-    $modelRegion = "${region}";
-    $temperature = ${temperature};
-    $maxTokens = ${maxTokens};
-    $topP = ${topP};
+    try {
+        $s3SignedUrl = "${s3SignedUrl}";
+        $packageName = "${packageName}";
+        $logsPath = "${logsPath}";
+        $version = "${version}";
+        $instanceId = "${instanceId}";
+        $region = "${region}";
+        $jobId = "${jobId}";
+        $modelId = "${inferenceProfileArn}";
+        $modelRegion = "${region}";
+        $temperature = ${temperature};
+        $maxTokens = ${maxTokens};
+        $topP = ${topP};
 
-    
-
-    function Invoke-RetryCommand {
-        param ([scriptblock]$Command, [int]$Retries = 5)
-        $Count = 0
-        while ($Count -lt $Retries) {
-            try {
-                & $Command
-                return
-            } catch {
-                $Count++
-                if ($Count -ge $Retries) {
-                    throw
+        function Invoke-RetryCommand {
+            param ([scriptblock]$Command, [int]$Retries = 5)
+            $Count = 0
+            while ($Count -lt $Retries) {
+                try {
+                    & $Command
+                    return
+                } catch {
+                    $Count++
+                    if ($Count -ge $Retries) {
+                        throw "Download failed after $Retries attempts. $_"
+                    }
+                    Start-Sleep -Seconds 5
                 }
-                Start-Sleep -Seconds 5
             }
         }
-    }
 
-    $filePath = ".\\$packageName-$version.exe"
-    if (-not (Test-Path $filePath)) {
-        Invoke-RetryCommand {
-            Invoke-WebRequest -Uri $s3SignedUrl -OutFile $filePath
+        $filePath = ".\\$packageName-$version.exe"
+        if (-not (Test-Path $filePath)) {
+            Invoke-RetryCommand {
+                Invoke-WebRequest -Uri $s3SignedUrl -OutFile $filePath
+            }
+            Get-ChildItem -Path . -Filter "$packageName-*.exe" | Where-Object { $_.Name -ne "$packageName-$version.exe" } | Remove-Item -Force
         }
 
-        Get-ChildItem -Path . -Filter "$packageName-*.exe" | Where-Object { $_.Name -ne "$packageName-$version.exe" } | Remove-Item -Force
-    }
-
-    try {
-        icacls $filePath /grant Everyone:F
-    } catch {
-        throw
-    }
-
-    try {
-        if (-Not (Test-Path $filePath)) {
-            throw "The specified file does not exist."
+        try {
+            icacls $filePath /grant Everyone:F
+        } catch {
+            throw "Failed to set permissions: $($_.Exception.Message)"
         }
-        Start-Process -FilePath $filePath -ArgumentList "--logs-path $logsPath --log-level info --region $region --model-id $modelId --model-region $modelRegion --job-id $jobId --instance-id $instanceId --temperature $temperature --maxTokens $maxTokens --topP $topP" -NoNewWindow -Wait
+
+        try {
+            if (-Not (Test-Path $filePath)) {
+                throw "The specified file does not exist."
+            }
+            Start-Process -FilePath $filePath -ArgumentList "--logs-path $logsPath --log-level info --region $region --model-id $modelId --model-region $modelRegion --job-id $jobId --instance-id $instanceId --temperature $temperature --maxTokens $maxTokens --topP $topP" -NoNewWindow -Wait
+        } catch {
+            throw "Failed to run Logs Analyzer: $($_.Exception.Message)"
+        }
+
+        $result = @{
+            success = $true
+            error = $null
+        }
     } catch {
-        throw
-    }`;
+        $result = @{
+            success = $false
+            error = $_.Exception.Message
+        }
+    }
+    $result | ConvertTo-Json -Depth 5
+    exit 0
+    `;
 }
 
 function getLinuxPrepareScript(scriptParams: {
