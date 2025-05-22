@@ -72,7 +72,6 @@ export const GENERAL = {
     VIEW_AND_FIX: 'View and fix',
     REBASE_LINE: 'Re-baseline',
     APPLY: 'Apply',
-    WELL_ARCHITECTED_STATUS: 'Well-architected status',
     MICROSOFT_SQL: 'Microsoft SQL',
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
     LOADING_DATA: 'Loading data',
