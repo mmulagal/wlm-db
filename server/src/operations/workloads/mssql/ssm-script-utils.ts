@@ -403,6 +403,7 @@ const validateSQLInstanceConnectivity = (
                     SERVERPROPERTY('edition') AS sqlEdition,
                     (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
                     ${
+                        // prettier-ignore
                         checkManageReadiness
                             ? ',(SELECT permission_name FROM fn_my_permissions(NULL, \'SERVER\') FOR JSON PATH) as permissions'
                             : ''

@@ -137,7 +137,7 @@ import discoverOracleHosts from './workloads/oracle/oracle-discover-scripts';
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
 const isDemoFlow = isDemo();
-
+const NO_PGSQL = 'no_pgsql';
 interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
@@ -2335,84 +2335,95 @@ async function discoverPgSqlResources(
             pageSize
         );
 
-        instancesWithSsmResponse = await Promise.all(
-            ssmConnectedEc2Instances.map(async ec2Instance => {
-                const ssmResponse = ssmResponseMap.get(ec2Instance.ec2InstanceId);
-                const output = ssmResponse?.output;
-                const error = ssmResponse?.error;
-                if (error) {
-                    return {
-                        ...ec2Instance,
-                        error
-                    };
-                }
+        instancesWithSsmResponse = compact(
+            await Promise.all(
+                ssmConnectedEc2Instances.map(async ec2Instance => {
+                    const ssmResponse = ssmResponseMap.get(ec2Instance.ec2InstanceId);
+                    const output = ssmResponse?.output;
+                    const error = ssmResponse?.error;
+                    if (error) {
+                        return {
+                            ...ec2Instance,
+                            error
+                        };
+                    }
 
-                let parsedResponse;
-                try {
-                    parsedResponse = sqlResponseParsing(output || '{}');
-                    const {
-                        version,
-                        nfs_ip_address: nfsIpAddress,
-                        ebs_volume: ebsVolume,
-                        status,
-                        hostname,
-                        nfs_mount_point: nfsMountPoint,
-                        postgres_server: pgSqlServer,
-                        database_count: databaseCount,
-                        deployment_type: deploymentType,
-                        replica_info: replicaInfo,
-                        replica_type: replicaType,
-                        primary_host: primaryHostIp,
-                        server_instance_id: serverInstanceId,
-                        default_auth: defaultAuth
-                    } = parsedResponse;
+                    let parsedResponse;
+                    try {
+                        parsedResponse = sqlResponseParsing(output || '{}');
+                        const {
+                            version,
+                            nfs_ip_address: nfsIpAddress,
+                            ebs_volume: ebsVolume,
+                            status,
+                            hostname,
+                            nfs_mount_point: nfsMountPoint,
+                            postgres_server: pgSqlServer,
+                            database_count: databaseCount,
+                            deployment_type: deploymentType,
+                            replica_info: replicaInfo,
+                            replica_type: replicaType,
+                            primary_host: primaryHostIp,
+                            server_instance_id: serverInstanceId,
+                            default_auth: defaultAuth,
+                            error: discoverScriptError
+                        } = parsedResponse;
 
-                    const pgsqlServerInstance: PgSqlServerInstaceType = {
-                        pgsqlServerVersion: isValidProp(version) ? version : undefined,
-                        pgsqlServerState: isValidProp(status) ? status : undefined,
-                        pgsqlServerName: getPgSqlHostName(hostname, pgSqlServer),
-                        pgsqlServerDeploymentType: isValidProp(deploymentType) ? deploymentType : undefined,
-                        databaseCount: isValidProp(databaseCount) ? databaseCount : 0,
-                        pgsqlServerInstanceId: isValidProp(serverInstanceId) ? serverInstanceId : undefined,
-                        defaultAuth: isValidProp(defaultAuth) ? !defaultAuth : false,
-                        ...(deploymentType === HA && {
-                            isPrimary: replicaType === 'primary',
-                            primaryNode: await getPrimaryHostDetails(credentialsId, region, primaryHostIp),
-                            nodes: await getReplicaNodes(credentialsId, region, replicaInfo, replicaType)
-                        })
-                    };
+                        if (status === NO_PGSQL) {
+                            logger.warn('PostgreSQL server not found', {
+                                ec2InstanceId: ec2Instance.ec2InstanceId,
+                                discoverScriptError
+                            });
+                            return;
+                        }
 
-                    pgsqlServerInstance.storage = getDiscoveredPgSqlStorageDetails(
-                        ec2Instance.ebsVolumes!,
-                        endPointIpWithFsxInfo,
-                        fsIdWithFsxInfo,
-                        subnetListMap,
-                        ebsVolumeToAvailabilityZoneMap,
-                        nfsIpAddress,
-                        ebsVolume,
-                        nfsMountPoint
-                    );
+                        const pgsqlServerInstance: PgSqlServerInstaceType = {
+                            pgsqlServerVersion: isValidProp(version) ? version : undefined,
+                            pgsqlServerState: isValidProp(status) ? status : undefined,
+                            pgsqlServerName: getPgSqlHostName(hostname, pgSqlServer),
+                            pgsqlServerDeploymentType: isValidProp(deploymentType) ? deploymentType : undefined,
+                            databaseCount: isValidProp(databaseCount) ? databaseCount : 0,
+                            pgsqlServerInstanceId: isValidProp(serverInstanceId) ? serverInstanceId : undefined,
+                            defaultAuth: isValidProp(defaultAuth) ? !defaultAuth : false,
+                            ...(deploymentType === HA && {
+                                isPrimary: replicaType === 'primary',
+                                primaryNode: await getPrimaryHostDetails(credentialsId, region, primaryHostIp),
+                                nodes: await getReplicaNodes(credentialsId, region, replicaInfo, replicaType)
+                            })
+                        };
 
-                    return {
-                        ...ec2Instance,
-                        pgsqlServerInstances: [pgsqlServerInstance]
-                    };
-                } catch (err: unknown) {
-                    logger.warn('Failed to parse SSM response', { error: err });
-                    ec2Instance.error = err as string;
-                    return {
-                        ...ec2Instance,
-                        error: `Failed to parse SSM response: ${err}`
-                    };
-                }
-            })
+                        pgsqlServerInstance.storage = getDiscoveredPgSqlStorageDetails(
+                            ec2Instance.ebsVolumes!,
+                            endPointIpWithFsxInfo,
+                            fsIdWithFsxInfo,
+                            subnetListMap,
+                            ebsVolumeToAvailabilityZoneMap,
+                            nfsIpAddress,
+                            ebsVolume,
+                            nfsMountPoint
+                        );
+
+                        return {
+                            ...ec2Instance,
+                            pgsqlServerInstances: [pgsqlServerInstance]
+                        };
+                    } catch (err: unknown) {
+                        logger.warn('Failed to parse SSM response', { error: err });
+                        ec2Instance.error = err as string;
+                        return {
+                            ...ec2Instance,
+                            error: `Failed to parse SSM response: ${err}`
+                        };
+                    }
+                })
+            )
         );
     } catch (error: any) {
         logger.error('Failed to discover PostgreSQL resources', { error: error.message });
     }
 
     return {
-        count: ec2Instances.length || 0,
+        count: (ssmNotConnectedEc2Instances?.length ?? 0) + (instancesWithSsmResponse?.length ?? 0),
         items: [...ssmNotConnectedEc2Instances, ...instancesWithSsmResponse],
         nextToken: NextToken as string
     };
@@ -2481,9 +2492,7 @@ function getEbsVolumeId(ebsVolumeIDs: (InstanceBlockDeviceMapping | undefined)[]
         if (/vol-\w+/.test(ebsVolume)) {
             return ebsVolumeIDs?.find(elem => elem?.Ebs?.VolumeId === ebsVolume)?.Ebs?.VolumeId;
         }
-        const ebsVolumeId = ebsVolumeIDs?.find(
-            elem => ebsVolume?.includes(elem?.DeviceName || '') && elem?.Ebs?.VolumeId === ebsVolume
-        )?.Ebs?.VolumeId;
+        const ebsVolumeId = ebsVolumeIDs?.find(elem => ebsVolume?.includes(elem?.DeviceName || ''))?.Ebs?.VolumeId;
         if (ebsVolumeId) {
             return ebsVolumeId;
         }
