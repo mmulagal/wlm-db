@@ -1303,6 +1303,8 @@ export const jobMonitoringTypeMapping = (val: string) => {
         typeValue = GENERAL.JM_TYPE_ASSESSMENT;
     } else if (val === JOB_MONITORING_TYPE.OPTIMIZE || val === JOB_MONITORING_TYPE.WELL_ARCHITECTED) {
         typeValue = GENERAL.JM_TYPE_OPTIMIZE;
+    } else if (val === JOB_MONITORING_TYPE.MANAGE_RESOURCE) {
+        typeValue = GENERAL.JM_TYPE_MANAGE_RESOURCE;
     }
     return typeValue;
 };
@@ -1672,6 +1674,7 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
     let detectOntapUsername = state?.inventoryV2?.detectOntapUsername;
     let detectOntapPassword = state?.inventoryV2?.detectOntapPassword;
     let credList = [];
+    let checkManageReadiness = false;
     if (detectManageUserName && detectManagePassword) {
         credList.push({
             resourceId: sqlServerInstance,
@@ -1679,6 +1682,7 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
             username: detectManageUserName,
             password: detectManagePassword
         });
+        checkManageReadiness = true;
     }
     if (detectOntapUsername && detectOntapPassword) {
         credList.push({
@@ -1692,9 +1696,9 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
     // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
     if (rowData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
         let addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
-        return { credentials: credList, clusterNodesIpAddress: addresses };
+        return { credentials: credList, clusterNodesIpAddress: addresses, checkManageReadiness: checkManageReadiness };
     } else {
-        return { credentials: credList };
+        return { credentials: credList, checkManageReadiness: checkManageReadiness };
     }
 };
 

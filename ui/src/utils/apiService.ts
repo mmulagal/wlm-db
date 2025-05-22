@@ -684,6 +684,13 @@ export const inventoryApi = createApi({
                     body: payload
                 })
             }),
+            registerResourceCredentialsBulk: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/discover/resource-credentials`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getMssqlInstanceData: builder.mutation({
                 query: ({ credentialId, regionId, instances, nextToken = null }) => ({
                     url: nextToken
@@ -846,6 +853,13 @@ export const inventoryApiV2 = createApi({
                         return `v1/mssql/credentials/${credentialId}/regions/${regionId}/assessment`;
                     }
                 }
+            }),
+            manageBulkV2MssqlInstance: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v2/mssql/manage`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1247,6 +1261,7 @@ export const {
     useLazyDiscoverPgsqlHostsQuery,
     useLazyGetFsxCredentialStatusQuery,
     useRegisterResourceCredentialsMutation,
+    useRegisterResourceCredentialsBulkMutation,
     useGetMssqlInstanceDataMutation,
     usePrepareHostMutation
 } = inventoryApi;
@@ -1261,7 +1276,8 @@ export const {
     useUnmanageMssqlInstanceMutation,
     useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,
-    useLazyGetAllMssqlHostsAssessmentDataQuery
+    useLazyGetAllMssqlHostsAssessmentDataQuery,
+    useManageBulkV2MssqlInstanceMutation
 } = inventoryApiV2;
 
 export const {

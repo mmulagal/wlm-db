@@ -97,6 +97,7 @@ import {
     resetInventoryLoading,
     resetRefreshData,
     setIsRefreshed,
+    setLandingFromWizard,
     setSelectedHeaderTab
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
@@ -159,7 +160,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         pgsqlInstancesData,
         perfMssqlInstancesData,
         potentialSavingsHostData,
-        createResourceApiLoading
+        createResourceApiLoading,
+        landingFromWizard
     } = useAppSelector(state => state.inventoryV2);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
@@ -197,6 +199,12 @@ const HeaderComponent = ({ tab }: Tab) => {
     DatabaseHomeApis();
     SavingsCalculatorApi();
     SavingsCalculatorManualApi();
+
+    useEffect(() => {
+        return () => {
+            dispatch(setLandingFromWizard(false));
+        };
+    }, [dispatch]);
 
     useEffect(() => {
         let tabValue = setTabValue(tab, selectedHeaderTab);
@@ -1101,7 +1109,8 @@ const HeaderComponent = ({ tab }: Tab) => {
             (!statusChk &&
                 (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS ||
                     tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
-                    tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM))
+                    tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM ||
+                    landingFromWizard))
         ) {
             return true;
         } else {

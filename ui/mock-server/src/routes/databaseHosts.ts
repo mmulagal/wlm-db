@@ -92,7 +92,7 @@ router.get(`${BASE_URL}/v1/jobs/:jobId`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobMonitoringSubTask);
         // generateResponse(res, 200, optimizeBulkJobs);
-    }, 30);
+    }, 7000);
 });
 
 router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/discover`, async (req: {}, res: any) => {
@@ -130,9 +130,62 @@ router.post(
                 databaseCount: 10,
                 sqlServerEdition: 'Standard',
                 sqlServerError: '',
-                fsxnError: ''
+                fsxnError: '',
+                "manageReadiness": { 
+                    "assessment" : { 
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "remediation": {
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "dbcreation": {
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "sandbox": {
+                        "missingSqlPermissions":[],
+                        "missingModules": []
+                    }
+                }
             });
-        }, 30);
+        }, 5000);
+    }
+);
+
+router.post(
+    `${BASE_URL}/v1/mssql/discover/resource-credentials`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, [{
+                credentialsId: "3ad8702c-a2fd-48d2-be50-1ba6ce83acd5",
+                ec2InstanceId: "i-0db20e831d1ce41e3",
+                region: "ap-south-1",
+                databaseCount: 10,
+                sqlServerEdition: 'Standard',
+                sqlServerError: '',
+                fsxnError: '',
+                "manageReadiness": { 
+                    "assessment" : { 
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "remediation": {
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "dbcreation": {
+                        "missingSqlPermissions": [],
+                        "missingModules": []
+                    },
+                    "sandbox": {
+                        "missingSqlPermissions":[],
+                        "missingModules": []
+                    }
+                }
+            }]);
+        }, 5000);
     }
 );
 

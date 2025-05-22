@@ -1,4 +1,14 @@
+interface OptionType {
+    id: number;
+    label: string;
+    value: string;
+}
+
 export interface InventorySliceData {
+    landingFromWizard: boolean;
+    selectedMultiDetectInstances: OptionType[];
+    wizardOperationType: string;
+    manageInstanceInstallAction: any;
     authenticationType: string;
     tableManageColumnState: any;
     selectedFilterValue: {} | any;
@@ -78,6 +88,9 @@ export interface InventorySliceData {
         error: string;
     };
     createResourceApiLoading: boolean;
+    manageSingleInstanceReadiness: any;
+    manageSingleInstanceChecks: any;
+    manageSingleInstanceData: any;
 }
 
 export interface InventoryTableData {
@@ -520,6 +533,7 @@ export interface SQLServerInstancesDiscovered {
         type?: string;
         zones?: Array<string>;
     }>;
+    manageReadiness?: any;
 }
 
 export interface PgsqlInstancesDiscovered {

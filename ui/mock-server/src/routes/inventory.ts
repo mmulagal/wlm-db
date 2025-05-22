@@ -113,4 +113,14 @@ router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
     }, 100);
 });
 
+router.post(
+    `${BASE_URL}/v2/mssql/manage`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, { jobId: '1234' });
+            // generateResponse(res, 404, { message: 'No data found' });
+        }, 20);
+    }
+);
+
 export default router;

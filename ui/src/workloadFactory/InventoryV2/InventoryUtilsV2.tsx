@@ -12,6 +12,7 @@ import {
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
+    ACTION_CTA,
     DBType,
     DETECT_HOST_VAR,
     INVENTORY_ACTIONS,
@@ -376,6 +377,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 databaseInstanceId: perRow?.databaseInstanceId,
                 databaseInstanceName: perRow?.instanceName,
                 status: perRow?.instanceState,
+                manageReadiness: statusObj?.[0]?.manageReadiness,
                 statusColText: isManagedRow?.[0]?.isManaged
                     ? INVENTORY_STATUS.MANAGED
                     : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED
@@ -415,7 +417,8 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     storage: perRow?.storage,
                     storageSavingsText: getStorageSavingsText(perRow || {}),
                     allocatedCapacity: allocatedCapacity,
-                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
+                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
+                    manageReadiness: statusObj?.[0]?.manageReadiness
                 };
             } else {
                 return instRow;
@@ -1208,7 +1211,8 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         status: INVENTORY_STATUS.UNDETECTED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
-                        isFsxRegistered: !fsxCredentialValidationFailed
+                        isFsxRegistered: !fsxCredentialValidationFailed,
+                        manageReadiness: perRow?.manageReadiness
                     };
                 } else {
                     statusObj = {
@@ -1216,7 +1220,8 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         status: INVENTORY_STATUS.UNMANAGED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
-                        isFsxRegistered: !fsxCredentialValidationFailed
+                        isFsxRegistered: !fsxCredentialValidationFailed,
+                        manageReadiness: perRow?.manageReadiness
                     };
                 }
                 result = [...result, ...[statusObj]];
@@ -1493,7 +1498,8 @@ export const formatDiscoverInstanceData = (
             sqlServerAuthentication: perRow?.sqlServerAuthentication,
             windowsAuthentication: perRow?.windowsAuthentication,
             detectOption: statusObj?.[0]?.detectOption,
-            detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg
+            detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
+            manageReadiness: perRow?.manageReadiness
             // protection: {},
             // performance: {},
             // storageSavingsText: '',
@@ -1648,6 +1654,7 @@ export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
         [INVENTORY_STATUS.CASE_SENSITIVE_DOWN.toLowerCase()]: 2000,
         [INVENTORY_STATUS.STOPPED.toLowerCase()]: 2000,
         [INVENTORY_STATUS.UNKNOWN.toLowerCase()]: 1000,
+
         '': 0
     };
 
@@ -3431,4 +3438,44 @@ export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any,
     });
 
     return triggeredPrepare;
+};
+
+export const manageActionCol = (rowData?: any) => {
+    let colText = '';
+    let disableMsg = '';
+    if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+        colText = ACTION_CTA.FIX_ISSUES;
+    } else {
+        colText = ACTION_CTA.MANAGE_INSTANCES;
+    }
+
+    if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
+        disableMsg = GENERAL.HOST_DOWN;
+    } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+        disableMsg = GENERAL.SSM_DOWN;
+    } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+        disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+    } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+        disableMsg = GENERAL.PGSQL_CTA_NA;
+    } else if (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) {
+        disableMsg = rowData?.detectOptionDisableMsg;
+    } else if (
+        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
+    ) {
+        disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
+    } else if (
+        rowData?.serverInstallationMode === GENERAL.AOAG &&
+        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+    ) {
+        disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
+    }
+
+    if (colText === ACTION_CTA.FIX_ISSUES && !rowData?.optimizationStatus && !rowData?.optimizationStatusLoading) {
+        disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
+    }
+    return {
+        colText: colText,
+        disableMsg: disableMsg
+    };
 };

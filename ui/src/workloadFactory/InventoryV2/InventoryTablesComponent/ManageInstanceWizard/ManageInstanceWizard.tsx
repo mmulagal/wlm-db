@@ -3,6 +3,13 @@ import { StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
 import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
+import { useNavigate } from 'react-router-dom';
+import ManageOnlyWizard from './ManageOnlyWizard';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useMemo } from 'react';
+import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { useDispatch } from 'react-redux';
+import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const MANAGE_STEPS = [
     { key: 'detect-instance', label: 'Detect instance', component: DetectInstanceStep },
@@ -17,6 +24,8 @@ const stepPaths = {
 
 const Wizard = () => {
     const { stepsMap, currentStep }: any = useWizard();
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const { Footer: StepFooter, Content: StepContent } = stepsMap[currentStep];
     return (
@@ -25,7 +34,10 @@ const Wizard = () => {
                 className={styles['manage-instance-wizard']}
                 title={'Manage instance'}
                 onExit={() => {
-                    console.log('cancel');
+                    setTimeout(() => {
+                        dispatch(setLandingFromWizard(true));
+                        navigate('../databases/inventory');
+                    }, 100);
                 }}
             />
             <WizardContent
@@ -44,16 +56,34 @@ const Wizard = () => {
 
 const ManageInstanceWizard = () => {
     const initialState: any = {};
+    const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
+    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
+    const isAlreadyDetected = useMemo(() => {
+        if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+            return true;
+        }
+        return false;
+    }, [manageSingleInstanceData]);
+
     return (
-        <WizardContextProvider
-            stepsMap={stepsMap}
-            stepPaths={stepPaths}
-            initialStep={'detect-instance'}
-            initialPath={'regular'}
-            initialState={initialState}
-        >
-            <Wizard />
-        </WizardContextProvider>
+        <>
+            {wizardOperationType !== 'bulk' && isAlreadyDetected && (
+                <>
+                    <ManageOnlyWizard />
+                </>
+            )}
+            {(wizardOperationType === 'bulk' || !isAlreadyDetected) && (
+                <WizardContextProvider
+                    stepsMap={stepsMap}
+                    stepPaths={stepPaths}
+                    initialStep={'detect-instance'}
+                    initialPath={'regular'}
+                    initialState={initialState}
+                >
+                    <Wizard />
+                </WizardContextProvider>
+            )}
+        </>
     );
 };
 

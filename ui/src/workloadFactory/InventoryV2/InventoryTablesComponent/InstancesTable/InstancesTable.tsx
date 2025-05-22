@@ -13,6 +13,7 @@ import {
     detectFieldsValidation,
     handleManageInstances,
     handleManageInstancesBulk,
+    manageActionCol,
     saveFsxInCredRegisteredObj,
     uniqueHostRow,
     updateInstanceStatus
@@ -25,6 +26,7 @@ import {
     isSmbProtocol
 } from '../../../../utils/utilityFunctions';
 import {
+    ACTION_CTA,
     DETECT_HOST_VAR,
     FROM_DIALOG,
     INVENTORY_STATUS,
@@ -42,14 +44,17 @@ import {
     setDetectedInstanceId,
     setInProgressInstances,
     setInventoryTableData,
+    setManageSingleInstanceData,
     setRadioValueDetect,
     setSelectedFilterValue,
     setSelectedHeaderTab,
     setSelectedInventoryTab,
+    setSelectedMultiDetectInstances,
     setSelectedRowsForManage,
     setTableManageColumnState,
     setUnManagedPerfInstanceIdsList,
-    setValuesForForm
+    setValuesForForm,
+    setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -91,6 +96,7 @@ import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected
 
 const InstancesTable = () => {
     const disptach = useDispatch();
+
     const { instanceTableRows, inProgressInstances, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
@@ -363,10 +369,7 @@ const InstancesTable = () => {
                         error.push(result?.data?.sqlServerError || '');
                         error.push(result?.data?.fsxnError || '');
                         dispatch(setIsDetectHostError(error.join(' ')));
-                        dispatch(setIsDetectHostLoading(false));
                     } else {
-                        dispatch(setIsDetectHostLoading(false));
-
                         // store fsx cred in register obj if payload has fsx register
                         let isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
 
@@ -397,10 +400,10 @@ const InstancesTable = () => {
                     }
                 } else {
                     dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
-                    dispatch(setIsDetectHostLoading(false));
                 }
             } catch (error) {
                 dispatch(setIsDetectHostError(error || GENERAL.FAILED_TO_DETECT_HOST));
+            } finally {
                 dispatch(setIsDetectHostLoading(false));
             }
         }
@@ -600,21 +603,14 @@ const InstancesTable = () => {
         },
         {
             Header: 'Management status',
-            accessor: 'statusColText',
+            accessor: 'managementStatus',
             id: '5',
             isSortable: false,
             width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'statusColText'),
+            filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
                     return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
-                }
-                if (cellData === INVENTORY_STATUS.UNDETECTED) {
-                    if (rowData?.hostType === GENERAL.MICROSOFT_SQL_SERVER_TYPE) {
-                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
-                    } else {
-                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
-                    }
                 }
                 if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
@@ -851,6 +847,56 @@ const InstancesTable = () => {
                     </DsTypography>
                 );
             }
+        },
+        {
+            id: '12',
+            Header: '',
+            accessor: '',
+            isSortable: false,
+            width: '200px',
+            isSticky: true,
+            renderCell: (cellData: any, rowData: any) => {
+                const { colText, disableMsg } = manageActionCol(rowData);
+                return (
+                    <>
+                        {disableMsg ? (
+                            <Popover
+                                isAppendedToBody={true}
+                                children={disableMsg}
+                                trigger="hover"
+                                container={
+                                    <div className={styles.buttonContainer}>
+                                        <DsButton variant="secondary" isThin isDisabled={true}>
+                                            {colText}
+                                        </DsButton>
+                                    </div>
+                                }
+                            />
+                        ) : (
+                            <div className={styles.buttonContainer}>
+                                <DsButton
+                                    variant="secondary"
+                                    isThin
+                                    onClick={() => {
+                                        if (colText === ACTION_CTA.FIX_ISSUES) {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            optimizeAction(rowData);
+                                        } else {
+                                            dispatch(setManageSingleInstanceData(rowData));
+                                            dispatch(setWizardOperationType('single'));
+                                            navigate('../manage-wizard');
+                                        }
+                                    }}
+                                >
+                                    {colText}
+                                </DsButton>
+                            </div>
+                        )}
+                    </>
+                );
+            }
         }
     ];
 
@@ -859,8 +905,8 @@ const InstancesTable = () => {
         columns: managedHostSubTableColDefs,
         rows: updatedTableData,
         pageSize: 50,
-        selectionType: 'multiple',
-        defaultSelectedRows: [],
+        // selectionType: 'multiple',
+        // defaultSelectedRows: [],
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
@@ -942,6 +988,12 @@ const InstancesTable = () => {
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
+                    if (
+                        rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                        rowData.statusColText === INVENTORY_STATUS.UNDETECTED
+                    ) {
+                        return true;
+                    }
                     if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
                         disableMsg = GENERAL.PGSQL_CTA_NA;
                         width = '110px';
@@ -1168,6 +1220,12 @@ const InstancesTable = () => {
         );
     };
 
+    const handleManageBulk = () => {
+        dispatch(setSelectedMultiDetectInstances([]));
+        dispatch(setWizardOperationType('bulk'));
+        navigate('../manage-wizard');
+    };
+
     return (
         <>
             <div className={styles.inventoryTable}>
@@ -1182,10 +1240,17 @@ const InstancesTable = () => {
                         singularTitle="Instance"
                         exportToCsvOptions={{ fileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
+                        // actionsRight={
+                        //     <div className={styles.manageInstanceButton}>
+                        //         <DsButton isThin onClick={() => handleManageBulk()}>
+                        //             Manage multiple instances
+                        //         </DsButton>
+                        //     </div>
+                        // }
                     />
-                    {selectedRowsForManage.length > 0 && (
+                    {/* {selectedRowsForManage.length > 0 && (
                         <BulkActionContainer action={'Manage'} onClick={handleBulkOperation} />
-                    )}
+                    )} */}
                     <Table
                         //@ts-ignore
                         tableProps={tableProps}

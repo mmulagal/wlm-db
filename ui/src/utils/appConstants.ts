@@ -28,6 +28,13 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    BULK_INSTANCE_SELECT_TEXT:
+        'Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials.',
+    MANAGE_MIN_PERMISSION_REQUIRED: [
+        'Missing minimum prerequisites:',
+        ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To manage this SQL Server instance, please address the necessary prerequisites and try again.'
+    ],
+    PREREQUISITE_LIST: 'Prerequisites list',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
     UPDATE: 'Update',
     UPDATE_FSX_ADMIN_PASSWORD: 'Update FSxadmin password',
@@ -636,6 +643,7 @@ export const GENERAL = {
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
     JM_TYPE_OPTIMIZE: 'Well-architected',
+    JM_TYPE_MANAGE_RESOURCE: 'Manage resource',
     JM_DOWNLOAD_PROGRESS: 'Download in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table was downloaded',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -801,6 +809,8 @@ export const GENERAL = {
     MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 / 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
+    MANAGE_DETECT_FAIL_MESSAGE:
+        'Workload Factory was unable to detect the SQL Server instance. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.',
     DETECT_FAILED_WITH_NO_STORAGE:
         'Unable to identify attached storage. For SQL user authentication, reload the inventory page and try to manage again.',
     DONE: 'Done',
@@ -1179,7 +1189,7 @@ export const GENERAL = {
     HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
     NOT_OPTIMIZED_SHARED_DRIVES:
         'Drive size optimization isn’t possible because data is on the same shared drive. You’ll need to change the storage layout before resizing the drive.',
-    ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
+    ASSESSMENT_IN_PROGRESS: 'Well-architected analysis has not been run yet.',
     ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
     FSXN_OPTIMIZE_SUPPORTED:
         'Optimization assessment is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',

@@ -199,7 +199,8 @@ export const JOB_MONITORING_TYPE = {
     SANDBOX: 'SANDBOX',
     ASSESSMENT: 'ASSESSMENT',
     OPTIMIZE: 'OPTIMIZATION',
-    WELL_ARCHITECTED: 'WELL_ARCHITECTED'
+    WELL_ARCHITECTED: 'WELL_ARCHITECTED',
+    MANAGE_RESOURCE: 'MANAGE_RESOURCE'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -612,6 +613,8 @@ export const OPTIMIZE_POLLING_INTERVAL = 5000;
 
 export const MAX_IOPS_VALUE = 160000;
 
+export const MANAGE_POLLING_INTERVAL = 5000;
+
 export const INVENTORY_STATUS = {
     MANAGED: 'Managed',
     UNMANAGED: 'Unmanaged',
@@ -908,6 +911,18 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     }
+};
+
+export const MANAGE_STATES = {
+    READY: 'Ready',
+    MISSING_POWERSHELL: 'Missing PowerShell modules',
+    MISSING_PREREQUISITES: 'Missing prerequisites',
+    POWERSHELL7: 'Powershell 7'
+};
+
+export const ACTION_CTA = {
+    FIX_ISSUES: 'Fix issues',
+    MANAGE_INSTANCES: 'Manage instances'
 };
 
 export const RESPONSE_STATUS = {

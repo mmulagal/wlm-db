@@ -24,6 +24,7 @@ import { setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
+import ManageInstanceWizard from './workloadFactory/InventoryV2/InventoryTablesComponent/ManageInstanceWizard/ManageInstanceWizard';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -125,6 +126,7 @@ const Home = () => {
                         <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
                         {/* Testing code */}
                         {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
+                        <Route path={'/manage-wizard'} element={<ManageInstanceWizard />} />
                     </Routes>
                 )}
                 {!isWorkloadFactory && (
@@ -189,6 +191,7 @@ const Home = () => {
                             <Route path={'/job-monitor'} element={<JobMonitoring />} />
                             <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
                             {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
+                            <Route path={'/manage-wizard'} element={<ManageInstanceWizard />} />
                         </Routes>
                     </Suspense>
                 )}

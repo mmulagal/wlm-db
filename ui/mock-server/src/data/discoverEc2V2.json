@@ -83,7 +83,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": ["Powershell 7"]
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": ["abc"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        }
+                    }
                 }
             ]
         },
@@ -159,7 +177,25 @@
                             "id": "vol-0c73fa01e4e64ba60"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":["abc", "def"],
+                            "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "NEO",
@@ -186,7 +222,25 @@
                             "id": "vol-0c73fa01e4e64ba60"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": ["abc", "def"],
+                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":["abc", "def"],
+                            "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -213,7 +267,25 @@
                             "id": "vol-0c73fa01e4e64ba60"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -255,7 +327,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "NEO1",
@@ -283,7 +373,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER1",
@@ -311,7 +419,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -361,7 +487,25 @@
                                 "ap-southeast-1c"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -402,7 +546,25 @@
                             "id": "vol-078ccd469b92353ad"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -444,7 +606,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -534,7 +714,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -705,7 +903,25 @@
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": true,
                     "storage": [],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -736,7 +952,25 @@
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": false,
                     "storage": [],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -767,7 +1001,25 @@
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": true,
                     "storage": [],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -892,7 +1144,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -947,7 +1217,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER",
@@ -983,7 +1271,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1038,7 +1344,25 @@
                                 "ap-southeast-1c"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1128,7 +1452,25 @@
                                 "ap-southeast-1c"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1252,7 +1594,25 @@
                                 "ap-southeast-1a"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1351,7 +1711,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1406,7 +1784,25 @@
                                 "ap-southeast-1b"
                             ]
                         }
-                    ]
+                    ],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         },
@@ -1452,7 +1848,25 @@
                             "fileSystemStorageType": "SSD"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER1",
@@ -1479,7 +1893,25 @@
                             "id": "vol-058229dab6d33d374"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER3",
@@ -1510,7 +1942,25 @@
                             "id": "vol-0f1ae0046501426a3"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 },
                 {
                     "sqlServerInstance": "MSSQLSERVER4",
@@ -1537,7 +1987,25 @@
                             "id": "fs123"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "manageReadiness": { 
+                        "assessment" : { 
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions":[],
+                            "missingModules": []
+                        }
+                    }
                 }
             ]
         }
