@@ -1,0 +1,20 @@
+{
+    "databases": {
+        "general": {
+            "manage-instances-well-architected-score": "Managed instances well-architected score",
+            "well_architected_status": "Well-architected status",
+            "update": "Update",
+            "update_fsx_admin_password": "Update FSxadmin password",
+            "fsx_password_content": "The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Microsoft SQL Server instance.",
+            "sql_password_content": "The password for your Windows login might have changed. Update credentials to manage this Microsoft SQL Server instance.",
+            "update_sql_server_password": "Update SQL Server password",
+            "database_management": "Database management",
+            "database_optimization": "Database optimization",
+            "inventory_card_text1": "Manage database resources and perform day-to-day operations with FSx for ONTAP. You can check the status of hosts, instances, and databases, deploy new resources, and stay on top of resource usage, data protection, and performance.",
+            "findings": {
+                "optimized": "Optimized",
+                "not_optimized": "Not optimized"
+            }
+        }
+    }
+}

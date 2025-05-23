@@ -37,7 +37,10 @@
         "uuid": "^11.0.5",
         "vite": "^6.3.5",
         "vite-tsconfig-paths": "^5.1.4",
-        "web-vitals": "^4.2.4"
+        "web-vitals": "^4.2.4",
+        "react-i18next": "15.5.1",
+        "i18next": "25.1.1",
+        "i18next-http-backend": "3.0.2"
     },
     "scripts": {
         "start": "cross-env HOST=localhost PORT=4300 VITE_APP_USE_CM_FORWARDER=false vite",
