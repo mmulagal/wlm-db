@@ -601,7 +601,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Management status',
+            Header: 'Registration status',
             accessor: 'managementStatus',
             id: '5',
             isSortable: false,

@@ -922,7 +922,7 @@ export const MANAGE_STATES = {
 
 export const ACTION_CTA = {
     FIX_ISSUES: 'Fix issues',
-    MANAGE_INSTANCES: 'Manage instances'
+    MANAGE_INSTANCES: 'Register instance'
 };
 
 export const RESPONSE_STATUS = {

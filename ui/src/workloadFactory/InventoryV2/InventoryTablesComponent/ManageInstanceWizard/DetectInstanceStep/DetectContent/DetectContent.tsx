@@ -102,7 +102,7 @@ const DetectContent = () => {
                 (!manageSingleInstanceData?.sqlServerAuthentication &&
                     !manageSingleInstanceData?.windowsAuthentication)) && (
                 <div className={styles['radio-container']}>
-                    <DsTypography variant="Semibold_14">Select authentication type</DsTypography>
+                    <DsTypography variant="Semibold_14">Select authentication mode</DsTypography>
                     <RadioButton
                         id="select-sql-authentication"
                         isChecked={authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}

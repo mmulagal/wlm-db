@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 import { MANAGE_STATES } from '../../../../../../utils/consts';
 
 const NoteComponent = () => {
-    const textDisabled = false;
     const { installMissingPowershell } = useAppSelector(state => state.inventoryV2.manageInstanceInstallAction);
 
     return (
@@ -13,18 +12,10 @@ const NoteComponent = () => {
             <DsTypography variant="Semibold_16">Note</DsTypography>
 
             <div>
-                {installMissingPowershell && (
-                    <div className={styles['noteContainer']} style={{ borderBottom: '1px solid var(--border)' }}>
-                        <DsTypography className={textDisabled ? styles.disabled : ''} variant="Regular_14">
-                            PowerShell 7 will be automatically installed by Workload Factory, and a system reboot at
-                            your convenience is required to complete the installation
-                        </DsTypography>
-                    </div>
-                )}
-                <div className={styles['noteContainer']}>
-                    <DsTypography className={textDisabled ? styles.disabled : ''} variant="Regular_14">
-                        Click continue to authorize Workload Factory to automatically perform these actions on your
-                        behalf
+                 <div className={styles['noteContainer']} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <DsTypography className={!installMissingPowershell ? styles.disabled : ''} variant="Regular_14">
+                        Installing missing PowerShell module 7 requires a system reboot at your convenience. 
+                        Select "Manage" to authorize Workload Factory to automatically install PowerShell 7.
                     </DsTypography>
                 </div>
             </div>
