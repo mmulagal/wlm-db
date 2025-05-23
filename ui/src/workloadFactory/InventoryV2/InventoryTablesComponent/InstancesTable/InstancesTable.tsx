@@ -90,7 +90,6 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
-import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 
@@ -1231,7 +1230,7 @@ const InstancesTable = () => {
             <div className={styles.inventoryTable}>
                 <div
                     //  @ts-ignore
-                    className={styles.table}
+                    className={`${styles.table} ${styles.leftBorder}`}
                 >
                     <TableTopBar
                         //@ts-ignore
