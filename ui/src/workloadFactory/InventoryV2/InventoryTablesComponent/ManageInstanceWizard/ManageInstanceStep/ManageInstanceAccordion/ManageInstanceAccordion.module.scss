@@ -9,7 +9,7 @@
     }
 
     .accordion-header-wrapper {
-        height: 88px;
+        height: auto;
         padding: 18px 40px;
     }
 
@@ -35,18 +35,18 @@
     .accordion-title {
         display: flex;
         gap: 16px;
-        width: 480px;
+        width: 45.11%;
         border-right: 1px solid var(--border);
     }
 
     .accordion-title-bulk {
         display: flex;
         gap: 16px;
-        width: 480px;
+        width: 45.11%;
     }
 
     .readinessSection {
-        width: 280px;
+        width: 26.31%;
         border-right: 1px solid var(--border);
     }
 
@@ -75,7 +75,7 @@
     .accordion-status {
         display: flex;
         gap: 8px;
-        width: 264px;
+        width: 24.81%;
         align-items: center;
         justify-content: flex-end;
 

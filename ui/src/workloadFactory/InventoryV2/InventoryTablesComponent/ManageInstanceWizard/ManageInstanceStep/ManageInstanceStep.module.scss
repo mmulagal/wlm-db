@@ -3,6 +3,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
+
+    .detectSection {
+        width: 100%;
+
+        margin-bottom: 40px;
+    }
 
     .textSection {
         width: 1030px;

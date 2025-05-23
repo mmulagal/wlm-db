@@ -12,7 +12,11 @@ export const Content = () => {
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
     return (
         <div className={styles['detect-step']}>
-            {wizardOperationType === 'single' && <DetectHeader />}
+            {wizardOperationType === 'single' && (
+                <div style={{ width: '100%' }}>
+                    <DetectHeader />
+                </div>
+            )}
 
             {wizardOperationType === 'bulk' && (
                 <DsTypography variant="Regular_14" className={styles.note}>
