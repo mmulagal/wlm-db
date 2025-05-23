@@ -180,7 +180,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
     });
 
     // Manage job based
-    server.post(`/v2/mssql/manage`, { schema: JobBasedManageSchema }, async request => {
+    server.post('/v2/mssql/manage', { schema: JobBasedManageSchema }, async request => {
         const {
             params: { accountId },
             body: { items }

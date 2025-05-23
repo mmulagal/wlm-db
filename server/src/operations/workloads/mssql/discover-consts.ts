@@ -969,6 +969,7 @@ const INSTALL_POWERSHELL_7 = (s3SignedURL: string) => [
     } else {
       throw "Failed to install PowerShell 7.5.0"
       }
+    $responseObject['status'] = "success"
   } catch {
     $responseObject['${FAILURE_INFO}'] = $_.Exception.Message
     $responseObject['status'] = "failed"
@@ -977,7 +978,6 @@ const INSTALL_POWERSHELL_7 = (s3SignedURL: string) => [
     }
   } finally {
     $responseObject['scriptExecutionTime'] = ((Get-Date) - $scriptStartTime).TotalMilliseconds
-    $responseObject['status'] = "success"
     Echo $responseObject | ConvertTo-Json -Compress
   }
 `

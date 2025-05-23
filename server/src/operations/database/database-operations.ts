@@ -234,7 +234,8 @@ async function getResources(
     region?: string | string[],
     resourceType?: string | string[],
     pageSize: number = 200,
-    nextToken?: string
+    nextToken?: string,
+    includeDatabaseInstances?: boolean
 ): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
     logger.info(' Get the Resources', {
         accountId,
@@ -258,7 +259,8 @@ async function getResources(
             undefined,
             undefined,
             pageSize,
-            nextToken
+            nextToken,
+            includeDatabaseInstances
         );
 
         const countPromise = countResources(accountId);
