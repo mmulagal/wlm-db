@@ -3443,7 +3443,10 @@ export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any,
 export const manageActionCol = (rowData?: any) => {
     let colText = '';
     let disableMsg = '';
-    if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+    if (
+        rowData?.statusColText === INVENTORY_STATUS.MANAGED ||
+        rowData?.managementStatus === INVENTORY_STATUS.IN_PROGRESS
+    ) {
         colText = ACTION_CTA.FIX_ISSUES;
     } else {
         colText = ACTION_CTA.MANAGE_INSTANCES;

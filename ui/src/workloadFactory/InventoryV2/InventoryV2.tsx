@@ -129,8 +129,8 @@ const InventoryV2 = () => {
                         )
                             ? INVENTORY_STATUS.IN_PROGRESS
                             : perRow.statusColText === INVENTORY_STATUS.MANAGED
-                            ? INVENTORY_STATUS.MANAGED
-                            : INVENTORY_STATUS.UNMANAGED;
+                            ? INVENTORY_STATUS.REGISTERED
+                            : INVENTORY_STATUS.NOT_REGISTERED;
                         let perRowData = {
                             ...perRow,
                             id: String(instanceUniqueId++),

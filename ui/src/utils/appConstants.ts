@@ -32,7 +32,7 @@ export const GENERAL = {
         'Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials.',
     MANAGE_MIN_PERMISSION_REQUIRED: [
         'Missing minimum prerequisites:',
-        ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To manage this SQL Server instance, please address the necessary prerequisites and try again.'
+        ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To register this SQL Server instance, please address the necessary prerequisites and try again.'
     ],
     PREREQUISITE_LIST: 'Prerequisites list',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
@@ -41,7 +41,7 @@ export const GENERAL = {
     FSX_PASSWORD_CONTENT:
         'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Microsoft SQL Server instance.',
     SQL_PASSWORD_CONTENT:
-        'The password for your Windows login might have changed. Update credentials to manage this Microsoft SQL Server instance.',
+        'The password for your Windows login might have changed. Update credentials to register this Microsoft SQL Server instance.',
     UPDATE_SQL_SERVER_PASSWORD: 'Update SQL Server password',
     DATABASE_MANAGEMENT: 'Database management',
     DATABASE_OPTIMIZATION: 'Database optimization',
@@ -643,7 +643,7 @@ export const GENERAL = {
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
     JM_TYPE_OPTIMIZE: 'Well-architected',
-    JM_TYPE_MANAGE_RESOURCE: 'Manage resource',
+    JM_TYPE_REGISTER_RESOURCE: 'Register resource',
     JM_DOWNLOAD_PROGRESS: 'Download in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table was downloaded',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -861,8 +861,8 @@ export const GENERAL = {
         ' Managed hosts ',
         'tab.'
     ],
-    INSTANCE_MANAGE_REQUEST: ['Your request to manage the SQL Server instance ', ' is in progress.'],
-    MULTI_INSTANCE_MANAGE_REQUEST: ['Your request to manage ', ' SQL Server instances is in progress.'],
+    INSTANCE_MANAGE_REQUEST: ['Your request to register the SQL Server instance ', ' is in progress.'],
+    MULTI_INSTANCE_MANAGE_REQUEST: ['Your request to register ', ' SQL Server instances is in progress.'],
 
     INSTANCE_SUCCESS_DETECTED: ['Instance ', ' successfully detected.'],
     INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED: ['Instance ', ' successfully detected but failed to become managed. '],

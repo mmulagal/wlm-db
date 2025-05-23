@@ -14,7 +14,9 @@
             "findings": {
                 "optimized": "Optimized",
                 "not_optimized": "Not optimized"
-            }
+            },
+            "registered": "Registered",
+            "not_registered": "Not registered"
         }
     }
 }

@@ -92,8 +92,10 @@ import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
+import { useTranslation } from 'react-i18next';
 
 const InstancesTable = () => {
+    const { t } = useTranslation();
     const disptach = useDispatch();
 
     const { instanceTableRows, inProgressInstances, tableManageColumnState } = useAppSelector(
@@ -608,19 +610,21 @@ const InstancesTable = () => {
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
             renderCell: (cellData: string, rowData: any) => {
-                if (cellData === INVENTORY_STATUS.UNMANAGED) {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
+                if (cellData === INVENTORY_STATUS.NOT_REGISTERED) {
+                    return (
+                        <DotComponent color={'var(--toggle-off-bg)'} value={t('databases.general.not_registered')} />
+                    );
                 }
                 if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
                         <div className={styles.inProgress}>
-                            <SmallLoader />
+                            <DsFlashingDotsLoader />
                             <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
                         </div>
                     );
                 }
-                if (cellData === INVENTORY_STATUS.MANAGED) {
-                    return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
+                if (cellData === INVENTORY_STATUS.REGISTERED) {
+                    return <DotComponent color={'var(--success)'} value={t('databases.general.registered')} />;
                 }
             }
         },
@@ -952,7 +956,7 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'viewInstance',
-                            displayName: 'View instance',
+                            displayName: 'Manage instance',
                             disabled: disableOption,
                             infoText: disableMessage
                         },
@@ -1242,7 +1246,7 @@ const InstancesTable = () => {
                         // actionsRight={
                         //     <div className={styles.manageInstanceButton}>
                         //         <DsButton isThin onClick={() => handleManageBulk()}>
-                        //             Manage multiple instances
+                        //             Register multiple instances
                         //         </DsButton>
                         //     </div>
                         // }

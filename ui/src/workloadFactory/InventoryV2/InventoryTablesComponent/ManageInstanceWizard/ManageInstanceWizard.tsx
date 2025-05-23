@@ -12,8 +12,8 @@ import { useDispatch } from 'react-redux';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const MANAGE_STEPS = [
-    { key: 'detect-instance', label: 'Detect instance', component: DetectInstanceStep },
-    { key: 'manage-instance', label: 'Manage instance', component: ManageInstanceStep }
+    { key: 'detect-instance', label: 'Authenticate', component: DetectInstanceStep },
+    { key: 'manage-instance', label: 'Prepare', component: ManageInstanceStep }
 ];
 
 const stepsMap = Object.fromEntries(MANAGE_STEPS.map(({ key, component }) => [key, component]));
@@ -32,7 +32,7 @@ const Wizard = () => {
         <StepLayout>
             <WizardHeader
                 className={styles['manage-instance-wizard']}
-                title={'Manage instance'}
+                title={'Register instance'}
                 onExit={() => {
                     setTimeout(() => {
                         dispatch(setLandingFromWizard(true));

@@ -45,9 +45,14 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             showCopy: false
                         },
                         {
+                            label: 'EC2 IAM instance profile permissions',
+                            values: ['Databases workload - EC2 instance profile permissions'],
+                            showCopy: false
+                        },
+                        {
                             label: 'SQL Server permissions',
                             values: ['VIEW ANY DEFINITION', 'CONNECT ANY DATABASE', 'VIEW SERVER STATE'],
-                            showCopy: true
+                            showCopy: false
                         },
                         {
                             label: 'PowerShell modules',
@@ -96,6 +101,11 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             showCopy: false
                         },
                         {
+                            label: 'EC2 IAM instance profile permissions',
+                            values: ['Databases workload - EC2 instance profile permissions'],
+                            showCopy: false
+                        },
+                        {
                             label: 'SQL Server permissions',
                             values: [
                                 'VIEW ANY DEFINITION',
@@ -103,7 +113,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                                 'ALTER SETTINGS',
                                 'VIEW SERVER STATE'
                             ],
-                            showCopy: true
+                            showCopy: false
                         },
                         {
                             label: 'PowerShell modules',
@@ -135,6 +145,11 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             showCopy: false
                         },
                         {
+                            label: 'EC2 IAM instance profile permissions',
+                            values: ['Databases workload - EC2 instance profile permissions'],
+                            showCopy: false
+                        },
+                        {
                             label: 'SQL Server permissions',
                             values: [
                                 'VIEW ANY DEFINITION',
@@ -142,7 +157,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                                 'CONNECT ANY DATABASE',
                                 'CREATE ANY DATABASE'
                             ],
-                            showCopy: true
+                            showCopy: false
                         },
                         {
                             label: 'PowerShell modules',
@@ -174,6 +189,11 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             showCopy: false
                         },
                         {
+                            label: 'EC2 IAM instance profile permissions',
+                            values: ['Databases workload - EC2 instance profile permissions'],
+                            showCopy: false
+                        },
+                        {
                             label: 'SQL Server permissions',
                             values: [
                                 'ALTER SETTINGS',
@@ -184,7 +204,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                                 'CONNECT ANY DATABASE',
                                 'CREATE ANY DATABASE'
                             ],
-                            showCopy: true
+                            showCopy: false
                         },
                         {
                             label: 'PowerShell modules',

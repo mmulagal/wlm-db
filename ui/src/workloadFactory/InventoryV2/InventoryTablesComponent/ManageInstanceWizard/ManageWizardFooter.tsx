@@ -270,7 +270,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     variant={'primary'}
                     {...rest}
                 >
-                    Manage
+                    Register
                 </DsButton>
             )}
         </WizardFooter>

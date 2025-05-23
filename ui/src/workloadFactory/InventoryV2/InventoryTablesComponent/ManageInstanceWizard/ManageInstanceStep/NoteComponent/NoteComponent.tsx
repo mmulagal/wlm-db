@@ -12,10 +12,10 @@ const NoteComponent = () => {
             <DsTypography variant="Semibold_16">Note</DsTypography>
 
             <div>
-                 <div className={styles['noteContainer']} style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className={styles['noteContainer']} style={{ borderBottom: '1px solid var(--border)' }}>
                     <DsTypography className={!installMissingPowershell ? styles.disabled : ''} variant="Regular_14">
-                        Installing missing PowerShell module 7 requires a system reboot at your convenience. 
-                        Select "Manage" to authorize Workload Factory to automatically install PowerShell 7.
+                        Installing missing PowerShell module 7 requires a system reboot at your convenience. Select
+                        "Register" to authorize Workload Factory to automatically install PowerShell 7.
                     </DsTypography>
                 </div>
             </div>

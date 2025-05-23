@@ -95,11 +95,11 @@ export const Content = () => {
 
             <div className={styles.textSection}>
                 <DsTypography variant="Regular_14">
-                    Before proceeding, ensure you have completed all required preparations.
+                    This prerequisite check validates that your SQL Server instance meets the required prerequisites and
+                    if prepared for management in Workload Factory.
                 </DsTypography>
                 <DsTypography variant="Regular_14">
-                    This checker validates that your SQL Server instance meets the necessary prerequisites for
-                    management in Workload Factory.
+                    To complete instance registration, complete all required prerequisites.
                 </DsTypography>
             </div>
 
