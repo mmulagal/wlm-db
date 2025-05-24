@@ -290,6 +290,7 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
             }
             try {
                 $sqlError = $null
+                $serverInstanceName = $instance
                 ${validateSQLInstanceCredentials}
 
                 $instanceResponse = @{}
