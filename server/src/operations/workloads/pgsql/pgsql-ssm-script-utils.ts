@@ -82,11 +82,31 @@ const ontapRestApi = `
     
     cert_path=/home/ec2-user/cfn/fsx_certs/bundle-$region.pem
  
+    # Check if the certificate file exists
+    if [ ! -f $cert_path ]; then
+        # Check for public IP to determine if we are in a public or private network
+        token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
+        public_ip=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/public-ipv4)
+        if [ -n "$public_ip" ]; then
+            # Public network: download the certificate
+            certsUrl="https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$region.pem"
+            if [ ! -f /tmp/fsx_bundle.pem ]; then
+                curl -sS -o /tmp/fsx_bundle.pem "$certsUrl"
+            fi
+            cert_option="--cacert /tmp/fsx_bundle.pem"
+        else
+            # Private network: use --insecure
+            cert_option="--insecure"
+        fi
+    else
+        cert_option="--cacert $cert_path"
+    fi
+
     ontap_request () {
         management_ip=management.$filesystemid.fsx.$region.amazonaws.com
         if ! ping -c 1 -W 2 "$management_ip" > /dev/null 2>&1; then
             management_ip=$(aws fsx describe-file-systems --file-system-id $filesystemid --region $region --query "FileSystems[0].OntapConfiguration.Endpoints.Management.IpAddresses[0]" --output text)
-            USE_INSECURE=true
+            cert_option="--insecure"
         fi
         auth=$(printf '%s:%s' $fsxusername $fsxpassword | base64)
         method=$1
@@ -101,14 +121,11 @@ const ontapRestApi = `
             --show-error
             --header "Authorization: Basic $auth"
             --request $method
-            --cacert $cert_path
+            $cert_option
             --location https://$management_ip/api/$endpoint
             $request_body
         )
 
-        if [ "$USE_INSECURE" = true ]; then
-            args+=(--insecure)
-        fi
         return_result=$(curl "\${args[@]}")
         echo $return_result
     }
