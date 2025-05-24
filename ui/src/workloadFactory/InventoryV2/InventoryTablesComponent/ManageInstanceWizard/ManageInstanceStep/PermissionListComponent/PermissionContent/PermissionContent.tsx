@@ -1,13 +1,22 @@
 import styles from './PermissionContent.module.scss';
 import { ReactComponent as Copy } from '../../../../../../../assets/code snippets copy.svg';
-import { DsTypography, Popover } from '@netapp/design-system';
+import { DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import React from 'react';
 import CopyToClipboardCommon from '../../../../../../../common/CopyToClipboard/copyToClipboard';
+import DialogComponent from '../../../../../../../common/Dialog/DialogComponent';
+import PolicyDialog from './PolicyDialog/PolicyDialog';
+import { GENERAL } from '../../../../../../../utils/appConstants';
+import WellArchitectPolicyDialog from './WellArchitectPolicyDialog/WellArchitectPolicyDialog';
 
 type PermissionBlock = {
     label: string;
     values: (string | { title: string; items: string[] })[];
     showCopy?: boolean;
+    viewPolicy?: {
+        value: boolean;
+        withTabs?: boolean;
+    };
+    dialogHeader?: string;
 };
 
 type AccordionContentProps = {
@@ -16,6 +25,29 @@ type AccordionContentProps = {
 };
 
 export const PermissionContent: React.FC<AccordionContentProps> = ({ title, blocks }) => {
+    const { setDialog } = useDialog();
+    const openDialog = (type: string | undefined, label: string) => {
+        const data = 'mockData';
+        setDialog(
+            <DialogComponent
+                header={type}
+                content={<PolicyDialog data={data} label={label} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+            />
+        );
+    };
+    const openWellArchitectPolicyDialog = (type: string | undefined, label: string) => {
+        const data = 'mockData';
+        setDialog(
+            <DialogComponent
+                header={type}
+                content={<WellArchitectPolicyDialog data={data} label={label} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+            />
+        );
+    };
     return (
         <div className={styles['permission-content']}>
             <DsTypography className={styles['permission-title']} variant="Semibold_14">
@@ -70,6 +102,20 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                             children={'Copied to clipboard'}
                             container={<CopyToClipboardCommon value={block.values} iconProvided={<Copy />} />}
                         />
+                    )}
+                    {block?.viewPolicy?.value && !block?.viewPolicy?.withTabs && (
+                        <DsButton type="text" onClick={() => openDialog(block?.dialogHeader, block?.label)}>
+                            View policy
+                        </DsButton>
+                    )}
+
+                    {block?.viewPolicy?.value && block?.viewPolicy?.withTabs && (
+                        <DsButton
+                            type="text"
+                            onClick={() => openWellArchitectPolicyDialog(block?.dialogHeader, block?.label)}
+                        >
+                            View policy
+                        </DsButton>
                     )}
                 </div>
             ))}

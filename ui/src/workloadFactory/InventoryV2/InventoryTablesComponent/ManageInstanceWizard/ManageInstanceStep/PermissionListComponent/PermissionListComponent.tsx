@@ -42,12 +42,22 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                         {
                             label: 'AWS IAM policy permissions',
                             values: ['Databases workload - Read-only permissions'],
-                            showCopy: false
+                            showCopy: false,
+                            viewPolicy: {
+                                value: true,
+                                withTabs: false
+                            },
+                            dialogHeader: 'Review well-architected issues and recommendations'
                         },
                         {
                             label: 'EC2 IAM instance profile permissions',
                             values: ['Databases workload - EC2 instance profile permissions'],
-                            showCopy: false
+                            showCopy: false,
+                            viewPolicy: {
+                                value: true,
+                                withTabs: false
+                            },
+                            dialogHeader: 'Review well-architected issues and recommendations'
                         },
                         {
                             label: 'SQL Server permissions',
@@ -98,12 +108,22 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                                     ]
                                 }
                             ],
-                            showCopy: false
+                            showCopy: false,
+                            viewPolicy: {
+                                value: true,
+                                withTabs: true
+                            },
+                            dialogHeader: 'Fix well-architected issues'
                         },
                         {
                             label: 'EC2 IAM instance profile permissions',
                             values: ['Databases workload - EC2 instance profile permissions'],
-                            showCopy: false
+                            showCopy: false,
+                            viewPolicy: {
+                                value: true,
+                                withTabs: false
+                            },
+                            dialogHeader: 'Fix well-architected issues'
                         },
                         {
                             label: 'SQL Server permissions',
@@ -142,12 +162,22 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                         {
                             label: 'AWS IAM policy permissions',
                             values: ['Databases workload - Read-only permissions'],
-                            showCopy: false
+                            showCopy: false,
+                            viewPolicy: {
+                                value: true,
+                                withTabs: false
+                            },
+                            dialogHeader: 'Create database'
                         },
                         {
                             label: 'EC2 IAM instance profile permissions',
                             values: ['Databases workload - EC2 instance profile permissions'],
-                            showCopy: false
+                            showCopy: false,
+                            viewPolicy: {
+                                value: true,
+                                withTabs: false
+                            },
+                            dialogHeader: 'Create database'
                         },
                         {
                             label: 'SQL Server permissions',
@@ -186,12 +216,22 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                         {
                             label: 'AWS IAM policy permissions',
                             values: ['Databases workload - Read-only permissions'],
-                            showCopy: false
+                            showCopy: false,
+                            viewPolicy: {
+                                value: true,
+                                withTabs: false
+                            },
+                            dialogHeader: 'Create database copies (Sandbox)'
                         },
                         {
                             label: 'EC2 IAM instance profile permissions',
                             values: ['Databases workload - EC2 instance profile permissions'],
-                            showCopy: false
+                            showCopy: false,
+                            viewPolicy: {
+                                value: true,
+                                withTabs: false
+                            },
+                            dialogHeader: 'Create database copies (Sandbox)'
                         },
                         {
                             label: 'SQL Server permissions',

@@ -1,0 +1,105 @@
+.wellArchitectPolicyDialog {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 720px;
+
+    .policyTab {
+        border-bottom: 1px solid var(--grey-30);
+        display: flex;
+        gap: 4px;
+
+        .headers {
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            padding-bottom: 12px;
+        }
+
+        .headerWidthFirst {
+            width: 232px;
+        }
+
+        .headerWidthSecond {
+            width: 225px;
+        }
+
+        .headerWidthThird {
+            width: 256px;
+        }
+
+        .headerPart1 {
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .headerDisabled {
+            color: var(--text-disabled);
+            cursor: not-allowed;
+        }
+
+        .active {
+            border-bottom: 2px solid var(--text-button-primary);
+        }
+
+        .activeText {
+            color: var(--text-button-primary);
+        }
+    }
+
+    .dialog-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        .dialog-body {
+            min-width: 712px;
+            .code-box {
+                width: 100%;
+                background-color: var(--main-background);
+                padding: 24px 16px 8px 32px;
+                display: flex;
+                position: relative;
+
+                height: 390px;
+                overflow-y: auto;
+
+                .code {
+                    width: calc(100% - 56px);
+                    font-weight: 400;
+                    font-size: 14px;
+                    line-height: 24px;
+                    color: var(--text-primary);
+                }
+
+                .copy {
+                    width: 100px;
+                    display: flex;
+                    justify-content: flex-end;
+                    height: 20px;
+                    gap: 16px;
+                    position: sticky;
+                    left: calc(100% - 56px);
+                    .copy-popover {
+                        width: 140px;
+                        font-size: 13px;
+                        line-height: 20px;
+                        text-align: center;
+                        padding: 2px 2px;
+                    }
+
+                    svg {
+                        cursor: pointer;
+                        &:hover {
+                            fill: var(--text-primary);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
