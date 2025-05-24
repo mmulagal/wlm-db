@@ -208,7 +208,7 @@ SERVERPROPERTY('InstanceDefaultLogPath') AS DefaultLogDrive FOR JSON PATH;"
 
     ${slqcmdExecutionTemplate}
 
-$sqlCredential = @{'useSqlAuth' = $False}
+$sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 if($sqlAuthEnabled) {
     ${readSsmParameter(instanceName)}
 }
@@ -305,7 +305,9 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
                         ${disableCredSSP}
                     } elseif ($sqlCredential.useSqlAuth -eq $True) {
                         $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
-                    } elseif ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
+                    }
+
+                    if ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
                         $sqlResponse =  sqlcmd -S $instanceName -Q $query -y 0 2>> $sqlError
                     }
 
@@ -347,7 +349,7 @@ $queryVersion = "SET NOCOUNT ON;SELECT @@VERSION;"
 
 ${slqcmdExecutionTemplate}
 
-$sqlCredential = @{'useSqlAuth' = $False}
+$sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 if($sqlAuthEnabled) {
     ${readSsmParameter(instanceName)}
 }
@@ -1194,7 +1196,7 @@ const sqlQueryExecution = (
     `
     $query = "${query}"
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 
     ${slqcmdExecutionTemplate}
     
@@ -1243,7 +1245,9 @@ Function Call-SqlCmd {
         else {
             $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
         }
-    } elseif ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
+    }
+
+    if ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
             $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0;
         }
@@ -1370,7 +1374,9 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
                     ${disableCredSSP}
                 } elseif ($sqlCredential.useSqlAuth -eq $True) {
                     $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
-                } elseif ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
+                }
+
+                if ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
                     $sqlResponse =  sqlcmd -S $instanceName -Q $query -y 0 2>> $sqlError
                 }
 

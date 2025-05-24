@@ -48,7 +48,7 @@ try {
 "@
 
 
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -310,7 +310,7 @@ const getDbMappedOntapVolumes = (
             return $responseObject
         }
 
-        $sqlCredential = @{'useSqlAuth' = $False}
+        $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
         if($sqlAuthEnabled) {
             ${readSsmParameter(instanceName)}
         }
@@ -720,7 +720,7 @@ const createClonedDb = (
     ${slqcmdExecutionTemplate}
 
     try {
-        $sqlCredential = @{'useSqlAuth' = $False}
+        $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
         if($sqlAuthEnabled) {
             ${readSsmParameter(instanceName)}
         }
@@ -817,7 +817,7 @@ Start-Transcript -Path "C:\\cfn\\log\\add_extended_properties_$dbname.log.txt" -
 
 ${slqcmdExecutionTemplate}
 
-$sqlCredential = @{'useSqlAuth' = $False}
+$sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 if($sqlAuthEnabled) {
     ${readSsmParameter(instanceName)}
 }
@@ -874,7 +874,7 @@ const cleanUpOntapResources = (
     
     ${slqcmdExecutionTemplate}
 
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -1087,7 +1087,7 @@ const detachDbAndRemoveAccessPath = (
     
     ${slqcmdExecutionTemplate}
 
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -1223,7 +1223,7 @@ const addAccessPathAndAttachDb = (
     try {
 
         ${slqcmdExecutionTemplate}
-        $sqlCredential = @{'useSqlAuth' = $False}
+        $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
         if($sqlAuthEnabled) {
             ${readSsmParameter(instanceName)}
         }
@@ -1345,7 +1345,7 @@ Start-Transcript -Path "C:\\cfn\\log\\delete_extended_properties_$dbname.log.txt
 
 ${slqcmdExecutionTemplate}
 
-$sqlCredential = @{'useSqlAuth' = $False}
+$sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 if($sqlAuthEnabled) {
     ${readSsmParameter(instanceName)}
 }
@@ -1386,7 +1386,7 @@ Start-Transcript -Path "C:\\cfn\\log\\check_integrity_for_$dbname.log.txt" -Appe
 
 ${slqcmdExecutionTemplate}
 
-$sqlCredential = @{'useSqlAuth' = $False}
+$sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 if($sqlAuthEnabled) {
     ${readSsmParameter(instanceName)}
 }
@@ -1412,7 +1412,7 @@ const readExtendedPropertiesOfSandbox = (
     $instanceName = "${instanceName}"
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -1533,7 +1533,7 @@ const getConnectionInfo = (instanceName: string, sqlAuthEnabled: boolean) => `
 
 $ProgressPreference = "SilentlyContinue"
 $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-$sqlCredential = @{'useSqlAuth' = $False}
+$sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 
 ${slqcmdExecutionTemplate}
 

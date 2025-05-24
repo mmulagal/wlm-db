@@ -209,7 +209,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             return $responseObject
         }
     
-        $sqlCredential = @{'useSqlAuth' = $False}
+        $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
         if($sqlAuthEnabled) {
             ${readSsmParameter(instanceRecord.name)}
         }
@@ -270,7 +270,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     `
     $sqlInstance = "${instance}"
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 
     # Build sql instance service name
     $instanceServiceName = "$env:COMPUTERNAME"
@@ -1208,7 +1208,7 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
     $sqlInstanceName = "${instanceName}"
 
     ${slqcmdExecutionTemplate}
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -1270,7 +1270,7 @@ const GET_INSTALLED_MSSQL_VERSION = (instanceName: string, sqlAuthEnabled: boole
     $sqlInstanceName = "${instanceName}"
 
      ${slqcmdExecutionTemplate}
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -1428,7 +1428,7 @@ const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: 
     $isClustered = [System.Convert]::ToBoolean('${isClustered}')
 
     ${slqcmdExecutionTemplate}
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -1483,7 +1483,7 @@ const GET_SANDBOX_DETAILS = (instanceName: string, sqlAuthEnabled: boolean, quer
     $query = "${query}"
 
     ${slqcmdExecutionTemplate}
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
