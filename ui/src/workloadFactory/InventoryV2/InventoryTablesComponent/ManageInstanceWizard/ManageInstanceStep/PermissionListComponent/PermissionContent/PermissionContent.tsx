@@ -1,6 +1,7 @@
 import styles from './PermissionContent.module.scss';
 import { ReactComponent as Copy } from '../../../../../../../assets/code snippets copy.svg';
 import { DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import CopyToClipboardCommon from '../../../../../../../common/CopyToClipboard/copyToClipboard';
 import DialogComponent from '../../../../../../../common/Dialog/DialogComponent';
@@ -25,6 +26,7 @@ type AccordionContentProps = {
 };
 
 export const PermissionContent: React.FC<AccordionContentProps> = ({ title, blocks }) => {
+    const { t } = useTranslation();
     const { setDialog } = useDialog();
     const openDialog = (type: string | undefined, label: string) => {
         const data = 'mockData';
@@ -105,7 +107,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                     )}
                     {block?.viewPolicy?.value && !block?.viewPolicy?.withTabs && (
                         <DsButton type="text" onClick={() => openDialog(block?.dialogHeader, block?.label)}>
-                            View policy
+                            {t('databases.register-flow.view-policy')}
                         </DsButton>
                     )}
 
@@ -114,7 +116,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                             type="text"
                             onClick={() => openWellArchitectPolicyDialog(block?.dialogHeader, block?.label)}
                         >
-                            View policy
+                            {t('databases.register-flow.view-policy')}
                         </DsButton>
                     )}
                 </div>

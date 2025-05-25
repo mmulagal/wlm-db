@@ -2,10 +2,12 @@ import { DsTypography, Popover } from '@netapp/design-system';
 import { ReactComponent as CopyIcon } from '../../../../../../../../assets/ic_copy.svg';
 import styles from './WellArchitectPolicyDialog.module.scss';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import CopyToClipboardCommon from '../../../../../../../../common/CopyToClipboard/copyToClipboard';
 
 const WellArchitectPolicyDialog = ({ data, label }: any) => {
-    const [selectedTab, setSelectedTab] = useState('AWS IAM policy permissions');
+    const { t } = useTranslation();
+    const [selectedTab, setSelectedTab] = useState(t('databases.register-flow.aws-iam-policy-permissions'));
 
     const handleClick = (value: string) => {
         setSelectedTab(value);
@@ -14,14 +16,13 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
         <div className={styles.wellArchitectPolicyDialog}>
             <DsTypography variant="Semibold_16">{label}</DsTypography>
             <DsTypography variant="Regular_14">
-                These permissions include AWS IAM policy permissions, FSx for ONTAP permissions, and AWS Compute
-                Optimizer permissions. Switch between the tabs to review each set of permissions.
+                {t('databases.register-flow.well-architect-permission-text')}
             </DsTypography>
 
             <div className={styles.policyTab}>
                 <div
                     className={
-                        selectedTab === 'AWS IAM policy permissions'
+                        selectedTab === t('databases.register-flow.aws-iam-policy-permissions')
                             ? `${styles.headers} ${styles.headerWidthFirst} ${styles.active}`
                             : `${styles.headers} ${styles.headerWidthFirst}`
                     }
@@ -29,18 +30,18 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
                     <DsTypography
                         variant="Semibold_14"
                         className={
-                            selectedTab === 'AWS IAM policy permissions'
+                            selectedTab === t('databases.register-flow.aws-iam-policy-permissions')
                                 ? `${styles.headerPart1} ${styles.activeText}`
                                 : `${styles.headerPart1}`
                         }
-                        onClick={() => handleClick('AWS IAM policy permissions')}
+                        onClick={() => handleClick(t('databases.register-flow.aws-iam-policy-permissions'))}
                     >
-                        AWS IAM policy permissions
+                        {t('databases.register-flow.aws-iam-policy-permissions')}
                     </DsTypography>
                 </div>
                 <div
                     className={
-                        selectedTab === 'FSx for ONTAP permissions'
+                        selectedTab === t('databases.register-flow.fsx-for-ontap-permissions')
                             ? `${styles.headers} ${styles.headerWidthSecond} ${styles.active}`
                             : `${styles.headers} ${styles.headerWidthSecond}`
                     }
@@ -48,19 +49,19 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
                     <DsTypography
                         variant="Semibold_14"
                         className={
-                            selectedTab === 'FSx for ONTAP permissions'
+                            selectedTab === t('databases.register-flow.fsx-for-ontap-permissions')
                                 ? `${styles.headerPart1} ${styles.activeText}`
                                 : `${styles.headerPart1}`
                         }
-                        onClick={() => handleClick('FSx for ONTAP permissions')}
+                        onClick={() => handleClick(t('databases.register-flow.fsx-for-ontap-permissions'))}
                     >
-                        FSx for ONTAP permissions
+                        {t('databases.register-flow.fsx-for-ontap-permissions')}
                     </DsTypography>
                 </div>
 
                 <div
                     className={
-                        selectedTab === 'Compute Optimizer permissions'
+                        selectedTab === t('databases.register-flow.compute-optimizer-permissions')
                             ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
                             : `${styles.headers} ${styles.headerWidthThird}`
                     }
@@ -68,13 +69,13 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
                     <DsTypography
                         variant="Semibold_14"
                         className={
-                            selectedTab === 'Compute Optimizer permissions'
+                            selectedTab === t('databases.register-flow.compute-optimizer-permissions')
                                 ? `${styles.headerPart1} ${styles.activeText}`
                                 : `${styles.headerPart1}`
                         }
-                        onClick={() => handleClick('Compute Optimizer permissions')}
+                        onClick={() => handleClick(t('databases.register-flow.compute-optimizer-permissions'))}
                     >
-                        Compute Optimizer permissions
+                        {t('databases.register-flow.compute-optimizer-permissions')}
                     </DsTypography>
                 </div>
             </div>

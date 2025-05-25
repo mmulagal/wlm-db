@@ -1,4 +1,5 @@
 import { DsTypography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { AccordionItem, ManageInstanceAccordion } from '../ManageInstanceAccordion/ManageInstanceAccordion';
 import { ReactComponent as Review } from '../../../../../../assets/Review.svg';
 import { ReactComponent as Fix } from '../../../../../../assets/Fix.svg';
@@ -18,6 +19,7 @@ import { GENERAL } from '../../../../../../utils/appConstants';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 
 const PermissionListComponent = ({ manageChecks }: any) => {
+    const { t } = useTranslation();
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll, setDisableAll] = useState(false);
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
@@ -25,8 +27,8 @@ const PermissionListComponent = ({ manageChecks }: any) => {
     const items: AccordionItem[] = [
         {
             id: '1',
-            title: 'Review well-architected issues and recommendations',
-            subtitle: 'Capability',
+            title: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
+            subtitle: t('databases.register-flow.capability'),
             readinessStatus: manageChecks?.assessment,
             missingPermission: manageChecks?.assessment !== MANAGE_STATES.READY,
             image:
@@ -40,32 +42,36 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                     title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
-                            label: 'AWS IAM policy permissions',
+                            label: t('databases.register-flow.aws-iam-policy-permissions'),
                             values: ['Databases workload - Read-only permissions'],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
                                 withTabs: false
                             },
-                            dialogHeader: 'Review well-architected issues and recommendations'
+                            dialogHeader: t(
+                                'databases.register-flow.review-well-architected-issues-and-recommendations'
+                            )
                         },
                         {
-                            label: 'EC2 IAM instance profile permissions',
+                            label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
                             values: ['Databases workload - EC2 instance profile permissions'],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
                                 withTabs: false
                             },
-                            dialogHeader: 'Review well-architected issues and recommendations'
+                            dialogHeader: t(
+                                'databases.register-flow.review-well-architected-issues-and-recommendations'
+                            )
                         },
                         {
-                            label: 'SQL Server permissions',
+                            label: t('databases.register-flow.sql-server-permissions'),
                             values: ['VIEW ANY DEFINITION', 'CONNECT ANY DATABASE', 'VIEW SERVER STATE'],
                             showCopy: false
                         },
                         {
-                            label: 'PowerShell modules',
+                            label: t('databases.register-flow.powershell-modules'),
                             values: ['AWS.Tools.SimpleSystemsManagement']
                         }
                     ]}
@@ -74,8 +80,8 @@ const PermissionListComponent = ({ manageChecks }: any) => {
         },
         {
             id: '2',
-            title: 'Fix well-architected issues',
-            subtitle: 'Capability',
+            title: t('databases.register-flow.fix-well-architected-issues'),
+            subtitle: t('databases.register-flow.capability'),
             readinessStatus: manageChecks?.remediation,
             missingPermission: manageChecks?.remediation !== MANAGE_STATES.READY,
             image:
@@ -89,7 +95,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                     title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
-                            label: 'AWS IAM policy permissions',
+                            label: t('databases.register-flow.aws-iam-policy-permissions'),
                             values: [
                                 'Databases workload - Read-only permissions',
                                 {
@@ -113,20 +119,20 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                                 value: true,
                                 withTabs: true
                             },
-                            dialogHeader: 'Fix well-architected issues'
+                            dialogHeader: t('databases.register-flow.fix-well-architected-issues')
                         },
                         {
-                            label: 'EC2 IAM instance profile permissions',
+                            label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
                             values: ['Databases workload - EC2 instance profile permissions'],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
                                 withTabs: false
                             },
-                            dialogHeader: 'Fix well-architected issues'
+                            dialogHeader: t('databases.register-flow.fix-well-architected-issues')
                         },
                         {
-                            label: 'SQL Server permissions',
+                            label: t('databases.register-flow.sql-server-permissions'),
                             values: [
                                 'VIEW ANY DEFINITION',
                                 'CONNECT ANY DATABASE',
@@ -136,7 +142,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             showCopy: false
                         },
                         {
-                            label: 'PowerShell modules',
+                            label: t('databases.register-flow.powershell-modules'),
                             values: ['AWS.Tools.SimpleSystemsManagement']
                         }
                     ]}
@@ -145,8 +151,8 @@ const PermissionListComponent = ({ manageChecks }: any) => {
         },
         {
             id: '3',
-            title: 'Create database',
-            subtitle: 'Capability',
+            title: t('databases.register-flow.create-database'),
+            subtitle: t('databases.register-flow.capability'),
             readinessStatus: manageChecks?.dbcreation,
             missingPermission: manageChecks?.dbcreation !== MANAGE_STATES.READY,
             image:
@@ -160,27 +166,27 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                     title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
-                            label: 'AWS IAM policy permissions',
+                            label: t('databases.register-flow.aws-iam-policy-permissions'),
                             values: ['Databases workload - Read-only permissions'],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
                                 withTabs: false
                             },
-                            dialogHeader: 'Create database'
+                            dialogHeader: t('databases.register-flow.create-database')
                         },
                         {
-                            label: 'EC2 IAM instance profile permissions',
+                            label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
                             values: ['Databases workload - EC2 instance profile permissions'],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
                                 withTabs: false
                             },
-                            dialogHeader: 'Create database'
+                            dialogHeader: t('databases.register-flow.create-database')
                         },
                         {
-                            label: 'SQL Server permissions',
+                            label: t('databases.register-flow.sql-server-permissions'),
                             values: [
                                 'VIEW ANY DEFINITION',
                                 'VIEW SERVER STATE',
@@ -190,7 +196,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             showCopy: false
                         },
                         {
-                            label: 'PowerShell modules',
+                            label: t('databases.register-flow.powershell-modules'),
                             values: ['AWS.Tools.FSx', 'AWS.Tools.SimpleSystemsManagement', 'PowerShell 7']
                         }
                     ]}
@@ -199,8 +205,8 @@ const PermissionListComponent = ({ manageChecks }: any) => {
         },
         {
             id: '4',
-            title: 'Create database copies (Sandbox)',
-            subtitle: 'Capability',
+            title: t('databases.register-flow.create-database-copies-sandbox'),
+            subtitle: t('databases.register-flow.capability'),
             readinessStatus: manageChecks?.sandbox,
             missingPermission: manageChecks?.sandbox !== MANAGE_STATES.READY,
             image:
@@ -214,27 +220,27 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                     title={GENERAL.PREREQUISITE_LIST}
                     blocks={[
                         {
-                            label: 'AWS IAM policy permissions',
+                            label: t('databases.register-flow.aws-iam-policy-permissions'),
                             values: ['Databases workload - Read-only permissions'],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
                                 withTabs: false
                             },
-                            dialogHeader: 'Create database copies (Sandbox)'
+                            dialogHeader: t('databases.register-flow.create-database-copies-sandbox')
                         },
                         {
-                            label: 'EC2 IAM instance profile permissions',
+                            label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
                             values: ['Databases workload - EC2 instance profile permissions'],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
                                 withTabs: false
                             },
-                            dialogHeader: 'Create database copies (Sandbox)'
+                            dialogHeader: t('databases.register-flow.create-database-copies-sandbox')
                         },
                         {
-                            label: 'SQL Server permissions',
+                            label: t('databases.register-flow.sql-server-permissions'),
                             values: [
                                 'ALTER SETTINGS',
                                 'CONTROL SERVER',
@@ -247,7 +253,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             showCopy: false
                         },
                         {
-                            label: 'PowerShell modules',
+                            label: t('databases.register-flow.powershell-modules'),
                             values: ['AWS.Tools.FSx', 'AWS.Tools.SimpleSystemsManagement', 'PowerShell 7']
                         }
                     ]}
@@ -257,7 +263,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
     ];
     return (
         <div className={styles.permissionList}>
-            <DsTypography variant="Semibold_16">Prerequisite check</DsTypography>
+            <DsTypography variant="Semibold_16">{t('databases.register-flow.prerequisite-check')}</DsTypography>
 
             <div className={styles.accordionSection}>
                 <ManageInstanceAccordion

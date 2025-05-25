@@ -1,21 +1,20 @@
+import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@netapp/design-system';
 import styles from './NoteComponent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { useMemo } from 'react';
-import { MANAGE_STATES } from '../../../../../../utils/consts';
 
 const NoteComponent = () => {
+    const { t } = useTranslation();
     const { installMissingPowershell } = useAppSelector(state => state.inventoryV2.manageInstanceInstallAction);
 
     return (
         <div className={styles['note-component']}>
-            <DsTypography variant="Semibold_16">Note</DsTypography>
+            <DsTypography variant="Semibold_16">{t('databases.register-flow.note')}</DsTypography>
 
             <div>
                 <div className={styles['noteContainer']} style={{ borderBottom: '1px solid var(--border)' }}>
                     <DsTypography className={!installMissingPowershell ? styles.disabled : ''} variant="Regular_14">
-                        Installing missing PowerShell module 7 requires a system reboot at your convenience. Select
-                        "Register" to authorize Workload Factory to automatically install PowerShell 7.
+                        {t('databases.register-flow.install-note')}
                     </DsTypography>
                 </div>
             </div>

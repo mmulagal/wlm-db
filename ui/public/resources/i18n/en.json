@@ -17,6 +17,24 @@
             },
             "registered": "Registered",
             "not_registered": "Not registered"
+        },
+        "register-flow": {
+            "note": "Note",
+            "prerequisite-check": "Prerequisite check",
+            "install-note": "Installing missing PowerShell module 7 requires a system reboot at your convenience. Select 'Register' to authorize Workload Factory to automatically install PowerShell 7.",
+            "view-policy": "View policy",
+            "create-database-copies-sandbox": "Create database copies (Sandbox)",
+            "create-database": "Create database",
+            "ec2-iam-instance-profile-permissions": "EC2 IAM instance profile permissions",
+            "capability": "Capability",
+            "fix-well-architected-issues": "Fix well-architected issues",
+            "powershell-modules": "PowerShell modules",
+            "sql-server-permissions": "SQL Server permissions",
+            "review-well-architected-issues-and-recommendations": "Review well-architected issues and recommendations",
+            "compute-optimizer-permissions": "Compute Optimizer permissions",
+            "fsx-for-ontap-permissions": "FSx for ONTAP permissions",
+            "aws-iam-policy-permissions": "AWS IAM policy permissions",
+            "well-architect-permission-text": "These permissions include AWS IAM policy permissions, FSx for ONTAP permissions, and AWS Compute Optimizer permissions. Switch between the tabs to review each set of permissions."
         }
     }
 }
