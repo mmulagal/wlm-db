@@ -1181,7 +1181,8 @@ export const GENERAL = {
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
     ONLINE_INSTANCE_DISMISS: 'Analysis state can be updated for online instances.',
-    NON_MSSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
+    NON_MSSQL_ASSESSMENT_NA:
+        'Well-architected analysis is only available for Microsoft SQL Server registered instances.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
@@ -1190,33 +1191,36 @@ export const GENERAL = {
     NOT_OPTIMIZED_SHARED_DRIVES:
         'Drive size optimization isn’t possible because data is on the same shared drive. You’ll need to change the storage layout before resizing the drive.',
     ASSESSMENT_IN_PROGRESS: 'Well-architected analysis has not been run yet.',
-    ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
+    ASSESSMENT_FOR_MANAGE: 'Well-architected analysis is only supported for registered instances.',
     FSXN_OPTIMIZE_SUPPORTED:
-        'Optimization assessment is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',
-    ASSESSMENT_FOR_UNDETECTED_FSXN: 'Optimization assessment is only supported for detected and managed instances.',
+        'Well-architected analysis is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',
+    ASSESSMENT_FOR_UNDETECTED_FSXN:
+        'Well-architected analysis is only supported for registered and authenticated instances.',
     ASSESSMENT_STORAGE_TYPE_UNKNOWN:
-        'Optimization assessment is only supported for detected and managed FSx for ONTAP instances.',
-    ASSESSMENT_AOAG_DETECTED: 'Optimization assessment is only supported for managed instances.',
-    ASSESSMENT_AOAG_UNDETECTED: 'Optimization assessment is only supported for detected and managed instances.',
+        'Well-architected analysis is only supported for authenticated and registered FSx for ONTAP instances.',
+    ASSESSMENT_AOAG_DETECTED: 'Well-architected analysis is only supported for registered instances.',
+    ASSESSMENT_AOAG_UNDETECTED:
+        'Well-architected analysis is only supported for authenticated and registered instances.',
 
     SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
-    FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
+    FSXN_MANAGE_SUPPORTED:
+        'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be registered.',
     MANAGE_DISABLE_FOR_UNDETECTED:
-        'This instance is currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+        'This instance is currently unauthenticated. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     NO_UNMANAGED_TO_MANAGE:
-        'All SQL Server instances on this host are either managed or undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are either registered or unauthenticated. To manage the instance, click on view instance, and then select "detect" from the menu.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
-        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
+        'All SQL Server instances on this host are currently registered. To explore instance actions or not-registered the instance, click on view instance, and click the menu.',
     ALL_FSXN_MANAGED_TEXT:
-        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
+        'All FSx for ONTAP SQL Server instances on this host are currently registered. To explore instance actions or not-registered the instance, click on view instance, and click the menu.',
     ALL_UNDETECT_TEXT:
-        'All SQL Server instances on this host are currently undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently unauthenticated. To manage the instance, click on view instance, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
-        'All SQL Server instances on this host are currently undetected. To explore savings on this instance first click on view instance, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently unauthenticated. To explore savings on this instance first click on view instance, and then select "detect" from the menu.',
     ALL_ES_FSXW_AOAG_ROWS:
         'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
     NON_SSD_FSXW_MSG:
