@@ -93,7 +93,7 @@
         },
         "assessment": {
              "purge": {
-                "interval": "24h"
+                "interval": "4h"
             }
         }
     },

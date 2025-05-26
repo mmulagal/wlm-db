@@ -1410,7 +1410,7 @@ async function fetchDriftAssessment(
     }
     // Get last assessed timestamp
     try {
-        const [{ creation_time: latestInstanceLevelAssessedTime = 0 }] = databaseInstanceConfigData;
+        const [{ creation_time: latestInstanceLevelAssessedTime = 0 } = {}] = databaseInstanceConfigData;
         const { assessment: { lastAssessedDate: latestHostLevelAssessedTime } = {} } =
             resourceMetadata as unknown as Metadata;
         const latestAssessmentTimestamp = Math.max(
