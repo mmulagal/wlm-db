@@ -193,11 +193,11 @@ const InstancesTable = () => {
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Unmanage instance'}
+                header={'Unregister instance'}
                 content={
                     <>
                         <DsTypography variant="Regular_14">
-                            Are you sure you want to unmanage the SQL Server instance?{' '}
+                            Are you sure you want to unregister the SQL Server instance?{' '}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginTop: '24px', width: '700px' }}>
                             This will exclude the instance from Workload Factory's best practices and lifecycle
@@ -455,7 +455,7 @@ const InstancesTable = () => {
             errorMessage = 'The instance is already managed by Workload Factory.';
         } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
             isDisabled = true;
-            errorMessage = 'The instance is not detected.';
+            errorMessage = 'The instance is not authenticated.';
         } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
             isDisabled = true;
             errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
@@ -935,14 +935,14 @@ const InstancesTable = () => {
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
-                        displayName: 'Detect',
+                        displayName: 'Authenticate',
                         disabled: disableOption,
                         infoText: disableMessage
                     });
                 } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     menu.push({
                         id: 'manage',
-                        displayName: 'Manage',
+                        displayName: 'Register',
                         disabled: disableOption,
                         infoText: disableMessage
                     });

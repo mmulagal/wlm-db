@@ -1,7 +1,7 @@
 {
     "databases": {
         "general": {
-            "manage-instances-well-architected-score": "Managed instances well-architected score",
+            "manage-instances-well-architected-score": "Registered instances well-architected score",
             "well_architected_status": "Well-architected status",
             "update": "Update",
             "update_fsx_admin_password": "Update FSxadmin password",

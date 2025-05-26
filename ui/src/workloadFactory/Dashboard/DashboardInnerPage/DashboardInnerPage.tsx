@@ -1248,7 +1248,7 @@ const DashboardInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
-                        Manage instance fixing
+                        Register instance fixing
                     </DsTypography>
                 </div>
 
