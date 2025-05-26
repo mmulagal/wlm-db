@@ -1815,7 +1815,7 @@ export const getUnmanagedOracleHostInstances = (
     runningOracleInstanceListRef: Array<string>
 ) => {
     let instanceList: Array<string> = [];
-    Object.keys(databaseHostsData).map((key: string) => {
+    Object.keys(databaseHostsData).forEach((key: string) => {
         if (
             runningOracleInstanceListRef.includes(
                 uniqueHostRow(

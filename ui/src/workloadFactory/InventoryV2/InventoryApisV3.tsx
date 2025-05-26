@@ -86,6 +86,7 @@ import {
     setPotentialSavingsValues
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
+import { OracleInstanceData } from '../../utils/types/inventoryV2Types';
 
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
@@ -983,7 +984,7 @@ const InventoryApisV3 = () => {
         }
     };
 
-    // This function is to call API2 that will return unmanaged oracle per instance full data like SS, cost, proection, performance.
+    // This function is to call API2 that will return unmanaged oracle per instance full data like SS, cost, protection, performance.
     const getOracleData = async (
         instanceIdComb: any,
         isManagedHost: boolean,
@@ -1000,8 +1001,8 @@ const InventoryApisV3 = () => {
                 nextToken: nextToken
             });
             if (result && !result?.error) {
-                let oracleInstancesDataRes: any = {};
-                result?.data?.items?.map((host: any) => {
+                let oracleInstancesDataRes: Record<string, OracleInstanceData> | null = {};
+                result?.data?.items?.forEach((host: any) => {
                     if (oracleInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
                         oracleInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
                             isManagedHost:
@@ -1115,7 +1116,7 @@ const InventoryApisV3 = () => {
     };
 
     const callOracleResourceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
-        let oracleInstancesDataLoad: any = {};
+        let oracleInstancesDataLoad: Record<string, OracleInstanceData> | null = {};
         let noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList?.map((ec2InstanceIdComb: any) => {
