@@ -23,7 +23,7 @@
             "prerequisite-check": "Prerequisite check",
             "install-note": "Installing missing PowerShell module 7 requires a system reboot at your convenience. Select 'Register' to authorize Workload Factory to automatically install PowerShell 7.",
             "view-policy": "View policy",
-            "create-database-copies-sandbox": "Create database copies (Sandbox)",
+            "create-database-copies-sandbox": "Create sandbox (database clone)",
             "create-database": "Create database",
             "ec2-iam-instance-profile-permissions": "EC2 IAM instance profile permissions",
             "capability": "Capability",

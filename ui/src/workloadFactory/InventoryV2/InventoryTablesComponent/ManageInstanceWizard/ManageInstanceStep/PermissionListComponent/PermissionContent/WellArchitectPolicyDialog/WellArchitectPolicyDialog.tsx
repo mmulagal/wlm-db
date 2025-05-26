@@ -8,8 +8,25 @@ import CopyToClipboardCommon from '../../../../../../../../common/CopyToClipboar
 const WellArchitectPolicyDialog = ({ data, label }: any) => {
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(t('databases.register-flow.aws-iam-policy-permissions'));
+    const [permissionData, setPermissionData] = useState<any>(JSON.stringify(data?.view, null, 2));
 
     const handleClick = (value: string) => {
+        let permissionData: any = '';
+        if (value === t('databases.register-flow.aws-iam-policy-permissions')) {
+            permissionData = data?.view;
+        } else if (value === t('databases.register-flow.fsx-for-ontap-permissions')) {
+            permissionData = ['fsx:UpdateFileSystem', 'fsx:UpdateVolume'];
+        } else if (value === t('databases.register-flow.compute-optimizer-permissions')) {
+            permissionData = [
+                'compute-optimizer:GetEnrollmentStatus',
+                'compute-optimizer:PutRecommendationPreferences',
+                'compute-optimizer:GetEffectiveRecommendationPreferences',
+                'compute-optimizer:GetEC2InstanceRecommendations',
+                'autoscaling:DescribeAutoScalingGroups',
+                'autoscaling:DescribeAutoScalingInstances'
+            ];
+        }
+        setPermissionData(JSON.stringify(permissionData, null, 2));
         setSelectedTab(value);
     };
     return (
@@ -85,7 +102,7 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
                     <div className={styles['code-box']}>
                         <div className={styles['code']}>
                             <pre>
-                                <DsTypography variant="Regular_14">{data}</DsTypography>
+                                <DsTypography variant="Regular_14">{permissionData}</DsTypography>
                             </pre>
                         </div>
                         <div className={styles['copy']}>
@@ -94,7 +111,7 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
                                 children={'Copied to clipboard'}
                                 container={
                                     <CopyToClipboardCommon
-                                        value={data}
+                                        value={permissionData}
                                         iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
                                     />
                                 }

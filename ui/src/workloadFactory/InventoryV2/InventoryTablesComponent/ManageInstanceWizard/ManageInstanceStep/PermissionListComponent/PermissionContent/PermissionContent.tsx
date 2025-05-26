@@ -23,13 +23,20 @@ type PermissionBlock = {
 type AccordionContentProps = {
     title: string;
     blocks: PermissionBlock[];
+    policies: any;
 };
 
-export const PermissionContent: React.FC<AccordionContentProps> = ({ title, blocks }) => {
+export const PermissionContent: React.FC<AccordionContentProps> = ({ title, blocks, policies }) => {
     const { t } = useTranslation();
     const { setDialog } = useDialog();
     const openDialog = (type: string | undefined, label: string) => {
-        const data = 'mockData';
+        let data = null;
+        if (label === t('databases.register-flow.aws-iam-policy-permissions')) {
+            data = JSON.stringify(policies?.view, null, 2);
+        } else {
+            // ToDo - to check what data to show here
+            data = JSON.stringify(policies?.view, null, 2);
+        }
         setDialog(
             <DialogComponent
                 header={type}
@@ -40,11 +47,10 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
         );
     };
     const openWellArchitectPolicyDialog = (type: string | undefined, label: string) => {
-        const data = 'mockData';
         setDialog(
             <DialogComponent
                 header={type}
-                content={<WellArchitectPolicyDialog data={data} label={label} />}
+                content={<WellArchitectPolicyDialog data={policies} label={label} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
             />
@@ -84,7 +90,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                                     )}
                                     {nestedValues.map((val, i) => (
                                         <div key={i} className={styles['nested-section']}>
-                                            <DsTypography variant="Semibold_14" className={styles['nested-title']}>
+                                            <DsTypography variant="Regular_14" className={styles['nested-title']}>
                                                 {val.title}
                                             </DsTypography>
                                             {val.items.map((item, idx) => (

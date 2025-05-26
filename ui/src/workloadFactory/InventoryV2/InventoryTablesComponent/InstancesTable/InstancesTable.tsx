@@ -982,7 +982,7 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'unManage',
-                            displayName: 'Unmanage'
+                            displayName: 'Unregister'
                         }
                     );
                 }

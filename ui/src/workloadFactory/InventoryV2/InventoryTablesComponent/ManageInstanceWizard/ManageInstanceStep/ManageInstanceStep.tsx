@@ -13,6 +13,7 @@ import { setManageSingleInstanceChecks } from '../../../../../store/workloadFact
 import { useDispatch } from 'react-redux';
 import MultiInstanceHeader from '../DetectInstanceStep/DetectHeader/MultiInstanceHeader';
 import { getPermissionState, hasMissingPowershell7, isAllowManage, missingModules } from '../ManageInstanceUtils';
+import { useGetWlmdbPoliciesQuery } from '../../../../../utils/apiService';
 
 export const Content = () => {
     const dispatch = useDispatch();
@@ -26,6 +27,8 @@ export const Content = () => {
         }
         return false;
     }, [manageSingleInstanceData]);
+
+    const { data: policiesList, isFetching: policiesLoading, isError: policiesError } = useGetWlmdbPoliciesQuery({});
 
     const manageChecks = useMemo(() => {
         let manageCheckObj: any = {
@@ -107,7 +110,7 @@ export const Content = () => {
             <ActionComponent manageChecks={manageChecks} />
 
             {/* Accordions */}
-            <PermissionListComponent manageChecks={manageChecks} />
+            <PermissionListComponent manageChecks={manageChecks} policiesList={policiesList} />
 
             {/* Note */}
             {!isAllReady && <NoteComponent />}

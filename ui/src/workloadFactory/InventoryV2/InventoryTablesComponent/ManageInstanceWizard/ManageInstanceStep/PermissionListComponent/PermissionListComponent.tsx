@@ -18,7 +18,7 @@ import { MANAGE_STATES } from '../../../../../../utils/consts';
 import { GENERAL } from '../../../../../../utils/appConstants';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 
-const PermissionListComponent = ({ manageChecks }: any) => {
+const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
     const { t } = useTranslation();
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll, setDisableAll] = useState(false);
@@ -75,6 +75,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             values: ['AWS.Tools.SimpleSystemsManagement']
                         }
                     ]}
+                    policies={policiesList}
                 />
             )
         },
@@ -97,21 +98,17 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                         {
                             label: t('databases.register-flow.aws-iam-policy-permissions'),
                             values: [
-                                'Databases workload - Read-only permissions',
                                 {
-                                    title: 'Additional FSx for ONTAP permissions',
-                                    items: ['fsx:UpdateFileSystem', 'fsx:UpdateVolume']
+                                    title: 'Databases workload - Read-only permissions',
+                                    items: []
                                 },
                                 {
-                                    title: 'AWS Compute Optimizer',
-                                    items: [
-                                        'compute-optimizer:GetEnrollmentStatus',
-                                        'compute-optimizer:PutRecommendationPreferences',
-                                        'compute-optimizer:GetEffectiveRecommendationPreferences',
-                                        'compute-optimizer:GetEC2InstanceRecommendations',
-                                        'autoscaling:DescribeAutoScalingGroups',
-                                        'autoscaling:DescribeAutoScalingInstances'
-                                    ]
+                                    title: 'Additional FSx for ONTAP permissions',
+                                    items: []
+                                },
+                                {
+                                    title: 'Additional Compute Optimizer permissions',
+                                    items: []
                                 }
                             ],
                             showCopy: false,
@@ -146,6 +143,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             values: ['AWS.Tools.SimpleSystemsManagement']
                         }
                     ]}
+                    policies={policiesList}
                 />
             )
         },
@@ -200,6 +198,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             values: ['AWS.Tools.FSx', 'AWS.Tools.SimpleSystemsManagement', 'PowerShell 7']
                         }
                     ]}
+                    policies={policiesList}
                 />
             )
         },
@@ -257,6 +256,7 @@ const PermissionListComponent = ({ manageChecks }: any) => {
                             values: ['AWS.Tools.FSx', 'AWS.Tools.SimpleSystemsManagement', 'PowerShell 7']
                         }
                     ]}
+                    policies={policiesList}
                 />
             )
         }
