@@ -1214,9 +1214,9 @@ export const GENERAL = {
         'All SQL Server instances on this host are either registered or unauthenticated. To manage the instance, click on view instance, and then select "detect" from the menu.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
-        'All SQL Server instances on this host are currently registered. To explore instance actions or not-registered the instance, click on view instance, and click the menu.',
+        'All SQL Server instances on this host are currently registered. To explore instance actions or unregister the instance, click on view instance, and click the menu.',
     ALL_FSXN_MANAGED_TEXT:
-        'All FSx for ONTAP SQL Server instances on this host are currently registered. To explore instance actions or not-registered the instance, click on view instance, and click the menu.',
+        'All FSx for ONTAP SQL Server instances on this host are currently registered. To explore instance actions or unregister the instance, click on view instance, and click the menu.',
     ALL_UNDETECT_TEXT:
         'All SQL Server instances on this host are currently unauthenticated. To manage the instance, click on view instance, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
