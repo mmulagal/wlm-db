@@ -22,7 +22,8 @@ import {
     Metadata,
     ResourceDetails,
     StorageAssessment,
-    WorkloadInstance
+    WorkloadInstance,
+    CloneDetail
 } from '../utils/common-types';
 import {
     AuditStatus,
@@ -1402,9 +1403,23 @@ async function fetchDriftAssessment(
         driftAssessmentData = { ...driftAssessmentData, ...resilienceAssessmentResponse };
     }
 
-    if (!isEmpty(cloneResponse)) {
+    if (!isEmpty(cloneResponse) && !('errorMessage' in cloneResponse)) {
+        if (isDemoFlow) {
+            const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+            const cloneConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.CLONE || [];
+            if (cloneConfigsOptimized.length > 0) {
+                const { oldCloneDetails } = cloneResponse;
+                const cloneDatabaseNamesToRemove = new Set(
+                    (cloneConfigsOptimized as CloneDetail[]).map(({ cloneDatabaseName }) => cloneDatabaseName)
+                );
+                cloneResponse.oldCloneDetails = oldCloneDetails?.filter(
+                    ({ cloneDatabaseName }) => !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
+                );
+            }
+        }
         driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
     }
+
     if (!isEmpty(dismissedConfigurations)) {
         driftAssessmentData.dismissedConfigurations = dismissedConfigurations;
     }

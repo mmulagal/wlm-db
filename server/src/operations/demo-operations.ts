@@ -444,6 +444,31 @@ async function updateOptimizedConfigNameInInstanceTable(
     await updateInstanceMetadata(accountId, instanceId, metaData);
 }
 
+async function updateOptimizedConfigMetaData(
+    accountId: string,
+    instanceId: string,
+    optimizedData: any,
+    configType: string,
+    metaData: DatabaseInstanceMetadata
+) {
+    logger.info(
+        'updating optimized config data into instance meta data',
+        accountId,
+        instanceId,
+        optimizedData,
+        configType
+    );
+
+    const existingConfigs = metaData.configsOptimized || {};
+
+    existingConfigs[configType] = existingConfigs[configType]
+        ? [...existingConfigs[configType], ...optimizedData]
+        : [...optimizedData];
+
+    metaData.configsOptimized = existingConfigs;
+    await updateInstanceMetadata(accountId, instanceId, metaData);
+}
+
 async function updateSandboxDBIntoResourceData(
     accountId: string,
     credentialsId: string,
@@ -988,5 +1013,6 @@ export {
     createOperatingSystemMpioSessionsOptimizeJobMockData,
     createStorageTierJobMockData,
     createEnableMpioJobMockData,
-    createAssessmentData
+    createAssessmentData,
+    updateOptimizedConfigMetaData
 };
