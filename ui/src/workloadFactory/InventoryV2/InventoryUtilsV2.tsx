@@ -1810,6 +1810,39 @@ export const getUnmanagedPgsqlHostInstances = (
     return instanceList;
 };
 
+export const getUnmanagedOracleHostInstances = (
+    databaseHostsData: { [key: string]: InventoryTableData },
+    runningOracleInstanceListRef: Array<string>
+) => {
+    let instanceList: Array<string> = [];
+    Object.keys(databaseHostsData).map((key: string) => {
+        if (
+            runningOracleInstanceListRef.includes(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            )
+        ) {
+            return;
+        }
+        if (
+            databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE &&
+            databaseHostsData[key]?.ssmState === STATUS_CONST.ONLINE
+        ) {
+            instanceList.push(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            );
+        }
+    });
+    return instanceList;
+};
+
 export const updateInstancesApiResponse = (
     mssqlInstancesData: { [key: string]: InstancesObjectInterface },
     inventoryTableData: { [key: string]: InventoryTableData }
@@ -2297,7 +2330,7 @@ export const getPerfUnmanagedData = (
     // perfMssqlInstancesData - This is used for MSSQL as we get MSSQL protection and perf data seperately
     // pgsqlInstancesData - This is used for PGSQL as we get PGSQL protection and perf data together with cost
     // Will handle oracle also
-    const { perfMssqlInstancesData, pgsqlInstancesData } = updatedState.inventoryV2;
+    const { perfMssqlInstancesData, pgsqlInstancesData, oracleInstancesData } = updatedState.inventoryV2;
     let uniqueInstanceId = uniqueHostRow(instanceId, credentialId, regionId);
     let uniquePartnerId = uniqueHostRow(partnerId || '', credentialId, regionId);
     let perfData1: any = null;
@@ -2313,6 +2346,8 @@ export const getPerfUnmanagedData = (
         perfData2 = pgsqlInstancesData?.[uniquePartnerId];
     } else if (pgsqlInstancesData?.[uniqueInstanceId]) {
         perfData = pgsqlInstancesData?.[uniqueInstanceId];
+    } else if (oracleInstancesData?.[uniqueInstanceId]) {
+        perfData = oracleInstancesData?.[uniqueInstanceId];
     }
     if (perfData1 && partnerId && perfData2) {
         const perRow1 = perfData1?.data?.databaseInstancesSummary?.find(

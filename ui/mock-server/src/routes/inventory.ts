@@ -3,6 +3,7 @@ import DatabaseHostsV2 from '../data/databaseHostsV2.json';
 import PgSqlDatabaseHosts from '../data/pgsqlDatabaseHosts.json';
 import MssqlInstancesV2 from '../data/mssqlInstancesV2.json';
 import PgsqlInstancesV2 from '../data/pgsqlInstances.json';
+import OracleInstancesV2 from '../data/oracleInstances.json';
 
 const router = require('express').Router();
 
@@ -35,6 +36,14 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/inst
 router.get(`${BASE_URL}/v1/pgsql/credentials/:credentialsId/regions/:region/resource-details`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, PgsqlInstancesV2);
+
+        // generateResponse(res, 400, {'error': 'error'});
+    }, 100);
+});
+
+router.get(`${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/resource-details`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, OracleInstancesV2);
 
         // generateResponse(res, 400, {'error': 'error'});
     }, 100);

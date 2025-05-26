@@ -672,7 +672,8 @@ export const INSTANCE_API_FIELDS = {
         'usageEstimation',
         'dbCount'
     ],
-    UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation']
+    UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation'],
+    UNMANAGED_ORACLE_DEFAULT: ['protection', 'performance', 'usageEstimation']
 };
 
 export const PROTECTION_TEXT_STATUS = {
