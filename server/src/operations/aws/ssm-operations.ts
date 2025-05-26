@@ -87,12 +87,13 @@ async function pollCommandStatus(
     credentialsId: string,
     region: string,
     pollParams: GetCommandInvocationCommandInput,
-    pollInterval: number = ms(config.get<string>('ssm.poll-interval'))
+    pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
+    accountId?: string
 ): Promise<GetCommandInvocationCommandOutput> {
     logger.debug('Polling SSM command execution', { pollParams, pollInterval });
 
     try {
-        const response = await getCommandInvocation(credentialsId, region, pollParams);
+        const response = await getCommandInvocation(credentialsId, region, pollParams, accountId);
 
         logger.debug('Polling SSM command execution response', response);
 
@@ -122,12 +123,12 @@ async function pollCommandStatus(
         }
 
         await sleep(pollInterval);
-        return await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
+        return await pollCommandStatus(credentialsId, region, pollParams, pollInterval, accountId);
     } catch (error: any) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
             await sleep(pollInterval);
-            return pollCommandStatus(credentialsId, region, pollParams, pollInterval);
+            return pollCommandStatus(credentialsId, region, pollParams, pollInterval, accountId);
         }
         throw error;
     }
@@ -207,7 +208,7 @@ async function executeSSMDocument(
     // Sleep for 1 second to avoid immediate polling
     await sleep(1000);
     try {
-        const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
+        const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration, accountId);
         logger.debug('SSM command commandId, Response:', commandId, response);
         return {
             commandId,
@@ -286,7 +287,7 @@ async function callSsmExecution(
                 logger.error('Error setting log group retention policy', error);
             });
         }
-        const { error, output = '' } = await extractSsmResponse(credentialsId, region, response);
+        const { error, output = '' } = await extractSsmResponse(credentialsId, region, response, accountId);
         if (error) {
             throw createError(error);
         }
@@ -305,15 +306,16 @@ async function getSsmResponseFromCloudWatch(
     credentialId: string,
     region: string,
     commandId: string,
-    instanceId: string
+    instanceId: string,
+    accountId?: string
 ) {
-    logger.info('Getting SSM response from CloudWatch', { credentialId, region, commandId, instanceId });
+    logger.info('Getting SSM response from CloudWatch', { credentialId, region, commandId, instanceId, accountId });
     const logGroupName = CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE;
     const logStreamSuffix = 'aws-runPowerShellScript/stdout';
     const logStreamName = `${commandId}/${instanceId}/${logStreamSuffix}`;
 
     try {
-        const logs = await getCloudWatchLogs(credentialId, region, logGroupName, logStreamName);
+        const logs = await getCloudWatchLogs(credentialId, region, logGroupName, logStreamName, accountId);
         return logs;
     } catch (error) {
         logger.error('Error getting logs from CloudWatch', error);
@@ -520,7 +522,8 @@ async function extractSsmResponse(
         instanceId?: string;
         response?: GetCommandInvocationCommandOutput;
         error?: string;
-    }
+    },
+    accountId?: string
 ) {
     const { commandId, instanceId, response, error } = ssmResponse;
     logger.info(`Extract SSM response from instance ${instanceId} for command with id: ${commandId}`, { response });
@@ -548,7 +551,13 @@ async function extractSsmResponse(
         if (!response?.CommandId) {
             throw createError('Command Id not found');
         }
-        const responses = await getSsmResponseFromCloudWatch(credentialsId, region, response?.CommandId, instanceId);
+        const responses = await getSsmResponseFromCloudWatch(
+            credentialsId,
+            region,
+            response?.CommandId,
+            instanceId,
+            accountId
+        );
         return {
             output: responses.join('')
         };
