@@ -300,7 +300,7 @@ async function manageSqlInstance(
     hostJobId: string,
     databaseHostId?: string
 ) {
-    logger.info('Manage SQL instances', {
+    logger.info('Register SQL instances', {
         accountId,
         credentialsId,
         region,
@@ -407,7 +407,9 @@ async function manageSqlInstance(
                 !sqlInstanceInfo ||
                 alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)
             ) {
-                const errorMsg = !sqlInstanceInfo ? 'SQL Server instance not found.' : 'Instance is already managed.';
+                const errorMsg = !sqlInstanceInfo
+                    ? 'SQL Server instance not found.'
+                    : 'Instance is already registered.';
                 throw new Error(errorMsg);
             }
 
@@ -581,7 +583,8 @@ async function manageSqlInstance(
                     name: `Register instance ${dbInst}`,
                     startTime: Date.now(),
                     description: `Register instance ${dbInst}`,
-                    error: instanceErrorMessage
+                    error: instanceErrorMessage,
+                    endTime: Date.now()
                 });
             }
         }
@@ -635,7 +638,7 @@ async function installAndManageSqlInstances(
     parentManageJobId: string,
     resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]
 ) {
-    logger.info('Install and manage sql instances', {
+    logger.info('Install and register sql instances', {
         accountId,
         parentManageJobId,
         resourcesToBeManaged: resourcesToBeManaged.length
@@ -680,10 +683,10 @@ async function installAndManageSqlInstances(
 }
 
 async function manageSqlInstances(accountId: string, resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]) {
-    logger.info('Manage sql instances', { accountId, resourcesToBeManagedLength: resourcesToBeManaged.length });
+    logger.info('Register sql instances', { accountId, resourcesToBeManagedLength: resourcesToBeManaged.length });
 
     if (!resourcesToBeManaged?.length) {
-        throw new Error('No sql instances to be managed');
+        throw new Error('No sql instances to be registered');
     }
     const jobName = `Register SQL Server instances for account ${accountId}`;
     const { id: jobId } = await registerJob(accountId, '', '', {
