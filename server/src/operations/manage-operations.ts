@@ -249,7 +249,7 @@ async function getPartnerNodeDetails(
         }));
 
     // Extract all cluster IPs from the FCI instance details and flatten the array.
-    const clusterIps = fciInstanceDetails.map(fciInstance => fciInstance.clusterIps).flat();
+    const clusterIps = [...new Set(fciInstanceDetails.map(fciInstance => fciInstance.clusterIps).flat())];
 
     // Fetch details of EC2 instances corresponding to the cluster IPs using their private IP addresses.
     const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, compact(clusterIps));
