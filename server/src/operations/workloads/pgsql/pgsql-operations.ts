@@ -537,6 +537,19 @@ async function getPgSqlProtectionStatus(
     );
     if (response) {
         const parsedResponse = sqlResponseParsing(response);
+        if (!isEmpty(parsedResponse?.error)) {
+            throw parsedResponse.error;
+        }
+        if (!parsedResponse?.records || !parsedResponse.records.length) {
+            logger.warn(
+                `No records found for pgsql protection status for fsxId: ${fsxId}, region: ${region}, credentialsId: ${credentialsId}`
+            );
+            return {
+                isAwsBackupEnabled: { fsxn: false },
+                isFsxOntapSnapshotsEnabled: false
+            };
+        }
+
         const records = parsedResponse?.records[0];
         const { snapshot_count: snapshotCount, uuid } = records;
         const backupStatus = await isFsxnAwsBackupEnabled(credentialsId, region, fsxId, [uuid]);

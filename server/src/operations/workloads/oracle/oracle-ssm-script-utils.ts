@@ -1,8 +1,8 @@
 const checkCommandStatus = `
     check_status() {
         if [ $? -ne 0 ]; then
-        echo "$1"
-        exit 1;
+        echo "{\\"error\\": \\"$1\\"}"
+        exit 0;
         fi
     }
 `;
@@ -64,7 +64,8 @@ const getMappedOntapDataVolume = (
 `;
 
 const ontapRestApi = `
-    creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$filesystemid" --with-decryption --query "Parameter.Value"  --output text)
+    creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$filesystemid" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
+    check_status "Credentials not found for $filesystemid in SSM Parameter Store. Please ensure the credentials are stored in SSM Parameter Store with the name /netapp/wlmdb/$filesystemid"
      
     fsxusername=$(echo $creds | jq -r '.fsx.username')
     fsxpassword=$(echo $creds | jq -r '.fsx.password')
