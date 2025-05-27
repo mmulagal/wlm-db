@@ -414,7 +414,7 @@ async function manageSqlInstance(
             }
 
             try {
-                const { windowsAuthentication, sqlServerAuthentication, serverGuid, storage } = sqlInstanceInfo;
+                const { windowsAuthentication, sqlServerAuthentication, windowsDomainUserAuthentication, serverGuid, storage } = sqlInstanceInfo;
                 const storageInfo = storage?.find((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN);
                 const storageProtocols = storage
                     ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
@@ -423,8 +423,9 @@ async function manageSqlInstance(
                 // Combine all failure conditions for early exit
                 let failureReason: string | undefined;
 
-                if (!windowsAuthentication && !sqlServerAuthentication) {
-                    failureReason = 'Authentication to SQL Server instance is not possible.';
+                if (!windowsAuthentication && !sqlServerAuthentication && !windowsDomainUserAuthentication) {
+                    failureReason =
+                        'Unable to authenticate with the SQL Server instance. Windows authentication or SQL Server authentication is required.';
                 } else if (!storageInfo) {
                     failureReason = 'SQL Server instance is not hosted on FSx for NetApp.';
                 } else if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
