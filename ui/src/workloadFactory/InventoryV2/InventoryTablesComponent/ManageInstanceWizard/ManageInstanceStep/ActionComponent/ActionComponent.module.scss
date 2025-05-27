@@ -14,7 +14,7 @@
         gap: 40px;
 
         [class*='Popover-module_tooltip-wrapper'] {
-            max-width: None !important;
+            max-width: unset !important;
         }
     }
 }
