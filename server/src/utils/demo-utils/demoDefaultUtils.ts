@@ -27,16 +27,18 @@ import {
     createStorageTierJobMockData,
     createEnableMpioJobMockData,
     createDeploymentMockDataInDBForPgSql,
-    createAssessmentData
+    createAssessmentData,
+    prepareDemoSandboxMetadata
 } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
-import { listConfig, upsertDatabaseInstance } from '../../lib/database/db';
+import { listConfig, listResources, updateResource, upsertDatabaseInstance } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { createJobs, listJobs } from '../../lib/database/job';
 import { inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
 import { instanceDemoData } from './instancesResponse';
+import { Metadata } from '../common-types';
 
 const logger = getLogger();
 
@@ -207,8 +209,11 @@ async function createDemoResourcesPerRegion(
                 deploymentType: 'HA'
             }
         ];
+        const resourceSandboxMetadata: any = { sandboxes: [], userDatabase: [] };
 
-        instances.forEach(async ({ resourceId, hostName, protocol, sqlInstances, databaseType, deploymentType }) => {
+        for (const instance of instances) {
+            const { resourceId, hostName, protocol, sqlInstances, databaseType, deploymentType } = instance;
+            // create hosts and default instances
             await createDemoResources(
                 accountId,
                 region,
@@ -239,6 +244,26 @@ async function createDemoResourcesPerRegion(
                     }
                 };
                 const databaseConfigurationData = { dismissedConfigurations };
+                // create sandbox metadata for resource and instance
+                let sqlInstanceSandboxMetadata: any = {};
+                if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
+                    sqlInstanceSandboxMetadata = prepareDemoSandboxMetadata(
+                        hostName,
+                        sqlInstanceId,
+                        undefined,
+                        sqlInstanceName
+                    );
+                    if (
+                        sqlInstanceSandboxMetadata &&
+                        sqlInstanceSandboxMetadata?.sandboxes?.length > 0 &&
+                        sqlInstanceSandboxMetadata?.userDatabase?.length > 0
+                    ) {
+                        resourceSandboxMetadata.sandboxes.push(...(sqlInstanceSandboxMetadata?.sandboxes ?? []));
+                        resourceSandboxMetadata.userDatabase.push(...(sqlInstanceSandboxMetadata?.userDatabase ?? []));
+                    }
+                }
+
+                // create additional database instance from the "instances" array
                 await createDatabaseInstances(
                     accountId,
                     resourceId,
@@ -249,7 +274,7 @@ async function createDemoResourcesPerRegion(
                     region,
                     `fs-${randomize('0', 8)}`,
                     protocol,
-                    {},
+                    databaseType === DatabaseTypes.MS_SQL_SERVER ? sqlInstanceSandboxMetadata : {},
                     databaseConfigurationData
                 );
                 const newInstanceName = sqlInstanceName.replace(hostName, '');
@@ -257,11 +282,25 @@ async function createDemoResourcesPerRegion(
                 instanceNames.push(DEFAULT_INSTANCE_NAME);
                 instanceIds += `${sqlInstanceId},`;
             }
-
             if (databaseType === DatabaseTypes.PG_SQL) {
                 return;
             }
 
+            if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
+                const [resource] = await listResources(accountId, resourceId);
+                if (!isEmpty(resource?.metadata)) {
+                    (resource.metadata as unknown as Metadata).sandboxes = (
+                        (resource?.metadata as unknown as Metadata)?.sandboxes ?? []
+                    )?.concat(resourceSandboxMetadata.sandboxes ?? []);
+                    (resource.metadata as unknown as Metadata).userDatabase = (
+                        (resource?.metadata as unknown as Metadata)?.userDatabase ?? []
+                    )?.concat(resourceSandboxMetadata.userDatabase ?? []);
+                    await updateResource({ accountId, credentialsId, region, resourceId, metaData: resource.metadata });
+                }
+            }
+
+            // create sandbox metadata for instances
+            // Update assessment configs
             const optimizeStorageJobMockdata = await createOptimizeJobMockData(
                 accountId,
                 hostName,
@@ -271,6 +310,8 @@ async function createDemoResourcesPerRegion(
                 instanceIds.split(',')[0],
                 resourceId
             );
+
+            // create assessment and optimization jobs
             await createJobs(accountId, optimizeStorageJobMockdata);
 
             const operatingSystemOptimizeJobMockData = await createOperatingSystemOptimizeJobMockData(
@@ -315,7 +356,7 @@ async function createDemoResourcesPerRegion(
                 resourceId
             );
             await createJobs(accountId, enableMpioJobMockData);
-        });
+        }
         const filteredInstances = instances.filter(instance => instance.databaseType !== DatabaseTypes.PG_SQL);
         const assessmentJobMockData = await createAssessmentJobMockData(
             accountId,
@@ -324,8 +365,8 @@ async function createDemoResourcesPerRegion(
             region
         );
         await createJobs(accountId, assessmentJobMockData);
+        return { message: 'Demo Data created' };
     }
-    return { message: 'Demo Data created' };
 }
 
 async function creadteDemoDBData(accountId: string, credentialsList: any) {
