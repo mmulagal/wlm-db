@@ -38,6 +38,7 @@ const SelectInstances = () => {
                     (!row?.fsxId || (row?.fsxId && row?.isFsxRegistered));
 
                 const id = row.id;
+
                 const isSelected = selectedId === id;
 
                 const isDisabled =
@@ -47,33 +48,39 @@ const SelectInstances = () => {
                     ((selectedType === 'authorized' && !isAuthorized) ||
                         (selectedType === 'unauthorized' && isAuthorized));
 
-                const baseOption = optionCacheRef.current.get(id) ?? {
-                    id,
-                    label: row.databaseInstanceName,
-                    value: row.name,
-                    data: row,
-                    authorized: isAuthorized,
-                    onClick: () => {
-                        if (isSelected) {
-                            setSelectedId(null);
-                            setSelectedType(null);
-                        } else {
-                            setSelectedId(id);
-                            setSelectedType(isAuthorized ? 'authorized' : 'unauthorized');
-                        }
-                    }
+                // Use existing option if present
+                let baseOption = optionCacheRef.current.get(id);
+
+                if (!baseOption) {
+                    // Create a fresh one if not in cache
+                    baseOption = {
+                        id,
+                        label: row.databaseInstanceName,
+                        value: row.name,
+                        data: row,
+                        authorized: isAuthorized
+                    };
+                }
+
+                // Always create a fresh onClick to avoid stale closure
+                baseOption.onClick = () => {
+                    setSelectedId(prevId => (prevId === id ? null : id));
+                    setSelectedType(prevType =>
+                        selectedId === id ? null : isAuthorized ? 'authorized' : 'unauthorized'
+                    );
                 };
 
-                // update dynamic fields without changing reference
+                // Always update these to match current state
                 baseOption.isDisabled = isDisabled;
-                baseOption.message = isDisabled ? 'Option disabled due to selection type restriction' : '';
+                baseOption.disabledReason = isDisabled
+                    ? 'When selecting multiple instances, they must have the same status: authenticated or unauthenticated.'
+                    : '';
 
                 newMap.set(id, baseOption);
                 finalOptions.push(baseOption);
             }
         });
 
-        // Update the ref only after all options are computed
         optionCacheRef.current = newMap;
 
         return finalOptions;
