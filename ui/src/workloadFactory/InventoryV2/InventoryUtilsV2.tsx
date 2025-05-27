@@ -593,6 +593,20 @@ export const getPrimaryPgsqlNode = (
 
             if (partnerNode && !isDemoMode) {
                 partnerNode = [host, ...partnerNode];
+                let ec2Details: Array<{ id: string; name: string }> = [];
+                partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
+                    ec2Details.push({
+                        id: perPartnerNode?.ec2InstanceId || '',
+                        name: perPartnerNode?.ec2InstanceName || ''
+                    });
+                });
+
+                partnerNode = partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
+                    return {
+                        ...perPartnerNode,
+                        ec2Details: ec2Details
+                    };
+                });
 
                 let anyManagedNode = false;
                 partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
@@ -1001,7 +1015,7 @@ export const formatPgsqlDiscoveredRows = (
         loading: false,
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
-        ec2Details: ec2Details,
+        ec2Details: discoveredRow?.ec2Details || ec2Details,
         hostType: GENERAL.POSTGRESQL_TYPE,
         // **** Below values will get from Instances API *****
         // estimatedUsageCost: {}, // Initially it will be blank
