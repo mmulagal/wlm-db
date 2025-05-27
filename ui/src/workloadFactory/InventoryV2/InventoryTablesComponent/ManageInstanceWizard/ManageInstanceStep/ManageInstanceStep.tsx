@@ -39,6 +39,9 @@ export const Content = () => {
         sqlServerName: string
     ) => {
         // Get managereadiness data directly from discoveredHostData for MSSQL
+        if (!Array.isArray(data)) {
+            return null; // Return null if data is not an array
+        }
         for (const instance of data) {
             if (
                 instance.ec2InstanceId === ec2InstanceId &&
