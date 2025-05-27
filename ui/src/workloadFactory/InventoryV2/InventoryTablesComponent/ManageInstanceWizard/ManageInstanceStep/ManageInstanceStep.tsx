@@ -21,6 +21,7 @@ export const Content = () => {
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
     const { manageSingleInstanceData, manageSingleInstanceReadiness } = useAppSelector(state => state.inventoryV2);
+    const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     const isAlreadyDetected = useMemo(() => {
         if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
             return true;
@@ -29,6 +30,30 @@ export const Content = () => {
     }, [manageSingleInstanceData]);
 
     const { data: policiesList, isFetching: policiesLoading, isError: policiesError } = useGetWlmdbPoliciesQuery({});
+
+    const getManageReadinessData = (
+        data: any[],
+        ec2InstanceId: string,
+        credentialId: string,
+        regionId: string,
+        sqlServerName: string
+    ) => {
+        // Get managereadiness data directly from discoveredHostData for MSSQL
+        for (const instance of data) {
+            if (
+                instance.ec2InstanceId === ec2InstanceId &&
+                instance.credentialId === credentialId &&
+                instance.regionId === regionId
+            ) {
+                for (const sqlInstance of instance.sqlServerInstances) {
+                    if (sqlInstance.sqlServerInstance === sqlServerName) {
+                        return sqlInstance.manageReadiness;
+                    }
+                }
+            }
+        }
+        return null; // Return null if no match is found
+    };
 
     const manageChecks = useMemo(() => {
         let manageCheckObj: any = {
@@ -46,10 +71,27 @@ export const Content = () => {
         };
 
         let manageReadinessData: any = null;
-        if (!manageSingleInstanceData?.windowsAuthentication && !manageSingleInstanceData?.sqlServerAuthentication) {
+        if (
+            !manageSingleInstanceData?.windowsAuthentication &&
+            !manageSingleInstanceData?.sqlServerAuthentication &&
+            manageSingleInstanceReadiness
+        ) {
             manageReadinessData = manageSingleInstanceReadiness;
-        } else {
+        } else if (manageSingleInstanceData?.manageReadiness) {
             manageReadinessData = manageSingleInstanceData?.manageReadiness;
+        } else {
+            // If user Unregister and instance or in case of mixed case of manage and unmanage. Get managereadiness data directly from discoveredHostData.
+            let ec2InstanceId = manageSingleInstanceData?.ec2InstanceId;
+            let credentialId = manageSingleInstanceData?.credentialId;
+            let regionId = manageSingleInstanceData?.regionId;
+            let instanceName = manageSingleInstanceData?.databaseInstanceName;
+            manageReadinessData = getManageReadinessData(
+                discoveredHostData,
+                ec2InstanceId,
+                credentialId,
+                regionId,
+                instanceName
+            );
         }
         if (manageReadinessData) {
             let missingModulesList = missingModules(manageReadinessData);
