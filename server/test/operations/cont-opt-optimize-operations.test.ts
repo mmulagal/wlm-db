@@ -8,7 +8,12 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/cloud-watch-scope';
 import '../simulator/scopes/aws/compute-optimizer-scope';
 
-import { optimizeMaxDop, optimizeSizing, optimizeStorage } from '../../src/operations/cont-opt-optimize-operations';
+import {
+    optimizeClone,
+    optimizeMaxDop,
+    optimizeSizing,
+    optimizeStorage
+} from '../../src/operations/cont-opt-optimize-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import { AssessmentCategories, OPTIMIZE_SIZING_CONFIGS } from '../../src/utils/continous-optimization-consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
@@ -18,6 +23,29 @@ import optimizeCompute from '../../src/operations/continuous-optimization/comput
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 const CREDENTIALS_ID = DEFAULT_AWS_CREDENTIALS_ID;
+
+const clone = {
+    cloneDatabaseName: 'sandbox_clonecleanup01',
+    clonedBy: 'netapp_wf',
+    action: 'refresh'
+};
+
+const oldCloneDetails = [
+    {
+        cloneDatabaseName: 'sandbox_clonecleanup01',
+        clonedBy: 'netapp_wf',
+        action: 'refresh',
+        databaseHostName: 'test-host',
+        databaseHostId: RESOURCE_ID,
+        databaseInstanceName: 'MSSQLSERVER'
+    }
+];
+
+const configData = {
+    oldCloneDetails,
+    status: 'not-optimized'
+};
+
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
         resourceId: '6cbdabbfe3fb147e',
@@ -354,17 +382,18 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
 
     it('should optimize MPIO policy', async () => {
         const { optimizeOperatingSystemSettings } = await import('../../src/operations/cont-opt-optimize-operations');
-       try{ const response = await optimizeOperatingSystemSettings(
-            ACCOUNT_ID,
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            databaseHostId,
-            databaseInstanceId,
-            'mpio-load-balance-policy'
-        );
-        expect(response.jobId).toBeDefined();
-        await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });}
-         catch (err: any) {
+        try {
+            const response = await optimizeOperatingSystemSettings(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                databaseHostId,
+                databaseInstanceId,
+                'mpio-load-balance-policy'
+            );
+            expect(response.jobId).toBeDefined();
+            await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+        } catch (err: any) {
             // If PreconditionFailedError, extract jobId and mark as completed, then retry once
             if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
                 const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
@@ -393,17 +422,18 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
 
     it('should optimize MPIO sessions', async () => {
         const { optimizeOperatingSystemSettings } = await import('../../src/operations/cont-opt-optimize-operations');
-       try{ const response = await optimizeOperatingSystemSettings(
-            ACCOUNT_ID,
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            databaseHostId,
-            databaseInstanceId,
-            'mpio-iscsi-count'
-        );
-        expect(response.jobId).toBeDefined();
-        await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });}
-     catch (err: any) {
+        try {
+            const response = await optimizeOperatingSystemSettings(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                databaseHostId,
+                databaseInstanceId,
+                'mpio-iscsi-count'
+            );
+            expect(response.jobId).toBeDefined();
+            await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+        } catch (err: any) {
             // If PreconditionFailedError, extract jobId and mark as completed, then retry once
             if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
                 const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
@@ -432,18 +462,18 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
 
     it('should enable MPIO and configure sessions', async () => {
         const { optimizeOperatingSystemSettings } = await import('../../src/operations/cont-opt-optimize-operations');
-        try{
-        const response = await optimizeOperatingSystemSettings(
-            ACCOUNT_ID,
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            databaseHostId,
-            databaseInstanceId,
-            'mpio-enabled'
-        );
-        expect(response.jobId).toBeDefined();
-        await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });}
-        catch (err: any) {
+        try {
+            const response = await optimizeOperatingSystemSettings(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                databaseHostId,
+                databaseInstanceId,
+                'mpio-enabled'
+            );
+            expect(response.jobId).toBeDefined();
+            await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+        } catch (err: any) {
             // If PreconditionFailedError, extract jobId and mark as completed, then retry once
             if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
                 const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
@@ -510,5 +540,52 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
                 throw err;
             }
         }
+    });
+
+    it('should optimize clone and complete the job', async () => {
+        const response = await optimizeClone(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            clone,
+            configData,
+            'test-server',
+            'MSSQLSERVER',
+            'test-jobid'
+        );
+
+        expect(response).toBeUndefined();
+    });
+
+    it('should throw error if matching clone is not found', async () => {
+        const configDataNoMatch = {
+            oldCloneDetails: [
+                {
+                    cloneDatabaseName: 'sandbox_clonecleanup02',
+                    clonedBy: 'netapp_wf',
+                    action: 'refresh',
+                    databaseHostName: 'test-host',
+                    databaseHostId: RESOURCE_ID,
+                    databaseInstanceName: 'MSSQLSERVER'
+                }
+            ],
+            status: 'not-optimized'
+        };
+        await expect(
+            optimizeClone(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                clone,
+                configDataNoMatch,
+                'test-server',
+                'MSSQLSERVER',
+                'test-jobid'
+            )
+        ).rejects.toThrow('Clone sandbox_clonecleanup01 not found for netapp_wf');
     });
 });

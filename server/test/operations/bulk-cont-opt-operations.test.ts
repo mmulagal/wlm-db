@@ -13,13 +13,18 @@ import {
     AssessmentCategories,
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_SIZING_CONFIGS,
+    OptimizeCloneParams,
     OptimizeComputeParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageTierParams
 } from '../../src/utils/continous-optimization-consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import { createDatabaseInstanceConfigData } from '../../src/lib/database/database-instance-config';
-import { bulkComputeOptimization, bulkOptimization } from '../../src/operations/bulk-cont-opt-operations';
+import {
+    bulkCloneOptimization,
+    bulkComputeOptimization,
+    bulkOptimization
+} from '../../src/operations/bulk-cont-opt-operations';
 import { updateJobDetails } from '../../src/operations/database/job-operations';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
@@ -347,6 +352,38 @@ describe('Continuous optimization optimize operations', () => {
                 ]
             }
         ]);
+
+        expect(response.jobId).toBeDefined();
+        await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+    });
+
+    it('Bulk optimize clone parameters', async () => {
+        const hostsToOptimize = [
+            {
+                configurationName: OptimizeCloneParams.CLONE,
+                databaseHosts: [
+                    {
+                        id: RESOURCE_ID,
+                        region: DEFAULT_AWS_REGION,
+                        credentialsId: CREDENTIALS_ID,
+                        sqlServerInstances: [
+                            {
+                                instanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+                                clones: [
+                                    {
+                                        cloneDatabaseName: 'sandbox_clonecleanup01',
+                                        clonedBy: 'netapp_wf',
+                                        action: 'refresh'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const response = await bulkCloneOptimization(ACCOUNT_ID, hostsToOptimize);
 
         expect(response.jobId).toBeDefined();
         await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
