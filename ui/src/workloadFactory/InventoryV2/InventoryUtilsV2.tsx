@@ -1960,17 +1960,7 @@ export const updateInventoryDatawithInstancesRes = (
                 loading: partnerInstanceData?.loading
             };
         } else if (partnerInstanceData && !partnerInstanceData?.loading) {
-            let ec2Details: any = [];
-            if (
-                inventoryRow?.hostType === DBType.POSTGRESQL &&
-                inventoryRow?.ec2Details &&
-                inventoryRow?.ec2Details?.length > 0
-            ) {
-                // cluster node details does not have same node in PGSQL resource-details API. That's why getting it from different way.
-                ec2Details = inventoryRow?.ec2Details;
-            } else {
-                ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
-            }
+            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
             let mergedCost = mergeEstimatedCost(instanceRow, partnerInstanceData);
             let allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data, partnerInstanceData?.data]);
             let ebsResourceInfo = mergeEbsResourceInfo(instanceRow, partnerInstanceData);
@@ -1997,17 +1987,7 @@ export const updateInventoryDatawithInstancesRes = (
             };
         } else {
             const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data]);
-            let ec2Details: any = [];
-            if (
-                inventoryRow?.hostType === DBType.POSTGRESQL &&
-                inventoryRow?.ec2Details &&
-                inventoryRow?.ec2Details?.length > 0
-            ) {
-                // cluster node details does not have same node in PGSQL resource-details API. That's why getting it from different way.
-                ec2Details = inventoryRow?.ec2Details;
-            } else {
-                ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
-            }
+            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
             result = {
                 ...inventoryRow,
                 name: inventoryRow?.name || instanceRow?.data?.name,
