@@ -2185,16 +2185,22 @@ export const updateSqlServerInstancesForBothNodes = (
     if (instanceData?.databaseInstancesSummary && instanceData?.databaseInstancesSummary?.length > 0) {
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
             const perRowNode = instanceData?.databaseInstancesSummary?.find(
-                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstancesSummaryInterface) =>
+                    (per?.databaseInstanceName ?? '').toLowerCase() ===
+                    (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             const perRowNodeStatus = instanceData?.databaseInstanceDetails?.find(
-                (per: DatabaseInstanceDetailsInterface) => per?.instanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstanceDetailsInterface) =>
+                    (per?.instanceName ?? '').toLowerCase() === (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             const perRowPartner = partnerData?.databaseInstancesSummary?.find(
-                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstancesSummaryInterface) =>
+                    (per?.databaseInstanceName ?? '').toLowerCase() ===
+                    (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             const perRowPartnerStatus = partnerData?.databaseInstanceDetails?.find(
-                (per: DatabaseInstanceDetailsInterface) => per?.instanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstanceDetailsInterface) =>
+                    (per?.instanceName ?? '').toLowerCase() === (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             let perRow: any;
             if (
@@ -2366,10 +2372,12 @@ export const getPerfUnmanagedData = (
     }
     if (perfData1 && partnerId && perfData2) {
         const perRow1 = perfData1?.data?.databaseInstancesSummary?.find(
-            (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+            (per: DatabaseInstancesSummaryInterface) =>
+                (per?.databaseInstanceName ?? '').toLowerCase() === (instRow?.databaseInstanceName ?? '').toLowerCase()
         );
         const perRow2 = perfData2?.data?.databaseInstancesSummary?.find(
-            (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+            (per: DatabaseInstancesSummaryInterface) =>
+                (per?.databaseInstanceName ?? '').toLowerCase() === (instRow?.databaseInstanceName ?? '').toLowerCase()
         );
         if (perRow1 || perRow2) {
             return {
@@ -2399,7 +2407,9 @@ export const getPerfUnmanagedData = (
             };
         } else if (perfData?.data?.databaseInstancesSummary && perfData?.data?.databaseInstancesSummary?.length > 0) {
             const perRow = perfData?.data?.databaseInstancesSummary?.find(
-                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstancesSummaryInterface) =>
+                    (per?.databaseInstanceName ?? '').toLowerCase() ===
+                    (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             return {
                 loading: false,

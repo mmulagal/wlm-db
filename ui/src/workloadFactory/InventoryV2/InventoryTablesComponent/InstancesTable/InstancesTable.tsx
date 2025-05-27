@@ -748,7 +748,7 @@ const InstancesTable = () => {
                         {cellData && (
                             <div className={styles.colTextProtection}>
                                 <div className={styles.protection}>
-                                    {cellData === 'Protected' && (
+                                    {cellData === GENERAL.PROTECTED && (
                                         <ProtectedIcon
                                             style={{
                                                 //@ts-ignore
@@ -756,7 +756,7 @@ const InstancesTable = () => {
                                             }}
                                         />
                                     )}
-                                    {cellData === 'Not Protected' && (
+                                    {cellData === GENERAL.NOT_PROTECTED && (
                                         <NotProtectedIcon
                                             style={{
                                                 //@ts-ignore
