@@ -447,7 +447,7 @@ async function updateOptimizedConfigNameInInstanceTable(
 async function updateOptimizedConfigMetaData(
     accountId: string,
     instanceId: string,
-    optimizedData: any,
+    optimizedData: Record<string, any>[], // array of objects with unknown keys/values
     configType: string,
     metaData: DatabaseInstanceMetadata
 ) {
