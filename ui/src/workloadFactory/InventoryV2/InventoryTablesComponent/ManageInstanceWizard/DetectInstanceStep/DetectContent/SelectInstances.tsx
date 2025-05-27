@@ -3,7 +3,7 @@ import styles from './DetectContent.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedMultiDetectInstances } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ACTION_CTA } from '../../../../../../utils/consts';
 import { manageActionCol } from '../../../../InventoryUtilsV2';
 import SeparatorComponent from '../../../../../../common/SeparatorComponent/SeparatorComponent';
@@ -19,29 +19,65 @@ const SelectInstances = () => {
     const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
     const { instanceTableRows } = useAppSelector(state => state.inventoryV2);
 
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [selectedType, setSelectedType] = useState<'authorized' | 'unauthorized' | null>(null);
+
+    // Stable reference map to preserve object identity
+    const optionCacheRef = useRef<Map<string, any>>(new Map());
+
     const options = useMemo(() => {
-        let optionsList: any = [];
-        instanceTableRows?.map((row: any) => {
+        const newMap = new Map<string, any>();
+        const finalOptions: any[] = [];
+
+        instanceTableRows?.forEach((row: any) => {
             const { colText, disableMsg } = manageActionCol(row);
+
             if (colText === ACTION_CTA.MANAGE_INSTANCES && disableMsg === '') {
-                let isAuthorized = false;
-                if (
+                const isAuthorized =
                     (row?.sqlServerAuthentication || row?.windowsAuthentication) &&
-                    (!row?.fsxId || (row?.fsxId && row?.isFsxRegistered))
-                ) {
-                    isAuthorized = true;
-                }
-                optionsList.push({
-                    id: row.id,
+                    (!row?.fsxId || (row?.fsxId && row?.isFsxRegistered));
+
+                const id = row.id;
+                const isSelected = selectedId === id;
+
+                const isDisabled =
+                    selectedId !== null &&
+                    selectedType !== null &&
+                    !isSelected &&
+                    ((selectedType === 'authorized' && !isAuthorized) ||
+                        (selectedType === 'unauthorized' && isAuthorized));
+
+                const baseOption = optionCacheRef.current.get(id) ?? {
+                    id,
                     label: row.databaseInstanceName,
                     value: row.name,
                     data: row,
-                    authorized: isAuthorized
-                });
+                    authorized: isAuthorized,
+                    onClick: () => {
+                        if (isSelected) {
+                            setSelectedId(null);
+                            setSelectedType(null);
+                        } else {
+                            setSelectedId(id);
+                            setSelectedType(isAuthorized ? 'authorized' : 'unauthorized');
+                        }
+                    }
+                };
+
+                // update dynamic fields without changing reference
+                baseOption.isDisabled = isDisabled;
+                baseOption.message = isDisabled ? 'Option disabled due to selection type restriction' : '';
+
+                newMap.set(id, baseOption);
+                finalOptions.push(baseOption);
             }
         });
-        return optionsList;
-    }, [instanceTableRows]);
+
+        // Update the ref only after all options are computed
+        optionCacheRef.current = newMap;
+
+        return finalOptions;
+    }, [instanceTableRows, selectedId, selectedType]);
 
     const handleSelect = (option: OptionType) => {
         dispatch(setSelectedMultiDetectInstances(option));
