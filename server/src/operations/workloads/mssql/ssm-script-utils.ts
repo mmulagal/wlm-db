@@ -461,8 +461,12 @@ const validateSQLInstanceConnectivity = (
             }
 
             if([string]::IsNullOrEmpty($sqlresult)) {
-                $responseObject.add('sqlInstanceConnectivity', $False)
-                $responseObject.add('sqlerror', "SQLCMD execution failed. Verify credentials.")
+                if (-not $responseObject.ContainsKey('sqlInstanceConnectivity')) {
+                    $responseObject.add('sqlInstanceConnectivity', $False)
+                }
+                if (-not $responseObject.ContainsKey('sqlerror')) {
+                    $responseObject.add('sqlerror', "SQLCMD execution failed. Verify credentials.")
+                }
             }
             else {
                 $sqlresult = $sqlresult | ConvertFrom-Json
@@ -484,8 +488,12 @@ const validateSQLInstanceConnectivity = (
             }
         }
     } catch {
-        $responseObject.add('sqlerror', $_.Exception.Message)
-        $responseObject.add('sqlInstanceConnectivity', $False)
+        if (-not $responseObject.ContainsKey('sqlerror')) {
+            $responseObject.add('sqlerror', $_.Exception.Message)
+        }
+        if (-not $responseObject.ContainsKey('sqlInstanceConnectivity')) {
+            $responseObject.add('sqlInstanceConnectivity', $False)
+        }
     }
 `;
 
