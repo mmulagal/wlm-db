@@ -435,8 +435,8 @@ const validateSQLInstanceConnectivity = (
                 $errorMessage = "No SQL instance found with the name $sqlinstancename"
                 throw $errorMessage
             }
-            $username = $sqlCredentials.username
-            $password = $sqlCredentials.password
+            $sqlCredential.username = $sqlCredentials.username
+            $sqlCredential.password = $sqlCredentials.password
             
             $serverInstanceName = "$env:COMPUTERNAME"
             If($sqlinstancename -ne 'MSSQLSERVER') {
@@ -444,7 +444,7 @@ const validateSQLInstanceConnectivity = (
                 
             }
 
-            if ($username -eq $null -or $password -eq $null) {
+            if ($sqlCredential.username -eq $null -or $sqlCredential.password -eq $null) {
                 $errorMessage = "SQL credentials not found for the instance $sqlinstancename"
                 throw $errorMessage
             }
@@ -457,7 +457,7 @@ const validateSQLInstanceConnectivity = (
                     $sqlresult = Invoke-CommandWithCredSSP -sqlquery $sqlquery -extraArguments -r1
                     ${disableCredSSP}
                 `
-                    : '$sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlquery -y 0 -r1 2> $null'
+                    : '$sqlresult = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $sqlquery -y 0 -r1 2> $null'
             }
 
             if([string]::IsNullOrEmpty($sqlresult)) {
@@ -1245,7 +1245,7 @@ Function Call-SqlCmd {
     if ($sqlCredential.useDomainAuth -eq $True) {
         ${enableCredSSP}
         ${invokeCommandWithCredSSP}
-        $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $sqlquery -extraArguments $ExtraArguments
+        $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $Query -extraArguments $ExtraArguments
         ${disableCredSSP}
     } elseif ($sqlCredential.useSqlAuth -eq $True) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
