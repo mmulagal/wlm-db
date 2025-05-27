@@ -91,7 +91,7 @@ export const Content = () => {
             )}
 
             {wizardOperationType === 'bulk' && (
-                <div style={{ marginBottom: '40px' }}>
+                <div style={{ marginBottom: '40px', width: '100%' }}>
                     <MultiInstanceHeader />
                 </div>
             )}

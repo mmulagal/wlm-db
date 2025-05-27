@@ -1,0 +1,28 @@
+.authScreen {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+
+    .container {
+        width: 55.41%;
+        background-color: var(--content-background);
+        padding: 40px;
+        box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 40px;
+
+        .textSection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+
+            .description {
+                max-width: 836px;
+                text-align: center;
+            }
+        }
+    }
+}

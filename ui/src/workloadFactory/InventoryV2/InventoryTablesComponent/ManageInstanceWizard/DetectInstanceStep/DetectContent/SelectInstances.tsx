@@ -6,6 +6,7 @@ import { useAppSelector } from '../../../../../../store/storeHooks';
 import { useMemo } from 'react';
 import { ACTION_CTA } from '../../../../../../utils/consts';
 import { manageActionCol } from '../../../../InventoryUtilsV2';
+import SeparatorComponent from '../../../../../../common/SeparatorComponent/SeparatorComponent';
 
 interface OptionType {
     id: number;
@@ -46,6 +47,10 @@ const SelectInstances = () => {
         dispatch(setSelectedMultiDetectInstances(option));
     };
 
+    const handleChange = () => {
+        console.log('handleChange called');
+    };
+
     return (
         <div className={styles.detectInstanceSelect}>
             <DsSelect
@@ -66,9 +71,23 @@ const SelectInstances = () => {
                 }}
                 formatOptionLabel={(option: any) => {
                     return (
-                        <div className={styles.detectFormatOption}>
+                        <div onClick={handleChange} className={styles.detectFormatOption}>
                             <DsTypography variant="Semibold_14">{option.label}</DsTypography>
-                            <DsTypography variant="Regular_14">{option.value}</DsTypography>
+                            <div className={styles.detectOptionValue}>
+                                <div className={styles.status}>
+                                    <div
+                                        className={styles.statusIcon}
+                                        style={{ background: option?.authorized ? '#48A08B' : '#C8C8C8' }}
+                                    ></div>
+                                    <DsTypography variant="Regular_14">
+                                        {option?.authorized ? 'Authenticated' : 'Unauthenticated'}
+                                    </DsTypography>
+                                </div>
+
+                                <SeparatorComponent variant="vertical" height="20px" />
+
+                                <DsTypography variant="Regular_14">Host: {option.value}</DsTypography>
+                            </div>
                         </div>
                     );
                 }}

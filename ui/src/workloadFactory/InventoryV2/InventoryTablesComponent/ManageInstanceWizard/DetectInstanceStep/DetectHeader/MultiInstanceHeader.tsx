@@ -43,40 +43,72 @@ const MultiInstanceHeader = () => {
         );
     };
     return (
-        <div className={styles['detect-header']}>
-            <div className={styles.firstBlock}>
-                <div>
-                    <InstanceName />
+        <>
+            <div className={styles.cardHeader}>
+                <div className={styles.cardContent}>
+                    {/* image*/}
+                    <div className={`${styles.column} ${styles.columnImage}`}>
+                        <InstanceName />
+                    </div>
+
+                    <div className={`${styles.column}`}>
+                        <DsTypography
+                            variant="Semibold_14"
+                            className={styles.titleText}
+                            style={{ paddingRight: '8px' }}
+                            title={countSummary.total}
+                        >
+                            {countSummary.total}
+                        </DsTypography>
+
+                        <DsTypography variant="Regular_14" className={styles.label} title={GENERAL.INSTANCE_NAME}>
+                            {GENERAL.INSTANCE_NAME}
+                        </DsTypography>
+                    </div>
+
+                    <div className={styles.column}>
+                        <DsTypography
+                            variant="Semibold_24"
+                            className={styles.titleText}
+                            style={{ lineHeight: 'unset' }}
+                        >
+                            {countSummary.success} / {countSummary.total}
+                        </DsTypography>
+                        <DsTypography
+                            variant="Regular_14"
+                            className={styles.label}
+                            title={'Successfully authenticated'}
+                        >
+                            Successfully authenticated
+                        </DsTypography>
+                    </div>
+
+                    <div className={`${styles.column}`}>
+                        <DsTypography
+                            className={styles.titleText}
+                            variant="Semibold_24"
+                            style={{ lineHeight: 'unset' }}
+                        >
+                            {countSummary.readyForManagement} / {countSummary.total}
+                        </DsTypography>
+
+                        <DsTypography
+                            variant="Regular_14"
+                            className={styles.label}
+                            title={GENERAL.RESOURCE_DEPLOYMENT_MODEL}
+                        >
+                            Ready for management
+                        </DsTypography>
+                    </div>
+
+                    <div className={styles.buttonBlock}>
+                        <DsButton type="text" onClick={handleManageDialog}>
+                            View Instance status
+                        </DsButton>
+                    </div>
                 </div>
-
-                <div className={styles.textSection}>
-                    <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
-                        {countSummary.total}
-                    </DsTypography>
-                    <DsTypography variant="Regular_14">Selected instances</DsTypography>
-                </div>
             </div>
-
-            <div className={styles.commonBlock}>
-                <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
-                    {countSummary.success} / {countSummary.total}
-                </DsTypography>
-                <DsTypography variant="Regular_14">Successfully authenticated</DsTypography>
-            </div>
-
-            <div className={styles.commonBlock}>
-                <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
-                    {countSummary.readyForManagement} / {countSummary.total}
-                </DsTypography>
-                <DsTypography variant="Regular_14">Ready for management</DsTypography>
-            </div>
-
-            <div className={styles.buttonBlock}>
-                <DsButton type="text" onClick={handleManageDialog}>
-                    View Instance status
-                </DsButton>
-            </div>
-        </div>
+        </>
     );
 };
 

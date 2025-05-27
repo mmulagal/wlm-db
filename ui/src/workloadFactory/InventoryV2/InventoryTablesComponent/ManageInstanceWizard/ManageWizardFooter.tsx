@@ -18,7 +18,7 @@ import {
     setManageSingleInstanceReadiness,
     setSelectedMultiDetectInstances
 } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { MANAGE_STATES } from '../../../../utils/consts';
+
 import { handleSingleInstanceManage } from './ManageInstanceUtils';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,8 +35,6 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: any = useWizard();
 
-    const { ontapUserNameFromWizard, ontapPasswordFromWizard, mssqlUserNameFromWizard, mssqlPasswordFromWizard } =
-        state;
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
@@ -224,6 +222,28 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
     };
 
+    const bulkGoForward = (currentStepIndex: number) => {
+        if (currentStepIndex === 0) {
+            if (selectedMultiDetectInstances.length > 0) {
+                goToNextStep();
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: GENERAL.BULK_INSTANCE_SELECT_TEXT
+                    })
+                );
+            }
+        } else if (currentStepIndex === 1) {
+            const isAuth = selectedMultiDetectInstances.every((instance: any) => instance?.authorized);
+            if (isAuth) {
+                goToNextStep();
+            } else {
+                handleMultiRegisterResourceCred();
+            }
+        }
+    };
+
     const handleManage = () => {
         if (wizardOperationType === 'bulk') {
             // ToDo
@@ -239,41 +259,83 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     return (
-        <WizardFooter className={styles['pw-footer']} style={style}>
-            {currentStepIndex !== 0 && (
-                <DsButton
-                    data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
-                    isThin={true}
-                    onClick={goBack}
-                    variant={'secondary'}
-                >
-                    Previous
-                </DsButton>
+        <>
+            {wizardOperationType !== 'bulk' && (
+                <WizardFooter className={styles['pw-footer']} style={style}>
+                    {currentStepIndex !== 0 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
+                            isThin={true}
+                            onClick={goBack}
+                            variant={'secondary'}
+                        >
+                            Previous
+                        </DsButton>
+                    )}
+                    {currentStepIndex < 1 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
+                            isThin={true}
+                            onClick={goForward}
+                            variant={'primary'}
+                            isLoading={detectHostLoading}
+                            {...rest}
+                        >
+                            Next
+                        </DsButton>
+                    )}
+                    {currentStepIndex === 1 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
+                            isThin={true}
+                            onClick={handleManage}
+                            variant={'primary'}
+                            {...rest}
+                        >
+                            Register
+                        </DsButton>
+                    )}
+                </WizardFooter>
             )}
-            {currentStepIndex < 1 && (
-                <DsButton
-                    data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
-                    isThin={true}
-                    onClick={goForward}
-                    variant={'primary'}
-                    isLoading={detectHostLoading}
-                    {...rest}
-                >
-                    Next
-                </DsButton>
+
+            {/* This is only for Bulk operation */}
+            {wizardOperationType === 'bulk' && (
+                <WizardFooter className={styles['pw-footer']} style={style}>
+                    {currentStepIndex !== 0 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
+                            isThin={true}
+                            onClick={goBack}
+                            variant={'secondary'}
+                        >
+                            Previous
+                        </DsButton>
+                    )}
+                    {currentStepIndex < 2 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
+                            isThin={true}
+                            onClick={() => bulkGoForward(currentStepIndex)}
+                            variant={'primary'}
+                            {...rest}
+                        >
+                            Next
+                        </DsButton>
+                    )}
+                    {currentStepIndex === 2 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
+                            isThin={true}
+                            onClick={handleManage}
+                            variant={'primary'}
+                            {...rest}
+                        >
+                            Register
+                        </DsButton>
+                    )}
+                </WizardFooter>
             )}
-            {currentStepIndex === 1 && (
-                <DsButton
-                    data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
-                    isThin={true}
-                    onClick={handleManage}
-                    variant={'primary'}
-                    {...rest}
-                >
-                    Register
-                </DsButton>
-            )}
-        </WizardFooter>
+        </>
     );
 };
 

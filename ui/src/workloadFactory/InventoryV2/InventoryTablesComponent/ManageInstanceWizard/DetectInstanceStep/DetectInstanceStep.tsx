@@ -7,9 +7,15 @@ import ManageWizardFooter from '../ManageWizardFooter';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { DsTypography } from '@netapp/design-system';
 import { GENERAL } from '../../../../../utils/appConstants';
+import { useMemo } from 'react';
+import AuthenticatedScreen from './AuthenticatedScreen/AuthenticatedScreen';
 
 export const Content = () => {
-    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
+    const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
+
+    const isAuth = useMemo(() => {
+        return selectedMultiDetectInstances?.every((item: any) => item?.authorized);
+    }, []);
     return (
         <div className={styles['detect-step']}>
             {wizardOperationType === 'single' && (
@@ -18,13 +24,9 @@ export const Content = () => {
                 </div>
             )}
 
-            {wizardOperationType === 'bulk' && (
-                <DsTypography variant="Regular_14" className={styles.note}>
-                    {GENERAL.BULK_INSTANCE_SELECT_TEXT}
-                </DsTypography>
-            )}
+            {wizardOperationType === 'bulk' && isAuth && <AuthenticatedScreen />}
 
-            <DetectContent />
+            {wizardOperationType !== 'bulk' || (wizardOperationType === 'bulk' && !isAuth && <DetectContent />)}
         </div>
     );
 };

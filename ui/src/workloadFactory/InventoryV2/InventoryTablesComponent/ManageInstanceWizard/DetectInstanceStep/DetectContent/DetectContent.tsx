@@ -94,10 +94,6 @@ const DetectContent = () => {
     }, [detectPasswordSearch]);
     return (
         <div className={styles.detectContent}>
-            {/* Only for bulk */}
-
-            {wizardOperationType === 'bulk' && <SelectInstances />}
-
             {(wizardOperationType === 'bulk' ||
                 (!manageSingleInstanceData?.sqlServerAuthentication &&
                     !manageSingleInstanceData?.windowsAuthentication)) && (
