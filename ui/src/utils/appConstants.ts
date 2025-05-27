@@ -1246,9 +1246,9 @@ export const GENERAL = {
     MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS: [' out of ', ' SQL Server instances have been successfully registered.'],
     MULTIPLE_INSTANCE_DETECT_MANAGE_PARTIAL_SUCCESS: [
         ' out of ',
-        ' SQL Server instances have been successfully managed. The rest of the instances have been moved to unregister'
+        ' SQL Server instances have been successfully registered. The rest of the instances have been moved to unregister'
     ],
-    MUTLI_INSTANCE_MANAGE_SUCCESS: [' SQL Server instances have been successfully managed.'],
+    MUTLI_INSTANCE_MANAGE_SUCCESS: [' SQL Server instances have been successfully registered.'],
     UNMANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) =>
         `Database instance ${instanceName} unregister successfully.`,
     UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unregister.`,
