@@ -178,8 +178,11 @@ async function getResilienceDriftAssessment(
     const shouldTriggerAwsBackupAssessment =
         isEmpty(fieldsValues) || fieldsValues.includes(AssessmentCategories.AWS_BACKUP);
 
+    // filter out the config data which is not required for assessment and listDatabaseInstanceConfigData returns in descending order of creation time
     const configDataMap = databaseInstanceConfigData.reduce((acc, config) => {
-        acc[config.config_data_type] = config.config_data;
+        if (!acc[config.config_data_type]) {
+            acc[config.config_data_type] = config.config_data;
+        }
         return acc;
     }, {} as Record<string, any>);
 

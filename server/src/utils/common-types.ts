@@ -710,6 +710,8 @@ export {
     OptimizeMpioPolicyParams,
     StorageLayout,
     DatabaseInstancesIncludingResource,
+    DatabaseInstances,
+    Resource,
     StorageTierParams,
     ComputeAssessment,
     LicenseAssessment,

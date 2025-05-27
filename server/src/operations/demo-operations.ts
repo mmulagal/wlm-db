@@ -15,7 +15,6 @@ import {
     DEMO_STANADLONE_SQL_SERVER_ID,
     STORAGE_PROTOCOLS
 } from '../utils/consts';
-// import { handleNotification } from './cloud-manager/notification-operations';
 import { checkAccount, createDeployment, createResource, upsertDatabaseInstance } from '../lib/database/db';
 import { Metadata, Sandbox, DatabaseInstanceMetadata, ResourceAssessmentData } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
@@ -56,6 +55,7 @@ import { createDatabaseInstanceConfigData } from '../lib/database/database-insta
 import { updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 
 const logger = getLogger();
+const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
 
 async function createJobMockData(
     accountId: string,
@@ -133,7 +133,7 @@ async function createDeploymentMockDataInDB(
     fsxFileSystemId: string | undefined,
     awsAccountId: string,
     serverName: string,
-    createSandbox: boolean = false,
+    createSandbox: boolean = true,
     storageProtocol?: string,
     resourceId?: string
 ) {
@@ -188,33 +188,7 @@ async function createDeploymentMockDataInDB(
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
         sandboxCreated: true,
         storageProtocol,
-        ...(createSandbox && {
-            sandboxes: [
-                {
-                    databaseName: 'RetailBanking_sandbox',
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                    source: `SQL-Managed-Host-DEV|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
-                    tag: 'Development',
-                    databaseInstanceId: instanceId
-                }
-            ],
-            userDatabase: [
-                {
-                    name: 'RetailBanking_sandbox',
-                    size: 17179869184,
-                    type: 'User Database',
-                    status: 'ONLINE',
-                    protection: {
-                        isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
-                        isFsxOntapSnapshotsEnabled: false,
-                        isSqlNativeEnabled: false,
-                        isCRREnabled: false
-                    },
-                    collation: SQL_DEFAULT_COLLATION
-                }
-            ]
-        }),
+        ...(createSandbox && prepareDemoSandboxMetadata(resourceName, instanceId)),
         assessment: mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData
     };
 
@@ -235,33 +209,6 @@ async function createDeploymentMockDataInDB(
         metadata
     });
 
-    const databaseMetadata = {
-        sandboxes: [
-            {
-                databaseName: 'RetailBanking_sandbox',
-                createdAt: Date.now(),
-                updatedAt: Date.now(),
-                source: `SQL-Managed-Host-DEV|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
-                tag: 'Development'
-            }
-        ],
-        userDatabase: [
-            {
-                name: 'RetailBanking_sandbox',
-                size: 17179869184,
-                type: 'User Database',
-                status: 'ONLINE',
-                protection: {
-                    isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
-                    isFsxOntapSnapshotsEnabled: false,
-                    isSqlNativeEnabled: false,
-                    isCRREnabled: false
-                },
-                collation: SQL_DEFAULT_COLLATION
-            }
-        ]
-    };
-
     const instanceRecord = {
         resourceId,
         credentialsId,
@@ -276,7 +223,7 @@ async function createDeploymentMockDataInDB(
         numberofUserDbsCreated: 1,
         sandboxCreated: true,
         storageProtocol,
-        metaData: databaseMetadata,
+        metaData: prepareDemoSandboxMetadata(resourceName, instanceId),
         databaseType: DatabaseTypes.MS_SQL_SERVER,
         storageType: STORAGE_TYPE.FSXN
     };
@@ -447,7 +394,7 @@ async function updateOptimizedConfigNameInInstanceTable(
 async function updateOptimizedConfigMetaData(
     accountId: string,
     instanceId: string,
-    optimizedData: any,
+    optimizedData: Record<string, any>[], // array of objects with unknown keys/values
     configType: string,
     metaData: DatabaseInstanceMetadata
 ) {
@@ -994,6 +941,43 @@ async function createAssessmentData(
     ]);
 }
 
+function prepareDemoSandboxMetadata(
+    hostname: string,
+    instanceId?: string,
+    dbName: string = DemoDefaultDatabaseNames[0],
+    instancename: string = DEFAULT_INSTANCE_NAME
+) {
+    const hostMetadata: any = {};
+    hostMetadata.sandboxes = [];
+    hostMetadata.userDatabase = [];
+
+    hostMetadata.sandboxes.push({
+        databaseName: `${dbName}_sandbox`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        source: `${hostname}|${instancename}|${dbName}`,
+        tag: 'Development',
+        databaseInstanceId: instanceId
+    });
+    hostMetadata.userDatabase.push({
+        name: `${dbName}_sandbox`,
+        size: 17179869184,
+        type: 'User Database',
+        status: 'ONLINE',
+        protection: {
+            isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
+            isFsxOntapSnapshotsEnabled: false,
+            isSqlNativeEnabled: false,
+            isCRREnabled: false
+        },
+        collation: SQL_DEFAULT_COLLATION
+    });
+    if (!instanceId) {
+        hostMetadata.sandboxes[0].databaseInstanceId = instanceId;
+    }
+    return hostMetadata;
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -1014,5 +998,6 @@ export {
     createStorageTierJobMockData,
     createEnableMpioJobMockData,
     createAssessmentData,
+    prepareDemoSandboxMetadata,
     updateOptimizedConfigMetaData
 };
