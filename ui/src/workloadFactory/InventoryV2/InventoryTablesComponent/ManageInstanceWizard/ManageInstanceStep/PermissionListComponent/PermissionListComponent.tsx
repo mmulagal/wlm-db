@@ -67,7 +67,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.sql-server-permissions'),
-                            values: ['VIEW ANY DEFINITION', 'CONNECT ANY DATABASE', 'VIEW SERVER STATE'],
+                            values: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE'],
                             showCopy: false
                         },
                         {
@@ -130,12 +130,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.sql-server-permissions'),
-                            values: [
-                                'VIEW ANY DEFINITION',
-                                'CONNECT ANY DATABASE',
-                                'ALTER SETTINGS',
-                                'VIEW SERVER STATE'
-                            ],
+                            values: ['VIEW ANY DEFINITION', 'ALTER SETTINGS', 'VIEW SERVER STATE'],
                             showCopy: false
                         },
                         {
@@ -185,12 +180,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.sql-server-permissions'),
-                            values: [
-                                'VIEW ANY DEFINITION',
-                                'VIEW SERVER STATE',
-                                'CONNECT ANY DATABASE',
-                                'CREATE ANY DATABASE'
-                            ],
+                            values: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE', 'CREATE ANY DATABASE'],
                             showCopy: false
                         },
                         {
@@ -246,7 +236,6 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                                 'ALTER ANY DATABASE',
                                 'VIEW ANY DEFINITION',
                                 'VIEW SERVER STATE',
-                                'CONNECT ANY DATABASE',
                                 'CREATE ANY DATABASE'
                             ],
                             showCopy: false

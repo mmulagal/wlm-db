@@ -2264,7 +2264,8 @@ export const updateSqlServerInstancesForUnmanaged = (
             if (instRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
                 const perRow = instanceData?.databaseInstancesSummary?.find(
                     (per: DatabaseInstancesSummaryInterface) =>
-                        per?.databaseInstanceName === instRow?.databaseInstanceName
+                        (per?.databaseInstanceName ?? '').toLowerCase() ===
+                        (instRow?.databaseInstanceName ?? '').toLowerCase()
                 );
                 const statusObj = nonManagedStatus?.filter(
                     (per: StatusObjInterface) => per?.name === instRow?.databaseInstanceName
