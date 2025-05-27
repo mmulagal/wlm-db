@@ -270,5 +270,117 @@
                 "Resource": "arn:aws:logs:*:*:log-group:netapp/wlmdb/*"
             }
         ]
+    },
+    "well-architected-fsx": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "WellArchitecturedFsxGroup",
+                "Effect": "Allow",
+                "Action": [
+                    "fsx:UpdateFileSystem",
+                    "fsx:UpdateVolume"
+                ],
+                "Resource": "*"
+            }
+        ]
+    },
+    "well-architected-compute-optimizer": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "WellArchitecturedComputeOptimizerGroup",
+                "Effect": "Allow",
+                "Action": [
+                    "compute-optimizer:GetEnrollmentStatus",
+                    "compute-optimizer:PutRecommendationPreferences",
+                    "compute-optimizer:GetEffectiveRecommendationPreferences",
+                    "compute-optimizer:GetEC2InstanceRecommendations",
+                    "autoscaling:DescribeAutoScalingGroups",
+                    "autoscaling:DescribeAutoScalingInstances"
+                ],
+                "Resource": "*"
+            }
+        ]
+    },
+    "instance-profile": {
+        "Version": "2012-10-17",
+        "Statement":[
+            { 
+                "Effect": "Allow",
+                "Action": "logs:DescribeLogGroups", 
+                "Resource": "*" 
+            }, 
+            { 
+                "Effect":"Allow", 
+                "Action":[ 
+                    "logs:CreateLogGroup", 
+                    "logs:CreateLogStream", 
+                    "logs:DescribeLogStreams", 
+                    "logs:PutLogEvents" 
+                ], 
+                "Resource":"arn:aws:logs:*:*:log-group:/netapp/wlmdb/*"
+            },
+            {
+                "Effect": "Allow",
+                "Sid": "SSMListCommandStatement",
+                "Action": [
+                    "ssm:ListCommands",
+                    "ssm:ListCommandInvocations",
+                    "ssm:GetCommandInvocation",
+                    "ssm:DescribeInstanceInformation"
+                ],
+                "Resource": "*"
+                
+            },
+            {
+                "Effect": "Allow",
+                "Sid": "SSMDescribeDocumentStatement",
+                "Action": [
+                    "ssm:DescribeDocument",
+                    "ssm:GetDocument",
+                    "ssm:ListDocuments",
+                    "ssm:GetDeployablePatchSnapshotForInstance",
+                    "ssm:DescribeAssociation",
+                    "ssm:GetManifest"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Sid": "EC2MessagesStatement",
+                "Action": [
+                    "ec2messages:AcknowledgeMessage",
+                    "ec2messages:DeleteMessage",
+                    "ec2messages:FailMessage",
+                    "ec2messages:GetEndpoint",
+                    "ec2messages:GetMessages",
+                    "ec2messages:SendReply"
+                ],
+                "Resource": "*"
+            }
+            ,
+            {
+                "Effect": "Allow",
+                "Sid": "SSMMessagesStatement",
+                "Action": [
+                    "ssmmessages:CreateControlChannel",
+                    "ssmmessages:CreateDataChannel",
+                    "ssmmessages:OpenControlChannel",
+                    "ssmmessages:OpenDataChannel"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Sid": "SSMGetParameterStatement",
+                "Action": [
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
+                    "ssm:GetParametersByPath"
+                ],
+                "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
+            }
+        ]
     }
 }
