@@ -480,6 +480,10 @@ export interface DiscoverPgsqlHostInterface {
     pgsqlServerInstances?: Array<PgsqlInstancesDiscovered>;
     credentialId?: string;
     regionId?: string;
+    ec2Details?: Array<{
+        id?: string;
+        name?: string;
+    }>;
 }
 
 export interface OracleInstancesDiscovered {
@@ -600,11 +604,11 @@ export type OracleInstanceData = {
 
 export interface OracleHostData {
     databaseHostStatus: string;
-    databaseInstanceDetails: any[]; 
+    databaseInstanceDetails: any[];
     databaseInstancesSummary?: any[];
     estimatedUsageCost?: {
         compute: number;
-        storage: any; 
+        storage: any;
         connectivity: number;
         others: number;
         estimationType: string;
