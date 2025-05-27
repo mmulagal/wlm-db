@@ -98,7 +98,9 @@ const DetectContent = () => {
 
             {wizardOperationType === 'bulk' && <SelectInstances />}
 
-            {true && (
+            {(wizardOperationType === 'bulk' ||
+                (!manageSingleInstanceData?.sqlServerAuthentication &&
+                    !manageSingleInstanceData?.windowsAuthentication)) && (
                 <div className={styles['radio-container']}>
                     <DsTypography variant="Semibold_14">Select authentication mode</DsTypography>
                     <RadioButton
