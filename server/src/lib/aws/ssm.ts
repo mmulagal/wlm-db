@@ -57,7 +57,7 @@ async function sendSSMCommand(
     params: SendCommandCommandInput,
     accountId?: string
 ) {
-    logger.info('Send SSM Command', { credentialsId, region, params: params?.Comment });
+    logger.info('Send SSM Command', { credentialsId, region, params: params?.Comment, accountId });
 
     const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const sendCommand = new SendCommandCommand(params);

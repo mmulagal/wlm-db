@@ -47,9 +47,10 @@ async function pollCommandStatusForAllInstances(
     commandId: string,
     instanceIds: string[],
     pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
-    throttleSize: number = 5
+    throttleSize: number = 5,
+    accountId?: string
 ) {
-    logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollInterval });
+    logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollInterval, accountId });
     const pollStatuses: MultipleCommandSsmResponse[] = [];
 
     await Promise.all(
@@ -60,7 +61,13 @@ async function pollCommandStatusForAllInstances(
                     InstanceId: instanceId
                 };
                 try {
-                    const response = await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
+                    const response = await pollCommandStatus(
+                        credentialsId,
+                        region,
+                        pollParams,
+                        pollInterval,
+                        accountId
+                    );
                     logger.debug('SSM command Response:', response);
                     pollStatuses.push({
                         commandId,
@@ -68,7 +75,7 @@ async function pollCommandStatusForAllInstances(
                         response
                     });
                 } catch (error) {
-                    const errorMessage = `Error executing SSM command on instance ${instanceId}, commandId ${commandId} :  ${error}`;
+                    const errorMessage = `Error executing SSM command on instance ${instanceId}, accountId ${accountId}, commandId ${commandId} :  ${error}`;
                     logger.error(errorMessage);
                     pollStatuses.push({
                         commandId,
@@ -170,7 +177,8 @@ async function executeSSMDocumentMultipleInstances(
                     commandId,
                     instanceIds,
                     pollDuration,
-                    throttleSize
+                    throttleSize,
+                    accountId
                 );
                 logger.debug('SSM command Response:', response);
                 if (createCache) {
@@ -181,7 +189,7 @@ async function executeSSMDocumentMultipleInstances(
             }
             throw new Error('SSM command Id not found');
         } catch (error) {
-            const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
+            const errorMessage = `Error executing SSM command on instance ${instanceIds}, accountId ${accountId}, commandId ${commandId} :  ${error}`;
             logger.error(errorMessage);
             throw createError(errorMessage);
         }
@@ -216,7 +224,7 @@ async function executeSSMDocument(
             instanceId: instanceIds
         };
     } catch (error) {
-        const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
+        const errorMessage = `Error executing SSM command on instance ${instanceIds},  accountId ${accountId}, commandId ${commandId} :  ${error}`;
         logger.error(errorMessage);
         throw createError(errorMessage);
     }

@@ -529,7 +529,14 @@ const HOST_AND_SQL_INFO_PS1 = [
         $responseObject['sqlServerNodes'] = hostname
       } else {
         $responseObject['sqlServerNodes'] =  $sqlNodes
-      }             
+      } 
+      
+      # Check if sqlcmd is available
+      $isSqlCmdAvailable = $False
+      if (Get-Command -Name sqlcmd -ErrorAction SilentlyContinue) {
+        $isSqlCmdAvailable = $True
+      }
+      $responseObject['isSqlCmdAvailable'] = $isSqlCmdAvailable
 
       if ($sqlService.State -eq "Running") {
         
@@ -537,8 +544,6 @@ const HOST_AND_SQL_INFO_PS1 = [
           $existingPermissions = $null
           $sqlInstanceDriveLetterOrPathList = $null
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" } 
-
-          $responseObject['isSqlCmdAvailable'] = $True
           try {
             $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';"  2> $null
             $responseObject['windowsAuthentication'] = $?
@@ -546,9 +551,6 @@ const HOST_AND_SQL_INFO_PS1 = [
             $deploymentTypeCheck = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('IsHadrEnabled') AS IsHadrEnabled, SERVERPROPERTY('IsClustered') AS IsClustered  FOR JSON PATH" 2> $null
             $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance 
           } catch {
-             if ($_.Exception.Message -like "*'sqlcmd' is not recognized as the name of a cmdlet*") {
-             $responseObject['isSqlCmdAvailable'] = $False
-      }
             $responseObject['windowsAuthentication'] = $False
             try {           
               $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]

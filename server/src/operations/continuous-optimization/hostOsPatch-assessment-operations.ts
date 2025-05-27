@@ -45,7 +45,8 @@ async function checkIfWindowsUpdateCatalogReachable(
             region,
             [TEST_CONNECTION_COMMAND],
             node1InstanceId,
-            'Check if Windows Update Catalog is reachable'
+            'Check if Windows Update Catalog is reachable',
+            accountId
         );
 
         if (node2InstanceId) {
@@ -54,7 +55,8 @@ async function checkIfWindowsUpdateCatalogReachable(
                 region,
                 [TEST_CONNECTION_COMMAND],
                 node2InstanceId,
-                'Check if Windows Update Catalog is reachable'
+                'Check if Windows Update Catalog is reachable',
+                accountId
             );
         }
     } catch (error) {
