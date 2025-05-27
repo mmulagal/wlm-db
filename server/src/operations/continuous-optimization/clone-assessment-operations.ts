@@ -233,7 +233,7 @@ async function runCloneAssessment(
         [ssmCommand],
         activeNodeInstanceId,
         'Get sandbox Details for clone assessment',
-        undefined,
+        accountId,
         true,
         undefined,
         true

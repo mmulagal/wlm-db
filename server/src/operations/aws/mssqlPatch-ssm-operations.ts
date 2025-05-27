@@ -38,8 +38,13 @@ async function getAvailablePatches(credentialsId: string, region: string, instan
     return availablePatches;
 }
 
-async function getInstalledSQLPatchDetails(credentialsId: string, region: string, instanceIds: string[]) {
-    logger.info('Get Installed SQL Patch Details', { credentialsId, region, instanceIds });
+async function getInstalledSQLPatchDetails(
+    credentialsId: string,
+    region: string,
+    instanceIds: string[],
+    accountId: string
+) {
+    logger.info('Get Installed SQL Patch Details', { credentialsId, region, instanceIds, accountId });
     const ssmCommand = GET_INSTALLED_SQL_PATCHES();
 
     return Promise.all(
@@ -49,7 +54,8 @@ async function getInstalledSQLPatchDetails(credentialsId: string, region: string
                 region,
                 [ssmCommand],
                 instanceId,
-                'Get Installed SQL patches'
+                'Get Installed SQL patches',
+                accountId
             );
             const parsedResponse = sqlResponseParsing(response);
             const { installedPatches } = parsedResponse;
