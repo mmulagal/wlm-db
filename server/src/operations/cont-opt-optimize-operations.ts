@@ -2886,7 +2886,7 @@ async function optimizeClone(
             await updateOptimizedConfigMetaData(
                 accountId,
                 databaseInstanceId,
-                matchingClone,
+                [matchingClone],
                 'CLONE',
                 instanceMetadata as DatabaseInstanceMetadata
             );
