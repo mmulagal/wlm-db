@@ -1241,7 +1241,7 @@ export const GENERAL = {
     ],
     MULTIPLE_INSTANCE_DETECT_MANAGE_FAILED: [
         'The attempt to manage ',
-        ' SQL Server instances was unsuccessful. The instaces state has been changed to unregister. Please try again or contact support if the problem persists.'
+        ' SQL Server instances was unsuccessful. The instances state has been changed to unregister. Please try again or contact support if the problem persists.'
     ],
     MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS: [' out of ', ' SQL Server instances have been successfully registered.'],
     MULTIPLE_INSTANCE_DETECT_MANAGE_PARTIAL_SUCCESS: [
