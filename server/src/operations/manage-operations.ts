@@ -414,7 +414,13 @@ async function manageSqlInstance(
             }
 
             try {
-                const { windowsAuthentication, sqlServerAuthentication, windowsDomainUserAuthentication, serverGuid, storage } = sqlInstanceInfo;
+                const {
+                    windowsAuthentication,
+                    sqlServerAuthentication,
+                    windowsDomainUserAuthentication,
+                    serverGuid,
+                    storage
+                } = sqlInstanceInfo;
                 const storageInfo = storage?.find((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN);
                 const storageProtocols = storage
                     ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
