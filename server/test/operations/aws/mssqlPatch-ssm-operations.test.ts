@@ -21,13 +21,20 @@ describe('MSSQL Patch SSM operations', () => {
 
     it('Get installed SQL patch details', async () => {
         const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2'];
-        const response = await getInstalledSQLPatchDetails(credentialsId, 'us-east-1', instanceIds);
+        const response = await getInstalledSQLPatchDetails(credentialsId, 'us-east-1', instanceIds, 'account-id-123');
         expect(response?.length).toEqual(instanceIds.length);
     });
 
     it('Get the MSSQL version', async () => {
         const instanceId = 'i-test-ec2-1';
-        const { versionYear } = await getTheMSSqlversion(credentialsId, 'us-east-1', instanceId, false, 'MSSQLSERVER');
+        const { versionYear } = await getTheMSSqlversion(
+            credentialsId,
+            'us-east-1',
+            instanceId,
+            false,
+            'MSSQLSERVER',
+            'account-id-123'
+        );
         expect(versionYear).toMatch(/20\d{2}/);
     });
 });
