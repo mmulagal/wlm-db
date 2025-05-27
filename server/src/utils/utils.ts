@@ -50,6 +50,7 @@ import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
 import { REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
 import { readFromCacheByKey, writeToCache } from './cache';
+import { DatabaseInstances, DatabaseInstancesIncludingResource, Resource } from './common-types';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -497,6 +498,16 @@ function checkAccount(accountId: string) {
         return userId && !accountId.includes('_') ? `${accountId}_${userId}` : accountId;
     }
     return accountId;
+}
+
+async function getInstancesWithResourceForDemo(databaseInstances: DatabaseInstances[], resources: Resource[]) {
+    const updatedInstances: DatabaseInstancesIncludingResource[] = databaseInstances
+        .map(instance => {
+            const foundResource = resources.find(res => res.resource_id === instance.resource_id);
+            return foundResource ? { ...instance, resource: foundResource } : undefined;
+        })
+        .filter((instance): instance is DatabaseInstancesIncludingResource => instance !== undefined);
+    return updatedInstances;
 }
 
 function calculateSQLandWindowsVersion(sqlAmiName: string) {
@@ -1116,5 +1127,6 @@ export {
     generateSqlResourceId,
     extractSqlInstanceName,
     escapeBackslash,
-    getEc2Hostname
+    getEc2Hostname,
+    getInstancesWithResourceForDemo
 };

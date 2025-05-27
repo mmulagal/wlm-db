@@ -1,97 +1,13 @@
-import {
-    DEPLOYMENT_STATUS,
-    DEPLOYMENT_MODEL,
-    STORAGE_TYPE,
-    SOURCE,
-    DATABASE_DEPLOYMENT_TYPE,
-    DATABASE_TYPE
-} from '@prisma/client';
+import { DEPLOYMENT_STATUS, SOURCE, DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE } from '@prisma/client';
 import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
-import { checkAccount } from '../../utils/utils';
+import { checkAccount, isDemo, getInstancesWithResourceForDemo } from '../../utils/utils';
 import { TCO_FEATURE } from '../../utils/consts';
-import { DatabaseInstanceConfigurations, DatabaseInstanceMetadata } from '../../utils/common-types';
+import { Deployment, Event, Resource, Config, DatabaseInstanceRecord, ListDatabaseInstancesRecord } from './db-types';
 
 const logger = getLogger();
-
-interface Deployment {
-    deploymentId: string;
-    parentDeploymentId?: string;
-    deploymentName: string;
-    cloudProviderAccountId?: string;
-    cloudProviderName?: string;
-    credentialsId: string;
-    deploymentStatus: DEPLOYMENT_STATUS;
-    deploymentModel: DEPLOYMENT_MODEL;
-    deploymentStatusReason?: string;
-    startTime: number;
-    endTime?: number;
-    region: string;
-    data?: object;
-}
-
-interface Event {
-    eventId: string;
-    accountId: string;
-    deploymentId: string;
-    deploymentName: string;
-    eventStatus: DEPLOYMENT_STATUS;
-    eventStatusReason: string;
-    resourceType: string;
-    time: number;
-    data?: object;
-}
-
-interface Resource {
-    resourceId: string;
-    credentialsId: string;
-    storageType: STORAGE_TYPE;
-    resourceName?: string;
-    resourceType: string;
-    coRelationId?: string;
-    cloudProviderAccountId?: string;
-    cloudProviderName?: string;
-    region: string;
-    metadata?: object;
-}
-
-interface Config {
-    user?: string;
-    creationTime?: number;
-    name: string;
-    data?: object;
-    databaseType?: string;
-}
-
-interface DatabaseInstanceRecord {
-    credentialsId: string;
-    resourceId: string;
-    region: string;
-    databaseInstanceId: string;
-    databaseInstanceName: string;
-    fsxnIds: string;
-    isDefault: boolean;
-    source: string;
-    sqlDeploymentType: string;
-    fsxSvmId: object;
-    storageProtocol?: string;
-    numberofUserDbsCreated?: number;
-    sandboxCreated?: boolean;
-    metaData?: DatabaseInstanceMetadata;
-    databaseType: string;
-    storageType?: string;
-    configurations?: DatabaseInstanceConfigurations;
-}
-
-interface ListDatabaseInstancesRecord {
-    resourceId?: string;
-    sqlInstanceId?: string;
-    sqlInstanceName?: string;
-    isDefault?: boolean;
-    credentialsId?: string;
-    region?: string | null;
-}
+const isDemoFlow = isDemo();
 
 async function listDeployments(
     accountId?: string,
@@ -699,7 +615,7 @@ async function listDatabaseInstances(accountId?: string, record?: ListDatabaseIn
     const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region } = record ?? {};
     accountId = accountId ? checkAccount(accountId) : '';
 
-    return prisma.client.database_instances.findMany({
+    let databaseInstances = await prisma.client.database_instances.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
             ...(credentialsId && { credentials_id: credentialsId }),
@@ -716,6 +632,13 @@ async function listDatabaseInstances(accountId?: string, record?: ListDatabaseIn
             resource: true
         }
     });
+
+    if (!isEmpty(databaseInstances) && isDemoFlow) {
+        // relational mapping in prismock has some issues. So we need to map the resource to the database instance
+        const filteredResource = await listResources(accountId, undefined, credentialsId);
+        databaseInstances = await getInstancesWithResourceForDemo(databaseInstances, filteredResource);
+    }
+    return databaseInstances;
 }
 
 async function deleteDatabaseInstance(
@@ -827,7 +750,6 @@ async function updateTrackedEc2Record(
 }
 
 export {
-    Resource,
     listDeployments,
     createDeployment,
     deleteDeployment,
@@ -851,7 +773,6 @@ export {
     upsertDatabaseInstance,
     listDatabaseInstances,
     deleteDatabaseInstance,
-    DatabaseInstanceRecord,
     updateDatabaseInstance,
     createTrackedEc2Records,
     listTrackedEc2,
