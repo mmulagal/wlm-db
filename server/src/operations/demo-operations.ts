@@ -2,7 +2,7 @@ import randomize from 'randomatic';
 import { Volume } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { compact, isUndefined, sample } from 'lodash-es';
+import { compact, sample } from 'lodash-es';
 import {
     CloudProviders,
     RESOURCESTYPE,
@@ -972,7 +972,7 @@ function prepareDemoSandboxMetadata(
         },
         collation: SQL_DEFAULT_COLLATION
     });
-    if (!isUndefined(instanceId)) {
+    if (!instanceId) {
         hostMetadata.sandboxes[0].databaseInstanceId = instanceId;
     }
     return hostMetadata;
