@@ -372,7 +372,7 @@ const HostTable = () => {
         },
         {
             id: '2',
-            Header: 'Managed instances',
+            Header: 'Registered instances',
             accessor: 'totalInstance',
             width: '200px',
             isSortable: true,
@@ -535,15 +535,9 @@ const HostTable = () => {
         initialColumnState: tableManageColumnState.hostTable,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
-                const { disableOption, disableMessage } = findManageOption(rowData);
+                // const { disableOption, disableMessage } = findManageOption(rowData);
                 const { disableOptionDatabase, disableMessageDatabase } = findDatabaseOption(rowData);
                 const menu = [
-                    {
-                        id: 'manage',
-                        displayName: 'Manage',
-                        disabled: disableOption,
-                        infoText: disableMessage
-                    },
                     {
                         id: 'viewInstances',
                         displayName: 'View instances'

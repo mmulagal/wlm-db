@@ -13,6 +13,7 @@ import {
     detectFieldsValidation,
     handleManageInstances,
     handleManageInstancesBulk,
+    manageActionCol,
     saveFsxInCredRegisteredObj,
     uniqueHostRow,
     updateInstanceStatus
@@ -25,6 +26,7 @@ import {
     isSmbProtocol
 } from '../../../../utils/utilityFunctions';
 import {
+    ACTION_CTA,
     DETECT_HOST_VAR,
     FROM_DIALOG,
     INVENTORY_STATUS,
@@ -42,14 +44,17 @@ import {
     setDetectedInstanceId,
     setInProgressInstances,
     setInventoryTableData,
+    setManageSingleInstanceData,
     setRadioValueDetect,
     setSelectedFilterValue,
     setSelectedHeaderTab,
     setSelectedInventoryTab,
+    setSelectedMultiDetectInstances,
     setSelectedRowsForManage,
     setTableManageColumnState,
     setUnManagedPerfInstanceIdsList,
-    setValuesForForm
+    setValuesForForm,
+    setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -85,12 +90,14 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
-import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
+import { useTranslation } from 'react-i18next';
 
 const InstancesTable = () => {
+    const { t } = useTranslation();
     const disptach = useDispatch();
+
     const { instanceTableRows, inProgressInstances, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
@@ -186,11 +193,11 @@ const InstancesTable = () => {
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Unmanage instance'}
+                header={'Unregister instance'}
                 content={
                     <>
                         <DsTypography variant="Regular_14">
-                            Are you sure you want to unmanage the SQL Server instance?{' '}
+                            Are you sure you want to unregister the SQL Server instance?{' '}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginTop: '24px', width: '700px' }}>
                             This will exclude the instance from Workload Factory's best practices and lifecycle
@@ -363,10 +370,7 @@ const InstancesTable = () => {
                         error.push(result?.data?.sqlServerError || '');
                         error.push(result?.data?.fsxnError || '');
                         dispatch(setIsDetectHostError(error.join(' ')));
-                        dispatch(setIsDetectHostLoading(false));
                     } else {
-                        dispatch(setIsDetectHostLoading(false));
-
                         // store fsx cred in register obj if payload has fsx register
                         let isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
 
@@ -397,10 +401,10 @@ const InstancesTable = () => {
                     }
                 } else {
                     dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
-                    dispatch(setIsDetectHostLoading(false));
                 }
             } catch (error) {
                 dispatch(setIsDetectHostError(error || GENERAL.FAILED_TO_DETECT_HOST));
+            } finally {
                 dispatch(setIsDetectHostLoading(false));
             }
         }
@@ -451,7 +455,7 @@ const InstancesTable = () => {
             errorMessage = 'The instance is already managed by Workload Factory.';
         } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
             isDisabled = true;
-            errorMessage = 'The instance is not detected.';
+            errorMessage = 'The instance is not authenticated.';
         } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
             isDisabled = true;
             errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
@@ -599,33 +603,28 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Management status',
-            accessor: 'statusColText',
+            Header: 'Registration status',
+            accessor: 'managementStatus',
             id: '5',
             isSortable: false,
             width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'statusColText'),
+            filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
             renderCell: (cellData: string, rowData: any) => {
-                if (cellData === INVENTORY_STATUS.UNMANAGED) {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
-                }
-                if (cellData === INVENTORY_STATUS.UNDETECTED) {
-                    if (rowData?.hostType === GENERAL.MICROSOFT_SQL_SERVER_TYPE) {
-                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
-                    } else {
-                        return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
-                    }
+                if (cellData === INVENTORY_STATUS.NOT_REGISTERED) {
+                    return (
+                        <DotComponent color={'var(--toggle-off-bg)'} value={t('databases.general.not_registered')} />
+                    );
                 }
                 if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
                         <div className={styles.inProgress}>
-                            <SmallLoader />
+                            <DsFlashingDotsLoader />
                             <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
                         </div>
                     );
                 }
-                if (cellData === INVENTORY_STATUS.MANAGED) {
-                    return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
+                if (cellData === INVENTORY_STATUS.REGISTERED) {
+                    return <DotComponent color={'var(--success)'} value={t('databases.general.registered')} />;
                 }
             }
         },
@@ -851,6 +850,56 @@ const InstancesTable = () => {
                     </DsTypography>
                 );
             }
+        },
+        {
+            id: '12',
+            Header: '',
+            accessor: '',
+            isSortable: false,
+            width: '200px',
+            isSticky: true,
+            renderCell: (cellData: any, rowData: any) => {
+                const { colText, disableMsg } = manageActionCol(rowData);
+                return (
+                    <>
+                        {disableMsg ? (
+                            <Popover
+                                isAppendedToBody={true}
+                                children={disableMsg}
+                                trigger="hover"
+                                container={
+                                    <div className={styles.buttonContainer}>
+                                        <DsButton variant="secondary" isThin isDisabled={true}>
+                                            {colText}
+                                        </DsButton>
+                                    </div>
+                                }
+                            />
+                        ) : (
+                            <div className={styles.buttonContainer}>
+                                <DsButton
+                                    variant="secondary"
+                                    isThin
+                                    onClick={() => {
+                                        if (colText === ACTION_CTA.FIX_ISSUES) {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            optimizeAction(rowData);
+                                        } else {
+                                            dispatch(setManageSingleInstanceData(rowData));
+                                            dispatch(setWizardOperationType('single'));
+                                            navigate('../manage-wizard');
+                                        }
+                                    }}
+                                >
+                                    {colText}
+                                </DsButton>
+                            </div>
+                        )}
+                    </>
+                );
+            }
         }
     ];
 
@@ -859,8 +908,8 @@ const InstancesTable = () => {
         columns: managedHostSubTableColDefs,
         rows: updatedTableData,
         pageSize: 50,
-        selectionType: 'multiple',
-        defaultSelectedRows: [],
+        // selectionType: 'multiple',
+        // defaultSelectedRows: [],
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
@@ -886,14 +935,14 @@ const InstancesTable = () => {
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
-                        displayName: 'Detect',
+                        displayName: 'Authenticate',
                         disabled: disableOption,
                         infoText: disableMessage
                     });
                 } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     menu.push({
                         id: 'manage',
-                        displayName: 'Manage',
+                        displayName: 'Register',
                         disabled: disableOption,
                         infoText: disableMessage
                     });
@@ -901,13 +950,13 @@ const InstancesTable = () => {
                     menu.push(
                         {
                             id: 'optimize',
-                            displayName: 'Well-architect',
+                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
                             disabled: disableOption,
                             infoText: disableMessage
                         },
                         {
                             id: 'viewInstance',
-                            displayName: 'View instance',
+                            displayName: 'Manage instance',
                             disabled: disableOption,
                             infoText: disableMessage
                         },
@@ -933,7 +982,7 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'unManage',
-                            displayName: 'Unmanage'
+                            displayName: 'Unregister'
                         }
                     );
                 }
@@ -942,6 +991,12 @@ const InstancesTable = () => {
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
+                    if (
+                        rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                        rowData.statusColText === INVENTORY_STATUS.UNDETECTED
+                    ) {
+                        return true;
+                    }
                     if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
                         disableMsg = GENERAL.PGSQL_CTA_NA;
                         width = '110px';
@@ -1168,12 +1223,18 @@ const InstancesTable = () => {
         );
     };
 
+    const handleManageBulk = () => {
+        dispatch(setSelectedMultiDetectInstances([]));
+        dispatch(setWizardOperationType('bulk'));
+        navigate('../manage-wizard');
+    };
+
     return (
         <>
             <div className={styles.inventoryTable}>
                 <div
                     //  @ts-ignore
-                    className={styles.table}
+                    className={`${styles.table} ${styles.leftBorder}`}
                 >
                     <TableTopBar
                         //@ts-ignore
@@ -1182,10 +1243,17 @@ const InstancesTable = () => {
                         singularTitle="Instance"
                         exportToCsvOptions={{ fileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
+                        // actionsRight={
+                        //     <div className={styles.manageInstanceButton}>
+                        //         <DsButton isThin onClick={() => handleManageBulk()}>
+                        //             Register multiple instances
+                        //         </DsButton>
+                        //     </div>
+                        // }
                     />
-                    {selectedRowsForManage.length > 0 && (
+                    {/* {selectedRowsForManage.length > 0 && (
                         <BulkActionContainer action={'Manage'} onClick={handleBulkOperation} />
-                    )}
+                    )} */}
                     <Table
                         //@ts-ignore
                         tableProps={tableProps}

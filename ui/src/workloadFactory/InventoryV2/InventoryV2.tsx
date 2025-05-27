@@ -120,6 +120,17 @@ const InventoryV2 = () => {
                         if (perRow?.statusColText === INVENTORY_STATUS.MANAGED) {
                             optimizationStatusLoading = allmssqlHostAssessmentLoading;
                         }
+                        let managementStatus = inProgressInstances.has(
+                            uniqueHostRow(
+                                `${perHost?.ec2InstanceId}_${perRow.databaseInstanceName}`,
+                                perHost?.credentialId || '',
+                                perHost?.regionId || ''
+                            )
+                        )
+                            ? INVENTORY_STATUS.IN_PROGRESS
+                            : perRow.statusColText === INVENTORY_STATUS.MANAGED
+                            ? INVENTORY_STATUS.REGISTERED
+                            : INVENTORY_STATUS.NOT_REGISTERED;
                         let perRowData = {
                             ...perRow,
                             id: String(instanceUniqueId++),
@@ -160,7 +171,8 @@ const InventoryV2 = () => {
                             accountId: perHost?.accountId,
                             regionName: perHost?.regionName,
                             resourceId: perHost?.resourceId,
-                            ec2InstanceId: perHost?.ec2InstanceId
+                            ec2InstanceId: perHost?.ec2InstanceId,
+                            managementStatus: managementStatus
                         };
                         perInstanceData.push(perRowData);
                     });

@@ -8,8 +8,14 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-async function getCloudWatchLogs(credentialsId: string, region: string, logGroupName: string, logStreamName: string) {
-    logger.info('Getting cloudwatch logs response:', { region, credentialsId, logGroupName, logStreamName });
+async function getCloudWatchLogs(
+    credentialsId: string,
+    region: string,
+    logGroupName: string,
+    logStreamName: string,
+    accountId?: string
+) {
+    logger.info('Getting cloudwatch logs response:', { region, credentialsId, logGroupName, logStreamName, accountId });
 
     const input = {
         logGroupName,
@@ -18,7 +24,7 @@ async function getCloudWatchLogs(credentialsId: string, region: string, logGroup
     };
 
     try {
-        const logs = await getPaginatedCloudwatchLogs(credentialsId, region, input);
+        const logs = await getPaginatedCloudwatchLogs(credentialsId, region, input, accountId);
         return logs;
     } catch (error) {
         logger.error('Error reading log events from CloudWatch:', error);

@@ -159,8 +159,10 @@ EOF
     get_asm_iscsi_details() {
         local diskName="$1"
         
-        mountDevice=$(udevadm info --query=all --name="/dev/oracleasm/disks/$diskName" | grep -m 1 "disk/by-path" | awk '{print $2}')
+        udevInfo=$(udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
+        mountDevice=$(echo "$udevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
         mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
+        iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
         mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
 
         if echo "$mountPoint" | grep -q "iscsi"; then
@@ -168,6 +170,7 @@ EOF
         else
             protocol="others"
         fi
+        mountPoint=$iscsiSerialNumber
         echo "$mountIp,$mountPoint,$protocol"
     }
 
@@ -255,8 +258,10 @@ EOF
 
                 if [ -n "$source" ]; then
                     if [[ "$fstype" != nfs* ]]; then
-                        mountDevice=$(udevadm info --query=all --name=$source | grep -m 1 "disk/by-path" | awk '{print $2}')
+                        udevInfo=$(udevadm info --query=all --name=$source)
+                        mountDevice=$(echo "$udevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
                         mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
+                        iscsiSerialNumber=$(echo "$udevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
                         mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
                         if echo "$mountPoint" | grep -q "iscsi"; then
                             protocol="iSCSI"
@@ -264,6 +269,7 @@ EOF
                             protocol="others"
                         fi
 
+                        mountPoint=$iscsiSerialNumber
                         jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\"}"
                     elif [[ "$fstype" == nfs* ]]; then
                         dns_name=$(echo "$source" | cut -d':' -f1)
@@ -413,8 +419,8 @@ EOF
 
     for sid in $SIDS; do
         # Check if the instance is running by checking for its PMON process.
-        if ! pgrep -f "ora_pmon_$ORACLE_SID" > /dev/null 2>&1; then
-            echo "Instance $ORACLE_SID is not active. Skipping."
+        if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
+            echo "Instance $sid is not active. Skipping."
             continue
         fi
 

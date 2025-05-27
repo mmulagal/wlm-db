@@ -6,6 +6,7 @@ import {
     initialHostsTableColState,
     initialInstanceTableColState
 } from '../../utils/manageColumnUtils';
+import { setLandingFrom } from './getWellOptimizeSlice';
 
 const initialInventoryV2State: InventorySliceData = {
     breadCrumbSelectedFrom: '',
@@ -40,6 +41,7 @@ const initialInventoryV2State: InventorySliceData = {
     fsxCredentialStatusLoading: false,
     mssqlInstancesData: null,
     pgsqlInstancesData: null,
+    oracleInstancesData: null,
     perfMssqlInstancesData: null,
     inProgressInstances: new Set(),
     manageHostSelectedRows: [],
@@ -95,13 +97,38 @@ const initialInventoryV2State: InventorySliceData = {
         error: ''
     },
     createResourceApiLoading: false,
-    authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+    authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+    manageInstanceInstallAction: {
+        installMissingAWS: false,
+        installMissingPowershell: false
+    },
+    manageSingleInstanceReadiness: null,
+    manageSingleInstanceChecks: null,
+    manageSingleInstanceData: null,
+    wizardOperationType: '',
+    selectedMultiDetectInstances: [],
+    landingFromWizard: false
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setLandingFromWizard: (state, action: PayloadAction<any>) => {
+            state.landingFromWizard = action.payload;
+        },
+        setSelectedMultiDetectInstances: (state, action: PayloadAction<any>) => {
+            state.selectedMultiDetectInstances = action.payload;
+        },
+        setInstallType: (state, action: PayloadAction<Partial<typeof state.manageInstanceInstallAction>>) => {
+            state.manageInstanceInstallAction = {
+                ...state.manageInstanceInstallAction,
+                ...action.payload
+            };
+        },
+        setWizardOperationType: (state, action: PayloadAction<any>) => {
+            state.wizardOperationType = action.payload;
+        },
         setAuthenticationType: (state, action: PayloadAction<any>) => {
             state.authenticationType = action.payload;
         },
@@ -194,6 +221,9 @@ const inventoryV2Slice = createSlice({
         },
         setPgsqlInstancesData: (state, action: PayloadAction<any>) => {
             state.pgsqlInstancesData = action.payload;
+        },
+        setOracleInstancesData: (state, action: PayloadAction<any>) => {
+            state.oracleInstancesData = action.payload;
         },
         setPerfMssqlInstancesData: (state, action: PayloadAction<any>) => {
             state.perfMssqlInstancesData = action.payload;
@@ -298,6 +328,15 @@ const inventoryV2Slice = createSlice({
         setCreateResourceApiLoading: (state, action: PayloadAction<any>) => {
             state.createResourceApiLoading = action.payload;
         },
+        setManageSingleInstanceReadiness: (state, action: PayloadAction<any>) => {
+            state.manageSingleInstanceReadiness = action.payload;
+        },
+        setManageSingleInstanceChecks: (state, action: PayloadAction<any>) => {
+            state.manageSingleInstanceChecks = action.payload;
+        },
+        setManageSingleInstanceData: (state, action: PayloadAction<any>) => {
+            state.manageSingleInstanceData = action.payload;
+        },
         resetPerComboData: (state, action: PayloadAction<any>) => {
             state.createResourceApiLoading = true;
             state.resetManagedData = true;
@@ -337,6 +376,7 @@ const inventoryV2Slice = createSlice({
 
             state.mssqlInstancesData = null;
             state.pgsqlInstancesData = null;
+            state.oracleInstancesData = null;
             state.perfMssqlInstancesData = {};
             state.unManagedPerfInstanceIdsList = [];
         },
@@ -359,6 +399,10 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setLandingFromWizard,
+    setSelectedMultiDetectInstances,
+    setWizardOperationType,
+    setInstallType,
     setAuthenticationType,
     setSelectedFilterValue,
     setSelectedInventoryTab,
@@ -387,6 +431,7 @@ export const {
     setFsxCredentialStatusLoading,
     setMssqlInstancesData,
     setPgsqlInstancesData,
+    setOracleInstancesData,
     setPerfMssqlInstancesData,
     setInProgressInstances,
     setManageHostSelectedRows,
@@ -425,7 +470,10 @@ export const {
     setDashSandboxList,
     setDashSandboxSavings,
     setCreateResourceApiLoading,
-    resetInventoryLoading
+    resetInventoryLoading,
+    setManageSingleInstanceChecks,
+    setManageSingleInstanceReadiness,
+    setManageSingleInstanceData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

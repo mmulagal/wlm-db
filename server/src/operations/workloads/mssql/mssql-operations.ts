@@ -69,6 +69,7 @@ import {
 import { getParameter } from '../../../lib/aws/ssm';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 import { getPgSqlInstanceDetails } from '../pgsql/pgsql-operations';
+import { getOracleInstanceDetails } from '../oracle/oracle-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -783,11 +784,12 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                           )
                         : !isEmpty(domain)
                         ? Boolean(
-                              domain?.find(({ sqlinstancename }: { sqlinstancename: string }) => {
-                                  sqlinstancename &&
+                              domain?.find(
+                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
+                                      sqlinstancename &&
                                       (sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase() ||
-                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME);
-                              })
+                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME)
+                              )
                           )
                         : false;
                 });
@@ -1039,6 +1041,17 @@ async function getActiveSqlNode(
                 );
                 return pgSqlInstanceDetails;
             }
+
+            if (resourceType === DatabaseTypes.ORACLE) {
+                const oracleInstanceDetails = await getOracleInstanceDetails(
+                    accountId!,
+                    credentialsId,
+                    region,
+                    node1InstanceId
+                );
+                return oracleInstanceDetails;
+            }
+
             const { instanceName, instancesDetails = [] } =
                 (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
             if (instanceName) {
@@ -1339,11 +1352,12 @@ async function getActiveSqlNodeAndInstanceDetails(
                           )
                         : !isEmpty(domain)
                         ? Boolean(
-                              domain?.find(({ sqlinstancename }: { sqlinstancename: string }) => {
-                                  sqlinstancename &&
+                              domain?.find(
+                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
+                                      sqlinstancename &&
                                       (sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase() ||
-                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME);
-                              })
+                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME)
+                              )
                           )
                         : false;
                 });

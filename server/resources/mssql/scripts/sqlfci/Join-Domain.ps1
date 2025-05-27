@@ -17,7 +17,6 @@ try {
 $ErrorActionPreference = "Stop"
 Start-Transcript -Path C:\cfn\log\$($MyInvocation.MyCommand.Name).log -Append
 
-Start-Transcript -Path C:\cfn\log\$($MyInvocation.MyCommand.Name).log -Append
 $env:PSModulePath += ';C:\Windows\system32\WindowsPowerShell\v1.0\Modules\aws_ssm'
     if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
         Install-WindowsFeature RSAT-AD-PowerShell -ErrorAction SilentlyContinue *>$null

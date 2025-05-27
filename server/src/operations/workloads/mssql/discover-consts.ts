@@ -36,7 +36,7 @@ const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
 ]);
 
 const MINIMUM_PREPREQUISITES = {
-    SQL_PERMISSIONS: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE', 'CONNECT ANY DATABASE'],
+    SQL_PERMISSIONS: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE'],
     MODULES: ['AWS.Tools.SimpleSystemsManagement']
 };
 
@@ -535,6 +535,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         
           $editionDBCountMachineInfoGuid = $null
           $existingPermissions = $null
+          $sqlInstanceDriveLetterOrPathList = $null
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" } 
 
           $responseObject['isSqlCmdAvailable'] = $True
@@ -968,6 +969,7 @@ const INSTALL_POWERSHELL_7 = (s3SignedURL: string) => [
     } else {
       throw "Failed to install PowerShell 7.5.0"
       }
+    $responseObject['status'] = "success"
   } catch {
     $responseObject['${FAILURE_INFO}'] = $_.Exception.Message
     $responseObject['status'] = "failed"
@@ -976,7 +978,6 @@ const INSTALL_POWERSHELL_7 = (s3SignedURL: string) => [
     }
   } finally {
     $responseObject['scriptExecutionTime'] = ((Get-Date) - $scriptStartTime).TotalMilliseconds
-    $responseObject['status'] = "success"
     Echo $responseObject | ConvertTo-Json -Compress
   }
 `

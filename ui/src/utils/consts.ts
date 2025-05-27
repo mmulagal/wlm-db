@@ -199,7 +199,8 @@ export const JOB_MONITORING_TYPE = {
     SANDBOX: 'SANDBOX',
     ASSESSMENT: 'ASSESSMENT',
     OPTIMIZE: 'OPTIMIZATION',
-    WELL_ARCHITECTED: 'WELL_ARCHITECTED'
+    WELL_ARCHITECTED: 'WELL_ARCHITECTED',
+    REGISTER_RESOURCE: 'REGISTER_RESOURCE'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -612,6 +613,8 @@ export const OPTIMIZE_POLLING_INTERVAL = 5000;
 
 export const MAX_IOPS_VALUE = 160000;
 
+export const MANAGE_POLLING_INTERVAL = 5000;
+
 export const INVENTORY_STATUS = {
     MANAGED: 'Managed',
     UNMANAGED: 'Unmanaged',
@@ -631,7 +634,9 @@ export const INVENTORY_STATUS = {
     STOPPED: 'Stopped',
     CASE_SENSITIVE_UP: 'Up',
     CASE_SENSITIVE_DOWN: 'Down',
-    RUNNING_LOWER: 'running'
+    RUNNING_LOWER: 'running',
+    REGISTERED: 'Registered',
+    NOT_REGISTERED: 'Not registered'
 };
 
 export const WELL_ARCHITECT_FINDINGS = {
@@ -667,7 +672,8 @@ export const INSTANCE_API_FIELDS = {
         'usageEstimation',
         'dbCount'
     ],
-    UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation']
+    UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation'],
+    UNMANAGED_ORACLE_DEFAULT: ['protection', 'performance', 'usageEstimation']
 };
 
 export const PROTECTION_TEXT_STATUS = {
@@ -908,6 +914,18 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     }
+};
+
+export const MANAGE_STATES = {
+    READY: 'Ready',
+    MISSING_POWERSHELL: 'Missing PowerShell modules',
+    MISSING_PREREQUISITES: 'Missing prerequisites',
+    POWERSHELL7: 'Powershell 7'
+};
+
+export const ACTION_CTA = {
+    FIX_ISSUES: 'Fix issues',
+    MANAGE_INSTANCES: 'Register instance'
 };
 
 export const RESPONSE_STATUS = {

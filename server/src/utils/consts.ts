@@ -303,7 +303,8 @@ enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
     FSX = 'FSX',
     PGSQL = 'PGSQL',
-    WINDOWS_USER = 'WINDOWS_USER'
+    WINDOWS_USER = 'WINDOWS_USER',
+    ORACLE = 'ORACLE'
 }
 
 const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
@@ -1220,6 +1221,12 @@ const PGSQL_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     5: 'protection'
 };
 
+const ORACLE_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
+    0: 'databaseInstancetopologyData',
+    1: 'performance',
+    2: 'protection'
+};
+
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
     DISK = 'disk',
@@ -1493,6 +1500,11 @@ const FINDING = {
 const SQL_SERVICE_STATE = {
     RUNNING: 'Running',
     STOPPED: 'Stopped'
+};
+
+const ORACLE_INSTANCE_STATE = {
+    STARTED: 'STARTED',
+    OPEN: 'OPEN'
 };
 
 const WIN_SQL_EC2_USAGE_OPERATION = ['RunInstances:0102', 'RunInstances:0006', 'RunInstances:0202'];
@@ -2058,6 +2070,7 @@ export {
     CF_STACK_COUNT_QUOTACODE,
     MSSQL_DATABASE_INSTANCE_INDEX_MAPPING,
     PGSQL_DATABASE_INSTANCE_INDEX_MAPPING,
+    ORACLE_DATABASE_INSTANCE_INDEX_MAPPING,
     PGSQL_CW_CONFIG,
     SQL_CASE_INSENSITIVE,
     MAX_EMAIL_ATTACHMENT_SIZE,
@@ -2085,5 +2098,6 @@ export {
     PGSQL_DEFAULT_INSTANCE_NAME,
     POWERSHELL_7_RELATIVE_PATH,
     CLONE_ACTION,
-    OTHER_CLONE
+    OTHER_CLONE,
+    ORACLE_INSTANCE_STATE
 };

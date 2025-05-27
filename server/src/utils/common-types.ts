@@ -396,6 +396,14 @@ interface PgSqlInstanceDetails {
     isDefault: boolean;
 }
 
+interface OracleInstanceDetails {
+    databaseInstanceId: string;
+    instanceName: string;
+    isManaged: boolean;
+    instanceState: string;
+    isDefault: boolean;
+}
+
 interface WorkloadInstance {
     id: string;
     name: string;
@@ -471,6 +479,7 @@ interface OSAssessment {
     'ntfs-allocation-details': Array<{ Key?: string; Value?: string }>;
     'mpio-load-balance-policy': string;
     'ntfs-allocation-unit-size': number;
+    'mpio-timeout': number;
 }
 interface StorageAssessment {
     filesystemId: string;
@@ -563,6 +572,10 @@ interface OptimizeMpioIscsiSessionsParams extends OptimizeParams {
     svmId: string;
     iscsiTargetAddresses: string[];
     currentMpioSessionsCount: SessionsCountPerIscsiTarget[];
+}
+
+interface OptimizeMpioTimeoutParams extends OptimizeParams {
+    ssmCommand: string;
 }
 
 interface DatabaseInstancesIncludingResource extends DatabaseInstances {
@@ -707,6 +720,7 @@ export {
     OptimizeMpioIscsiSessionsParams,
     SessionsCountPerIscsiTarget,
     PgSqlInstanceDetails,
+    OracleInstanceDetails,
     RssConfigAssesment,
     MaxDOPAssesment,
     PatchDetail,
@@ -728,5 +742,6 @@ export {
     DatabaseInstanceConfigurations,
     DatabaseHostConfigurations,
     CrrAssessment,
-    CrrDetails
+    CrrDetails,
+    OptimizeMpioTimeoutParams
 };

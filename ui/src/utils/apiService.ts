@@ -684,6 +684,13 @@ export const inventoryApi = createApi({
                     body: payload
                 })
             }),
+            registerResourceCredentialsBulk: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/discover/resource-credentials`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getMssqlInstanceData: builder.mutation({
                 query: ({ credentialId, regionId, instances, nextToken = null }) => ({
                     url: nextToken
@@ -816,6 +823,14 @@ export const inventoryApiV2 = createApi({
                     method: 'GET'
                 })
             }),
+            getOracleInstanceData: builder.mutation({
+                query: ({ credentialId, regionId, instances, fields, nextToken = null }) => ({
+                    url: nextToken
+                        ? `v1/oracle/credentials/${credentialId}/regions/${regionId}/resource-details?instances=${instances}&fields=${fields}&nextToken=${nextToken}`
+                        : `v1/oracle/credentials/${credentialId}/regions/${regionId}/resource-details?instances=${instances}&fields=${fields}`,
+                    method: 'GET'
+                })
+            }),
             unmanageMssqlInstance: builder.mutation({
                 query: ({ credentialsId, resourceId, dbInstanceId }) => ({
                     url: `v1/mssql/credentials/${credentialsId}/resources/${resourceId}/instances?databaseInstanceIds=${dbInstanceId}`,
@@ -846,6 +861,13 @@ export const inventoryApiV2 = createApi({
                         return `v1/mssql/credentials/${credentialId}/regions/${regionId}/assessment`;
                     }
                 }
+            }),
+            manageBulkV2MssqlInstance: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v2/mssql/manage`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1247,6 +1269,7 @@ export const {
     useLazyDiscoverPgsqlHostsQuery,
     useLazyGetFsxCredentialStatusQuery,
     useRegisterResourceCredentialsMutation,
+    useRegisterResourceCredentialsBulkMutation,
     useGetMssqlInstanceDataMutation,
     usePrepareHostMutation
 } = inventoryApi;
@@ -1258,10 +1281,12 @@ export const {
     useLazyGetPgSqlDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
     useGetPgsqlInstanceDataMutation,
+    useGetOracleInstanceDataMutation,
     useUnmanageMssqlInstanceMutation,
     useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,
-    useLazyGetAllMssqlHostsAssessmentDataQuery
+    useLazyGetAllMssqlHostsAssessmentDataQuery,
+    useManageBulkV2MssqlInstanceMutation
 } = inventoryApiV2;
 
 export const {

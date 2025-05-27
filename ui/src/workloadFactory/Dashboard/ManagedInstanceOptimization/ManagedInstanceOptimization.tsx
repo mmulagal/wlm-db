@@ -7,12 +7,13 @@ import { ReactComponent as WellArchitect } from '../../../assets/well-architect.
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import useResize from '../../../common/hooks/useResize';
 import { GENERAL } from '../../../utils/appConstants';
-
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
 import { getManagedInstanceOptimizationSummary } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
 const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) => {
+    const { t } = useTranslation();
     const windowSize = useResize();
     const { allmssqlHostAssessmentLoading, allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
@@ -58,7 +59,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
         <div className={styles.managedInstance}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Managed instances well-architected score
+                    {t('databases.general.manage-instances-well-architected-score')}
                 </DsTypography>
 
                 <div className={styles.ManageInstanceTooltipSection}>
@@ -91,7 +92,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                     </div>
 
                                     <DsTypography variant="Regular_14" style={{ whiteSpace: 'nowrap' }}>
-                                        Total managed instances
+                                        Total registered instances
                                     </DsTypography>
                                 </div>
                                 <SeparatorComponent variant="vertical" height="48px" />
@@ -123,7 +124,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <div className={styles.headSectionSmall}>
                                     <div className={styles.manageInstanceTooltipSection}>
                                         <DsTypography variant="Semibold_16" style={{ whiteSpace: 'nowrap' }}>
-                                            Total managed instances &nbsp;{instanceOptimizationSummary?.totalInstances}
+                                            Total registered instances &nbsp;{instanceOptimizationSummary?.totalInstances}
                                         </DsTypography>
                                         {instanceOptimizationSummary?.hasDismissedOrPostponed && (
                                             <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>

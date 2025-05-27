@@ -97,6 +97,7 @@ import {
     resetInventoryLoading,
     resetRefreshData,
     setIsRefreshed,
+    setLandingFromWizard,
     setSelectedHeaderTab
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
@@ -157,9 +158,11 @@ const HeaderComponent = ({ tab }: Tab) => {
         fsxCredentialStatusLoading,
         mssqlInstancesData,
         pgsqlInstancesData,
+        oracleInstancesData,
         perfMssqlInstancesData,
         potentialSavingsHostData,
-        createResourceApiLoading
+        createResourceApiLoading,
+        landingFromWizard
     } = useAppSelector(state => state.inventoryV2);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
@@ -197,6 +200,12 @@ const HeaderComponent = ({ tab }: Tab) => {
     DatabaseHomeApis();
     SavingsCalculatorApi();
     SavingsCalculatorManualApi();
+
+    useEffect(() => {
+        return () => {
+            dispatch(setLandingFromWizard(false));
+        };
+    }, [dispatch]);
 
     useEffect(() => {
         let tabValue = setTabValue(tab, selectedHeaderTab);
@@ -486,6 +495,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             const {
                 mssqlInstancesData: mssqlInstancesDataLatest,
                 pgsqlInstancesData: pgsqlInstancesDataLatest,
+                oracleInstancesData: oracleInstancesDataLatest,
                 perfMssqlInstancesData: perfMssqlInstancesDataLatest,
                 potentialSavingsHostData: potentialSavingsHostDataLatest
             } = state.inventoryV2;
@@ -516,6 +526,21 @@ const HeaderComponent = ({ tab }: Tab) => {
                         pgsqlInstancesDataLatest?.[key]?.loading
                     ) {
                         isPgsqlInstanceDataLoading = true;
+                    }
+                });
+            }
+
+            let isOracleInstanceDataLoading = false;
+            if (oracleInstancesDataLatest) {
+                Object.keys(oracleInstancesDataLatest)?.map((key: any) => {
+                    let keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[1] === currentCredId &&
+                        keyList[2] === currentRegionId &&
+                        oracleInstancesDataLatest?.[key]?.loading
+                    ) {
+                        isOracleInstanceDataLoading = true;
                     }
                 });
             }
@@ -554,7 +579,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 !isMssqlInstanceDataLoading &&
                 !perfMssqlInstancesDataLoading &&
                 !potentialSavingsHostDataLoading &&
-                !isPgsqlInstanceDataLoading
+                !isPgsqlInstanceDataLoading &&
+                !isOracleInstanceDataLoading
             ) {
                 let newStatus = { ...multiDataStatusRef.current };
                 newStatus[currentCredId + '_' + currentRegionId] = true;
@@ -577,6 +603,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         fsxCredentialStatusLoading,
         mssqlInstancesData,
         pgsqlInstancesData,
+        oracleInstancesData,
         perfMssqlInstancesData,
         potentialSavingsHostData
     ]);
@@ -1101,7 +1128,8 @@ const HeaderComponent = ({ tab }: Tab) => {
             (!statusChk &&
                 (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS ||
                     tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
-                    tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM))
+                    tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM ||
+                    landingFromWizard))
         ) {
             return true;
         } else {
