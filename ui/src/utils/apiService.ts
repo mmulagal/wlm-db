@@ -823,6 +823,14 @@ export const inventoryApiV2 = createApi({
                     method: 'GET'
                 })
             }),
+            getOracleInstanceData: builder.mutation({
+                query: ({ credentialId, regionId, instances, fields, nextToken = null }) => ({
+                    url: nextToken
+                        ? `v1/oracle/credentials/${credentialId}/regions/${regionId}/resource-details?instances=${instances}&fields=${fields}&nextToken=${nextToken}`
+                        : `v1/oracle/credentials/${credentialId}/regions/${regionId}/resource-details?instances=${instances}&fields=${fields}`,
+                    method: 'GET'
+                })
+            }),
             unmanageMssqlInstance: builder.mutation({
                 query: ({ credentialsId, resourceId, dbInstanceId }) => ({
                     url: `v1/mssql/credentials/${credentialsId}/resources/${resourceId}/instances?databaseInstanceIds=${dbInstanceId}`,
@@ -1273,6 +1281,7 @@ export const {
     useLazyGetPgSqlDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
     useGetPgsqlInstanceDataMutation,
+    useGetOracleInstanceDataMutation,
     useUnmanageMssqlInstanceMutation,
     useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,

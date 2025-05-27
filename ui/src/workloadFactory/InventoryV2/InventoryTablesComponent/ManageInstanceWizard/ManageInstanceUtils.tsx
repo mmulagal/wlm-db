@@ -132,7 +132,7 @@ export const callManageSingleInstanceApi = async (
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: 'Manage instance failed'
+                    message: 'Register instance failed'
                 })
             );
         }

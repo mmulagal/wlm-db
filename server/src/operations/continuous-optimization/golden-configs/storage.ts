@@ -160,6 +160,14 @@ const GOLDEN_CONFIG = {
                 recommendation:
                     'Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.',
                 tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+            },
+            {
+                parameter: 'mpio-timeout',
+                value: 100,
+                severity: SEVERITY.CRITICAL,
+                recommendation:
+                    'Ensure the Multipath I/O Timeout setting on the host is configured to 100 seconds to maintain connectivity and stability during FSxN failovers. Properly configured Multipath I/O Timeout settings prevent disconnections from the disk, which can occur during FSX failovers. Insufficient timeout settings can lead to temporary disconnections, application errors, and potential data loss.',
+                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
             }
         ]
     },

@@ -32,6 +32,7 @@ import {
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
     setPgsqlInstancesData,
+    setOracleInstancesData,
     setPotentialSavingsHostData,
     setRemoveSecNodeDiscoveredList,
     setResetManagedData,
@@ -41,6 +42,7 @@ import {
     useCreateDemoResourcesMutation,
     useGetMssqlInstanceDataV2Mutation,
     useGetPgsqlInstanceDataMutation,
+    useGetOracleInstanceDataMutation,
     useGetStorageSavingsMutation,
     useLazyDiscoverHostsQuery,
     useLazyDiscoverOracleHostsQuery,
@@ -70,6 +72,7 @@ import {
     getPrimaryPgsqlNode,
     getUnmanagedHostInstances,
     getUnmanagedPgsqlHostInstances,
+    getUnmanagedOracleHostInstances,
     uniqueHostRow,
     updateInstancesApiResponse
 } from './InventoryUtilsV2';
@@ -83,6 +86,7 @@ import {
     setPotentialSavingsValues
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
+import { OracleInstanceData } from '../../utils/types/inventoryV2Types';
 
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
@@ -104,10 +108,12 @@ const InventoryApisV3 = () => {
     const fsxCredentialStatusObj = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObj);
     const mssqlInstancesData = useAppSelector(state => state.inventoryV2.mssqlInstancesData);
     const pgsqlInstancesData = useAppSelector(state => state.inventoryV2.pgsqlInstancesData);
+    const oracleInstancesData = useAppSelector(state => state.inventoryV2.oracleInstancesData);
     const detectedInstanceId = useAppSelector(state => state.inventoryV2.detectedInstanceId);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
     const [runningPgsqlInstanceList, setRunningPgsqlInstanceList] = useState<Array<string>>([]);
+    const [runningOracleInstanceList, setRunningOracleInstanceList] = useState<Array<string>>([]);
     const [runningPerfInstanceList, setRunningPerfInstanceList] = useState<Array<string>>([]);
     const [runningManagedAssessmentList, setRunningManagedAssessmentList] = useState<Array<string>>([]);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -164,6 +170,7 @@ const InventoryApisV3 = () => {
     // Get Instance data mutation. This will be called to get unmanaged rows full data - ToDo
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataV2Mutation();
     const [getPgsqlInstanceDataApi] = useGetPgsqlInstanceDataMutation();
+    const [getOracleInstanceDataApi] = useGetOracleInstanceDataMutation();
 
     // Get all managed hosts assessment data
     const [getAllMssqlHostAssessmentAPI] = useLazyGetAllMssqlHostsAssessmentDataQuery();
@@ -179,10 +186,12 @@ const InventoryApisV3 = () => {
     const fsxCredentialStatusObjRef: any = useRef(null);
     const mssqlInstancesDataRef: any = useRef(null);
     const pgsqlInstancesDataRef: any = useRef(null);
+    const oracleInstancesDataRef: any = useRef(null);
     const perfMssqlInstancesDataRef: any = useRef(null);
     const managedAssessmentHostDataRef: any = useRef(null);
     const runningInstanceListRef: any = useRef(null);
     const runningPgsqlInstanceListRef: any = useRef(null);
+    const runningOracleInstanceListRef: any = useRef(null);
 
     const runningPerfInstanceListRef: any = useRef(null);
     const runningManagedAssessmentRef: any = useRef(null);
@@ -208,6 +217,10 @@ const InventoryApisV3 = () => {
     }, [runningPgsqlInstanceList]);
 
     useEffect(() => {
+        runningOracleInstanceListRef.current = runningOracleInstanceList;
+    }, [runningOracleInstanceList]);
+
+    useEffect(() => {
         fsxCredentialStatusObjRef.current = fsxCredentialStatusObj;
     }, [fsxCredentialStatusObj]);
 
@@ -218,6 +231,10 @@ const InventoryApisV3 = () => {
     useEffect(() => {
         pgsqlInstancesDataRef.current = pgsqlInstancesData;
     }, [pgsqlInstancesData]);
+
+    useEffect(() => {
+        oracleInstancesDataRef.current = oracleInstancesData;
+    }, [oracleInstancesData]);
 
     useEffect(() => {
         inventoryTableDataRef.current = inventoryTableData;
@@ -967,6 +984,78 @@ const InventoryApisV3 = () => {
         }
     };
 
+    // This function is to call API2 that will return unmanaged oracle per instance full data like SS, cost, protection, performance.
+    const getOracleData = async (
+        instanceIdComb: any,
+        isManagedHost: boolean,
+        fields: Array<string>,
+        nextToken: string | null = ''
+    ) => {
+        let [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
+        try {
+            const result: any = await getOracleInstanceDataApi({
+                credentialId: instanceCredId,
+                regionId: instanceRegionId,
+                instances: instanceId,
+                fields: fields.join(','),
+                nextToken: nextToken
+            });
+            if (result && !result?.error) {
+                let oracleInstancesDataRes: Record<string, OracleInstanceData> = {};
+                result?.data?.items?.forEach((host: any) => {
+                    if (oracleInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
+                        oracleInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
+                            isManagedHost:
+                                oracleInstancesDataRef.current[
+                                    uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                                ]?.isManagedHost,
+                            loading: false,
+                            data: host,
+                            error: host?.errors,
+                            fields: oracleInstancesDataRef.current[
+                                uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                            ]?.fields
+                        };
+                    }
+                });
+                if (!oracleInstancesDataRes?.[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]) {
+                    oracleInstancesDataRes[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
+                        isManagedHost:
+                            oracleInstancesDataRef.current[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]
+                                ?.isManagedHost,
+                        loading: false,
+                        data: null,
+                        error: null,
+                        fields: oracleInstancesDataRef.current[
+                            uniqueHostRow(instanceId, instanceCredId, instanceRegionId)
+                        ]?.fields
+                    };
+                }
+                dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataRes }));
+            } else {
+                let oracleInstancesDataErr: any = {};
+                oracleInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
+                    isManagedHost: isManagedHost,
+                    loading: false,
+                    data: null,
+                    error: result?.error?.data?.message,
+                    fields: fields
+                };
+                dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataErr }));
+            }
+        } catch (error) {
+            let oracleInstancesDataErr: any = {};
+            oracleInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
+                isManagedHost: isManagedHost,
+                loading: false,
+                data: null,
+                error: error,
+                fields: fields
+            };
+            dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataErr }));
+        }
+    };
+
     // If any new row added than it will trigger getMssqlData (API2) function to get unmanagaed row data.
     const callInstanceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
         let mssqlInstancesDataLoad: any = {};
@@ -1021,6 +1110,33 @@ const InventoryApisV3 = () => {
             noRunningList?.map((ec2InstanceIdComb: any) => {
                 setTimeout(() => {
                     getPgsqlData(ec2InstanceIdComb, isManagedHost, fields);
+                }, 1);
+            });
+        }
+    };
+
+    const callOracleResourceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
+        let oracleInstancesDataLoad: Record<string, OracleInstanceData> = {};
+        let noRunningList: Array<string> = [];
+        if (instancesList && instancesList.length > 0) {
+            instancesList?.map((ec2InstanceIdComb: any) => {
+                if (runningOracleInstanceListRef.current.includes(ec2InstanceIdComb)) {
+                    return;
+                }
+                oracleInstancesDataLoad[ec2InstanceIdComb] = {
+                    isManagedHost: isManagedHost,
+                    loading: true,
+                    data: null,
+                    error: null,
+                    fields: fields
+                };
+                noRunningList.push(ec2InstanceIdComb);
+            });
+            dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataLoad }));
+            setRunningOracleInstanceList([...runningOracleInstanceListRef.current, ...noRunningList]);
+            noRunningList?.map((ec2InstanceIdComb: any) => {
+                setTimeout(() => {
+                    getOracleData(ec2InstanceIdComb, isManagedHost, fields);
                 }, 1);
             });
         }
@@ -1667,8 +1783,12 @@ const InventoryApisV3 = () => {
 
             // To Avoid overriding
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
-            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) {
-                const mergedData = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
+                const mergedData = {
+                    ...mssqlInstancesDataRef.current,
+                    ...pgsqlInstancesDataRef.current,
+                    ...oracleInstancesDataRef.current
+                };
                 const updatedInventoryData = updateInstancesApiResponse(mergedData, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
             } else {
@@ -1692,7 +1812,26 @@ const InventoryApisV3 = () => {
                 formatDiscoveredOracleInventoryData(discoveredOracleHostData);
             // To Avoid overriding
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredOracleInventoryTableData };
-            dispatch(setInventoryTableData(updatedResult));
+
+            let unmanagedOracleHostList = getUnmanagedOracleHostInstances(
+                formattedDiscoveredOracleInventoryTableData,
+                runningOracleInstanceListRef.current
+            );
+            if (unmanagedOracleHostList && unmanagedOracleHostList?.length > 0) {
+                callOracleResourceApi(unmanagedOracleHostList, false, INSTANCE_API_FIELDS.UNMANAGED_ORACLE_DEFAULT);
+            }
+
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
+                const mergedData = {
+                    ...mssqlInstancesDataRef.current,
+                    ...pgsqlInstancesDataRef.current,
+                    ...oracleInstancesDataRef.current
+                };
+                const updatedInventoryData = updateInstancesApiResponse(mergedData, updatedResult);
+                dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
+            } else {
+                dispatch(setInventoryTableData(updatedResult));
+            }
         }
     }, [discoveredOracleHostData, managedHostListLoading]);
 
@@ -1729,11 +1868,14 @@ const InventoryApisV3 = () => {
             if (unmanagedPgsqlHostList && unmanagedPgsqlHostList?.length > 0) {
                 callPgsqlResourceApi(unmanagedPgsqlHostList, false, INSTANCE_API_FIELDS.UNMANAGED_PGSQL_DEFAULT);
             }
-
             // To Avoid overriding
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
-            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) {
-                const mergedData = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
+                const mergedData = {
+                    ...mssqlInstancesDataRef.current,
+                    ...pgsqlInstancesDataRef.current,
+                    ...oracleInstancesDataRef.current
+                };
                 const updatedInventoryData = updateInstancesApiResponse(mergedData, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
             } else {
@@ -1762,8 +1904,12 @@ const InventoryApisV3 = () => {
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
             // dispatch(setInventoryTableData(updatedResult));
 
-            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) {
-                const mergedData = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
+                const mergedData = {
+                    ...mssqlInstancesDataRef.current,
+                    ...pgsqlInstancesDataRef.current,
+                    ...oracleInstancesDataRef.current
+                };
                 //@ts-ignore
                 const updatedInventoryData = updateInstancesApiResponse(mergedData, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
@@ -1782,8 +1928,12 @@ const InventoryApisV3 = () => {
 
             // To Avoid overriding
             let updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
-            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) {
-                const mergedDataArray = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+            if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
+                const mergedDataArray = {
+                    ...mssqlInstancesDataRef.current,
+                    ...pgsqlInstancesDataRef.current,
+                    ...oracleInstancesDataRef.current
+                };
                 const updatedInventoryData = updateInstancesApiResponse(mergedDataArray, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
             } else {
@@ -1797,14 +1947,18 @@ const InventoryApisV3 = () => {
         const resetManagedData = state.inventoryV2.resetManagedData;
         if (
             !resetManagedData &&
-            (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current) &&
+            (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) &&
             inventoryTableDataRef.current
         ) {
-            const mergedData = { ...mssqlInstancesDataRef.current, ...pgsqlInstancesDataRef.current };
+            const mergedData = {
+                ...mssqlInstancesDataRef.current,
+                ...pgsqlInstancesDataRef.current,
+                ...oracleInstancesDataRef.current
+            };
             const updatedInventoryData = updateInstancesApiResponse(mergedData, inventoryTableDataRef.current);
             dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
         }
-    }, [mssqlInstancesData, pgsqlInstancesData, perfMssqlInstancesData]);
+    }, [mssqlInstancesData, pgsqlInstancesData, oracleInstancesData, perfMssqlInstancesData]);
 
     useEffect(() => {
         const state = store.getState();

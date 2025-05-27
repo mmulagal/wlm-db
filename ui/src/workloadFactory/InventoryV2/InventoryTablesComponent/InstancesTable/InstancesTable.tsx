@@ -92,8 +92,10 @@ import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
+import { useTranslation } from 'react-i18next';
 
 const InstancesTable = () => {
+    const { t } = useTranslation();
     const disptach = useDispatch();
 
     const { instanceTableRows, inProgressInstances, tableManageColumnState } = useAppSelector(
@@ -191,11 +193,11 @@ const InstancesTable = () => {
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Unmanage instance'}
+                header={'Unregister instance'}
                 content={
                     <>
                         <DsTypography variant="Regular_14">
-                            Are you sure you want to unmanage the SQL Server instance?{' '}
+                            Are you sure you want to unregister the SQL Server instance?{' '}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginTop: '24px', width: '700px' }}>
                             This will exclude the instance from Workload Factory's best practices and lifecycle
@@ -203,7 +205,7 @@ const InstancesTable = () => {
                         </DsTypography>
                     </>
                 }
-                primaryButton={'Unmanage'}
+                primaryButton={'Unregister'}
                 secondaryButton={'Close'}
                 callback={() => {
                     const updatedState = store.getState();
@@ -453,7 +455,7 @@ const InstancesTable = () => {
             errorMessage = 'The instance is already managed by Workload Factory.';
         } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
             isDisabled = true;
-            errorMessage = 'The instance is not detected.';
+            errorMessage = 'The instance is not authenticated.';
         } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
             isDisabled = true;
             errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
@@ -601,26 +603,28 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Management status',
+            Header: 'Registration status',
             accessor: 'managementStatus',
             id: '5',
             isSortable: false,
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
             renderCell: (cellData: string, rowData: any) => {
-                if (cellData === INVENTORY_STATUS.UNMANAGED) {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
+                if (cellData === INVENTORY_STATUS.NOT_REGISTERED) {
+                    return (
+                        <DotComponent color={'var(--toggle-off-bg)'} value={t('databases.general.not_registered')} />
+                    );
                 }
                 if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
                         <div className={styles.inProgress}>
-                            <SmallLoader />
+                            <DsFlashingDotsLoader />
                             <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
                         </div>
                     );
                 }
-                if (cellData === INVENTORY_STATUS.MANAGED) {
-                    return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
+                if (cellData === INVENTORY_STATUS.REGISTERED) {
+                    return <DotComponent color={'var(--success)'} value={t('databases.general.registered')} />;
                 }
             }
         },
@@ -881,6 +885,11 @@ const InstancesTable = () => {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(
+                                                setSelectedWellArchitectTab(
+                                                    WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
+                                                )
+                                            );
                                             optimizeAction(rowData);
                                         } else {
                                             dispatch(setManageSingleInstanceData(rowData));
@@ -931,14 +940,14 @@ const InstancesTable = () => {
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
-                        displayName: 'Detect',
+                        displayName: 'Authenticate',
                         disabled: disableOption,
                         infoText: disableMessage
                     });
                 } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     menu.push({
                         id: 'manage',
-                        displayName: 'Manage',
+                        displayName: 'Register',
                         disabled: disableOption,
                         infoText: disableMessage
                     });
@@ -952,7 +961,7 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'viewInstance',
-                            displayName: 'View instance',
+                            displayName: 'Manage instance',
                             disabled: disableOption,
                             infoText: disableMessage
                         },
@@ -978,7 +987,7 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'unManage',
-                            displayName: 'Unmanage'
+                            displayName: 'Unregister'
                         }
                     );
                 }
@@ -1242,7 +1251,7 @@ const InstancesTable = () => {
                         // actionsRight={
                         //     <div className={styles.manageInstanceButton}>
                         //         <DsButton isThin onClick={() => handleManageBulk()}>
-                        //             Manage multiple instances
+                        //             Register multiple instances
                         //         </DsButton>
                         //     </div>
                         // }

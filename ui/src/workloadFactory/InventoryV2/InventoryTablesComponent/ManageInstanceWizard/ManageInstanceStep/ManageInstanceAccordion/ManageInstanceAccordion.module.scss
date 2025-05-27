@@ -9,7 +9,7 @@
     }
 
     .accordion-header-wrapper {
-        height: 88px;
+        height: auto;
         padding: 18px 40px;
     }
 
@@ -35,18 +35,18 @@
     .accordion-title {
         display: flex;
         gap: 16px;
-        width: 480px;
+        width: 45.11%;
         border-right: 1px solid var(--border);
     }
 
     .accordion-title-bulk {
         display: flex;
         gap: 16px;
-        width: 480px;
+        width: 45.11%;
     }
 
     .readinessSection {
-        width: 280px;
+        width: 26.31%;
         border-right: 1px solid var(--border);
     }
 
@@ -75,12 +75,12 @@
     .accordion-status {
         display: flex;
         gap: 8px;
-        width: 264px;
+        width: 24.81%;
         align-items: center;
         justify-content: flex-end;
 
         .text {
-            color: #0067c5;
+            color: var(--text-button-primary);
         }
     }
 
@@ -101,8 +101,8 @@
 
     .accordion-content {
         padding: 16px 40px;
-        border-top: 1px solid #ddd;
+        border-top: 1px solid var(--border);
         font-size: 14px;
-        background: #fff;
+        background: var(--content-background);
     }
 }

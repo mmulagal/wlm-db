@@ -165,7 +165,8 @@ async function runMaxDOPAssessment(
         region,
         [ssmCommand],
         activeNodeInstanceId,
-        'Get MaxDOP and VCPU details'
+        'Get MaxDOP and VCPU details',
+        accountId
     );
     const parsedResponse = sqlResponseParsing(response);
     const { maxDOP, vcpuCount } = parsedResponse;

@@ -76,7 +76,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             const isInstanceInProgress = inProgressInstances.has(
                 `${dialogData?.ec2InstanceId}_${item?.databaseInstanceName}`
             );
-            if (isInstanceInProgress || item.statusColText === 'managed') {
+            if (isInstanceInProgress || item.statusColText === INVENTORY_STATUS.MANAGED) {
                 return item.id;
             }
         });

@@ -2,7 +2,7 @@ import throat from 'throat';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import {
     derivePropertiesFromARN,
     generateSqlResourceId,
@@ -11,7 +11,7 @@ import {
     retryWithDelay
 } from '../utils/utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
-import { MultiInstanceManageMsSqlRequestBodyType } from '../routes/types/discover.types';
+import { MultiInstanceManageMsSqlRequestBodyType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 import {
     CloudProviders,
@@ -43,6 +43,7 @@ import { tagResources } from './aws/sqs-operations';
 import { createAssessmentData } from './demo-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 import { DatabaseInstance } from '../utils/common-types';
+import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -62,7 +63,7 @@ async function installPowershell7(
         type: JOBTYPE.REGISTER_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: ec2InstanceId,
-        name: 'Install PowerShell 7.5.0',
+        name: `Install PowerShell 7.5.0 for ${ec2InstanceId}`,
         description: 'Install PowerShell 7.5.0 for Workload Factory database operations.',
         parentJobId,
         startTime: Date.now()
@@ -82,7 +83,7 @@ async function installPowershell7(
                 region,
                 INSTALL_POWERSHELL_7(copyPowershell7SignedUrl),
                 ec2InstanceId,
-                'Install PowerShell 7.5.0',
+                `Install PowerShell 7.5.0 for ${ec2InstanceId}`,
                 accountId,
                 false
             )
@@ -140,7 +141,7 @@ async function installPowerShellModules(
         type: JOBTYPE.REGISTER_RESOURCE,
         status: jobStatus,
         resourceName: ec2InstanceId,
-        name: 'Install PowerShell modules',
+        name: `Install PowerShell modules for ${ec2InstanceId}`,
         description: 'Install PowerShell modules for Workload Factory database operations.',
         parentJobId: hostJobId,
         startTime: Date.now()
@@ -159,7 +160,7 @@ async function installPowerShellModules(
                 region,
                 INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT, copyPSModuleS3SignedUrl),
                 ec2InstanceId,
-                'Install PowerShell modules',
+                `Install PowerShell modules for ${ec2InstanceId}`,
                 accountId,
                 false,
                 (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
@@ -184,6 +185,110 @@ async function installPowerShellModules(
     return ssmPsModuleInstallResponse;
 }
 
+async function powershellInstallations(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    hostJobId: string,
+    modulesToInstall: string[] | undefined
+) {
+    logger.info('Powershell installations', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        hostJobId,
+        modulesToInstall
+    });
+    const shouldInstallPowershell7 = modulesToInstall?.includes('Powershell 7');
+    const shouldInstallPowershellModules = modulesToInstall?.some(module => module !== 'Powershell 7');
+    const psModulesToInstall = modulesToInstall?.filter(module => module !== 'Powershell 7');
+
+    const [powershellInstallationResponse, modulesInstallationResponse] = await Promise.all([
+        shouldInstallPowershell7
+            ? installPowershell7(accountId, credentialsId, region, ec2InstanceId, hostJobId)
+            : Promise.resolve(),
+        shouldInstallPowershellModules
+            ? installPowerShellModules(
+                  accountId,
+                  credentialsId,
+                  region,
+                  ec2InstanceId,
+                  hostJobId,
+                  psModulesToInstall ?? []
+              )
+            : Promise.resolve()
+    ]);
+    return { powershellInstallationResponse, modulesInstallationResponse };
+}
+
+async function getPartnerNodeDetails(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    sqlServerInstances: SqlServerInstanceInfoType[]
+) {
+    logger.info('Get partner node details', {
+        credentialsId,
+        region,
+        ec2InstanceId,
+        sqlServerInstancesLength: sqlServerInstances.length
+    });
+    const fciInstanceDetails = sqlServerInstances
+        .filter(
+            ({ sqlServerDeploymentType, windowsClusterNodes }) =>
+                sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT && windowsClusterNodes
+        )
+        .map(({ sqlServerInstance, windowsClusterNodes }) => ({
+            databaseInstanceName: sqlServerInstance,
+            clusterIps: !Array.isArray(windowsClusterNodes)
+                ? [windowsClusterNodes]
+                : windowsClusterNodes.map(node => node?.Address),
+            partnerEc2InstanceId: ''
+        }));
+
+    // Extract all cluster IPs from the FCI instance details and flatten the array.
+    const clusterIps = [...new Set(fciInstanceDetails.map(fciInstance => fciInstance.clusterIps).flat())];
+
+    // Fetch details of EC2 instances corresponding to the cluster IPs using their private IP addresses.
+    const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, compact(clusterIps));
+
+    // Iterate over each FCI instance to determine the partner EC2 instance ID.
+    // For each FCI instance, filter the cluster node details to find nodes that:
+    // - Are not the current EC2 instance (ec2InstanceId).
+    // - Have a private IP address matching one of the cluster IPs of the FCI instance.
+    // Map the matching nodes to their EC2 instance IDs and assign the first match
+    // as the partner EC2 instance ID for the FCI instance.
+    fciInstanceDetails.forEach(fciInstance => {
+        const partnerNode = clusterNodeDetails.find(
+            node =>
+                ec2InstanceId !== node.ec2InstanceId &&
+                fciInstance.clusterIps.includes(node.ec2InstancePrivateIpAddress)
+        );
+        fciInstance.partnerEc2InstanceId = partnerNode?.ec2InstanceId ?? '';
+    });
+    return fciInstanceDetails;
+}
+
+async function getEbsVolumeDetails(credentialsId: string, region: string, node1InstanceId: string) {
+    logger.info('Get EBS volume details', { credentialsId, region, node1InstanceId });
+    const ebsVolumes = await paginateDescribeEbsVolumes(credentialsId, region, {
+        Filters: [{ Name: 'attachment.instance-id', Values: [node1InstanceId] }]
+    });
+    const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
+        iops: volume.Iops,
+        size: volume.Size,
+        isRoot: volume.Attachments?.some(
+            attachment => attachment.Device === '/dev/xvda' || attachment.Device === '/dev/sda1'
+        ),
+        volumeType: volume.VolumeType,
+        volumeId: volume.VolumeId,
+        throughput: volume.Throughput
+    }));
+    return ebsVolumesFiltered;
+}
+
 async function manageSqlInstance(
     accountId: string,
     credentialsId: string,
@@ -195,7 +300,7 @@ async function manageSqlInstance(
     hostJobId: string,
     databaseHostId?: string
 ) {
-    logger.info('Manage SQL instances', {
+    logger.info('Register SQL instances', {
         accountId,
         credentialsId,
         region,
@@ -271,25 +376,24 @@ async function manageSqlInstance(
             return !isAlreadyManaged && hasFsxnStorage && isSupportedDeployment;
         });
 
+        const fciInstanceDetails = await getPartnerNodeDetails(
+            credentialsId,
+            region,
+            ec2InstanceId,
+            eligibleSqlInstances
+        );
+
         let powershellInstallationResponse;
         let modulesInstallationResponse;
         if (eligibleSqlInstances.length && modulesToInstall && !isEmpty(modulesToInstall)) {
-            const psModulesToInstall = modulesToInstall?.filter(module => module !== 'Powershell 7');
-            [powershellInstallationResponse, modulesInstallationResponse] = await Promise.all([
-                modulesToInstall?.includes('Powershell 7')
-                    ? installPowershell7(accountId, credentialsId, region, ec2InstanceId, hostJobId)
-                    : Promise.resolve(),
-                !isEmpty(psModulesToInstall ?? [])
-                    ? installPowerShellModules(
-                          accountId,
-                          credentialsId,
-                          region,
-                          ec2InstanceId,
-                          hostJobId,
-                          psModulesToInstall ?? []
-                      )
-                    : Promise.resolve()
-            ]);
+            ({ powershellInstallationResponse, modulesInstallationResponse } = await powershellInstallations(
+                accountId,
+                credentialsId,
+                region,
+                ec2InstanceId,
+                hostJobId,
+                modulesToInstall
+            ));
         }
 
         for (const dbInst of databaseInstanceNames) {
@@ -303,181 +407,185 @@ async function manageSqlInstance(
                 !sqlInstanceInfo ||
                 alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)
             ) {
-                const errorMsg = !sqlInstanceInfo ? 'SQL Server instance not found.' : 'Instance is already managed.';
-                instanceManagementStatus.push({
-                    databaseInstanceName: dbInst,
-                    databaseInstanceGuid: sqlInstanceInfo?.serverGuid,
-                    status: 'failed',
-                    errorMessage: errorMsg
-                });
-                await registerJob(accountId, credentialsId, region, {
-                    type: JOBTYPE.REGISTER_RESOURCE,
-                    status: JOBSTATUS.FAILED,
-                    resourceName: dbInst,
-                    parentJobId: hostJobId,
-                    name: `Manage instance ${dbInst}`,
-                    startTime: Date.now(),
-                    description: `Manage instance ${dbInst}}`,
-                    error: errorMsg
-                });
-            } else {
-                try {
-                    const { windowsAuthentication, sqlServerAuthentication, serverGuid, storage } = sqlInstanceInfo;
-                    const storageInfo = storage?.find((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN);
-                    const storageProtocols = storage
-                        ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
-                        .map((elem: any) => elem.protocol);
+                const errorMsg = !sqlInstanceInfo
+                    ? 'SQL Server instance not found.'
+                    : 'Instance is already registered.';
+                throw new Error(errorMsg);
+            }
 
-                    // Combine all failure conditions for early exit
-                    let failureReason: string | undefined;
+            try {
+                const { windowsAuthentication, sqlServerAuthentication, serverGuid, storage } = sqlInstanceInfo;
+                const storageInfo = storage?.find((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN);
+                const storageProtocols = storage
+                    ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
+                    .map((elem: any) => elem.protocol);
 
-                    if (!windowsAuthentication && !sqlServerAuthentication) {
-                        failureReason = 'Authentication to SQL Server instance is not possible.';
-                    } else if (!storageInfo) {
-                        failureReason = 'SQL Server instance is not hosted on FSx for NetApp.';
-                    } else if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
-                        failureReason = 'Always On availability group environments are not supported.';
-                    } else if (
-                        modulesInstallationResponse &&
-                        modulesToInstall?.includes('AWS.Tools.SimpleSystemsManagement') &&
-                        !modulesInstallationResponse.availablePSModules.includes('AWS.Tools.SimpleSystemsManagement')
-                    ) {
-                        failureReason = modulesInstallationResponse.failureInfo;
-                    }
+                // Combine all failure conditions for early exit
+                let failureReason: string | undefined;
 
-                    if (failureReason) {
-                        instanceManagementStatus.push({
-                            databaseInstanceName: dbInst,
-                            databaseInstanceGuid: sqlInstanceInfo?.serverGuid,
-                            status: 'failed',
-                            errorMessage: failureReason
-                        });
-                        await registerJob(accountId, credentialsId, region, {
-                            type: JOBTYPE.REGISTER_RESOURCE,
-                            status: JOBSTATUS.FAILED,
-                            resourceName: dbInst,
-                            parentJobId: hostJobId,
-                            name: `Manage instance ${dbInst}`,
-                            startTime: Date.now(),
-                            description: `Manage instance ${dbInst}}`,
-                            error: failureReason
-                        });
-                    } else if (storageInfo) {
-                        let activeDirectoryDomainName: string | undefined;
-                        let activeDirectoryIpAddresses: string[] | undefined = [];
-                        if (isResourceTobeCreated) {
-                            if (adDetails && !adDetails.includes(ACTIVE_DIRECTORY)) {
-                                ({ domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } =
-                                    JSON.parse(adDetails!)[ACTIVE_DIRECTORY]);
-                            }
-                            const ebsVolumes = await paginateDescribeEbsVolumes(credentialsId, region, {
-                                Filters: [{ Name: 'attachment.instance-id', Values: [node1InstanceId] }]
-                            });
-                            const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
-                                iops: volume.Iops,
-                                size: volume.Size,
-                                isRoot: volume.Attachments?.some(
-                                    attachment => attachment.Device === '/dev/xvda' || attachment.Device === '/dev/sda1'
-                                ),
-                                volumeType: volume.VolumeType,
-                                volumeId: volume.VolumeId,
-                                throughput: volume.Throughput
-                            }));
+                if (!windowsAuthentication && !sqlServerAuthentication) {
+                    failureReason = 'Authentication to SQL Server instance is not possible.';
+                } else if (!storageInfo) {
+                    failureReason = 'SQL Server instance is not hosted on FSx for NetApp.';
+                } else if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+                    failureReason = 'Always On availability group environments are not supported.';
+                } else if (
+                    modulesInstallationResponse &&
+                    modulesToInstall?.includes('AWS.Tools.SimpleSystemsManagement') &&
+                    !modulesInstallationResponse.availablePSModules.includes('AWS.Tools.SimpleSystemsManagement')
+                ) {
+                    failureReason = modulesInstallationResponse.failureInfo;
+                }
 
-                            await createResource(accountId, {
-                                resourceId,
-                                credentialsId,
-                                storageType: STORAGE_TYPE.FSXN,
-                                resourceName: sqlInstanceInfo.sqlServerName,
-                                cloudProviderAccountId: awsAccountId!,
-                                cloudProviderName: CloudProviders.AWS,
-                                resourceType: RESOURCESTYPE.MSSQL,
-                                coRelationId: storageInfo.id,
-                                region,
-                                metadata: {
-                                    creationDate: Date.now(),
-                                    node1InstanceId,
-                                    sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
-                                    source: RESOURCE_SOURCE.DISCOVER,
-                                    fsxSvmId: storageInfo.svmId,
-                                    storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                                    ...(activeDirectoryDomainName && {
-                                        activeDirectoryName: activeDirectoryDomainName
-                                    }),
-                                    ...(activeDirectoryIpAddresses && {
-                                        activeDirectoryAddress: activeDirectoryIpAddresses.join()
-                                    }),
-                                    ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
-                                }
-                            });
-                            isResourceTobeCreated = false;
+                if (failureReason) {
+                    throw new Error(failureReason);
+                }
+                let partnerPowershellInstallationResponse;
+                let partnerModulesInstallationResponse;
+                if (storageInfo) {
+                    if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+                        const fciInstance = fciInstanceDetails.find(
+                            instance => instance.databaseInstanceName === dbInst
+                        );
+                        const partnerEc2InstanceId = fciInstance?.partnerEc2InstanceId;
+
+                        if (fciInstanceDetails.length === 0 || !fciInstance || !partnerEc2InstanceId) {
+                            failureReason = 'FCI instance details not found or partner EC2 instance ID is missing.';
+                            throw new Error(failureReason);
                         }
 
-                        tagResources(credentialsId, region, awsAccountId!, accountId, storageInfo.id, node1InstanceId);
+                        resourceId = generateSqlResourceId(node1InstanceId, partnerEc2InstanceId);
 
-                        const dbInstanceName = isDemoFlow
-                            ? sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
-                                ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
-                                : sqlInstanceInfo.sqlServerInstance
-                            : sqlInstanceInfo.sqlServerInstance;
-
-                        await upsertDatabaseInstance(accountId, {
+                        ({
+                            powershellInstallationResponse: partnerPowershellInstallationResponse,
+                            modulesInstallationResponse: partnerModulesInstallationResponse
+                        } = await powershellInstallations(
+                            accountId,
                             credentialsId,
-                            resourceId,
                             region,
-                            databaseInstanceId: serverGuid!,
-                            databaseInstanceName: dbInstanceName,
-                            fsxnIds: storageInfo.id,
-                            isDefault: sqlInstanceInfo.isDefaultInstance,
-                            source: RESOURCE_SOURCE.DISCOVER,
-                            sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
-                            fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
-                            storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                            databaseType: DatabaseTypes.MS_SQL_SERVER
-                        });
-                        if (isDemoFlow) {
-                            await createAssessmentData(accountId, credentialsId, region, resourceId, serverGuid!);
-                        }
-                        instanceManagementStatus.push({
-                            databaseInstanceName: dbInst,
-                            databaseInstanceGuid: serverGuid,
-                            status:
-                                powershellInstallationResponse && powershellInstallationResponse === JOBSTATUS.FAILED
-                                    ? 'warning'
-                                    : 'success'
-                        });
+                            partnerEc2InstanceId,
+                            hostJobId,
+                            modulesToInstall
+                        ));
 
-                        instanceJobStatus = powershellInstallationResponse as JOBSTATUS;
+                        // Check if the partner EC2 instance has the required PowerShell module installed.
+                        // If the module "AWS.Tools.SimpleSystemsManagement" is specified in the modulesToInstall list
+                        // and is not available in the partnerModulesInstallationResponse, throw an error with the failure reason.
+                        if (
+                            partnerModulesInstallationResponse &&
+                            modulesToInstall?.includes('AWS.Tools.SimpleSystemsManagement') &&
+                            !partnerModulesInstallationResponse.availablePSModules.includes(
+                                'AWS.Tools.SimpleSystemsManagement'
+                            )
+                        ) {
+                            failureReason = partnerModulesInstallationResponse.failureInfo;
+                            throw new Error(failureReason);
+                        }
                     }
-                } catch (error: any) {
-                    logger.error('Error while managing SQL instance', {
-                        accountId,
+                    let activeDirectoryDomainName: string | undefined;
+                    let activeDirectoryIpAddresses: string[] | undefined = [];
+                    if (isResourceTobeCreated) {
+                        if (adDetails && !adDetails.includes(ACTIVE_DIRECTORY)) {
+                            ({ domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } =
+                                JSON.parse(adDetails!)[ACTIVE_DIRECTORY]);
+                        }
+                        const ebsVolumesFiltered = await getEbsVolumeDetails(credentialsId, region, node1InstanceId);
+
+                        await createResource(accountId, {
+                            resourceId,
+                            credentialsId,
+                            storageType: STORAGE_TYPE.FSXN,
+                            resourceName: sqlInstanceInfo.sqlServerName,
+                            cloudProviderAccountId: awsAccountId!,
+                            cloudProviderName: CloudProviders.AWS,
+                            resourceType: RESOURCESTYPE.MSSQL,
+                            coRelationId: storageInfo.id,
+                            region,
+                            metadata: {
+                                creationDate: Date.now(),
+                                node1InstanceId,
+                                sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
+                                source: RESOURCE_SOURCE.DISCOVER,
+                                fsxSvmId: storageInfo.svmId,
+                                storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                                ...(activeDirectoryDomainName && {
+                                    activeDirectoryName: activeDirectoryDomainName
+                                }),
+                                ...(activeDirectoryIpAddresses && {
+                                    activeDirectoryAddress: activeDirectoryIpAddresses.join()
+                                }),
+                                ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
+                            }
+                        });
+                        isResourceTobeCreated = false;
+                    }
+
+                    tagResources(credentialsId, region, awsAccountId!, accountId, storageInfo.id, node1InstanceId);
+
+                    const dbInstanceName = isDemoFlow
+                        ? sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
+                            ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
+                            : sqlInstanceInfo.sqlServerInstance
+                        : sqlInstanceInfo.sqlServerInstance;
+
+                    await upsertDatabaseInstance(accountId, {
                         credentialsId,
+                        resourceId,
                         region,
-                        ec2InstanceId,
-                        dbInst,
-                        modulesToInstall,
-                        error: error.message
+                        databaseInstanceId: serverGuid!,
+                        databaseInstanceName: dbInstanceName,
+                        fsxnIds: storageInfo.id,
+                        isDefault: sqlInstanceInfo.isDefaultInstance,
+                        source: RESOURCE_SOURCE.DISCOVER,
+                        sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
+                        fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
+                        storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                        databaseType: DatabaseTypes.MS_SQL_SERVER
                     });
+                    if (isDemoFlow) {
+                        await createAssessmentData(accountId, credentialsId, region, resourceId, serverGuid!);
+                    }
+                    const isWarning = [powershellInstallationResponse, partnerPowershellInstallationResponse].some(
+                        status => status === JOBSTATUS.FAILED || status === JOBSTATUS.WARNING
+                    );
+
                     instanceManagementStatus.push({
                         databaseInstanceName: dbInst,
-                        status: 'failed',
-                        errorMessage: `${error}`
+                        databaseInstanceGuid: serverGuid,
+                        status: isWarning ? JOBSTATUS.WARNING : JOBSTATUS.COMPLETED
                     });
-                    instanceJobStatus = JOBSTATUS.FAILED;
-                    instanceErrorMessage = `${error}`;
-                } finally {
-                    await registerJob(accountId, credentialsId, region, {
-                        type: JOBTYPE.REGISTER_RESOURCE,
-                        status: instanceJobStatus,
-                        resourceName: accountId,
-                        parentJobId: hostJobId,
-                        name: `Manage instance ${dbInst}`,
-                        startTime: Date.now(),
-                        description: `Manage instance ${dbInst}}`,
-                        error: instanceErrorMessage
-                    });
+
+                    instanceJobStatus = JOBSTATUS.COMPLETED;
                 }
+            } catch (error: any) {
+                logger.error('Error while managing SQL instance', {
+                    accountId,
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    dbInst,
+                    modulesToInstall,
+                    error: error.message
+                });
+                instanceManagementStatus.push({
+                    databaseInstanceName: dbInst,
+                    status: JOBSTATUS.FAILED,
+                    errorMessage: `${error}`
+                });
+                instanceJobStatus = JOBSTATUS.FAILED;
+                instanceErrorMessage = `${error}`;
+            } finally {
+                await registerJob(accountId, credentialsId, region, {
+                    type: JOBTYPE.REGISTER_RESOURCE,
+                    status: instanceJobStatus,
+                    resourceName: accountId,
+                    parentJobId: hostJobId,
+                    name: `Register instance ${dbInst}`,
+                    startTime: Date.now(),
+                    description: `Register instance ${dbInst}`,
+                    error: instanceErrorMessage,
+                    endTime: Date.now()
+                });
             }
         }
     } catch (error: any) {
@@ -500,14 +608,14 @@ async function manageSqlInstance(
             error: error.message
         });
     } finally {
-        jobStatus = instanceManagementStatus.every(elem => elem.status.toLocaleLowerCase() === 'failed')
+        jobStatus = instanceManagementStatus.every(elem => elem.status === JOBSTATUS.FAILED)
             ? JOBSTATUS.FAILED
-            : instanceManagementStatus.every(elem => elem.status === 'success')
+            : instanceManagementStatus.every(elem => elem.status === JOBSTATUS.COMPLETED)
             ? JOBSTATUS.COMPLETED
             : JOBSTATUS.WARNING;
 
         const errorMessage = instanceManagementStatus
-            .filter(elem => elem.status === 'failed')
+            .filter(elem => elem.status === JOBSTATUS.FAILED)
             .map(elem => `${elem.databaseInstanceName}: ${elem.errorMessage}`)
             .join(', ');
         await updateJobDetails(accountId, hostJobId, {
@@ -530,7 +638,7 @@ async function installAndManageSqlInstances(
     parentManageJobId: string,
     resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]
 ) {
-    logger.info('Install and manage sql instances', {
+    logger.info('Install and register sql instances', {
         accountId,
         parentManageJobId,
         resourcesToBeManaged: resourcesToBeManaged.length
@@ -547,7 +655,7 @@ async function installAndManageSqlInstances(
                     databaseInstanceNames,
                     modulesToInstall
                 } = resource;
-                const jobName = `Manage instance(s) ${databaseInstanceNames} in ${ec2InstanceId}`;
+                const jobName = `Register instance(s) ${databaseInstanceNames} in ${ec2InstanceId}`;
                 const { id: jobId } = await registerJob(accountId, credentialsId, region, {
                     type: JOBTYPE.REGISTER_RESOURCE,
                     status: JOBSTATUS.IN_PROGRESS,
@@ -575,12 +683,12 @@ async function installAndManageSqlInstances(
 }
 
 async function manageSqlInstances(accountId: string, resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]) {
-    logger.info('Manage sql instances', { accountId, resourcesToBeManagedLength: resourcesToBeManaged.length });
+    logger.info('Register sql instances', { accountId, resourcesToBeManagedLength: resourcesToBeManaged.length });
 
     if (!resourcesToBeManaged?.length) {
-        throw new Error('No sql instances to be managed');
+        throw new Error('No sql instances to be registered');
     }
-    const jobName = `Manage SQL Server instances for account ${accountId}`;
+    const jobName = `Register SQL Server instances for account ${accountId}`;
     const { id: jobId } = await registerJob(accountId, '', '', {
         type: JOBTYPE.REGISTER_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,

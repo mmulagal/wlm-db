@@ -32,7 +32,7 @@ const MultiInstanceHeader = () => {
     const handleManageDialog = () => {
         setDialog(
             <DialogComponent
-                header={'Detected Instances status'}
+                header={'Authenticated Instances status'}
                 content={<DetectedInstanceTable />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
@@ -61,7 +61,7 @@ const MultiInstanceHeader = () => {
                 <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
                     {countSummary.success} / {countSummary.total}
                 </DsTypography>
-                <DsTypography variant="Regular_14">Successfully detected</DsTypography>
+                <DsTypography variant="Regular_14">Successfully authenticated</DsTypography>
             </div>
 
             <div className={styles.commonBlock}>

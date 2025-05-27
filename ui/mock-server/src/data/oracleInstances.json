@@ -1,0 +1,118 @@
+{
+    "count": 2,
+    "items": [
+        {
+            "id": "i-055ed011c2068033a",
+            "name": "oracle19c_on_rhel81_fsxn",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "databaseInstanceDetails": [
+                {
+                    "databaseInstanceId": "1",
+                    "instanceName": "ordbsdl",
+                    "isManaged": false,
+                    "instanceState": "OPEN",
+                    "isDefault": false
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 154.76,
+                "storage": {
+                    "fsxn": 260.74,
+                    "ebs": 9.6,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-09a78da5fd349eed5",
+                            "capacityCost": 153.6,
+                            "operationalCost": 107.14,
+                            "size": 1099511627776
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "1",
+                    "databaseInstanceName": "ordbsdl",
+                    "status": "Up",
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": true,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "performance": {
+                        "assessment": "Excellent ( <=1 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": 0,
+                                "write": 0,
+                                "serverIo": 0
+                            },
+                            "iops": {
+                                "read": 0.11,
+                                "write": 0.6
+                            },
+                            "throughput": {
+                                "read": 0.001,
+                                "write": 0.005
+                            }
+                        },
+                        "sqlServerDeploymentType": "standalone"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "i-08d0bd2b32ead74e1",
+            "name": "oracle19c_on_rhel91_fsxn",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "oraclesan1",
+                    "databaseInstanceId": "1",
+                    "isManaged": false,
+                    "instanceState": "STARTED",
+                    "isDefault": false
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 132.76,
+                "storage": {
+                    "fsxn": 240.74,
+                    "ebs": 7.6,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-09a78da5fd349eed5",
+                            "capacityCost": 135.6,
+                            "operationalCost": 170.14,
+                            "size": 1022519027776
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "1",
+                    "databaseInstanceName": "oraclesan1",
+                    "status": "Up",
+                    "sqlServerDeploymentType": "standalone",
+                    "errors": {
+                        "protection": "{\"message\":\"Error fetching oracle protection status: BadRequestError: Missing mountIp, junctionPath or protocol for fsxnId: , 0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8, ap-southeast-1, 0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8, ap-southeast-1\"}",
+                        "performance": "{\"message\":\"Error fetching oracle performance metrics: InternalServerError: Error parsing query response: Error: Failed to get Oracle performance metrics\\n, 0c9ba7d1-3bca-4e8a-b6e3-becd91160ab8, ap-southeast-1\"}"
+                    }
+                }
+            ]
+        }
+    ]
+}

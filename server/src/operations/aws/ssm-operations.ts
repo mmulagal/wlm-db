@@ -47,9 +47,10 @@ async function pollCommandStatusForAllInstances(
     commandId: string,
     instanceIds: string[],
     pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
-    throttleSize: number = 5
+    throttleSize: number = 5,
+    accountId?: string
 ) {
-    logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollInterval });
+    logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollInterval, accountId });
     const pollStatuses: MultipleCommandSsmResponse[] = [];
 
     await Promise.all(
@@ -60,7 +61,13 @@ async function pollCommandStatusForAllInstances(
                     InstanceId: instanceId
                 };
                 try {
-                    const response = await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
+                    const response = await pollCommandStatus(
+                        credentialsId,
+                        region,
+                        pollParams,
+                        pollInterval,
+                        accountId
+                    );
                     logger.debug('SSM command Response:', response);
                     pollStatuses.push({
                         commandId,
@@ -68,7 +75,7 @@ async function pollCommandStatusForAllInstances(
                         response
                     });
                 } catch (error) {
-                    const errorMessage = `Error executing SSM command on instance ${instanceId}, commandId ${commandId} :  ${error}`;
+                    const errorMessage = `Error executing SSM command on instance ${instanceId}, accountId ${accountId}, commandId ${commandId} :  ${error}`;
                     logger.error(errorMessage);
                     pollStatuses.push({
                         commandId,
@@ -87,12 +94,13 @@ async function pollCommandStatus(
     credentialsId: string,
     region: string,
     pollParams: GetCommandInvocationCommandInput,
-    pollInterval: number = ms(config.get<string>('ssm.poll-interval'))
+    pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
+    accountId?: string
 ): Promise<GetCommandInvocationCommandOutput> {
     logger.debug('Polling SSM command execution', { pollParams, pollInterval });
 
     try {
-        const response = await getCommandInvocation(credentialsId, region, pollParams);
+        const response = await getCommandInvocation(credentialsId, region, pollParams, accountId);
 
         logger.debug('Polling SSM command execution response', response);
 
@@ -122,12 +130,12 @@ async function pollCommandStatus(
         }
 
         await sleep(pollInterval);
-        return await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
+        return await pollCommandStatus(credentialsId, region, pollParams, pollInterval, accountId);
     } catch (error: any) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
             await sleep(pollInterval);
-            return pollCommandStatus(credentialsId, region, pollParams, pollInterval);
+            return pollCommandStatus(credentialsId, region, pollParams, pollInterval, accountId);
         }
         throw error;
     }
@@ -169,7 +177,8 @@ async function executeSSMDocumentMultipleInstances(
                     commandId,
                     instanceIds,
                     pollDuration,
-                    throttleSize
+                    throttleSize,
+                    accountId
                 );
                 logger.debug('SSM command Response:', response);
                 if (createCache) {
@@ -180,7 +189,7 @@ async function executeSSMDocumentMultipleInstances(
             }
             throw new Error('SSM command Id not found');
         } catch (error) {
-            const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
+            const errorMessage = `Error executing SSM command on instance ${instanceIds}, accountId ${accountId}, commandId ${commandId} :  ${error}`;
             logger.error(errorMessage);
             throw createError(errorMessage);
         }
@@ -207,7 +216,7 @@ async function executeSSMDocument(
     // Sleep for 1 second to avoid immediate polling
     await sleep(1000);
     try {
-        const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
+        const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration, accountId);
         logger.debug('SSM command commandId, Response:', commandId, response);
         return {
             commandId,
@@ -215,7 +224,7 @@ async function executeSSMDocument(
             instanceId: instanceIds
         };
     } catch (error) {
-        const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
+        const errorMessage = `Error executing SSM command on instance ${instanceIds},  accountId ${accountId}, commandId ${commandId} :  ${error}`;
         logger.error(errorMessage);
         throw createError(errorMessage);
     }
@@ -286,7 +295,7 @@ async function callSsmExecution(
                 logger.error('Error setting log group retention policy', error);
             });
         }
-        const { error, output = '' } = await extractSsmResponse(credentialsId, region, response);
+        const { error, output = '' } = await extractSsmResponse(credentialsId, region, response, accountId);
         if (error) {
             throw createError(error);
         }
@@ -305,15 +314,16 @@ async function getSsmResponseFromCloudWatch(
     credentialId: string,
     region: string,
     commandId: string,
-    instanceId: string
+    instanceId: string,
+    accountId?: string
 ) {
-    logger.info('Getting SSM response from CloudWatch', { credentialId, region, commandId, instanceId });
+    logger.info('Getting SSM response from CloudWatch', { credentialId, region, commandId, instanceId, accountId });
     const logGroupName = CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE;
     const logStreamSuffix = 'aws-runPowerShellScript/stdout';
     const logStreamName = `${commandId}/${instanceId}/${logStreamSuffix}`;
 
     try {
-        const logs = await getCloudWatchLogs(credentialId, region, logGroupName, logStreamName);
+        const logs = await getCloudWatchLogs(credentialId, region, logGroupName, logStreamName, accountId);
         return logs;
     } catch (error) {
         logger.error('Error getting logs from CloudWatch', error);
@@ -520,7 +530,8 @@ async function extractSsmResponse(
         instanceId?: string;
         response?: GetCommandInvocationCommandOutput;
         error?: string;
-    }
+    },
+    accountId?: string
 ) {
     const { commandId, instanceId, response, error } = ssmResponse;
     logger.info(`Extract SSM response from instance ${instanceId} for command with id: ${commandId}`, { response });
@@ -548,7 +559,13 @@ async function extractSsmResponse(
         if (!response?.CommandId) {
             throw createError('Command Id not found');
         }
-        const responses = await getSsmResponseFromCloudWatch(credentialsId, region, response?.CommandId, instanceId);
+        const responses = await getSsmResponseFromCloudWatch(
+            credentialsId,
+            region,
+            response?.CommandId,
+            instanceId,
+            accountId
+        );
         return {
             output: responses.join('')
         };

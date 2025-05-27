@@ -292,16 +292,18 @@ async function getFsxnVolIdsFromOntapVolIds(
     credentialsId: string,
     region: string,
     fsxId: string,
-    volumeUuids: string[]
+    volumeUuids: string[],
+    accountId?: string
 ) {
     logger.info('Get the Fsxn volume ids from the ontap volume ids', {
         credentialsId,
         region,
         fsxId,
-        volumeUuids
+        volumeUuids,
+        accountId
     });
 
-    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, [fsxId]);
+    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, [fsxId], accountId);
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
@@ -330,7 +332,8 @@ async function isFsxnAwsBackupEnabled(
     fileSystemId: string,
     volumeUuids: string[],
     volumeDBMap?: any,
-    activeNodeInstanceId?: string
+    activeNodeInstanceId?: string,
+    accountId?: string
 ) {
     logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled', {
         credentialsId,
@@ -338,7 +341,8 @@ async function isFsxnAwsBackupEnabled(
         fileSystemId,
         volumeUuids,
         volumeDBMap,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        accountId
     });
 
     if (!isEmpty(volumeUuids)) {
@@ -346,7 +350,8 @@ async function isFsxnAwsBackupEnabled(
             credentialsId,
             region,
             fileSystemId,
-            volumeUuids
+            volumeUuids,
+            accountId
         );
         let volumeDBMapWithBackupFlag;
         const backups: Backup[] = [];
@@ -363,7 +368,7 @@ async function isFsxnAwsBackupEnabled(
                                 }
                             ]
                         };
-                        const { Backups } = await describeFSxBackups(credentialsId, region, input);
+                        const { Backups } = await describeFSxBackups(credentialsId, region, input, accountId);
                         backups.push(...Backups!);
                     })
                 )

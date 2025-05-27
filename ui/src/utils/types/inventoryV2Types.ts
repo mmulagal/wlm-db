@@ -49,6 +49,7 @@ export interface InventorySliceData {
     fsxCredentialStatusLoading: boolean;
     mssqlInstancesData: any;
     pgsqlInstancesData: any;
+    oracleInstancesData: Record<string, OracleInstanceData> | null;
     perfMssqlInstancesData: any;
     inProgressInstances: any;
     manageHostSelectedRows: any;
@@ -479,6 +480,10 @@ export interface DiscoverPgsqlHostInterface {
     pgsqlServerInstances?: Array<PgsqlInstancesDiscovered>;
     credentialId?: string;
     regionId?: string;
+    ec2Details?: Array<{
+        id?: string;
+        name?: string;
+    }>;
 }
 
 export interface OracleInstancesDiscovered {
@@ -588,3 +593,29 @@ export interface InstancesObjectInterface {
 }
 
 export type InstanceActions = 'manage' | 'unmanage' | 'detect';
+
+export type OracleInstanceData = {
+    isManagedHost: boolean;
+    loading: boolean;
+    data: OracleHostData | null;
+    error: any | null;
+    fields?: Array<string>;
+};
+
+export interface OracleHostData {
+    databaseHostStatus: string;
+    databaseInstanceDetails: any[];
+    databaseInstancesSummary?: any[];
+    estimatedUsageCost?: {
+        compute: number;
+        storage: any;
+        connectivity: number;
+        others: number;
+        estimationType: string;
+    };
+    fsxnResourceInfo?: any[];
+    id: string;
+    name: string;
+    ssmStatus: string;
+    storageAllocation?: any;
+}

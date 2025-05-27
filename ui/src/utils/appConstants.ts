@@ -32,7 +32,7 @@ export const GENERAL = {
         'Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials.',
     MANAGE_MIN_PERMISSION_REQUIRED: [
         'Missing minimum prerequisites:',
-        ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To manage this SQL Server instance, please address the necessary prerequisites and try again.'
+        ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To register this SQL Server instance, please address the necessary prerequisites and try again.'
     ],
     PREREQUISITE_LIST: 'Prerequisites list',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
@@ -41,7 +41,7 @@ export const GENERAL = {
     FSX_PASSWORD_CONTENT:
         'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Microsoft SQL Server instance.',
     SQL_PASSWORD_CONTENT:
-        'The password for your Windows login might have changed. Update credentials to manage this Microsoft SQL Server instance.',
+        'The password for your Windows login might have changed. Update credentials to register this Microsoft SQL Server instance.',
     UPDATE_SQL_SERVER_PASSWORD: 'Update SQL Server password',
     DATABASE_MANAGEMENT: 'Database management',
     DATABASE_OPTIMIZATION: 'Database optimization',
@@ -643,7 +643,7 @@ export const GENERAL = {
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
     JM_TYPE_OPTIMIZE: 'Well-architected',
-    JM_TYPE_MANAGE_RESOURCE: 'Manage resource',
+    JM_TYPE_REGISTER_RESOURCE: 'Register resource',
     JM_DOWNLOAD_PROGRESS: 'Download in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table was downloaded',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -677,8 +677,6 @@ export const GENERAL = {
     UNIDENTIFIABLE_HOST: 'Unidentifiable host',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     MANAGED_BY_WLF: 'Managed by Workload Factory',
-    MANAGED_INSTANCES: 'Managed instances',
-    UNMANAGED_INSTANCES: 'Unmanaged instances',
     MANAGED_HOSTS_HEADING: 'Managed hosts',
     MANAGED_HOST_HEADING: 'Managed host',
     // Create USER DB
@@ -805,12 +803,12 @@ export const GENERAL = {
     MULTI_AZ: 'Multi AZ',
     // Const for unidentifiable data
     DETECT_HOST: 'Detect host',
-    DETECT_INSTANCE: 'Detect Instance',
+    DETECT_INSTANCE: 'Authenticate Instance',
     MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 / 2'],
-    FAILED_TO_DETECT_HOST: 'Failed to detect host',
+    FAILED_TO_DETECT_HOST: 'Failed to authenticate host',
     MANAGE_DETECT_FAIL_MESSAGE:
-        'Workload Factory was unable to detect the SQL Server instance. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.',
+        'Workload Factory was unable to authenticate the SQL Server instance. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.',
     DETECT_FAILED_WITH_NO_STORAGE:
         'Unable to identify attached storage. For SQL user authentication, reload the inventory page and try to manage again.',
     DONE: 'Done',
@@ -819,7 +817,7 @@ export const GENERAL = {
     SSM_ONLINE: 'Online',
     SSM_CONNECTION_LOST: 'Connection lost',
     DETECT_HOST_DESC: 'Detect and manage Microsoft SQL Server deployed on EC2 instance ',
-    DETECT_INSTANCE_DESC: 'Detect and manage instance ',
+    DETECT_INSTANCE_DESC: 'Detect and register instance ',
     DETECT_ONLY_INSTANCE: 'Detect instance',
     DETECT_MSSQL_HEADING: 'Microsoft SQL Server',
     DETECT_MSSQL_USERNAME: 'Microsoft SQL Server user name',
@@ -853,7 +851,7 @@ export const GENERAL = {
         'Would you like to manage the detected instance via Workload Factory?'
     ],
     FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.'],
-    FSX_INSTANCE_AFTER_DETECT_OPTIONS: ['Yes, Manage instance via Workload Factory.', 'No.'],
+    FSX_INSTANCE_AFTER_DETECT_OPTIONS: ['Yes, Register instance via Workload Factory.', 'No.'],
     HOST_MOVED_SUCCESS: [
         'Host ',
         ' successfully detected and moved to the ',
@@ -861,8 +859,8 @@ export const GENERAL = {
         ' Managed hosts ',
         'tab.'
     ],
-    INSTANCE_MANAGE_REQUEST: ['Your request to manage the SQL Server instance ', ' is in progress.'],
-    MULTI_INSTANCE_MANAGE_REQUEST: ['Your request to manage ', ' SQL Server instances is in progress.'],
+    INSTANCE_MANAGE_REQUEST: ['Your request to register the SQL Server instance ', ' is in progress.'],
+    MULTI_INSTANCE_MANAGE_REQUEST: ['Your request to register ', ' SQL Server instances is in progress.'],
 
     INSTANCE_SUCCESS_DETECTED: ['Instance ', ' successfully detected.'],
     INSTANCE_SUCCESS_DETECTED_FAILED_MANAGED: ['Instance ', ' successfully detected but failed to become managed. '],
@@ -882,13 +880,13 @@ export const GENERAL = {
     ],
     PREPARE_DETECTED_INSTANCE_INFO: [
         'Instance ',
-        ' state is changed to unmanaged but is unable to become a managed instance because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        ' state is changed to unmanaged but is unable to become a registered instance because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
         'Job monitoring',
         ' to see when the modules have been installed.'
     ],
     PREPARE_DETECTED_INSTANCES_INFO: [
         'Instances ',
-        'state has been changed to unmanaged but are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'state has been changed to unmanaged but are unable to become registered instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
         'Job monitoring',
         ' to see when the modules have been installed.'
     ],
@@ -900,13 +898,13 @@ export const GENERAL = {
     ],
     PREPARE_INSTANCES_INFO: [
         'Instances ',
-        'are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'are unable to become registered instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
         'Job monitoring',
         ' to see when the modules have been installed.'
     ],
     PREPARE_BULK_INSTANCES_INFO: [
         'Few instances ',
-        'are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'are unable to become registered instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
         'Job monitoring',
         ' to see when the modules have been installed.'
     ],
@@ -1089,7 +1087,7 @@ export const GENERAL = {
     EXPORT_PDF: 'Export PDF',
     ES_COST_SAVINGS: 'Cost savings',
     ES_SAVINGS_PERCENTAGE: 'Percentage savings',
-    ES_HEADING: 'Detected host cost analysis',
+    ES_HEADING: 'Authenticated host cost analysis',
     ES_HEADING_ONPREM_LEFT_SIDE: 'Migrate your on-premises SQL Server environment',
     ES_HEADING_ONPREM_RIGHT_SIDE: 'Assessment steps',
     ES_MIGRATE_SERVER_ENV:
@@ -1140,7 +1138,7 @@ export const GENERAL = {
     COST_CALCULATION: 'Cost calculation',
     DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.',
     TOOLTIP_MESSAGE_SNAPSHOT_FREQ:
-        'No EBS snapshots detected. If you would like to compare the cost of EBS snapshots to FSx for ONTAP snapshots, update the snapshot frequency.',
+        'No EBS snapshots authenticated. If you would like to compare the cost of EBS snapshots to FSx for ONTAP snapshots, update the snapshot frequency.',
     NOTICE_MESSAGE_COST_SAVINGS:
         'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
     PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',
@@ -1177,11 +1175,12 @@ export const GENERAL = {
     SSM_DOWN: 'SSM is not connected.',
     PGSQL_CTA_NA: 'Coming soon',
     NON_MSSQL_BULK_CTA: 'Bulk manage is only supported for Microsoft SQL Server instances.',
-    DATABASE_AVAILABLE_MSG: 'Databases are available for managed instances only.',
+    DATABASE_AVAILABLE_MSG: 'Databases are available for registered instances only.',
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
     ONLINE_INSTANCE_DISMISS: 'Analysis state can be updated for online instances.',
-    NON_MSSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
+    NON_MSSQL_ASSESSMENT_NA:
+        'Well-architected analysis is only available for Microsoft SQL Server registered instances.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
@@ -1190,39 +1189,42 @@ export const GENERAL = {
     NOT_OPTIMIZED_SHARED_DRIVES:
         'Drive size optimization isn’t possible because data is on the same shared drive. You’ll need to change the storage layout before resizing the drive.',
     ASSESSMENT_IN_PROGRESS: 'Well-architected analysis has not been run yet.',
-    ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
+    ASSESSMENT_FOR_MANAGE: 'Well-architected analysis is only supported for registered instances.',
     FSXN_OPTIMIZE_SUPPORTED:
-        'Optimization assessment is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',
-    ASSESSMENT_FOR_UNDETECTED_FSXN: 'Optimization assessment is only supported for detected and managed instances.',
+        'Well-architected analysis is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',
+    ASSESSMENT_FOR_UNDETECTED_FSXN:
+        'Well-architected analysis is only supported for registered and authenticated instances.',
     ASSESSMENT_STORAGE_TYPE_UNKNOWN:
-        'Optimization assessment is only supported for detected and managed FSx for ONTAP instances.',
-    ASSESSMENT_AOAG_DETECTED: 'Optimization assessment is only supported for managed instances.',
-    ASSESSMENT_AOAG_UNDETECTED: 'Optimization assessment is only supported for detected and managed instances.',
+        'Well-architected analysis is only supported for authenticated and registered FSx for ONTAP instances.',
+    ASSESSMENT_AOAG_DETECTED: 'Well-architected analysis is only supported for registered instances.',
+    ASSESSMENT_AOAG_UNDETECTED:
+        'Well-architected analysis is only supported for authenticated and registered instances.',
 
     SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
-    FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
+    FSXN_MANAGE_SUPPORTED:
+        'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be registered.',
     MANAGE_DISABLE_FOR_UNDETECTED:
-        'This instance is currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+        'This instance is currently unauthenticated. To manage the instance, expand the database host name, and then select "authenticate" from the menu.',
     NO_UNMANAGED_TO_MANAGE:
-        'All SQL Server instances on this host are either managed or undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
-    AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
+        'All SQL Server instances on this host are either registered or unauthenticated. To manage the instance, click on view instance, and then select "authenticate" from the menu.',
+    AOAG_MANAGE_DISABLE: 'Register instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
-        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
+        'All SQL Server instances on this host are currently registered. To explore instance actions or unregister the instance, click on view instance, and click the menu.',
     ALL_FSXN_MANAGED_TEXT:
-        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
+        'All FSx for ONTAP SQL Server instances on this host are currently registered. To explore instance actions or unregister the instance, click on view instance, and click the menu.',
     ALL_UNDETECT_TEXT:
-        'All SQL Server instances on this host are currently undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently unauthenticated. To manage the instance, click on view instance, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
-        'All SQL Server instances on this host are currently undetected. To explore savings on this instance first click on view instance, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently unauthenticated. To explore savings on this instance first click on view instance, and then select "detect" from the menu.',
     ALL_ES_FSXW_AOAG_ROWS:
         'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
     NON_SSD_FSXW_MSG:
         'Explore Savings for FSx for Windows File Server is only supported for SSD file system storage type.',
     MANAGED_SUPPORT_FOR_EBS_FSXW:
-        'Manage instance is not supported for EBS and FSx for Windows File Server storage type.',
+        'Register instance is not supported for EBS and FSx for Windows File Server storage type.',
     MIXED_STORAGE_ES_MSG: 'Explore Savings for mixed storage type is not supported.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [
@@ -1239,17 +1241,17 @@ export const GENERAL = {
     ],
     MULTIPLE_INSTANCE_DETECT_MANAGE_FAILED: [
         'The attempt to manage ',
-        ' SQL Server instances was unsuccessful. The instaces state has been changed to unmanaged. Please try again or contact support if the problem persists.'
+        ' SQL Server instances was unsuccessful. The instances state has been changed to unregister. Please try again or contact support if the problem persists.'
     ],
-    MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS: [' out of ', ' SQL Server instances have been successfully managed.'],
+    MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS: [' out of ', ' SQL Server instances have been successfully registered.'],
     MULTIPLE_INSTANCE_DETECT_MANAGE_PARTIAL_SUCCESS: [
         ' out of ',
-        ' SQL Server instances have been successfully managed. The rest of the instances have been moved to unmanaged'
+        ' SQL Server instances have been successfully registered. The rest of the instances have been moved to unregister'
     ],
-    MUTLI_INSTANCE_MANAGE_SUCCESS: [' SQL Server instances have been successfully managed.'],
+    MUTLI_INSTANCE_MANAGE_SUCCESS: [' SQL Server instances have been successfully registered.'],
     UNMANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) =>
-        `Database instance ${instanceName} unmanaged successfully.`,
-    UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unmanage.`,
+        `Database instance ${instanceName} unregister successfully.`,
+    UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unregister.`,
     NOT_OPTIMIZED:
         "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use.",
     // Explore savings view calculations related consts
@@ -1317,7 +1319,7 @@ export const GENERAL = {
     CLONING: 'Cloning',
     CLONE_MANAGEMENT: 'Clone cleanup',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        'A well-architected score is available only for managed instances that have been analyzed and are online.',
+        'A well-architected score is available only for registered instances that have been analyzed and are online.',
     CLONE_MANAGEMENT_TAB1: 'Clones created in Workload factory (Sandboxes)',
     CLONE_MANAGEMENT_TAB2: 'Clones created outside Workload factory',
     MANAGED_INSTANCE_DISMISS_INFO:

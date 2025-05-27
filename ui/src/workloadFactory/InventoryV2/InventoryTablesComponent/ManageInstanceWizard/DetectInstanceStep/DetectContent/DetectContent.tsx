@@ -1,4 +1,4 @@
-import { DsTypography, PasswordField, RadioButton, TextField, useWizard } from '@netapp/design-system';
+import { DsTypography, PasswordField, Popover, RadioButton, TextField, useWizard } from '@netapp/design-system';
 import styles from './DetectContent.module.scss';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../../../store/storeHooks';
@@ -102,7 +102,7 @@ const DetectContent = () => {
                 (!manageSingleInstanceData?.sqlServerAuthentication &&
                     !manageSingleInstanceData?.windowsAuthentication)) && (
                 <div className={styles['radio-container']}>
-                    <DsTypography variant="Semibold_14">Select authentication type</DsTypography>
+                    <DsTypography variant="Semibold_14">Select authentication mode</DsTypography>
                     <RadioButton
                         id="select-sql-authentication"
                         isChecked={authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
@@ -113,16 +113,25 @@ const DetectContent = () => {
                         children={AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
                         className=""
                     />
-                    <RadioButton
-                        id="select-windows-authentication"
-                        isDisabled={true} // Currently windows auth is not supported
-                        isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
-                        onChange={() => {
-                            dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
-                            setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION });
-                        }}
-                        children={AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
-                        className=""
+                    <Popover
+                        children={GENERAL.COMING_SOON}
+                        trigger="hover"
+                        container={
+                            <RadioButton
+                                id="select-windows-authentication"
+                                isDisabled={true} // Currently windows auth is not supported
+                                title="Windows authentication is not supported yet"
+                                isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                                onChange={() => {
+                                    dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
+                                    setState({
+                                        authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+                                    });
+                                }}
+                                children={AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                                className=""
+                            />
+                        }
                     />
                 </div>
             )}

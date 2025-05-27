@@ -29,7 +29,7 @@ const ManageOnlyWizard = () => {
         <StepLayout>
             <Header
                 className={styles['manage-instance-wizard']}
-                title={'Manage instance'}
+                title={'Register instance'}
                 closeButtonProps={{
                     onClick: () => {
                         setTimeout(() => {
@@ -63,7 +63,7 @@ const ManageOnlyWizard = () => {
                         Previous
                     </Button>
                     <Button isThin onClick={handleManage} id="wizard-manage-btn">
-                        Manage
+                        Register
                     </Button>
                 </>
             </WizardFooter>

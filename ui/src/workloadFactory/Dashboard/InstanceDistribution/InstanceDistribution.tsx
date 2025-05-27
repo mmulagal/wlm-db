@@ -41,7 +41,7 @@ const InstanceDistribution = () => {
                         isThin={true}
                         onClick={() => handleClick(WLF_TABS.INVENTORY)}
                     >
-                        Manage instances
+                        Register instances
                     </DsButton>
                 </div>
             </div>
@@ -77,11 +77,11 @@ const InstanceDistribution = () => {
                             )}
                         </DsTypography>
 
-                        <DsTypography variant="Regular_14">Managed instances</DsTypography>
+                        <DsTypography variant="Regular_14">Registered instances</DsTypography>
                     </div>
                 </div>
 
-                <DsTypography variant="Semibold_14">Managed instances</DsTypography>
+                <DsTypography variant="Semibold_14">Registered instances</DsTypography>
                 <div className={styles.barContainer}>
                     <BarComponent
                         color="var(--chart-3)"
@@ -92,7 +92,7 @@ const InstanceDistribution = () => {
                         )}
                         beforeOutOf={mssqlHostData?.managedInstances || 0}
                         afterOutOf={mssqlHostData?.totalInstances || 0}
-                        bottomText="Managed instances:"
+                        bottomText="Registered instances:"
                         width="auto"
                         loading={mssqlDatabaseHostsLoading || multiDataLoading}
                     />
@@ -105,7 +105,7 @@ const InstanceDistribution = () => {
                         )}
                         beforeOutOf={pgsqlHostData?.managedInstances || 0}
                         afterOutOf={pgsqlHostData?.totalInstances || 0}
-                        bottomText="Managed instances:"
+                        bottomText="Registered instances:"
                         width="auto"
                         loading={pgsqlDatabaseHostsLoading || multiDataLoading}
                     />

@@ -200,7 +200,7 @@ export const JOB_MONITORING_TYPE = {
     ASSESSMENT: 'ASSESSMENT',
     OPTIMIZE: 'OPTIMIZATION',
     WELL_ARCHITECTED: 'WELL_ARCHITECTED',
-    MANAGE_RESOURCE: 'MANAGE_RESOURCE'
+    REGISTER_RESOURCE: 'REGISTER_RESOURCE'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -634,7 +634,9 @@ export const INVENTORY_STATUS = {
     STOPPED: 'Stopped',
     CASE_SENSITIVE_UP: 'Up',
     CASE_SENSITIVE_DOWN: 'Down',
-    RUNNING_LOWER: 'running'
+    RUNNING_LOWER: 'running',
+    REGISTERED: 'Registered',
+    NOT_REGISTERED: 'Not registered'
 };
 
 export const WELL_ARCHITECT_FINDINGS = {
@@ -670,7 +672,8 @@ export const INSTANCE_API_FIELDS = {
         'usageEstimation',
         'dbCount'
     ],
-    UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation']
+    UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation'],
+    UNMANAGED_ORACLE_DEFAULT: ['protection', 'performance', 'usageEstimation']
 };
 
 export const PROTECTION_TEXT_STATUS = {
@@ -922,7 +925,7 @@ export const MANAGE_STATES = {
 
 export const ACTION_CTA = {
     FIX_ISSUES: 'Fix issues',
-    MANAGE_INSTANCES: 'Manage instances'
+    MANAGE_INSTANCES: 'Register instance'
 };
 
 export const RESPONSE_STATUS = {

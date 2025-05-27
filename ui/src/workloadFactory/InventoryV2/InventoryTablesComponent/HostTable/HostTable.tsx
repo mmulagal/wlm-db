@@ -372,7 +372,7 @@ const HostTable = () => {
         },
         {
             id: '2',
-            Header: 'Managed instances',
+            Header: 'Registered instances',
             accessor: 'totalInstance',
             width: '200px',
             isSortable: true,

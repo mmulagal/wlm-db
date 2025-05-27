@@ -1303,8 +1303,8 @@ export const jobMonitoringTypeMapping = (val: string) => {
         typeValue = GENERAL.JM_TYPE_ASSESSMENT;
     } else if (val === JOB_MONITORING_TYPE.OPTIMIZE || val === JOB_MONITORING_TYPE.WELL_ARCHITECTED) {
         typeValue = GENERAL.JM_TYPE_OPTIMIZE;
-    } else if (val === JOB_MONITORING_TYPE.MANAGE_RESOURCE) {
-        typeValue = GENERAL.JM_TYPE_MANAGE_RESOURCE;
+    } else if (val === JOB_MONITORING_TYPE.REGISTER_RESOURCE) {
+        typeValue = GENERAL.JM_TYPE_REGISTER_RESOURCE;
     }
     return typeValue;
 };

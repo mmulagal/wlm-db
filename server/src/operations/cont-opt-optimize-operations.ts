@@ -18,7 +18,8 @@ import {
     AwsFsxNBackupConfig,
     CloneAssessment,
     CloneDetail,
-    MappedVolumeResponseForClone
+    MappedVolumeResponseForClone,
+    OptimizeMpioTimeoutParams
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -87,7 +88,8 @@ import {
     ENABLE_MPIO_AND_CONFIGURE,
     MPIO_ISCSI_SESSIONS,
     REMEDIATE_MPIO_ISCSI_SESSIONS,
-    REMEDIATE_MPIO_POLICY
+    REMEDIATE_MPIO_POLICY,
+    MPIO_TIMEOUT
 } from './workloads/mssql/mpio-remediation-scripts';
 import { describeInstance } from '../lib/aws/ec2';
 import {
@@ -1971,6 +1973,139 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
     }
 }
 
+async function enableMpioTimeout(optimizeMpioTimeoutParams: OptimizeMpioTimeoutParams) {
+    const {
+        credentialsId,
+        region,
+        accountId,
+        activeNodeInstanceId,
+        standbyNodeInstanceId,
+        sqlDeploymentType,
+        ssmCommand,
+        instanceId,
+        instanceName,
+        databaseType,
+        sqlAuthEnabled,
+        fsxId,
+        serverNameWithHostName,
+        parentJobId,
+        databaseHostId
+    } = optimizeMpioTimeoutParams;
+
+    logger.info(
+        `Optimizing MPIO timeout for ${accountId}, ${credentialsId}, ${region}, ${parentJobId}, ${fsxId}, ${instanceId}, ${instanceName}, ${serverNameWithHostName}, ${databaseHostId}, ${activeNodeInstanceId}, ${sqlDeploymentType}, ${standbyNodeInstanceId}`
+    );
+
+    let jobError: string | undefined;
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+
+    // Helper to run SSM command and update job
+    const runOnNode = async (
+        nodeInstanceId: string | undefined,
+        jobName: string,
+        jobDesc: string
+    ): Promise<JOBSTATUS> => {
+        if (!nodeInstanceId) {
+            return JOBSTATUS.COMPLETED;
+        }
+        const jobId = await handleOptimizeJobCreation(
+            accountId,
+            credentialsId,
+            region,
+            serverNameWithHostName,
+            JOBTYPE.WELL_ARCHITECTED,
+            jobName,
+            jobDesc,
+            parentJobId
+        );
+        try {
+            await retryWithDelay(
+                callSsmExecution.bind(
+                    null,
+                    credentialsId,
+                    region,
+                    [ssmCommand],
+                    nodeInstanceId,
+                    jobName,
+                    accountId,
+                    false
+                ),
+                3,
+                50
+            );
+            await updateJobDetails(accountId, jobId, {
+                status: JOBSTATUS.COMPLETED,
+                endTime: Date.now()
+            });
+            return JOBSTATUS.COMPLETED;
+        } catch (error) {
+            const errMsg = `Error while setting MPIO timeout on ${jobName.toLowerCase()}: ${error}`;
+            logger.error(errMsg);
+            await updateJobDetails(accountId, jobId, {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now(),
+                error: errMsg
+            });
+            jobError = errMsg;
+            return JOBSTATUS.FAILED;
+        }
+    };
+
+    // Run on primary node
+    const primaryStatus = await runOnNode(
+        activeNodeInstanceId,
+        'Set MPIO timeout on primary node',
+        'Set MPIO timeout on primary node'
+    );
+
+    // Run on standby node if FCI
+    let standbyStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT && standbyNodeInstanceId) {
+        standbyStatus = await runOnNode(
+            standbyNodeInstanceId,
+            'Set MPIO timeout on standby node',
+            'Set MPIO timeout on standby node'
+        );
+    }
+
+    // If either job failed, mark parent as failed
+    if (primaryStatus === JOBSTATUS.FAILED || standbyStatus === JOBSTATUS.FAILED) {
+        jobStatus = JOBSTATUS.FAILED;
+        await updateJobDetails(accountId, parentJobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        await updateLongRunningAuditGroup(
+            AuditStatus.FAILED,
+            `Failed to set MPIO timeout on ${serverNameWithHostName}`
+        );
+    } else {
+        // Trigger assessment after optimization
+        const instanceToAssess: WorkloadInstance = {
+            id: instanceId,
+            name: instanceName,
+            type: databaseType,
+            region,
+            sqlAuthEnabled: sqlAuthEnabled || false,
+            fsxFileSystem: fsxId,
+            activeNodeInstanceid: activeNodeInstanceId!,
+            resourceName: serverNameWithHostName,
+            cloudProviderAccountId: accountId
+        };
+        await triggerAssessmentAfterOptimization(
+            credentialsId,
+            region,
+            accountId,
+            databaseHostId,
+            serverNameWithHostName,
+            parentJobId,
+            instanceToAssess,
+            AssessmentCategories.STORAGE
+        );
+    }
+}
+
 async function optimizeOperatingSystemSettings(
     accountId: string,
     credentialsId: string,
@@ -2040,7 +2175,7 @@ async function optimizeOperatingSystemSettings(
             InstanceIds: [activeNodeInstanceId!, standbyNodeInstanceId!]
         });
         activeNodeName = getResourceNameFromTags(Reservations?.[0].Instances?.[0].Tags);
-        standbyNodeName = getResourceNameFromTags(Reservations?.[1].Instances?.[0].Tags);
+        standbyNodeName = getResourceNameFromTags(Reservations?.[1]?.Instances?.[0].Tags);
     }
 
     const svmDetailsObject = svmDetails as Record<string, string>;
@@ -2053,6 +2188,8 @@ async function optimizeOperatingSystemSettings(
             ? `Fix operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
             : configurationName === OptimizeOperatingSystemParams.MPIO_ENABLE
             ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
+            : configurationName === OptimizeOperatingSystemParams.MPIO_TIMEOUT
+            ? `Set MPIO timeout for ${serverNameWithHostName}`
             : '';
     const jobMetadata: JobMetadata = {
         hostsToOptimize: [
@@ -2202,6 +2339,49 @@ async function optimizeOperatingSystemSettings(
                 throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
             }
 
+            break;
+        }
+        case OptimizeOperatingSystemParams.MPIO_TIMEOUT: {
+            const jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+            try {
+                const ssmCommand = MPIO_TIMEOUT;
+                await enableMpioTimeout({
+                    credentialsId,
+                    region,
+                    accountId,
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId,
+                    sqlDeploymentType,
+                    ssmCommand,
+                    instanceId,
+                    instanceName,
+                    databaseType,
+                    sqlAuthEnabled,
+                    fsxId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    databaseHostId,
+                    databaseInstanceId,
+                    awsAccountId: resourceDetail.cloud_provider_account_id!,
+                    instanceMetadata
+                });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            } catch (error) {
+                const errorMessage = `Error while setting MPIO timeout: ${error}`;
+                logger.error(errorMessage);
+                await updateJobDetails(accountId, parentJobId, {
+                    status: JOBSTATUS.FAILED,
+                    endTime: Date.now(),
+                    error: errorMessage
+                });
+                updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            } finally {
+                await updateJobDetails(accountId, parentJobId, {
+                    status: jobStatus,
+                    endTime: Date.now()
+                });
+            }
             break;
         }
         default: {

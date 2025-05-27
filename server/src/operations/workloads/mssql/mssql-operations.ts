@@ -784,11 +784,12 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                           )
                         : !isEmpty(domain)
                         ? Boolean(
-                              domain?.find(({ sqlinstancename }: { sqlinstancename: string }) => {
-                                  sqlinstancename &&
+                              domain?.find(
+                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
+                                      sqlinstancename &&
                                       (sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase() ||
-                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME);
-                              })
+                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME)
+                              )
                           )
                         : false;
                 });
@@ -1351,11 +1352,12 @@ async function getActiveSqlNodeAndInstanceDetails(
                           )
                         : !isEmpty(domain)
                         ? Boolean(
-                              domain?.find(({ sqlinstancename }: { sqlinstancename: string }) => {
-                                  sqlinstancename &&
+                              domain?.find(
+                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
+                                      sqlinstancename &&
                                       (sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase() ||
-                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME);
-                              })
+                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME)
+                              )
                           )
                         : false;
                 });

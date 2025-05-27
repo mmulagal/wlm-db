@@ -41,6 +41,7 @@ const initialInventoryV2State: InventorySliceData = {
     fsxCredentialStatusLoading: false,
     mssqlInstancesData: null,
     pgsqlInstancesData: null,
+    oracleInstancesData: null,
     perfMssqlInstancesData: null,
     inProgressInstances: new Set(),
     manageHostSelectedRows: [],
@@ -221,6 +222,9 @@ const inventoryV2Slice = createSlice({
         setPgsqlInstancesData: (state, action: PayloadAction<any>) => {
             state.pgsqlInstancesData = action.payload;
         },
+        setOracleInstancesData: (state, action: PayloadAction<any>) => {
+            state.oracleInstancesData = action.payload;
+        },
         setPerfMssqlInstancesData: (state, action: PayloadAction<any>) => {
             state.perfMssqlInstancesData = action.payload;
         },
@@ -372,6 +376,7 @@ const inventoryV2Slice = createSlice({
 
             state.mssqlInstancesData = null;
             state.pgsqlInstancesData = null;
+            state.oracleInstancesData = null;
             state.perfMssqlInstancesData = {};
             state.unManagedPerfInstanceIdsList = [];
         },
@@ -426,6 +431,7 @@ export const {
     setFsxCredentialStatusLoading,
     setMssqlInstancesData,
     setPgsqlInstancesData,
+    setOracleInstancesData,
     setPerfMssqlInstancesData,
     setInProgressInstances,
     setManageHostSelectedRows,

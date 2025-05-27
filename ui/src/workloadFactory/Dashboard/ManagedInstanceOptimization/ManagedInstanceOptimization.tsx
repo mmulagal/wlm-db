@@ -92,7 +92,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                     </div>
 
                                     <DsTypography variant="Regular_14" style={{ whiteSpace: 'nowrap' }}>
-                                        Total managed instances
+                                        Total registered instances
                                     </DsTypography>
                                 </div>
                                 <SeparatorComponent variant="vertical" height="48px" />
@@ -124,7 +124,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <div className={styles.headSectionSmall}>
                                     <div className={styles.manageInstanceTooltipSection}>
                                         <DsTypography variant="Semibold_16" style={{ whiteSpace: 'nowrap' }}>
-                                            Total managed instances &nbsp;{instanceOptimizationSummary?.totalInstances}
+                                            Total registered instances &nbsp;{instanceOptimizationSummary?.totalInstances}
                                         </DsTypography>
                                         {instanceOptimizationSummary?.hasDismissedOrPostponed && (
                                             <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>

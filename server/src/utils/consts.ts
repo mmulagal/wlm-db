@@ -1667,7 +1667,10 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'autoscaling:DescribeAutoScalingGroups',
     'autoscaling:DescribeAutoScalingInstances',
     'fsx:UpdateFileSystem',
-    'fsx:UpdateVolume'
+    'fsx:UpdateVolume',
+    'bedrock:GetFoundationModelAvailability',
+    'bedrock:ListInferenceProfiles',
+    'logs:PutRetentionPolicy'
 ];
 
 const AWS_ERROR_CODES = {

@@ -11,12 +11,12 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-async function getCloudWatchLogsClient(region: string, credentialsId: string) {
-    logger.debug('Getting cloud watch logs client:', region, credentialsId);
+async function getCloudWatchLogsClient(region: string, credentialsId: string, accountId?: string) {
+    logger.debug('Getting cloud watch logs client:', region, credentialsId, accountId);
     try {
         const {
             credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-        } = await getCredentialsDetails(credentialsId);
+        } = await getCredentialsDetails(credentialsId, accountId);
         const credentials = { accessKeyId, secretAccessKey, sessionToken };
         return new CloudWatchLogsClient({ region, credentials });
     } catch (error) {
@@ -28,10 +28,11 @@ async function getCloudWatchLogsClient(region: string, credentialsId: string) {
 async function getPaginatedCloudwatchLogs(
     credentialsId: string,
     region: string,
-    input: GetLogEventsCommandInput
+    input: GetLogEventsCommandInput,
+    accountId?: string
 ): Promise<string[]> {
-    logger.info('Getting paginated cloud watch logs:', credentialsId, region, input);
-    const client = await getCloudWatchLogsClient(region, credentialsId);
+    logger.info('Getting paginated cloud watch logs:', credentialsId, region, input, accountId);
+    const client = await getCloudWatchLogsClient(region, credentialsId, accountId);
     const logs: string[] = [];
 
     const paginator = paginateGetLogEvents(

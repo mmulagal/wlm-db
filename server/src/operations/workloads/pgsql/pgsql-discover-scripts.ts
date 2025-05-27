@@ -33,7 +33,7 @@ const discoverPgsqlHosts = `
         is_nfs="false"
         mount_response=$(sudo findmnt -n -o FSTYPE,SOURCE --target $data_dir)
         fs_type=$(echo "$mount_response" | awk '{print $1}')
-        if [[ -z $mount_response || -z $fs_type || $fs_type != "nfs" ]]; then
+        if [[ -z $mount_response || -z $fs_type || $fs_type != "nfs"* ]]; then
             DEVICE=$(sudo df --output=source "$data_dir" | tail -n 1)
             if [[ $DEVICE == *"nvme"* ]]; then
                 if ! command -v nvme &> /dev/null; then

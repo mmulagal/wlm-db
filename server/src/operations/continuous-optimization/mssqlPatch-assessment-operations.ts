@@ -178,7 +178,8 @@ async function getTheMSSqlversion(
     region: string,
     instanceId: string,
     sqlAuthEnabled: boolean,
-    instanceName: string
+    instanceName: string,
+    accountId: string
 ) {
     logger.info('Getting the MSSQL version', {
         credentialsId,
@@ -195,7 +196,8 @@ async function getTheMSSqlversion(
         region,
         [ssmCommand],
         instanceId,
-        'Get Installed SQL version'
+        'Get Installed SQL version',
+        accountId
     );
     const [parsedResponse] = sqlResponseParsing(response);
     const { version } = parsedResponse;
@@ -253,12 +255,13 @@ async function runMSSQLPatchAssessment(
             region,
             activeNodeInstanceId,
             sqlAuthEnabled,
-            instanceName
+            instanceName,
+            accountId
         );
 
         const [availableCriticalSQLPatches, instanceInstalledPatchDetails] = await Promise.all([
             getAvailablePatches(credentialsId, region, activeNodeInstanceId, sqlServerYear),
-            getInstalledSQLPatchDetails(credentialsId, region, clusterNodeInstanceIds)
+            getInstalledSQLPatchDetails(credentialsId, region, clusterNodeInstanceIds, accountId)
         ]);
 
         const instanceInstalledPatchDetailsList = instanceInstalledPatchDetails || [];
