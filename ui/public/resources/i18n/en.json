@@ -34,7 +34,11 @@
             "compute-optimizer-permissions": "Compute Optimizer permissions",
             "fsx-for-ontap-permissions": "FSx for ONTAP permissions",
             "aws-iam-policy-permissions": "AWS IAM policy permissions",
-            "well-architect-permission-text": "These permissions include AWS IAM policy permissions, FSx for ONTAP permissions, and AWS Compute Optimizer permissions. Switch between the tabs to review each set of permissions."
+            "well-architect-permission-text": "These permissions include AWS IAM policy permissions, FSx for ONTAP permissions, and AWS Compute Optimizer permissions. Switch between the tabs to review each set of permissions.",
+            "powershell-7-already-installed": "PowerShell 7 is already installed",
+            "all-modules-installed": "AWS and NetApp powershell modules are already installed",
+            "missing-powershell-title": "Install missing PowerShell 7",
+            "missing-modules-title": "Install missing AWS and NetApp PowerShell modules"
         }
     }
 }

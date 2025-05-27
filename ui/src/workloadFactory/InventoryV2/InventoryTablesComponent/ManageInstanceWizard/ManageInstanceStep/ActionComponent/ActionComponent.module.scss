@@ -12,5 +12,9 @@
         padding: 16px 40px;
         display: flex;
         gap: 40px;
+
+        [class*='Popover-module_tooltip-wrapper'] {
+            max-width: None !important;
+        }
     }
 }

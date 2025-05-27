@@ -1001,7 +1001,7 @@ const InventoryApisV3 = () => {
                 nextToken: nextToken
             });
             if (result && !result?.error) {
-                let oracleInstancesDataRes: Record<string, OracleInstanceData> | null = {};
+                let oracleInstancesDataRes: Record<string, OracleInstanceData> = {};
                 result?.data?.items?.forEach((host: any) => {
                     if (oracleInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
                         oracleInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
@@ -1116,7 +1116,7 @@ const InventoryApisV3 = () => {
     };
 
     const callOracleResourceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
-        let oracleInstancesDataLoad: Record<string, OracleInstanceData> | null = {};
+        let oracleInstancesDataLoad: Record<string, OracleInstanceData> = {};
         let noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList?.map((ec2InstanceIdComb: any) => {
