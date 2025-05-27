@@ -34,8 +34,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
         if (label === t('databases.register-flow.aws-iam-policy-permissions')) {
             data = JSON.stringify(policies?.view, null, 2);
         } else {
-            // ToDo - to check what data to show here
-            data = JSON.stringify(policies?.view, null, 2);
+            data = JSON.stringify(policies?.['instance-profile'], null, 2);
         }
         setDialog(
             <DialogComponent
