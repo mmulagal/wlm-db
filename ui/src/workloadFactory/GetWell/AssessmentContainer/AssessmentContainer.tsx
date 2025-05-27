@@ -9,11 +9,12 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 
 const AssessmentContainer = ({ onClick, isLoading }: any) => {
     const { gwTimestamp, gwAdhocError, optimizePageLoading } = useAppSelector(state => state.getWellOptimize);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     return (
         <div className={styles.assessment}>
             <div className={styles.leftSide}>
                 <div className={styles.leftContainer}>
-                    <div className={styles.scanImage}>
+                    <div className={!isDarkTheme ? `${styles.scanImage}` : `${styles.scanImage} ${styles.darkTheme}`}>
                         <ScanImage />
                     </div>
                     <div className={styles.textSection}>
