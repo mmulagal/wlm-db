@@ -593,6 +593,20 @@ export const getPrimaryPgsqlNode = (
 
             if (partnerNode && !isDemoMode) {
                 partnerNode = [host, ...partnerNode];
+                let ec2Details: Array<{ id: string; name: string }> = [];
+                partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
+                    ec2Details.push({
+                        id: perPartnerNode?.ec2InstanceId || '',
+                        name: perPartnerNode?.ec2InstanceName || ''
+                    });
+                });
+
+                partnerNode = partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
+                    return {
+                        ...perPartnerNode,
+                        ec2Details: ec2Details
+                    };
+                });
 
                 let anyManagedNode = false;
                 partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
@@ -1001,7 +1015,7 @@ export const formatPgsqlDiscoveredRows = (
         loading: false,
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
-        ec2Details: ec2Details,
+        ec2Details: discoveredRow?.ec2Details || ec2Details,
         hostType: GENERAL.POSTGRESQL_TYPE,
         // **** Below values will get from Instances API *****
         // estimatedUsageCost: {}, // Initially it will be blank
@@ -1946,7 +1960,17 @@ export const updateInventoryDatawithInstancesRes = (
                 loading: partnerInstanceData?.loading
             };
         } else if (partnerInstanceData && !partnerInstanceData?.loading) {
-            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
+            let ec2Details: any = [];
+            if (
+                inventoryRow?.hostType === DBType.POSTGRESQL &&
+                inventoryRow?.ec2Details &&
+                inventoryRow?.ec2Details?.length > 0
+            ) {
+                // cluster node details does not have same node in PGSQL resource-details API. That's why getting it from different way.
+                ec2Details = inventoryRow?.ec2Details;
+            } else {
+                ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
+            }
             let mergedCost = mergeEstimatedCost(instanceRow, partnerInstanceData);
             let allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data, partnerInstanceData?.data]);
             let ebsResourceInfo = mergeEbsResourceInfo(instanceRow, partnerInstanceData);
@@ -1973,7 +1997,17 @@ export const updateInventoryDatawithInstancesRes = (
             };
         } else {
             const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data]);
-            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
+            let ec2Details: any = [];
+            if (
+                inventoryRow?.hostType === DBType.POSTGRESQL &&
+                inventoryRow?.ec2Details &&
+                inventoryRow?.ec2Details?.length > 0
+            ) {
+                // cluster node details does not have same node in PGSQL resource-details API. That's why getting it from different way.
+                ec2Details = inventoryRow?.ec2Details;
+            } else {
+                ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
+            }
             result = {
                 ...inventoryRow,
                 name: inventoryRow?.name || instanceRow?.data?.name,
