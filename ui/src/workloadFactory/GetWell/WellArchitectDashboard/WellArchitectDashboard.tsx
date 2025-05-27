@@ -293,7 +293,7 @@ const WellArchitectDashboard = () => {
                             items={[
                                 {
                                     id: 'resetSQLServerPassword',
-                                    children: 'Reset SQL server password',
+                                    children: GENERAL.UPDATE_SQL_SERVER_PASSWORD,
 
                                     onClick: () => {
                                         handleFsxPassword(RESET_PASSWORD_TYPE.SQLSERVER);
@@ -301,7 +301,7 @@ const WellArchitectDashboard = () => {
                                 },
                                 {
                                     id: 'resetFSxAdminPassword',
-                                    children: 'Reset FSxadmin password',
+                                    children: GENERAL.UPDATE_FSX_ADMIN_PASSWORD,
 
                                     onClick: () => {
                                         handleFsxPassword(RESET_PASSWORD_TYPE.FSXADMIN);

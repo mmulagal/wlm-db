@@ -205,7 +205,7 @@ const InstancesTable = () => {
                         </DsTypography>
                     </>
                 }
-                primaryButton={'Unmanage'}
+                primaryButton={'Unregister'}
                 secondaryButton={'Close'}
                 callback={() => {
                     const updatedState = store.getState();
@@ -885,6 +885,11 @@ const InstancesTable = () => {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(
+                                                setSelectedWellArchitectTab(
+                                                    WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
+                                                )
+                                            );
                                             optimizeAction(rowData);
                                         } else {
                                             dispatch(setManageSingleInstanceData(rowData));
