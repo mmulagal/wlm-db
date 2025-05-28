@@ -193,11 +193,11 @@ const InstancesTable = () => {
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Unregister instance'}
+                header={'Deregister instance'}
                 content={
                     <>
                         <DsTypography variant="Regular_14">
-                            Are you sure you want to unregister the SQL Server instance?{' '}
+                            Are you sure you want to deregister the SQL Server instance?{' '}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginTop: '24px', width: '700px' }}>
                             This will exclude the instance from Workload Factory's best practices and lifecycle
@@ -205,7 +205,7 @@ const InstancesTable = () => {
                         </DsTypography>
                     </>
                 }
-                primaryButton={'Unregister'}
+                primaryButton={'Deregister'}
                 secondaryButton={'Close'}
                 callback={() => {
                     const updatedState = store.getState();
@@ -997,7 +997,7 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'unManage',
-                            displayName: 'Unregister'
+                            displayName: 'Deregister'
                         }
                     );
                 }
