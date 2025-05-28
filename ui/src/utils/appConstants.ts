@@ -46,7 +46,7 @@ export const GENERAL = {
     DATABASE_MANAGEMENT: 'Database management',
     DATABASE_OPTIMIZATION: 'Database optimization',
     INVENTORY_CARD_TEXT1:
-        'Manage database resources and perform day-to-day operations with FSx for ONTAP. You can check the status of hosts, instances, and databases, deploy new resources, and stay on top of resource usage, data protection, and performance.',
+        'Register database resources and perform day-to-day operations with FSx for ONTAP. You can check the status of hosts, instances, and databases, deploy new resources, and stay on top of resource usage, data protection, and performance.',
     INVENTORY_CARD_TEXT2:
         'Plus, get optimization recommendations to make sure your database resources are well-architected.',
     INVENTORY_CARD_TEXT3:
@@ -1250,7 +1250,7 @@ export const GENERAL = {
     ],
     MUTLI_INSTANCE_MANAGE_SUCCESS: [' SQL Server instances have been successfully registered.'],
     UNMANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) =>
-        `Database instance ${instanceName} unregister successfully.`,
+        `Database instance ${instanceName} unregistered successfully.`,
     UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unregister.`,
     NOT_OPTIMIZED:
         "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use.",

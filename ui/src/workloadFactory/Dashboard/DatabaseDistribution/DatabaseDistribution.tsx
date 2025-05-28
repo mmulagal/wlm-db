@@ -71,7 +71,7 @@ const DatabaseDistribution = () => {
                         )}
                         beforeOutOf={aggregatedHostsCount?.managedDatabases || 0}
                         afterOutOf={aggregatedHostsCount?.totalDatabases || 0}
-                        bottomText="Managed databases:"
+                        bottomText="Registered databases:"
                         width="auto"
                         loading={loading}
                     />
