@@ -2132,14 +2132,20 @@ export const getMergedAllocatedCapacity = (nodeList: Array<ManagedHostsRowInterf
     return allocatedCapacity;
 };
 
-export const getEc2DetailsForUnmanagedHost = (instanceRow: InstancesObjectInterface, inventoryRow: InventoryTableData) => {
+export const getEc2DetailsForUnmanagedHost = (
+    instanceRow: InstancesObjectInterface,
+    inventoryRow: InventoryTableData
+) => {
     const ec2Details: Array<EC2DetailsInterface> = [];
-    if (inventoryRow?.hostType === DBType.POSTGRESQL && inventoryRow?.ec2Details) {
-        return [...inventoryRow?.ec2Details];
-    }
-
     let instanceId = '';
-    if (instanceRow?.data?.nodeTopology?.ec2Details && instanceRow?.data?.nodeTopology?.ec2Details?.length > 0) {
+    if (inventoryRow?.hostType === DBType.POSTGRESQL) {
+        instanceId = inventoryRow?.ec2InstanceId || '';
+        ec2Details.push({
+            id: inventoryRow?.ec2InstanceId || '',
+            name: inventoryRow?.ec2InstanceName || '',
+            instanceType: inventoryRow?.hostType || ''
+        });
+    } else if (instanceRow?.data?.nodeTopology?.ec2Details && instanceRow?.data?.nodeTopology?.ec2Details?.length > 0) {
         instanceId = instanceRow?.data?.nodeTopology?.ec2Details?.[0]?.id || '';
         ec2Details.push(instanceRow?.data?.nodeTopology?.ec2Details?.[0]);
     }
@@ -3539,52 +3545,76 @@ export const manageActionCol = (rowData?: any) => {
     }
 
     if (colText === ACTION_CTA.FIX_ISSUES) {
-        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
-            disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
-        } else if (
-            rowData?.status === INVENTORY_STATUS.OFFLINE ||
-            rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
-            rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
-            rowData?.status === INVENTORY_STATUS.STOPPED
-        ) {
-            disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
-        } else if (
-            (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-            (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
-        ) {
-            disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
-        } else if (
-            (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-            (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
-        ) {
-            disableMsg = GENERAL.FSXN_OPTIMIZE_SUPPORTED;
-        } else if (
-            rowData?.serverInstallationMode === GENERAL.AOAG &&
-            rowData.fileSystemType &&
-            rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
-        ) {
-            if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-                disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
-            } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
-            }
-        } else if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
-            if (
-                rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
-            ) {
-                disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
-            } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
-            }
-        } else if (!rowData?.optimizationStatus && !rowData?.optimizationStatusLoading) {
-            disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
-        }
+        disableMsg = fixIssueDisableMsg(rowData);
     }
     return {
         colText: colText,
         disableMsg: disableMsg
     };
+};
+
+export const fixIssueDisableMsg = (rowData: any) => {
+    let disableMsg = '';
+    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+        disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
+        return disableMsg;
+    }
+    if (
+        rowData?.status === INVENTORY_STATUS.OFFLINE ||
+        rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
+        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
+        rowData?.status === INVENTORY_STATUS.STOPPED
+    ) {
+        disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
+        return disableMsg;
+    }
+    if (
+        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+        (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
+    ) {
+        disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
+        return disableMsg;
+    }
+    if (
+        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+    ) {
+        disableMsg = GENERAL.FSXN_OPTIMIZE_SUPPORTED;
+        return disableMsg;
+    }
+    if (
+        rowData?.serverInstallationMode === GENERAL.AOAG &&
+        rowData.fileSystemType &&
+        rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
+    ) {
+        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+            disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
+            return disableMsg;
+        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+            disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
+            return disableMsg;
+        }
+    }
+    if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+        if (
+            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+            rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
+        ) {
+            disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
+            return disableMsg;
+        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+            disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
+            return disableMsg;
+        }
+    }
+    if (
+        (!rowData?.optimizationStatus && !rowData?.optimizationStatusLoading) ||
+        rowData?.optimizationStatus === INVENTORY_STATUS.IN_PROGRESS
+    ) {
+        disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
+        return disableMsg;
+    }
+    return disableMsg;
 };

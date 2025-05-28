@@ -11,6 +11,7 @@ import { JOB_MONITORING_STATUS, MANAGE_POLLING_INTERVAL, MANAGE_STATES, WLF_TABS
 import { Button, DsTypography } from '@netapp/design-system';
 import store from '../../../../store/store';
 import { uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
+import { ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
 
 export const handleSingleInstanceManage = (
     manageSingleInstanceChecks: any,
@@ -261,4 +262,34 @@ export const isAllowManage = (manageReadinessData: any) => {
         }
     }
     return anyListEmpty;
+};
+
+export const mergeReadinessData = (
+    manageReadinessData: ManageReadinessInterface,
+    partnerManageReadinessData: ManageReadinessInterface
+): ManageReadinessInterface => {
+    const mergedData: any = {};
+
+    Object.keys(manageReadinessData).forEach(key => {
+        if (key !== 'missingSqlCmd') {
+            mergedData[key] = {
+                missingSqlPermissions: Array.from(
+                    new Set([
+                        ...manageReadinessData[key].missingSqlPermissions,
+                        ...partnerManageReadinessData[key].missingSqlPermissions
+                    ])
+                ),
+                missingModules: Array.from(
+                    new Set([
+                        ...manageReadinessData[key].missingModules,
+                        ...partnerManageReadinessData[key].missingModules
+                    ])
+                )
+            };
+        } else {
+            mergedData[key] = manageReadinessData[key] || partnerManageReadinessData[key];
+        }
+    });
+
+    return mergedData;
 };

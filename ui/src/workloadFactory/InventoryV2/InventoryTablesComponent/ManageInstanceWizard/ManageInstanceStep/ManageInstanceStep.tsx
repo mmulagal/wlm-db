@@ -12,7 +12,13 @@ import { GENERAL } from '../../../../../utils/appConstants';
 import { setManageSingleInstanceChecks } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { useDispatch } from 'react-redux';
 import MultiInstanceHeader from '../DetectInstanceStep/DetectHeader/MultiInstanceHeader';
-import { getPermissionState, hasMissingPowershell7, isAllowManage, missingModules } from '../ManageInstanceUtils';
+import {
+    getPermissionState,
+    hasMissingPowershell7,
+    isAllowManage,
+    mergeReadinessData,
+    missingModules
+} from '../ManageInstanceUtils';
 import { useGetWlmdbPoliciesQuery } from '../../../../../utils/apiService';
 
 export const Content = () => {
@@ -80,21 +86,46 @@ export const Content = () => {
             manageSingleInstanceReadiness
         ) {
             manageReadinessData = manageSingleInstanceReadiness;
-        } else if (manageSingleInstanceData?.manageReadiness) {
-            manageReadinessData = manageSingleInstanceData?.manageReadiness;
         } else {
             // If user Unregister and instance or in case of mixed case of manage and unmanage. Get managereadiness data directly from discoveredHostData.
             let ec2InstanceId = manageSingleInstanceData?.ec2InstanceId;
             let credentialId = manageSingleInstanceData?.credentialId;
             let regionId = manageSingleInstanceData?.regionId;
             let instanceName = manageSingleInstanceData?.databaseInstanceName;
-            manageReadinessData = getManageReadinessData(
-                discoveredHostData,
-                ec2InstanceId,
-                credentialId,
-                regionId,
-                instanceName
+            const partnerInstance = manageSingleInstanceData?.hostRow?.ec2Details?.find(
+                (instance: any) => instance.id !== ec2InstanceId
             );
+
+            let primaryManageReadinessData: any = null;
+            if (manageSingleInstanceData?.manageReadiness) {
+                primaryManageReadinessData = manageSingleInstanceData?.manageReadiness;
+            } else {
+                primaryManageReadinessData = getManageReadinessData(
+                    discoveredHostData,
+                    ec2InstanceId,
+                    credentialId,
+                    regionId,
+                    instanceName
+                );
+            }
+
+            // If partner node is present than merge manageReadiness for partner also 
+            let partnerManageReadinessData: any = null;
+            if (partnerInstance?.id) {
+                partnerManageReadinessData = getManageReadinessData(
+                    discoveredHostData,
+                    partnerInstance?.id,
+                    credentialId,
+                    regionId,
+                    instanceName
+                );
+            }
+            if (primaryManageReadinessData && partnerManageReadinessData) {
+                // Merge manageReadiness if both node and partner node are present
+                manageReadinessData = mergeReadinessData(primaryManageReadinessData, partnerManageReadinessData);
+            } else {
+                manageReadinessData = primaryManageReadinessData;
+            }
         }
         if (manageReadinessData) {
             let missingModulesList = missingModules(manageReadinessData);
@@ -158,7 +189,7 @@ export const Content = () => {
             <PermissionListComponent manageChecks={manageChecks} policiesList={policiesList} />
 
             {/* Note */}
-            {!isAllReady && <NoteComponent />}
+            {<NoteComponent />}
         </div>
     );
 };
