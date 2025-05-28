@@ -17,10 +17,12 @@ import {
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
 import useResize from '../../../common/hooks/useResize';
+import { useNavigate } from 'react-router-dom';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
     const windowSize = useResize();
+    const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -134,7 +136,7 @@ const ExploreSavingsTableV2 = () => {
                     <div
                         className={styles.detectManage}
                         onClick={() => {
-                            onClickESHost(dispatch, rowData, isWorkloadFactory);
+                            onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
                         }}
                         id="explore-savings-table-button"
                     >
