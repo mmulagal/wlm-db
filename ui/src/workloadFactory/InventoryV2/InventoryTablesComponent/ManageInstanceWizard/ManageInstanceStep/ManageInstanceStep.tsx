@@ -87,7 +87,7 @@ export const Content = () => {
         ) {
             manageReadinessData = manageSingleInstanceReadiness;
         } else {
-            // If user Unregister and instance or in case of mixed case of manage and unmanage. Get managereadiness data directly from discoveredHostData.
+            // If user Deregister and instance or in case of mixed case of manage and unmanage. Get managereadiness data directly from discoveredHostData.
             let ec2InstanceId = manageSingleInstanceData?.ec2InstanceId;
             let credentialId = manageSingleInstanceData?.credentialId;
             let regionId = manageSingleInstanceData?.regionId;
@@ -109,7 +109,7 @@ export const Content = () => {
                 );
             }
 
-            // If partner node is present than merge manageReadiness for partner also 
+            // If partner node is present than merge manageReadiness for partner also
             let partnerManageReadinessData: any = null;
             if (partnerInstance?.id) {
                 partnerManageReadinessData = getManageReadinessData(
