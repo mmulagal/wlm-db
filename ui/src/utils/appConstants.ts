@@ -37,12 +37,12 @@ export const GENERAL = {
     PREREQUISITE_LIST: 'Prerequisites list',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
     UPDATE: 'Update',
-    UPDATE_FSX_ADMIN_PASSWORD: 'Update FSxadmin password',
+    UPDATE_FSX_ADMIN_PASSWORD: 'Update fsxadmin password',
     FSX_PASSWORD_CONTENT:
         'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Microsoft SQL Server instance.',
     SQL_PASSWORD_CONTENT:
         'The password for your Windows login might have changed. Update credentials to register this Microsoft SQL Server instance.',
-    UPDATE_SQL_SERVER_PASSWORD: 'Update SQL Server password',
+    UPDATE_SQL_SERVER_PASSWORD: 'Update Microsoft SQL Server password',
     DATABASE_MANAGEMENT: 'Database management',
     DATABASE_OPTIMIZATION: 'Database optimization',
     INVENTORY_CARD_TEXT1:
