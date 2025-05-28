@@ -117,6 +117,10 @@ const Home = () => {
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ONPREM} />}
                         />
                         <Route
+                            path="/databases/storage-saving-calculator"
+                            element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
+                        />
+                        <Route
                             path={'/databases/job-monitoring'}
                             element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                         />
@@ -125,7 +129,7 @@ const Home = () => {
                         <Route path={'/job-monitor'} element={<JobMonitoring />} />
                         <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
                         {/* Testing code */}
-                        {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
+                        <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                         <Route path={'/manage-wizard'} element={<ManageInstanceWizard />} />
                     </Routes>
                 )}
@@ -158,6 +162,11 @@ const Home = () => {
                                 path={'/fsxdb/explore-savings'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
                             />
+                            <Route
+                                path="/fsxdb/storage-saving-calculator"
+                                element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
+                            />
+
                             <Route
                                 path={'/fsxdb/job-monitoring'}
                                 element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
