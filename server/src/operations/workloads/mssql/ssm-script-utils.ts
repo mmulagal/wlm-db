@@ -435,8 +435,11 @@ const validateSQLInstanceConnectivity = (
                 $errorMessage = "No SQL instance found with the name $sqlinstancename"
                 throw $errorMessage
             }
-            $sqlCredential.username = $sqlCredentials.username
-            $sqlCredential.password = $sqlCredentials.password
+
+            $sqlCredential = New-Object PSObject -Property @{
+                username = $sqlCredentials.username
+                password = $sqlCredentials.password
+            }
             
             $serverInstanceName = "$env:COMPUTERNAME"
             If($sqlinstancename -ne 'MSSQLSERVER') {
