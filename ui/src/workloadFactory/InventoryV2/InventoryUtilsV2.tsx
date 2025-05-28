@@ -2135,7 +2135,7 @@ export const getMergedAllocatedCapacity = (nodeList: Array<ManagedHostsRowInterf
 export const getEc2DetailsForUnmanagedHost = (instanceRow: InstancesObjectInterface, inventoryRow: InventoryTableData) => {
     const ec2Details: Array<EC2DetailsInterface> = [];
     if (inventoryRow?.hostType === DBType.POSTGRESQL && inventoryRow?.ec2Details) {
-        return inventoryRow?.ec2Details;
+        return [...inventoryRow?.ec2Details];
     }
 
     let instanceId = '';
