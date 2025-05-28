@@ -200,7 +200,7 @@ const WellArchitectDashboard = () => {
                             message:
                                 result?.data?.fsxnError ||
                                 `Failed to update ${
-                                    value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft Sql Server'
+                                    value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
                                 } password. `
                         })
                     );
@@ -212,7 +212,7 @@ const WellArchitectDashboard = () => {
                         message:
                             result?.error?.data?.message ||
                             `Failed to update ${
-                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft Sql Server'
+                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
                             } password. `
                     })
                 );
