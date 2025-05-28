@@ -117,7 +117,7 @@ const Home = () => {
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ONPREM} />}
                         />
                         <Route
-                            path="/databases/storage-saving-calculator"
+                            path="/databases/saving-calculator"
                             element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
                         />
                         <Route
@@ -163,7 +163,7 @@ const Home = () => {
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
                             />
                             <Route
-                                path="/fsxdb/storage-saving-calculator"
+                                path="/fsxdb/saving-calculator"
                                 element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
                             />
 
