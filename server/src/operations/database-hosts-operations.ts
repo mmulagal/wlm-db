@@ -1467,13 +1467,12 @@ async function fetchCrrBackupDetails(
     }
     const { crrConfigData } = instanceDetails[0];
     const crrDetails = crrConfigData?.crrDetails || [];
-    const crrMapping = volumeRecords.map(volumeRecord => {
-        const crrDetail = crrDetails.find((detail: { volumeName: string }) => detail.volumeName === volumeRecord.name);
-        const volumeDB = volumeDBMap.find(
-            (dbMap: { ontapVolumeuuid: string }) => dbMap.ontapVolumeuuid === volumeRecord.uuid
-        );
+    const crrMapping = Object.entries(volumeDBMap).map(([, dbMap]: [string, any]) => {
+        const { databaseName, ontapVolumeuuid: volumeUuid } = dbMap;
+        const volumeRecord = volumeRecords.find(vr => vr.uuid === volumeUuid);
+        const crrDetail = crrDetails.find((detail: { volumeName: string }) => detail.volumeName === volumeRecord?.name);
         return {
-            databaseName: volumeDB ? volumeDB.databaseName : null,
+            databaseName,
             isCRREnabled: crrDetail ? crrDetail.isCRREnabled : null
         };
     });
