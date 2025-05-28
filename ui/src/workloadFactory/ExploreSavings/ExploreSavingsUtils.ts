@@ -97,7 +97,7 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
     })();
     if (rowData?.storageType === GENERAL.EBS) {
         if (navigate) {
-            navigate(`${isWorkloadFactory ? '../storage-saving-calculator' : '../fsxdb/storage-saving-calculator'}`);
+            navigate(`${isWorkloadFactory ? '../saving-calculator' : '../fsxdb/saving-calculator'}`);
         }
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
@@ -113,7 +113,7 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
         dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_EBS));
     } else {
         if (navigate) {
-            navigate(`${isWorkloadFactory ? '../storage-saving-calculator' : '../fsxdb/storage-saving-calculator'}`);
+            navigate(`${isWorkloadFactory ? '../saving-calculator' : '../fsxdb/saving-calculator'}`);
         }
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
