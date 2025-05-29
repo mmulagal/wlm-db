@@ -114,12 +114,10 @@ EOF
 
     get_loop_device_associated_with_disk() {
         local diskName="$1"
-        local raw_output
-        raw_output=$(sudo -i -u oracle bash -c "oracleasm querydisk -p $diskName 2>/dev/null")
+        local udevInfo=$(sudo udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
 
         # Process the output only if it contains a valid device
-        local loopDev
-        loopDev=$(echo "$raw_output" | awk -F':' '/^\\/dev\\// {print $1}' | cut -d':' -f1)
+        local loopDev=$(echo "$udevInfo" | grep "^E: DEVNAME=" | cut -d '=' -f2)
 
         if [ -n "$loopDev" ]; then
             echo "$loopDev"
@@ -137,7 +135,7 @@ EOF
 
     get_asm_nfs_details() {
         local diskName="$1"
-        loopDevice=$(get_loop_device_associated_with_disk "$diskName")
+        loopDevice=$(get_loop_device_associated_with_disk $diskName)
         if [ -n "$loopDevice" ]; then
             backFilePath=$(get_back_file_path "$loopDevice")
             if [ -n "$backFilePath" ]; then
