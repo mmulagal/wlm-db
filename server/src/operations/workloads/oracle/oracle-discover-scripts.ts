@@ -114,10 +114,10 @@ EOF
 
     get_loop_device_associated_with_disk() {
         local diskName="$1"
-        udevInfo=$(sudo udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
+        local udevInfo=$(sudo udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
 
         # Process the output only if it contains a valid device
-        loopDev=$(echo "$udevInfo" | grep "^E: DEVNAME=" | cut -d '=' -f2)
+        local loopDev=$(echo "$udevInfo" | grep "^E: DEVNAME=" | cut -d '=' -f2)
 
         if [ -n "$loopDev" ]; then
             echo "$loopDev"
