@@ -391,7 +391,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         {
             id: '7',
             Header: '',
-            accessor: 'optimize',
+            accessor: '',
             isSticky: true,
             width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
             renderCell: (cellData: any, rowData: any) => {
