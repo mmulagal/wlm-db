@@ -37,16 +37,16 @@ export const GENERAL = {
     PREREQUISITE_LIST: 'Prerequisites list',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
     UPDATE: 'Update',
-    UPDATE_FSX_ADMIN_PASSWORD: 'Update FSxadmin password',
+    UPDATE_FSX_ADMIN_PASSWORD: 'Update fsxadmin password',
     FSX_PASSWORD_CONTENT:
         'The password for your fsxadmin user might have changed. Update credentials to maintain FSx for ONTAP operations serving this Microsoft SQL Server instance.',
     SQL_PASSWORD_CONTENT:
         'The password for your Windows login might have changed. Update credentials to register this Microsoft SQL Server instance.',
-    UPDATE_SQL_SERVER_PASSWORD: 'Update SQL Server password',
+    UPDATE_SQL_SERVER_PASSWORD: 'Update Microsoft SQL Server password',
     DATABASE_MANAGEMENT: 'Database management',
     DATABASE_OPTIMIZATION: 'Database optimization',
     INVENTORY_CARD_TEXT1:
-        'Manage database resources and perform day-to-day operations with FSx for ONTAP. You can check the status of hosts, instances, and databases, deploy new resources, and stay on top of resource usage, data protection, and performance.',
+        'Register database resources and perform day-to-day operations with FSx for ONTAP. You can check the status of hosts, instances, and databases, deploy new resources, and stay on top of resource usage, data protection, and performance.',
     INVENTORY_CARD_TEXT2:
         'Plus, get optimization recommendations to make sure your database resources are well-architected.',
     INVENTORY_CARD_TEXT3:
@@ -1212,9 +1212,9 @@ export const GENERAL = {
         'All SQL Server instances on this host are either registered or unauthenticated. To manage the instance, click on view instance, and then select "authenticate" from the menu.',
     AOAG_MANAGE_DISABLE: 'Register instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
-        'All SQL Server instances on this host are currently registered. To explore instance actions or unregister the instance, click on view instance, and click the menu.',
+        'All SQL Server instances on this host are currently registered. To explore instance actions or deregister the instance, click on view instance, and click the menu.',
     ALL_FSXN_MANAGED_TEXT:
-        'All FSx for ONTAP SQL Server instances on this host are currently registered. To explore instance actions or unregister the instance, click on view instance, and click the menu.',
+        'All FSx for ONTAP SQL Server instances on this host are currently registered. To explore instance actions or deregister the instance, click on view instance, and click the menu.',
     ALL_UNDETECT_TEXT:
         'All SQL Server instances on this host are currently unauthenticated. To manage the instance, click on view instance, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
@@ -1241,17 +1241,17 @@ export const GENERAL = {
     ],
     MULTIPLE_INSTANCE_DETECT_MANAGE_FAILED: [
         'The attempt to manage ',
-        ' SQL Server instances was unsuccessful. The instances state has been changed to unregister. Please try again or contact support if the problem persists.'
+        ' SQL Server instances was unsuccessful. The instances state has been changed to deregister. Please try again or contact support if the problem persists.'
     ],
     MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS: [' out of ', ' SQL Server instances have been successfully registered.'],
     MULTIPLE_INSTANCE_DETECT_MANAGE_PARTIAL_SUCCESS: [
         ' out of ',
-        ' SQL Server instances have been successfully registered. The rest of the instances have been moved to unregister'
+        ' SQL Server instances have been successfully registered. The rest of the instances have been moved to deregister'
     ],
     MUTLI_INSTANCE_MANAGE_SUCCESS: [' SQL Server instances have been successfully registered.'],
     UNMANAGE_INSTANCE_SUCCESS_MSG: (instanceName: string) =>
-        `Database instance ${instanceName} unregister successfully.`,
-    UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to unregister.`,
+        `Database instance ${instanceName} deregistered successfully.`,
+    UNMANAGE_INSTANCE_FAILED_MSG: (instanceName: string) => `Database instance ${instanceName} failed to deregister.`,
     NOT_OPTIMIZED:
         "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use.",
     // Explore savings view calculations related consts

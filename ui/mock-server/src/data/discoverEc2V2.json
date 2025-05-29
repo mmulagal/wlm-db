@@ -86,20 +86,20 @@
                     ],
                     "manageReadiness": { 
                         "assessment" : { 
-                            "missingSqlPermissions": [],
-                            "missingModules": ["Powershell 7"]
+                            "missingSqlPermissions": ["test"],
+                            "missingModules": []
                         },
                         "remediation": {
-                            "missingSqlPermissions": [],
+                            "missingSqlPermissions": ["test"],
                             "missingModules": []
                         },
                         "dbcreation": {
-                            "missingSqlPermissions": [],
+                            "missingSqlPermissions": ["test"],
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions": ["abc"],
-                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                            "missingSqlPermissions": ["test"],
+                            "missingModules": []
                         }
                     }
                 }

@@ -193,11 +193,11 @@ const InstancesTable = () => {
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Unregister instance'}
+                header={'Deregister instance'}
                 content={
                     <>
                         <DsTypography variant="Regular_14">
-                            Are you sure you want to unregister the SQL Server instance?{' '}
+                            Are you sure you want to deregister the SQL Server instance?{' '}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginTop: '24px', width: '700px' }}>
                             This will exclude the instance from Workload Factory's best practices and lifecycle
@@ -205,7 +205,7 @@ const InstancesTable = () => {
                         </DsTypography>
                     </>
                 }
-                primaryButton={'Unregister'}
+                primaryButton={'Deregister'}
                 secondaryButton={'Close'}
                 callback={() => {
                     const updatedState = store.getState();
@@ -530,8 +530,14 @@ const InstancesTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.databaseInstanceName;
                 return (
-                    <div>
-                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                    <div className={styles.firstColumnClass}>
+                        <DsTypography
+                            title={name || GENERAL.NOT_AVAILABLE}
+                            className={styles.textClass}
+                            variant="Semibold_14"
+                        >
+                            {name || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
                         <div className={styles.firstColText}>
                             {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
@@ -568,7 +574,11 @@ const InstancesTable = () => {
             filterOptions: getFilterOptions(updatedTableData, 'name'),
             renderCell: (cellData: string, rowData: any) => {
                 return (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
+                    <DsTypography
+                        title={cellData || GENERAL.NOT_AVAILABLE}
+                        variant="Regular_13"
+                        className={`${styles.colText} ${styles.textClass}`}
+                    >
                         {cellData || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
                 );
@@ -987,7 +997,7 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'unManage',
-                            displayName: 'Unregister'
+                            displayName: 'Deregister'
                         }
                     );
                 }
@@ -1231,7 +1241,7 @@ const InstancesTable = () => {
     const handleManageBulk = () => {
         dispatch(setSelectedMultiDetectInstances([]));
         dispatch(setWizardOperationType('bulk'));
-        navigate('../manage-wizard');
+        navigate('../register-bulk-wizard');
     };
 
     return (

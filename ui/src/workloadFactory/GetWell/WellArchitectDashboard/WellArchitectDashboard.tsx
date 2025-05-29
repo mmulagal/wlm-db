@@ -189,8 +189,8 @@ const WellArchitectDashboard = () => {
                         addNotification({
                             type: NOTIFICATION_TYPES.SUCCESS,
                             message: `${
-                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'FSxadmin' : 'Sql server'
-                            } password reset successfully`
+                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
+                            } password updated successfully`
                         })
                     );
                 } else {
@@ -199,8 +199,8 @@ const WellArchitectDashboard = () => {
                             type: NOTIFICATION_TYPES.ERROR,
                             message:
                                 result?.data?.fsxnError ||
-                                `Failed to reset ${
-                                    value === RESET_PASSWORD_TYPE.FSXADMIN ? 'FSxadmin' : 'Sql server'
+                                `Failed to update ${
+                                    value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
                                 } password. `
                         })
                     );
@@ -211,8 +211,8 @@ const WellArchitectDashboard = () => {
                         type: NOTIFICATION_TYPES.ERROR,
                         message:
                             result?.error?.data?.message ||
-                            `Failed to reset ${
-                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'FSxadmin' : 'Sql server'
+                            `Failed to update ${
+                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
                             } password. `
                     })
                 );
@@ -221,7 +221,7 @@ const WellArchitectDashboard = () => {
             dispatch(
                 addNotification({
                     type: NOTIFICATION_TYPES.ERROR,
-                    message: error || `Failed to reset FSxadmin password. `
+                    message: error || `Failed to update fsxadmin password. `
                 })
             );
         } finally {
@@ -290,6 +290,7 @@ const WellArchitectDashboard = () => {
                     <div className={styles.buttonContainer}>
                         <ButtonWithDropdown
                             variant="icon"
+                            className={styles.buttonWithDropdownContainer}
                             items={[
                                 {
                                     id: 'resetSQLServerPassword',

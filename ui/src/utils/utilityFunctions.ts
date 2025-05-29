@@ -2102,6 +2102,8 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
             return WLF_TABS.JOB_MONITORING;
         case WLF_TABS.DASHBOARD:
             return WLF_TABS.DASHBOARD;
+        case WLF_TABS.SAVINGS_CALCULATOR:
+            return WLF_TABS.SAVINGS_CALCULATOR;
         default:
             return selectedHeaderTab;
     }

@@ -324,8 +324,14 @@ const HostTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.name;
                 return (
-                    <div>
-                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                    <div className={styles.firstColumnClass}>
+                        <DsTypography
+                            title={name || GENERAL.NOT_AVAILABLE}
+                            className={styles.textClass}
+                            variant="Semibold_14"
+                        >
+                            {name || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
                         <div className={styles.firstColText}>
                             {(rowData?.status === INVENTORY_STATUS.RUNNING ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP ||

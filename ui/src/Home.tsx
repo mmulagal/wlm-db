@@ -117,6 +117,10 @@ const Home = () => {
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ONPREM} />}
                         />
                         <Route
+                            path="/databases/saving-calculator"
+                            element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
+                        />
+                        <Route
                             path={'/databases/job-monitoring'}
                             element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                         />
@@ -158,6 +162,11 @@ const Home = () => {
                                 path={'/fsxdb/explore-savings'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
                             />
+                            <Route
+                                path="/fsxdb/saving-calculator"
+                                element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
+                            />
+
                             <Route
                                 path={'/fsxdb/job-monitoring'}
                                 element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}

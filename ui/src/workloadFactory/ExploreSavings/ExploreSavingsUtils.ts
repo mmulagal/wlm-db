@@ -5,10 +5,8 @@ import {
     setMonthlyChangeRate,
     setOnPremStorageAndComputeInfoFull,
     setSavingsCalculatorFrom,
-    setSelectedDeploymentModel,
     setSelectedEsPageInstance,
     setSelectedHostDetails,
-    setSelectedInstanceId,
     setSelectedOnPremHostDetails,
     setSelectedOnPremHostId,
     setSelectedServerName
@@ -26,6 +24,7 @@ import {
     formatFractionalNumberForCost,
     formatNumberWithCustomComma
 } from '../../utils/utilityFunctions';
+import { NavigateFunction } from 'react-router-dom';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     postBlueXPMessage({
@@ -92,11 +91,14 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
     }, 500);
 };
 
-export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
+export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean, navigate?: NavigateFunction) => {
     const deploymentModel = (() => {
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
     if (rowData?.storageType === GENERAL.EBS) {
+        if (navigate) {
+            navigate(`${isWorkloadFactory ? '../databases/saving-calculator' : '../fsxdb/saving-calculator'}`);
+        }
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
             payload: {
@@ -110,6 +112,9 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
         });
         dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_EBS));
     } else {
+        if (navigate) {
+            navigate(`${isWorkloadFactory ? '../databases/saving-calculator' : '../fsxdb/saving-calculator'}`);
+        }
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
             payload: {

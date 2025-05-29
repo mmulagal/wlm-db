@@ -57,4 +57,8 @@
 
 [class*='ButtonWithDropdown-module_dropdown-container'] {
     z-index: 2 !important;
+
+    [class*='Button-module_content'] {
+        text-transform: unset !important;
+    }
 }

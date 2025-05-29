@@ -619,3 +619,10 @@ export interface OracleHostData {
     ssmStatus: string;
     storageAllocation?: any;
 }
+
+export interface ManageReadinessInterface {
+    [key: string]: {
+        missingSqlPermissions: string[];
+        missingModules: string[];
+    };
+}

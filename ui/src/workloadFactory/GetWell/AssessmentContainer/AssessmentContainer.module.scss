@@ -29,6 +29,14 @@
             }
         }
     }
+
+    .darkTheme {
+        svg {
+            path {
+                fill: var(--white);
+            }
+        }
+    }
 }
 
 @media screen and (max-width: 1920px) {

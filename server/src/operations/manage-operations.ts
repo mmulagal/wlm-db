@@ -492,7 +492,7 @@ async function manageSqlInstance(
                     let activeDirectoryDomainName: string | undefined;
                     let activeDirectoryIpAddresses: string[] | undefined = [];
                     if (isResourceTobeCreated) {
-                        if (adDetails && !adDetails.includes(ACTIVE_DIRECTORY)) {
+                        if (adDetails && adDetails.includes(ACTIVE_DIRECTORY)) {
                             ({ domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } =
                                 JSON.parse(adDetails!)[ACTIVE_DIRECTORY]);
                         }

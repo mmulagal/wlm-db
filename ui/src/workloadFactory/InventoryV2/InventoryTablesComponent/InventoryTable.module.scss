@@ -119,6 +119,16 @@
         }
     }
 
+    .firstColumnClass {
+        min-width: 0;
+        overflow: hidden;
+    }
+    .textClass {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .firstColText {
         display: flex;
         gap: 8px;

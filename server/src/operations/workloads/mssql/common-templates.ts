@@ -252,8 +252,8 @@ const invokeCommandWithCredSSP = `
             $extraArguments = ''
         }
 
-        $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
-        $Credential = New-Object Management.Automation.PSCredential ($username, $securePassword)
+        $securePassword = ConvertTo-SecureString -String $sqlCredential.password -AsPlainText -Force
+        $Credential = New-Object Management.Automation.PSCredential ($sqlCredential.username, $securePassword)
 
         $scriptblock = {
             param ($sqlquery, $extraArguments)

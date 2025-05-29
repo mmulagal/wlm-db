@@ -245,7 +245,10 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         configurations.map(async config => {
             const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
             const startTime = Date.now();
-            const thirtyDaysInMs = moment.duration(1, 'hours').asMilliseconds(); // update to 1 day for testing will be reverted to 30 days after testing
+            const thirtyDaysInMs =
+                process.env.NODE_ENV === 'production'
+                    ? moment.duration(30, 'days').asMilliseconds()
+                    : moment.duration(1, 'hours').asMilliseconds(); // 1 hour for testing, 30 days for production
             const endTime = startTime + thirtyDaysInMs;
             const response = {
                 configurationName: configName,

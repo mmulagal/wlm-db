@@ -11,6 +11,7 @@ import { JOB_MONITORING_STATUS, MANAGE_POLLING_INTERVAL, MANAGE_STATES, WLF_TABS
 import { Button, DsTypography } from '@netapp/design-system';
 import store from '../../../../store/store';
 import { uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
+import { ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
 
 export const handleSingleInstanceManage = (
     manageSingleInstanceChecks: any,
@@ -19,6 +20,7 @@ export const handleSingleInstanceManage = (
     getJobDetailApi: any,
     navigate: any
 ) => {
+    let allowManage = isAllowManage(manageSingleInstanceChecks?.manageReadinessData);
     if (
         manageSingleInstanceChecks?.assessment === GENERAL.NOT_AVAILABLE &&
         manageSingleInstanceChecks?.remediation === GENERAL.NOT_AVAILABLE &&
@@ -36,7 +38,7 @@ export const handleSingleInstanceManage = (
                 )
             })
         );
-    } else if (!manageSingleInstanceChecks?.allowManage) {
+    } else if (!allowManage) {
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.ERROR,
@@ -252,13 +254,65 @@ export const checkOverallManageState = (
 };
 
 export const isAllowManage = (manageReadinessData: any) => {
+    const state = store.getState();
+    const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
+
     let anyListEmpty = false;
     const readinessKeys = Object.keys(manageReadinessData);
     for (const key of readinessKeys) {
+        if (key === 'missingSqlCmd') continue; // Skip the missingSqlCmd key
         const missingSqlPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
-        if (missingSqlPermissions.length == 0) {
+        const missingModules = manageReadinessData[key]?.missingModules || [];
+        const otherMissingModules = missingModules.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
+        if (missingSqlPermissions.length == 0 && missingModules.length == 0) {
             anyListEmpty = true;
+        } else if (missingSqlPermissions.length == 0 || missingModules.length > 0) {
+            let notMissingPowershellCheck = false;
+            if (
+                (missingModules.includes(MANAGE_STATES.POWERSHELL7) && installMissingPowershell) ||
+                !missingModules.includes(MANAGE_STATES.POWERSHELL7)
+            ) {
+                notMissingPowershellCheck = true;
+            }
+            let notMissingModulesCheck = false;
+            if (otherMissingModules.length == 0 || (otherMissingModules.length > 0 && installMissingAWS)) {
+                notMissingModulesCheck = true;
+            }
+
+            if (notMissingPowershellCheck && notMissingModulesCheck) {
+                anyListEmpty = true;
+            } 
         }
     }
     return anyListEmpty;
+};
+
+export const mergeReadinessData = (
+    manageReadinessData: ManageReadinessInterface,
+    partnerManageReadinessData: ManageReadinessInterface
+): ManageReadinessInterface => {
+    const mergedData: any = {};
+
+    Object.keys(manageReadinessData).forEach(key => {
+        if (key !== 'missingSqlCmd') {
+            mergedData[key] = {
+                missingSqlPermissions: Array.from(
+                    new Set([
+                        ...manageReadinessData[key].missingSqlPermissions,
+                        ...partnerManageReadinessData[key].missingSqlPermissions
+                    ])
+                ),
+                missingModules: Array.from(
+                    new Set([
+                        ...manageReadinessData[key].missingModules,
+                        ...partnerManageReadinessData[key].missingModules
+                    ])
+                )
+            };
+        } else {
+            mergedData[key] = manageReadinessData[key] || partnerManageReadinessData[key];
+        }
+    });
+
+    return mergedData;
 };

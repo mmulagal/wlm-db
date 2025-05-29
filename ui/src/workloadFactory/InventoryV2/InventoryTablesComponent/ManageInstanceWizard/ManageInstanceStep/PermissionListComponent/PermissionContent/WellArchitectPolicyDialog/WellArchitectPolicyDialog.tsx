@@ -15,16 +15,9 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
         if (value === t('databases.register-flow.aws-iam-policy-permissions')) {
             permissionData = data?.view;
         } else if (value === t('databases.register-flow.fsx-for-ontap-permissions')) {
-            permissionData = ['fsx:UpdateFileSystem', 'fsx:UpdateVolume'];
+            permissionData = data?.['well-architected-fsx'];
         } else if (value === t('databases.register-flow.compute-optimizer-permissions')) {
-            permissionData = [
-                'compute-optimizer:GetEnrollmentStatus',
-                'compute-optimizer:PutRecommendationPreferences',
-                'compute-optimizer:GetEffectiveRecommendationPreferences',
-                'compute-optimizer:GetEC2InstanceRecommendations',
-                'autoscaling:DescribeAutoScalingGroups',
-                'autoscaling:DescribeAutoScalingInstances'
-            ];
+            permissionData = data?.['well-architected-compute-optimizer'];
         }
         setPermissionData(JSON.stringify(permissionData, null, 2));
         setSelectedTab(value);

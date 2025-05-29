@@ -2,7 +2,7 @@ import { Table, useTable, TableTopBar, DsTypography, ButtonWithDropdown } from '
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
@@ -126,7 +126,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                                 }
                             >
                                 <DsTypography variant="Regular_14" className={styles.actionText}>
-                                    Optimize
+                                    Fix
                                 </DsTypography>
                                 <ButtonWithDropdown
                                     variant="icon"
