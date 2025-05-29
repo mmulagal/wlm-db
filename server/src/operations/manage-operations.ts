@@ -63,8 +63,8 @@ async function installPowershell7(
         type: JOBTYPE.REGISTER_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: ec2InstanceId,
-        name: `Install PowerShell 7.5.0 for ${ec2InstanceId}`,
-        description: 'Install PowerShell 7.5.0 for Workload Factory database operations.',
+        name: `Installing PowerShell 7.5.0 on ${ec2InstanceId}`,
+        description: `Installing PowerShell 7.5.0 on ${ec2InstanceId} for Workload Factory database operations.`,
         parentJobId,
         startTime: Date.now()
     });
@@ -143,8 +143,8 @@ async function installPowerShellModules(
         type: JOBTYPE.REGISTER_RESOURCE,
         status: jobStatus,
         resourceName: ec2InstanceId,
-        name: `Install PowerShell modules for ${ec2InstanceId}`,
-        description: 'Install PowerShell modules for Workload Factory database operations.',
+        name: `Installing PowerShell modules on ${ec2InstanceId}`,
+        description: `Installing PowerShell modules on ${ec2InstanceId} for Workload Factory database operations.`,
         parentJobId: hostJobId,
         startTime: Date.now()
     });
@@ -643,6 +643,7 @@ async function manageSqlInstance(
         await updateJobDetails(accountId, hostJobId, {
             status: jobStatus,
             error: errorMessage,
+            endTime: Date.now(),
             metadata: {
                 ec2InstanceId,
                 databaseInstanceNames,
