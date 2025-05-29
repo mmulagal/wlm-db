@@ -12,13 +12,7 @@ import { GENERAL } from '../../../../../utils/appConstants';
 import { setManageSingleInstanceChecks } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { useDispatch } from 'react-redux';
 import MultiInstanceHeader from '../DetectInstanceStep/DetectHeader/MultiInstanceHeader';
-import {
-    getPermissionState,
-    hasMissingPowershell7,
-    isAllowManage,
-    mergeReadinessData,
-    missingModules
-} from '../ManageInstanceUtils';
+import { getPermissionState, hasMissingPowershell7, mergeReadinessData, missingModules } from '../ManageInstanceUtils';
 import { useGetWlmdbPoliciesQuery } from '../../../../../utils/apiService';
 
 export const Content = () => {
@@ -133,7 +127,6 @@ export const Content = () => {
                 installMissingAWS: missingModulesList.length > 0 ? true : false,
                 installMissingAWSList: missingModulesList,
                 installMissingPowershell: hasMissingPowershell7(manageReadinessData),
-                allowManage: isAllowManage(manageReadinessData),
                 assessment: getPermissionState('assessment', manageReadinessData),
                 remediation: getPermissionState('remediation', manageReadinessData),
                 dbcreation: getPermissionState('dbcreation', manageReadinessData),
@@ -141,7 +134,8 @@ export const Content = () => {
                 ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
                 region: manageSingleInstanceData?.regionId,
                 credentialsId: manageSingleInstanceData?.credentialId,
-                databaseInstanceName: manageSingleInstanceData?.databaseInstanceName
+                databaseInstanceName: manageSingleInstanceData?.databaseInstanceName,
+                manageReadinessData: manageReadinessData
             };
             dispatch(setManageSingleInstanceChecks(manageCheckObj));
             return manageCheckObj;
