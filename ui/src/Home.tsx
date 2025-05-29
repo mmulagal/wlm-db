@@ -20,7 +20,7 @@ import { BXP_MESSAGES, WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
 import { useRunOnce } from './common/hooks/useRunOnce';
-import { setTabInfoFOrBXP } from './utils/utilityFunctions';
+import { setRoutePath, setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
@@ -58,7 +58,8 @@ const Home = () => {
                             navigate('../fsxdb/marketing');
                         } else {
                             const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname, statusData);
-                            navigate(`../fsxdb/${tabInfo}`);
+                            const routePath = setRoutePath(tabInfo);
+                            navigate(`../fsxdb/${routePath}`);
                             dispatch(setSelectedHeaderTab(tabInfo));
                         }
                     }

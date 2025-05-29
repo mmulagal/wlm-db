@@ -1847,6 +1847,27 @@ export const isClusteredWithSelectedInstance = (val: any) => {
     return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
 };
 
+export const setRoutePath = (path: string) => {
+    switch (path) {
+        case 'Inventory':
+            path = 'inventory';
+            break;
+        case 'Dashboard':
+            path = 'dashboard';
+            break;
+        case 'Sandboxes':
+            path = 'sandboxes';
+            break;
+        case 'Explore savings':
+            path = 'explore-savings';
+            break;
+        case 'Job monitoring':
+            path = 'job-monitoring';
+            break;
+    }
+    return path;
+};
+
 export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
     const state = store.getState();
     switch (tab) {
