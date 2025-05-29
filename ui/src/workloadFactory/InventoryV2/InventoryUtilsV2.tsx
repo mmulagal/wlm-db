@@ -1392,8 +1392,7 @@ export const getDetectOptionForInstance = (
     if (type === GENERAL.POSTGRESQL_TYPE) {
         auth = perRow?.defaultAuth;
     }
-    let isSqlRunning =
-        state === DETECT_HOST_VAR.RUNNING || state === STATUS_CONST.OPEN || state === STATUS_CONST.STARTED;
+    let isSqlRunning = state === DETECT_HOST_VAR.RUNNING || state === STATUS_CONST.OPEN;
     if (ssmState?.toLowerCase() !== INVENTORY_STATUS.SSM_CONNECTED) {
         detectOption = DETECT_HOST_VAR.HIDE;
         detectOptionDisableMsg = GENERAL.SSM_CONNECTION_DOWN;
@@ -1569,7 +1568,7 @@ export const formatOracleDiscoverInstanceData = (
     let instanceRows = row?.databaseInstanceDetails?.map((perRow: OracleInstancesDiscovered) => {
         const statusObj = perInstanceStatus?.filter((per: StatusObjInterface) => per?.name === perRow?.instanceName);
         const instanceStatus =
-            perRow?.instanceState === STATUS_CONST.OPEN || perRow?.instanceState === STATUS_CONST.STARTED
+            perRow?.instanceState === STATUS_CONST.OPEN
                 ? INVENTORY_STATUS.CASE_SENSITIVE_UP
                 : INVENTORY_STATUS.CASE_SENSITIVE_DOWN;
         return {

@@ -267,23 +267,21 @@ export const isAllowManage = (manageReadinessData: any) => {
         if (missingSqlPermissions.length == 0 && missingModules.length == 0) {
             anyListEmpty = true;
         } else if (missingSqlPermissions.length == 0 || missingModules.length > 0) {
-            let missingPowershellCheck = false;
+            let notMissingPowershellCheck = false;
             if (
                 (missingModules.includes(MANAGE_STATES.POWERSHELL7) && installMissingPowershell) ||
                 !missingModules.includes(MANAGE_STATES.POWERSHELL7)
             ) {
-                missingPowershellCheck = true;
+                notMissingPowershellCheck = true;
             }
-            let missingModulesCheck = false;
+            let notMissingModulesCheck = false;
             if (otherMissingModules.length == 0 || (otherMissingModules.length > 0 && installMissingAWS)) {
-                missingModulesCheck = true;
+                notMissingModulesCheck = true;
             }
 
-            if (missingPowershellCheck && missingModulesCheck) {
+            if (notMissingPowershellCheck && notMissingModulesCheck) {
                 anyListEmpty = true;
-            } else {
-                anyListEmpty = false;
-            }
+            } 
         }
     }
     return anyListEmpty;
