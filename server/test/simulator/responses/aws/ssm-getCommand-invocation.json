@@ -2256,7 +2256,6 @@
         "ebs_volume": "",
         "server_instance_id": "",
         "default_auth": "unknown"
-
     },
     "getPgsqlDatabasesCommandResponse": {
         "$metadata": {
@@ -2316,9 +2315,9 @@
     },
     "discoverOracleServer": [
         {
-            "sid": "oradb1san",
+            "sid": "oracle",
             "instance_details": {
-                "instance_name": "oradb1san",
+                "instance_name": "oracle",
                 "host_name": "ip-172-31-48-50.ap-southeast-1.compute.internal",
                 "version": "19.0.0.0.0",
                 "instance_state": "OPEN",
@@ -2347,6 +2346,42 @@
                     "isAsmManaged": "true",
                     "mountIP": "172.31.255.207",
                     "mountPoint": "/ORADATA1",
+                    "protocol": "NFS"
+                }
+            ]
+        },
+        {
+            "sid": "oracleasm",
+            "instance_details": {
+                "instance_name": "oracleasm",
+                "host_name": "ip-172-31-48-50.ap-southeast-1.compute.internal",
+                "version": "19.0.0.0.0",
+                "instance_state": "OPEN",
+                "instance_id": "28096914"
+            },
+            "database_details": {
+                "name": "ORADB1",
+                "database_id": "28096914",
+                "open_mode": "READ WRITE",
+                "is_cdb": "YES"
+            },
+            "pdb_database_details": [
+                {
+                    "pdb_id": 3,
+                    "pdb_name": "ORCLPDB",
+                    "status": "NORMAL"
+                },
+                {
+                    "pdb_id": 2,
+                    "pdb_name": "PDB$SEED",
+                    "status": "NORMAL"
+                }
+            ],
+            "storage_details": [
+                {
+                    "isAsmManaged": "true",
+                    "mountIP": "172.31.255.217",
+                    "mountPoint": "/ORADATA2",
                     "protocol": "NFS"
                 }
             ]

@@ -3001,7 +3001,9 @@ async function getOracleResourceDetails(
                 instanceState: dbInstanceState,
                 region,
                 credentials_id: credentialsId,
-                metadata: { mountPointDetails },
+                metadata: isDemoFlow
+                    ? { mountPointDetails: { protocol: 'NFS', mountPoint: '/oracleData', mountIp: '0.0.0.0' } }
+                    : { mountPointDetails },
                 fsxn_ids: fsxnId || '',
                 database_deployment_type: STANDALONE,
                 storage_type: fsxnId ? STORAGE_TYPE.FSXN : NOT_AVAILABLE,
@@ -3026,6 +3028,12 @@ async function getOracleResourceDetails(
             )
         )
     );
+
+    if (isDemoFlow) {
+        response.forEach((item, index) => {
+            item.id = instances[index];
+        });
+    }
 
     if (errorInstances.length > 0) {
         response = response.concat(errorInstances);
