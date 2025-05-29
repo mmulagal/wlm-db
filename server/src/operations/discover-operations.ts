@@ -650,9 +650,13 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     const featureReadiness = Object.entries(FEATURE_PREPREQUISITES).reduce((acc, [key, value]) => {
                         acc[key.toLowerCase()] = {
-                            missingSqlPermissions: isEmpty(sqlPermissions)
-                                ? value.SQL_PERMISSIONS
-                                : value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
+                            missingSqlPermissions:
+                                // If SQL Server is stopped, we cannot check permissions. In FCI case instance will be down on standby node
+                                sqlServerState === 'Stopped'
+                                    ? []
+                                    : isEmpty(sqlPermissions)
+                                    ? value.SQL_PERMISSIONS
+                                    : value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
 
                             missingModules: isEmpty(availablePsModules)
                                 ? value.MODULES

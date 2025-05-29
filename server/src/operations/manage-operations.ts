@@ -109,7 +109,7 @@ async function installPowershell7(
         const parsedResponse = JSON.parse(checkResponse);
         const isPS7Available = parsedResponse?.[IS_PS7_AVAILABLE];
         jobStatus = isPS7Available ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
-        errorMessage = FAILURE_INFO in parsedResponse ? parsedResponse[FAILURE_INFO] : '';
+        errorMessage = parsedResponse && FAILURE_INFO in parsedResponse ? parsedResponse[FAILURE_INFO] : '';
     } catch (error: any) {
         logger.error(`Failed to install PowerShell 7.5.0 on ${ec2InstanceId}: ${error.message}`);
         jobStatus = error.message.includes('PowerShell 7 is already installed') ? JOBSTATUS.WARNING : JOBSTATUS.FAILED;
@@ -449,12 +449,13 @@ async function manageSqlInstance(
                 }
                 let partnerPowershellInstallationResponse;
                 let partnerModulesInstallationResponse;
+                let partnerEc2InstanceId;
                 if (storageInfo) {
                     if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
                         const fciInstance = fciInstanceDetails.find(
                             instance => instance.databaseInstanceName === dbInst
                         );
-                        const partnerEc2InstanceId = fciInstance?.partnerEc2InstanceId;
+                        partnerEc2InstanceId = fciInstance?.partnerEc2InstanceId;
 
                         if (fciInstanceDetails.length === 0 || !fciInstance || !partnerEc2InstanceId) {
                             failureReason = 'FCI instance details not found or partner EC2 instance ID is missing.';
@@ -511,6 +512,7 @@ async function manageSqlInstance(
                             metadata: {
                                 creationDate: Date.now(),
                                 node1InstanceId,
+                                ...(partnerEc2InstanceId && { node2InstanceId: partnerEc2InstanceId }),
                                 sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
                                 source: RESOURCE_SOURCE.DISCOVER,
                                 fsxSvmId: storageInfo.svmId,
@@ -527,7 +529,15 @@ async function manageSqlInstance(
                         isResourceTobeCreated = false;
                     }
 
-                    tagResources(credentialsId, region, awsAccountId!, accountId, storageInfo.id, node1InstanceId);
+                    tagResources(
+                        credentialsId,
+                        region,
+                        awsAccountId!,
+                        accountId,
+                        storageInfo.id,
+                        node1InstanceId,
+                        partnerEc2InstanceId
+                    );
 
                     const dbInstanceName = isDemoFlow
                         ? sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
