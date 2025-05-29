@@ -1127,7 +1127,8 @@ async function getDatabaseHostSummaryV2(
                         return (
                             instance.instanceName.includes(hostResourceName) ||
                             instance.instanceName === 'MSSQLSERVER' ||
-                            instance.instanceName === 'postgresql'
+                            instance.instanceName === 'postgresql' ||
+                            instance.instanceName === 'oracle'
                         );
                     })
                     .map((instance: { instanceName: { replace: (arg0: string | null, arg1: string) => any } }) => ({
