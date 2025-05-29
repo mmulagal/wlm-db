@@ -2066,7 +2066,7 @@ async function getDatabaseInstancesSummary(
         }
 
         if (isDemo() && databasesCount && getDbCount) {
-            databasesCount.totalCount += userDatabase.length;
+            databasesCount[instanceName][0].totalCount += userDatabase.length;
         }
 
         const [instanceDbCount] = databasesCount?.[instanceName] ?? [];

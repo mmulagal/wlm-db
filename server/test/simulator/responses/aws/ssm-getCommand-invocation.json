@@ -2243,7 +2243,7 @@
     },
     "discoverPgsqlServer": {
         "version": "psql (PostgreSQL) 16.5",
-        "nfs_ip_address": "10.0.132.47",
+        "nfs_ip_address": "198.19.252.13",
         "status": "running",
         "hostname": "pgsqlservermm",
         "nfs_mount_point": "/wlmdb_pgsqldata_1742007997310",
