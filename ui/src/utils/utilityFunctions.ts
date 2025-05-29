@@ -1861,8 +1861,20 @@ export const setRoutePath = (path: string) => {
         case 'Explore savings':
             path = 'explore-savings';
             break;
+        case 'Explore savings EBS':
+            path = 'explore-savings-ebs';
+            break;
+        case 'Explore savings FsxW':
+            path = 'explore-savings-fsxw';
+            break;
         case 'Job monitoring':
             path = 'job-monitoring';
+            break;
+        case 'Explore savings OnPrem':
+            path = 'explore-savings-on-premise';
+            break;
+        default:
+            path = '';
             break;
     }
     return path;
