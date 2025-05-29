@@ -89,8 +89,10 @@ async function installPowershell7(
             )
         );
 
-        if (installResponse?.includes(FAILURE_INFO)) {
-            throw new Error(JSON.parse(installResponse)[FAILURE_INFO]);
+        const parsedInstallResponse = JSON.parse(installResponse || '{}');
+
+        if (parsedInstallResponse && FAILURE_INFO in parsedInstallResponse) {
+            throw new Error(parsedInstallResponse[FAILURE_INFO]);
         }
 
         const checkResponse = await retryWithDelay(
@@ -148,6 +150,7 @@ async function installPowerShellModules(
     });
 
     let ssmPsModuleInstallResponse;
+    let parsedResponse;
     try {
         // Get signed url for dependent-packages.zip to install the ps modules
         const bucketname = getArtifactsRegionBucketName(region);
@@ -168,8 +171,9 @@ async function installPowerShellModules(
         );
 
         jobStatus = JOBSTATUS.COMPLETED;
-        if (ssmPsModuleInstallResponse?.includes(FAILURE_INFO)) {
-            errorMessage = JSON.parse(ssmPsModuleInstallResponse)[FAILURE_INFO];
+        parsedResponse = JSON.parse(ssmPsModuleInstallResponse || '{}');
+        if (parsedResponse && FAILURE_INFO in parsedResponse) {
+            errorMessage = parsedResponse[FAILURE_INFO];
             jobStatus = JOBSTATUS.FAILED;
         }
     } catch (error: any) {
@@ -182,7 +186,7 @@ async function installPowerShellModules(
             error: errorMessage
         });
     }
-    return ssmPsModuleInstallResponse;
+    return parsedResponse;
 }
 
 async function powershellInstallations(
@@ -191,7 +195,7 @@ async function powershellInstallations(
     region: string,
     ec2InstanceId: string,
     hostJobId: string,
-    modulesToInstall: string[] | undefined
+    modulesToInstall: string[]
 ) {
     logger.info('Powershell installations', {
         accountId,
@@ -201,9 +205,9 @@ async function powershellInstallations(
         hostJobId,
         modulesToInstall
     });
-    const shouldInstallPowershell7 = modulesToInstall?.includes('Powershell 7');
-    const shouldInstallPowershellModules = modulesToInstall?.some(module => module !== 'Powershell 7');
-    const psModulesToInstall = modulesToInstall?.filter(module => module !== 'Powershell 7');
+    const shouldInstallPowershell7 = modulesToInstall.includes('Powershell 7');
+    const shouldInstallPowershellModules = modulesToInstall.some(module => module !== 'Powershell 7');
+    const psModulesToInstall = modulesToInstall.filter(module => module !== 'Powershell 7');
 
     const [powershellInstallationResponse, modulesInstallationResponse] = await Promise.all([
         shouldInstallPowershell7
@@ -295,7 +299,7 @@ async function manageSqlInstance(
     region: string,
     ec2InstanceId: string,
     databaseInstanceNames: string[],
-    modulesToInstall: string[] | undefined,
+    modulesToInstall: string[],
     parentManageJobId: string,
     hostJobId: string,
     databaseHostId?: string
@@ -438,7 +442,7 @@ async function manageSqlInstance(
                     failureReason = 'Always On availability group environments are not supported.';
                 } else if (
                     modulesInstallationResponse &&
-                    modulesToInstall?.includes('AWS.Tools.SimpleSystemsManagement') &&
+                    modulesToInstall.includes('AWS.Tools.SimpleSystemsManagement') &&
                     !modulesInstallationResponse.availablePSModules.includes('AWS.Tools.SimpleSystemsManagement')
                 ) {
                     failureReason = modulesInstallationResponse.failureInfo;
@@ -481,7 +485,8 @@ async function manageSqlInstance(
                         // and is not available in the partnerModulesInstallationResponse, throw an error with the failure reason.
                         if (
                             partnerModulesInstallationResponse &&
-                            modulesToInstall?.includes('AWS.Tools.SimpleSystemsManagement') &&
+                            modulesToInstall &&
+                            modulesToInstall.includes('AWS.Tools.SimpleSystemsManagement') &&
                             !partnerModulesInstallationResponse.availablePSModules.includes(
                                 'AWS.Tools.SimpleSystemsManagement'
                             )
@@ -689,7 +694,7 @@ async function installAndManageSqlInstances(
                     region,
                     ec2InstanceId,
                     databaseInstanceNames,
-                    modulesToInstall,
+                    modulesToInstall ?? [],
                     parentManageJobId,
                     jobId,
                     databaseHostId
