@@ -2574,6 +2574,11 @@ async function getPgSqlResourceDetails(
         )
     );
 
+    if (isDemoFlow) {
+        response.forEach((item, index) => {
+            item.id = instances[index];
+        });
+    }
     if (errorInstances.length > 0) {
         response = response.concat(errorInstances);
     }
