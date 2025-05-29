@@ -356,7 +356,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '6',
             Header: '',
             accessor: 'recommendation',
-            width: from === WLF_TABS.INVENTORY ? '406px' : '575px',
+            width: from === WLF_TABS.INVENTORY ? '202px' : '290px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
@@ -383,6 +383,21 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                     {'View recommendation'}
                                 </DsTypography>
                             </div>
+                        </div>
+                    </>
+                );
+            }
+        },
+        {
+            id: '7',
+            Header: '',
+            accessor: 'optimize',
+            isSticky: true,
+            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <>
+                        <div className={styles.recommendation}>
                             {!optimizePrintState &&
                                 (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
                                 rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
