@@ -103,8 +103,8 @@ const JobBasedManageSchema = {
     ...DiscoveryBaseRequest,
     params: AccountIdParams,
     body: MultiInstanceManageMsSqlRequestBody,
-    summary: 'Manage SQL Server instances',
-    description: 'Manage SQL Server instances',
+    summary: 'Register SQL Server instances',
+    description: 'Register SQL Server instances',
     response: {
         200: JobBasedManageResponseBody
     }
