@@ -419,8 +419,8 @@ EOF
 
     for sid in $SIDS; do
         # Check if the instance is running by checking for its PMON process.
+        # Skip if the instance process is not running.
         if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
-            echo "Instance $sid is not active. Skipping."
             continue
         fi
 
