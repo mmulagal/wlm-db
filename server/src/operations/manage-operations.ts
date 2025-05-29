@@ -109,7 +109,7 @@ async function installPowershell7(
         const parsedResponse = JSON.parse(checkResponse);
         const isPS7Available = parsedResponse?.[IS_PS7_AVAILABLE];
         jobStatus = isPS7Available ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
-        errorMessage = parsedResponse.includes(FAILURE_INFO) ? parsedResponse[FAILURE_INFO] : '';
+        errorMessage = FAILURE_INFO in parsedResponse ? parsedResponse[FAILURE_INFO] : '';
     } catch (error: any) {
         logger.error(`Failed to install PowerShell 7.5.0 on ${ec2InstanceId}: ${error.message}`);
         jobStatus = error.message.includes('PowerShell 7 is already installed') ? JOBSTATUS.WARNING : JOBSTATUS.FAILED;
