@@ -20,6 +20,7 @@ export const handleSingleInstanceManage = (
     getJobDetailApi: any,
     navigate: any
 ) => {
+    let allowManage = isAllowManage(manageSingleInstanceChecks?.manageReadinessData);
     if (
         manageSingleInstanceChecks?.assessment === GENERAL.NOT_AVAILABLE &&
         manageSingleInstanceChecks?.remediation === GENERAL.NOT_AVAILABLE &&
@@ -37,7 +38,7 @@ export const handleSingleInstanceManage = (
                 )
             })
         );
-    } else if (!manageSingleInstanceChecks?.allowManage) {
+    } else if (!allowManage) {
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.ERROR,
@@ -253,12 +254,36 @@ export const checkOverallManageState = (
 };
 
 export const isAllowManage = (manageReadinessData: any) => {
+    const state = store.getState();
+    const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
+
     let anyListEmpty = false;
     const readinessKeys = Object.keys(manageReadinessData);
     for (const key of readinessKeys) {
+        if (key === 'missingSqlCmd') continue; // Skip the missingSqlCmd key
         const missingSqlPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
-        if (missingSqlPermissions.length == 0) {
+        const missingModules = manageReadinessData[key]?.missingModules || [];
+        const otherMissingModules = missingModules.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
+        if (missingSqlPermissions.length == 0 && missingModules.length == 0) {
             anyListEmpty = true;
+        } else if (missingSqlPermissions.length == 0 || missingModules.length > 0) {
+            let missingPowershellCheck = false;
+            if (
+                (missingModules.includes(MANAGE_STATES.POWERSHELL7) && installMissingPowershell) ||
+                !missingModules.includes(MANAGE_STATES.POWERSHELL7)
+            ) {
+                missingPowershellCheck = true;
+            }
+            let missingModulesCheck = false;
+            if (otherMissingModules.length == 0 || (otherMissingModules.length > 0 && installMissingAWS)) {
+                missingModulesCheck = true;
+            }
+
+            if (missingPowershellCheck && missingModulesCheck) {
+                anyListEmpty = true;
+            } else {
+                anyListEmpty = false;
+            }
         }
     }
     return anyListEmpty;
