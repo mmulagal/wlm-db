@@ -162,10 +162,6 @@ const Home = () => {
                                 path={'/fsxdb/explore-savings'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
                             />
-                            <Route
-                                path="/fsxdb/saving-calculator"
-                                element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
-                            />
 
                             <Route
                                 path={'/fsxdb/job-monitoring'}

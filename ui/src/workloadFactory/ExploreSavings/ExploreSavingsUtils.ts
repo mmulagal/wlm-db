@@ -96,8 +96,8 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
         return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
     if (rowData?.storageType === GENERAL.EBS) {
-        if (navigate) {
-            navigate(`${isWorkloadFactory ? '../databases/saving-calculator' : '../fsxdb/saving-calculator'}`);
+        if (navigate && isWorkloadFactory) {
+            navigate('../databases/saving-calculator');
         }
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
@@ -112,8 +112,8 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
         });
         dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_EBS));
     } else {
-        if (navigate) {
-            navigate(`${isWorkloadFactory ? '../databases/saving-calculator' : '../fsxdb/saving-calculator'}`);
+        if (navigate && isWorkloadFactory) {
+            navigate('../databases/saving-calculator');
         }
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
