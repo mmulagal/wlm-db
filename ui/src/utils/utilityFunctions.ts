@@ -1873,6 +1873,9 @@ export const setRoutePath = (path: string) => {
         case 'Explore savings OnPrem':
             path = 'explore-savings-on-premise';
             break;
+        case 'Savings calculator':
+            path = 'storage-saving-calculator';
+            break;
         default:
             path = 'redirect';
             break;

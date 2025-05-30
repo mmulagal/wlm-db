@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { useCreateUserDBMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { FORM_TO_WLF_NAVIGATE_BLUEXP, WLF_TABS } from '../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE_BLUEXP, FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY, WLF_TABS } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './CreateNewUserFooter.module.scss';
 import { updateRefreshBlocked } from '../../../store/authSlice';
@@ -26,7 +26,7 @@ const CreateNewUserFooter = () => {
         if (isWorkloadFactoryStatus) {
             navigate('../databases');
         } else {
-            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
         }
     };
 
@@ -61,7 +61,7 @@ const CreateNewUserFooter = () => {
                                     if (isWorkloadFactoryStatus) {
                                         navigate('../databases');
                                     } else {
-                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
                                     }
 
                                     dispatch(clearNotifications());
@@ -91,7 +91,7 @@ const CreateNewUserFooter = () => {
                     if (isWorkloadFactoryStatus) {
                         navigate('../databases');
                     } else {
-                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
                     }
                 }
             } catch (error) {

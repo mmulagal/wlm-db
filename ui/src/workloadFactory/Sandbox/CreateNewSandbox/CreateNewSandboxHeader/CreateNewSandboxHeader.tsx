@@ -4,7 +4,7 @@ import styles from './CreateNewSandboxHeader.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { updateRefreshBlocked } from '../../../../store/authSlice';
-import { FORM_TO_WLF_NAVIGATE_BLUEXP } from '../../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 
 function CreateNewSandboxHeader() {
@@ -18,7 +18,7 @@ function CreateNewSandboxHeader() {
         if (isWorkloadFactoryStatus) {
             navigate('../databases');
         } else {
-            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES);
         }
     };
     return (
