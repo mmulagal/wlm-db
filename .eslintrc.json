@@ -124,7 +124,9 @@
                 "react/prop-types": "off",
                 "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
                 "jsx-a11y/no-autofocus": "off",
-                "react/jsx-filename-extension": "off"
+                "react/jsx-filename-extension": "off",
+                "react/function-component-definition": "off",
+                "@typescript-eslint/no-explicit-any": "warn"
             }
         }
     ]

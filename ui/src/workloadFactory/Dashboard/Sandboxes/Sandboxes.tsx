@@ -1,5 +1,6 @@
 import { DsTypography, DsButton, DsFlashingDotsLoader } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { useEffect, useState, useMemo } from 'react';
 import styles from './Sandboxes.module.scss';
 import SandboxChart from '../../Sandbox/SandboxDistributionDate/SandboxChart/SandboxChart';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -10,7 +11,6 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { useEffect, useState, useMemo } from 'react';
 
 const Sandboxes = () => {
     const dispatch = useDispatch();
@@ -24,20 +24,19 @@ const Sandboxes = () => {
 
     const [data, setData] = useState<any>([]);
 
-    const loading = useMemo(() => {
-        return dataLoading || multiDataLoading;
-    }, [dataLoading, multiDataLoading]);
+    const loading = useMemo(() => dataLoading || multiDataLoading, [dataLoading, multiDataLoading]);
 
     useEffect(() => {
-        let filteredList: Array<any> = [];
-        let uniqueResourceList: Array<String> = [];
+        const filteredList: Array<any> = [];
+        const uniqueResourceList: Array<string> = [];
         if (aggregatedSandboxList?.length > 0) {
-            aggregatedSandboxList?.map((item: any) => {
-                let uniqueRow = item?.databaseHostId + '_' + item?.databaseInstanceId + '_' + item?.sandboxName;
+            aggregatedSandboxList.forEach((item: any) => {
+                const uniqueRow = `${item?.databaseHostId}_${item?.databaseInstanceId}_${item?.sandboxName}`;
                 if (
                     !headerSelectedMultiCredIdsList?.includes(item?.credentialId) ||
                     !headerSelectedMultiRegionIdsList?.includes(item?.regionId) ||
-                    uniqueResourceList?.includes(uniqueRow)
+                    uniqueResourceList.includes(uniqueRow) ||
+                    item?.error // Skip items with an error field that has a value
                 ) {
                     return;
                 }
@@ -51,7 +50,7 @@ const Sandboxes = () => {
     const redirectToSandbox = (range: string) => {
         dispatch(
             setSandboxAgeRange({
-                range: range,
+                range,
                 from: 'Dashboard'
             })
         );
@@ -91,19 +90,15 @@ const Sandboxes = () => {
 
                         <div className={styles.count}>
                             {!isNA && (
-                                <>
-                                    <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAgeValue(data)['0-30']
-                                    }`}</DsTypography>
-                                </>
+                                <DsTypography variant="Semibold_14">{`${
+                                    getSandboxDistributionByAgeValue(data)['0-30']
+                                }`}</DsTypography>
                             )}
 
                             {isNA && (
-                                <>
-                                    <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                        {GENERAL.NOT_AVAILABLE}
-                                    </DsTypography>
-                                </>
+                                <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
+                                    {GENERAL.NOT_AVAILABLE}
+                                </DsTypography>
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
@@ -134,19 +129,15 @@ const Sandboxes = () => {
 
                         <div className={styles.count}>
                             {!isNA && (
-                                <>
-                                    <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAgeValue(data)['31-60']
-                                    }`}</DsTypography>
-                                </>
+                                <DsTypography variant="Semibold_14">{`${
+                                    getSandboxDistributionByAgeValue(data)['31-60']
+                                }`}</DsTypography>
                             )}
 
                             {isNA && (
-                                <>
-                                    <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                        {GENERAL.NOT_AVAILABLE}
-                                    </DsTypography>
-                                </>
+                                <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
+                                    {GENERAL.NOT_AVAILABLE}
+                                </DsTypography>
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
@@ -177,19 +168,15 @@ const Sandboxes = () => {
 
                         <div className={styles.count}>
                             {!isNA && (
-                                <>
-                                    <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAgeValue(data)['61+']
-                                    }`}</DsTypography>
-                                </>
+                                <DsTypography variant="Semibold_14">{`${
+                                    getSandboxDistributionByAgeValue(data)['61+']
+                                }`}</DsTypography>
                             )}
 
                             {isNA && (
-                                <>
-                                    <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                        {GENERAL.NOT_AVAILABLE}
-                                    </DsTypography>
-                                </>
+                                <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
+                                    {GENERAL.NOT_AVAILABLE}
+                                </DsTypography>
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
