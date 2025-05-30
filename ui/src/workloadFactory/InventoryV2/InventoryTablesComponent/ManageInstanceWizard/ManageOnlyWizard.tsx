@@ -1,4 +1,13 @@
-import { Button, Header, StepLayout, WizardContent, WizardFooter, WizardHeader } from '@netapp/design-system';
+import {
+    BlueXPListeners,
+    Button,
+    Header,
+    StepLayout,
+    WizardContent,
+    WizardFooter,
+    WizardHeader,
+    postBlueXPMessage
+} from '@netapp/design-system';
 import { Content } from './ManageInstanceStep/ManageInstanceStep';
 import styles from './ManageInstanceWizard.module.scss';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +44,13 @@ const ManageOnlyWizard = () => {
                         setTimeout(() => {
                             dispatch(setLandingFromWizard(true));
                             navigate('../databases/inventory');
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: {
+                                    pathname: './inventory',
+                                    replace: true
+                                }
+                            });
                         }, 100);
                     }
                 }}
@@ -57,6 +73,13 @@ const ManageOnlyWizard = () => {
                             setTimeout(() => {
                                 dispatch(setLandingFromWizard(true));
                                 navigate('../databases/inventory');
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: {
+                                        pathname: './inventory',
+                                        replace: true
+                                    }
+                                });
                             }, 100);
                         }}
                     >
