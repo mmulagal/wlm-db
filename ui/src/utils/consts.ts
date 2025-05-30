@@ -213,6 +213,9 @@ export const MAX_SAVED_CONFIG = 100;
 export const WLF_TO_FORM_NAVIGATE = '../mssql-deploy-wizard';
 
 export const FORM_TO_WLF_NAVIGATE = '../databases';
+export const FORM_TO_WLF_NAVIGATE_JOB_MONITORING = '../databases/job-monitoring';
+export const FORM_TO_WLF_NAVIGATE_INVENTORY = '../databases/inventory';
+export const FORM_TO_WLF_NAVIGATE_SANDBOXES = '../databases/sandboxes';
 export const FORM_TO_WLF_NAVIGATE_BLUEXP = '../fsxdb/job-monitoring';
 export const FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES = '../fsxdb/sandboxes';
 export const FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY = '../fsxdb/inventory';

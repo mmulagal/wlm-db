@@ -6,7 +6,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { updateRefreshBlocked } from '../../../store/authSlice';
-import { FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY } from '../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY, FORM_TO_WLF_NAVIGATE_INVENTORY } from '../../../utils/consts';
 const CreateNewUserHeader = () => {
     const navigate = useNavigate();
     const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
@@ -17,7 +17,7 @@ const CreateNewUserHeader = () => {
     const closeHandler = () => {
         dispatch(updateRefreshBlocked(true));
         if (isWorkloadFactoryStatus) {
-            navigate('../databases');
+            navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
         } else {
             navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
         }

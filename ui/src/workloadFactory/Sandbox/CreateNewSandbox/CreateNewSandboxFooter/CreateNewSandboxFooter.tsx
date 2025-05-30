@@ -6,7 +6,11 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { handleCreateNewSandbox } from './CreateNewSandboxPayload';
 import styles from './CreateNewSandboxFooter.module.scss';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../store/notificationSlice';
-import { FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES, WLF_TABS } from '../../../../utils/consts';
+import {
+    FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES,
+    FORM_TO_WLF_NAVIGATE_SANDBOXES,
+    WLF_TABS
+} from '../../../../utils/consts';
 import { useCreateSandboxMutation } from '../../../../utils/apiService';
 import { setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { setShowError } from '../../../../store/workloadFactory/createSandboxSlice';
@@ -23,7 +27,7 @@ const CreateNewSandboxFooter = () => {
     const closeHandler = () => {
         dispatch(updateRefreshBlocked(true));
         if (isWorkloadFactoryStatus) {
-            navigate('../databases');
+            navigate(FORM_TO_WLF_NAVIGATE_SANDBOXES);
         } else {
             navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES);
         }
@@ -60,7 +64,7 @@ const CreateNewSandboxFooter = () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                     dispatch(updateRefreshBlocked(true));
                                     if (isWorkloadFactoryStatus) {
-                                        navigate('../databases');
+                                        navigate(FORM_TO_WLF_NAVIGATE_SANDBOXES);
                                     } else {
                                         navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES);
                                     }
@@ -79,7 +83,7 @@ const CreateNewSandboxFooter = () => {
                     );
                     dispatch(updateRefreshBlocked(true));
                     if (isWorkloadFactoryStatus) {
-                        navigate('../databases');
+                        navigate(FORM_TO_WLF_NAVIGATE_SANDBOXES);
                     } else {
                         navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES);
                     }

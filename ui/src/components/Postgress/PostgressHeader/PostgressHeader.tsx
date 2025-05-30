@@ -3,7 +3,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { useNavigate } from 'react-router-dom';
 import styles from './PostgressHeader.module.scss';
 
-import { FORM_TO_WLF_NAVIGATE_BLUEXP, FROM_DIALOG, MAX_SAVED_CONFIG, WIZARD_TYPE } from '../../../utils/consts';
+import { FROM_DIALOG, MAX_SAVED_CONFIG, WIZARD_TYPE } from '../../../utils/consts';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import SaveConfig from '../../CreateMsSql/SaveConfig/SaveConfig';

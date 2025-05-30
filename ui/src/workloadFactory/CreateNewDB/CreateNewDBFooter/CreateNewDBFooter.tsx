@@ -6,7 +6,12 @@ import { useDispatch } from 'react-redux';
 import { useCreateUserDBMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { FORM_TO_WLF_NAVIGATE_BLUEXP, FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY, WLF_TABS } from '../../../utils/consts';
+import {
+    FORM_TO_WLF_NAVIGATE_BLUEXP,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
+    FORM_TO_WLF_NAVIGATE_INVENTORY,
+    WLF_TABS
+} from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './CreateNewUserFooter.module.scss';
 import { updateRefreshBlocked } from '../../../store/authSlice';
@@ -24,7 +29,7 @@ const CreateNewUserFooter = () => {
     const closeHandler = () => {
         dispatch(updateRefreshBlocked(true));
         if (isWorkloadFactoryStatus) {
-            navigate('../databases');
+            navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
         } else {
             navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
         }
@@ -59,7 +64,7 @@ const CreateNewUserFooter = () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                     dispatch(updateRefreshBlocked(true));
                                     if (isWorkloadFactoryStatus) {
-                                        navigate('../databases');
+                                        navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
                                     } else {
                                         navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
                                     }
