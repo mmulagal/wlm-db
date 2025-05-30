@@ -381,7 +381,8 @@ export const WLF_TABS = {
     OPTIMIZE: 'Optimize',
     MSSQL_ELASTIC_BLOCK_STORE: 'SQL Server on Elastic Block Store (EBS)',
     MSSQL_FSX_FOR_WINDOWS: 'SQL Server on FSx for Windows',
-    MSSQL_ON_PREMISES: 'SQL Server On-Premises'
+    MSSQL_ON_PREMISES: 'SQL Server On-Premises',
+    REGISTER_COMPONENT: 'Register Component'
 };
 
 export const DRIVE_LETTER_TYPE = {

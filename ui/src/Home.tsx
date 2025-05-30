@@ -135,7 +135,10 @@ const Home = () => {
                         <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
                         {/* Testing code */}
                         {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
-                        <Route path={'/manage-wizard'} element={<ManageInstanceWizard />} />
+                        <Route
+                            path={'/manage-wizard'}
+                            element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
+                        />
                         {/* <Route path={'/register-bulk-wizard'} element={<RegisterBulkWizard />} /> */}
                     </Routes>
                 )}
@@ -202,7 +205,10 @@ const Home = () => {
                             <Route path={'/job-monitor'} element={<JobMonitoring />} />
                             <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
                             {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
-                            <Route path={'/manage-wizard'} element={<ManageInstanceWizard />} />
+                            <Route
+                                path={'/manage-wizard'}
+                                element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
+                            />
                             {/* <Route path={'/register-bulk-wizard'} element={<RegisterBulkWizard />} /> */}
                         </Routes>
                     </Suspense>
