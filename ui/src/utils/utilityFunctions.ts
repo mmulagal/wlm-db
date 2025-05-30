@@ -1874,7 +1874,7 @@ export const setRoutePath = (path: string) => {
             path = 'explore-savings-on-premise';
             break;
         default:
-            path = '';
+            path = 'redirect';
             break;
     }
     return path;

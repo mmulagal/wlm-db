@@ -59,9 +59,11 @@ const Home = () => {
                         } else {
                             const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname, statusData);
                             const routePath = setRoutePath(tabInfo);
-                            if (!routePath) {
+                            if (routePath === 'redirect') {
+                                console.log('Redirecting to fsxdb');
                                 navigate(`../fsxdb`);
                             } else {
+                                console.log('Navigating to fsxdb with routePath:');
                                 navigate(`../fsxdb/${routePath}`);
                             }
 
