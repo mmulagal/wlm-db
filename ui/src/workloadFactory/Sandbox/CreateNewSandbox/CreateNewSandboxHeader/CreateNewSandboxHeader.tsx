@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { updateRefreshBlocked } from '../../../../store/authSlice';
 import { FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES, FORM_TO_WLF_NAVIGATE_SANDBOXES } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { setSourceDbHost, setSourceDbInstance } from '../../../../store/workloadFactory/createSandboxSlice';
 
 function CreateNewSandboxHeader() {
     const navigate = useNavigate();
@@ -15,6 +16,8 @@ function CreateNewSandboxHeader() {
 
     const closeHandler = () => {
         dispatch(updateRefreshBlocked(true));
+        dispatch(setSourceDbHost(null));
+        dispatch(setSourceDbInstance(null));
         if (isWorkloadFactoryStatus) {
             navigate(FORM_TO_WLF_NAVIGATE_SANDBOXES);
         } else {
