@@ -1876,6 +1876,9 @@ export const setRoutePath = (path: string) => {
         case 'Savings Calculator':
             path = 'storage-saving-calculator';
             break;
+        case 'Register Component':
+            path = 'manage-wizard';
+            break;
         default:
             path = 'redirect';
             break;
@@ -1910,6 +1913,8 @@ export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
         case '/fsxdb/jobMonitoring':
         case '/fsxdb/job-monitoring':
             return WLF_TABS.JOB_MONITORING;
+        case '/fsxdb/manage-wizard':
+            return WLF_TABS.REGISTER_COMPONENT;
         default:
             return WLF_TABS.DASHBOARD;
     }
