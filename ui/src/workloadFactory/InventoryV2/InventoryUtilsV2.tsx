@@ -1774,7 +1774,8 @@ export const getUnmanagedHostInstances = (
             return;
         }
         if (
-            (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) ||
+            (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE &&
+                databaseHostsData[key]?.ssmState === STATUS_CONST.ONLINE) ||
             (databaseHostsData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && databaseHostsData[key]?.isDetected)
         ) {
             instanceList.push(
