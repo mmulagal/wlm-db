@@ -13,7 +13,11 @@ import {
 } from '../../../../utils/consts';
 import { useCreateSandboxMutation } from '../../../../utils/apiService';
 import { setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
-import { setShowError } from '../../../../store/workloadFactory/createSandboxSlice';
+import {
+    setShowError,
+    setSourceDbHost,
+    setSourceDbInstance
+} from '../../../../store/workloadFactory/createSandboxSlice';
 import { updateRefreshBlocked } from '../../../../store/authSlice';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 
@@ -26,6 +30,8 @@ const CreateNewSandboxFooter = () => {
 
     const closeHandler = () => {
         dispatch(updateRefreshBlocked(true));
+        dispatch(setSourceDbHost(null));
+        dispatch(setSourceDbInstance(null));
         if (isWorkloadFactoryStatus) {
             navigate(FORM_TO_WLF_NAVIGATE_SANDBOXES);
         } else {
@@ -82,6 +88,8 @@ const CreateNewSandboxFooter = () => {
                         })
                     );
                     dispatch(updateRefreshBlocked(true));
+                    dispatch(setSourceDbHost(null));
+                    dispatch(setSourceDbInstance(null));
                     if (isWorkloadFactoryStatus) {
                         navigate(FORM_TO_WLF_NAVIGATE_SANDBOXES);
                     } else {
