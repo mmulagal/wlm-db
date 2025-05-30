@@ -403,9 +403,41 @@ async function manageSqlInstance(
         for (const dbInst of databaseInstanceNames) {
             let instanceJobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
             let instanceErrorMessage = '';
+            let partnerEc2InstanceId;
             const sqlInstanceInfo = sqlServerInstances?.find(
                 (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
             );
+
+            if (!sqlInstanceInfo) {
+                throw new Error('SQL Server instance not found.');
+            }
+
+            if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+                const fciInstance = fciInstanceDetails.find(instance => instance.databaseInstanceName === dbInst);
+                partnerEc2InstanceId = fciInstance?.partnerEc2InstanceId;
+
+                if (fciInstanceDetails.length === 0 || !fciInstance || !partnerEc2InstanceId) {
+                    throw new Error('FCI instance details not found or partner EC2 instance ID is missing.');
+                }
+
+                resourceId = generateSqlResourceId(node1InstanceId, partnerEc2InstanceId);
+                const {
+                    items: [resourceDetails]
+                } = await getResources(
+                    accountId,
+                    resourceId,
+                    credentialsId,
+                    region,
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+                isResourceTobeCreated = !resourceDetails;
+                if (resourceDetails && Array.isArray(resourceDetails.databaseInstanceDetails)) {
+                    alreadyManagedDatabaseInstances = resourceDetails.databaseInstanceDetails;
+                }
+            }
 
             if (
                 !sqlInstanceInfo ||
@@ -453,21 +485,8 @@ async function manageSqlInstance(
                 }
                 let partnerPowershellInstallationResponse;
                 let partnerModulesInstallationResponse;
-                let partnerEc2InstanceId;
                 if (storageInfo) {
                     if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
-                        const fciInstance = fciInstanceDetails.find(
-                            instance => instance.databaseInstanceName === dbInst
-                        );
-                        partnerEc2InstanceId = fciInstance?.partnerEc2InstanceId;
-
-                        if (fciInstanceDetails.length === 0 || !fciInstance || !partnerEc2InstanceId) {
-                            failureReason = 'FCI instance details not found or partner EC2 instance ID is missing.';
-                            throw new Error(failureReason);
-                        }
-
-                        resourceId = generateSqlResourceId(node1InstanceId, partnerEc2InstanceId);
-
                         ({
                             powershellInstallationResponse: partnerPowershellInstallationResponse,
                             modulesInstallationResponse: partnerModulesInstallationResponse
@@ -475,7 +494,7 @@ async function manageSqlInstance(
                             accountId,
                             credentialsId,
                             region,
-                            partnerEc2InstanceId,
+                            partnerEc2InstanceId!,
                             hostJobId,
                             modulesToInstall
                         ));
