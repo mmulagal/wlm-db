@@ -206,7 +206,7 @@ const Home = () => {
                             <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
                             {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
                             <Route
-                                path={'/manage-wizard'}
+                                path={'/fsxdb/manage-wizard'}
                                 element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
                             />
                             {/* <Route path={'/register-bulk-wizard'} element={<RegisterBulkWizard />} /> */}
