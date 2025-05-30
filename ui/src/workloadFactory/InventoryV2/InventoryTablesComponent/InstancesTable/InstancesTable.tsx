@@ -908,7 +908,7 @@ const InstancesTable = () => {
                                             postBlueXPMessage({
                                                 type: BlueXPListeners.navigate,
                                                 payload: {
-                                                    pathname: '../manage-wizard',
+                                                    pathname: './manage-wizard',
                                                     replace: true
                                                 }
                                             });
