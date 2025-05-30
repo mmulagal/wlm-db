@@ -930,7 +930,8 @@ export const MANAGE_STATES = {
 };
 
 export const ACTION_CTA = {
-    FIX_ISSUES: 'Fix issues',
+    FIX_ISSUES: 'View and fix',
+    WELL_ARCHITECTED: 'Well-architected',
     MANAGE_INSTANCES: 'Register instance'
 };
 

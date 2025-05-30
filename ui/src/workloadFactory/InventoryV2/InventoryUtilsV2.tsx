@@ -2918,7 +2918,7 @@ export const getOptimizationStatus = (
                 ? optBreakDown?.total?.notOptimized === 1
                     ? optBreakDown?.total?.notOptimized + ' issues'
                     : optBreakDown?.total?.notOptimized + ' issues'
-                : 'Well-architected';
+                : ACTION_CTA.WELL_ARCHITECTED;
     } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     } else if (instanceRow?.assessments && !instanceRow?.assessments?.lastAssessmentTimestamp) {
@@ -3517,7 +3517,11 @@ export const manageActionCol = (rowData?: any) => {
         rowData?.statusColText === INVENTORY_STATUS.MANAGED ||
         rowData?.managementStatus === INVENTORY_STATUS.IN_PROGRESS
     ) {
-        colText = ACTION_CTA.FIX_ISSUES;
+        if (rowData?.optimizationStatus === ACTION_CTA.WELL_ARCHITECTED) {
+            colText = ACTION_CTA.WELL_ARCHITECTED;
+        } else {
+            colText = ACTION_CTA.FIX_ISSUES;
+        }
     } else {
         colText = ACTION_CTA.MANAGE_INSTANCES;
     }
@@ -3544,7 +3548,7 @@ export const manageActionCol = (rowData?: any) => {
         disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
     }
 
-    if (colText === ACTION_CTA.FIX_ISSUES) {
+    if (colText === ACTION_CTA.FIX_ISSUES || colText === ACTION_CTA.WELL_ARCHITECTED) {
         disableMsg = fixIssueDisableMsg(rowData);
     }
     return {
