@@ -130,7 +130,13 @@ EOF
     get_back_file_path() {
         # back-file path refers to the underlying file or block device that the loop device is associated with. 
         local loopDevice="$1"
-        sudo -u oracle bash -c "losetup -l --noheadings $loopDevice | awk '{print \\$6}'"
+        local backFilePath=$(sudo -u oracle bash -c "losetup -l --noheadings $loopDevice 2>/dev/null | awk '{print \\$6}'")
+        if [ $? -eq 0 ]; then
+            echo "$backFilePath"
+            return 0
+        else
+            return 1
+        fi
     }
 
     get_asm_nfs_details() {
