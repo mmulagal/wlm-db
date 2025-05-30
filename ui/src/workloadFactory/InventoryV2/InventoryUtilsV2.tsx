@@ -3613,12 +3613,5 @@ export const fixIssueDisableMsg = (rowData: any) => {
             return disableMsg;
         }
     }
-    if (
-        (!rowData?.optimizationStatus && !rowData?.optimizationStatusLoading) ||
-        rowData?.optimizationStatus === INVENTORY_STATUS.IN_PROGRESS
-    ) {
-        disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
-        return disableMsg;
-    }
     return disableMsg;
 };
