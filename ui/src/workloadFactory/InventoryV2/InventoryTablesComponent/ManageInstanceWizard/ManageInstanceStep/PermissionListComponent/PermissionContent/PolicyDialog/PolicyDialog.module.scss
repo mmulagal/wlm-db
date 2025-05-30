@@ -10,32 +10,36 @@
 
         .dialog-body {
             min-width: 712px;
+            max-height: 390px;
+            height: 390px;
+            overflow-y: auto;
+            position: relative;
             .code-box {
                 width: 100%;
                 background-color: var(--main-background);
                 padding: 24px 16px 8px 32px;
-                display: flex;
                 position: relative;
-
-                height: 390px;
-                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
 
                 .code {
-                    width: calc(100% - 56px);
                     font-weight: 400;
                     font-size: 14px;
                     line-height: 24px;
                     color: var(--text-primary);
+                    white-space: pre-wrap;
+                    margin-top: -4rem;
+                    height: 390px;
                 }
 
                 .copy {
-                    width: 100px;
-                    display: flex;
-                    justify-content: flex-end;
-                    height: 20px;
-                    gap: 16px;
                     position: sticky;
-                    left: calc(100% - 56px);
+                    top: 8px;
+                    right: 16px;
+                    align-self: flex-end;
+                    z-index: 10;
+                    padding: 4px;
+
                     .copy-popover {
                         width: 140px;
                         font-size: 13px;

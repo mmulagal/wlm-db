@@ -10,11 +10,6 @@ const PolicyDialog = ({ data, label }: any) => {
             <div className={styles['dialog-content']}>
                 <div className={styles['dialog-body']}>
                     <div className={styles['code-box']}>
-                        <div className={styles['code']}>
-                            <pre>
-                                <DsTypography variant="Regular_14">{data}</DsTypography>
-                            </pre>
-                        </div>
                         <div className={styles['copy']}>
                             <Popover
                                 popoverClass={styles['copy-popover']}
@@ -26,6 +21,11 @@ const PolicyDialog = ({ data, label }: any) => {
                                     />
                                 }
                             />
+                        </div>
+                        <div className={styles['code']}>
+                            <pre>
+                                <DsTypography variant="Regular_14">{data}</DsTypography>
+                            </pre>
                         </div>
                     </div>
                 </div>
