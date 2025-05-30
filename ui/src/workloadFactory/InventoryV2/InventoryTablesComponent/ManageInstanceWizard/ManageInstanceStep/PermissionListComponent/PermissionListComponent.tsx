@@ -242,7 +242,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.powershell-modules'),
-                            values: ['AWS.Tools.FSx', 'AWS.Tools.SimpleSystemsManagement', 'PowerShell 7']
+                            values: ['AWS.Tools.SimpleSystemsManagement', 'NetApp.ONTAP']
                         }
                     ]}
                     policies={policiesList}
