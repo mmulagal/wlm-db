@@ -58,7 +58,7 @@ const Home = () => {
                             navigate('../fsxdb/marketing');
                         } else {
                             const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname, statusData);
-                            const routePath = setRoutePath(tabInfo);
+                            const routePath = setRoutePath(tabInfo, msg?.data?.payload?.search);
                             if (routePath === 'redirect') {
                                 console.log('Redirecting to fsxdb');
                                 navigate(`../fsxdb`);
@@ -190,6 +190,10 @@ const Home = () => {
                             <Route
                                 path={'/fsxdb/storage-saving-calculator'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                            />
+                            <Route
+                                path={'/fsxdb/storage-saving-calculator-fsxw'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
                             <Route
                                 path={'/databases/explore-savings-fsxw'}

@@ -1847,7 +1847,7 @@ export const isClusteredWithSelectedInstance = (val: any) => {
     return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
 };
 
-export const setRoutePath = (path: string) => {
+export const setRoutePath = (path: string, search?: string) => {
     switch (path) {
         case 'Inventory':
             path = 'inventory';
@@ -1874,7 +1874,12 @@ export const setRoutePath = (path: string) => {
             path = 'explore-savings-on-premise';
             break;
         case 'Savings Calculator':
-            path = 'storage-saving-calculator';
+            if (search && search.includes('fsxw')) {
+                path = 'storage-saving-calculator-fsxw';
+            } else {
+                path = 'storage-saving-calculator';
+            }
+
             break;
         case 'Register Component':
             path = 'manage-wizard';
