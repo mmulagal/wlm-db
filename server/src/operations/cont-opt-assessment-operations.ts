@@ -1406,15 +1406,33 @@ async function fetchDriftAssessment(
     if (!isEmpty(cloneResponse) && !('errorMessage' in cloneResponse)) {
         if (isDemoFlow) {
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+            const { oldCloneDetails = [], cloneDetails = [] } = cloneResponse;
             const cloneConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.CLONE || [];
+
             if (cloneConfigsOptimized.length > 0) {
-                const { oldCloneDetails } = cloneResponse;
+                // Destructure cloneDatabaseName from each optimized config
                 const cloneDatabaseNamesToRemove = new Set(
                     (cloneConfigsOptimized as CloneDetail[]).map(({ cloneDatabaseName }) => cloneDatabaseName)
                 );
-                cloneResponse.oldCloneDetails = oldCloneDetails?.filter(
+
+                // Filter out optimized clones from oldCloneDetails
+                const filteredOldCloneDetails = oldCloneDetails.filter(
                     ({ cloneDatabaseName }) => !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
                 );
+
+                const totalObjectsInViolation = filteredOldCloneDetails.length;
+                const objectsInViolation = filteredOldCloneDetails.map(
+                    ({ cloneDatabaseName }) => cloneDatabaseName as string
+                );
+                const status =
+                    totalObjectsInViolation === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+                const cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${cloneDetails.length} clones are old and divergent`;
+
+                cloneResponse.oldCloneDetails = filteredOldCloneDetails;
+                cloneResponse.totalObjectsInViolation = totalObjectsInViolation;
+                cloneResponse.status = status;
+                cloneResponse.objectsInViolation = objectsInViolation;
+                cloneResponse.cloneDriftMessage = cloneDriftMessage;
             }
         }
         driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
