@@ -59,7 +59,7 @@ const Home = () => {
                         } else {
                             const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname, statusData);
                             const routePath = setRoutePath(tabInfo);
-                            if (!routePath) {
+                            if (routePath === '') {
                                 navigate(`../fsxdb`);
                             } else {
                                 navigate(`../fsxdb/${routePath}`);
