@@ -482,6 +482,10 @@ const HOST_AND_SQL_INFO_PS1 = [
           $isPS7Available = $True
         } 
 
+        If (($isPS7Available -eq $False) -and (Test-Path "C:\\Program Files\\PowerShell\\7")) {
+          $isPS7Available = $True
+        }
+
         $requiredPsModuleList = @(${REQUIRED_PS_MODULES_FOR_MANAGEMENT})
 
         $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
@@ -548,6 +552,12 @@ const HOST_AND_SQL_INFO_PS1 = [
         $isSqlCmdAvailable = $True
       }
       $responseObject['isSqlCmdAvailable'] = $isSqlCmdAvailable
+
+      $responseObject['isPS7Available'] = $isPS7Available
+      if($isPS7Available -eq $True) {
+        $availablePsModuleList += 'Powershell 7'
+      }
+      $responseObject['availablePsModules'] = $availablePsModuleList
 
       if ($sqlService.State -eq "Running") {
         
@@ -631,12 +641,6 @@ const HOST_AND_SQL_INFO_PS1 = [
             else {
               $responseObject['sqlPermissions'] = @()
             }
-
-            $responseObject['isPS7Available'] = $isPS7Available
-            if($isPS7Available -eq $True) {
-             $availablePsModuleList += 'Powershell 7'
-            }
-            $responseObject['availablePsModules'] = $availablePsModuleList
 
             if(($sqlInstanceDriveLetterOrPathList.Count -eq 0) -and (-Not [string]::IsNullOrEmpty($sqlServerInfoFromRegistry)) -and $sqlServerInfoFromRegistry.ContainsKey('driveDetails')) {
               $sqlInstanceDriveLetterOrPathList = $sqlServerInfoFromRegistry['driveDetails']

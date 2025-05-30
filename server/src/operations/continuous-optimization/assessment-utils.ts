@@ -99,7 +99,7 @@ async function handleOptimizeJobCreation(
     if (job) {
         const timeDifferenceInMinutes = getTimeDifferenceInMinutes(job.startTime);
         if (timeDifferenceInMinutes <= 5) {
-            throw createError(412, `The following fix is running: Job ID:  ${job.id}. Wait until it completes.`);
+            throw createError(412, `A job is already in progress with ID: ${job.id}. Please wait for it to finish.`);
         }
     }
 

@@ -382,10 +382,7 @@ async function getDriveInfo(
             node1InstanceId,
             node2InstanceId
         });
-        throw createError(
-            HttpErrorCodes.VALIDATION_ERROR,
-            'One or both nodes are not registered for FCI deployment'
-        );
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, 'One or both nodes are not registered for FCI deployment');
     }
 
     let instanceDetail;
