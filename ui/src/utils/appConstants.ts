@@ -505,6 +505,7 @@ export const GENERAL = {
     AWS_BACKUP: 'AWS backup',
     FSX_ONTAP_SNAPSHOTS: 'FSx for ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
+    CRR_ENABLED: 'Cross-region replication enabled',
     PROTECTED_BY: 'Protected By',
     DEPLOY_NEW_DATABASE: 'Deploy database host',
     DISCOVER: 'Discover',

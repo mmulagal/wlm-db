@@ -195,12 +195,12 @@ result=$(sudo -i -u oracle bash <<EOF
         'assessment' VALUE (
         SELECT CASE
             WHEN (SELECT avg_io_latency_ms FROM overall_latency) IS NULL THEN 'N/A'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) <= 1 THEN 'Excellent (<=1 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 5 THEN 'Very Good (<5 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 10 THEN 'Good (<10 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 20 THEN 'Poor (<20 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 100 THEN 'Bad (<100 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 500 THEN 'Very Bad (<500 ms)'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) <= 1 THEN 'Excellent ( <=1 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 5 THEN 'Very Good ( <5 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 10 THEN 'Good ( <10 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 20 THEN 'Poor ( <20 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 100 THEN 'Bad ( <100 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 500 THEN 'Very Bad ( <500 ms )'
             ELSE 'Awful (>=500 ms)'
         END FROM dual
         )

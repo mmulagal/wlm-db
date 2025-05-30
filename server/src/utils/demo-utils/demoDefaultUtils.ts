@@ -42,7 +42,7 @@ import { Metadata } from '../common-types';
 
 const logger = getLogger();
 
-function createDemoResources(
+async function createDemoResources(
     accountId: string,
     region: string,
     credentialsId: string,
@@ -59,7 +59,7 @@ function createDemoResources(
     const fsxFilSystemId = `fs-${randomize('0', 8)}`;
 
     if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
-        createDeploymentMockDataInDB(
+        await createDeploymentMockDataInDB(
             accountId!,
             stackId,
             stackName,
@@ -74,7 +74,7 @@ function createDemoResources(
             resourceId
         );
     } else {
-        createDeploymentMockDataInDBForPgSql(
+        await createDeploymentMockDataInDBForPgSql(
             accountId,
             stackId,
             stackName,
@@ -282,9 +282,6 @@ async function createDemoResourcesPerRegion(
                 instanceNames.push(DEFAULT_INSTANCE_NAME);
                 instanceIds += `${sqlInstanceId},`;
             }
-            if (databaseType === DatabaseTypes.PG_SQL) {
-                return;
-            }
 
             if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
                 const [resource] = await listResources(accountId, resourceId);
@@ -297,36 +294,10 @@ async function createDemoResourcesPerRegion(
                     )?.concat(resourceSandboxMetadata.userDatabase ?? []);
                     await updateResource({ accountId, credentialsId, region, resourceId, metaData: resource.metadata });
                 }
-            }
 
-            // create sandbox metadata for instances
-            // Update assessment configs
-            const optimizeStorageJobMockdata = await createOptimizeJobMockData(
-                accountId,
-                hostName,
-                instanceNames[0],
-                credentialsId,
-                region,
-                instanceIds.split(',')[0],
-                resourceId
-            );
-
-            // create assessment and optimization jobs
-            await createJobs(accountId, optimizeStorageJobMockdata);
-
-            const operatingSystemOptimizeJobMockData = await createOperatingSystemOptimizeJobMockData(
-                accountId,
-                hostName,
-                instanceNames[0],
-                credentialsId,
-                region,
-                instanceIds.split(',')[0],
-                resourceId
-            );
-            await createJobs(accountId, operatingSystemOptimizeJobMockData);
-
-            const operatingSystemMpioSessionsOptimizeJobMockData =
-                await createOperatingSystemMpioSessionsOptimizeJobMockData(
+                // create sandbox metadata for instances
+                // Update assessment configs
+                const optimizeStorageJobMockdata = await createOptimizeJobMockData(
                     accountId,
                     hostName,
                     instanceNames[0],
@@ -335,27 +306,53 @@ async function createDemoResourcesPerRegion(
                     instanceIds.split(',')[0],
                     resourceId
                 );
-            await createJobs(accountId, operatingSystemMpioSessionsOptimizeJobMockData);
-            const storageTierJobMockData = await createStorageTierJobMockData(
-                accountId,
-                hostName,
-                instanceNames[0],
-                credentialsId,
-                region,
-                instanceIds.split(',')[0],
-                resourceId
-            );
-            await createJobs(accountId, storageTierJobMockData);
-            const enableMpioJobMockData = await createEnableMpioJobMockData(
-                accountId,
-                hostName,
-                instanceNames[0],
-                credentialsId,
-                region,
-                instanceIds.split(',')[0],
-                resourceId
-            );
-            await createJobs(accountId, enableMpioJobMockData);
+
+                // create assessment and optimization jobs
+                await createJobs(accountId, optimizeStorageJobMockdata);
+
+                const operatingSystemOptimizeJobMockData = await createOperatingSystemOptimizeJobMockData(
+                    accountId,
+                    hostName,
+                    instanceNames[0],
+                    credentialsId,
+                    region,
+                    instanceIds.split(',')[0],
+                    resourceId
+                );
+                await createJobs(accountId, operatingSystemOptimizeJobMockData);
+
+                const operatingSystemMpioSessionsOptimizeJobMockData =
+                    await createOperatingSystemMpioSessionsOptimizeJobMockData(
+                        accountId,
+                        hostName,
+                        instanceNames[0],
+                        credentialsId,
+                        region,
+                        instanceIds.split(',')[0],
+                        resourceId
+                    );
+                await createJobs(accountId, operatingSystemMpioSessionsOptimizeJobMockData);
+                const storageTierJobMockData = await createStorageTierJobMockData(
+                    accountId,
+                    hostName,
+                    instanceNames[0],
+                    credentialsId,
+                    region,
+                    instanceIds.split(',')[0],
+                    resourceId
+                );
+                await createJobs(accountId, storageTierJobMockData);
+                const enableMpioJobMockData = await createEnableMpioJobMockData(
+                    accountId,
+                    hostName,
+                    instanceNames[0],
+                    credentialsId,
+                    region,
+                    instanceIds.split(',')[0],
+                    resourceId
+                );
+                await createJobs(accountId, enableMpioJobMockData);
+            }
         }
         const filteredInstances = instances.filter(instance => instance.databaseType !== DatabaseTypes.PG_SQL);
         const assessmentJobMockData = await createAssessmentJobMockData(

@@ -138,6 +138,12 @@ const DatabaseListTable = () => {
                 ) {
                     protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
                 }
+                if (
+                    protectionData?.isCRREnabled &&
+                    String(protectionData?.isCRREnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
+                ) {
+                    protectedByList.push(GENERAL.CRR_ENABLED);
+                }
 
                 return (
                     <>

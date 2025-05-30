@@ -133,12 +133,12 @@ async function getDriveInfoFromNodes(
     );
     // Getting list of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise =
-        sqlDeploymentType === 'FCI' && !forSandbox
+        sqlDeploymentType === 'FCI' && !forSandbox && standbyNodeInstanceId
             ? callSsmExecution(
                   credentialsId,
                   region,
                   standbyNodeDriveListCommand,
-                  standbyNodeInstanceId!,
+                  standbyNodeInstanceId,
                   'Get standby node drive list',
                   undefined,
                   false,
@@ -374,6 +374,19 @@ async function getDriveInfo(
 
     let { co_relation_id: fileSystemId, metadata } = resourceDetail;
     const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
+
+    // Handling the case when /register does not register standby node in case of FCI deployments
+    if (sqlDeploymentType === 'FCI' && (!node1InstanceId || !node2InstanceId)) {
+        logger.error('One or both nodes are not registered for FCI deployment', {
+            sqlDeploymentType,
+            node1InstanceId,
+            node2InstanceId
+        });
+        throw createError(
+            HttpErrorCodes.VALIDATION_ERROR,
+            'One or both nodes are not registered for FCI deployment'
+        );
+    }
 
     let instanceDetail;
     if (databaseInstanceId) {

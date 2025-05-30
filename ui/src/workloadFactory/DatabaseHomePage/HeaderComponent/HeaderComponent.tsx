@@ -220,10 +220,10 @@ const HeaderComponent = ({ tab }: Tab) => {
             setExploreSavingsSubTab(tabValue, dispatch);
         }
 
-        if (navType === NavigationType.Pop) {
+        if (navType === NavigationType.Pop && isWorkloadFactory) {
             handleURL(tab, isWorkloadFactory);
         }
-    }, [tab]);
+    }, [tab, isWorkloadFactory]);
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
@@ -824,7 +824,11 @@ const HeaderComponent = ({ tab }: Tab) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
         dispatch(addExploreSavingsInitialData(null));
-        handleURLFromDashboard(value, isWorkloadFactory, navigate);
+        if (isWorkloadFactory) {
+            handleURLFromDashboard(value, isWorkloadFactory, navigate);
+        } else {
+            handleURL(value, isWorkloadFactory);
+        }
     };
 
     useEffect(() => {

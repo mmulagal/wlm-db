@@ -20,11 +20,12 @@ import { BXP_MESSAGES, WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
 import { useRunOnce } from './common/hooks/useRunOnce';
-import { setTabInfoFOrBXP } from './utils/utilityFunctions';
+import { setRoutePath, setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
 import ManageInstanceWizard from './workloadFactory/InventoryV2/InventoryTablesComponent/ManageInstanceWizard/ManageInstanceWizard';
+// import RegisterBulkWizard from './workloadFactory/InventoryV2/InventoryTablesComponent/ManageInstanceWizard/RegisterBulkWizard';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -57,7 +58,13 @@ const Home = () => {
                             navigate('../fsxdb/marketing');
                         } else {
                             const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname, statusData);
-                            navigate('../fsxdb');
+                            const routePath = setRoutePath(tabInfo);
+                            if (!routePath) {
+                                navigate(`../fsxdb`);
+                            } else {
+                                navigate(`../fsxdb/${routePath}`);
+                            }
+
                             dispatch(setSelectedHeaderTab(tabInfo));
                         }
                     }
@@ -85,7 +92,6 @@ const Home = () => {
                             path={`add-working-environment/database-services/:storage/discover`}
                             element={<DiscoverPage />}
                         />
-
                         <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
                             <Route path={'overview'} element={<MsSqlOverview />} />
                             <Route path={'databases'} element={<Databases />} />
@@ -124,13 +130,13 @@ const Home = () => {
                             path={'/databases/job-monitoring'}
                             element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                         />
-
                         <Route path={'/create-new-user'} element={<WizardComponent />} />
                         <Route path={'/job-monitor'} element={<JobMonitoring />} />
                         <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
                         {/* Testing code */}
                         {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
                         <Route path={'/manage-wizard'} element={<ManageInstanceWizard />} />
+                        {/* <Route path={'/register-bulk-wizard'} element={<RegisterBulkWizard />} /> */}
                     </Routes>
                 )}
                 {!isWorkloadFactory && (
@@ -161,10 +167,6 @@ const Home = () => {
                             <Route
                                 path={'/fsxdb/explore-savings'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
-                            />
-                            <Route
-                                path="/fsxdb/saving-calculator"
-                                element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
                             />
 
                             <Route
@@ -201,6 +203,7 @@ const Home = () => {
                             <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
                             {/* <Route path="*" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} /> */}
                             <Route path={'/manage-wizard'} element={<ManageInstanceWizard />} />
+                            {/* <Route path={'/register-bulk-wizard'} element={<RegisterBulkWizard />} /> */}
                         </Routes>
                     </Suspense>
                 )}

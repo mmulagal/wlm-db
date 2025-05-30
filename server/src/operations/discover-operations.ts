@@ -650,9 +650,13 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     const featureReadiness = Object.entries(FEATURE_PREPREQUISITES).reduce((acc, [key, value]) => {
                         acc[key.toLowerCase()] = {
-                            missingSqlPermissions: isEmpty(sqlPermissions)
-                                ? value.SQL_PERMISSIONS
-                                : value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
+                            missingSqlPermissions:
+                                // If SQL Server is stopped, we cannot check permissions. In FCI case instance will be down on standby node
+                                sqlServerState === 'Stopped'
+                                    ? []
+                                    : isEmpty(sqlPermissions)
+                                    ? value.SQL_PERMISSIONS
+                                    : value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
 
                             missingModules: isEmpty(availablePsModules)
                                 ? value.MODULES
@@ -2574,6 +2578,11 @@ async function getPgSqlResourceDetails(
         )
     );
 
+    if (isDemoFlow) {
+        response.forEach((item, index) => {
+            item.id = instances[index];
+        });
+    }
     if (errorInstances.length > 0) {
         response = response.concat(errorInstances);
     }
@@ -2667,7 +2676,7 @@ async function discoverOracleResources(
     const filters = [
         {
             Name: 'platform-details',
-            Values: ['Linux/UNIX', 'Red Hat Enterprise Linux*']
+            Values: ['Red Hat Enterprise Linux*']
         },
         { Name: 'instance-state-name', Values: ['running'] }
     ];
@@ -2992,7 +3001,9 @@ async function getOracleResourceDetails(
                 instanceState: dbInstanceState,
                 region,
                 credentials_id: credentialsId,
-                metadata: { mountPointDetails },
+                metadata: isDemoFlow
+                    ? { mountPointDetails: { protocol: 'NFS', mountPoint: '/oracleData', mountIp: '0.0.0.0' } }
+                    : { mountPointDetails },
                 fsxn_ids: fsxnId || '',
                 database_deployment_type: STANDALONE,
                 storage_type: fsxnId ? STORAGE_TYPE.FSXN : NOT_AVAILABLE,
@@ -3017,6 +3028,12 @@ async function getOracleResourceDetails(
             )
         )
     );
+
+    if (isDemoFlow) {
+        response.forEach((item, index) => {
+            item.id = instances[index];
+        });
+    }
 
     if (errorInstances.length > 0) {
         response = response.concat(errorInstances);
