@@ -805,7 +805,8 @@ async function logDriveOptimization(
         serverNameWithHostName,
         databaseHostId,
         databaseInstanceId,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        objectsToOptimize
     });
     const jobId = await handleOptimizeJobCreation(
         accountId,
@@ -818,7 +819,7 @@ async function logDriveOptimization(
         parentJobId
     );
 
-    const { underProvisionedDrives } = getLogVolumeDrift(
+    let { underProvisionedDrives } = getLogVolumeDrift(
         logDriveDetails,
         AssessmentStatus.UNDER_PROVISIONED,
         'log-drive-size'
@@ -829,13 +830,11 @@ async function logDriveOptimization(
     try {
         if (underProvisionedDrives.length > 0) {
             let underProvisionedOntapVolIds = compact(underProvisionedDrives.map(drive => drive.ontapVolumeUuid)) || [];
-            if (!isEmpty(objectsToOptimize)) {
-                underProvisionedOntapVolIds =
-                    compact(
-                        underProvisionedDrives
-                            .filter(drive => drive.logAccessPath && objectsToOptimize?.includes(drive.logAccessPath))
-                            .map(drive => drive.ontapVolumeUuid)
-                    ) || [];
+            if (objectsToOptimize && !isEmpty(objectsToOptimize)) {
+                underProvisionedDrives = underProvisionedDrives.filter(
+                    drive => drive.logAccessPath && objectsToOptimize.includes(drive.logAccessPath)
+                );
+                underProvisionedOntapVolIds = compact(underProvisionedDrives.map(drive => drive.ontapVolumeUuid)) || [];
             }
             const { volumeIds: fsxVolumeIdList, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
                 credentialsId,
