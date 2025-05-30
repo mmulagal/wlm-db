@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { getHostAndSqlServerInfo } from '../discover-operations';
+import { getSqlServerVersionAndEdition } from '../workloads/mssql/mssql-operations';
 import {
     fetchSqlServerInstanceConfiguration,
     getLicenseRecommendations,
@@ -136,13 +136,11 @@ async function runLicenseAssessment(
     activeNodeInstanceId: string
 ) {
     logger.info('Run license assessment', { accountId, credentialsId, region, activeNodeInstanceId });
-    const { items: [{ sqlServerInstances = [] } = {}] = [] } = await getHostAndSqlServerInfo(
+    const sqlServerInstances = await getSqlServerVersionAndEdition(
         accountId,
         credentialsId,
         region,
-        undefined,
-        undefined,
-        [activeNodeInstanceId]
+        activeNodeInstanceId
     );
     const { sqlServerDeploymentType = '' } = fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
     if (
