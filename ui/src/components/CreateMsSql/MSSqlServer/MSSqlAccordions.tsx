@@ -1,4 +1,4 @@
-import { AccordionController, Button, Typography, useDialog } from '@netapp/design-system';
+import { AccordionController, Typography } from '@netapp/design-system';
 
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import AvailabilityZone from '../AwsSettings/AvailabilityZone/AvailabilityZone';
@@ -22,13 +22,11 @@ import SimpleNotificationService from '../InfrastructureSettings/SimpleNotificat
 
 import styles from './MSSqlAccordions.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CloudWatch from '../InfrastructureSettings/CloudWatch/CloudWatch';
 import EstimatedCost from '../Cost/EstimatedCost';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import PreviewDefault from '../Cost/PreviewDefault/PreviewDefault';
-import { createMssqlPayload } from './MSSqlFooter/createSqlServer';
-import ViewDialog from '../../../common/ViewDialog/ViewDialog';
+
 import { useEffect, useState } from 'react';
 import { setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 import ResourceRollBack from '../InfrastructureSettings/ResourceRollBack/ResourceRollBack';
@@ -37,25 +35,11 @@ import SnapshotPolicy from '../InfrastructureSettings/SnapshotPolicy/SnapshotPol
 import { WIZARD_TYPE } from '../../../utils/consts';
 
 const MSSqlAccordions = () => {
-    const { setDialog } = useDialog();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
-    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { vpcLoading } = useAppSelector(state => state.mssql.getVPCList);
     const [isVpcLoadingStarted, setIsVpcLoadingStarted] = useState(false);
-    const state = useAppSelector(state => state);
-    const dispatch = useAppDispatch();
 
-    const handleViewAPIRequest = () => {
-        const data = JSON.stringify(createMssqlPayload(state), null, 2);
-        setDialog(
-            <DialogComponent
-                header={GENERAL.API_REQUEST}
-                content={<ViewDialog data={data} />}
-                primaryButton={GENERAL.CLOSE}
-                callback={() => {}}
-            />
-        );
-    };
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         if (vpcLoading) {
@@ -80,16 +64,6 @@ const MSSqlAccordions = () => {
                         >
                             {GENERAL.DEPLOYMENT_MODEL}
                         </Typography>
-                        {!isWorkloadFactory && (
-                            <Button
-                                onClick={handleViewAPIRequest}
-                                Component="button"
-                                variant="text"
-                                className={styles.buttonClass}
-                            >
-                                {GENERAL.VIEW_API_REQUEST}
-                            </Button>
-                        )}
                     </div>
                 )}
 
@@ -107,17 +81,6 @@ const MSSqlAccordions = () => {
                     >
                         {GENERAL.LANDING_ZONE}
                     </Typography>
-                    {/* View API request added here in case of easy create otherwise added as part of Deployment Model */}
-                    {selectedConfig === SELECT_CONFIG.EASY_CREATE && !isWorkloadFactory && (
-                        <Button
-                            onClick={handleViewAPIRequest}
-                            Component="button"
-                            variant="text"
-                            className={styles.buttonClass}
-                        >
-                            {GENERAL.VIEW_API_REQUEST}
-                        </Button>
-                    )}
                 </div>
                 {/* AWS Accounts Accordion */}
                 {/* <MssqlApis /> */}
