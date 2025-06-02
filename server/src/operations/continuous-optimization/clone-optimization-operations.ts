@@ -27,8 +27,9 @@ import { getMappedOntapVolumes } from '../aws/fsx-operations';
 import { listResources } from '../../lib/database/db';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { getInstanceDetails, getInstanceOntapDetails } from '../database-hosts-operations';
-// const isDemoFlow = isDemo();
+import { isDemo } from '../../utils/utils';
 
+const isDemoFlow = isDemo();
 const logger = getLogger();
 
 async function handleCloneRemediation(
@@ -94,17 +95,21 @@ async function handleCloneRemediation(
         } else if (clonedBy.toLowerCase() === 'other') {
             if (action === CLONE_ACTION.DELETE) {
                 logger.info(`Deleting clone ${cloneDatabaseName} created by other source.`);
-                // To Check a cloned volume is mapped to any other database while doing deletion
-                const result = await extractVolumeDetailsForClonesInInstance(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    cloneDetail,
-                    volumeMapping as MappedVolumeResponseForClone
-                );
-                if (result) {
+                let canDelete = true;
+                // To Check a cloned volume is mapped to any other database while doing deletion.. Not for Demo flow
+                if (!isDemoFlow) {
+                    const result = await extractVolumeDetailsForClonesInInstance(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        databaseInstanceId,
+                        cloneDetail,
+                        volumeMapping as MappedVolumeResponseForClone
+                    );
+                    canDelete = !!result;
+                }
+                if (canDelete) {
                     await deleteClone(
                         accountId,
                         credentialsId,
