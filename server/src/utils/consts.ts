@@ -1735,6 +1735,7 @@ const PRICING_LICENSE_KEYS = {
 
 const GERERIC_JOB_ERROR_MESSAGE = 'Examine the subjobs for comprehensive error messages.';
 const PGSQL_DEFAULT_INSTANCE_NAME = 'postgresql';
+const ORACLE_INSTANCE_NAME = 'oracle';
 
 const GENERIC_ASSESSMENT_ERROR_MESSAGE = (category: string) =>
     `No ${category} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try after running adhoc assessment.`;
@@ -2099,6 +2100,7 @@ export {
     RESTRICTED_FSX_REGIONS,
     CLONE_AGE,
     PGSQL_DEFAULT_INSTANCE_NAME,
+    ORACLE_INSTANCE_NAME,
     POWERSHELL_7_RELATIVE_PATH,
     CLONE_ACTION,
     OTHER_CLONE,

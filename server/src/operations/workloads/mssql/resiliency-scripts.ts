@@ -182,16 +182,14 @@ const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance) => `
                 }
         $CRRDetails['crrDetails'] += $object
     }
-    
-    Write-Information "CRR Assessment completed: $CRRDetails"
-    
-    $response = $CRRDetails | ConvertTo-Json -Depth 5
+    $CRRDetailsJson = $CRRDetails | ConvertTo-Json -Depth 5
+    Write-Information "CRR Assessment completed: $CRRDetailsJson"
 
-    if([string]::IsNullOrEmpty($response)) {
-        throw "Failed to compress the response because the response is either null or empty. $response"
+    if([string]::IsNullOrEmpty($CRRDetailsJson)) {
+        throw "Failed to compress the response because the response is either null or empty. $CRRDetailsJson"
     }
     
-    return (Deflate-String $response)
+    return (Deflate-String $CRRDetailsJson)
 
 `;
 export { CROSS_REGION_REPLICATION_SCRIPT };

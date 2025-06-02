@@ -25,7 +25,7 @@ describe('Oracle Database Operations', () => {
         );
 
         expect(result).toEqual({
-            assessment: 'Excellent (<=1 ms)',
+            assessment: 'Excellent ( <=1 ms )',
             latency: {
                 read: 0,
                 write: 0,

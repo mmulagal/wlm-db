@@ -1847,6 +1847,50 @@ export const isClusteredWithSelectedInstance = (val: any) => {
     return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
 };
 
+export const setRoutePath = (path: string, search?: string) => {
+    switch (path) {
+        case 'Inventory':
+            path = 'inventory';
+            break;
+        case 'Dashboard':
+            path = 'dashboard';
+            break;
+        case 'Sandboxes':
+            path = 'sandboxes';
+            break;
+        case 'Explore savings':
+            path = 'explore-savings';
+            break;
+        case 'Explore savings EBS':
+            path = 'explore-savings-ebs';
+            break;
+        case 'Explore savings FsxW':
+            path = 'explore-savings-fsxw';
+            break;
+        case 'Job monitoring':
+            path = 'job-monitoring';
+            break;
+        case 'Explore savings OnPrem':
+            path = 'explore-savings-on-premise';
+            break;
+        case 'Savings Calculator':
+            if (search && search.includes('fsxw')) {
+                path = 'storage-saving-calculator-fsxw';
+            } else {
+                path = 'storage-saving-calculator';
+            }
+
+            break;
+        case 'Register Component':
+            path = 'manage-wizard';
+            break;
+        default:
+            path = 'redirect';
+            break;
+    }
+    return path;
+};
+
 export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
     const state = store.getState();
     switch (tab) {
@@ -1874,6 +1918,8 @@ export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
         case '/fsxdb/jobMonitoring':
         case '/fsxdb/job-monitoring':
             return WLF_TABS.JOB_MONITORING;
+        case '/fsxdb/manage-wizard':
+            return WLF_TABS.REGISTER_COMPONENT;
         default:
             return WLF_TABS.DASHBOARD;
     }

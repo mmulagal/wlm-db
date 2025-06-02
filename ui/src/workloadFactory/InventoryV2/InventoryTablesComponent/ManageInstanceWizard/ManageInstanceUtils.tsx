@@ -8,7 +8,7 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../../../utils/appConstants';
 import { JOB_MONITORING_STATUS, MANAGE_POLLING_INTERVAL, MANAGE_STATES, WLF_TABS } from '../../../../utils/consts';
-import { Button, DsTypography } from '@netapp/design-system';
+import { BlueXPListeners, Button, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import store from '../../../../store/store';
 import { uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
@@ -122,6 +122,13 @@ export const callManageSingleInstanceApi = async (
             setTimeout(() => {
                 dispatch(setLandingFromWizard(true));
                 navigate('../databases/inventory');
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: {
+                        pathname: './inventory',
+                        replace: true
+                    }
+                });
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
@@ -281,7 +288,7 @@ export const isAllowManage = (manageReadinessData: any) => {
 
             if (notMissingPowershellCheck && notMissingModulesCheck) {
                 anyListEmpty = true;
-            } 
+            }
         }
     }
     return anyListEmpty;

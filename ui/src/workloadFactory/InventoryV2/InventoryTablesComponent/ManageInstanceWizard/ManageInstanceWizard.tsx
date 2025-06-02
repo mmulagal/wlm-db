@@ -1,5 +1,5 @@
 import { useWizard, WizardContextProvider } from '@netapp/design-system/dist/components/Wizard';
-import { StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
+import { BlueXPListeners, postBlueXPMessage, StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
 import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
@@ -37,6 +37,13 @@ const Wizard = () => {
                     setTimeout(() => {
                         dispatch(setLandingFromWizard(true));
                         navigate('../databases/inventory');
+                        postBlueXPMessage({
+                            type: BlueXPListeners.navigate,
+                            payload: {
+                                pathname: './inventory',
+                                replace: true
+                            }
+                        });
                     }, 100);
                 }}
             />

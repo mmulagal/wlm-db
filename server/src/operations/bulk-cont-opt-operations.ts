@@ -36,12 +36,21 @@ import { listResources } from '../lib/database/db';
 import { handleOptimizeRssOptimization } from './continuous-optimization/rssConfig-optimize-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { resetCache } from '../utils/cache';
-import { getServerNameWithHostname } from '../utils/utils';
+import { getServerNameWithHostname, isDemo } from '../utils/utils';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
-import { CloneAssessment, MappedVolumeResponseForClone } from '../utils/common-types';
+import {
+    CloneAssessment,
+    CloneDetail,
+    DatabaseInstance,
+    DatabaseInstanceMetadata,
+    MappedVolumeResponseForClone
+} from '../utils/common-types';
 import { getMappedVolumeDetailForInstance } from './continuous-optimization/clone-optimization-operations';
+import { getInstanceInfo } from './database/database-operations';
+import { updateOptimizedConfigMetaData } from './demo-operations';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 async function formatJobMetadata<T extends { configurationName: string; databaseHosts: any[] }>(hostsToOptimize: T[]) {
     return hostsToOptimize.flatMap(({ configurationName, databaseHosts }) =>
@@ -217,6 +226,16 @@ async function handleBulkCloneOptimization(
                             })
                         )
                     );
+                    if (isDemoFlow) {
+                        await updateAllOptimizedClonesDemoFlow(
+                            accountId,
+                            credentialsId,
+                            databaseHostId,
+                            instanceId,
+                            configData,
+                            clones
+                        );
+                    }
                     // once the optimize done for the specific instance id in a host, Run the assessment for that
                     resetCache(SSM_COMMAND_CACHE_TYPE);
                     await triggerAssessmentAfterOptimization(
@@ -243,6 +262,43 @@ async function handleBulkCloneOptimization(
     } else if (status === JOBSTATUS.FAILED) {
         updateLongRunningAuditGroup(AuditStatus.FAILED, `Error occurred while fixing clone for account ${accountId}`);
     }
+}
+
+async function updateAllOptimizedClonesDemoFlow(
+    accountId: string,
+    credentialsId: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    configData: CloneAssessment,
+    clones: CloneDetailType[]
+) {
+    logger.info('Updating all optimized clones for demo flow', {
+        accountId,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId
+    });
+
+    // Filter only the clones that were optimized
+    const { oldCloneDetails } = configData as unknown as CloneAssessment;
+    const matchingClones: CloneDetail[] = Array.isArray(oldCloneDetails)
+        ? oldCloneDetails.filter(({ cloneDatabaseName, clonedBy }) =>
+              clones.some(c => c.cloneDatabaseName === cloneDatabaseName && c.clonedBy?.toLowerCase() === clonedBy)
+          )
+        : [];
+
+    // Fetch instance metadata once
+    const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+
+    // Update all matching clones in one DB call
+    await updateOptimizedConfigMetaData(
+        accountId,
+        databaseInstanceId,
+        matchingClones,
+        'CLONE',
+        instanceMetadata as DatabaseInstanceMetadata
+    );
 }
 
 async function handleOptimization(

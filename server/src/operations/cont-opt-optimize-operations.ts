@@ -81,7 +81,7 @@ import {
     updateFsxBackup,
     updateVolumeSizeAndWaitForUpdate
 } from './aws/fsx-operations';
-import { updateOptimizedConfigMetaData, updateOptimizedConfigNameInInstanceTable } from './demo-operations';
+import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
 import {
     CHECK_IF_MPIO_INSTALLED,
     CHECK_MPIO_POLICY,
@@ -805,7 +805,8 @@ async function logDriveOptimization(
         serverNameWithHostName,
         databaseHostId,
         databaseInstanceId,
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        objectsToOptimize
     });
     const jobId = await handleOptimizeJobCreation(
         accountId,
@@ -818,7 +819,7 @@ async function logDriveOptimization(
         parentJobId
     );
 
-    const { underProvisionedDrives } = getLogVolumeDrift(
+    let { underProvisionedDrives } = getLogVolumeDrift(
         logDriveDetails,
         AssessmentStatus.UNDER_PROVISIONED,
         'log-drive-size'
@@ -829,13 +830,11 @@ async function logDriveOptimization(
     try {
         if (underProvisionedDrives.length > 0) {
             let underProvisionedOntapVolIds = compact(underProvisionedDrives.map(drive => drive.ontapVolumeUuid)) || [];
-            if (!isEmpty(objectsToOptimize)) {
-                underProvisionedOntapVolIds =
-                    compact(
-                        underProvisionedDrives
-                            .filter(drive => drive.logAccessPath && objectsToOptimize?.includes(drive.logAccessPath))
-                            .map(drive => drive.ontapVolumeUuid)
-                    ) || [];
+            if (objectsToOptimize && !isEmpty(objectsToOptimize)) {
+                underProvisionedDrives = underProvisionedDrives.filter(
+                    drive => drive.logAccessPath && objectsToOptimize.includes(drive.logAccessPath)
+                );
+                underProvisionedOntapVolIds = compact(underProvisionedDrives.map(drive => drive.ontapVolumeUuid)) || [];
             }
             const { volumeIds: fsxVolumeIdList, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
                 credentialsId,
@@ -3060,17 +3059,6 @@ async function optimizeClone(
             serverNameWithHostName,
             volumeMapping
         );
-        if (isDemoFlow) {
-            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-            const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
-            await updateOptimizedConfigMetaData(
-                accountId,
-                databaseInstanceId,
-                [matchingClone],
-                'CLONE',
-                instanceMetadata as DatabaseInstanceMetadata
-            );
-        }
         // can update once the job is success for this newly created child job one
         await updateJobDetails(accountId, childCloneJobId, {
             status: JOBSTATUS.COMPLETED,

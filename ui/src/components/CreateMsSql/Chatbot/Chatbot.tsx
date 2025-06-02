@@ -65,7 +65,8 @@ import {
     SQL_DEPLOYMENT_MODE,
     USER_MANAGED_AD,
     FORM_OPTIONS,
-    FORM_TO_WLF_NAVIGATE_BLUEXP
+    FORM_TO_WLF_NAVIGATE_BLUEXP,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING
 } from '../../../utils/consts';
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
@@ -244,7 +245,7 @@ const Chatbot = () => {
                                 clearTimeout(notificationMsg);
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                 if (isWorkloadFactoryStatus) {
-                                    navigate('../databases');
+                                    navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
                                 } else {
                                     navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
                                 }

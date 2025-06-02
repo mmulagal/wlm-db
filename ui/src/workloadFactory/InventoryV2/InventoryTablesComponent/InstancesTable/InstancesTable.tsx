@@ -1,4 +1,12 @@
-import { DsButton, DsFlashingDotsLoader, DsTypography, Popover, useDialog } from '@netapp/design-system';
+import {
+    BlueXPListeners,
+    DsButton,
+    DsFlashingDotsLoader,
+    DsTypography,
+    Popover,
+    postBlueXPMessage,
+    useDialog
+} from '@netapp/design-system';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -891,7 +899,10 @@ const InstancesTable = () => {
                                     variant="secondary"
                                     isThin
                                     onClick={() => {
-                                        if (colText === ACTION_CTA.FIX_ISSUES) {
+                                        if (
+                                            colText === ACTION_CTA.FIX_ISSUES ||
+                                            colText === ACTION_CTA.WELL_ARCHITECTED
+                                        ) {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
@@ -905,6 +916,13 @@ const InstancesTable = () => {
                                             dispatch(setManageSingleInstanceData(rowData));
                                             dispatch(setWizardOperationType('single'));
                                             navigate('../manage-wizard');
+                                            postBlueXPMessage({
+                                                type: BlueXPListeners.navigate,
+                                                payload: {
+                                                    pathname: './manage-wizard',
+                                                    replace: true
+                                                }
+                                            });
                                         }
                                     }}
                                 >

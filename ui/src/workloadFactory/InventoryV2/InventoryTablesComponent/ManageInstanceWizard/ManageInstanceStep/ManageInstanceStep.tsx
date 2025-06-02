@@ -22,6 +22,7 @@ export const Content = () => {
 
     const { manageSingleInstanceData, manageSingleInstanceReadiness } = useAppSelector(state => state.inventoryV2);
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
+
     const isAlreadyDetected = useMemo(() => {
         if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
             return true;
@@ -177,13 +178,15 @@ export const Content = () => {
             </div>
 
             {/* Action component */}
-            <ActionComponent manageChecks={manageChecks} />
+            {(manageChecks?.installMissingPowershell || manageChecks?.installMissingAWS) && (
+                <ActionComponent manageChecks={manageChecks} />
+            )}
 
             {/* Accordions */}
             <PermissionListComponent manageChecks={manageChecks} policiesList={policiesList} />
 
             {/* Note */}
-            {<NoteComponent />}
+            {manageChecks?.installMissingPowershell && <NoteComponent />}
         </div>
     );
 };

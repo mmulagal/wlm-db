@@ -394,6 +394,17 @@ const HOST_AND_SQL_INFO_PS1 = [
     if (-not ([string]::IsNullOrEmpty($isClustered))) {
         $sqlServerInfo['isClustered'] = if ($isClustered -eq 1) { $True } else { $False }
     }
+    
+    # Fetch FCI Cluster Name
+    if($sqlServerInfo['isClustered']) {
+      try{
+          $instanceClusterConfigPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$instance\\Cluster"
+          $clusterName = (Get-ItemProperty -Path $instanceClusterConfigPath -Name "ClusterName" -ErrorAction SilentlyContinue).ClusterName
+          $sqlServerInfo['clusterName'] = $clusterName
+      }catch{ 
+          Write-Warning "Failed to fetch cluster name for instance '$instanceName'."
+        }
+    }
 
     # Check if HADR (High Availability Disaster Recovery) is enabled
     $sqlServerInfo['hadrEnabled'] = $False
@@ -471,6 +482,10 @@ const HOST_AND_SQL_INFO_PS1 = [
           $isPS7Available = $True
         } 
 
+        If (($isPS7Available -eq $False) -and (Test-Path "C:\\Program Files\\PowerShell\\7")) {
+          $isPS7Available = $True
+        }
+
         $requiredPsModuleList = @(${REQUIRED_PS_MODULES_FOR_MANAGEMENT})
 
         $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
@@ -538,6 +553,12 @@ const HOST_AND_SQL_INFO_PS1 = [
       }
       $responseObject['isSqlCmdAvailable'] = $isSqlCmdAvailable
 
+      $responseObject['isPS7Available'] = $isPS7Available
+      if($isPS7Available -eq $True) {
+        $availablePsModuleList += 'Powershell 7'
+      }
+      $responseObject['availablePsModules'] = $availablePsModuleList
+
       if ($sqlService.State -eq "Running") {
         
           $editionDBCountMachineInfoGuid = $null
@@ -599,6 +620,13 @@ const HOST_AND_SQL_INFO_PS1 = [
             }
             elseif($isClustered -eq $True) {
               $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
+              $responseObject['sqlServerName'] = if ($sqlServerInfoFromRegistry.ContainsKey('clusterName') -and $sqlServerInfoFromRegistry['clusterName']) {
+                $sqlServerInfoFromRegistry['clusterName']
+              } elseif ($clusterDetails.ContainsKey('name') -and $clusterDetails['name']) {
+                $clusterDetails['name']
+              } else {
+                (Get-WmiObject -Class Win32_ComputerSystem).Name
+              }
             }
             else{
               $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
@@ -613,12 +641,6 @@ const HOST_AND_SQL_INFO_PS1 = [
             else {
               $responseObject['sqlPermissions'] = @()
             }
-
-            $responseObject['isPS7Available'] = $isPS7Available
-            if($isPS7Available -eq $True) {
-             $availablePsModuleList += 'Powershell 7'
-            }
-            $responseObject['availablePsModules'] = $availablePsModuleList
 
             if(($sqlInstanceDriveLetterOrPathList.Count -eq 0) -and (-Not [string]::IsNullOrEmpty($sqlServerInfoFromRegistry)) -and $sqlServerInfoFromRegistry.ContainsKey('driveDetails')) {
               $sqlInstanceDriveLetterOrPathList = $sqlServerInfoFromRegistry['driveDetails']

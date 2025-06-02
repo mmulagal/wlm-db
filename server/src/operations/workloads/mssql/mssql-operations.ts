@@ -1,6 +1,6 @@
 import Promise from 'bluebird';
 import createError from 'http-errors';
-import { attempt, isEmpty } from 'lodash-es';
+import { attempt, compact, isEmpty } from 'lodash-es';
 import { STORAGE_TYPE } from '@prisma/client';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
@@ -22,7 +22,8 @@ import {
     MEMORY_UTILISATION,
     INSTANCE_GUID,
     DATABASES_COUNT_V2,
-    SERVER_VERSION
+    SERVER_VERSION,
+    SERVER_VERSION_EDITION_DETAILS
 } from './queries';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -70,6 +71,7 @@ import { getParameter } from '../../../lib/aws/ssm';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 import { getPgSqlInstanceDetails } from '../pgsql/pgsql-operations';
 import { getOracleInstanceDetails } from '../oracle/oracle-operations';
+import { SQL_SERVER_VERSION_TO_YEAR } from './discover-consts';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -1454,6 +1456,102 @@ async function getSQLAuthFromSSMParameterStore(credentialsId: string, region: st
     return { sql, domain };
 }
 
+async function getSqlServerVersionAndEdition(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('Get SQL server version and edition:', { accountId, credentialsId, region, activeNodeInstanceId });
+
+    const { instancesDetails } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        undefined,
+        undefined,
+        accountId
+    );
+
+    if (isEmpty(instancesDetails)) {
+        logger.warn('No active SQL instances found while fetching version and edition');
+        throw createError(HttpErrorCodes.NOT_FOUND, 'No active SQL instances found');
+    }
+
+    try {
+        let sqlAuthEnabled = (instancesDetails || []).some(
+            (instance: InstanceDetails) => instance.sqlAuthEnabled === true
+        );
+
+        let databaseInstances = (instancesDetails || []).map((instance: InstanceDetails) => instance.instanceName);
+
+        if (isDemoFlow) {
+            sqlAuthEnabled = false;
+            databaseInstances = [DEFAULT_INSTANCE_NAME];
+        }
+
+        const commands = sqlQueryExecutionWithAuth(databaseInstances, SERVER_VERSION_EDITION_DETAILS, sqlAuthEnabled);
+        const ssmResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            [commands],
+            activeNodeInstanceId,
+            'Get SQL server version and edition',
+            accountId,
+            true
+        );
+        const parsedResponse = sqlResponseParsing(ssmResponse);
+
+        const items = Object.entries(parsedResponse).map(([instanceName, records]) => {
+            const [record = {}] = Array.isArray(records) ? records : [];
+            if (!record) {
+                logger.warn(`No records found for instance ${instanceName} while fetching version and edition`);
+                return;
+            }
+
+            const { sqlServerVersion, windowsAuthentication, isHadrEnabled, isClustered } = record;
+            if (sqlServerVersion) {
+                const [sqlServerMajorVersion] = sqlServerVersion.split('.');
+                record.sqlServerMajorVersion = SQL_SERVER_VERSION_TO_YEAR.get(sqlServerMajorVersion) || 2015;
+            }
+
+            let sqlServerDeploymentType: SqlServerDeploymentModel;
+            if (isClustered) {
+                sqlServerDeploymentType = SqlServerDeploymentModel.SQL_FCI_SHORT;
+            } else if (isHadrEnabled) {
+                sqlServerDeploymentType = SqlServerDeploymentModel.SQL_AOAG_SHORT;
+            } else {
+                sqlServerDeploymentType = SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
+            }
+
+            const {
+                instanceState,
+                sqlAuthEnabled: sqlServerAuthentication,
+                isDefault
+            } = (instancesDetails || []).find((instance: InstanceDetails) => instance.instanceName === instanceName) ||
+            {};
+
+            return {
+                ...record,
+                sqlServerDeploymentType,
+                sqlServerAuthentication,
+                sqlServerInstance: instanceName,
+                windowsAuthentication: Boolean(windowsAuthentication),
+                sqlServerState: instanceState,
+                isDefaultInstance: isDefault
+            };
+        });
+
+        return [...compact(items)];
+    } catch (error: any) {
+        logger.error('Failed to get SQL Server version and edition details', error);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Failed to get SQL Server version and edition details. ${error?.message}`
+        );
+    }
+}
+
 export {
     getSqlServerDetails,
     getAllResourceUtilisation,
@@ -1482,5 +1580,6 @@ export {
     getAllInstanceDetails,
     getActiveNodeAndInstanceDetails,
     getActiveSqlNodeAndInstanceDetails,
-    ActiveSqlNodeDetails
+    ActiveSqlNodeDetails,
+    getSqlServerVersionAndEdition
 };

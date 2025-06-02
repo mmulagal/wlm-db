@@ -65,7 +65,7 @@ const ActionComponent = ({ manageChecks }: any) => {
                 </div>
             ) : (
                 <div className={styles.selectContainer}>
-                    {manageChecks?.installMissingAWS ? (
+                    {manageChecks?.installMissingAWS && (
                         <DsCheckbox
                             id="wlm-db-install-missing-aws"
                             title={t('databases.register-flow.missing-modules-title')}
@@ -77,24 +77,9 @@ const ActionComponent = ({ manageChecks }: any) => {
                             isDisabled={!manageChecks?.installMissingAWS}
                             className={styles.checkboxContainer}
                         />
-                    ) : (
-                        <Popover
-                            children={t('databases.register-flow.all-modules-installed')}
-                            trigger="hover"
-                            container={
-                                <DsCheckbox
-                                    id="wlm-db-install-missing-aws"
-                                    title={t('databases.register-flow.missing-modules-title')}
-                                    onSelect={() => {}}
-                                    isSelected={installMissingAWS}
-                                    isDisabled={!manageChecks?.installMissingAWS}
-                                    className={styles.checkboxContainer}
-                                />
-                            }
-                        />
                     )}
 
-                    {manageChecks?.installMissingPowershell ? (
+                    {manageChecks?.installMissingPowershell && (
                         <DsCheckbox
                             id="wlm-db-install-missing-powershell"
                             title={t('databases.register-flow.missing-powershell-title')}
@@ -105,21 +90,6 @@ const ActionComponent = ({ manageChecks }: any) => {
                             isSelected={installMissingPowershell}
                             isDisabled={!manageChecks?.installMissingPowershell}
                             className={styles.checkboxContainer}
-                        />
-                    ) : (
-                        <Popover
-                            children={t('databases.register-flow.powershell-7-already-installed')}
-                            trigger="hover"
-                            container={
-                                <DsCheckbox
-                                    id="wlm-db-install-missing-powershell"
-                                    title={t('databases.register-flow.missing-powershell-title')}
-                                    onSelect={() => {}}
-                                    isSelected={installMissingPowershell}
-                                    isDisabled={!manageChecks?.installMissingPowershell}
-                                    className={styles.checkboxContainer}
-                                />
-                            }
                         />
                     )}
                 </div>

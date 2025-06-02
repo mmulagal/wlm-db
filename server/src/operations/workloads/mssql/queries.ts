@@ -412,6 +412,19 @@ const INSTANCE_LOG_DB_DRIVE_SIZES = `
             ORDER BY 
                 d.name ${FOR_JSON_PATH}) as userDatabasesLogDriveSizes`;
 
+const SERVER_VERSION_EDITION_DETAILS = `
+    ${SET_NOCOUNT}
+    SELECT
+        SERVERPROPERTY('Edition') AS sqlServerEdition,
+        SERVERPROPERTY('EngineEdition') AS sqlServerEngineEdition,
+        SERVERPROPERTY('MachineName') AS sqlServerName,
+        SERVERPROPERTY('ProductVersion') AS sqlServerVersion,
+        SERVERPROPERTY('IsIntegratedSecurityOnly') As windowsAuthentication,
+        SERVERPROPERTY('IsHadrEnabled') AS isHadrEnabled,
+        SERVERPROPERTY('IsClustered') AS isClustered
+    ${FOR_JSON_PATH}
+`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -448,5 +461,6 @@ export {
     DEFAULT_LOG_DRIVE_SIZE,
     TEMPDB_DRIVE_SIZE,
     INSTANCE_USER_DB_DRIVE_SIZES,
-    INSTANCE_LOG_DB_DRIVE_SIZES
+    INSTANCE_LOG_DB_DRIVE_SIZES,
+    SERVER_VERSION_EDITION_DETAILS
 };

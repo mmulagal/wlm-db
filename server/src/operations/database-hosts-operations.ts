@@ -53,7 +53,9 @@ import {
     AWS_ERROR_CODES,
     MSSQL_DATABASE_INSTANCE_INDEX_MAPPING,
     DEFAULT_INSTANCE_NAME,
-    MSSQL_SYSTEM_DATABASES
+    MSSQL_SYSTEM_DATABASES,
+    PGSQL_DEFAULT_INSTANCE_NAME,
+    ORACLE_INSTANCE_NAME
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1126,8 +1128,9 @@ async function getDatabaseHostSummaryV2(
                         }
                         return (
                             instance.instanceName.includes(hostResourceName) ||
-                            instance.instanceName === 'MSSQLSERVER' ||
-                            instance.instanceName === 'postgresql'
+                            instance.instanceName === DEFAULT_INSTANCE_NAME ||
+                            instance.instanceName === PGSQL_DEFAULT_INSTANCE_NAME ||
+                            instance.instanceName === ORACLE_INSTANCE_NAME
                         );
                     })
                     .map((instance: { instanceName: { replace: (arg0: string | null, arg1: string) => any } }) => ({
@@ -2064,8 +2067,8 @@ async function getDatabaseInstancesSummary(
             databaseInstanceDetails.databaseServer = instanceServerDetails;
         }
 
-        if (isDemo() && databasesCount && getDbCount) {
-            databasesCount.totalCount += userDatabase.length;
+        if (isDemo() && databasesCount && getDbCount && databasesCount?.[instanceName]?.[index]?.totalCount) {
+            databasesCount[instanceName][index].totalCount += userDatabase.length;
         }
 
         const [instanceDbCount] = databasesCount?.[instanceName] ?? [];
