@@ -149,6 +149,14 @@ const createSandboxSlice = createSlice({
         setSelectedSandboxHeaderValue: (state, action: PayloadAction<any>) => {
             state.selectedSandboxCredId = action.payload.credId;
             state.selectedSandboxRegionId = action.payload.regionId;
+        },
+        resetSourceAndTarget: (state) => {
+            state.source.selectedDatabaseHost = null;
+            state.source.selectedDatabaseInstance = null;
+            state.source.selectedDatabase = null;
+            state.target.selectedDatabaseHost = null;
+            state.target.selectedDatabaseInstance = null;
+            state.target.selectedDatabase = `sandbox_${Date.now()}`;
         }
     }
 });
@@ -183,7 +191,8 @@ export const {
     setSelectedCsData,
     setSelectedCsDbHost,
     setSelectedCsDbInstance,
-    setSelectedCsDatabase
+    setSelectedCsDatabase,
+    resetSourceAndTarget
 } = createSandboxSlice.actions;
 
 export default createSandboxSlice;

@@ -46,7 +46,10 @@ import ConnectToCiCdContent from '../../../../Sandbox/SandboxTable/ConnectToCiCd
 import MenuPopover from '../../../../../common/MenuPopover/MenuPopover';
 import { formatDateWithTime } from '../../../../../utils/utilityFunctions';
 import SmallLoader from '../../../../../common/SmallLoader/SmallLoader';
-import { setSelectedSandboxHeaderValue } from '../../../../../store/workloadFactory/createSandboxSlice';
+import {
+    setSelectedCsData,
+    setSelectedSandboxHeaderValue
+} from '../../../../../store/workloadFactory/createSandboxSlice';
 import SandboxInstanceApis from './SandboxInstanceApis';
 
 const SandboxInstanceTable = () => {
@@ -58,6 +61,7 @@ const SandboxInstanceTable = () => {
 
     const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
     const [data, setData] = useState<any>();
+    const { selectedDatabaseInstanceName, selectedHostname } = useAppSelector(state => state.getWellOptimize);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const [deletedSandboxes, setDeletedSandboxes] = useState<any>([]);
@@ -756,6 +760,13 @@ const SandboxInstanceTable = () => {
                                     setSelectedSandboxHeaderValue({
                                         credId: selectedResourceCredId,
                                         regionId: selectedResourceRegionId
+                                    })
+                                );
+                                dispatch(
+                                    setSelectedCsData({
+                                        host: selectedHostname,
+                                        instance: selectedDatabaseInstanceName,
+                                        database: null
                                     })
                                 );
                                 navigate('../create-new-sandbox');
