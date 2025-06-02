@@ -81,8 +81,8 @@ const UnManageMsSqlSchema = {
     ...DiscoveryBaseRequest,
     params: UnmanageInstanceParams,
     querystring: DatabaseInstanceQueryString,
-    summary: 'Unmanage SQL Server database instances.',
-    description: 'Unmanage SQL Server database instances managed by Workload Factory.',
+    summary: 'Deregister SQL Server database instances.',
+    description: 'Deregister SQL Server database instances managed by Workload Factory.',
     response: {
         200: MultiInstanceUnmanageResponseBody
     }
