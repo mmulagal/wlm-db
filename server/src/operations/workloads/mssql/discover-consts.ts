@@ -12,7 +12,8 @@ const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
   'AWS.Tools.EC2',
   'AWS.Tools.FSx',
   'AWS.Tools.SimpleSystemsManagement',
-  'NetApp.ONTAP'
+  'NetApp.ONTAP',
+  'AWS.Tools.BedrockRuntime'
 `;
 
 const SQL_PERMISSIONS: string = `
