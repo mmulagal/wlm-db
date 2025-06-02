@@ -1,0 +1,183 @@
+.dsDropDownList {
+    position: fixed;
+    z-index: 999999;
+    min-width: 182px;
+    margin-top: 4px;
+
+    &.dropDownChild {
+        margin-top: 0;
+    }
+
+    .actionListRef {
+        outline: none;
+
+        .actionListContainer {
+            // @include fadeIn(0.25s);
+            background-color: var(--background-content);
+            box-shadow: 4px 4px 12px var(--border-drop-shadow);
+
+            &.top {
+                box-shadow: 4px -4px 12px var(--border-drop-shadow);
+            }
+
+            .searchableContainer {
+                --searchIconWidth: 16px;
+                --closeSearchWidth: 24px;
+                --gap: 8px;
+                --addButtonWidth: 0px;
+                --left-right-padding: 16px;
+
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+                align-items: center;
+                border-bottom: 1px solid var(--border-main);
+                padding: 8px var(--left-right-padding);
+
+                &.searchAdd {
+                    --addButtonWidth: 40px;
+                }
+
+                .searchIcon {
+                    width: var(--searchIconWidth);
+                    color: var(--field-icon);
+                }
+
+                .dropInputSearch {
+                    border: none;
+                    outline: none;
+                    width: calc(
+                        100% - var(--searchIconWidth) - var(--closeSearchWidth) - (var(--gap) * 2) -
+                            var(--addButtonWidth)
+                    );
+                    background-color: var(--background-content);
+                    color: var(--text-primary);
+                }
+
+                .closeSearch {
+                    // @include transition(opacity 0.2s ease);
+                    width: 24px;
+                    color: var(--field-icon);
+                    cursor: pointer;
+                    opacity: 0;
+
+                    &.closeVisible {
+                        opacity: 1;
+                    }
+                }
+
+                .dsButtonContainer {
+                    margin-right: 8px;
+
+                    .dsButtons {
+                        .primaryButton {
+                            text-transform: unset;
+                        }
+                    }
+                }
+            }
+
+            .itemsContainer {
+                // @include showScrollbarY();
+
+                & {
+                    overflow-y: auto;
+                }
+
+                @mixin dropDownItem() {
+                    padding: 12px 16px 12px 24px;
+                    cursor: pointer;
+                    box-sizing: border-box;
+
+                    &:hover:not(.isDisabled) {
+                        background-color: var(--background-hover);
+                    }
+
+                    &.isDisabled {
+                        cursor: initial;
+                    }
+                }
+
+                .dropDownItemPopover {
+                    display: flex;
+                    max-width: unset;
+                }
+
+                .dropItem {
+                    // @include dropDownItem();
+                    width: 100%;
+
+                    &.isDisabled {
+                        pointer-events: none;
+                    }
+
+                    &.isSelected:not(&.isDisabled) {
+                        color: var(--text-button-primary);
+                    }
+                }
+
+                .dropDownListContainer {
+                    &:hover:not(.isDisabled) {
+                        background-color: var(--background-hover);
+                    }
+
+                    &.isDisabled {
+                        .parentContainer {
+                            .parentChevron {
+                                path {
+                                    fill: var(--icon-secondary-disabled);
+                                }
+                            }
+                        }
+                    }
+
+                    .parentContainer {
+                        // @include dropDownItem();
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 16px;
+
+                        .parentTitle {
+                            width: calc(100% - 16px);
+                            display: flex;
+
+                            .dropItem {
+                                padding: 0;
+                            }
+                        }
+                    }
+                }
+
+                [class*='dsTypography_base'] {
+                    text-wrap: nowrap;
+                }
+            }
+
+            .actionsContainer {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+                border-top: 1px solid var(--border-main);
+
+                .dsButtonContainer {
+                    // @include transition(background-color 0.3s ease);
+                    flex: 1;
+                    cursor: pointer;
+                    text-align: center;
+                    line-height: 40px;
+                    color: var(--text-button-primary);
+
+                    &:last-child:not(:first-child) {
+                        border-left: 1px solid var(--border-main);
+                    }
+
+                    &:hover {
+                        background-color: var(--background-hover);
+                    }
+                }
+            }
+        }
+    }
+}

@@ -51,6 +51,7 @@ import moment from 'moment';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedRowsForManage } from '../store/workloadFactory/inventoryV2Slice';
 import { PgsqlInstancesDiscovered } from './types/inventoryV2Types';
+import classNames from 'classnames';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -2078,6 +2079,23 @@ export const handleURL = (value: string, isWorkloadFactory: boolean) => {
             replace: true
         }
     });
+};
+
+export const _Classes = (...classes: classNames.ArgumentArray): string => {
+    const classList: string[] = [];
+    classes.forEach(_class => {
+        if (typeof _class === 'string') {
+            classList.push(_class);
+        } else if (_class && typeof _class === 'object') {
+            Object.entries(_class).forEach(entry => {
+                if (entry[1] === true) {
+                    classList.push(entry[0]);
+                }
+            });
+        }
+    });
+
+    return classList.join(' ');
 };
 
 export const updateSizeInGib = (data: any): any => {
