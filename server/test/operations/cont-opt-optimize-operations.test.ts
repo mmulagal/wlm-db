@@ -395,8 +395,8 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
             await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
         } catch (err: any) {
             // If PreconditionFailedError, extract jobId and mark as completed, then retry once
-            if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
-                const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
+            if (err.status === 412 && /ID:\s+([a-f0-9-]+)/i.test(err.message)) {
+                const match = err.message.match(/ID:\s+([a-f0-9-]+)/i);
                 if (match) {
                     const jobId = match[1];
                     await updateJobDetails(ACCOUNT_ID, jobId, { status: 'COMPLETED', endTime: Date.now() });
@@ -435,8 +435,8 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
             await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
         } catch (err: any) {
             // If PreconditionFailedError, extract jobId and mark as completed, then retry once
-            if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
-                const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
+            if (err.status === 412 && /ID:\s+([a-f0-9-]+)/i.test(err.message)) {
+                const match = err.message.match(/ID:\s+([a-f0-9-]+)/i);
                 if (match) {
                     const jobId = match[1];
                     await updateJobDetails(ACCOUNT_ID, jobId, { status: 'COMPLETED', endTime: Date.now() });
@@ -475,8 +475,8 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
             await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
         } catch (err: any) {
             // If PreconditionFailedError, extract jobId and mark as completed, then retry once
-            if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
-                const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
+            if (err.status === 412 && /ID:\s+([a-f0-9-]+)/i.test(err.message)) {
+                const match = err.message.match(/ID:\s+([a-f0-9-]+)/i);
                 if (match) {
                     const jobId = match[1];
                     await updateJobDetails(ACCOUNT_ID, jobId, { status: 'COMPLETED', endTime: Date.now() });
@@ -517,8 +517,8 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
             await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
         } catch (err: any) {
             // If PreconditionFailedError, extract jobId and mark as completed, then retry once
-            if (err.status === 412 && /Job ID:\s+([a-f0-9-]+)/i.test(err.message)) {
-                const match = err.message.match(/Job ID:\s+([a-f0-9-]+)/i);
+            if (err.status === 412 && /ID:\s+([a-f0-9-]+)/i.test(err.message)) {
+                const match = err.message.match(/ID:\s+([a-f0-9-]+)/i);
                 if (match) {
                     const jobId = match[1];
                     await updateJobDetails(ACCOUNT_ID, jobId, { status: 'COMPLETED', endTime: Date.now() });

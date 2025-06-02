@@ -1750,6 +1750,7 @@ const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1',
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
 const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-age-in-days') : 60; // Fall Back to 60 days as default if not set in config
 const OTHER_CLONE = 'other';
+const POSTPONE_AGE: number = config.has('postpone-age-in-days') ? config.get('postpone-age-in-days') : 30; // Fall Back to 30 days as default if not set in config
 
 export {
     WLMDB,
@@ -2104,5 +2105,6 @@ export {
     POWERSHELL_7_RELATIVE_PATH,
     CLONE_ACTION,
     OTHER_CLONE,
-    ORACLE_INSTANCE_STATE
+    ORACLE_INSTANCE_STATE,
+    POSTPONE_AGE
 };

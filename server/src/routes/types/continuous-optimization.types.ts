@@ -128,8 +128,8 @@ const AdditionalLicenseParameterDriftResponse = Type.Optional(
             Type.Object({
                 sqlServerInstance: Type.String(),
                 sqlServerState: Type.String(),
-                sqlServerVersion: Type.String(),
-                sqlServerProductYear: Type.Number(),
+                sqlServerVersion: Type.Optional(Type.String()),
+                sqlServerProductYear: Type.Optional(Type.Number()),
                 sqlServerEdition: Type.Optional(Type.String()),
                 sqlServerEngineEdition: Type.Optional(Type.Number()),
                 sqlServerName: Type.Optional(Type.String())

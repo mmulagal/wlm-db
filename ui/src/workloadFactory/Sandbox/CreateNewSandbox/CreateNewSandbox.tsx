@@ -13,7 +13,6 @@ import {
     setShowError,
     setSourceDatabase,
     setSourceDbHost,
-    setSourceDbInstance,
     setTargetDatabase
 } from '../../../store/workloadFactory/createSandboxSlice';
 
@@ -28,7 +27,6 @@ const CreateNewSandbox = () => {
         dispatch(setTargetDatabase(`sandbox_${Date.now()}`));
         dispatch(setSourceDatabase(null));
         dispatch(setSourceDbHost(null));
-        dispatch(setSourceDbInstance(null));
         dispatch(setShowError(false));
     }, []);
 
