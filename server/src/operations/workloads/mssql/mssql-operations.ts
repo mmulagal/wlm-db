@@ -1512,7 +1512,7 @@ async function getSqlServerVersionAndEdition(
             const { sqlServerVersion, windowsAuthentication, isHadrEnabled, isClustered } = record;
             if (sqlServerVersion) {
                 const [sqlServerMajorVersion] = sqlServerVersion.split('.');
-                record.sqlServerMajorVersion = SQL_SERVER_VERSION_TO_YEAR.get(sqlServerMajorVersion) || 2015;
+                record.sqlServerProductYear = SQL_SERVER_VERSION_TO_YEAR.get(sqlServerMajorVersion) || 2015;
             }
 
             let sqlServerDeploymentType: SqlServerDeploymentModel;
