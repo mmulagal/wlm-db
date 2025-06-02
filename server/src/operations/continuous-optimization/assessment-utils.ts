@@ -1,6 +1,6 @@
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
-import moment from 'moment';
+import ms from 'ms';
 import { getJobs, registerJob } from '../database/job-operations';
 import { getTimeDifferenceInMinutes } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
@@ -30,7 +30,7 @@ import {
 
 import { listResources } from '../../lib/database/db';
 
-import { HttpErrorCodes } from '../../utils/consts';
+import { HttpErrorCodes, POSTPONE_AGE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -245,10 +245,7 @@ async function updateDismissConfigurations(accountId: string, configurations: Bu
         configurations.map(async config => {
             const { configurationName: configName, configState, databaseHosts: hostsToDismiss } = config;
             const startTime = Date.now();
-            const thirtyDaysInMs =
-                process.env.NODE_ENV === 'production'
-                    ? moment.duration(30, 'days').asMilliseconds()
-                    : moment.duration(1, 'hours').asMilliseconds(); // 1 hour for testing, 30 days for production
+            const thirtyDaysInMs = ms(`${POSTPONE_AGE}d`);
             const endTime = startTime + thirtyDaysInMs;
             const response = {
                 configurationName: configName,

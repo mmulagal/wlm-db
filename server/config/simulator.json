@@ -13,5 +13,6 @@
             }
         }
     },
-    "clone-age-in-days": 60
+    "clone-age-in-days": 60,
+    "postpone-age-in-days": 30
 }
