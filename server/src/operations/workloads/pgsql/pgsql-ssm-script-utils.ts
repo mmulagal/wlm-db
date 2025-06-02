@@ -76,7 +76,9 @@ const ontapRestApi = `
     check_status "Credentials not found for $filesystemid in SSM Parameter Store. Please ensure the credentials are stored in SSM Parameter Store with the name /netapp/wlmdb/$filesystemid"
     
     # Convert creds to a valid JSON string
-    creds=$(echo "$creds" | sed "s/'/\\"/g" | sed 's/\\([a-zA-Z0-9_]*\\):/"\\1":/g')
+    # First, replace single quotes with double quotes
+    # Second sed is for adding quotes around keys, only if there are no quotes already
+    creds=$(echo "$creds" | sed "s/'/\\"/g" | sed 's/\\([^"{},: ]\\+\\):/"\\1":/g')
     
     fsxusername=$(echo $creds | jq -r '.fsx.username')
     fsxpassword=$(echo $creds | jq -r '.fsx.password')
@@ -127,7 +129,14 @@ const ontapRestApi = `
             $request_body
         )
 
-        return_result=$(curl "\${args[@]}")
+        local response=$(curl "\${args[@]}" --write-out "HTTPSTATUS:%{http_code}")
+        http_status=$(echo "$response" | sed -n 's/.*HTTPSTATUS:\\([0-9]*\\)$/\\1/p')
+        return_result=$(echo "$response" | sed 's/HTTPSTATUS:[0-9]*$//')
+
+        # Check for 4xx or 5xx errors
+        if [[ $http_status -ge 400 ]]; then
+            check_status $return_result
+        fi
         echo $return_result
     }
 `;
