@@ -1508,14 +1508,16 @@ async function validateParams(
             false
         );
 
+        let isPS7Available = true;
         try {
             const parsedResponse = JSON.parse(ps7AvailabilityResponse);
-            const isPS7Available = parsedResponse?.[IS_PS7_AVAILABLE];
-            if (!isPS7Available) {
-                throw createError(HttpErrorCodes.VALIDATION_ERROR, 'PowerShell 7 is unavailable on the system.');
-            }
+            isPS7Available = parsedResponse?.[IS_PS7_AVAILABLE];
         } catch (error: any) {
             logger.error('Error parsing PowerShell 7 availability response:', error);
+        }
+
+        if (!isPS7Available) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, 'PowerShell 7 is unavailable on the system.');
         }
 
         const databaseExists = await checkDatabaseExists(
