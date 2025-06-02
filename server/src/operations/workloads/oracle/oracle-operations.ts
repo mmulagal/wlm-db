@@ -216,7 +216,10 @@ async function getOracleProtectionStatus(
         );
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
-            const { ontapProtectionDetails, isNativeProtectionEnabled } = parsedResponse;
+            const { ontapProtectionDetails, isNativeProtectionEnabled, error } = parsedResponse;
+            if (error) {
+                throw error;
+            }
             const records = ontapProtectionDetails?.records[0];
             const { snapshot_count: snapshotCount, uuid } = records;
             const backupStatus = await isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, [uuid]);

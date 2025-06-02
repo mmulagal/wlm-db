@@ -23,7 +23,8 @@ import { mockClient } from 'aws-sdk-client-mock';
 import {
     HOST_AND_SQL_INFO_PS1,
     CLUSTER_NETWORK_IP_INFO_PS1,
-    GET_ACTIVE_DIRECTORY_DETAILS
+    GET_ACTIVE_DIRECTORY_DETAILS,
+    CHECK_POWERSHELL7_AVAILABLE
 } from '../../../../src/operations/workloads/mssql/discover-consts';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
@@ -58,7 +59,8 @@ import {
     DATABASES_COUNT_V2,
     NATIVE_SQL_BACKUPS,
     DATABASES,
-    GET_SANDBOXES
+    GET_SANDBOXES,
+    SERVER_VERSION_EDITION_DETAILS
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
     createVolumeClone,
@@ -570,6 +572,14 @@ const getInstalledSQLPatches = {
     commands: [GET_INSTALLED_SQL_PATCHES()]
 };
 
+const getSqlServerVersionEditionDetails = {
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], SERVER_VERSION_EDITION_DETAILS, false)]
+};
+
+const getPS7CheckDetails = {
+    commands: CHECK_POWERSHELL7_AVAILABLE
+};
+
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
 const pgsqlDatabases = { commands: [LIST_DATABASES] };
@@ -884,7 +894,11 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'oracle performance metrics')
     .resolves(getSampleCommandResponse('oraclePerformanceMetrics'))
     .on(SendCommandCommand, params => params.Comment === 'oracle instance info')
-    .resolves(getSampleCommandResponse('oracleInstanceInfo'));
+    .resolves(getSampleCommandResponse('oracleInstanceInfo'))
+    .on(SendCommandCommand, params => params.Comment === 'Get SQL server version and edition')
+    .resolves(getSampleCommandResponse('getSqlServerVersionEditionDetails'))
+    .on(SendCommandCommand, params => params.Comment === 'Check PowerShell 7 availability')
+    .resolves(getSampleCommandResponse('getPS7CheckDetails'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1265,7 +1279,7 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'oraclePerformanceMetrics',
-            '{"READ_IOPS":0.11,"WRITE_IOPS":0.6,"READ_THROUGHPUT":0.001,"WRITE_THROUGHPUT":0.005,"READ_LATENCY":0,"WRITE_LATENCY":0,"SERVER_IO_LATENCY":0,"assessment":"Excellent (<=1 ms)"}'
+            '{"READ_IOPS":0.11,"WRITE_IOPS":0.6,"READ_THROUGHPUT":0.001,"WRITE_THROUGHPUT":0.005,"READ_LATENCY":0,"WRITE_LATENCY":0,"SERVER_IO_LATENCY":0,"assessment":"Excellent ( <=1 ms )"}'
         )
     )
     .on(GetCommandInvocationCommand, {
@@ -1274,7 +1288,25 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'oracleInstanceInfo',
-            '[{"sid":"ordbsdl","instance_details":{"instance_id":1,"instance_name":"ordbsdl","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"}},{"sid":"oraclesan1","instance_details":{"instance_id":1,"instance_name":"oraclesan1","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"STARTED"}},{"sid":"oraclesan2","instance_details":{"instance_id":1,"instance_name":"oraclesan2","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"}}]'
+            '[{"sid":"ordbsdl","instance_details":{"instance_id":1,"instance_name":"ordbsdl","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"}},{"sid":"oraclesan1","instance_details":{"instance_id":1,"instance_name":"oraclesan1","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"STARTED"}},{"sid":"oracle","instance_details":{"instance_id":1,"instance_name":"oracle","host_name":"ip-172-31-48-99.ap-southeast-1.compute.internal","version":"19.0.0.0.0","instance_state":"OPEN"}}]'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSqlServerVersionEditionDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getSqlServerVersionEditionDetails',
+            '{ "MSSQLSERVER": [ { "sqlServerEdition": "Standard Edition (64-bit)", "sqlServerEngineEdition": 2, "sqlServerName": "LessProvisionDB", "sqlServerVersion": "16.0.1000.6", "windowsAuthentication": 0, "isHadrEnabled": 0, "isClustered": 0 } ]}'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPS7CheckDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getPS7CheckDetails',
+            '{"scriptExecutionTime":486.0067,"status":"success","isPS7Available":true}'
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

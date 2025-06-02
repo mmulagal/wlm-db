@@ -14,11 +14,12 @@ import {
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
 import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/common-types';
-import { extractKbNumber, extractVersionDetails, sqlResponseParsing } from '../../utils/utils';
+import { extractKbNumber, extractVersionDetails, getResourceNameFromTags, sqlResponseParsing } from '../../utils/utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 import { GET_INSTALLED_MSSQL_VERSION } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { updateResourceMetaData } from '../database/database-operations';
+import { describeInstance } from '../../lib/aws/ec2';
 
 const logger = getLogger();
 
@@ -177,7 +178,8 @@ async function getTheMSSqlversion(
     region: string,
     instanceId: string,
     sqlAuthEnabled: boolean,
-    instanceName: string
+    instanceName: string,
+    accountId: string
 ) {
     logger.info('Getting the MSSQL version', {
         credentialsId,
@@ -194,7 +196,8 @@ async function getTheMSSqlversion(
         region,
         [ssmCommand],
         instanceId,
-        'Get Installed SQL version'
+        'Get Installed SQL version',
+        accountId
     );
     const [parsedResponse] = sqlResponseParsing(response);
     const { version } = parsedResponse;
@@ -226,11 +229,25 @@ async function runMSSQLPatchAssessment(
         instanceName
     });
 
-    const clusterNodeDetails = isPartOfCluster
-        ? await getAllClusterNodeDetails(accountId, credentialsId, region, databaseHostId, nodeInstanceId)
-        : [{ ec2InstanceId: nodeInstanceId, ec2InstanceName: 'Unknown' }];
+    let clusterNodeDetails;
+    if (isPartOfCluster) {
+        clusterNodeDetails = await getAllClusterNodeDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            nodeInstanceId
+        );
+    } else {
+        // Get the EC2 instance name for standalone
+        const { Reservations = [] } = await describeInstance(credentialsId, region, {
+            InstanceIds: [nodeInstanceId]
+        });
+        const ec2Name = getResourceNameFromTags(Reservations?.[0]?.Instances?.[0]?.Tags);
+        clusterNodeDetails = [{ ec2InstanceId: nodeInstanceId, ec2InstanceName: ec2Name || 'Unknown' }];
+    }
 
-    const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
+    const clusterNodeInstanceIds = compact(clusterNodeDetails?.map(({ ec2InstanceId }) => ec2InstanceId));
 
     if (!isEmpty(clusterNodeInstanceIds)) {
         const { releaseDate: currentVersionReleaseDate, versionYear: sqlServerYear } = await getTheMSSqlversion(
@@ -238,12 +255,13 @@ async function runMSSQLPatchAssessment(
             region,
             activeNodeInstanceId,
             sqlAuthEnabled,
-            instanceName
+            instanceName,
+            accountId
         );
 
         const [availableCriticalSQLPatches, instanceInstalledPatchDetails] = await Promise.all([
             getAvailablePatches(credentialsId, region, activeNodeInstanceId, sqlServerYear),
-            getInstalledSQLPatchDetails(credentialsId, region, clusterNodeInstanceIds)
+            getInstalledSQLPatchDetails(credentialsId, region, clusterNodeInstanceIds, accountId)
         ]);
 
         const instanceInstalledPatchDetailsList = instanceInstalledPatchDetails || [];

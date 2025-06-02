@@ -593,6 +593,20 @@ export const getPrimaryPgsqlNode = (
 
             if (partnerNode && !isDemoMode) {
                 partnerNode = [host, ...partnerNode];
+                let ec2Details: Array<{ id: string; name: string }> = [];
+                partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
+                    ec2Details.push({
+                        id: perPartnerNode?.ec2InstanceId || '',
+                        name: perPartnerNode?.ec2InstanceName || ''
+                    });
+                });
+
+                partnerNode = partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
+                    return {
+                        ...perPartnerNode,
+                        ec2Details: ec2Details
+                    };
+                });
 
                 let anyManagedNode = false;
                 partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
@@ -1001,7 +1015,7 @@ export const formatPgsqlDiscoveredRows = (
         loading: false,
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
-        ec2Details: ec2Details,
+        ec2Details: discoveredRow?.ec2Details || ec2Details,
         hostType: GENERAL.POSTGRESQL_TYPE,
         // **** Below values will get from Instances API *****
         // estimatedUsageCost: {}, // Initially it will be blank
@@ -1378,8 +1392,7 @@ export const getDetectOptionForInstance = (
     if (type === GENERAL.POSTGRESQL_TYPE) {
         auth = perRow?.defaultAuth;
     }
-    let isSqlRunning =
-        state === DETECT_HOST_VAR.RUNNING || state === STATUS_CONST.OPEN || state === STATUS_CONST.STARTED;
+    let isSqlRunning = state === DETECT_HOST_VAR.RUNNING || state === STATUS_CONST.OPEN;
     if (ssmState?.toLowerCase() !== INVENTORY_STATUS.SSM_CONNECTED) {
         detectOption = DETECT_HOST_VAR.HIDE;
         detectOptionDisableMsg = GENERAL.SSM_CONNECTION_DOWN;
@@ -1555,7 +1568,7 @@ export const formatOracleDiscoverInstanceData = (
     let instanceRows = row?.databaseInstanceDetails?.map((perRow: OracleInstancesDiscovered) => {
         const statusObj = perInstanceStatus?.filter((per: StatusObjInterface) => per?.name === perRow?.instanceName);
         const instanceStatus =
-            perRow?.instanceState === STATUS_CONST.OPEN || perRow?.instanceState === STATUS_CONST.STARTED
+            perRow?.instanceState === STATUS_CONST.OPEN
                 ? INVENTORY_STATUS.CASE_SENSITIVE_UP
                 : INVENTORY_STATUS.CASE_SENSITIVE_DOWN;
         return {
@@ -1761,7 +1774,8 @@ export const getUnmanagedHostInstances = (
             return;
         }
         if (
-            (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE && !databaseHostsData[key]?.actionDisable) ||
+            (databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE &&
+                databaseHostsData[key]?.ssmState === STATUS_CONST.ONLINE) ||
             (databaseHostsData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && databaseHostsData[key]?.isDetected)
         ) {
             instanceList.push(
@@ -1796,6 +1810,39 @@ export const getUnmanagedPgsqlHostInstances = (
         if (
             databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE &&
             // !databaseHostsData[key]?.actionDisable &&
+            databaseHostsData[key]?.ssmState === STATUS_CONST.ONLINE
+        ) {
+            instanceList.push(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            );
+        }
+    });
+    return instanceList;
+};
+
+export const getUnmanagedOracleHostInstances = (
+    databaseHostsData: { [key: string]: InventoryTableData },
+    runningOracleInstanceListRef: Array<string>
+) => {
+    let instanceList: Array<string> = [];
+    Object.keys(databaseHostsData).forEach((key: string) => {
+        if (
+            runningOracleInstanceListRef.includes(
+                uniqueHostRow(
+                    databaseHostsData[key]?.ec2InstanceId || '',
+                    databaseHostsData[key]?.credentialId || '',
+                    databaseHostsData[key]?.regionId || ''
+                )
+            )
+        ) {
+            return;
+        }
+        if (
+            databaseHostsData[key]?.action === INVENTORY_ACTIONS.MANAGE &&
             databaseHostsData[key]?.ssmState === STATUS_CONST.ONLINE
         ) {
             instanceList.push(
@@ -1913,7 +1960,7 @@ export const updateInventoryDatawithInstancesRes = (
                 loading: partnerInstanceData?.loading
             };
         } else if (partnerInstanceData && !partnerInstanceData?.loading) {
-            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
+            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow, inventoryRow);
             let mergedCost = mergeEstimatedCost(instanceRow, partnerInstanceData);
             let allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data, partnerInstanceData?.data]);
             let ebsResourceInfo = mergeEbsResourceInfo(instanceRow, partnerInstanceData);
@@ -1940,7 +1987,7 @@ export const updateInventoryDatawithInstancesRes = (
             };
         } else {
             const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data]);
-            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow);
+            const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow, inventoryRow);
             result = {
                 ...inventoryRow,
                 name: inventoryRow?.name || instanceRow?.data?.name,
@@ -2085,10 +2132,20 @@ export const getMergedAllocatedCapacity = (nodeList: Array<ManagedHostsRowInterf
     return allocatedCapacity;
 };
 
-export const getEc2DetailsForUnmanagedHost = (instanceRow: InstancesObjectInterface) => {
+export const getEc2DetailsForUnmanagedHost = (
+    instanceRow: InstancesObjectInterface,
+    inventoryRow: InventoryTableData
+) => {
     const ec2Details: Array<EC2DetailsInterface> = [];
     let instanceId = '';
-    if (instanceRow?.data?.nodeTopology?.ec2Details && instanceRow?.data?.nodeTopology?.ec2Details?.length > 0) {
+    if (inventoryRow?.hostType === DBType.POSTGRESQL) {
+        instanceId = inventoryRow?.ec2InstanceId || '';
+        ec2Details.push({
+            id: inventoryRow?.ec2InstanceId || '',
+            name: inventoryRow?.ec2InstanceName || '',
+            instanceType: inventoryRow?.hostType || ''
+        });
+    } else if (instanceRow?.data?.nodeTopology?.ec2Details && instanceRow?.data?.nodeTopology?.ec2Details?.length > 0) {
         instanceId = instanceRow?.data?.nodeTopology?.ec2Details?.[0]?.id || '';
         ec2Details.push(instanceRow?.data?.nodeTopology?.ec2Details?.[0]);
     }
@@ -2138,16 +2195,22 @@ export const updateSqlServerInstancesForBothNodes = (
     if (instanceData?.databaseInstancesSummary && instanceData?.databaseInstancesSummary?.length > 0) {
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
             const perRowNode = instanceData?.databaseInstancesSummary?.find(
-                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstancesSummaryInterface) =>
+                    (per?.databaseInstanceName ?? '').toLowerCase() ===
+                    (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             const perRowNodeStatus = instanceData?.databaseInstanceDetails?.find(
-                (per: DatabaseInstanceDetailsInterface) => per?.instanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstanceDetailsInterface) =>
+                    (per?.instanceName ?? '').toLowerCase() === (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             const perRowPartner = partnerData?.databaseInstancesSummary?.find(
-                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstancesSummaryInterface) =>
+                    (per?.databaseInstanceName ?? '').toLowerCase() ===
+                    (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             const perRowPartnerStatus = partnerData?.databaseInstanceDetails?.find(
-                (per: DatabaseInstanceDetailsInterface) => per?.instanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstanceDetailsInterface) =>
+                    (per?.instanceName ?? '').toLowerCase() === (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             let perRow: any;
             if (
@@ -2231,7 +2294,8 @@ export const updateSqlServerInstancesForUnmanaged = (
             if (instRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
                 const perRow = instanceData?.databaseInstancesSummary?.find(
                     (per: DatabaseInstancesSummaryInterface) =>
-                        per?.databaseInstanceName === instRow?.databaseInstanceName
+                        (per?.databaseInstanceName ?? '').toLowerCase() ===
+                        (instRow?.databaseInstanceName ?? '').toLowerCase()
                 );
                 const statusObj = nonManagedStatus?.filter(
                     (per: StatusObjInterface) => per?.name === instRow?.databaseInstanceName
@@ -2297,7 +2361,7 @@ export const getPerfUnmanagedData = (
     // perfMssqlInstancesData - This is used for MSSQL as we get MSSQL protection and perf data seperately
     // pgsqlInstancesData - This is used for PGSQL as we get PGSQL protection and perf data together with cost
     // Will handle oracle also
-    const { perfMssqlInstancesData, pgsqlInstancesData } = updatedState.inventoryV2;
+    const { perfMssqlInstancesData, pgsqlInstancesData, oracleInstancesData } = updatedState.inventoryV2;
     let uniqueInstanceId = uniqueHostRow(instanceId, credentialId, regionId);
     let uniquePartnerId = uniqueHostRow(partnerId || '', credentialId, regionId);
     let perfData1: any = null;
@@ -2313,13 +2377,17 @@ export const getPerfUnmanagedData = (
         perfData2 = pgsqlInstancesData?.[uniquePartnerId];
     } else if (pgsqlInstancesData?.[uniqueInstanceId]) {
         perfData = pgsqlInstancesData?.[uniqueInstanceId];
+    } else if (oracleInstancesData?.[uniqueInstanceId]) {
+        perfData = oracleInstancesData?.[uniqueInstanceId];
     }
     if (perfData1 && partnerId && perfData2) {
         const perRow1 = perfData1?.data?.databaseInstancesSummary?.find(
-            (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+            (per: DatabaseInstancesSummaryInterface) =>
+                (per?.databaseInstanceName ?? '').toLowerCase() === (instRow?.databaseInstanceName ?? '').toLowerCase()
         );
         const perRow2 = perfData2?.data?.databaseInstancesSummary?.find(
-            (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+            (per: DatabaseInstancesSummaryInterface) =>
+                (per?.databaseInstanceName ?? '').toLowerCase() === (instRow?.databaseInstanceName ?? '').toLowerCase()
         );
         if (perRow1 || perRow2) {
             return {
@@ -2349,7 +2417,9 @@ export const getPerfUnmanagedData = (
             };
         } else if (perfData?.data?.databaseInstancesSummary && perfData?.data?.databaseInstancesSummary?.length > 0) {
             const perRow = perfData?.data?.databaseInstancesSummary?.find(
-                (per: DatabaseInstancesSummaryInterface) => per?.databaseInstanceName === instRow?.databaseInstanceName
+                (per: DatabaseInstancesSummaryInterface) =>
+                    (per?.databaseInstanceName ?? '').toLowerCase() ===
+                    (instRow?.databaseInstanceName ?? '').toLowerCase()
             );
             return {
                 loading: false,
@@ -2848,7 +2918,7 @@ export const getOptimizationStatus = (
                 ? optBreakDown?.total?.notOptimized === 1
                     ? optBreakDown?.total?.notOptimized + ' issues'
                     : optBreakDown?.total?.notOptimized + ' issues'
-                : 'Well-architected';
+                : ACTION_CTA.WELL_ARCHITECTED;
     } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     } else if (instanceRow?.assessments && !instanceRow?.assessments?.lastAssessmentTimestamp) {
@@ -3447,7 +3517,11 @@ export const manageActionCol = (rowData?: any) => {
         rowData?.statusColText === INVENTORY_STATUS.MANAGED ||
         rowData?.managementStatus === INVENTORY_STATUS.IN_PROGRESS
     ) {
-        colText = ACTION_CTA.FIX_ISSUES;
+        if (rowData?.optimizationStatus === ACTION_CTA.WELL_ARCHITECTED) {
+            colText = ACTION_CTA.WELL_ARCHITECTED;
+        } else {
+            colText = ACTION_CTA.FIX_ISSUES;
+        }
     } else {
         colText = ACTION_CTA.MANAGE_INSTANCES;
     }
@@ -3474,11 +3548,70 @@ export const manageActionCol = (rowData?: any) => {
         disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
     }
 
-    if (colText === ACTION_CTA.FIX_ISSUES && !rowData?.optimizationStatus && !rowData?.optimizationStatusLoading) {
-        disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
+    if (colText === ACTION_CTA.FIX_ISSUES || colText === ACTION_CTA.WELL_ARCHITECTED) {
+        disableMsg = fixIssueDisableMsg(rowData);
     }
     return {
         colText: colText,
         disableMsg: disableMsg
     };
+};
+
+export const fixIssueDisableMsg = (rowData: any) => {
+    let disableMsg = '';
+    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
+        disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
+        return disableMsg;
+    }
+    if (
+        rowData?.status === INVENTORY_STATUS.OFFLINE ||
+        rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
+        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
+        rowData?.status === INVENTORY_STATUS.STOPPED
+    ) {
+        disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
+        return disableMsg;
+    }
+    if (
+        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+        (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
+    ) {
+        disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
+        return disableMsg;
+    }
+    if (
+        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+    ) {
+        disableMsg = GENERAL.FSXN_OPTIMIZE_SUPPORTED;
+        return disableMsg;
+    }
+    if (
+        rowData?.serverInstallationMode === GENERAL.AOAG &&
+        rowData.fileSystemType &&
+        rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
+    ) {
+        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+            disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
+            return disableMsg;
+        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+            disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
+            return disableMsg;
+        }
+    }
+    if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+        if (
+            rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+            rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
+        ) {
+            disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
+            return disableMsg;
+        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+            disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
+            return disableMsg;
+        }
+    }
+    return disableMsg;
 };

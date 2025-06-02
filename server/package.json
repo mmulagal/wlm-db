@@ -39,7 +39,7 @@
         "@aws-sdk/client-compute-optimizer": "^3.799.0",
         "@aws-sdk/client-cost-explorer": "^3.799.0",
         "@aws-sdk/client-directory-service": "^3.802.0",
-        "@aws-sdk/client-ec2": "^3.800.0",
+        "@aws-sdk/client-ec2": "^3.816.0",
         "@aws-sdk/client-fsx": "^3.799.0",
         "@aws-sdk/client-iam": "^3.799.0",
         "@aws-sdk/client-kms": "^3.799.0",

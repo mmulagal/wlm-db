@@ -1,4 +1,12 @@
-import { DsButton, DsFlashingDotsLoader, DsTypography, Popover, useDialog } from '@netapp/design-system';
+import {
+    BlueXPListeners,
+    DsButton,
+    DsFlashingDotsLoader,
+    DsTypography,
+    Popover,
+    postBlueXPMessage,
+    useDialog
+} from '@netapp/design-system';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -193,11 +201,11 @@ const InstancesTable = () => {
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Unmanage instance'}
+                header={'Deregister instance'}
                 content={
                     <>
                         <DsTypography variant="Regular_14">
-                            Are you sure you want to unmanage the SQL Server instance?{' '}
+                            Are you sure you want to deregister the SQL Server instance?{' '}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginTop: '24px', width: '700px' }}>
                             This will exclude the instance from Workload Factory's best practices and lifecycle
@@ -205,7 +213,7 @@ const InstancesTable = () => {
                         </DsTypography>
                     </>
                 }
-                primaryButton={'Unmanage'}
+                primaryButton={'Deregister'}
                 secondaryButton={'Close'}
                 callback={() => {
                     const updatedState = store.getState();
@@ -455,7 +463,7 @@ const InstancesTable = () => {
             errorMessage = 'The instance is already managed by Workload Factory.';
         } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
             isDisabled = true;
-            errorMessage = 'The instance is not detected.';
+            errorMessage = 'The instance is not authenticated.';
         } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
             isDisabled = true;
             errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
@@ -530,8 +538,14 @@ const InstancesTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.databaseInstanceName;
                 return (
-                    <div>
-                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                    <div className={styles.firstColumnClass}>
+                        <DsTypography
+                            title={name || GENERAL.NOT_AVAILABLE}
+                            className={styles.textClass}
+                            variant="Semibold_14"
+                        >
+                            {name || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
                         <div className={styles.firstColText}>
                             {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
@@ -568,7 +582,11 @@ const InstancesTable = () => {
             filterOptions: getFilterOptions(updatedTableData, 'name'),
             renderCell: (cellData: string, rowData: any) => {
                 return (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
+                    <DsTypography
+                        title={cellData || GENERAL.NOT_AVAILABLE}
+                        variant="Regular_13"
+                        className={`${styles.colText} ${styles.textClass}`}
+                    >
                         {cellData || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
                 );
@@ -748,7 +766,7 @@ const InstancesTable = () => {
                         {cellData && (
                             <div className={styles.colTextProtection}>
                                 <div className={styles.protection}>
-                                    {cellData === 'Protected' && (
+                                    {cellData === GENERAL.PROTECTED && (
                                         <ProtectedIcon
                                             style={{
                                                 //@ts-ignore
@@ -756,7 +774,7 @@ const InstancesTable = () => {
                                             }}
                                         />
                                     )}
-                                    {cellData === 'Not Protected' && (
+                                    {cellData === GENERAL.NOT_PROTECTED && (
                                         <NotProtectedIcon
                                             style={{
                                                 //@ts-ignore
@@ -881,15 +899,30 @@ const InstancesTable = () => {
                                     variant="secondary"
                                     isThin
                                     onClick={() => {
-                                        if (colText === ACTION_CTA.FIX_ISSUES) {
+                                        if (
+                                            colText === ACTION_CTA.FIX_ISSUES ||
+                                            colText === ACTION_CTA.WELL_ARCHITECTED
+                                        ) {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            dispatch(
+                                                setSelectedWellArchitectTab(
+                                                    WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
+                                                )
+                                            );
                                             optimizeAction(rowData);
                                         } else {
                                             dispatch(setManageSingleInstanceData(rowData));
                                             dispatch(setWizardOperationType('single'));
                                             navigate('../manage-wizard');
+                                            postBlueXPMessage({
+                                                type: BlueXPListeners.navigate,
+                                                payload: {
+                                                    pathname: './manage-wizard',
+                                                    replace: true
+                                                }
+                                            });
                                         }
                                     }}
                                 >
@@ -935,14 +968,14 @@ const InstancesTable = () => {
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
                     menu.push({
                         id: 'detect',
-                        displayName: 'Detect',
+                        displayName: 'Authenticate',
                         disabled: disableOption,
                         infoText: disableMessage
                     });
                 } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
                     menu.push({
                         id: 'manage',
-                        displayName: 'Manage',
+                        displayName: 'Register',
                         disabled: disableOption,
                         infoText: disableMessage
                     });
@@ -982,7 +1015,7 @@ const InstancesTable = () => {
                         },
                         {
                             id: 'unManage',
-                            displayName: 'Unmanage'
+                            displayName: 'Deregister'
                         }
                     );
                 }
@@ -1226,7 +1259,7 @@ const InstancesTable = () => {
     const handleManageBulk = () => {
         dispatch(setSelectedMultiDetectInstances([]));
         dispatch(setWizardOperationType('bulk'));
-        navigate('../manage-wizard');
+        navigate('../register-bulk-wizard');
     };
 
     return (

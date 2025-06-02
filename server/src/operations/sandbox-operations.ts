@@ -285,7 +285,7 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
         isDemoFlow ? undefined : { sandboxCreated: true },
         SANDBOX_API_SIZE,
         nextToken,
-        true
+        !isDemoFlow
     );
 
     if (isEmpty(resourceDetails)) {

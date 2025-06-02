@@ -209,7 +209,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             return $responseObject
         }
     
-        $sqlCredential = @{'useSqlAuth' = $False}
+        $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
         if($sqlAuthEnabled) {
             ${readSsmParameter(instanceRecord.name)}
         }
@@ -270,7 +270,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     `
     $sqlInstance = "${instance}"
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 
     # Build sql instance service name
     $instanceServiceName = "$env:COMPUTERNAME"
@@ -816,6 +816,23 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         }
        
         $DriftAssessmentData['os']['mpio-enabled'] = $MpioStatus
+        try { 
+             # Get the formatted output as a string
+            $output = Get-MPIOSetting | Format-List * | Out-String
+
+            # Use a regex pattern to extract the DiskTimeoutValue
+            $MatchString =  'DiskTimeoutValue\\s+:\\s+(\\d+)' 
+            if ($output -match $MatchString) {
+                $MpioTimeout = $Matches[1] 
+            } else {
+                $MpioTimeout = $null
+            }
+        }        
+        catch {
+            Write-Warning "Failed to retrieve DiskTimeoutValue: $_"
+            $MpioTimeout = $null
+        }
+        $DriftAssessmentData['os']['mpio-timeout'] = $MpioTimeout
         
         # Fetch load balancing policy for all NetApp disks
         $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number
@@ -1208,7 +1225,7 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
     $sqlInstanceName = "${instanceName}"
 
     ${slqcmdExecutionTemplate}
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -1270,7 +1287,7 @@ const GET_INSTALLED_MSSQL_VERSION = (instanceName: string, sqlAuthEnabled: boole
     $sqlInstanceName = "${instanceName}"
 
      ${slqcmdExecutionTemplate}
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -1428,7 +1445,7 @@ const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: 
     $isClustered = [System.Convert]::ToBoolean('${isClustered}')
 
     ${slqcmdExecutionTemplate}
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
@@ -1483,7 +1500,7 @@ const GET_SANDBOX_DETAILS = (instanceName: string, sqlAuthEnabled: boolean, quer
     $query = "${query}"
 
     ${slqcmdExecutionTemplate}
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }

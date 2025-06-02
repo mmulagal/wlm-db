@@ -73,11 +73,11 @@ async function describeFSx(
     return response;
 }
 
-async function describeFSxVolumes(credentialsId: string, region: string, fsxFsId: string[]) {
-    logger.info('Describe FSx volumes:', { credentialsId, region, fsxFsId });
+async function describeFSxVolumes(credentialsId: string, region: string, fsxFsId: string[], accountId?: string) {
+    logger.info('Describe FSx volumes:', { credentialsId, region, fsxFsId, accountId });
     const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: fsxFsId }] };
 
-    const client = await getFSxClient(credentialsId, region);
+    const client = await getFSxClient(credentialsId, region, accountId);
     const volumes = [];
     for await (const { Volumes = [] } of paginateDescribeVolumes({ client }, input)) {
         volumes.push(...Volumes);
@@ -111,11 +111,12 @@ async function describeFSxStorageVirtualMachines(credentialsId: string, region: 
 async function describeFSxBackups(
     credentialsId: string,
     region: string,
-    params: DescribeBackupsCommandInput
+    params: DescribeBackupsCommandInput,
+    accountId?: string
 ): Promise<DescribeBackupsCommandOutput> {
-    logger.info('Describe FSx backups:', { credentialsId, region, params });
+    logger.info('Describe FSx backups:', { credentialsId, region, params, accountId });
 
-    const client = await getFSxClient(credentialsId, region);
+    const client = await getFSxClient(credentialsId, region, accountId);
 
     const response = await client.send(new DescribeBackupsCommand(params));
 

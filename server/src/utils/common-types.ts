@@ -479,6 +479,7 @@ interface OSAssessment {
     'ntfs-allocation-details': Array<{ Key?: string; Value?: string }>;
     'mpio-load-balance-policy': string;
     'ntfs-allocation-unit-size': number;
+    'mpio-timeout': number;
 }
 interface StorageAssessment {
     filesystemId: string;
@@ -571,6 +572,10 @@ interface OptimizeMpioIscsiSessionsParams extends OptimizeParams {
     svmId: string;
     iscsiTargetAddresses: string[];
     currentMpioSessionsCount: SessionsCountPerIscsiTarget[];
+}
+
+interface OptimizeMpioTimeoutParams extends OptimizeParams {
+    ssmCommand: string;
 }
 
 interface DatabaseInstancesIncludingResource extends DatabaseInstances {
@@ -705,6 +710,8 @@ export {
     OptimizeMpioPolicyParams,
     StorageLayout,
     DatabaseInstancesIncludingResource,
+    DatabaseInstances,
+    Resource,
     StorageTierParams,
     ComputeAssessment,
     LicenseAssessment,
@@ -735,5 +742,6 @@ export {
     DatabaseInstanceConfigurations,
     DatabaseHostConfigurations,
     CrrAssessment,
-    CrrDetails
+    CrrDetails,
+    OptimizeMpioTimeoutParams
 };

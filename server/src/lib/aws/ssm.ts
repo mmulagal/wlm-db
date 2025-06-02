@@ -57,7 +57,7 @@ async function sendSSMCommand(
     params: SendCommandCommandInput,
     accountId?: string
 ) {
-    logger.info('Send SSM Command', { credentialsId, region, params: params?.Comment });
+    logger.info('Send SSM Command', { credentialsId, region, params: params?.Comment, accountId });
 
     const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const sendCommand = new SendCommandCommand(params);
@@ -76,10 +76,15 @@ async function listSsmCommands(credentialsId: string, region: string, params: Li
     return response;
 }
 
-async function getCommandInvocation(credentialsId: string, region: string, params: GetCommandInvocationCommandInput) {
-    logger.info('Getting command invocation details for command', { credentialsId, region, params });
+async function getCommandInvocation(
+    credentialsId: string,
+    region: string,
+    params: GetCommandInvocationCommandInput,
+    accountId?: string
+) {
+    logger.info('Getting command invocation details for command', { credentialsId, region, params, accountId });
 
-    const ssmClient = await getSSMClient(region, credentialsId);
+    const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const response: GetCommandInvocationCommandOutput = await ssmClient.send(new GetCommandInvocationCommand(params));
     logger.debug('SSM Command response', response);
     return response;

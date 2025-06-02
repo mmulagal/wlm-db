@@ -208,7 +208,7 @@ SERVERPROPERTY('InstanceDefaultLogPath') AS DefaultLogDrive FOR JSON PATH;"
 
     ${slqcmdExecutionTemplate}
 
-$sqlCredential = @{'useSqlAuth' = $False}
+$sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 if($sqlAuthEnabled) {
     ${readSsmParameter(instanceName)}
 }
@@ -290,6 +290,7 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
             }
             try {
                 $sqlError = $null
+                $serverInstanceName = $instance
                 ${validateSQLInstanceCredentials}
 
                 $instanceResponse = @{}
@@ -305,7 +306,9 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
                         ${disableCredSSP}
                     } elseif ($sqlCredential.useSqlAuth -eq $True) {
                         $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
-                    } elseif ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
+                    }
+
+                    if ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
                         $sqlResponse =  sqlcmd -S $instanceName -Q $query -y 0 2>> $sqlError
                     }
 
@@ -347,7 +350,7 @@ $queryVersion = "SET NOCOUNT ON;SELECT @@VERSION;"
 
 ${slqcmdExecutionTemplate}
 
-$sqlCredential = @{'useSqlAuth' = $False}
+$sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 if($sqlAuthEnabled) {
     ${readSsmParameter(instanceName)}
 }
@@ -432,8 +435,11 @@ const validateSQLInstanceConnectivity = (
                 $errorMessage = "No SQL instance found with the name $sqlinstancename"
                 throw $errorMessage
             }
-            $username = $sqlCredentials.username
-            $password = $sqlCredentials.password
+
+            $sqlCredential = New-Object PSObject -Property @{
+                username = $sqlCredentials.username
+                password = $sqlCredentials.password
+            }
             
             $serverInstanceName = "$env:COMPUTERNAME"
             If($sqlinstancename -ne 'MSSQLSERVER') {
@@ -441,7 +447,7 @@ const validateSQLInstanceConnectivity = (
                 
             }
 
-            if ($username -eq $null -or $password -eq $null) {
+            if ($sqlCredential.username -eq $null -or $sqlCredential.password -eq $null) {
                 $errorMessage = "SQL credentials not found for the instance $sqlinstancename"
                 throw $errorMessage
             }
@@ -454,12 +460,16 @@ const validateSQLInstanceConnectivity = (
                     $sqlresult = Invoke-CommandWithCredSSP -sqlquery $sqlquery -extraArguments -r1
                     ${disableCredSSP}
                 `
-                    : '$sqlresult = Sqlcmd -S $serverInstanceName -U $username -P $password -Q $sqlquery -y 0 -r1 2> $null'
+                    : '$sqlresult = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $sqlquery -y 0 -r1 2> $null'
             }
 
             if([string]::IsNullOrEmpty($sqlresult)) {
-                $responseObject.add('sqlInstanceConnectivity', $False)
-                $responseObject.add('sqlerror', "SQLCMD execution failed. Verify credentials.")
+                if (-not $responseObject.ContainsKey('sqlInstanceConnectivity')) {
+                    $responseObject.add('sqlInstanceConnectivity', $False)
+                }
+                if (-not $responseObject.ContainsKey('sqlerror')) {
+                    $responseObject.add('sqlerror', "SQLCMD execution failed. Verify credentials.")
+                }
             }
             else {
                 $sqlresult = $sqlresult | ConvertFrom-Json
@@ -481,8 +491,12 @@ const validateSQLInstanceConnectivity = (
             }
         }
     } catch {
-        $responseObject.add('sqlerror', $_.Exception.Message)
-        $responseObject.add('sqlInstanceConnectivity', $False)
+        if (-not $responseObject.ContainsKey('sqlerror')) {
+            $responseObject.add('sqlerror', $_.Exception.Message)
+        }
+        if (-not $responseObject.ContainsKey('sqlInstanceConnectivity')) {
+            $responseObject.add('sqlInstanceConnectivity', $False)
+        }
     }
 `;
 
@@ -1194,7 +1208,7 @@ const sqlQueryExecution = (
     `
     $query = "${query}"
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-    $sqlCredential = @{'useSqlAuth' = $False}
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
 
     ${slqcmdExecutionTemplate}
     
@@ -1234,7 +1248,7 @@ Function Call-SqlCmd {
     if ($sqlCredential.useDomainAuth -eq $True) {
         ${enableCredSSP}
         ${invokeCommandWithCredSSP}
-        $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $sqlquery -extraArguments $ExtraArguments
+        $sqlresponse = Invoke-CommandWithCredSSP -sqlquery $Query -extraArguments $ExtraArguments
         ${disableCredSSP}
     } elseif ($sqlCredential.useSqlAuth -eq $True) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
@@ -1243,7 +1257,9 @@ Function Call-SqlCmd {
         else {
             $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
         }
-    } elseif ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
+    }
+
+    if ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
             $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0;
         }
@@ -1370,7 +1386,9 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
                     ${disableCredSSP}
                 } elseif ($sqlCredential.useSqlAuth -eq $True) {
                     $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
-                } elseif ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
+                }
+
+                if ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
                     $sqlResponse =  sqlcmd -S $instanceName -Q $query -y 0 2>> $sqlError
                 }
 

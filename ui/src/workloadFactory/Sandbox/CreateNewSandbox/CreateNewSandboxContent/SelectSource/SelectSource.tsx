@@ -115,7 +115,7 @@ const SelectSource = () => {
         instanceList?.map((obj: any, idx: number) => {
             const option = generateOptionType(obj?.value, obj?.label, '', false, '', obj);
             if (obj?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase()) {
-                if (selectedCs?.selectedDatabaseInstance === obj?.label) {
+                if (selectedCs?.selectedDatabaseInstance?.toLowerCase() === obj?.label?.toLowerCase()) {
                     selected_item = option;
                 } else {
                     options.push(option);

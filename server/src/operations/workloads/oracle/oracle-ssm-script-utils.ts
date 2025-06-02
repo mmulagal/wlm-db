@@ -1,8 +1,8 @@
 const checkCommandStatus = `
     check_status() {
         if [ $? -ne 0 ]; then
-        echo "$1"
-        exit 1;
+        echo "{\\"error\\": \\"$1\\"}"
+        exit 0;
         fi
     }
 `;
@@ -64,8 +64,13 @@ const getMappedOntapDataVolume = (
 `;
 
 const ontapRestApi = `
-    creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$filesystemid" --with-decryption --query "Parameter.Value"  --output text)
+    creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$filesystemid" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
+    check_status "Credentials not found for $filesystemid in SSM Parameter Store. Please ensure the credentials are stored in SSM Parameter Store with the name /netapp/wlmdb/$filesystemid"
      
+    # First, replace single quotes with double quotes
+    # Second sed is for adding quotes around keys, only if there are no quotes already
+    creds=$(echo "$creds" | sed "s/'/\\"/g" | sed 's/\\([^"{},: ]\\+\\):/"\\1":/g')
+
     fsxusername=$(echo $creds | jq -r '.fsx.username')
     fsxpassword=$(echo $creds | jq -r '.fsx.password')
     
@@ -194,12 +199,12 @@ result=$(sudo -i -u oracle bash <<EOF
         'assessment' VALUE (
         SELECT CASE
             WHEN (SELECT avg_io_latency_ms FROM overall_latency) IS NULL THEN 'N/A'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) <= 1 THEN 'Excellent (<=1 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 5 THEN 'Very Good (<5 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 10 THEN 'Good (<10 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 20 THEN 'Poor (<20 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 100 THEN 'Bad (<100 ms)'
-            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 500 THEN 'Very Bad (<500 ms)'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) <= 1 THEN 'Excellent ( <=1 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 5 THEN 'Very Good ( <5 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 10 THEN 'Good ( <10 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 20 THEN 'Poor ( <20 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 100 THEN 'Bad ( <100 ms )'
+            WHEN (SELECT avg_io_latency_ms FROM overall_latency) < 500 THEN 'Very Bad ( <500 ms )'
             ELSE 'Awful (>=500 ms)'
         END FROM dual
         )
@@ -254,7 +259,6 @@ EOF
     for sid in $SIDS; do
         # Check if the instance is running by checking for its PMON process.
         if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
-            echo "Instance $sid is not active. Skipping."
             continue
         fi
 

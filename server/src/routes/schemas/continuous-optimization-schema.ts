@@ -75,11 +75,11 @@ const TriggerDriftAssessmentSchema = {
 };
 
 const OptimizeStorageSchemaDescription =
-    'Optimize storage parameters as per the best practice for the selected database instance.';
+    'Fix storage parameters as per the best practice for the selected database instance.';
 
 const OptimizeStorageSchema = {
     ...resourceRequest,
-    summary: 'Optimize storage for a database instance',
+    summary: 'Fix storage for a database instance',
     description: OptimizeStorageSchemaDescription,
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
@@ -93,8 +93,8 @@ const OptimizeStorageSchema = {
 
 const OptimizeSizingSchema = {
     ...resourceRequest,
-    summary: 'Optimize storage sizing for a database instance',
-    description: 'Optimize sizing parameters as per the best practice for the selected database instance.',
+    summary: 'Fix storage sizing for a database instance',
+    description: 'Fix sizing parameters as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeGenericRequestBody,
     tags: [RouteTags.ASSESSMENT],
@@ -107,8 +107,8 @@ const OptimizeSizingSchema = {
 
 const OptimizeComputeSchema = {
     ...resourceRequest,
-    summary: 'Optimize compute rightsizing for a database instance',
-    description: 'Optimize compute rightsizing as per the best practice for the selected database instance.',
+    summary: 'Fix compute rightsizing for a database instance',
+    description: 'Fix compute rightsizing as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeComputeRequestBody,
     tags: [RouteTags.ASSESSMENT],
@@ -121,8 +121,8 @@ const OptimizeComputeSchema = {
 
 const OptimizeOperatingSystemSchema = {
     ...resourceRequest,
-    summary: 'Optimize MPIO settings for a database instance',
-    description: 'Optimize MPIO settings parameters as per the best practice for the selected database instance.',
+    summary: 'Fix MPIO settings for a database instance',
+    description: 'Fix MPIO settings parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
     body: OptimizeOperatingSystemRequestBody,
@@ -135,8 +135,8 @@ const OptimizeOperatingSystemSchema = {
 
 const OptimizeStorageTierSchema = {
     ...resourceRequest,
-    summary: 'Optimize storage-tier settings for a database instance',
-    description: 'Optimize storage-tier parameters as per the best practice for the selected database instance.',
+    summary: 'Fix storage-tier settings for a database instance',
+    description: 'Fix storage-tier parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
     body: OptimizeGenericRequestBody,
@@ -149,8 +149,8 @@ const OptimizeStorageTierSchema = {
 
 const DriftAssessmentPerAccount = {
     ...resourceRequest,
-    summary: 'Get database parameter drift from recommended settings for all managed instances on an account',
-    description: 'Get database parameter drift from recommended settings for all managed instances on an account',
+    summary: 'Get database parameter drift from recommended settings for all registered instances on an account',
+    description: 'Get database parameter drift from recommended settings for all registered instances on an account',
     params: CredentialsIdParams,
     tags: [RouteTags.ASSESSMENT],
     querystring: AssessmentQueryStringPerAccount,
@@ -173,8 +173,8 @@ const AvailableSnapshotPolicies = {
 
 const OptimizeResilienceSchema = {
     ...resourceRequest,
-    summary: 'Optimize resilience parameters for database instances',
-    description: 'Optimize resilience parameters for database instances',
+    summary: 'Fix resilience parameters for database instances',
+    description: 'Fix resilience parameters for database instances',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeResiliencyBody,
     tags: [RouteTags.ASSESSMENT],
@@ -199,20 +199,20 @@ const BulkOptimizeGeneralSchema = {
 
 const BulkOptimizeStorageSizingSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Optimize storage-sizing',
-    description: 'Optimize storage-sizing as per the best practice for selected database instances.'
+    summary: 'Fix storage-sizing',
+    description: 'Fix storage-sizing as per the best practice for selected database instances.'
 };
 
 const BulkOptimizeOperatingSystemSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Optimize MPIO settings',
-    description: 'Optimize mpio settings parameters as per the best practice for selected database instances.'
+    summary: 'Fix MPIO settings',
+    description: 'Fix mpio settings parameters as per the best practice for selected database instances.'
 };
 
 const BulkOptimizeStorageTierSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Optimize storage-tier',
-    description: 'Optimize storage-tier parameters as per the best practice for selected database instances.'
+    summary: 'Fix storage-tier',
+    description: 'Fix storage-tier parameters as per the best practice for selected database instances.'
 };
 
 const BulkOptimizeComputeSchema = {
@@ -220,8 +220,8 @@ const BulkOptimizeComputeSchema = {
     params: AccountIdParams,
     tags: [RouteTags.ASSESSMENT],
     body: BulkOptimizeComputeRequestBody,
-    summary: 'Optimize compute',
-    description: 'Optimize compute parameters as per the best practice for selected database instances.',
+    summary: 'Fix compute',
+    description: 'Fix compute parameters as per the best practice for selected database instances.',
     response: {
         200: Type.Object({
             jobId: Type.String()
@@ -231,8 +231,8 @@ const BulkOptimizeComputeSchema = {
 
 const BulkOptimizeMaxDopSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Optimize max-dop',
-    description: 'Optimize max-dop parameters as per the best practice for selected database instances.'
+    summary: 'Fix max-dop',
+    description: 'Fix max-dop parameters as per the best practice for selected database instances.'
 };
 
 const BulkOptimizeAwsBackupSchema = {
@@ -254,8 +254,8 @@ const BulkDismissConfigurationSchema = {
 
 const BulkOptimizeCloneSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Optimize clone parameters for database instances',
-    description: 'Optimize clone parameters for database instances',
+    summary: 'Fix clone parameters for database instances',
+    description: 'Fix clone parameters for database instances',
     body: BulkOptimizeCloneBody,
     tags: [RouteTags.ASSESSMENT],
     response: {

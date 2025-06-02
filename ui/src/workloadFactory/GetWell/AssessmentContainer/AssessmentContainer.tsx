@@ -1,4 +1,4 @@
-import { Button, DsTypography, Popover } from '@netapp/design-system';
+import { Button, DsFlashingDotsLoader, DsTypography, Popover } from '@netapp/design-system';
 import { ReactComponent as ScanImage } from '../../../assets/ic_scan.svg';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import styles from './AssessmentContainer.module.scss';
@@ -8,26 +8,35 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 
 const AssessmentContainer = ({ onClick, isLoading }: any) => {
-    const { gwTimestamp, gwAdhocError } = useAppSelector(state => state.getWellOptimize);
+    const { gwTimestamp, gwAdhocError, optimizePageLoading } = useAppSelector(state => state.getWellOptimize);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     return (
         <div className={styles.assessment}>
             <div className={styles.leftSide}>
                 <div className={styles.leftContainer}>
-                    <div className={styles.scanImage}>
+                    <div className={!isDarkTheme ? `${styles.scanImage}` : `${styles.scanImage} ${styles.darkTheme}`}>
                         <ScanImage />
                     </div>
                     <div className={styles.textSection}>
                         <DsTypography variant="Regular_14">{GENERAL.ASSESSMENT_PERFORMED}</DsTypography>
                         <SeparatorComponent variant="vertical" height="16px" />
                         <div className={styles.dateSection}>
-                            {gwTimestamp && gwTimestamp !== '0' ? (
-                                <>
-                                    <DsTypography variant="Regular_14">{GENERAL.LAST_UPDATE}</DsTypography>
-                                    <DsTypography variant="Semibold_14">{gwTimestamp}</DsTypography>
-                                </>
+                            {optimizePageLoading ? (
+                                <DsFlashingDotsLoader />
                             ) : (
                                 <>
-                                    <DsTypography variant="Regular_14">{GENERAL.NO_ANALYSIS_PERFORMED}</DsTypography>
+                                    {gwTimestamp && gwTimestamp !== '0' ? (
+                                        <>
+                                            <DsTypography variant="Regular_14">{GENERAL.LAST_UPDATE}</DsTypography>
+                                            <DsTypography variant="Semibold_14">{gwTimestamp}</DsTypography>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <DsTypography variant="Regular_14">
+                                                {GENERAL.NO_ANALYSIS_PERFORMED}
+                                            </DsTypography>
+                                        </>
+                                    )}
                                 </>
                             )}
                         </div>

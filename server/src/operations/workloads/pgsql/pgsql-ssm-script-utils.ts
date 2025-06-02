@@ -1,8 +1,8 @@
 const checkCommandStatus = `
     check_status() {
         if [ $? -ne 0 ]; then
-        echo "$1"
-        exit 1;
+        echo "{\\"error\\": \\"$1\\"}"
+        exit 0;
         fi
     }
 `;
@@ -24,8 +24,11 @@ const getMappedOntapDataVolume = (fsxnId: string, region: string) => `
     junctionPath=$(echo "$mount_path" | cut -d':' -f2) 
     check_status "Failed to extract junction path"
 
-    ipAddress=$(dig +short $dnsName)
-    check_status "Failed to resolve IP address"
+    if [[ $dnsName =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+        ipAddress=$dnsName
+    else
+        ipAddress=$(dig +short $dnsName)
+    fi
 
     svmEndpoint='svm/svms?fields=ip_interfaces'
     ${ontapRestApi}
@@ -72,21 +75,44 @@ const getPgSqlProtection = (fsxnId: string, region: string) => `
 `;
 
 const ontapRestApi = `
-    creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$filesystemid" --with-decryption --query "Parameter.Value"  --output text)
+    creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$filesystemid" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
+    check_status "Credentials not found for $filesystemid in SSM Parameter Store. Please ensure the credentials are stored in SSM Parameter Store with the name /netapp/wlmdb/$filesystemid"
     
     # Convert creds to a valid JSON string
-    creds=$(echo "$creds" | sed "s/'/\\"/g" | sed 's/\\([a-zA-Z0-9_]*\\):/"\\1":/g')
+    # First, replace single quotes with double quotes
+    # Second sed is for adding quotes around keys, only if there are no quotes already
+    creds=$(echo "$creds" | sed "s/'/\\"/g" | sed 's/\\([^"{},: ]\\+\\):/"\\1":/g')
     
     fsxusername=$(echo $creds | jq -r '.fsx.username')
     fsxpassword=$(echo $creds | jq -r '.fsx.password')
     
     cert_path=/home/ec2-user/cfn/fsx_certs/bundle-$region.pem
  
+    # Check if the certificate file exists
+    if [ ! -f $cert_path ]; then
+        # Check for public IP to determine if we are in a public or private network
+        token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
+        public_ip=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/public-ipv4)
+        if [ -n "$public_ip" ]; then
+            # Public network: download the certificate
+            certsUrl="https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$region.pem"
+            if [ ! -f /tmp/fsx_bundle.pem ]; then
+                curl -sS -o /tmp/fsx_bundle.pem "$certsUrl"
+            fi
+            cert_option="--cacert /tmp/fsx_bundle.pem"
+        else
+            # Private network: use --insecure
+            cert_option="--insecure"
+        fi
+    else
+        cert_option="--cacert $cert_path"
+    fi
+
     ontap_request () {
         management_ip=management.$filesystemid.fsx.$region.amazonaws.com
         if ! ping -c 1 -W 2 "$management_ip" > /dev/null 2>&1; then
             management_ip=$(aws fsx describe-file-systems --file-system-id $filesystemid --region $region --query "FileSystems[0].OntapConfiguration.Endpoints.Management.IpAddresses[0]" --output text)
-            USE_INSECURE=true
+            cert_option="--insecure"
         fi
         auth=$(printf '%s:%s' $fsxusername $fsxpassword | base64)
         method=$1
@@ -101,15 +127,19 @@ const ontapRestApi = `
             --show-error
             --header "Authorization: Basic $auth"
             --request $method
-            --cacert $cert_path
+            $cert_option
             --location https://$management_ip/api/$endpoint
             $request_body
         )
 
-        if [ "$USE_INSECURE" = true ]; then
-            args+=(--insecure)
+        local response=$(curl "\${args[@]}" --write-out "HTTPSTATUS:%{http_code}")
+        http_status=$(echo "$response" | sed -n 's/.*HTTPSTATUS:\\([0-9]*\\)$/\\1/p')
+        return_result=$(echo "$response" | sed 's/HTTPSTATUS:[0-9]*$//')
+
+        # Check for 4xx or 5xx errors
+        if [[ $http_status -ge 400 ]]; then
+            check_status $return_result
         fi
-        return_result=$(curl "\${args[@]}")
         echo $return_result
     }
 `;

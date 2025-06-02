@@ -10,7 +10,6 @@ import {
     checkOverallManageState,
     getPermissionState,
     hasMissingPowershell7,
-    isAllowManage,
     missingModules
 } from '../../ManageInstanceUtils';
 
@@ -51,7 +50,6 @@ const DetectedInstanceTable = () => {
                 installMissingAWS: missingModulesList.length > 0 ? true : false,
                 installMissingAWSList: missingModulesList,
                 installMissingPowershell: hasMissingPowershell7(manageReadinessData),
-                allowManage: isAllowManage(manageReadinessData),
                 assessment: assessment,
                 remediation: remediation,
                 dbcreation: dbcreation,

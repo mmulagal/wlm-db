@@ -2,10 +2,7 @@ import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ManualVolumeTypes.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import {
-    setSelectedVolumeType,
-    setVolumeFilledStatus
-} from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { setSelectedVolumeType, setVolumeFilledStatus } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import ManualTCOInputComponent from './ManualTCOInputComponent';
 import { useEffect, useState } from 'react';
 import { allPropertiesHaveValues, calculateTotalVolumes } from '../savingsUtil';

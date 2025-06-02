@@ -114,12 +114,10 @@ EOF
 
     get_loop_device_associated_with_disk() {
         local diskName="$1"
-        local raw_output
-        raw_output=$(sudo -i -u oracle bash -c "oracleasm querydisk -p $diskName 2>/dev/null")
+        local udevInfo=$(sudo udevadm info --query=all --name="/dev/oracleasm/disks/$diskName")
 
         # Process the output only if it contains a valid device
-        local loopDev
-        loopDev=$(echo "$raw_output" | awk -F':' '/^\\/dev\\// {print $1}' | cut -d':' -f1)
+        local loopDev=$(echo "$udevInfo" | grep "^E: DEVNAME=" | cut -d '=' -f2)
 
         if [ -n "$loopDev" ]; then
             echo "$loopDev"
@@ -132,12 +130,18 @@ EOF
     get_back_file_path() {
         # back-file path refers to the underlying file or block device that the loop device is associated with. 
         local loopDevice="$1"
-        sudo -u oracle bash -c "losetup -l --noheadings $loopDevice | awk '{print \\$6}'"
+        local backFilePath=$(sudo -u oracle bash -c "losetup -l --noheadings $loopDevice 2>/dev/null | awk '{print \\$6}'")
+        if [ $? -eq 0 ]; then
+            echo "$backFilePath"
+            return 0
+        else
+            return 1
+        fi
     }
 
     get_asm_nfs_details() {
         local diskName="$1"
-        loopDevice=$(get_loop_device_associated_with_disk "$diskName")
+        loopDevice=$(get_loop_device_associated_with_disk $diskName)
         if [ -n "$loopDevice" ]; then
             backFilePath=$(get_back_file_path "$loopDevice")
             if [ -n "$backFilePath" ]; then
@@ -419,8 +423,8 @@ EOF
 
     for sid in $SIDS; do
         # Check if the instance is running by checking for its PMON process.
+        # Skip if the instance process is not running.
         if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
-            echo "Instance $sid is not active. Skipping."
             continue
         fi
 

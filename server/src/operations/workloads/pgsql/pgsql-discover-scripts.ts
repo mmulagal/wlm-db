@@ -49,7 +49,11 @@ const discoverPgsqlHosts = `
             nfs_string=$(echo "$mount_response" | awk '{print $2}')
             dns_name=$(echo "$nfs_string" | cut -d':' -f1)
             nfs_mount_point=$(echo "$nfs_string" | cut -d':' -f2-)
-            nfs_ip_address=$(dig +short $dns_name)
+            if [[ $dns_name =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+                nfs_ip_address=$dns_name
+            else
+                nfs_ip_address=$(dig +short $dns_name)
+            fi
             is_nfs="true"
             echo "$is_nfs,$nfs_ip_address,$nfs_mount_point"
         fi

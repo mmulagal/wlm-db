@@ -163,7 +163,8 @@ async function runRssConfigAssessment(
         region,
         [ssmCommand],
         activeNodeInstanceId,
-        'Get network adapters configuration details'
+        'Get network adapters configuration details',
+        accountId
     );
     const parsedResponse = sqlResponseParsing(response);
     const { adapters: rssConfigAdapters, vcpuCount, tcpOffloadState } = parsedResponse;

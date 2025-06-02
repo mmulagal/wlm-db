@@ -50,12 +50,7 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
                                 .slice(start, end)
                                 .map(currLine => currLine.replace(/[^\x20-\x7E]/g, ''))
                                 .filter(currentLine => {
-                                    const contextMatch = MSSQL_ERROR_PATTERN.exec(currentLine);
-                                    if (contextMatch) {
-                                        const [, contextTimestamp, contextSpid] = contextMatch;
-                                        return contextTimestamp === timestamp && contextSpid === spid;
-                                    }
-                                    return false;
+                                        return currentLine.startsWith(timestamp) && currentLine.includes(spid);
                                 });
                             const context = contextData.join('\n');
                             // unshift to push error to the beginning of the array so that the latest error logs are at the top

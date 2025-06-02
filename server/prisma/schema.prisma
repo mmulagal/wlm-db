@@ -113,6 +113,7 @@ model job {
   @@index([parent_job_id], map: "k_wlmdb_job_parent_job_id")
   @@index([start_time], map: "k_wlmdb_job_start_time")
   @@unique([account_id, name, resource_name, initiator, start_time], name: "uk_wlmdb_config_uniqueJob")
+  logs_analysis_reports logs_analysis_reports? @relation(map: "k_wlmdb_job_unique_criteria_logs_analysis_reports")
 }
 
 model database_instances {
@@ -146,6 +147,7 @@ model database_instances {
   @@index([credentials_id], map: "k_wlmdb_database_instances_credentials_id")
   @@index([resource_id], map: "k_wlmdb_database_instances_resource_id")
   @@index([database_instance_name], map: "k_wlmdb_database_instances_database_instance_name")
+  logs_analysis_reports logs_analysis_reports[] @relation(map: "k_wlmdb_database_instances_unique_criteria_logs_analysis_reports")
 }
 
 model tracked_ec2 {
@@ -198,6 +200,26 @@ model onprem_tco_reports {
   @@unique([account_id, resource_id, creation_time], name: "uk_wlmdb_onprem_tco_reports", map: "uk_wlmdb_onprem_tco_reports")
   @@index([account_id], name: "k_wlmdb_onprem_tco_reports_account_id")
   @@index([resource_id], map: "k_wlmdb_onprem_tco_reports_resource_id")
+}
+
+model logs_analysis_reports {
+  id                   String        @id @default(uuid()) @db.VarChar(40)
+  credentials_id       String        @db.VarChar(80)
+  resource_id          String        @db.VarChar(255)
+  database_instance_id String        @db.VarChar(36)
+  job_id              String        @db.VarChar(40)
+  account_id           String        @db.VarChar(64)
+  database_type        DATABASE_TYPE @default(mssql)
+  logs_analysis_data   Json?         @default("{}")
+  database_instances   database_instances @relation(fields: [account_id, credentials_id, resource_id, database_instance_id], references: [account_id, credentials_id, resource_id, database_instance_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_database_instances_unique_criteria_logs_analysis_reports")
+  job                job?          @relation(fields: [job_id], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_job_unique_criteria_logs_analysis_reports")
+  creation_time        DateTime      @default(now())
+  version              String        @db.VarChar(64)
+
+  @@unique([account_id, resource_id, database_instance_id, job_id], name: "uk_wlmdb_logs_analysis_reports", map: "uk_wlmdb_logs_analysis_reports")
+  @@unique([job_id], name: "uk_wlmdb_logs_analysis_reports_job_id", map: "uk_wlmdb_logs_analysis_reports_job_id")
+  @@index([account_id], name: "k_wlmdb_logs_analysis_reports_account_id")
+  @@index([resource_id], map: "k_wlmdb_logs_analysis_reports_resource_id")
 }
 
 enum JOBSTATUS {

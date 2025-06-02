@@ -21,7 +21,7 @@
                                     {
                                         "name": "thin-provision",
                                         "recommended": "true",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "mantar",
                                             "wlmdb_sqldata_1735808882",
@@ -71,7 +71,7 @@
                                     {
                                         "name": "autosize",
                                         "recommended": "on",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "mantar",
                                             "wlmdb_sqldata_1735808882",
@@ -121,7 +121,7 @@
                                     {
                                         "name": "autosize-mode",
                                         "recommended": "grow",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "mantar",
                                             "wlmdb_sqldata_1735808882",
@@ -171,7 +171,7 @@
                                     {
                                         "name": "fractional-reserve",
                                         "recommended": "0",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "mantar",
                                             "wlmdb_sqldata_1735808882",
@@ -221,7 +221,7 @@
                                     {
                                         "name": "snapshot-copy-reserve",
                                         "recommended": "0",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "mantar",
                                             "wlmdb_sqldata_1735808882",
@@ -271,7 +271,7 @@
                                     {
                                         "name": "snapshot-autodelete",
                                         "recommended": "true",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "mantar",
                                             "wlmdb_sqldata_1735808882",
@@ -321,7 +321,7 @@
                                     {
                                         "name": "space-mgmt-try-first",
                                         "recommended": "volume_grow",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "mantar",
                                             "wlmdb_sqldata_1735808882",
@@ -371,7 +371,7 @@
                                     {
                                         "name": "tiering-policy",
                                         "recommended": "snapshot_only",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "mantar",
                                             "wlmdb_sqldata_1735808882",
@@ -421,7 +421,7 @@
                                     {
                                         "name": "tiering-min-cooling-days",
                                         "recommended": "7",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "mantar",
                                             "wlmdb_sqldata_1735808882",
@@ -473,7 +473,7 @@
                                     {
                                         "name": "os-type",
                                         "recommended": "windows_2008",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "/vol/mantar/sql",
                                             "/vol/wlmdb_sqllog_1735550019/sqllog",
@@ -526,7 +526,7 @@
                                     {
                                         "name": "space-reservation-enabled",
                                         "recommended": "true",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "/vol/mantar/sql",
                                             "/vol/wlmdb_sqllog_1735550019/sqllog",
@@ -579,7 +579,7 @@
                                     {
                                         "name": "space-allocation-allocated",
                                         "recommended": "true",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "objectsInViolation": [
                                             "/vol/mantar/sql",
                                             "/vol/wlmdb_sqllog_1735550019/sqllog",
@@ -670,7 +670,7 @@
                                     {
                                         "name": "ntfs-allocation-unit-size",
                                         "recommended": "65536",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "severity": "critical",
                                         "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
                                         "tags": ["Performance efficiency"],
@@ -688,7 +688,7 @@
                                     {
                                         "name": "mpio-load-balance-policy",
                                         "recommended": "RR",
-                                        "status": "not-optimized",
+                                        "status": "optimized",
                                         "severity": "critical",
                                         "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
                                         "tags": ["Performance efficiency", "Reliability"],
@@ -710,7 +710,7 @@
                                     "name": "performance-tier",
                                     "recommended": "100%",
                                     "current": "100%",
-                                    "status": "not-optimized",
+                                    "status": "optimized",
                                     "severity": "critical",
                                     "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
                                     "tags": ["Performance efficiency"],
@@ -749,7 +749,7 @@
                                     "name": "log-drive-size",
                                     "recommended": "20-30%",
                                     "current": "5%",
-                                    "status": "over-provisioned",
+                                    "status": "optimized",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
                                     "tags": ["Operational excellence"],
@@ -799,7 +799,7 @@
                                     "name": "tempdb-drive-size",
                                     "recommended": "10-20%",
                                     "current": "5%",
-                                    "status": "over-provisioned",
+                                    "status": "optimized",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
                                     "tags": ["Operational excellence"],
@@ -832,7 +832,7 @@
                                     "name": "headroom",
                                     "current": "36%",
                                     "recommended": "36-100%",
-                                    "status": "under-provisioned",
+                                    "status": "optimized",
                                     "severity": "critical",
                                     "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                                     "tags": ["Performance efficiency"],
@@ -845,7 +845,7 @@
                                     "name": "tempdb-files-location",
                                     "current": "separate drive",
                                     "recommended": "separate-drive",
-                                    "status": "not-optimized",
+                                    "status": "optimized",
                                     "severity": "critical",
                                     "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
                                     "tags": ["Performance efficiency", "Operational excellence"],
@@ -855,7 +855,7 @@
                                     "name": "log-files-location",
                                     "current": "shared drive",
                                     "recommended": "separate-drive",
-                                    "status": "not-optimized",
+                                    "status": "optimized",
                                     "severity": "critical",
                                     "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                                     "tags": ["Performance efficiency", "Operational excellence"],
@@ -868,7 +868,7 @@
                                     "name": "data-files-location",
                                     "recommended": "separate-drive",
                                     "current": "shared drive",
-                                    "status": "not-optimized",
+                                    "status": "optimized",
                                     "severity": "critical",
                                     "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                                     "tags": ["Performance efficiency", "Operational excellence"],
@@ -881,7 +881,7 @@
                         },
                         "compute": {
                             "name": "compute-rightsizing",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "Your current instance m5.large is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses. Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.",
@@ -932,7 +932,7 @@
                         },
                         "rssConfig": {
                             "name": "rss-config",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.",
@@ -963,7 +963,7 @@
                         },
                         "license": {
                             "name": "sql-license",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
@@ -992,7 +992,7 @@
                         },
                         "hostOsPatch": {
                             "name": "host-os-patch",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "critical",
                             "recommendation": "Your host OS patch is not optimized. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.",
@@ -1013,7 +1013,7 @@
                         },
                         "maxDOP": {
                             "name": "maxdop",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": 4,
                             "severity": "critical",
                             "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
@@ -1023,7 +1023,7 @@
                         },
                         "mssqlPatch": {
                             "name": "mssql-patch",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "missingPatchesInEc2Instances": [
                                 {
@@ -1110,7 +1110,7 @@
                         },
                         "clone": {
                             "name": "clone-management",
-                            "status": "not-optimized",
+                            "status": "optimized",
                             "recommended": "optimized",
                             "severity": "warning",
                             "recommendation": "All clones are proper and up-to-date with the source.",

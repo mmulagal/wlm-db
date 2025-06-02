@@ -22,7 +22,8 @@ import {
     Metadata,
     ResourceDetails,
     StorageAssessment,
-    WorkloadInstance
+    WorkloadInstance,
+    CloneDetail
 } from '../utils/common-types';
 import {
     AuditStatus,
@@ -881,7 +882,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     const errorMessage = `No managed instances found for account ${accountId}.`;
                     logger.info(errorMessage);
                 } else {
-                    const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
+                    const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} registered instances in your account ${accountId} for best practice misalignments.`;
                     let parentJobStatus = '';
                     const { id: parentJobId } = await registerJob(accountId, '', '', {
                         name: jobDescription,
@@ -959,7 +960,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         );
 
                         if (assessmentErrors.length === managedInstances.length) {
-                            const errorMessage = `No managed instances are online and running in account ${accountId}.`;
+                            const errorMessage = `No registered instances are online and running in account ${accountId}.`;
                             logger.info(errorMessage);
                             await updateJobDetails(accountId, parentJobId, {
                                 status: JOBSTATUS.WARNING,
@@ -1402,15 +1403,47 @@ async function fetchDriftAssessment(
         driftAssessmentData = { ...driftAssessmentData, ...resilienceAssessmentResponse };
     }
 
-    if (!isEmpty(cloneResponse)) {
+    if (!isEmpty(cloneResponse) && !('errorMessage' in cloneResponse)) {
+        if (isDemoFlow) {
+            const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+            const { oldCloneDetails = [], cloneDetails = [] } = cloneResponse;
+            const cloneConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.CLONE || [];
+
+            if (cloneConfigsOptimized.length > 0) {
+                // Destructure cloneDatabaseName from each optimized config
+                const cloneDatabaseNamesToRemove = new Set(
+                    (cloneConfigsOptimized as CloneDetail[]).map(({ cloneDatabaseName }) => cloneDatabaseName)
+                );
+
+                // Filter out optimized clones from oldCloneDetails
+                const filteredOldCloneDetails = oldCloneDetails.filter(
+                    ({ cloneDatabaseName }) => !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
+                );
+
+                const totalObjectsInViolation = filteredOldCloneDetails.length;
+                const objectsInViolation = filteredOldCloneDetails.map(
+                    ({ cloneDatabaseName }) => cloneDatabaseName as string
+                );
+                const status =
+                    totalObjectsInViolation === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+                const cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${cloneDetails.length} clones are old and divergent`;
+
+                cloneResponse.oldCloneDetails = filteredOldCloneDetails;
+                cloneResponse.totalObjectsInViolation = totalObjectsInViolation;
+                cloneResponse.status = status;
+                cloneResponse.objectsInViolation = objectsInViolation;
+                cloneResponse.cloneDriftMessage = cloneDriftMessage;
+            }
+        }
         driftAssessmentData.clone = cloneResponse as CloneDriftResponseType;
     }
+
     if (!isEmpty(dismissedConfigurations)) {
         driftAssessmentData.dismissedConfigurations = dismissedConfigurations;
     }
     // Get last assessed timestamp
     try {
-        const [{ creation_time: latestInstanceLevelAssessedTime = 0 }] = databaseInstanceConfigData;
+        const [{ creation_time: latestInstanceLevelAssessedTime = 0 } = {}] = databaseInstanceConfigData;
         const { assessment: { lastAssessedDate: latestHostLevelAssessedTime } = {} } =
             resourceMetadata as unknown as Metadata;
         const latestAssessmentTimestamp = Math.max(

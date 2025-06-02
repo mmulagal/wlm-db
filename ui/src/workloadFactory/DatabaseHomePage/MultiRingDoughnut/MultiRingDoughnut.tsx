@@ -14,10 +14,7 @@ type MultiRingDoughnutPropType = {
     hostData?: any;
 };
 
-const MultiRingDoughnut = ({
-    unProtectColor,
-    hostData
-}: MultiRingDoughnutPropType) => {
+const MultiRingDoughnut = ({ unProtectColor, hostData }: MultiRingDoughnutPropType) => {
     const unProtectedColor = unProtectColor ? '#E0E0E0' : '#FDC300';
 
     const ref = useRef<HTMLCanvasElement>(null);

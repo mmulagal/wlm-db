@@ -18,7 +18,7 @@ export const setMaskedPassword = (data: MssqlRequestBody) => {
 };
 
 export const addEscapeInCli = (data: TemplateRes) => {
-     if (!data || typeof data.cliCommand !== 'string') {
+    if (!data || typeof data.cliCommand !== 'string') {
         return data;
     }
 

@@ -1,7 +1,7 @@
 import { Button, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import { FORM_TO_WLF_NAVIGATE, WLF_TABS, FORM_TO_WLF_NAVIGATE_BLUEXP } from '../../../../utils/consts';
+import { WLF_TABS, FORM_TO_WLF_NAVIGATE_BLUEXP, FORM_TO_WLF_NAVIGATE_JOB_MONITORING } from '../../../../utils/consts';
 import {
     setDeployRedirectToCfLink,
     setIsLoading,
@@ -62,7 +62,7 @@ const MSSqlFooter = () => {
 
     const handleNavigation = () => {
         if (isWorkloadFactoryStatus) {
-            navigate(FORM_TO_WLF_NAVIGATE);
+            navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
             handleURL('Dashboard', true);
         } else {
             navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
@@ -90,7 +90,7 @@ const MSSqlFooter = () => {
                                 clearTimeout(notificationMsg);
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                 if (isWorkloadFactoryStatus) {
-                                    navigate('../databases');
+                                    navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
                                 } else {
                                     navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
                                 }

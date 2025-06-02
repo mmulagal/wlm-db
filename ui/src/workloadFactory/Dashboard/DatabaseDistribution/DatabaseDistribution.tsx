@@ -54,11 +54,11 @@ const DatabaseDistribution = () => {
                             {loading && <DsFlashingDotsLoader />}
                         </DsTypography>
 
-                        <DsTypography variant="Regular_14">Managed databases</DsTypography>
+                        <DsTypography variant="Regular_14">Registered databases</DsTypography>
                     </div>
                 </div>
 
-                <DsTypography variant="Semibold_14">Managed databases</DsTypography>
+                <DsTypography variant="Semibold_14">Registered databases</DsTypography>
                 <div className={styles.barContainer}>
                     <BarComponent
                         color="var(--chart-3)"
@@ -71,7 +71,7 @@ const DatabaseDistribution = () => {
                         )}
                         beforeOutOf={aggregatedHostsCount?.managedDatabases || 0}
                         afterOutOf={aggregatedHostsCount?.totalDatabases || 0}
-                        bottomText="Managed databases:"
+                        bottomText="Registered databases:"
                         width="auto"
                         loading={loading}
                     />
@@ -86,7 +86,7 @@ const DatabaseDistribution = () => {
                         )}
                         beforeOutOf={aggregatedPgSqlHostsCount?.managedDatabases || 0}
                         afterOutOf={aggregatedPgSqlHostsCount?.totalDatabases || 0}
-                        bottomText="Managed databases:"
+                        bottomText="Registered databases:"
                         width="auto"
                         loading={loading}
                     />

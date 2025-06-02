@@ -251,18 +251,28 @@ type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
 const DiscoverCredentials = Type.Object({
     resourceId: Type.String({
         minLength: 1,
+        examples: ['MSSQLSERVER', 'fs-01234aa85e38bdfbe'],
         description:
             'For types MSSQL and WINDOWS_USER, this is the sql instannce name. For FSX, this is the file system ID.'
     }),
     resourceType: Type.String({ enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL, RESOURCESTYPE.WINDOWS_USER] }),
-    username: Type.String({ minLength: 1 }),
+    username: Type.String({
+        minLength: 1,
+        description: 'Username for the resource. For windows domain user, use DOMAIN\\username format.',
+        examples: ['WLM\\wfuser', 'sqluser', 'fsxadmin']
+    }),
     password: Type.String({ minLength: 1 })
 });
 
 const DiscoverCredentialsRequestBody = Type.Object({
     credentials: Type.Array(DiscoverCredentials),
     clusterNodesIpAddress: Type.Optional(
-        Type.Array(Type.String({ description: 'Private ips of nodes in a clustered deployment' }))
+        Type.Array(
+            Type.String({
+                description:
+                    'Private IP addresses of nodes in a clustered deployment that would help us find out the EC2 instance IDs'
+            })
+        )
     ),
     checkManageReadiness: Type.Optional(
         Type.Boolean({

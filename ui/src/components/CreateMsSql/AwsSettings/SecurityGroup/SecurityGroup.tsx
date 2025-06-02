@@ -131,7 +131,9 @@ const SecurityGroup = () => {
                             </div>
                         )}
 
-                        {selectedSecurityType === GENERAL.GENERATED_SECURITY_GROUP && <div className={styles.createNew} />}
+                        {selectedSecurityType === GENERAL.GENERATED_SECURITY_GROUP && (
+                            <div className={styles.createNew} />
+                        )}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

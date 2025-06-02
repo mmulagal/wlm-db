@@ -119,6 +119,8 @@ function getWindowsPrepareScript(scriptParams: {
     s3SignedUrl: string;
     packageName: string;
     logsPath: string;
+    sqlAuthEnabled?: boolean;
+    databaseInstanceName?: string;
     version: string;
     instanceId: string;
     region: string;
@@ -131,6 +133,8 @@ function getWindowsPrepareScript(scriptParams: {
         s3SignedUrl,
         packageName,
         logsPath,
+        sqlAuthEnabled,
+        databaseInstanceName,
         version,
         instanceId,
         region,
@@ -151,6 +155,8 @@ function getWindowsPrepareScript(scriptParams: {
         $s3SignedUrl = "${s3SignedUrl}";
         $packageName = "${packageName}";
         $logsPath = "${logsPath}";
+        $sqlAuthEnabled = $${sqlAuthEnabled};
+        $databaseInstanceName = "${databaseInstanceName}";
         $version = "${version}";
         $instanceId = "${instanceId}";
         $region = "${region}";
@@ -196,7 +202,7 @@ function getWindowsPrepareScript(scriptParams: {
             if (-Not (Test-Path $filePath)) {
                 throw "The specified file does not exist."
             }
-            Start-Process -FilePath $filePath -ArgumentList "--logs-path $logsPath --log-level info --region $region --model-id $modelId --model-region $modelRegion --job-id $jobId --instance-id $instanceId --temperature $temperature --maxTokens $maxTokens --topP $topP" -NoNewWindow -Wait
+            Start-Process -FilePath $filePath -ArgumentList "--logs-path $logsPath --sql-auth-enabled $sqlAuthEnabled --database-instance-name $databaseInstanceName --log-level info --region $region --model-id $modelId --model-region $modelRegion --job-id $jobId --instance-id $instanceId --temperature $temperature --maxTokens $maxTokens --topP $topP" -NoNewWindow -Wait
         } catch {
             throw "Failed to run Logs Analyzer: $($_.Exception.Message)"
         }

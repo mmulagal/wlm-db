@@ -53,7 +53,9 @@ import {
     AWS_ERROR_CODES,
     MSSQL_DATABASE_INSTANCE_INDEX_MAPPING,
     DEFAULT_INSTANCE_NAME,
-    MSSQL_SYSTEM_DATABASES
+    MSSQL_SYSTEM_DATABASES,
+    PGSQL_DEFAULT_INSTANCE_NAME,
+    ORACLE_INSTANCE_NAME
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -338,12 +340,17 @@ async function getProtectionStatus(
         const commonResult = instanceNames.reduce((acc, instName) => {
             acc[instName] = {
                 isAwsBackupEnabled: {
-                    fsxn: isDemoFlow ?? checkAllTrue(awsBackup[instName]),
+                    fsxn: isDemoFlow
+                        ? true
+                        : awsBackup[instName]?.volumeDBMapWithBackupFlag &&
+                          typeof awsBackup[instName]?.volumeDBMapWithBackupFlag === 'object'
+                        ? checkAllTrue(awsBackup[instName]?.volumeDBMapWithBackupFlag)
+                        : false,
                     fsxw: Boolean(fsxwBackup),
                     ebs: Boolean(ebsBackup)
                 },
-                isFsxOntapSnapshotsEnabled: isDemoFlow ?? checkAllTrue(ontapBackup[instName]),
-                isCRREnabled: isDemoFlow ?? checkAllTrue(crrBackup[instName])
+                isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup[instName]),
+                isCRREnabled: isDemoFlow ? true : checkAllTrue(crrBackup[instName])
             };
             return acc;
         }, {} as Record<string, any>);
@@ -1079,20 +1086,18 @@ async function getDatabaseHostSummaryV2(
         : [];
 
     // Update the database instances detail to include storage type as FSXN
-    instancesManaged = instancesManaged.map(instance => ({
-        ...instance,
-        storage_type: STORAGE_TYPE.FSXN,
-        crrConfigData: uniqueCrrConfigData.find(
+    instancesManaged = instancesManaged.map(instance => {
+        const crrConfig = uniqueCrrConfigData.find(
             (config: any) => config.database_instance_id === instance.database_instance_id
-        )
-            ? {
-                  crrDetails: uniqueCrrConfigData.find(
-                      (config: any) => config.database_instance_id === instance.database_instance_id
-                  )?.config_data
-              }
-            : undefined,
-        isManaged: true
-    }));
+        );
+
+        return {
+            ...instance,
+            storage_type: STORAGE_TYPE.FSXN,
+            crrConfigData: crrConfig?.config_data ? crrConfig.config_data : undefined,
+            isManaged: true
+        };
+    });
     const errormessages: { [index: string]: string } = {};
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
@@ -1126,8 +1131,9 @@ async function getDatabaseHostSummaryV2(
                         }
                         return (
                             instance.instanceName.includes(hostResourceName) ||
-                            instance.instanceName === 'MSSQLSERVER' ||
-                            instance.instanceName === 'postgresql'
+                            instance.instanceName === DEFAULT_INSTANCE_NAME ||
+                            instance.instanceName === PGSQL_DEFAULT_INSTANCE_NAME ||
+                            instance.instanceName === ORACLE_INSTANCE_NAME
                         );
                     })
                     .map((instance: { instanceName: { replace: (arg0: string | null, arg1: string) => any } }) => ({
@@ -1467,13 +1473,14 @@ async function fetchCrrBackupDetails(
     }
     const { crrConfigData } = instanceDetails[0];
     const crrDetails = crrConfigData?.crrDetails || [];
-    const crrMapping = volumeRecords.map(volumeRecord => {
-        const crrDetail = crrDetails.find((detail: { volumeName: string }) => detail.volumeName === volumeRecord.name);
-        const volumeDB = volumeDBMap.find(
-            (dbMap: { ontapVolumeuuid: string }) => dbMap.ontapVolumeuuid === volumeRecord.uuid
-        );
+    const crrMapping = Object.entries(volumeDBMap).map(([, dbMap]: [string, any]) => {
+        const { databaseName, ontapVolumeuuid: volumeUuid } = dbMap;
+        const volumeRecord = volumeRecords.find(vr => vr.uuid === volumeUuid);
+        const crrDetail = Array.isArray(crrDetails)
+            ? crrDetails.find((detail: { volumeName: string }) => detail.volumeName === volumeRecord?.name)
+            : undefined;
         return {
-            databaseName: volumeDB ? volumeDB.databaseName : null,
+            databaseName,
             isCRREnabled: crrDetail ? crrDetail.isCRREnabled : null
         };
     });
@@ -1768,7 +1775,7 @@ async function getDatabaseDetails(
                                     fsxn: isDemoFlow
                                         ? true
                                         : checkKey(
-                                              awsBackup[instName].volumeDBMapWithBackupFlag,
+                                              awsBackup[instName]?.volumeDBMapWithBackupFlag,
                                               database.databaseName
                                           ),
                                     fsxw: false,
@@ -2065,8 +2072,8 @@ async function getDatabaseInstancesSummary(
             databaseInstanceDetails.databaseServer = instanceServerDetails;
         }
 
-        if (isDemo() && databasesCount && getDbCount) {
-            databasesCount.totalCount += userDatabase.length;
+        if (isDemo() && databasesCount && getDbCount && databasesCount?.[instanceName]?.[index]?.totalCount) {
+            databasesCount[instanceName][index].totalCount += userDatabase.length;
         }
 
         const [instanceDbCount] = databasesCount?.[instanceName] ?? [];

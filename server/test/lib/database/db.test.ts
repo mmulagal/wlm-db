@@ -13,7 +13,6 @@ import {
     listRelationshipsResources,
     updateConfig,
     listEvents,
-    DatabaseInstanceRecord,
     upsertDatabaseInstance,
     listDatabaseInstances,
     deleteDatabaseInstance,
@@ -24,6 +23,7 @@ import {
     updateResource
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
+import { DatabaseInstanceRecord } from '../../../src/lib/database/db-types';
 
 describe('List deployments', () => {
     it('should return a list of deployments', async () => {
@@ -181,7 +181,7 @@ describe('Database instance operations', () => {
         const DATABASE_INSTANCE_RECORD: DatabaseInstanceRecord = {
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
-            resourceId: databaseResource.id,
+            resourceId: databaseResource.resource_id,
             databaseInstanceId: '11111111-2222-3333-4444-55555555555a',
             databaseInstanceName: 'MSSQLSERVER',
             isDefault: true,

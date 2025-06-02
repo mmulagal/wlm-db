@@ -213,7 +213,12 @@ export const MAX_SAVED_CONFIG = 100;
 export const WLF_TO_FORM_NAVIGATE = '../mssql-deploy-wizard';
 
 export const FORM_TO_WLF_NAVIGATE = '../databases';
-export const FORM_TO_WLF_NAVIGATE_BLUEXP = '../fsxdb';
+export const FORM_TO_WLF_NAVIGATE_JOB_MONITORING = '../databases/job-monitoring';
+export const FORM_TO_WLF_NAVIGATE_INVENTORY = '../databases/inventory';
+export const FORM_TO_WLF_NAVIGATE_SANDBOXES = '../databases/sandboxes';
+export const FORM_TO_WLF_NAVIGATE_BLUEXP = '../fsxdb/job-monitoring';
+export const FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES = '../fsxdb/sandboxes';
+export const FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY = '../fsxdb/inventory';
 
 export const RECOMMENDED_TEMPLATES = {
     DEV_ID: '0',
@@ -381,7 +386,8 @@ export const WLF_TABS = {
     OPTIMIZE: 'Optimize',
     MSSQL_ELASTIC_BLOCK_STORE: 'SQL Server on Elastic Block Store (EBS)',
     MSSQL_FSX_FOR_WINDOWS: 'SQL Server on FSx for Windows',
-    MSSQL_ON_PREMISES: 'SQL Server On-Premises'
+    MSSQL_ON_PREMISES: 'SQL Server On-Premises',
+    REGISTER_COMPONENT: 'Register Component'
 };
 
 export const DRIVE_LETTER_TYPE = {
@@ -672,7 +678,8 @@ export const INSTANCE_API_FIELDS = {
         'usageEstimation',
         'dbCount'
     ],
-    UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation']
+    UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation'],
+    UNMANAGED_ORACLE_DEFAULT: ['protection', 'performance', 'usageEstimation']
 };
 
 export const PROTECTION_TEXT_STATUS = {
@@ -923,7 +930,8 @@ export const MANAGE_STATES = {
 };
 
 export const ACTION_CTA = {
-    FIX_ISSUES: 'Fix issues',
+    FIX_ISSUES: 'View and fix',
+    WELL_ARCHITECTED: 'Well-architected',
     MANAGE_INSTANCES: 'Register instance'
 };
 

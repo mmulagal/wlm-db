@@ -151,7 +151,7 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    ASSESSMENT = 'Continuous Optimization',
+    ASSESSMENT = 'Well Architected',
     ONPREM_TCO = 'OnPremises TCO',
     NOTIFICATION = 'Notification',
     LOGS_ANALYSIS = 'Logs Analysis'
@@ -1667,7 +1667,10 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'autoscaling:DescribeAutoScalingGroups',
     'autoscaling:DescribeAutoScalingInstances',
     'fsx:UpdateFileSystem',
-    'fsx:UpdateVolume'
+    'fsx:UpdateVolume',
+    'bedrock:GetFoundationModelAvailability',
+    'bedrock:ListInferenceProfiles',
+    'logs:PutRetentionPolicy'
 ];
 
 const AWS_ERROR_CODES = {
@@ -1732,6 +1735,7 @@ const PRICING_LICENSE_KEYS = {
 
 const GERERIC_JOB_ERROR_MESSAGE = 'Examine the subjobs for comprehensive error messages.';
 const PGSQL_DEFAULT_INSTANCE_NAME = 'postgresql';
+const ORACLE_INSTANCE_NAME = 'oracle';
 
 const GENERIC_ASSESSMENT_ERROR_MESSAGE = (category: string) =>
     `No ${category} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try after running adhoc assessment.`;
@@ -1746,6 +1750,7 @@ const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1',
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
 const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-age-in-days') : 60; // Fall Back to 60 days as default if not set in config
 const OTHER_CLONE = 'other';
+const POSTPONE_AGE: number = config.has('postpone-age-in-days') ? config.get('postpone-age-in-days') : 30; // Fall Back to 30 days as default if not set in config
 
 export {
     WLMDB,
@@ -2096,8 +2101,10 @@ export {
     RESTRICTED_FSX_REGIONS,
     CLONE_AGE,
     PGSQL_DEFAULT_INSTANCE_NAME,
+    ORACLE_INSTANCE_NAME,
     POWERSHELL_7_RELATIVE_PATH,
     CLONE_ACTION,
     OTHER_CLONE,
-    ORACLE_INSTANCE_STATE
+    ORACLE_INSTANCE_STATE,
+    POSTPONE_AGE
 };

@@ -11,7 +11,7 @@ type codeBoxTypes = {
     dbType?: string;
 };
 
-const CodeBoxColor = ({ credID, region, actualData, endpoint, dbType='mssql' }: codeBoxTypes) => {
+const CodeBoxColor = ({ credID, region, actualData, endpoint, dbType = 'mssql' }: codeBoxTypes) => {
     const baseUrl = getBaseUrl();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 

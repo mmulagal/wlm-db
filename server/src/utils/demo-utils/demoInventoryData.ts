@@ -66,7 +66,17 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ],
-                        manageReadiness: MANAGE_READINESS
+                        manageReadiness: MANAGE_READINESS,
+                        windowsClusterNodes: [
+                            {
+                                Node: 'EC2AMAZ-1MF7SUF',
+                                Address: '10.0.6.118'
+                            },
+                            {
+                                Node: 'EC2AMAZ-1MF7SUD',
+                                Address: '10.0.28.145'
+                            }
+                        ]
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
@@ -96,7 +106,17 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                                 zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ],
-                        manageReadiness: MANAGE_READINESS
+                        manageReadiness: MANAGE_READINESS,
+                        windowsClusterNodes: [
+                            {
+                                Node: 'EC2AMAZ-1MF7SUF',
+                                Address: '10.0.6.118'
+                            },
+                            {
+                                Node: 'EC2AMAZ-1MF7SUD',
+                                Address: '10.0.28.145'
+                            }
+                        ]
                     }
                 ]
             },

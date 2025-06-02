@@ -28,7 +28,7 @@ describe('Manage operations', () => {
     });
 
     it('should throw error if no resources to be managed', async () => {
-        await expect(manageSqlInstances(ACCOUNT_ID, [])).rejects.toThrow('No sql instances to be managed');
+        await expect(manageSqlInstances(ACCOUNT_ID, [])).rejects.toThrow('No sql instances to be registered');
     });
 
     it('should manage multiple SQL instances in one call', async () => {

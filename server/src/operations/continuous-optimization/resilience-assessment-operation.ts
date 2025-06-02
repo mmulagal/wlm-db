@@ -178,8 +178,11 @@ async function getResilienceDriftAssessment(
     const shouldTriggerAwsBackupAssessment =
         isEmpty(fieldsValues) || fieldsValues.includes(AssessmentCategories.AWS_BACKUP);
 
+    // filter out the config data which is not required for assessment and listDatabaseInstanceConfigData returns in descending order of creation time
     const configDataMap = databaseInstanceConfigData.reduce((acc, config) => {
-        acc[config.config_data_type] = config.config_data;
+        if (!acc[config.config_data_type]) {
+            acc[config.config_data_type] = config.config_data;
+        }
         return acc;
     }, {} as Record<string, any>);
 
@@ -357,7 +360,7 @@ async function initiateAWSBackupAssessment(
 
     let isAWSBackupEnabled = false;
     try {
-        const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
+        const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, accountId);
         isAWSBackupEnabled = fsxnInfo?.FileSystems?.[0]?.OntapConfiguration?.AutomaticBackupRetentionDays !== undefined;
         logger.debug('Is Scheduled FSx for ONTAP backup enabled:', isAWSBackupEnabled);
         if (!isAWSBackupEnabled) {
@@ -371,8 +374,15 @@ async function initiateAWSBackupAssessment(
             );
 
             const { volumeUuidsInBackups } =
-                (await isFsxnAwsBackupEnabled(credentialsId, region, fileSystemId, dataLogVolumeUuids, undefined)) ||
-                {};
+                (await isFsxnAwsBackupEnabled(
+                    credentialsId,
+                    region,
+                    fileSystemId,
+                    dataLogVolumeUuids,
+                    undefined,
+                    undefined,
+                    accountId
+                )) || {};
 
             logger.debug('Is on-demand backup enabled:', volumeUuidsInBackups);
 
