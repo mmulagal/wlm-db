@@ -8,22 +8,15 @@ import { useNavigate, useOutletContext } from 'react-router';
 
 const MsSqlOverview = () => {
     const navigate = useNavigate();
-    let { databasesList, mssqlSummary, mssqlCpu, mssqlDisk, mssqlMemory, tables, batchingCompleted } =
-        useOutletContext<{
-            databasesList: any;
-            mssqlSummary: any;
-            mssqlCpu: any;
-            mssqlDisk: any;
-            mssqlMemory: any;
-            tables: any;
-            batchingCompleted: boolean;
-        }>();
+    let {databasesList, mssqlSummary, mssqlCpu, mssqlDisk, mssqlMemory, tables, batchingCompleted} = 
+    useOutletContext<{databasesList: any, mssqlSummary: any, mssqlCpu: any, mssqlDisk: any, mssqlMemory: any, tables: any, 
+        batchingCompleted: boolean}>();
 
     return (
         <div className={styles.overviewContainer}>
             <div className={styles.leftPane}>
                 <div className={styles.resourceDistribution}>
-                    <ResourceDistribution mssqlCpu={mssqlCpu} mssqlDisk={mssqlDisk} mssqlMemory={mssqlMemory} />
+                    <ResourceDistribution mssqlCpu={mssqlCpu} mssqlDisk={mssqlDisk} mssqlMemory={mssqlMemory}/>
                 </div>
                 <div className={styles.infoCards}>
                     <InfoCard
@@ -52,7 +45,7 @@ const MsSqlOverview = () => {
                 </div>
             </div>
             <div className={styles.rightPane}>
-                <InformationPane mssqlSummary={mssqlSummary} />
+                <InformationPane mssqlSummary={mssqlSummary}/>
             </div>
         </div>
     );

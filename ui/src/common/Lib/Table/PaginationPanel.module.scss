@@ -1,48 +1,49 @@
+
 .pagination-panel {
-    position: sticky;
-    bottom: 0;
+  position: sticky;
+  bottom: 0;
 
+  display: flex;
+  box-sizing: border-box;
+  justify-content: flex-end;
+  align-items: center;
+  background-color: var(--content-background);
+  height: 40px;
+  border-top: 1px solid var(--border);
+  box-shadow:2px 2px 6px var(--drop-shadow);
+  color:var(--text-primary);
+  z-index: 2;
+
+  padding-right: 16px;
+
+  .pagination-title {
+    margin-right: 24px;
+  }
+
+  .pagination-button {
     display: flex;
-    box-sizing: border-box;
-    justify-content: flex-end;
+    justify-content: center;
     align-items: center;
-    background-color: var(--content-background);
-    height: 40px;
-    border-top: 1px solid var(--border);
-    box-shadow: 2px 2px 6px var(--drop-shadow);
-    color: var(--text-primary);
-    z-index: 2;
+    cursor: pointer;
 
-    padding-right: 16px;
-
-    .pagination-title {
-        margin-right: 24px;
+    &:disabled{
+      opacity: 0.5;
+      pointer-events: none;
     }
 
-    .pagination-button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-
-        &:disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        &.next {
-            transform: rotate(-90deg);
-        }
-
-        &.prev {
-            transform: rotate(90deg);
-        }
+    &.next {
+      transform: rotate(-90deg);
     }
 
-    .current-page {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 16px;
+    &.prev {
+      transform: rotate(90deg);
     }
+  }
+
+  .current-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+  }
 }

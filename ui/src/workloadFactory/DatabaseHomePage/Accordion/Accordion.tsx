@@ -85,7 +85,7 @@ const Accordion = ({
 
     const handleDelete = () => {
         deleteConfigApi({ configId: id }).then((data: any) => {
-            if (!data?.error) {
+            if(!data?.error){
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -107,7 +107,7 @@ const Accordion = ({
         };
         setIsSaveConfigLoading(true);
         renameConfigApi({ configId: id, payload: payload }).then((data: any) => {
-            if (!data?.error) {
+            if(!data?.error) {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -163,11 +163,7 @@ const Accordion = ({
         setDialog(
             <DialogComponent
                 header={GENERAL.RENAME_CONFIG}
-                content={
-                    <SaveConfig
-                        description={`${GENERAL.RENAME_CONFIG_CONTENT[0]} "${heading}" ${GENERAL.RENAME_CONFIG_CONTENT[1]}`}
-                    />
-                }
+                content={<SaveConfig description={`${GENERAL.RENAME_CONFIG_CONTENT[0]} "${heading}" ${GENERAL.RENAME_CONFIG_CONTENT[1]}`}/>}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={handleRename}

@@ -19,10 +19,7 @@ const PostgreVersion = () => {
 
     const generateOSValues = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        const osValues = [
-            { label: 'postgresql16', value: 'postgresql16' },
-            { label: 'postgresql15', value: 'postgresql15' }
-        ];
+        const osValues = [{label: 'postgresql16', value: 'postgresql16'}, {label:'postgresql15', value: 'postgresql15'}];
         osValues.map((val: any, idx: number) => {
             const option = generateOptionType(val?.value, val?.label, val?.label, false, '');
             options.push(option);

@@ -150,7 +150,7 @@ const createSandboxSlice = createSlice({
             state.selectedSandboxCredId = action.payload.credId;
             state.selectedSandboxRegionId = action.payload.regionId;
         },
-        resetSourceAndTarget: state => {
+        resetSourceAndTarget: (state) => {
             state.source.selectedDatabaseHost = null;
             state.source.selectedDatabaseInstance = null;
             state.source.selectedDatabase = null;

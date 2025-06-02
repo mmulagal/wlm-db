@@ -76,7 +76,7 @@ const SimpleNotificationService = () => {
                             {GENERAL.SNS}
                         </ToggleSelector>
                         <Typography variant="Regular_14" className={styles.subText}>
-                            {databaseType === DBType.MSSQL ? GENERAL.SNS_TEXT : GENERAL.SNS_TEXT_PGSQL}
+                            {databaseType === DBType.MSSQL ?  GENERAL.SNS_TEXT : GENERAL.SNS_TEXT_PGSQL}
                         </Typography>
 
                         <div className={styles.selectField}>

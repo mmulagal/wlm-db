@@ -1,26 +1,26 @@
 export interface DatabaseTables {
-    tableName?: string;
-    databaseName?: string;
-    tableType?: string;
-    tableSchema?: string;
-    tableSize?: string;
+    tableName?: string,
+    databaseName?: string,
+    tableType?: string,
+    tableSchema?: string,
+    tableSize?: string
 }
 
 export interface Database {
-    databaseId: string;
-    databaseName: string;
-    creationDate: number;
-    databaseStatus: string;
-    databaseSize: number;
+    databaseId: string,
+    databaseName: string,
+    creationDate: number,
+    databaseStatus: string,
+    databaseSize: number,
 }
 
 export interface BatchEntry {
-    method: Method;
-    url: string;
-    headers?: any;
-    payload?: any;
-    inputs?: any;
-    key?: string;
+    method: Method,
+    url: string,
+    headers?: any,
+    payload?: any
+    inputs?: any,
+    key?: string
 }
 
 export enum Method {
@@ -29,6 +29,6 @@ export enum Method {
 }
 
 export interface ResourceEntities {
-    tables: DatabaseTables[];
-    ready: boolean;
+    tables: DatabaseTables[],
+    ready: boolean,
 }

@@ -124,8 +124,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <div className={styles.headSectionSmall}>
                                     <div className={styles.manageInstanceTooltipSection}>
                                         <DsTypography variant="Semibold_16" style={{ whiteSpace: 'nowrap' }}>
-                                            Total registered instances &nbsp;
-                                            {instanceOptimizationSummary?.totalInstances}
+                                            Total registered instances &nbsp;{instanceOptimizationSummary?.totalInstances}
                                         </DsTypography>
                                         {instanceOptimizationSummary?.hasDismissedOrPostponed && (
                                             <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>
