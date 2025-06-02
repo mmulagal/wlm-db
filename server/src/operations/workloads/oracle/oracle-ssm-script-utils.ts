@@ -67,6 +67,10 @@ const ontapRestApi = `
     creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$filesystemid" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
     check_status "Credentials not found for $filesystemid in SSM Parameter Store. Please ensure the credentials are stored in SSM Parameter Store with the name /netapp/wlmdb/$filesystemid"
      
+    # First, replace single quotes with double quotes
+    # Second sed is for adding quotes around keys, only if there are no quotes already
+    creds=$(echo "$creds" | sed "s/'/\\"/g" | sed 's/\\([^"{},: ]\\+\\):/"\\1":/g')
+
     fsxusername=$(echo $creds | jq -r '.fsx.username')
     fsxpassword=$(echo $creds | jq -r '.fsx.password')
     
