@@ -148,4 +148,92 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    .tooltipLevel {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 584px;
+        padding: 8px 0px;
+
+        .tooltipSeparator {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .row {
+            display: flex;
+            gap: 24px;
+            justify-content: space-between;
+            margin-bottom: 6px;
+
+            .firstPart {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .secondPart {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .seperator {
+                    height: 20px;
+                    border-right: 1px solid var(--border);
+                    position: relative;
+                }
+            }
+        }
+
+        .rowrss {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 6px;
+
+            .firstPart {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 300px;
+            }
+
+            .secondPart {
+                display: flex;
+                width: 280px;
+                gap: 8px;
+                flex-direction: row;
+
+                .secSubPart {
+                    display: flex;
+                    width: 100px;
+                    gap: 8px;
+                    flex-direction: row;
+                }
+
+                .seperator {
+                    height: 20px;
+                    border-right: 1px solid var(--border);
+                    position: relative;
+                }
+            }
+        }
+    }
+
+    .warningMsg {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        color: var(--warning);
+        .centerText {
+            position: relative;
+            top: 4.5px;
+        }
+    }
+
+    .tooltipTable {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        align-self: stretch;
+    }
 }
