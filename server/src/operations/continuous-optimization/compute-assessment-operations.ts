@@ -118,7 +118,8 @@ async function calculateComputeDrift(
             return { errorMessage };
         }
 
-        const { finding, findingReasonCodes, currentInstanceType, recommendationOptions } = compute as ComputeAssessment;
+        const { finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
+            compute as ComputeAssessment;
 
         let recommendationMessage = 'Analyzing instance for rightsizing. Check later for recommendations.';
         let findingValue = AssessmentStatus.ANALYZING;

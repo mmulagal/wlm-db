@@ -1,0 +1,57 @@
+{
+    "status": "success",
+    "message": "Logs analysis complete.",
+    "data": {
+        "conversationFilePath": "C:\\Windows\\system32\\output\\conversation_history_2025-05-22T22-17-21-887Z.json",
+        "remediationFilePath": "C:\\Windows\\system32\\output\\remediation_recommendations_2025-05-22T22-17-21-887Z.json",
+        "statusFilePath": "C:\\Windows\\system32\\output\\status_2025-05-22T22-17-21-887Z.txt",
+        "remediationRecommendation": [
+            {
+                "error": "2025-05-21 12:45:28.40 spid9s      Error: 2812, Severity: 16, State: 62.",
+                "cause": "Error 2812 indicates that a stored procedure, extended stored procedure, function, or trigger was specified but could not be found. This typically occurs when attempting to execute or reference a database object that doesn't exist in the current database or the user doesn't have permissions to access it.",
+                "count": 3,
+                "severity": 16,
+                "remediation": [
+                    "Verify that the stored procedure, function, or trigger name is spelled correctly in the execution statement.",
+                    "Check if the object exists in the current database context by running 'SELECT OBJECT_NAME(object_id) AS ObjectName, type_desc FROM sys.objects WHERE type IN (''P'', ''FN'', ''IF'', ''TF'', ''TR'') ORDER BY type_desc, name;'",
+                    "Ensure the user has appropriate permissions to execute the object by verifying role memberships and explicit permissions.",
+                    "If using a three-part or four-part name, verify that the server, database, and schema names are correct.",
+                    "Check if the object exists in a different schema by using 'schema_name.object_name' syntax in your execution statement.",
+                    "If the error occurs during system startup (indicated by spid9s), check SQL Server startup procedures and triggers for references to non-existent objects."
+                ]
+            },
+            {
+                "error": "2025-05-21 12:45:36.02 spid9s      Error: 15151, Severity: 16, State: 1.",
+                "cause": "Error 15151 indicates that a database file cannot be accessed or opened. This is likely due to permission issues, file corruption, or network connectivity problems with the AWS FSx for NetApp ONTAP storage. The system process ID (spid9s) suggests this is occurring during system startup or critical operations.",
+                "count": 7,
+                "severity": "16",
+                "remediation": [
+                    "Verify network connectivity between the SQL Server instance and the AWS FSx for NetApp ONTAP storage system using ping or Test-NetConnection.",
+                    "Check the SQL Server service account has proper permissions to access the database files on the FSx for NetApp ONTAP share.",
+                    "Ensure the FSx for NetApp ONTAP volume is mounted and accessible from the SQL Server instance.",
+                    "Review AWS FSx for NetApp ONTAP CloudWatch metrics for any storage performance issues or throttling events.",
+                    "Check for any recent changes to network security groups, VPC endpoints, or route tables that might affect connectivity.",
+                    "Verify that the SVM (Storage Virtual Machine) in FSx for NetApp ONTAP is operational and not in a failed state.",
+                    "Run DBCC CHECKDB on the affected database(s) once connectivity is restored to check for database corruption.",
+                    "Review SQL Server error logs for additional context about which specific database file cannot be accessed."
+                ]
+            },
+            {
+                "error": "2025-05-21 12:45:56.98 spid16s     SQL Server could not listen on IP address [10.0.16.15] because the cluster resource 'SQL IP Address 2 (fcivy1919k1f)' is not online (state = 3). This is an informational message and may indicate that resource 'SQL Network Name (fcivy1919k1f)' has OR type of dependency on several IP addresses some of which are currently offline or in a failed state. Further action is only required if it is generally possible to bind the IP address of the cluster resource 'SQL IP Address 2 (fcivy1919k1f)' to a network segment on the current hosting node.",
+                "cause": "This is an informational message related to SQL Server Failover Cluster Instance (FCI) configuration. The SQL Server instance cannot listen on the specified IP address (10.0.16.15) because the associated cluster resource 'SQL IP Address 2 (fcivy1919k1f)' is not online. This typically happens during failover events or when there are network connectivity issues with the cluster resources. Since this is running on AWS FSx for NetApp ONTAP, it could be related to network configuration between the SQL Server nodes and the storage layer.",
+                "count": 8,
+                "severity": 10,
+                "remediation": [
+                    "Verify the status of the Windows Server Failover Cluster (WSFC) resources using Failover Cluster Manager or PowerShell command 'Get-ClusterResource'",
+                    "Check if the IP address 10.0.16.15 is correctly configured in the subnet used by the current hosting node",
+                    "Ensure that the network adapters on the current hosting node can access the subnet where IP address 10.0.16.15 is configured",
+                    "Verify AWS VPC and subnet configurations to ensure proper network connectivity between SQL Server nodes and FSx for NetApp ONTAP",
+                    "Check for any recent network changes or AWS infrastructure maintenance that might have affected the cluster IP resources",
+                    "Review Windows event logs and cluster logs for additional error messages related to the cluster resource failures",
+                    "If this is a multi-subnet cluster, ensure that the RegisterAllProvidersIP setting is properly configured",
+                    "Consider bringing the cluster resource 'SQL IP Address 2 (fcivy1919k1f)' online manually if it's needed for application connectivity"
+                ]
+            }
+        ]
+    }
+}
