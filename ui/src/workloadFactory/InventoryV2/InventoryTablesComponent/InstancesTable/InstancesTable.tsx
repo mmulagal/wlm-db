@@ -1136,8 +1136,10 @@ const InstancesTable = () => {
                                                     'noopener,noreferrer'
                                                 );
                                             } else {
-                                                window.location.href =
-                                                    'https://staging.console.bluexp.netapp.com/unified-backup-restore';
+                                                if (window.top) {
+                                                    window.top.location.href =
+                                                        'https://staging.console.bluexp.netapp.com/unified-backup-restore';
+                                                }
                                             }
                                         }
 
