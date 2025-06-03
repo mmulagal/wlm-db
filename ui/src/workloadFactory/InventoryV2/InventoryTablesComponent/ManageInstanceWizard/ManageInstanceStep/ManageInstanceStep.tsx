@@ -1,4 +1,5 @@
 import { DsTypography, useWizard } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import ManageWizardFooter from '../ManageWizardFooter';
 import styles from './ManageInstanceStep.module.scss';
 import ActionComponent from './ActionComponent/ActionComponent';
@@ -6,7 +7,7 @@ import NoteComponent from './NoteComponent/NoteComponent';
 import PermissionListComponent from './PermissionListComponent/PermissionListComponent';
 import DetectHeader from '../DetectInstanceStep/DetectHeader/DetectHeader';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { INVENTORY_STATUS, MANAGE_STATES } from '../../../../../utils/consts';
+import { ACTION_TYPE, INVENTORY_STATUS, MANAGE_STATES } from '../../../../../utils/consts';
 import { useMemo } from 'react';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { setManageSingleInstanceChecks } from '../../../../../store/workloadFactory/inventoryV2Slice';
@@ -16,6 +17,7 @@ import { getPermissionState, hasMissingPowershell7, mergeReadinessData, missingM
 import { useGetWlmdbPoliciesQuery } from '../../../../../utils/apiService';
 
 export const Content = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { state, setState } = useWizard();
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
@@ -155,13 +157,13 @@ export const Content = () => {
 
     return (
         <div className={styles['manage-instance-step']}>
-            {wizardOperationType !== 'bulk' && isAlreadyDetected && (
+            {wizardOperationType !== ACTION_TYPE.BULK && isAlreadyDetected && (
                 <div className={styles.detectSection}>
                     <DetectHeader />
                 </div>
             )}
 
-            {wizardOperationType === 'bulk' && (
+            {wizardOperationType === ACTION_TYPE.BULK && (
                 <div style={{ marginBottom: '40px', width: '100%' }}>
                     <MultiInstanceHeader />
                 </div>
@@ -169,11 +171,10 @@ export const Content = () => {
 
             <div className={styles.textSection}>
                 <DsTypography variant="Regular_14">
-                    This prerequisite check validates that your SQL Server instance meets the required prerequisites and
-                    if prepared for management in Workload Factory.
+                    {t('databases.register-flow.manage-instance-page-content1')}
                 </DsTypography>
                 <DsTypography variant="Regular_14">
-                    To complete instance registration, complete all required prerequisites.
+                    {t('databases.register-flow.manage-instance-page-content2')}
                 </DsTypography>
             </div>
 

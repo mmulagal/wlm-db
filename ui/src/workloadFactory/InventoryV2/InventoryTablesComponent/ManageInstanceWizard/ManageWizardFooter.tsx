@@ -1,4 +1,5 @@
 import { DsButton, useWizard, WizardFooter } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import styles from './ManageInstanceWizard.module.scss';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -12,7 +13,6 @@ import {
 } from '../../../../utils/apiService';
 import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import { GENERAL } from '../../../../utils/appConstants';
 import {
     setInventoryTableData,
     setManageSingleInstanceReadiness,
@@ -21,6 +21,7 @@ import {
 
 import { handleSingleInstanceManage } from './ManageInstanceUtils';
 import { useNavigate } from 'react-router-dom';
+import { ACTION_TYPE } from '../../../../utils/consts';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -29,6 +30,7 @@ type PlanningWizardFooterProps = {
 };
 
 const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { nextButtonProps, validation, style } = props; //onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
@@ -124,7 +126,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                        message: t('databases.register-flow.manage-detect-fail-message')
                     })
                 );
             }
@@ -132,7 +134,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                    message: t('databases.register-flow.manage-detect-fail-message')
                 })
             );
         } finally {
@@ -164,7 +166,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: error.join(' ') || GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                            message: error.join(' ') || t('databases.register-flow.manage-detect-fail-message')
                         })
                     );
                 } else {
@@ -185,7 +187,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message || GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                        message: result?.error?.data?.message || t('databases.register-flow.manage-detect-fail-message')
                     })
                 );
             }
@@ -193,7 +195,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                    message: t('databases.register-flow.manage-detect-fail-message')
                 })
             );
         } finally {
@@ -202,14 +204,14 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     const goForward = () => {
-        if (wizardOperationType === 'bulk') {
+        if (wizardOperationType === ACTION_TYPE.BULK) {
             if (selectedMultiDetectInstances.length > 0) {
                 handleMultiRegisterResourceCred();
             } else {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: GENERAL.BULK_INSTANCE_SELECT_TEXT
+                        message: t('databases.register-flow.bulk-instance-select-text')
                     })
                 );
             }
@@ -230,7 +232,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: GENERAL.BULK_INSTANCE_SELECT_TEXT
+                        message: t('databases.register-flow.bulk-instance-select-text')
                     })
                 );
             }
@@ -245,7 +247,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     const handleManage = () => {
-        if (wizardOperationType === 'bulk') {
+        if (wizardOperationType === ACTION_TYPE.BULK) {
             // ToDo
         } else {
             handleSingleInstanceManage(
@@ -260,7 +262,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     return (
         <>
-            {wizardOperationType !== 'bulk' && (
+            {wizardOperationType !== ACTION_TYPE.BULK && (
                 <WizardFooter className={styles['pw-footer']} style={style}>
                     {currentStepIndex !== 0 && (
                         <DsButton
@@ -269,7 +271,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             onClick={goBack}
                             variant={'secondary'}
                         >
-                            Previous
+                            {t('databases.register-flow.previous')}
                         </DsButton>
                     )}
                     {currentStepIndex < 1 && (
@@ -281,7 +283,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             isLoading={detectHostLoading}
                             {...rest}
                         >
-                            Next
+                            {t('databases.register-flow.next')}
                         </DsButton>
                     )}
                     {currentStepIndex === 1 && (
@@ -292,14 +294,14 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             variant={'primary'}
                             {...rest}
                         >
-                            Register
+                            {t('databases.register-flow.register')}
                         </DsButton>
                     )}
                 </WizardFooter>
             )}
 
             {/* This is only for Bulk operation */}
-            {wizardOperationType === 'bulk' && (
+            {wizardOperationType === ACTION_TYPE.BULK && (
                 <WizardFooter className={styles['pw-footer']} style={style}>
                     {currentStepIndex !== 0 && (
                         <DsButton
@@ -308,7 +310,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             onClick={goBack}
                             variant={'secondary'}
                         >
-                            Previous
+                            {t('databases.register-flow.previous')}
                         </DsButton>
                     )}
                     {currentStepIndex < 2 && (
@@ -319,7 +321,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             variant={'primary'}
                             {...rest}
                         >
-                            Next
+                            {t('databases.register-flow.next')}
                         </DsButton>
                     )}
                     {currentStepIndex === 2 && (
@@ -330,7 +332,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             variant={'primary'}
                             {...rest}
                         >
-                            Register
+                            {t('databases.register-flow.register')}
                         </DsButton>
                     )}
                 </WizardFooter>

@@ -1,5 +1,5 @@
 import { useWizard } from '@netapp/design-system/dist/components/Wizard';
-
+import { useTranslation } from 'react-i18next';
 import styles from './SelectInstancesStep.module.scss';
 
 import ManageWizardFooter from '../ManageWizardFooter';
@@ -9,6 +9,7 @@ import { ReactComponent as MultipleInstances } from '../../../../../assets/Multi
 import SelectInstances from '../DetectInstanceStep/DetectContent/SelectInstances';
 
 export const Content = () => {
+    const { t } = useTranslation();
     return (
         <div className={styles['select-instances']}>
             <div className={styles.container}>
@@ -17,11 +18,10 @@ export const Content = () => {
                 </div>
                 <div className={styles.textSection}>
                     <DsTypography variant="Semibold_16">
-                        Selecting multiple instances requires shared credentials.
+                        {t('databases.register-flow.select-instance-page-content1')}
                     </DsTypography>
                     <DsTypography variant="Regular_14" className={styles.description}>
-                        Select multiple Microsoft SQL Server instances that share the same authentication credentials
-                        and FSx for ONTAP credentials, or a group of instances that are already authenticated.
+                        {t('databases.register-flow.select-instance-page-content2')}
                     </DsTypography>
                 </div>
 

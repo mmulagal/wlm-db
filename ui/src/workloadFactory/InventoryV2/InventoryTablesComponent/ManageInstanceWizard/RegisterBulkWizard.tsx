@@ -1,13 +1,11 @@
 import { useWizard, WizardContextProvider } from '@netapp/design-system/dist/components/Wizard';
 import { StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
 import * as SelectInstancesStep from './SelectInstancesStep/SelectInstancesStep';
 import { useNavigate } from 'react-router-dom';
-import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo } from 'react';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
@@ -24,6 +22,7 @@ const stepPaths = {
 };
 
 const Wizard = () => {
+    const { t } = useTranslation();
     const { stepsMap, currentStep }: any = useWizard();
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -33,7 +32,7 @@ const Wizard = () => {
         <StepLayout>
             <WizardHeader
                 className={styles['manage-instance-wizard']}
-                title={'Register instance'}
+                title={t('databases.register-flow.register-instance')}
                 onExit={() => {
                     setTimeout(() => {
                         dispatch(setLandingFromWizard(true));
@@ -57,28 +56,18 @@ const Wizard = () => {
 
 const RegisterBulkWizard = () => {
     const initialState: any = {};
-    const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
-    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
-    const isAlreadyDetected = useMemo(() => {
-        if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-            return true;
-        }
-        return false;
-    }, [manageSingleInstanceData]);
 
     return (
         <>
-            {(wizardOperationType === 'bulk' || !isAlreadyDetected) && (
-                <WizardContextProvider
-                    stepsMap={stepsMap}
-                    stepPaths={stepPaths}
-                    initialStep={'select-instances'}
-                    initialPath={'regular'}
-                    initialState={initialState}
-                >
-                    <Wizard />
-                </WizardContextProvider>
-            )}
+            <WizardContextProvider
+                stepsMap={stepsMap}
+                stepPaths={stepPaths}
+                initialStep={'select-instances'}
+                initialPath={'regular'}
+                initialState={initialState}
+            >
+                <Wizard />
+            </WizardContextProvider>
         </>
     );
 };

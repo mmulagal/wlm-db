@@ -101,7 +101,7 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
                         <div className={styles['copy']}>
                             <Popover
                                 popoverClass={styles['copy-popover']}
-                                children={'Copied to clipboard'}
+                                children={t('databases.general.copied-to-clipboard')}
                                 container={
                                     <CopyToClipboardCommon
                                         value={permissionData}

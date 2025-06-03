@@ -1,10 +1,12 @@
 import React from 'react';
 import styles from './ManageInstanceAccordion.module.scss';
 import { DsTypography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as Arrow } from '../../../../../../assets/row arrow2.svg';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
+import { ACTION_TYPE } from '../../../../../../utils/consts';
 
 export type AccordionItem = {
     id: string;
@@ -30,6 +32,7 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
     setExpandedId,
     disableAll = false
 }) => {
+    const { t } = useTranslation();
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
     const handleToggle = (id: string) => {
         if (disableAll) return;
@@ -43,10 +46,12 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                     key={item.id}
                     className={`${styles['accordion-item']} 
             ${expandedId === item.id ? styles['expanded'] : ''} 
-            ${wizardOperationType !== 'bulk' ? disableAll || item.disabled : false ? styles['disabled'] : ''}`}
+            ${
+                wizardOperationType !== ACTION_TYPE.BULK ? disableAll || item.disabled : false ? styles['disabled'] : ''
+            }`}
                 >
                     <div className={styles['accordion-header-wrapper']}>
-                        {wizardOperationType !== 'bulk' && (
+                        {wizardOperationType !== ACTION_TYPE.BULK && (
                             <div className={styles['accordion-header']} onClick={() => handleToggle(item.id)}>
                                 <div className={styles['accordion-title']}>
                                     <div className={styles.imageContainer}>{item.image}</div>
@@ -65,18 +70,20 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                             <DsTypography variant="Semibold_14">{item.readinessStatus}</DsTypography>
                                         </div>
 
-                                        <DsTypography variant="Regular_14">Readiness</DsTypography>
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.register-flow.readiness')}
+                                        </DsTypography>
                                     </div>
                                 </div>
                                 <div className={styles['accordion-status']}>
                                     <DsTypography className={styles.text} variant="Semibold_14">
-                                        View prerequisites list
+                                        {t('databases.register-flow.view-prerequisites-list')}
                                     </DsTypography>
                                     <Arrow />
                                 </div>
                             </div>
                         )}
-                        {wizardOperationType === 'bulk' && (
+                        {wizardOperationType === ACTION_TYPE.BULK && (
                             <div className={styles['accordion-header-bulk']} onClick={() => handleToggle(item.id)}>
                                 <div className={styles['accordion-title-bulk']}>
                                     <div className={styles.imageContainer}>{item.image}</div>
@@ -89,7 +96,7 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
 
                                 <div className={styles['accordion-status']}>
                                     <DsTypography className={styles.text} variant="Semibold_14">
-                                        View prerequisites list
+                                        {t('databases.register-flow.view-prerequisites-list')}
                                     </DsTypography>
                                     <Arrow />
                                 </div>
