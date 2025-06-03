@@ -141,9 +141,9 @@ const Home = () => {
                             path={'/manage-wizard'}
                             element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
                         />
-                        <Route 
-                            path={'/register-bulk-wizard'} 
-                            element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />} 
+                        <Route
+                            path={'/register-bulk-wizard'}
+                            element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
                         />
                     </Routes>
                 )}
@@ -218,9 +218,9 @@ const Home = () => {
                                 path={'/fsxdb/manage-wizard'}
                                 element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
                             />
-                            <Route 
-                                path={'/fsxdb/register-bulk-wizard'} 
-                                element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />} 
+                            <Route
+                                path={'/fsxdb/register-bulk-wizard'}
+                                element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
                             />
                         </Routes>
                     </Suspense>
