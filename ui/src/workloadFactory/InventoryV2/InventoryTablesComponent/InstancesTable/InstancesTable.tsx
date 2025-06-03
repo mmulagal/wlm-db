@@ -980,6 +980,12 @@ const InstancesTable = () => {
                         infoText: disableMessage
                     });
                 } else {
+                    if (localStorage.getItem('protection') === 'true') {
+                        menu.push({
+                            id: 'protect',
+                            displayName: 'Protect'
+                        });
+                    }
                     menu.push(
                         {
                             id: 'optimize',
@@ -1122,6 +1128,15 @@ const InstancesTable = () => {
                                     } else if (toggleType === 'selectedOption') {
                                         menuOpenedRowDetail.current = null;
                                         setOpenedRow(null);
+
+                                        //Protect POC code
+                                        if (menuId === 'protect') {
+                                            window.open(
+                                                'https://staging.console.bluexp.netapp.com/unified-backup-restore',
+                                                '_blank',
+                                                'noopener,noreferrer'
+                                            );
+                                        }
 
                                         if (menuId === 'optimize') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
