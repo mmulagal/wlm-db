@@ -233,7 +233,7 @@ async function handleToolUse(
 ) {
     let stopReason = '';
     if (message?.content) {
-        for (const content of message.content) {
+        await Promise.all(message.content?.map(async content => {
             if (content?.toolUse) {
                 const tool = content.toolUse;
 
@@ -255,7 +255,8 @@ async function handleToolUse(
                     await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, inferenceConfig);
                 }
             }
-        }
+        })
+        );
     }
 }
 
@@ -361,7 +362,7 @@ async function runBashScript(scriptContent: string): Promise<string> {
 async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWithScripts: ErrorLogWithScript[]) {
     logger.info('Checking and executing additional scripts.');
 
-    const result = [];
+    const result: { error: string, cause: string, count: number, severity: string, sql: string, additionalInfo?: string }[] = [];
 
     const uniqueQueryMap = new Map();
     errorLogsWithScripts.forEach((logWithScript: ErrorLogWithScript) => {
@@ -377,26 +378,28 @@ async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWi
         }
     });
 
-    for (const [, value] of uniqueQueryMap.entries()) {
-        const [{ sql }] = value;
-        if (!isEmpty(sql)) {
-            const response =
-                databaseType === DATABASE_TYPE.MSSQL
-                    ? await runPowerShellScript(getPowershellScript(sql))
-                    : await runBashScript(getBashScript(sql));
-            const errorAndCauseWithAdditionalInfo = value.map(
-                ({ error, cause, count, severity, sql: sqlQueries }: ErrorLogWithScript) => ({
-                    error,
-                    cause,
-                    count,
-                    severity,
-                    sql: sqlQueries,
-                    additionalInfo: response
-                })
-            );
-            result.push(...errorAndCauseWithAdditionalInfo);
-        }
-    }
+    await Promise.all(
+        Array.from(uniqueQueryMap.values()).map(async value => {
+            const [{ sql }] = value;
+            if (!isEmpty(sql)) {
+                const response =
+                    databaseType === DATABASE_TYPE.MSSQL
+                        ? await runPowerShellScript(getPowershellScript(sql))
+                        : await runBashScript(getBashScript(sql));
+                const errorAndCauseWithAdditionalInfo = value.map(
+                    ({ error, cause, count, severity, sql: sqlQueries }: ErrorLogWithScript) => ({
+                        error,
+                        cause,
+                        count,
+                        severity,
+                        sql: sqlQueries,
+                        additionalInfo: response
+                    })
+                );
+                result.push(...errorAndCauseWithAdditionalInfo);
+            }
+        })
+    );
 
     return { result };
 }
@@ -414,29 +417,31 @@ async function recommendRemediation(
             ? REMIDIATION_RECOMMENDATION_PROMPT
             : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
 
-    for (const errorWithInfo of result) {
-        const response = await streamMessages(
-            client,
-            MODEL_ID,
-            [
-                {
-                    role: ConversationRole.USER,
-                    content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
-                }
-            ],
-            undefined,
-            inferenceConfig
-        );
+    await Promise.all(
+        result.map(async errorWithInfo => {
+            const response = await streamMessages(
+                client,
+                MODEL_ID,
+                [
+                    {
+                        role: ConversationRole.USER,
+                        content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
+                    }
+                ],
+                undefined,
+                inferenceConfig
+            );
 
-        const { message } = response;
-        const { content: [{ text }] = [] } = message;
-        if (text) {
-            const { error, cause, count, severity, remediation } = JSON.parse(text);
-            remidiationRecommendation.push({ error, cause, count, severity, remediation });
-        } else {
-            logger.error('No text found in the response.');
+            const { message } = response;
+            const { content: [{ text }] = [] } = message;
+            if (text) {
+                const { error, cause, count, severity, remediation } = JSON.parse(text);
+                remidiationRecommendation.push({ error, cause, count, severity, remediation });
+            } else {
+                logger.error('No text found in the response.');
+            }
         }
-    }
+        ));
     return remidiationRecommendation;
 }
 
