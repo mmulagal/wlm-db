@@ -50,9 +50,9 @@
   },
   "scripts": {
     "bundle": "esbuild src/agent.ts --bundle --platform=node --outfile=dist/agent.js --external:config.extends --external:path9",
-    "pkg:win": "npm run bundle && npx pkg dist/agent.js --targets node22-win-x64 --output dist/agent-win",
-    "pkg:mac": "npm run bundle && npx pkg dist/agent.js --targets node22-macos-x64 --output dist/agent-macos",
-    "pkg:linux": "npm run bundle && npx pkg dist/agent.js --targets node22-linux-x64 --output dist/agent-linux",
+    "pkg:win": "npm run bundle && npx pkg dist/agent.js --targets latest-win-x64 --output dist/agent-win",
+    "pkg:mac": "npm run bundle && npx pkg dist/agent.js --targets latest-macos-x64 --output dist/agent-macos",
+    "pkg:linux": "npm run bundle && npx pkg dist/agent.js --targets latest-linux-x64 --output dist/agent-linux",
     "pkg:all": "npm run pkg:win && npm run pkg:mac && npm run pkg:linux",
     "build": "rimraf dist && tsc && copyfiles -u 0 \"src/**/*.json\" dist",
     "start": "tsc && node dist/app.js",

@@ -69,7 +69,7 @@ export const MIN_RETRY_DELAY = 5000;
 
 //License URL
 export const LICENSE_URL =
-    'https://docs.aws.amazon.com/launchwizard/latest/userguide/launch-wizard-setting-up.html#launch-wizard-custom-ami';
+    'https://docs.aws.amazon.com/launchwizard/latest/userguide/launch-wizard-getting-started.html#launch-wizard-amis';
 
 //AWS resize URL
 export const AWS_RESIZE_URL = 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html';
