@@ -85,6 +85,7 @@ const OptimizeOntapInnerPage = () => {
                 });
                 break;
             case 'Multipath I/O Policy':
+            case 'Multipath I/O Timeout':
                 setCardHeight({
                     recommendationSection: '180px',
                     tagSection: '276px'
@@ -319,6 +320,7 @@ const OptimizeOntapInnerPage = () => {
     const renderTable = () => {
         switch (selectedOptimizeConfig?.type) {
             case 'Multipath I/O Policy':
+            case 'Multipath I/O Timeout':
                 return (
                     <OSMultiPathIOPolicy
                         type={selectedOptimizeConfig?.type}
@@ -365,7 +367,8 @@ const OptimizeOntapInnerPage = () => {
     const setHeading = () => {
         if (
             selectedOptimizeConfig?.type !== 'Multipath I/O Policy' &&
-            selectedOptimizeConfig?.type !== 'NTFS allocation unit size'
+            selectedOptimizeConfig?.type !== 'NTFS allocation unit size' &&
+            selectedOptimizeConfig?.type !== 'Multipath I/O Timeout'
         ) {
             return `ONTAP / ${selectedOptimizeConfig?.type}`;
         } else {

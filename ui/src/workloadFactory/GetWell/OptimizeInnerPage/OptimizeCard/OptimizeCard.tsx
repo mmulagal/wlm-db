@@ -141,6 +141,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     }
                 };
             case 'Multipath I/O Policy':
+            case 'Multipath I/O Timeout':
                 return {
                     block_one: { type: 'Impacted drives', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
