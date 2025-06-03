@@ -1,9 +1,11 @@
 import { DsTypography, Popover } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as CopyIcon } from '../../../../../../../../assets/ic_copy.svg';
 import styles from './PolicyDialog.module.scss';
 import CopyToClipboardCommon from '../../../../../../../../common/CopyToClipboard/copyToClipboard';
 
 const PolicyDialog = ({ data, label }: any) => {
+    const { t } = useTranslation();
     return (
         <div className={styles.policyDialog}>
             <DsTypography variant="Semibold_16">{label}</DsTypography>
@@ -13,7 +15,7 @@ const PolicyDialog = ({ data, label }: any) => {
                         <div className={styles['copy']}>
                             <Popover
                                 popoverClass={styles['copy-popover']}
-                                children={'Copied to clipboard'}
+                                children={t('databases.general.copied-to-clipboard')}
                                 container={
                                     <CopyToClipboardCommon
                                         value={data}

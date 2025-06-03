@@ -24,8 +24,6 @@ import { setRoutePath, setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
-import ManageInstanceWizard from './workloadFactory/InventoryV2/InventoryTablesComponent/ManageInstanceWizard/ManageInstanceWizard';
-// import RegisterBulkWizard from './workloadFactory/InventoryV2/InventoryTablesComponent/ManageInstanceWizard/RegisterBulkWizard';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);

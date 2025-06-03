@@ -1,8 +1,9 @@
 import { DsTypography, PasswordField, Popover, RadioButton, TextField, useWizard } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import styles from './DetectContent.module.scss';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { AUTHENTICATION_TYPE } from '../../../../../../utils/consts';
+import { ACTION_TYPE, AUTHENTICATION_TYPE } from '../../../../../../utils/consts';
 import {
     setAuthenticationType,
     setDetectManagePassword,
@@ -13,10 +14,9 @@ import {
 import { useEffect, useState } from 'react';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { setIsDetectHostError } from '../../../../../../store/mssql/msSqlActionSlice';
-import { GENERAL } from '../../../../../../utils/appConstants';
-import SelectInstances from './SelectInstances';
 
 const DetectContent = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { state, setState }: any = useWizard();
 
@@ -94,11 +94,13 @@ const DetectContent = () => {
     }, [detectPasswordSearch]);
     return (
         <div className={styles.detectContent}>
-            {(wizardOperationType === 'bulk' ||
+            {(wizardOperationType === ACTION_TYPE.BULK ||
                 (!manageSingleInstanceData?.sqlServerAuthentication &&
                     !manageSingleInstanceData?.windowsAuthentication)) && (
                 <div className={styles['radio-container']}>
-                    <DsTypography variant="Semibold_14">Select authentication mode</DsTypography>
+                    <DsTypography variant="Semibold_14">
+                        {t('databases.register-flow.select-authentication-mode')}
+                    </DsTypography>
                     <RadioButton
                         id="select-sql-authentication"
                         isChecked={authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
@@ -110,7 +112,7 @@ const DetectContent = () => {
                         className=""
                     />
                     <Popover
-                        children={GENERAL.COMING_SOON}
+                        children={t('databases.general.coming-soon')}
                         trigger="hover"
                         container={
                             <RadioButton
@@ -132,66 +134,72 @@ const DetectContent = () => {
                 </div>
             )}
 
-            {(wizardOperationType === 'bulk' ||
+            {(wizardOperationType === ACTION_TYPE.BULK ||
                 (!manageSingleInstanceData?.sqlServerAuthentication &&
                     !manageSingleInstanceData?.windowsAuthentication)) && (
                 <div className={styles.firstSection}>
-                    <DsTypography variant="Semibold_14">{GENERAL.DETECT_MSSQL_HEADING}</DsTypography>
+                    <DsTypography variant="Semibold_14">
+                        {t('databases.register-flow.detect-mssql-heading')}
+                    </DsTypography>
                     <div className={styles.textFieldContainer}>
                         <TextField
-                            label={GENERAL.DETECT_MSSQL_USERNAME}
+                            label={t('databases.register-flow.detect-mssql-username')}
                             value={detectUserName}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 setDetectUserName(e.target.value);
                                 setState({ mssqlUserNameFromWizard: e.target.value });
                             }}
                             className={styles.textFieldStyle}
-                            error={!detectManageUserName && hitNext ? GENERAL.ACTION_REQUIRED : ''}
-                            placeholder={'Enter ' + GENERAL.DETECT_MSSQL_USERNAME}
+                            error={!detectManageUserName && hitNext ? t('databases.general.action-required') : ''}
+                            placeholder={
+                                t('databases.general.enter') + ' ' + t('databases.register-flow.detect-mssql-username')
+                            }
                         />
 
                         <PasswordField
-                            label={GENERAL.DETECT_MSSQL_PASSWORD}
+                            label={t('databases.register-flow.detect-mssql-password')}
                             value={detectPassword}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 setDetectPassword(e.target.value);
                                 setState({ mssqlPasswordFromWizard: e.target.value });
                             }}
                             className={styles.textFieldStyle}
-                            error={!detectManagePassword && hitNext ? GENERAL.ACTION_REQUIRED : ''}
-                            placeholder={'Enter password'}
+                            error={!detectManagePassword && hitNext ? t('databases.general.action-required') : ''}
+                            placeholder={t('databases.general.enter-password')}
                         />
                     </div>
                 </div>
             )}
 
-            {(wizardOperationType === 'bulk' ||
+            {(wizardOperationType === ACTION_TYPE.BULK ||
                 (manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered)) && (
                 <div className={styles.secondSection}>
-                    <DsTypography variant="Semibold_14">{GENERAL.DETECT_FSX_HEADING}</DsTypography>
+                    <DsTypography variant="Semibold_14">{t('databases.register-flow.detect-fsx-heading')}</DsTypography>
                     <div className={styles.textFieldContainer}>
                         <TextField
-                            label={GENERAL.DETECT_FSX_USERNAME}
+                            label={t('databases.register-flow.detect-fsx-username')}
                             value={ontapUserName}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 setOntapUserName(e.target.value);
                                 setState({ ontapUserNameFromWizard: e.target.value });
                             }}
                             className={styles.textFieldStyle}
-                            error={!detectOntapUsername && hitNext ? GENERAL.ACTION_REQUIRED : ''}
-                            placeholder={'Enter ' + GENERAL.DETECT_FSX_USERNAME}
+                            error={!detectOntapUsername && hitNext ? t('databases.general.action-required') : ''}
+                            placeholder={
+                                t('databases.general.enter') + ' ' + t('databases.register-flow.detect-fsx-username')
+                            }
                         />
 
                         <PasswordField
-                            label={GENERAL.DETECT_FSX_PASSWORD}
+                            label={t('databases.register-flow.detect-fsx-password')}
                             value={ontapPassword}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 setOntapPassword(e.target.value);
                                 setState({ ontapPasswordFromWizard: e.target.value });
                             }}
                             className={styles.textFieldStyle}
-                            error={!detectOntapPassword && hitNext ? GENERAL.ACTION_REQUIRED : ''}
-                            placeholder={'Enter password'}
+                            error={!detectOntapPassword && hitNext ? t('databases.general.action-required') : ''}
+                            placeholder={t('databases.general.enter-password')}
                         />
                     </div>
                 </div>

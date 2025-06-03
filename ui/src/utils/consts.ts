@@ -939,3 +939,9 @@ export const RESPONSE_STATUS = {
     SUCCESS: 'SUCCESS',
     FAILED: 'FAILED'
 };
+
+// Add any type of action in the below object
+export const ACTION_TYPE = {
+    BULK: 'bulk',
+    SINGLE: 'single'
+};

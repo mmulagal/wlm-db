@@ -1,8 +1,10 @@
-import { DsTypography, Table, useTable } from '@netapp/design-system';
+import { DsTypography, Table, useTable, Popover } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import styles from './DetectHeader.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
+import { ReactComponent as TooltipIcon } from '../../../../../../assets/tooltipGrey.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../../../../utils/appConstants';
@@ -12,8 +14,12 @@ import {
     hasMissingPowershell7,
     missingModules
 } from '../../ManageInstanceUtils';
+import DotComponent from '../../../../../../common/DotComponent/DotComponent';
+import { MANAGE_STATES } from '../../../../../../utils/consts';
+import TooltipCard from '../../../../../../common/TooltipCard/TooltipCard';
 
 const DetectedInstanceTable = () => {
+    const { t } = useTranslation();
     const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
     const [tableData, setTableData] = useState<any>([]);
 
@@ -30,7 +36,8 @@ const DetectedInstanceTable = () => {
             region: '',
             credentialsId: '',
             databaseInstanceName: '',
-            overallState: GENERAL.NOT_AVAILABLE
+            overallState: GENERAL.NOT_AVAILABLE,
+            readyCount: 0
         };
 
         let manageReadinessData: any = null;
@@ -46,6 +53,37 @@ const DetectedInstanceTable = () => {
             let dbcreation = getPermissionState('dbcreation', manageReadinessData);
             let sandbox = getPermissionState('sandbox', manageReadinessData);
             let overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
+            let readyCount = 0;
+            let perRowState = [
+                {
+                    key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
+                    value: assessment
+                },
+                {
+                    key: t('databases.register-flow.fix-well-architected-issues'),
+                    value: remediation
+                },
+                {
+                    key: t('databases.register-flow.create-database'),
+                    value: dbcreation
+                },
+                {
+                    key: t('databases.register-flow.create-database-copies-sandbox'),
+                    value: sandbox
+                }
+            ];
+            if (assessment === MANAGE_STATES.READY) {
+                readyCount += 1;
+            }
+            if (remediation === MANAGE_STATES.READY) {
+                readyCount += 1;
+            }
+            if (dbcreation === MANAGE_STATES.READY) {
+                readyCount += 1;
+            }
+            if (sandbox === MANAGE_STATES.READY) {
+                readyCount += 1;
+            }
             manageCheckObj = {
                 installMissingAWS: missingModulesList.length > 0 ? true : false,
                 installMissingAWSList: missingModulesList,
@@ -58,7 +96,9 @@ const DetectedInstanceTable = () => {
                 region: instance?.data?.regionId,
                 credentialsId: instance?.data?.credentialId,
                 databaseInstanceName: instance?.data?.databaseInstanceName,
-                overallState: overallState
+                overallState: overallState,
+                readyCount: readyCount + '/4',
+                perRowState: perRowState
             };
             return manageCheckObj;
         }
@@ -68,14 +108,18 @@ const DetectedInstanceTable = () => {
     useEffect(() => {
         let newTableData: any = [];
         selectedMultiDetectInstances?.forEach((item: any) => {
-            if (item?.authorized) {
-                newTableData.push({
-                    id: item?.id,
-                    instanceName: item?.data?.databaseInstanceName,
-                    hostName: item?.data?.name,
-                    readinessStatus: manageCheck(item)?.overallState
-                });
-            }
+            const manageStates = manageCheck(item);
+            newTableData.push({
+                id: item?.id,
+                instanceName: item?.data?.databaseInstanceName,
+                authenticationStatus: item?.authorized
+                    ? t('databases.general.authenticated')
+                    : t('databases.general.unauthenticated'),
+                hostName: item?.data?.name,
+                readinessStatus: manageStates?.overallState,
+                readyCount: manageStates?.readyCount,
+                perRowState: manageStates?.perRowState || []
+            });
         });
         setTableData(newTableData);
     }, [selectedMultiDetectInstances]);
@@ -83,28 +127,65 @@ const DetectedInstanceTable = () => {
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
-            Header: 'Instance name',
+            Header: t('databases.register-flow.detect-instance-table-col.instance-name'),
             accessor: 'instanceName',
-            width: '310px',
+            width: '180px',
             isSortable: true
         },
         {
             id: '2',
-            Header: 'Host name',
+            Header: t('databases.register-flow.detect-instance-table-col.host-name'),
             accessor: 'hostName',
-            width: '310px',
-            filterOptions: 'auto'
+            width: '180px',
+            filterOptions: 'auto',
+            isSortable: true
         },
         {
             id: '3',
-            Header: `Readiness status`,
+            Header: t('databases.register-flow.detect-instance-table-col.authenticated-status'),
+            accessor: 'authenticationStatus',
+            width: '200px',
+            filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                if (cellData === t('databases.general.authenticated')) {
+                    return <DotComponent color={'var(--success)'} value={cellData} />;
+                }
+                if (cellData === t('databases.general.unauthenticated')) {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value={cellData} />;
+                }
+            }
+        },
+        {
+            id: '4',
+            Header: t('databases.register-flow.detect-instance-table-col.readiness-status'),
             accessor: 'readinessStatus',
-            width: '310px',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {cellData === 'Ready' ? <Success /> : <Cross />}
+                        {cellData === MANAGE_STATES.READY ? <Success /> : <Cross />}
+                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                    </div>
+                );
+            }
+        },
+        {
+            id: '5',
+            Header: t('databases.register-flow.detect-instance-table-col.prerequisite-check'),
+            accessor: 'readyCount',
+            width: '188px',
+            filterOptions: 'auto',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Popover
+                            popoverClass={''}
+                            children={<TooltipCard listObj={rowData?.perRowState} registerFlow={true} />}
+                            trigger="click"
+                            isAppendedToBody={false}
+                            container={<TooltipIcon />}
+                        />
                         <DsTypography variant="Regular_14">{cellData}</DsTypography>
                     </div>
                 );

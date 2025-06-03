@@ -1,14 +1,15 @@
 import { DsButton, DsTypography, useDialog } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as InstanceName } from '../../../../../../assets/instance-name.svg';
 
 import styles from './DetectHeader.module.scss';
 import DialogComponent from '../../../../../../common/Dialog/DialogComponent';
-import { GENERAL } from '../../../../../../utils/appConstants';
 import DetectedInstanceTable from './DetectedInstanceTable';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 
 const MultiInstanceHeader = () => {
+    const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
     const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
     const [countSummary, setCountSummary] = useState<any>({});
@@ -32,9 +33,9 @@ const MultiInstanceHeader = () => {
     const handleManageDialog = () => {
         setDialog(
             <DialogComponent
-                header={'Authenticated Instances status'}
+                header={t('databases.register-flow.multiinstance-header-dialog-heading')}
                 content={<DetectedInstanceTable />}
-                primaryButton={GENERAL.CLOSE}
+                primaryButton={t('databases.general.close')}
                 callback={() => {}}
                 closeCallback={() => {
                     closeDialog();
@@ -53,16 +54,19 @@ const MultiInstanceHeader = () => {
 
                     <div className={`${styles.column}`}>
                         <DsTypography
-                            variant="Semibold_14"
+                            variant="Semibold_24"
                             className={styles.titleText}
-                            style={{ paddingRight: '8px' }}
-                            title={countSummary.total}
+                            style={{ lineHeight: 'unset' }}
                         >
                             {countSummary.total}
                         </DsTypography>
 
-                        <DsTypography variant="Regular_14" className={styles.label} title={GENERAL.INSTANCE_NAME}>
-                            {GENERAL.INSTANCE_NAME}
+                        <DsTypography
+                            variant="Regular_14"
+                            className={styles.label}
+                            title={t('databases.register-flow.selected-instances')}
+                        >
+                            {t('databases.register-flow.selected-instances')}
                         </DsTypography>
                     </div>
 
@@ -77,9 +81,9 @@ const MultiInstanceHeader = () => {
                         <DsTypography
                             variant="Regular_14"
                             className={styles.label}
-                            title={'Successfully authenticated'}
+                            title={t('databases.register-flow.successfully-authenticated')}
                         >
-                            Successfully authenticated
+                            {t('databases.register-flow.successfully-authenticated')}
                         </DsTypography>
                     </div>
 
@@ -95,15 +99,15 @@ const MultiInstanceHeader = () => {
                         <DsTypography
                             variant="Regular_14"
                             className={styles.label}
-                            title={GENERAL.RESOURCE_DEPLOYMENT_MODEL}
+                            title={t('databases.register-flow.ready-for-management')}
                         >
-                            Ready for management
+                            {t('databases.register-flow.ready-for-management')}
                         </DsTypography>
                     </div>
 
                     <div className={styles.buttonBlock}>
                         <DsButton type="text" onClick={handleManageDialog}>
-                            View Instance status
+                            {t('databases.register-flow.view-details')}
                         </DsButton>
                     </div>
                 </div>

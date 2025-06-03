@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { setInstallType } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { useEffect } from 'react';
+import { ACTION_TYPE } from '../../../../../../utils/consts';
 
 const ActionComponent = ({ manageChecks }: any) => {
     const { t } = useTranslation();
@@ -16,7 +17,7 @@ const ActionComponent = ({ manageChecks }: any) => {
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
     useEffect(() => {
-        if (wizardOperationType === 'bulk') {
+        if (wizardOperationType === ACTION_TYPE.BULK) {
             dispatch(
                 setInstallType({
                     installMissingAWS: true,
@@ -35,9 +36,9 @@ const ActionComponent = ({ manageChecks }: any) => {
 
     return (
         <div className={styles.actionComponent}>
-            <DsTypography variant="Semibold_16">Action Required</DsTypography>
+            <DsTypography variant="Semibold_16">{t('databases.general.action-required')}</DsTypography>
 
-            {wizardOperationType === 'bulk' ? (
+            {wizardOperationType === ACTION_TYPE.BULK ? (
                 <div className={styles.selectContainer}>
                     <DsCheckbox
                         id="wlm-db-install-missing-aws"
