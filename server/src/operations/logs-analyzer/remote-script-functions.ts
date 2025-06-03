@@ -16,31 +16,23 @@ if (-not $moduleFound) {
         error = "AWS.Tools.BedrockRuntime not found."
     }
     $result | ConvertTo-Json -Depth 5
-} elseif($moduleFound) {
+} elseif ($moduleFound) {
     try {
         Import-Module AWS.Tools.BedrockRuntime -ErrorAction Stop
 
         $region = "${region}"
         $modelId = "${modelId}"
 
-        try {
-            $contentBlock = New-Object Amazon.BedrockRuntime.Model.ContentBlock
-            $contentBlock.Text = "Hello"
-            $message = New-Object Amazon.BedrockRuntime.Model.Message
-            $message.Role = "user"
-            $message.Content = $contentBlock
-            $response = Invoke-BDRRConverse -ModelId $modelId -Messages $message -Region $region
-            $result = @{
-                success = $true
-                response = $response | ConvertTo-Json -Depth 10
-                error = $null
-            }
-        } catch {
-            $result = @{
-                success = $false
-                response = $null
-                error = $_.Exception.Message
-            }
+        $contentBlock = New-Object Amazon.BedrockRuntime.Model.ContentBlock
+        $contentBlock.Text = "Hello"
+        $message = New-Object Amazon.BedrockRuntime.Model.Message
+        $message.Role = "user"
+        $message.Content = $contentBlock
+        $response = Invoke-BDRRConverse -ModelId $modelId -Messages $message -Region $region
+        $result = @{
+            success = $true
+            response = $response | ConvertTo-Json -Depth 10
+            error = $null
         }
     } catch {
         $result = @{

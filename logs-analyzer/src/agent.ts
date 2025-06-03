@@ -26,7 +26,16 @@ import collectLogs from '../operations/logs-filtering-operations';
 import TOOLS from './utils/tools';
 import { getPowershellScript, getBashScript, runPowerShellScript, deleteOlderFilesInDirectory } from './utils/utils';
 import logger from './utils/logging';
-import { ErrorLg, ToolUse, ToolSpec, ErrorLogWithScript, MessageObj } from './utils/interfaces';
+import {
+    ErrorLg,
+    ToolUse,
+    ToolSpec,
+    ErrorLogWithScript,
+    MessageObj,
+    ErrorLogWithAdditionalInfo
+} from './utils/interfaces';
+
+const LIMIT_3 = pLimit(3); // Limit concurrency to 3
 
 const { argv } = yargs(hideBin(process.argv))
     .option('logs-path', {
@@ -233,29 +242,38 @@ async function handleToolUse(
 ) {
     let stopReason = '';
     if (message?.content) {
-        await Promise.all(message.content?.map(async content => {
-            if (content?.toolUse) {
-                const tool = content.toolUse;
+        await Promise.all(
+            message.content?.map(content =>
+                LIMIT_3(async () => {
+                    if (content?.toolUse) {
+                        const tool = content.toolUse;
 
-                switch (tool?.name) {
-                    case 'analyze_db_logs': {
-                        await analyzeDatabaseApplicationLogs(tool, client, LOGS_FOLDER, messages, INFERENCE_CONFIG);
-                        stopReason = 'end_turn'; // Stop further tool use
-                        logger.info('Log analysis completed. Stopping further tool use.');
+                        switch (tool?.name) {
+                            case 'analyze_db_logs': {
+                                await analyzeDatabaseApplicationLogs(
+                                    tool,
+                                    client,
+                                    LOGS_FOLDER,
+                                    messages,
+                                    INFERENCE_CONFIG
+                                );
+                                stopReason = 'end_turn'; // Stop further tool use
+                                logger.info('Log analysis completed. Stopping further tool use.');
 
-                        break;
+                                break;
+                            }
+                            default: {
+                                logger.info(`Tool ${tool.name} is not supported`);
+                                break;
+                            }
+                        }
+
+                        if (stopReason === 'tool_use') {
+                            await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, inferenceConfig);
+                        }
                     }
-                    default: {
-                        logger.info(`Tool ${tool.name} is not supported`);
-                        break;
-                    }
-                }
-
-                if (stopReason === 'tool_use') {
-                    await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, inferenceConfig);
-                }
-            }
-        })
+                })
+            )
         );
     }
 }
@@ -362,7 +380,7 @@ async function runBashScript(scriptContent: string): Promise<string> {
 async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWithScripts: ErrorLogWithScript[]) {
     logger.info('Checking and executing additional scripts.');
 
-    const result: { error: string, cause: string, count: number, severity: string, sql: string, additionalInfo?: string }[] = [];
+    const result: ErrorLogWithAdditionalInfo[] = [];
 
     const uniqueQueryMap = new Map();
     errorLogsWithScripts.forEach((logWithScript: ErrorLogWithScript) => {
@@ -379,35 +397,36 @@ async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWi
     });
 
     await Promise.all(
-        Array.from(uniqueQueryMap.values()).map(async value => {
-            const [{ sql }] = value;
-            if (!isEmpty(sql)) {
-                const response =
-                    databaseType === DATABASE_TYPE.MSSQL
-                        ? await runPowerShellScript(getPowershellScript(sql))
-                        : await runBashScript(getBashScript(sql));
-                const errorAndCauseWithAdditionalInfo = value.map(
-                    ({ error, cause, count, severity, sql: sqlQueries }: ErrorLogWithScript) => ({
-                        error,
-                        cause,
-                        count,
-                        severity,
-                        sql: sqlQueries,
-                        additionalInfo: response
-                    })
-                );
-                result.push(...errorAndCauseWithAdditionalInfo);
-            }
-        })
+        Array.from(uniqueQueryMap.values()).map(value =>
+            LIMIT_3(async () => {
+                const [{ sql }] = value;
+                if (!isEmpty(sql)) {
+                    const response =
+                        databaseType === DATABASE_TYPE.MSSQL
+                            ? await runPowerShellScript(getPowershellScript(sql))
+                            : await runBashScript(getBashScript(sql));
+                    const errorAndCauseWithAdditionalInfo = value.map(
+                        ({ error, cause, count, severity }: ErrorLogWithScript) => ({
+                            error,
+                            cause,
+                            count,
+                            severity,
+                            additionalInfo: response
+                        })
+                    );
+                    result.push(...errorAndCauseWithAdditionalInfo);
+                }
+            })
+        )
     );
 
-    return { result };
+    return { result: compact(result) };
 }
 
 async function recommendRemediation(
     databaseType: string,
     client: BedrockRuntimeClient,
-    result: string[],
+    result: ErrorLogWithAdditionalInfo[],
     inferenceConfig: InferenceConfiguration
 ) {
     logger.info('Recommending remediation for errors.', { databaseType });
@@ -418,30 +437,32 @@ async function recommendRemediation(
             : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
 
     await Promise.all(
-        result.map(async errorWithInfo => {
-            const response = await streamMessages(
-                client,
-                MODEL_ID,
-                [
-                    {
-                        role: ConversationRole.USER,
-                        content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
-                    }
-                ],
-                undefined,
-                inferenceConfig
-            );
+        result.map(errorWithInfo =>
+            LIMIT_3(async () => {
+                const response = await streamMessages(
+                    client,
+                    MODEL_ID,
+                    [
+                        {
+                            role: ConversationRole.USER,
+                            content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
+                        }
+                    ],
+                    undefined,
+                    inferenceConfig
+                );
 
-            const { message } = response;
-            const { content: [{ text }] = [] } = message;
-            if (text) {
-                const { error, cause, count, severity, remediation } = JSON.parse(text);
-                remidiationRecommendation.push({ error, cause, count, severity, remediation });
-            } else {
-                logger.error('No text found in the response.');
-            }
-        }
-        ));
+                const { message } = response;
+                const { content: [{ text }] = [] } = message;
+                if (text) {
+                    const { error, cause, count, severity, remediation } = JSON.parse(text);
+                    remidiationRecommendation.push({ error, cause, count, severity, remediation });
+                } else {
+                    logger.error('No text found in the response.');
+                }
+            })
+        )
+    );
     return remidiationRecommendation;
 }
 
@@ -453,36 +474,31 @@ async function getDatabaseDetails(logsFolderPath: string) {
         file => file.endsWith('.trc') || file.endsWith('.xel') || file.endsWith('.log') || file.startsWith('ERRORLOG')
     );
 
-    const limit = pLimit(3); // Limit concurrency to 3
+    for (const logFile of logFiles) {
+        const filePath = join(logsFolderPath, logFile);
+        const fileContent = readFileSync(filePath, 'utf-8').replace(/[^\x20-\x7E]/g, '');
+        let databaseType = 'Unknown';
+        let databaseVersion = 'Unknown';
 
-    await Promise.all(
-        logFiles.map(logFile =>
-            limit(async () => {
-                const filePath = join(logsFolderPath, logFile);
-                const fileContent = readFileSync(filePath, 'utf-8').replace(/[^\x20-\x7E]/g, '');
-                let databaseType = 'Unknown';
-                let databaseVersion = 'Unknown';
+        if (fileContent.includes('Microsoft SQL Server')) {
+            databaseType = DATABASE_TYPE.MSSQL;
+            const versionMatch = fileContent.match(/Microsoft SQL Server\s+([\d.]+)/);
+            if (versionMatch) {
+                [, databaseVersion] = versionMatch;
+            }
+        } else if (fileContent.includes('PostgreSQL')) {
+            databaseType = DATABASE_TYPE.POSTGRESQL;
+            const versionMatch = fileContent.match(/PostgreSQL\s+([\d.]+)/);
+            if (versionMatch) {
+                [, databaseVersion] = versionMatch;
+            }
+        }
 
-                if (fileContent.includes('Microsoft SQL Server')) {
-                    databaseType = DATABASE_TYPE.MSSQL;
-                    const versionMatch = fileContent.match(/Microsoft SQL Server\s+([\d.]+)/);
-                    if (versionMatch) {
-                        [, databaseVersion] = versionMatch;
-                    }
-                } else if (fileContent.includes('PostgreSQL')) {
-                    databaseType = DATABASE_TYPE.POSTGRESQL;
-                    const versionMatch = fileContent.match(/PostgreSQL\s+([\d.]+)/);
-                    if (versionMatch) {
-                        [, databaseVersion] = versionMatch;
-                    }
-                }
-
-                if (!databaseDetails) {
-                    databaseDetails = { logFile, databaseType, databaseVersion };
-                }
-            })
-        )
-    );
+        if (!databaseDetails) {
+            databaseDetails = { logFile, databaseType, databaseVersion };
+            break; // Stop as soon as we find a match
+        }
+    }
     if (isEmpty(databaseDetails)) {
         const errorMessage = 'No database type or version found in the logs.';
         logger.error(errorMessage);

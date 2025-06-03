@@ -11,7 +11,7 @@ function getPowershellScript(sql: string[]) {
 
         # Define the list of queries
         $queries = @(
-            ${sql.map(sqlQuery =>`'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')}
+            ${sql.map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')}
         )
 
 
@@ -62,7 +62,7 @@ function getBashScript(sql: string[]) {
 
         # Define the list of queries
         queries=(
-             ${sql.map(sqlQuery =>`'${sqlQuery.replace(/'/g, `'\\''`)}'`).join(',\n  ')}
+            ${sql.map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')}
         )
 
         # Initialize an array to store the results
