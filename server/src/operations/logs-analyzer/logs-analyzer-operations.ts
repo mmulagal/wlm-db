@@ -1,9 +1,11 @@
+import { Type, Static } from '@fastify/type-provider-typebox';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { DATABASE_TYPE, JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
 import { AuditStatus, DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
+
 import { getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
 import {
     LOGS_ANALYZER_BUNDLE_PATH,
@@ -22,7 +24,7 @@ import { getModelAvailability } from '../../lib/aws/bedrock';
 import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
 import { parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import { InferenceConfigType } from '../../routes/types/logs-analyzer.types';
+import { InferenceConfigType, RemediationRecommendationObject } from '../../routes/types/logs-analyzer.types';
 import getInferenceProfileFromModelId from '../aws/bedrock-operations';
 import {
     getLinuxBedrockAvailabilityCheckScript,
@@ -31,10 +33,25 @@ import {
     getWindowsPrepareScript
 } from './remote-script-functions';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../workloads/pgsql/const';
+import { createLogsAnalysisReports, listLogsAnalysisReports } from '../../lib/database/logs-analysis-reports';
 
 const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
+
+const DataObject = Type.Object({
+    conversationFilePath: Type.String(),
+    remediationFilePath: Type.String(),
+    statusFilePath: Type.String(),
+    remediationRecommendation: Type.Array(RemediationRecommendationObject)
+});
+
+const LogsAnalysisReportObject = Type.Object({
+    status: Type.String(),
+    message: Type.String(),
+    data: DataObject
+});
+type LogsAnalysisReportObjectType = Static<typeof LogsAnalysisReportObject>;
 
 async function findFirstAvailableModel(accountId: string, credentialsId: string, region: string, modelIds: string[]) {
     logger.debug('Finding first available model:', {
@@ -131,6 +148,37 @@ async function checkLogAnalyzerPreRequisites(
     return { inferenceProfileArn, modelId };
 }
 
+async function updateLogsAnalysisReportsInDB(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    databaseInstanceId: string,
+    jobId: string,
+    databaseType: string,
+    jsonSsmLogsResponse: object
+) {
+    logger.info('Updating logs analysis reports in DB:', {
+        accountId,
+        credentialsId,
+        resourceId,
+        databaseInstanceId,
+        jobId
+    });
+
+    await createLogsAnalysisReports([
+        {
+            credentials_id: credentialsId,
+            resource_id: resourceId,
+            database_instance_id: databaseInstanceId,
+            job_id: jobId,
+            account_id: accountId,
+            database_type: databaseType as DATABASE_TYPE,
+            logs_analysis_data: jsonSsmLogsResponse,
+            version: LOGS_ANALYZER_PACKAGE_VERSION,
+            creation_time: new Date()
+        }
+    ]);
+}
 async function handleLogsAnalysis(
     accountId: string,
     credentialsId: string,
@@ -183,11 +231,8 @@ async function handleLogsAnalysis(
 
         const logsPathQuery =
             'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH';
-        const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth(
-            [managedInstance?.database_instance_name],
-            logsPathQuery,
-            matchingInstance?.sqlAuthEnabled
-        );
+        const { sqlAuthEnabled, database_instance_name: databaseInstanceName } = matchingInstance;
+        const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth([databaseInstanceName], logsPathQuery, sqlAuthEnabled);
         const logsPathResponse = await callSsmExecution(
             credentialsId,
             region,
@@ -196,13 +241,15 @@ async function handleLogsAnalysis(
             'Fetch Logs Path for sql server instance'
         );
         const parsedResponse = logsPathResponse ? sqlResponseParsing(logsPathResponse) : {};
-        const [{ path: logsPath } = {}] = parsedResponse?.[managedInstance?.database_instance_name] || [];
+        const [{ path: logsPath } = {}] = parsedResponse?.[databaseInstanceName] || [];
         const logsAnalyserScriptCommand =
             databaseType === DATABASE_TYPE.mssql
                 ? getWindowsPrepareScript({
                       s3SignedUrl,
                       packageName: LOGS_ANALYZER_PACKAGE_NAME,
                       logsPath,
+                      sqlAuthEnabled,
+                      databaseInstanceName,
                       version: LOGS_ANALYZER_PACKAGE_VERSION,
                       instanceId: activeNodeInstanceId,
                       region,
@@ -242,6 +289,16 @@ async function handleLogsAnalysis(
         logger.info('Logs analysis compleeted successfully for jobId:', jobId);
         logger.debug(`Logs analysis response: ${JSON.stringify(jsonSsmLogsResponse)}`);
 
+        await updateLogsAnalysisReportsInDB(
+            accountId,
+            credentialsId,
+            managedInstance.resource_id,
+            managedInstance.database_instance_id,
+            jobId,
+            databaseType,
+            jsonSsmLogsResponse
+        );
+        await updateLongRunningAuditGroup(AuditStatus.SUCCESS, 'Logs analysis completed successfully');
         await updateJobDetails(accountId, jobId, {
             endTime: Date.now(),
             status: JOBSTATUS.COMPLETED
@@ -326,4 +383,35 @@ async function triggerLogsAnalysis(
     }
 }
 
-export { triggerLogsAnalysis, handleLogsAnalysis };
+async function getLogsAnalysisReport(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    jobId?: string
+) {
+    logger.info('Getting logs analysis report:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        jobId
+    });
+
+    const response = await listLogsAnalysisReports(accountId, databaseHostId, databaseInstanceId, jobId);
+
+    if (response && response.length > 0) {
+        const [{ logs_analysis_data: logsAnalysisData } = {}] = response;
+        const {
+            data: { remediationRecommendation }
+        } = logsAnalysisData as LogsAnalysisReportObjectType;
+
+        return { remediationRecommendation };
+    }
+    const errorMessage = `No logs analysis report found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;
+    logger.error(errorMessage);
+    throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+}
+export { triggerLogsAnalysis, handleLogsAnalysis, getLogsAnalysisReport };

@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify/types/instance';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import { LogsAnalyzerSchema } from './schemas/logs-analyzer-schema';
+import { GetLogsAnalyzerSchema, LogsAnalyzerSchema } from './schemas/logs-analyzer-schema';
 import castRequest from './utils';
-import { triggerLogsAnalysis } from '../operations/logs-analyzer/logs-analyzer-operations';
+import { getLogsAnalysisReport, triggerLogsAnalysis } from '../operations/logs-analyzer/logs-analyzer-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -27,6 +27,28 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
                 inferenceConfig,
                 logsAnalyzerS3SignedUrl
             );
+            return reply.send(response);
+        }
+    );
+
+    server.get(
+        `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`,
+        { schema: GetLogsAnalyzerSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                query: { jobId }
+            } = castRequest(request);
+
+            const response = await getLogsAnalysisReport(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                jobId
+            );
+
             return reply.send(response);
         }
     );

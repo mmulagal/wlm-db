@@ -44,6 +44,20 @@ const { argv } = yargs(hideBin(process.argv))
         description: 'Database application logs folder path',
         demandOption: true
     })
+    .option('sql-auth-enabled', {
+        alias: 's',
+        type: 'boolean',
+        description: 'SQL authentication enabled',
+        default: false,
+        demandOption: false
+    })
+    .option('database-instance-name', {
+        alias: 'd',
+        type: 'string',
+        description: 'SQL instance name',
+        default: 'MSSQLSERVER',
+        demandOption: false
+    })
     .option('job-id', {
         alias: 'j',
         type: 'string',
@@ -53,7 +67,7 @@ const { argv } = yargs(hideBin(process.argv))
     .option('instance-id', {
         alias: 'i',
         type: 'string',
-        description: 'Workload Factory job ID',
+        description: 'EC2 instance ID',
         demandOption: true
     })
     .option('region', {
@@ -123,6 +137,8 @@ logger.info('Command line arguments:', argv);
 
 const {
     'logs-path': LOGS_FOLDER,
+    'sql-auth-enabled': SQL_AUTH_ENABLED,
+    'database-instance-name': DATABASE_INSTANCE_NAME,
     'job-id': JOB_ID,
     'instance-id': INSTANCE_ID,
     'log-level': LOG_LEVEL,
@@ -150,7 +166,7 @@ const logStreamSuffix = 'aws-runPowerShellScript/stdout';
 const logStreamName = `${INSTANCE_ID}-logs-analyzer/${JOB_ID}/${logStreamSuffix}`;
 const CW_OUTPUT_PATH = `${logGroupName}/${logStreamName}`;
 
-const remidiationRecommendation: {
+const remediationRecommendation: {
     error: string;
     cause: string;
     count: number;
@@ -200,11 +216,11 @@ async function initiateLogsAnalysis(inputText: string) {
 
         logger.info('Step 4: Writing output files.');
         writeFileSync(conversationFilePath, JSON.stringify(messages, null, 2), 'utf-8');
-        writeFileSync(remediationFilePath, JSON.stringify(remidiationRecommendation, null, 2), 'utf-8');
+        writeFileSync(remediationFilePath, JSON.stringify(remediationRecommendation, null, 2), 'utf-8');
         writeFileSync(statusFilePath, 'Completed', 'utf-8');
 
         logger.debug('Conversation history:', JSON.stringify(messages, null, 2));
-        logger.debug('Recommendations for remediation are:', JSON.stringify(remidiationRecommendation, null, 2));
+        logger.debug('Recommendations for remediation are:', JSON.stringify(remediationRecommendation, null, 2));
 
         // delete files older than 7 days
         deleteOlderFilesInDirectory(outputDir, 7);
@@ -216,7 +232,7 @@ async function initiateLogsAnalysis(inputText: string) {
                 conversationFilePath,
                 remediationFilePath,
                 statusFilePath,
-                remidiationRecommendation
+                remediationRecommendation
             }
         };
 
@@ -250,13 +266,7 @@ async function handleToolUse(
 
                         switch (tool?.name) {
                             case 'analyze_db_logs': {
-                                await analyzeDatabaseApplicationLogs(
-                                    tool,
-                                    client,
-                                    LOGS_FOLDER,
-                                    messages,
-                                    INFERENCE_CONFIG
-                                );
+                                await analyzeDatabaseApplicationLogs(tool, client, LOGS_FOLDER, SQL_AUTH_ENABLED, DATABASE_INSTANCE_NAME, messages, INFERENCE_CONFIG);
                                 stopReason = 'end_turn'; // Stop further tool use
                                 logger.info('Log analysis completed. Stopping further tool use.');
 
@@ -332,6 +342,7 @@ function parseSuggestedScripts(assistantMessages: string[]): ErrorLogWithScript[
     return compact(
         assistantMessages
             .filter((asstMsg: string) => {
+                logger.debug('Processing assistant message:', asstMsg);
                 if (asstMsg && asstMsg.includes('error')) {
                     try {
                         const parsedMsg = JSON.parse(asstMsg);
@@ -377,8 +388,8 @@ async function runBashScript(scriptContent: string): Promise<string> {
     }
 }
 
-async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWithScripts: ErrorLogWithScript[]) {
-    logger.info('Checking and executing additional scripts.');
+async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWithScripts: ErrorLogWithScript[], databaseInstanceName?: string, sqlAuthEnabled?: boolean) {
+    logger.info('Checking and executing additional scripts.', { databaseType, databaseInstanceName, sqlAuthEnabled });
 
     const result: ErrorLogWithAdditionalInfo[] = [];
 
@@ -403,7 +414,7 @@ async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWi
                 if (!isEmpty(sql)) {
                     const response =
                         databaseType === DATABASE_TYPE.MSSQL
-                            ? await runPowerShellScript(getPowershellScript(sql))
+                            ? await runPowerShellScript(getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled))
                             : await runBashScript(getBashScript(sql));
                     const errorAndCauseWithAdditionalInfo = value.map(
                         ({ error, cause, count, severity }: ErrorLogWithScript) => ({
@@ -412,6 +423,17 @@ async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWi
                             count,
                             severity,
                             additionalInfo: response
+                        })
+                    );
+                    result.push(...errorAndCauseWithAdditionalInfo);
+                } else {
+                    const errorAndCauseWithAdditionalInfo = value.map(
+                        ({ error, cause, count, severity }: ErrorLogWithScript) => ({
+                            error,
+                            cause,
+                            count,
+                            severity,
+                            additionalInfo: 'No additional script executed.'
                         })
                     );
                     result.push(...errorAndCauseWithAdditionalInfo);
@@ -456,14 +478,14 @@ async function recommendRemediation(
                 const { content: [{ text }] = [] } = message;
                 if (text) {
                     const { error, cause, count, severity, remediation } = JSON.parse(text);
-                    remidiationRecommendation.push({ error, cause, count, severity, remediation });
+                    remediationRecommendation.push({ error, cause, count, severity, remediation });
                 } else {
                     logger.error('No text found in the response.');
                 }
             })
         )
     );
-    return remidiationRecommendation;
+    return remediationRecommendation;
 }
 
 async function getDatabaseDetails(logsFolderPath: string) {
@@ -511,10 +533,12 @@ async function analyzeDatabaseApplicationLogs(
     tool: ToolUse,
     client: BedrockRuntimeClient,
     logsFolderPath: string,
+    sqlAuthEnabled: boolean,
+    databaseInstanceName: string,
     messages: MessageObj[],
     inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG
 ) {
-    logger.info('Analyzing database application logs.', { logsFolderPath });
+    logger.info('Analyzing database application logs.', { logsFolderPath, sqlAuthEnabled, databaseInstanceName });
 
     const databaseDetails = await getDatabaseDetails(logsFolderPath);
     // Collect logs based on the identified database type
@@ -536,7 +560,7 @@ async function analyzeDatabaseApplicationLogs(
     const { errorLogsWithScripts } = await analyzeErrorLogs(dbType, client, errorLogs, inferenceConfig);
 
     if (!isEmpty(errorLogsWithScripts)) {
-        const { result } = await checkAndExecuteAdditionalScript(dbType, errorLogsWithScripts);
+        const { result } = await checkAndExecuteAdditionalScript(dbType, errorLogsWithScripts, databaseInstanceName, sqlAuthEnabled);
         await recommendRemediation(dbType || DATABASE_TYPE.MSSQL, client, result, inferenceConfig);
     }
 
