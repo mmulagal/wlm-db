@@ -25,8 +25,9 @@ export const Content = () => {
 
             {wizardOperationType === ACTION_TYPE.BULK && isAuth && <AuthenticatedScreen />}
 
-            {(wizardOperationType !== ACTION_TYPE.BULK ||
-                (wizardOperationType === ACTION_TYPE.BULK && !isAuth)) && <DetectContent />}
+            {(wizardOperationType !== ACTION_TYPE.BULK || (wizardOperationType === ACTION_TYPE.BULK && !isAuth)) && (
+                <DetectContent />
+            )}
         </div>
     );
 };
