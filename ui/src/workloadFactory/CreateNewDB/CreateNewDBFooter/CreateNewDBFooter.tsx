@@ -10,6 +10,7 @@ import {
     FORM_TO_WLF_NAVIGATE_BLUEXP,
     FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
     FORM_TO_WLF_NAVIGATE_INVENTORY,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     WLF_TABS
 } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
@@ -64,9 +65,9 @@ const CreateNewUserFooter = () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                     dispatch(updateRefreshBlocked(true));
                                     if (isWorkloadFactoryStatus) {
-                                        navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
+                                        navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
                                     } else {
-                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
+                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
                                     }
 
                                     dispatch(clearNotifications());
@@ -94,7 +95,7 @@ const CreateNewUserFooter = () => {
                     }
                     dispatch(updateRefreshBlocked(true));
                     if (isWorkloadFactoryStatus) {
-                        navigate('../databases');
+                        navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
                     } else {
                         navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
                     }

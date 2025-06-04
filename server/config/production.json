@@ -22,6 +22,11 @@
     "db": {
         "tco": {
             "update-recommendation-preference": "7d"
+        },
+        "assessment": {
+            "purge": {
+                "interval": "24h"
+            }
         }
     },
     "reporting": {

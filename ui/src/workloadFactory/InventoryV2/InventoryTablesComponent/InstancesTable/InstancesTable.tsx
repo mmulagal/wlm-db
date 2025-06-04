@@ -60,7 +60,6 @@ import {
     setSelectedMultiDetectInstances,
     setSelectedRowsForManage,
     setTableManageColumnState,
-    setUnManagedPerfInstanceIdsList,
     setValuesForForm,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -91,7 +90,6 @@ import {
 import { updateResourceId } from '../../../../store/authSlice';
 
 import DotComponent from '../../../../common/DotComponent/DotComponent';
-import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
@@ -110,7 +108,7 @@ const InstancesTable = () => {
         state => state.inventoryV2
     );
 
-    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { selectedRowsForManage } = useAppSelector(state => state.inventoryV2);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
@@ -980,6 +978,12 @@ const InstancesTable = () => {
                         infoText: disableMessage
                     });
                 } else {
+                    if (localStorage.getItem('protection') === 'true') {
+                        menu.push({
+                            id: 'protect',
+                            displayName: 'Protect'
+                        });
+                    }
                     menu.push(
                         {
                             id: 'optimize',
@@ -1122,6 +1126,22 @@ const InstancesTable = () => {
                                     } else if (toggleType === 'selectedOption') {
                                         menuOpenedRowDetail.current = null;
                                         setOpenedRow(null);
+
+                                        //Protect POC code
+                                        if (menuId === 'protect') {
+                                            if (isWorkloadFactory) {
+                                                window.open(
+                                                    'https://staging.console.bluexp.netapp.com/unified-backup-restore',
+                                                    '_blank',
+                                                    'noopener,noreferrer'
+                                                );
+                                            } else {
+                                                if (window.top) {
+                                                    window.top.location.href =
+                                                        'https://staging.console.bluexp.netapp.com/unified-backup-restore';
+                                                }
+                                            }
+                                        }
 
                                         if (menuId === 'optimize') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));

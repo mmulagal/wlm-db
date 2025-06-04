@@ -24,8 +24,11 @@ const getMappedOntapDataVolume = (fsxnId: string, region: string) => `
     junctionPath=$(echo "$mount_path" | cut -d':' -f2) 
     check_status "Failed to extract junction path"
 
-    ipAddress=$(dig +short $dnsName)
-    check_status "Failed to resolve IP address"
+    if [[ $dnsName =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+        ipAddress=$dnsName
+    else
+        ipAddress=$(dig +short $dnsName)
+    fi
 
     svmEndpoint='svm/svms?fields=ip_interfaces'
     ${ontapRestApi}

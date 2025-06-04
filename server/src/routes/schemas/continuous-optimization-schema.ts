@@ -75,11 +75,11 @@ const TriggerDriftAssessmentSchema = {
 };
 
 const OptimizeStorageSchemaDescription =
-    'Optimize storage parameters as per the best practice for the selected database instance.';
+    'Fix storage parameters as per the best practice for the selected database instance.';
 
 const OptimizeStorageSchema = {
     ...resourceRequest,
-    summary: 'Optimize storage for a database instance',
+    summary: 'Fix storage for a database instance',
     description: OptimizeStorageSchemaDescription,
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
@@ -93,8 +93,8 @@ const OptimizeStorageSchema = {
 
 const OptimizeSizingSchema = {
     ...resourceRequest,
-    summary: 'Optimize storage sizing for a database instance',
-    description: 'Optimize sizing parameters as per the best practice for the selected database instance.',
+    summary: 'Fix storage sizing for a database instance',
+    description: 'Fix sizing parameters as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeGenericRequestBody,
     tags: [RouteTags.ASSESSMENT],
@@ -107,8 +107,8 @@ const OptimizeSizingSchema = {
 
 const OptimizeComputeSchema = {
     ...resourceRequest,
-    summary: 'Optimize compute rightsizing for a database instance',
-    description: 'Optimize compute rightsizing as per the best practice for the selected database instance.',
+    summary: 'Fix compute rightsizing for a database instance',
+    description: 'Fix compute rightsizing as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeComputeRequestBody,
     tags: [RouteTags.ASSESSMENT],
@@ -121,8 +121,8 @@ const OptimizeComputeSchema = {
 
 const OptimizeOperatingSystemSchema = {
     ...resourceRequest,
-    summary: 'Optimize MPIO settings for a database instance',
-    description: 'Optimize MPIO settings parameters as per the best practice for the selected database instance.',
+    summary: 'Fix MPIO settings for a database instance',
+    description: 'Fix MPIO settings parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
     body: OptimizeOperatingSystemRequestBody,

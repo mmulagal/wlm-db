@@ -92,8 +92,8 @@ const ManageMsSqlSchemaV2 = {
     ...DiscoveryBaseRequest,
     params: AccountIdParams,
     body: MultiInstanceManageMsSqlRequestBody,
-    summary: 'Manage SQL Server instances',
-    description: 'Manage SQL Server instances',
+    summary: '(Deprecated) Register SQL Server instances',
+    description: 'Deprecated. Use /v2/mssql/manage instead.',
     response: {
         200: MultiHostManageResponseBody
     }
@@ -167,8 +167,8 @@ const UnManagePgSqlSchema = {
     ...DiscoveryBaseRequest,
     params: UnmanageInstanceParams,
     querystring: DatabaseInstanceQueryString,
-    summary: 'Unmanage PostgreSQL database instances.',
-    description: 'Unmanage PostgreSQL database instances managed by Workload Factory.',
+    summary: 'Deregister PostgreSQL database instances.',
+    description: 'Deregister PostgreSQL database instances managed by Workload Factory.',
     response: {
         200: MultiInstanceUnmanageResponseBody
     }

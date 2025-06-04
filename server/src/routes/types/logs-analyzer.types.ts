@@ -18,4 +18,19 @@ const LogsAnalyzerBody = Type.Optional(
 type LogsAnalyzerParamsType = Static<typeof LogsAnalyzerParams>;
 type InferenceConfigType = Static<typeof InferenceConfig>;
 
-export { LogsAnalyzerParams, LogsAnalyzerParamsType, LogsAnalyzerBody, InferenceConfigType };
+const RemediationRecommendationObject = Type.Object({
+    error: Type.String(),
+    cause: Type.String(),
+    count: Type.Number(),
+    severity: Type.String(),
+    remediation: Type.Array(Type.String())
+});
+type LogsAnalyzerBody = Static<typeof LogsAnalyzerBody>;
+
+export {
+    LogsAnalyzerParams,
+    LogsAnalyzerParamsType,
+    LogsAnalyzerBody,
+    InferenceConfigType,
+    RemediationRecommendationObject
+};

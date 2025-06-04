@@ -151,7 +151,7 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    ASSESSMENT = 'Continuous Optimization',
+    ASSESSMENT = 'Well Architected',
     ONPREM_TCO = 'OnPremises TCO',
     NOTIFICATION = 'Notification',
     LOGS_ANALYSIS = 'Logs Analysis'

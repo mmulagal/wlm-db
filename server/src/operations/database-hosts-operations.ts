@@ -340,12 +340,17 @@ async function getProtectionStatus(
         const commonResult = instanceNames.reduce((acc, instName) => {
             acc[instName] = {
                 isAwsBackupEnabled: {
-                    fsxn: isDemoFlow ?? checkAllTrue(awsBackup[instName]),
+                    fsxn: isDemoFlow
+                        ? true
+                        : awsBackup[instName]?.volumeDBMapWithBackupFlag &&
+                          typeof awsBackup[instName]?.volumeDBMapWithBackupFlag === 'object'
+                        ? checkAllTrue(awsBackup[instName]?.volumeDBMapWithBackupFlag)
+                        : false,
                     fsxw: Boolean(fsxwBackup),
                     ebs: Boolean(ebsBackup)
                 },
-                isFsxOntapSnapshotsEnabled: isDemoFlow ?? checkAllTrue(ontapBackup[instName]),
-                isCRREnabled: isDemoFlow ?? checkAllTrue(crrBackup[instName])
+                isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup[instName]),
+                isCRREnabled: isDemoFlow ? true : checkAllTrue(crrBackup[instName])
             };
             return acc;
         }, {} as Record<string, any>);
@@ -1770,7 +1775,7 @@ async function getDatabaseDetails(
                                     fsxn: isDemoFlow
                                         ? true
                                         : checkKey(
-                                              awsBackup[instName].volumeDBMapWithBackupFlag,
+                                              awsBackup[instName]?.volumeDBMapWithBackupFlag,
                                               database.databaseName
                                           ),
                                     fsxw: false,
