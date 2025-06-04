@@ -313,6 +313,8 @@ const HOST_LEVEL_CONFIGURATIONS = [
     'scheduled-fsx-for-ontap-backups'
 ];
 
+const DEFAULT_MPIO_TIMEOUT = 60; // seconds
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -355,5 +357,6 @@ export {
     INSTANCE_LEVEL_CONFIGURATIONS,
     HOST_LEVEL_CONFIGURATIONS,
     STORAGE_CONFIGURATION_ASSESMENT_MAP,
-    DISMISS_STATUS_ENUM
+    DISMISS_STATUS_ENUM,
+    DEFAULT_MPIO_TIMEOUT
 };

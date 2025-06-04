@@ -1,4 +1,5 @@
 import { OptimizeMpioPolicyParams, SessionsCountPerIscsiTarget } from '../../../utils/common-types';
+import { DEFAULT_MPIO_TIMEOUT } from '../../../utils/continous-optimization-consts';
 
 const CHECK_MPIO_POLICY = `
 $currentMpioPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
@@ -270,8 +271,8 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (sessionsCountPerTarget: SessionsCountPerI
 const MPIO_TIMEOUT = `
     Start-Transcript -Path "C:\\cfn\\log\\mpio-timeout-configuration.log.txt" -Append | Out-Null
     try {
-        Write-Information "Setting MPIO Disk Timeout to 100"
-        Set-MPIOSetting -NewDiskTimeout 100
+        Write-Information "Setting MPIO Disk Timeout to 60"
+        Set-MPIOSetting -NewDiskTimeout ${DEFAULT_MPIO_TIMEOUT}
         return @{"status" = "success"
                  "error" = $null} | ConvertTo-Json
     } catch {

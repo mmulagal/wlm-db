@@ -2,7 +2,8 @@ import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
-    SEVERITY
+    SEVERITY,
+    DEFAULT_MPIO_TIMEOUT
 } from '../../../utils/continous-optimization-consts';
 
 const GOLDEN_CONFIG = {
@@ -163,11 +164,11 @@ const GOLDEN_CONFIG = {
             },
             {
                 parameter: 'mpio-timeout',
-                value: 100,
-                severity: SEVERITY.CRITICAL,
+                value: DEFAULT_MPIO_TIMEOUT,
+                severity: SEVERITY.WARNING,
                 recommendation:
-                    'Ensure the Multipath I/O Timeout setting on the host is configured to 100 seconds to maintain connectivity and stability during FSxN failovers. Properly configured Multipath I/O Timeout settings prevent disconnections from the disk, which can occur during FSX failovers. Insufficient timeout settings can lead to temporary disconnections, application errors, and potential data loss.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+                    'Ensure the Multipath I/O Timeout setting on the host is configured to 60 seconds to maintain connectivity and stability during FSxN failovers. Properly configured Multipath I/O Timeout settings prevent disconnections from the disk, which can occur during FSX failovers. Insufficient timeout settings can lead to temporary disconnections, application errors, and potential data loss.',
+                tags: [AwsWellArchitecturedPillars.RELIABILITY]
             }
         ]
     },
