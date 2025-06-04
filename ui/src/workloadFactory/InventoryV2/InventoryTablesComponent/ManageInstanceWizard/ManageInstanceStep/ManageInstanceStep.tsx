@@ -72,6 +72,7 @@ export const Content = () => {
         return null; // Return null if no match is found
     };
 
+    // Function to merge readiness data for any single instance
     const getMergedReadinessData = (
         instanceData: any,
         discoveredHostData: any[],
@@ -107,6 +108,7 @@ export const Content = () => {
             : primaryReadiness;
     };
 
+    // Manage checks for single instance
     const manageChecks = useMemo(() => {
         if (wizardOperationType !== ACTION_TYPE.SINGLE) {
             return;
@@ -162,6 +164,7 @@ export const Content = () => {
         return manageCheckObj;
     }, [manageSingleInstanceData, manageSingleInstanceReadiness]);
 
+    // Manage checks for multiple instances
     const manageCheck = (instance: any) => {
         let manageCheckObj: any = {
             installMissingAWS: false,
@@ -249,6 +252,7 @@ export const Content = () => {
         return manageCheckObj;
     };
 
+    // Effect to handle single instance checks
     useEffect(() => {
         if (wizardOperationType !== ACTION_TYPE.BULK) {
             return;
