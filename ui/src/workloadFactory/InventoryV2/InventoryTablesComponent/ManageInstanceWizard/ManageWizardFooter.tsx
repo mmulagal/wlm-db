@@ -19,9 +19,10 @@ import {
     setSelectedMultiDetectInstances
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 
-import { handleSingleInstanceManage } from './ManageInstanceUtils';
+import { getBulkDetectChecks, handleSingleInstanceManage } from './ManageInstanceUtils';
 import { useNavigate } from 'react-router-dom';
 import { ACTION_TYPE } from '../../../../utils/consts';
+import { useMemo } from 'react';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -42,13 +43,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
     const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
 
-    // ToDo: Replace with actual bulk instance data when available
-    const bulkInstanceData = {
-        sqlServerAuthentication: false,
-        windowsAuthentication: false,
-        fsxId: '123',
-        isFsxRegistered: true
-    };
+    const bulkInstanceData = useMemo(() => {
+        return getBulkDetectChecks(selectedMultiDetectInstances);
+    }, [selectedMultiDetectInstances]);
 
     const dispatch = useDispatch();
 

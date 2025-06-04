@@ -11,9 +11,10 @@ import {
     setDetectONTAPPassword,
     setDetectONTAPUserName
 } from '../../../../../../store/workloadFactory/inventoryV2Slice';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { setIsDetectHostError } from '../../../../../../store/mssql/msSqlActionSlice';
+import { getBulkDetectChecks } from '../../ManageInstanceUtils';
 
 const DetectContent = () => {
     const { t } = useTranslation();
@@ -28,20 +29,20 @@ const DetectContent = () => {
         authenticationTypeSelected,
         hitNext
     } = state;
-    const { authenticationType } = useAppSelector(state => state.inventoryV2);
 
-    const { detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword } = useAppSelector(
-        state => state.inventoryV2
-    );
-    const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
+    const {
+        authenticationType,
+        manageSingleInstanceData,
+        selectedMultiDetectInstances,
+        detectManageUserName,
+        detectManagePassword,
+        detectOntapUsername,
+        detectOntapPassword
+    } = useAppSelector(state => state.inventoryV2);
 
-    // ToDo: Replace with actual bulk instance data when available
-    const bulkInstanceData = {
-        sqlServerAuthentication: false,
-        windowsAuthentication: false,
-        fsxId: '123',
-        isFsxRegistered: true
-    };
+    const bulkInstanceData = useMemo(() => {
+        return getBulkDetectChecks(selectedMultiDetectInstances);
+    }, [selectedMultiDetectInstances]);
 
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 

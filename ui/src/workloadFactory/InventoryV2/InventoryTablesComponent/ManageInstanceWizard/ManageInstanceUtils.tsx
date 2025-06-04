@@ -323,3 +323,25 @@ export const mergeReadinessData = (
 
     return mergedData;
 };
+
+export const getBulkDetectChecks = (selectedMultiDetectInstances: any) => {
+    let result = {
+        sqlServerAuthentication: true,
+        windowsAuthentication: true,
+        fsxId: false,
+        isFsxRegistered: true
+    };
+    if (selectedMultiDetectInstances?.length) {
+        selectedMultiDetectInstances?.forEach((item: any) => {
+            if (!item?.data?.sqlServerAuthentication && !item?.data?.windowsAuthentication) {
+                result.sqlServerAuthentication = false;
+                result.windowsAuthentication = false;
+            }
+            if (item?.data?.fsxId && !item?.data?.isFsxRegistered) {
+                result.fsxId = true;
+                result.isFsxRegistered = false;
+            }
+        });
+    }
+    return result;
+};
