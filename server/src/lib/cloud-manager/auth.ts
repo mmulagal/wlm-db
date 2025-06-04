@@ -87,8 +87,8 @@ async function getBxpServiceToken(): Promise<{ token: string; expiresIn: number 
         if (!process.env.TEST && hasCache(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN)) {
             await waitForResolution(
                 () => !readFromCacheByKey(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN),
-                ms(config.get('auth.bluexp.interval') as StringValue),
-                ms(config.get('auth.bluexp.timeout') as StringValue)
+                ms(config.get<StringValue>('auth.bluexp.interval')),
+                ms(config.get<StringValue>('auth.bluexp.timeout'))
             );
         }
 
