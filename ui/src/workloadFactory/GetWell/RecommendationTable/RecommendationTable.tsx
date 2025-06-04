@@ -177,7 +177,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     };
 
     const innerPageCheck = (name: string) => {
-        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status' || from === WLF_TABS.DASHBOARD) {
+        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status'  || name === 'Multipath I/O Timeout' || from === WLF_TABS.DASHBOARD) {
             return false;
         } else {
             return true;
@@ -290,7 +290,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
                 return (
                     <>
-                        {rowData?.name !== 'Multipath I/O Sessions' && rowData?.name !== 'Multipath I/O Status' ? (
+                        {rowData?.name !== 'Multipath I/O Sessions' && rowData?.name !== 'Multipath I/O Status'  && rowData?.name !== 'Multipath I/O Timeout'? (
                             <div>
                                 <DsTypography variant="Regular_13" className={`${styles.colText}`}>
                                     {(rowData?.totalObjectsInViolation || 0) +
