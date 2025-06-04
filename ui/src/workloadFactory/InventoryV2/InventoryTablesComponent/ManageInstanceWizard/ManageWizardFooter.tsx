@@ -42,6 +42,14 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
     const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
 
+    // ToDo: Replace with actual bulk instance data when available
+    const bulkInstanceData = {
+        sqlServerAuthentication: false,
+        windowsAuthentication: false,
+        fsxId: '123',
+        isFsxRegistered: true
+    };
+
     const dispatch = useDispatch();
 
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
@@ -204,18 +212,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     const goForward = () => {
-        if (wizardOperationType === ACTION_TYPE.BULK) {
-            if (selectedMultiDetectInstances.length > 0) {
-                handleMultiRegisterResourceCred();
-            } else {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: t('databases.register-flow.bulk-instance-select-text')
-                    })
-                );
-            }
-        } else {
+        if (wizardOperationType === ACTION_TYPE.SINGLE) {
             setState({ hitNext: true });
             const fieldsCorrect = detectFieldsValidation(manageSingleInstanceData);
             if (fieldsCorrect) {
@@ -241,7 +238,11 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             if (isAuth) {
                 goToNextStep();
             } else {
-                handleMultiRegisterResourceCred();
+                setState({ hitNext: true });
+                const fieldsCorrect = detectFieldsValidation(bulkInstanceData);
+                if (fieldsCorrect) {
+                    handleMultiRegisterResourceCred();
+                }
             }
         }
     };
@@ -318,6 +319,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
                             isThin={true}
                             onClick={() => bulkGoForward(currentStepIndex)}
+                            isLoading={detectHostLoading && currentStepIndex === 1}
                             variant={'primary'}
                             {...rest}
                         >

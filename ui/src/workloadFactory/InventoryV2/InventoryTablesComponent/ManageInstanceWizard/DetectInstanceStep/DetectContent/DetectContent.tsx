@@ -35,6 +35,14 @@ const DetectContent = () => {
     );
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
 
+    // ToDo: Replace with actual bulk instance data when available
+    const bulkInstanceData = {
+        sqlServerAuthentication: false,
+        windowsAuthentication: false,
+        fsxId: '123',
+        isFsxRegistered: true
+    };
+
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
     const [textSearch, setTextSearch] = useSearchDebounce(100);
@@ -92,11 +100,10 @@ const DetectContent = () => {
     useEffect(() => {
         dispatch(setDetectManagePassword(detectPasswordSearch));
     }, [detectPasswordSearch]);
-    return (
-        <div className={styles.detectContent}>
-            {(wizardOperationType === ACTION_TYPE.BULK ||
-                (!manageSingleInstanceData?.sqlServerAuthentication &&
-                    !manageSingleInstanceData?.windowsAuthentication)) && (
+
+    const authModeRadio = () => {
+        return (
+            <>
                 <div className={styles['radio-container']}>
                     <DsTypography variant="Semibold_14">
                         {t('databases.register-flow.select-authentication-mode')}
@@ -132,11 +139,13 @@ const DetectContent = () => {
                         }
                     />
                 </div>
-            )}
+            </>
+        );
+    };
 
-            {(wizardOperationType === ACTION_TYPE.BULK ||
-                (!manageSingleInstanceData?.sqlServerAuthentication &&
-                    !manageSingleInstanceData?.windowsAuthentication)) && (
+    const mssqlInputFields = () => {
+        return (
+            <>
                 <div className={styles.firstSection}>
                     <DsTypography variant="Semibold_14">
                         {t('databases.register-flow.detect-mssql-heading')}
@@ -169,10 +178,13 @@ const DetectContent = () => {
                         />
                     </div>
                 </div>
-            )}
+            </>
+        );
+    };
 
-            {(wizardOperationType === ACTION_TYPE.BULK ||
-                (manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered)) && (
+    const fsxInputFields = () => {
+        return (
+            <>
                 <div className={styles.secondSection}>
                     <DsTypography variant="Semibold_14">{t('databases.register-flow.detect-fsx-heading')}</DsTypography>
                     <div className={styles.textFieldContainer}>
@@ -203,6 +215,38 @@ const DetectContent = () => {
                         />
                     </div>
                 </div>
+            </>
+        );
+    };
+
+    return (
+        <div className={styles.detectContent}>
+            {wizardOperationType === ACTION_TYPE.SINGLE && (
+                <>
+                    {!manageSingleInstanceData?.sqlServerAuthentication &&
+                        !manageSingleInstanceData?.windowsAuthentication &&
+                        authModeRadio()}
+
+                    {!manageSingleInstanceData?.sqlServerAuthentication &&
+                        !manageSingleInstanceData?.windowsAuthentication &&
+                        mssqlInputFields()}
+
+                    {manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered && fsxInputFields()}
+                </>
+            )}
+
+            {wizardOperationType === ACTION_TYPE.BULK && (
+                <>
+                    {!bulkInstanceData?.sqlServerAuthentication &&
+                        !bulkInstanceData?.windowsAuthentication &&
+                        authModeRadio()}
+
+                    {!bulkInstanceData?.sqlServerAuthentication &&
+                        !bulkInstanceData?.windowsAuthentication &&
+                        mssqlInputFields()}
+
+                    {bulkInstanceData?.fsxId && !bulkInstanceData?.isFsxRegistered && fsxInputFields()}
+                </>
             )}
         </div>
     );

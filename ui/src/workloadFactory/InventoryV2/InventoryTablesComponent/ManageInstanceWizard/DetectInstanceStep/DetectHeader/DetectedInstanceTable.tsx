@@ -182,7 +182,7 @@ const DetectedInstanceTable = () => {
                         <Popover
                             popoverClass={''}
                             children={<TooltipCard listObj={rowData?.perRowState} registerFlow={true} />}
-                            trigger="click"
+                            trigger="hover"
                             isAppendedToBody={false}
                             container={<TooltipIcon />}
                         />
