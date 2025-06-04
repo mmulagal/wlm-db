@@ -1,10 +1,10 @@
-import { DsCheckbox, DsTypography, Popover, useWizard } from '@netapp/design-system';
+import { DsCheckbox, DsTypography, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
-import styles from './ActionComponent.module.scss';
 import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import styles from './ActionComponent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { setInstallType } from '../../../../../../store/workloadFactory/inventoryV2Slice';
-import { useEffect } from 'react';
 import { ACTION_TYPE } from '../../../../../../utils/consts';
 
 const ActionComponent = ({ manageChecks }: any) => {

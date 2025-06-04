@@ -6,7 +6,6 @@ import {
     initialHostsTableColState,
     initialInstanceTableColState
 } from '../../utils/manageColumnUtils';
-import { setLandingFrom } from './getWellOptimizeSlice';
 
 const initialInventoryV2State: InventorySliceData = {
     breadCrumbSelectedFrom: '',

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { BlueXPListeners, Button, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../store/notificationSlice';
 import {
     setInProgressInstances,
@@ -8,7 +9,6 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../../../utils/appConstants';
 import { JOB_MONITORING_STATUS, MANAGE_POLLING_INTERVAL, MANAGE_STATES, WLF_TABS } from '../../../../utils/consts';
-import { BlueXPListeners, Button, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import store from '../../../../store/store';
 import { uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
@@ -20,7 +20,7 @@ export const handleSingleInstanceManage = (
     getJobDetailApi: any,
     navigate: any
 ) => {
-    let allowManage = isAllowManage(manageSingleInstanceChecks?.manageReadinessData);
+    const allowManage = isAllowManage(manageSingleInstanceChecks?.manageReadinessData);
     if (
         manageSingleInstanceChecks?.assessment === GENERAL.NOT_AVAILABLE &&
         manageSingleInstanceChecks?.remediation === GENERAL.NOT_AVAILABLE &&
@@ -68,7 +68,7 @@ export const handleMultiInstanceManage = (
     getJobDetailApi: any,
     navigate: any
 ) => {
-    let allowManage = isAllowManage(selectedMultiDetectInstances?.[0]?.data?.manageReadinessData);
+    const allowManage = isAllowManage(selectedMultiDetectInstances?.[0]?.data?.manageReadinessData);
     if (
         selectedMultiDetectInstances?.[0]?.data?.assessment === GENERAL.NOT_AVAILABLE &&
         selectedMultiDetectInstances?.[0]?.data?.remediation === GENERAL.NOT_AVAILABLE &&
@@ -125,7 +125,7 @@ export const callManageSingleInstanceApi = async (
     if (manageSingleInstanceChecks?.installMissingPowershell && installMissingPowershell) {
         installModules = [...installModules, MANAGE_STATES.POWERSHELL7];
     }
-    let payload = {
+    const payload = {
         items: [
             {
                 ec2InstanceId: manageSingleInstanceChecks?.ec2InstanceId,
@@ -151,20 +151,18 @@ export const callManageSingleInstanceApi = async (
             const manageInstanceMsg = (
                 <DsTypography variant="Regular_14">
                     {`${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${manageSingleInstanceChecks?.databaseInstanceName} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`}
-                    {
-                        <>
-                            <Button
-                                Component="button"
-                                variant="text"
-                                onClick={() => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                    dispatch(clearNotifications());
-                                }}
-                            >
-                                {' Track progress.'}
-                            </Button>
-                        </>
-                    }
+                    <>
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {' Track progress.'}
+                        </Button>
+                    </>
                 </DsTypography>
             );
             setTimeout(() => {
@@ -253,7 +251,7 @@ export const missingModules = (manageReadinessData: any) => {
     if (!manageReadinessData) return [];
 
     const readinessKeys = Object.keys(manageReadinessData);
-    let filteredModulesSet: Set<string> = new Set();
+    const filteredModulesSet: Set<string> = new Set();
 
     readinessKeys.forEach(key => {
         const missingModules = manageReadinessData[key]?.missingModules || [];
@@ -373,7 +371,7 @@ export const mergeReadinessData = (
 };
 
 export const getBulkDetectChecks = (selectedMultiDetectInstances: any) => {
-    let result = {
+    const result = {
         sqlServerAuthentication: true,
         windowsAuthentication: true,
         fsxId: false,

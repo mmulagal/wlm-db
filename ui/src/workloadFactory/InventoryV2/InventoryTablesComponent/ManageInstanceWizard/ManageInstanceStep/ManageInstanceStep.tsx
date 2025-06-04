@@ -1,5 +1,7 @@
 import { DsTypography, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import { useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import ManageWizardFooter from '../ManageWizardFooter';
 import styles from './ManageInstanceStep.module.scss';
 import ActionComponent from './ActionComponent/ActionComponent';
@@ -8,13 +10,11 @@ import PermissionListComponent from './PermissionListComponent/PermissionListCom
 import DetectHeader from '../DetectInstanceStep/DetectHeader/DetectHeader';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { ACTION_TYPE, INVENTORY_STATUS, MANAGE_STATES } from '../../../../../utils/consts';
-import { useEffect, useMemo, useState } from 'react';
 import { GENERAL } from '../../../../../utils/appConstants';
 import {
     setBulkDetectedInstanceList,
     setManageSingleInstanceChecks
 } from '../../../../../store/workloadFactory/inventoryV2Slice';
-import { useDispatch } from 'react-redux';
 import MultiInstanceHeader from '../DetectInstanceStep/DetectHeader/MultiInstanceHeader';
 import {
     checkOverallManageState,
@@ -86,9 +86,9 @@ export const Content = () => {
         const partnerInstance = hostRow?.ec2Details?.find((inst: any) => inst.id !== ec2InstanceId);
 
         // Get primary readiness data
-        const primaryReadiness = manageReadiness
-            ? manageReadiness
-            : getManageReadinessData(discoveredHostData, ec2InstanceId, credentialId, regionId, databaseInstanceName);
+        const primaryReadiness =
+            manageReadiness ||
+            getManageReadinessData(discoveredHostData, ec2InstanceId, credentialId, regionId, databaseInstanceName);
 
         // Get partner readiness data (if partner exists)
         let partnerReadiness = null;
@@ -143,9 +143,9 @@ export const Content = () => {
             );
         }
         if (manageReadinessData) {
-            let missingModulesList = missingModules(manageReadinessData);
+            const missingModulesList = missingModules(manageReadinessData);
             manageCheckObj = {
-                installMissingAWS: missingModulesList.length > 0 ? true : false,
+                installMissingAWS: missingModulesList.length > 0,
                 installMissingAWSList: missingModulesList,
                 installMissingPowershell: hasMissingPowershell7(manageReadinessData),
                 assessment: getPermissionState('assessment', manageReadinessData),
@@ -156,7 +156,7 @@ export const Content = () => {
                 region: manageSingleInstanceData?.regionId,
                 credentialsId: manageSingleInstanceData?.credentialId,
                 databaseInstanceName: manageSingleInstanceData?.databaseInstanceName,
-                manageReadinessData: manageReadinessData
+                manageReadinessData
             };
             dispatch(setManageSingleInstanceChecks(manageCheckObj));
             return manageCheckObj;
@@ -194,14 +194,14 @@ export const Content = () => {
             );
         }
         if (manageReadinessData) {
-            let missingModulesList = missingModules(manageReadinessData);
-            let assessment = getPermissionState('assessment', manageReadinessData);
-            let remediation = getPermissionState('remediation', manageReadinessData);
-            let dbcreation = getPermissionState('dbcreation', manageReadinessData);
-            let sandbox = getPermissionState('sandbox', manageReadinessData);
-            let overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
+            const missingModulesList = missingModules(manageReadinessData);
+            const assessment = getPermissionState('assessment', manageReadinessData);
+            const remediation = getPermissionState('remediation', manageReadinessData);
+            const dbcreation = getPermissionState('dbcreation', manageReadinessData);
+            const sandbox = getPermissionState('sandbox', manageReadinessData);
+            const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
             let readyCount = 0;
-            let perRowState = [
+            const perRowState = [
                 {
                     key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
                     value: assessment
@@ -232,20 +232,20 @@ export const Content = () => {
                 readyCount += 1;
             }
             manageCheckObj = {
-                installMissingAWS: missingModulesList.length > 0 ? true : false,
+                installMissingAWS: missingModulesList.length > 0,
                 installMissingAWSList: missingModulesList,
                 installMissingPowershell: hasMissingPowershell7(manageReadinessData),
-                assessment: assessment,
-                remediation: remediation,
-                dbcreation: dbcreation,
-                sandbox: sandbox,
+                assessment,
+                remediation,
+                dbcreation,
+                sandbox,
                 ec2InstanceId: instance?.data?.ec2InstanceId,
                 region: instance?.data?.regionId,
                 credentialsId: instance?.data?.credentialId,
                 databaseInstanceName: instance?.data?.databaseInstanceName,
-                overallState: overallState,
-                readyCount: readyCount,
-                perRowState: perRowState
+                overallState,
+                readyCount,
+                perRowState
             };
             return manageCheckObj;
         }
@@ -257,7 +257,7 @@ export const Content = () => {
         if (wizardOperationType !== ACTION_TYPE.BULK) {
             return;
         }
-        let newTableData: any = [];
+        const newTableData: any = [];
         let installMissingAWSAll = false;
         let installMissingPowershellAll = false;
         selectedMultiDetectInstances?.forEach((item: any) => {
@@ -334,6 +334,4 @@ export const Content = () => {
     );
 };
 
-export const Footer = () => {
-    return <ManageWizardFooter />;
-};
+export const Footer = () => <ManageWizardFooter />;
