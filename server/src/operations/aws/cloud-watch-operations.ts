@@ -1,5 +1,5 @@
 import { Statistic, GetMetricStatisticsCommandInput } from '@aws-sdk/client-cloudwatch';
-import ms from 'ms';
+import ms, { StringValue } from 'ms';
 import getMetricStatistics from '../../lib/aws/cloud-watch';
 import getLogger from '../../utils/logger';
 import { describeFSx } from '../../lib/aws/fsx';
@@ -11,7 +11,7 @@ async function calculateFsxnStorageEfficiencyUsingCloudwatch(
     credentialsId: string,
     fileSystemId: string,
     cwMetricsDataCollectionPeriodSeconds: number = 24 * 60 * 60, // 1 day
-    cwMetricsDataCollectionPeriod: string = '1d'
+    cwMetricsDataCollectionPeriod: StringValue = '1d'
 ) {
     logger.info('Calculating storage efficiency for FSx for NetApp ONTAP:', { region, credentialsId, fileSystemId });
 
