@@ -11,8 +11,8 @@ import { SECRETS } from '../../../../src/utils/consts';
 
 const s3Mock = mockClient(S3Client);
 
-SECRETS.SIGNURL_ACCESS_KEY = faker.random.alpha(24);
-SECRETS.SIGNURL_SECRET_KEY = faker.random.alpha(24);
+SECRETS.SIGNURL_ACCESS_KEY = faker.string.alpha(24);
+SECRETS.SIGNURL_SECRET_KEY = faker.string.alpha(24);
 
 s3Mock.on(PutObjectCommand).resolves({});
 s3Mock.on(GetObjectCommand).resolves({});
