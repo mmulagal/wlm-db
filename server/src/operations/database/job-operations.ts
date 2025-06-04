@@ -458,7 +458,7 @@ async function updateParentJobStatus(
             } else if (allSubJobs.every(job => job.status === JOBSTATUS.FAILED)) {
                 jobStatus = JOBSTATUS.FAILED;
             } else if (allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)) {
-                jobStatus = JOBSTATUS.COMPLETED;
+                jobStatus = errorMsg ? JOBSTATUS.WARNING : JOBSTATUS.COMPLETED;
             } else if (
                 isSandboxJob &&
                 allSubJobs.some(
@@ -473,6 +473,8 @@ async function updateParentJobStatus(
             } else {
                 jobStatus = JOBSTATUS.IN_PROGRESS;
             }
+        } else {
+            jobStatus = errorMsg ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED;
         }
 
         const modifiedJobData = {
