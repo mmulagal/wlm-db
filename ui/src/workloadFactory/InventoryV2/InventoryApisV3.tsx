@@ -87,7 +87,6 @@ import {
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
 import { OracleInstanceData } from '../../utils/types/inventoryV2Types';
-import { isEqual } from 'lodash';
 
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
@@ -1957,13 +1956,7 @@ const InventoryApisV3 = () => {
                 ...oracleInstancesDataRef.current
             };
             const updatedInventoryData = updateInstancesApiResponse(mergedData, inventoryTableDataRef.current);
-            // dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
-            const newInventoryTableData = { ...inventoryTableData, ...updatedInventoryData };
-
-            // Use lodash.isequal for deep comparison
-            if (!isEqual(newInventoryTableData, inventoryTableData)) {
-                dispatch(setInventoryTableData(newInventoryTableData));
-            }
+            dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
         }
     }, [mssqlInstancesData, pgsqlInstancesData, oracleInstancesData, perfMssqlInstancesData]);
 
@@ -1972,32 +1965,11 @@ const InventoryApisV3 = () => {
         const resetManagedData = state.inventoryV2.resetManagedData;
         if (!resetManagedData && inventoryTableDataRef.current) {
             const inventoryDataCount = getInventoryDataCount(inventoryTableDataRef.current);
-
-            // dispatch(setInventoryChartData(inventoryDataCount));
-            // const exploreSavingsRows = getExploreSavingsRows(inventoryTableDataRef.current);
-            // dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
-            // // call ES APIs for dashboard potential savings
-            // if (exploreSavingsRows && exploreSavingsRows.length > 0) {
-            //     callPotentialSavings(exploreSavingsRows, credId, regionId);
-            // }
-
-            const currentChartData = state.inventoryV2.inventoryChartData;
-            if (!isEqual(inventoryDataCount, currentChartData)) {
-                dispatch(setInventoryChartData(inventoryDataCount));
-            }
-
+            dispatch(setInventoryChartData(inventoryDataCount));
             const exploreSavingsRows = getExploreSavingsRows(inventoryTableDataRef.current);
-            const currentExploreSavings = state.exploreSavings.unmanagedExploreSavingsHost;
-            if (!isEqual(exploreSavingsRows, currentExploreSavings)) {
-                dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
-            }
-
-            // Only call if exploreSavingsRows is not empty and has changed
-            if (
-                exploreSavingsRows &&
-                exploreSavingsRows.length > 0 &&
-                !isEqual(exploreSavingsRows, currentExploreSavings)
-            ) {
+            dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
+            // call ES APIs for dashboard potential savings
+            if (exploreSavingsRows && exploreSavingsRows.length > 0) {
                 callPotentialSavings(exploreSavingsRows, credId, regionId);
             }
         }
