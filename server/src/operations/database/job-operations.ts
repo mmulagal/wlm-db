@@ -474,7 +474,7 @@ async function updateParentJobStatus(
                 jobStatus = JOBSTATUS.IN_PROGRESS;
             }
         } else {
-            jobStatus = JOBSTATUS.FAILED;
+            jobStatus = errorMsg ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED;
         }
 
         const modifiedJobData = {
