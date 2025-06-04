@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import isEqual from 'lodash/isEqual';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAllMssqlHostAssessmentData,
@@ -1947,29 +1948,46 @@ const InventoryApisV3 = () => {
         const resetManagedData = state.inventoryV2.resetManagedData;
         if (
             !resetManagedData &&
-            (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) &&
-            inventoryTableDataRef.current
+            (mssqlInstancesData || pgsqlInstancesData || oracleInstancesData) &&
+            inventoryTableData
         ) {
             const mergedData = {
-                ...mssqlInstancesDataRef.current,
-                ...pgsqlInstancesDataRef.current,
-                ...oracleInstancesDataRef.current
+                ...mssqlInstancesData,
+                ...pgsqlInstancesData,
+                ...oracleInstancesData
             };
-            const updatedInventoryData = updateInstancesApiResponse(mergedData, inventoryTableDataRef.current);
-            dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
+            const updatedInventoryData = updateInstancesApiResponse(mergedData, inventoryTableData);
+            const newInventoryTableData = { ...inventoryTableData, ...updatedInventoryData };
+
+            // Use lodash.isequal for deep comparison
+            if (!isEqual(newInventoryTableData, inventoryTableData)) {
+                dispatch(setInventoryTableData(newInventoryTableData));
+            }
         }
-    }, [mssqlInstancesData, pgsqlInstancesData, oracleInstancesData, perfMssqlInstancesData]);
+    }, [mssqlInstancesData, pgsqlInstancesData, oracleInstancesData, inventoryTableData]);
 
     useEffect(() => {
         const state = store.getState();
         const resetManagedData = state.inventoryV2.resetManagedData;
         if (!resetManagedData && inventoryTableDataRef.current) {
             const inventoryDataCount = getInventoryDataCount(inventoryTableDataRef.current);
-            dispatch(setInventoryChartData(inventoryDataCount));
+            const currentChartData = state.inventoryV2.inventoryChartData;
+            if (!isEqual(inventoryDataCount, currentChartData)) {
+                dispatch(setInventoryChartData(inventoryDataCount));
+            }
+
             const exploreSavingsRows = getExploreSavingsRows(inventoryTableDataRef.current);
-            dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
-            // call ES APIs for dashboard potential savings
-            if (exploreSavingsRows && exploreSavingsRows.length > 0) {
+            const currentExploreSavings = state.exploreSavings.unmanagedExploreSavingsHost;
+            if (!isEqual(exploreSavingsRows, currentExploreSavings)) {
+                dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
+            }
+
+            // Only call if exploreSavingsRows is not empty and has changed
+            if (
+                exploreSavingsRows &&
+                exploreSavingsRows.length > 0 &&
+                !isEqual(exploreSavingsRows, currentExploreSavings)
+            ) {
                 callPotentialSavings(exploreSavingsRows, credId, regionId);
             }
         }

@@ -19,6 +19,7 @@ type ChartType = {
 const HostDistributionChart = ({ color1, color2, data1, data2, centerText, centerValue, loading }: ChartType) => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
+    const chartInstanceRef = useRef<any>(null);
 
     const doughnutOptions = {
         plugins: {
@@ -45,12 +46,11 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText, cente
     useEffect(() => {
         if (ref.current) {
             //@ts-ignore
-            var myDoughnut = new Chart(ref.current, config);
-            setDoughnutChart(myDoughnut);
+            chartInstanceRef.current = new Chart(ref.current, config);
         }
         return () => {
-            if (myDoughnut) {
-                myDoughnut.destroy();
+            if (chartInstanceRef.current) {
+                chartInstanceRef.current.destroy();
             }
         };
     }, []);
