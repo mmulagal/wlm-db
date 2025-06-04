@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 const MultiInstanceHeader = () => {
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
-    const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
+    const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
     const [countSummary, setCountSummary] = useState<any>({});
 
     useEffect(() => {
@@ -20,15 +20,17 @@ const MultiInstanceHeader = () => {
             success: 0,
             readyForManagement: 0
         };
-        selectedMultiDetectInstances.forEach((item: any) => {
+        bulkDetectedInstanceList.forEach((item: any) => {
             newCountSummary.total += 1;
             if (item?.authorized) {
                 newCountSummary.success += 1;
-                newCountSummary.readyForManagement += 1;
+                if (item?.readyCount > 0) {
+                    newCountSummary.readyForManagement += 1;
+                }
             }
         });
         setCountSummary(newCountSummary);
-    }, [selectedMultiDetectInstances]);
+    }, [bulkDetectedInstanceList]);
 
     const handleManageDialog = () => {
         setDialog(

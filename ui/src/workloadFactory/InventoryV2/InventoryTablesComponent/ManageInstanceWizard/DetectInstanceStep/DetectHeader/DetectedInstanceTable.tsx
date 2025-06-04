@@ -6,123 +6,13 @@ import { ReactComponent as Success } from '../../../../../../assets/success.svg'
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
 import { ReactComponent as TooltipIcon } from '../../../../../../assets/tooltipGrey.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
-import { GENERAL } from '../../../../../../utils/appConstants';
-import {
-    checkOverallManageState,
-    getPermissionState,
-    hasMissingPowershell7,
-    missingModules
-} from '../../ManageInstanceUtils';
 import DotComponent from '../../../../../../common/DotComponent/DotComponent';
 import { MANAGE_STATES } from '../../../../../../utils/consts';
 import TooltipCard from '../../../../../../common/TooltipCard/TooltipCard';
 
 const DetectedInstanceTable = () => {
     const { t } = useTranslation();
-    const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
-    const [tableData, setTableData] = useState<any>([]);
-
-    const manageCheck = (instance: any) => {
-        let manageCheckObj: any = {
-            installMissingAWS: false,
-            installMissingAWSList: [],
-            installMissingPowershell: false,
-            assessment: GENERAL.NOT_AVAILABLE,
-            remediation: GENERAL.NOT_AVAILABLE,
-            dbcreation: GENERAL.NOT_AVAILABLE,
-            sandbox: GENERAL.NOT_AVAILABLE,
-            ec2InstanceId: '',
-            region: '',
-            credentialsId: '',
-            databaseInstanceName: '',
-            overallState: GENERAL.NOT_AVAILABLE,
-            readyCount: 0
-        };
-
-        let manageReadinessData: any = null;
-        if (!instance?.data?.windowsAuthentication && !instance?.data?.sqlServerAuthentication) {
-            manageReadinessData = instance?.manageReadiness;
-        } else {
-            manageReadinessData = instance?.data?.manageReadiness;
-        }
-        if (manageReadinessData) {
-            let missingModulesList = missingModules(manageReadinessData);
-            let assessment = getPermissionState('assessment', manageReadinessData);
-            let remediation = getPermissionState('remediation', manageReadinessData);
-            let dbcreation = getPermissionState('dbcreation', manageReadinessData);
-            let sandbox = getPermissionState('sandbox', manageReadinessData);
-            let overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
-            let readyCount = 0;
-            let perRowState = [
-                {
-                    key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-                    value: assessment
-                },
-                {
-                    key: t('databases.register-flow.fix-well-architected-issues'),
-                    value: remediation
-                },
-                {
-                    key: t('databases.register-flow.create-database'),
-                    value: dbcreation
-                },
-                {
-                    key: t('databases.register-flow.create-database-copies-sandbox'),
-                    value: sandbox
-                }
-            ];
-            if (assessment === MANAGE_STATES.READY) {
-                readyCount += 1;
-            }
-            if (remediation === MANAGE_STATES.READY) {
-                readyCount += 1;
-            }
-            if (dbcreation === MANAGE_STATES.READY) {
-                readyCount += 1;
-            }
-            if (sandbox === MANAGE_STATES.READY) {
-                readyCount += 1;
-            }
-            manageCheckObj = {
-                installMissingAWS: missingModulesList.length > 0 ? true : false,
-                installMissingAWSList: missingModulesList,
-                installMissingPowershell: hasMissingPowershell7(manageReadinessData),
-                assessment: assessment,
-                remediation: remediation,
-                dbcreation: dbcreation,
-                sandbox: sandbox,
-                ec2InstanceId: instance?.data?.ec2InstanceId,
-                region: instance?.data?.regionId,
-                credentialsId: instance?.data?.credentialId,
-                databaseInstanceName: instance?.data?.databaseInstanceName,
-                overallState: overallState,
-                readyCount: readyCount + '/4',
-                perRowState: perRowState
-            };
-            return manageCheckObj;
-        }
-        return manageCheckObj;
-    };
-
-    useEffect(() => {
-        let newTableData: any = [];
-        selectedMultiDetectInstances?.forEach((item: any) => {
-            const manageStates = manageCheck(item);
-            newTableData.push({
-                id: item?.id,
-                instanceName: item?.data?.databaseInstanceName,
-                authenticationStatus: item?.authorized
-                    ? t('databases.general.authenticated')
-                    : t('databases.general.unauthenticated'),
-                hostName: item?.data?.name,
-                readinessStatus: manageStates?.overallState,
-                readyCount: manageStates?.readyCount,
-                perRowState: manageStates?.perRowState || []
-            });
-        });
-        setTableData(newTableData);
-    }, [selectedMultiDetectInstances]);
+    const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
 
     const ColDefs: ColumnProps[] = [
         {
@@ -186,7 +76,7 @@ const DetectedInstanceTable = () => {
                             isAppendedToBody={false}
                             container={<TooltipIcon />}
                         />
-                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                        <DsTypography variant="Regular_14">{cellData + '/' + rowData?.totalCount}</DsTypography>
                     </div>
                 );
             }
@@ -201,7 +91,7 @@ const DetectedInstanceTable = () => {
         isSorting: false,
         selectionType: 'none',
         columns: ColDefs,
-        rows: tableData,
+        rows: bulkDetectedInstanceList,
         isHorizontalScroll: false,
         isVerticalScroll: true,
         isLazyLoading: false

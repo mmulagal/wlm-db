@@ -17,21 +17,12 @@ const ActionComponent = ({ manageChecks }: any) => {
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
     useEffect(() => {
-        if (wizardOperationType === ACTION_TYPE.BULK) {
-            dispatch(
-                setInstallType({
-                    installMissingAWS: true,
-                    installMissingPowershell: true
-                })
-            );
-        } else {
-            dispatch(
-                setInstallType({
-                    installMissingAWS: manageChecks?.installMissingAWS,
-                    installMissingPowershell: manageChecks?.installMissingPowershell
-                })
-            );
-        }
+        dispatch(
+            setInstallType({
+                installMissingAWS: manageChecks?.installMissingAWS,
+                installMissingPowershell: manageChecks?.installMissingPowershell
+            })
+        );
     }, [wizardOperationType, manageChecks]);
 
     return (

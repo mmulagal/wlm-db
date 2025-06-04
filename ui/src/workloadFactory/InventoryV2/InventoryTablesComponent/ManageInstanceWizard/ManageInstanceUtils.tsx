@@ -61,6 +61,54 @@ export const handleSingleInstanceManage = (
     }
 };
 
+export const handleMultiInstanceManage = (
+    selectedMultiDetectInstances: any,
+    dispatch: any,
+    manageBulkV2InstanceApi: any,
+    getJobDetailApi: any,
+    navigate: any
+) => {
+    let allowManage = isAllowManage(selectedMultiDetectInstances?.[0]?.data?.manageReadinessData);
+    if (
+        selectedMultiDetectInstances?.[0]?.data?.assessment === GENERAL.NOT_AVAILABLE &&
+        selectedMultiDetectInstances?.[0]?.data?.remediation === GENERAL.NOT_AVAILABLE &&
+        selectedMultiDetectInstances?.[0]?.data?.dbcreation === GENERAL.NOT_AVAILABLE &&
+        selectedMultiDetectInstances?.[0]?.data?.sandbox === GENERAL.NOT_AVAILABLE
+    ) {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: (
+                    <>
+                        <span style={{ fontWeight: '500' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[0]}</span>
+                        <span style={{ fontWeight: '400' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[1]}</span>
+                    </>
+                )
+            })
+        );
+    } else if (!allowManage) {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: (
+                    <>
+                        <span style={{ fontWeight: '500' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[0]}</span>
+                        <span style={{ fontWeight: '400' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[1]}</span>
+                    </>
+                )
+            })
+        );
+    } else {
+        callManageSingleInstanceApi(
+            selectedMultiDetectInstances[0].data,
+            dispatch,
+            manageBulkV2InstanceApi,
+            getJobDetailApi,
+            navigate
+        );
+    }
+};
+
 export const callManageSingleInstanceApi = async (
     manageSingleInstanceChecks: any,
     dispatch: any,
