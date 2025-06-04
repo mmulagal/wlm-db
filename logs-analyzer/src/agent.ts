@@ -37,20 +37,20 @@ const LIMIT_3 = pLimit(3); // Limit concurrency to 3
 const program = new Command();
 
 program
-  .requiredOption('-l, --logs-path <path>', 'Database application logs folder path')
-  .option('-s, --sql-auth-enabled', 'SQL authentication enabled', false)
-  .option('-d, --database-instance-name <name>', 'SQL instance name', 'MSSQLSERVER')
-  .requiredOption('-j, --job-id <id>', 'Workload Factory job ID')
-  .requiredOption('-i, --instance-id <id>', 'EC2 instance ID')
-  .requiredOption('-r, --region <region>', 'AWS region')
-  .option('-g, --log-level <level>', 'Log level', 'info')
-  .option('-t, --timestamp <ms>', 'Timestamp of the last log statement in milliseconds', `${Date.now() - 1000 * 60 * 60 * 24 * 120}`)
-  .option('-c, --logs-count-to-consider <count>', 'Number of logs to consider for analysis', '1000')
-  .option('-e, --temperature <temp>', 'Temperature for the model', '0.5')
-  .option('-p, --top-p <topP>', 'Top P for the model', '0.9')
-  .option('-m, --max-tokens <tokens>', 'Max tokens for the model', '1000')
-  .requiredOption('-a, --model-id <id>', 'Model ID to use for analysis')
-  .requiredOption('-n, --model-region <region>', 'Model region to use for analysis');
+    .requiredOption('-l, --logs-path <path>', 'Database application logs folder path')
+    .option('-s, --sql-auth-enabled <enabled>', 'SQL authentication enabled', false)
+    .option('-d, --database-instance-name <name>', 'SQL instance name', 'MSSQLSERVER')
+    .requiredOption('-j, --job-id <id>', 'Workload Factory job ID')
+    .requiredOption('-i, --instance-id <id>', 'EC2 instance ID')
+    .requiredOption('-r, --region <region>', 'AWS region')
+    .option('-g, --log-level <level>', 'Log level', 'info')
+    .option('-t, --timestamp <ms>', 'Timestamp of the last log statement in milliseconds', `${Date.now() - 1000 * 60 * 60 * 24 * 120}`)
+    .option('-c, --logs-count-to-consider <count>', 'Number of logs to consider for analysis', '1000')
+    .option('-e, --temperature <temp>', 'Temperature for the model', '0.5')
+    .option('-p, --top-p <topP>', 'Top P for the model', '0.9')
+    .option('-m, --max-tokens <tokens>', 'Max tokens for the model', '1000')
+    .requiredOption('-a, --model-id <id>', 'Model ID to use for analysis')
+    .requiredOption('-n, --model-region <region>', 'Model region to use for analysis');
 
 program.parse(process.argv);
 const argv = program.opts();
