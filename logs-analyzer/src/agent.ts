@@ -1,8 +1,6 @@
 import { readdirSync, mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
+import { Command } from 'commander';
 import { BedrockRuntimeClient, ConversationRole, InferenceConfiguration } from '@aws-sdk/client-bedrock-runtime';
 import { createHash } from 'node:crypto';
 import {
@@ -36,120 +34,43 @@ import {
 } from './utils/interfaces';
 
 const LIMIT_3 = pLimit(3); // Limit concurrency to 3
+const program = new Command();
 
-const { argv } = yargs(hideBin(process.argv))
-    .option('logs-path', {
-        alias: 'l',
-        type: 'string',
-        description: 'Database application logs folder path',
-        demandOption: true
-    })
-    .option('sql-auth-enabled', {
-        alias: 's',
-        type: 'boolean',
-        description: 'SQL authentication enabled',
-        default: false,
-        demandOption: false
-    })
-    .option('database-instance-name', {
-        alias: 'd',
-        type: 'string',
-        description: 'SQL instance name',
-        default: 'MSSQLSERVER',
-        demandOption: false
-    })
-    .option('job-id', {
-        alias: 'j',
-        type: 'string',
-        description: 'Workload Factory job ID',
-        demandOption: true
-    })
-    .option('instance-id', {
-        alias: 'i',
-        type: 'string',
-        description: 'EC2 instance ID',
-        demandOption: true
-    })
-    .option('region', {
-        alias: 'r',
-        type: 'string',
-        description: 'AWS region',
-        demandOption: true
-    })
-    .option('log-level', {
-        alias: 'll',
-        type: 'string',
-        description: 'Log level',
-        choices: ['debug', 'info', 'warn', 'error'],
-        default: 'info'
-    })
-    .option('timestamp', {
-        alias: 't',
-        type: 'number',
-        description: 'Timestamp of the last log statement in milliseconds',
-        default: Date.now() - 1000 * 60 * 60 * 24 * 120 // Default to 24 hours ago
-    })
-    .option('logs-count-to-consider', {
-        alias: 'c',
-        type: 'number',
-        description: 'Number of logs to consider for analysis',
-        default: 1000
-    })
-    .option('temperature', {
-        alias: 'e',
-        type: 'string',
-        description: 'Temperature for the model',
-        demandOption: false,
-        default: '0.5'
-    })
-    .option('top-p', {
-        alias: 'p',
-        type: 'string',
-        description: 'Top P for the model',
-        demandOption: false,
-        default: '0.9'
-    })
-    .option('max-tokens', {
-        alias: 'm',
-        type: 'string',
-        description: 'Max tokens for the model',
-        demandOption: false,
-        default: '1000'
-    })
-    .option('model-id', {
-        type: 'string',
-        description: 'Model ID to use for analysis',
-        demandOption: true
-    })
-    .option('model-region', {
-        type: 'string',
-        description: 'Model ID to use for analysis',
-        demandOption: true
-    })
-    .option('help', {
-        alias: 'h',
-        type: 'boolean',
-        description: 'Show help'
-    })
-    .help();
+program
+  .requiredOption('-l, --logs-path <path>', 'Database application logs folder path')
+  .option('-s, --sql-auth-enabled', 'SQL authentication enabled', false)
+  .option('-d, --database-instance-name <name>', 'SQL instance name', 'MSSQLSERVER')
+  .requiredOption('-j, --job-id <id>', 'Workload Factory job ID')
+  .requiredOption('-i, --instance-id <id>', 'EC2 instance ID')
+  .requiredOption('-r, --region <region>', 'AWS region')
+  .option('-g, --log-level <level>', 'Log level', 'info')
+  .option('-t, --timestamp <ms>', 'Timestamp of the last log statement in milliseconds', `${Date.now() - 1000 * 60 * 60 * 24 * 120}`)
+  .option('-c, --logs-count-to-consider <count>', 'Number of logs to consider for analysis', '1000')
+  .option('-e, --temperature <temp>', 'Temperature for the model', '0.5')
+  .option('-p, --top-p <topP>', 'Top P for the model', '0.9')
+  .option('-m, --max-tokens <tokens>', 'Max tokens for the model', '1000')
+  .requiredOption('-a, --model-id <id>', 'Model ID to use for analysis')
+  .requiredOption('-n, --model-region <region>', 'Model region to use for analysis');
 
+program.parse(process.argv);
+const argv = program.opts();
 logger.info('Command line arguments:', argv);
 
 const {
-    'logs-path': LOGS_FOLDER,
-    'sql-auth-enabled': SQL_AUTH_ENABLED,
-    'database-instance-name': DATABASE_INSTANCE_NAME,
-    'job-id': JOB_ID,
-    'instance-id': INSTANCE_ID,
-    'log-level': LOG_LEVEL,
+    'logsPath': LOGS_FOLDER,
+    'sqlAuthEnabled': SQL_AUTH_ENABLED,
+    'databaseInstanceName': DATABASE_INSTANCE_NAME,
+    'jobId': JOB_ID,
+    'instanceId': INSTANCE_ID,
+    'logLevel': LOG_LEVEL,
     region: REGION,
-    'model-id': MODEL_ID,
-    'model-region': MODEL_REGION,
+    'modelId': MODEL_ID,
+    'modelRegion': MODEL_REGION,
     timestamp: TIMESTAMP_LAST_LOG_PROCESSED,
-    'logs-count-to-consider': LOGS_COUNT,
-    'top-p': TOP_P,
+    'logsCountToConsider': LOGS_COUNT,
+    'topP': TOP_P,
     temperature: TEMP,
-    'max-tokens': MAX_TOKENS
+    'maxTokens': MAX_TOKENS
 } = argv as any;
 
 const INFERENCE_CONFIG = {
