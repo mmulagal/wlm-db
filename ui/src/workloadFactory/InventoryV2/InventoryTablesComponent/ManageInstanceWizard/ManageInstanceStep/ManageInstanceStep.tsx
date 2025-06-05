@@ -24,13 +24,18 @@ import {
     missingModules
 } from '../ManageInstanceUtils';
 import { useGetWlmdbPoliciesQuery } from '../../../../../utils/apiService';
-import { BulkDetectedInstance, ManageStates } from '../../../../../utils/types/registerTypes';
+import {
+    BulkDetectedInstance,
+    ExtendedManageStates,
+    ManageReadinessData,
+    ManageStates
+} from '../../../../../utils/types/registerTypes';
 
 export const Content = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { state, setState } = useWizard();
-    const [manageMultiChecks, setManageMultiChecks] = useState<any>({});
+    const [manageMultiChecks, setManageMultiChecks] = useState<Partial<ManageStates>>({});
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
     const { manageSingleInstanceData, manageSingleInstanceReadiness, selectedMultiDetectInstances } = useAppSelector(
         state => state.inventoryV2
@@ -84,7 +89,7 @@ export const Content = () => {
             instanceData || {};
 
         // Find partner instance (if any)
-        const partnerInstance = hostRow?.ec2Details?.find((inst: any) => inst.id !== ec2InstanceId);
+        const partnerInstance = hostRow?.ec2Details?.find((inst: { id?: string }) => inst.id !== ec2InstanceId);
 
         // Get primary readiness data
         const primaryReadiness =
@@ -114,7 +119,7 @@ export const Content = () => {
         if (wizardOperationType !== ACTION_TYPE.SINGLE) {
             return;
         }
-        let manageCheckObj: any = {
+        let manageCheckObj: Partial<ManageStates> = {
             installMissingAWS: false,
             installMissingAWSList: [],
             installMissingPowershell: false,
@@ -128,7 +133,7 @@ export const Content = () => {
             databaseInstanceName: ''
         };
 
-        let manageReadinessData: any = null;
+        let manageReadinessData: ManageReadinessData | null = null;
         if (
             !manageSingleInstanceData?.windowsAuthentication &&
             !manageSingleInstanceData?.sqlServerAuthentication &&
@@ -167,7 +172,7 @@ export const Content = () => {
 
     // Manage checks for multiple instances
     const manageCheck = (instance: BulkDetectedInstance) => {
-        let manageCheckObj: Partial<ManageStates & { overallState: string; readyCount: number; perRowState: any[] }> = {
+        let manageCheckObj: Partial<ExtendedManageStates> = {
             installMissingAWS: false,
             installMissingAWSList: [],
             installMissingPowershell: false,
@@ -183,7 +188,7 @@ export const Content = () => {
             readyCount: 0
         };
 
-        let manageReadinessData: any = null;
+        let manageReadinessData: ManageReadinessData | null = null;
         if (!instance?.data?.windowsAuthentication && !instance?.data?.sqlServerAuthentication) {
             manageReadinessData = instance?.manageReadiness;
         } else {

@@ -7,12 +7,13 @@ import { useAppSelector } from '../../../../../store/storeHooks';
 import { useMemo } from 'react';
 import AuthenticatedScreen from './AuthenticatedScreen/AuthenticatedScreen';
 import { ACTION_TYPE } from '../../../../../utils/consts';
+import { BulkDetectedInstance, UseWizardReturn } from '../../../../../utils/types/registerTypes';
 
 export const Content = () => {
     const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
 
     const isAuth = useMemo(() => {
-        return selectedMultiDetectInstances?.every((item: any) => item?.authorized);
+        return selectedMultiDetectInstances?.every((item: BulkDetectedInstance) => item?.authorized);
     }, []);
 
     return (
@@ -33,7 +34,7 @@ export const Content = () => {
 };
 
 export const Footer = () => {
-    const { state }: any = useWizard();
+    const { state }: UseWizardReturn = useWizard();
     return (
         <ManageWizardFooter
             nextButtonProps={{

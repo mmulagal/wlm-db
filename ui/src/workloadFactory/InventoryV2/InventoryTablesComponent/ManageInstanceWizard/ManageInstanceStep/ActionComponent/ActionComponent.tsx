@@ -6,11 +6,16 @@ import styles from './ActionComponent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { setInstallType } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { ACTION_TYPE } from '../../../../../../utils/consts';
+import { ManageStates, UseWizardReturn } from '../../../../../../utils/types/registerTypes';
 
-const ActionComponent = ({ manageChecks }: any) => {
+type ActionComponentProps = {
+    manageChecks: Partial<ManageStates>;
+};
+
+const ActionComponent = ({ manageChecks }: ActionComponentProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { state, setState }: any = useWizard();
+    const { state, setState }: UseWizardReturn = useWizard();
     const { installMissingAWS, installMissingPowershell } = useAppSelector(
         state => state.inventoryV2.manageInstanceInstallAction
     );

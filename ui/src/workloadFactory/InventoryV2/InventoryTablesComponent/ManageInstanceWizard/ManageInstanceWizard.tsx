@@ -1,4 +1,4 @@
-import { useWizard, WizardContextProvider } from '@netapp/design-system/dist/components/Wizard';
+import { useWizard, WizardContextProvider, WizardState } from '@netapp/design-system/dist/components/Wizard';
 import { BlueXPListeners, postBlueXPMessage, StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import styles from './ManageInstanceWizard.module.scss';
@@ -64,7 +64,7 @@ const Wizard = () => {
 };
 
 const ManageInstanceWizard = () => {
-    const initialState: any = {};
+    const initialState: Partial<WizardState> = {};
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const isAlreadyDetected = useMemo(() => {
         if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {

@@ -23,6 +23,11 @@ import { getBulkDetectChecks, handleMultiInstanceManage, handleSingleInstanceMan
 import { useNavigate } from 'react-router-dom';
 import { ACTION_TYPE } from '../../../../utils/consts';
 import { useMemo } from 'react';
+import {
+    BulkDetectedInstance,
+    RegisterResourceCredResult,
+    UseWizardReturn
+} from '../../../../utils/types/registerTypes';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -36,7 +41,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const { nextButtonProps, validation, style } = props; //onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
 
-    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: any = useWizard();
+    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: UseWizardReturn =
+        useWizard();
 
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
@@ -65,7 +71,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         dispatch(setIsDetectHostLoading(true));
         dispatch(setManageSingleInstanceReadiness(null));
         let payload: Array<any> = [];
-        selectedMultiDetectInstances?.forEach((instance: any) => {
+        selectedMultiDetectInstances?.forEach((instance: BulkDetectedInstance) => {
             const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
             let cred = createDetectHostPayload(sqlServerInstance, instance?.data?.fsxId, instance?.data);
             let perPayload = {
@@ -155,7 +161,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         const sqlServerInstance =
             manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
         try {
-            const result: any = await registerResourceCred({
+            const result: RegisterResourceCredResult = await registerResourceCred({
                 credentialId: manageSingleInstanceData?.credentialId,
                 regionId: manageSingleInstanceData?.regionId,
                 instanceId: manageSingleInstanceData?.ec2InstanceId,

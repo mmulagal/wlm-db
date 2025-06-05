@@ -1305,7 +1305,7 @@ const InstancesTable = () => {
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                         actionsRight={
                             <div className={styles.manageInstanceButton}>
-                                <DsButton isThin onClick={() => handleManageBulk()}>
+                                <DsButton isThin onClick={() => handleManageBulk()} isDisabled={loading}>
                                     Register multiple instances
                                 </DsButton>
                             </div>

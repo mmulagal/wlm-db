@@ -7,12 +7,19 @@ import styles from './DetectHeader.module.scss';
 import DialogComponent from '../../../../../../common/Dialog/DialogComponent';
 import DetectedInstanceTable from './DetectedInstanceTable';
 import { useAppSelector } from '../../../../../../store/storeHooks';
+import { BulkDetectedInstance } from '../../../../../../utils/types/registerTypes';
+
+interface CountSummary {
+    total?: number;
+    success?: number;
+    readyForManagement?: number;
+}
 
 const MultiInstanceHeader = () => {
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
     const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
-    const [countSummary, setCountSummary] = useState<any>({});
+    const [countSummary, setCountSummary] = useState<CountSummary>({});
 
     useEffect(() => {
         const newCountSummary = {
@@ -20,7 +27,7 @@ const MultiInstanceHeader = () => {
             success: 0,
             readyForManagement: 0
         };
-        bulkDetectedInstanceList.forEach((item: any) => {
+        bulkDetectedInstanceList.forEach((item: BulkDetectedInstance) => {
             newCountSummary.total += 1;
             if (item?.authorized) {
                 newCountSummary.success += 1;

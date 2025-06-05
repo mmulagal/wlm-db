@@ -7,6 +7,7 @@ import ManageWizardFooter from '../ManageWizardFooter';
 import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as MultipleInstances } from '../../../../../assets/Multiple instances credentials 3.svg';
 import SelectInstances from '../DetectInstanceStep/DetectContent/SelectInstances';
+import { UseWizardReturn } from '../../../../../utils/types/registerTypes';
 
 export const Content = () => {
     const { t } = useTranslation();
@@ -34,7 +35,7 @@ export const Content = () => {
 };
 
 export const Footer = () => {
-    const { state }: any = useWizard();
+    const { state }: UseWizardReturn = useWizard();
     return (
         <ManageWizardFooter
             nextButtonProps={{

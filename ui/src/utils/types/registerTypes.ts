@@ -79,3 +79,37 @@ export interface JobResponse {
         [key: string]: any;
     };
 }
+
+export interface WizardState {
+    submit: any;
+    ontapUserNameFromWizard?: string;
+    ontapPasswordFromWizard?: string;
+    mssqlUserNameFromWizard?: string;
+    mssqlPasswordFromWizard?: string;
+    authenticationTypeSelected?: string;
+    hitNext?: boolean;
+    installMissingAWS?: boolean;
+    installMissingPowershell?: boolean;
+    installMissingAWSList?: string[];
+    // Add other keys as needed
+}
+
+export interface UseWizardReturn {
+    state: WizardState;
+    setState: (update: Partial<WizardState>) => void;
+    currentStepIndex?: number;
+    currentStep?: string;
+    gotoPreviousStep?: () => void;
+    goToNextStep?: () => void;
+}
+
+export interface ExtendedManageStates extends ManageStates {
+    overallState?: string;
+    readyCount?: number;
+    perRowState?: any[];
+}
+
+export type RegisterResourceCredResult = {
+    data?: { sqlServerError?: string; fsxnError?: string; manageReadiness?: any };
+    error?: any;
+};

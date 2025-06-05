@@ -15,11 +15,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { setIsDetectHostError } from '../../../../../../store/mssql/msSqlActionSlice';
 import { getBulkDetectChecks } from '../../ManageInstanceUtils';
+import { UseWizardReturn } from '../../../../../../utils/types/registerTypes';
 
 const DetectContent = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { state, setState }: any = useWizard();
+    const { state, setState }: UseWizardReturn = useWizard();
 
     const {
         ontapUserNameFromWizard,

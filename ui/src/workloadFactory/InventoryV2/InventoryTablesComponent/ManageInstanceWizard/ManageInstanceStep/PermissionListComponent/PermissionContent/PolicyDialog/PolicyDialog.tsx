@@ -4,7 +4,12 @@ import { ReactComponent as CopyIcon } from '../../../../../../../../assets/ic_co
 import styles from './PolicyDialog.module.scss';
 import CopyToClipboardCommon from '../../../../../../../../common/CopyToClipboard/copyToClipboard';
 
-const PolicyDialog = ({ data, label }: any) => {
+interface PolicyDialogProps {
+    data: string;
+    label: string;
+}
+
+const PolicyDialog = ({ data, label }: PolicyDialogProps) => {
     const { t } = useTranslation();
     return (
         <div className={styles.policyDialog}>
