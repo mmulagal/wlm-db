@@ -9,6 +9,7 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
+    FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
     FORM_TO_WLF_NAVIGATE_INVENTORY,
     JOB_MONITORING_STATUS,
     MANAGE_POLLING_INTERVAL,
@@ -213,7 +214,7 @@ export const callManageSingleInstanceApi = async (
                 postBlueXPMessage({
                     type: BlueXPListeners.navigate,
                     payload: {
-                        pathname: './inventory',
+                        pathname: FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
                         replace: true
                     }
                 });
@@ -329,7 +330,7 @@ export const callManageMultiInstanceApi = async (
                 postBlueXPMessage({
                     type: BlueXPListeners.navigate,
                     payload: {
-                        pathname: './inventory',
+                        pathname: FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
                         replace: true
                     }
                 });
