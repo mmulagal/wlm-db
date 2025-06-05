@@ -231,7 +231,7 @@ async function handleLogsAnalysis(
 
         const logsPathQuery =
             'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH';
-        const { sqlAuthEnabled, database_instance_name: databaseInstanceName } = matchingInstance;
+        const { sqlAuthEnabled, instanceName: databaseInstanceName } = matchingInstance;
         const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth([databaseInstanceName], logsPathQuery, sqlAuthEnabled);
         const logsPathResponse = await callSsmExecution(
             credentialsId,

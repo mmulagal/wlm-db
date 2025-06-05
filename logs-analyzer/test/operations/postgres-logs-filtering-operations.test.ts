@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import ms from 'ms';
 import { join } from 'path';
-import { existsSync, mkdirSync, writeFileSync} from 'fs';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { readPostgresLogsFile, getUniquePostgresErrors } from '../../src/operations/postgres-logs-filtering-operations';
 
 beforeAll(() => {

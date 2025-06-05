@@ -7,37 +7,7 @@ function getWindowsBedrockAvailabilityCheckScript(region: string, modelId: strin
     return `
 
 # Bedrock Availability Check Script
-$psGallery = Get-PSRepository -Name 'PSGallery' -ErrorAction SilentlyContinue
-if (-not $psGallery) {
-    try {
-        Register-PSRepository -Default -ErrorAction Stop
-        Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted -ErrorAction Stop
-    } catch {}
-} else {
-    Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted -ErrorAction SilentlyContinue
-}
-
-# Ensure NuGet provider is available
-if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
-    try {
-        Install-PackageProvider -Name NuGet -Force -Scope AllUsers -ErrorAction Stop
-    } catch {}
-}
-
-
 $moduleFound = Get-Module -ListAvailable -Name AWS.Tools.BedrockRuntime
-if (-not $moduleFound) {
-    try {
-        Install-Module -Name AWS.Tools.BedrockRuntime -Force -Scope AllUsers -ErrorAction Stop
-    } catch {
-        if ($_.Exception.Message -like '*may override the existing commands*') {
-            try {
-                Install-Module -Name AWS.Tools.BedrockRuntime -Force -Scope AllUsers -AllowClobber -ErrorAction Stop
-            } catch {}
-        }
-    }
-    $moduleFound = Get-Module -ListAvailable -Name AWS.Tools.BedrockRuntime
-}
 
 if (-not $moduleFound) {
     $result = @{
@@ -46,39 +16,34 @@ if (-not $moduleFound) {
         error = "AWS.Tools.BedrockRuntime not found."
     }
     $result | ConvertTo-Json -Depth 5
-    exit 1
-}
-
-if ($moduleFound) {
+} elseif ($moduleFound) {
     try {
         Import-Module AWS.Tools.BedrockRuntime -ErrorAction Stop
-    } catch {}
-}
 
-$region = "${region}"
-$modelId = "${modelId}"
+        $region = "${region}"
+        $modelId = "${modelId}"
 
-try {
-    $contentBlock = New-Object Amazon.BedrockRuntime.Model.ContentBlock
-    $contentBlock.Text = "Hello"
-    $message = New-Object Amazon.BedrockRuntime.Model.Message
-    $message.Role = "user"
-    $message.Content = $contentBlock
-    $response = Invoke-BDRRConverse -ModelId $modelId -Messages $message -Region $region
-    $result = @{
-        success = $true
-        response = $response | ConvertTo-Json -Depth 10
-        error = $null
+        $contentBlock = New-Object Amazon.BedrockRuntime.Model.ContentBlock
+        $contentBlock.Text = "Hello"
+        $message = New-Object Amazon.BedrockRuntime.Model.Message
+        $message.Role = "user"
+        $message.Content = $contentBlock
+        $response = Invoke-BDRRConverse -ModelId $modelId -Messages $message -Region $region
+        $result = @{
+            success = $true
+            response = $response | ConvertTo-Json -Depth 10
+            error = $null
+        }
+    } catch {
+        $result = @{
+                success = $false
+                response = $null
+                error = $_.Exception.Message
+            }
     }
-} catch {
-    $result = @{
-        success = $false
-        response = $null
-        error = $_.Exception.Message
-    }
+    $result | ConvertTo-Json -Depth 5
+    exit 0
 }
-$result | ConvertTo-Json -Depth 5
-exit 0
 `;
 }
 
@@ -154,7 +119,7 @@ function getWindowsPrepareScript(scriptParams: {
     try {
         $s3SignedUrl = "${s3SignedUrl}";
         $packageName = "${packageName}";
-        $logsPath = "${logsPath}";
+        $logsPath = "${encodeURIComponent(logsPath)}";
         $sqlAuthEnabled = $${sqlAuthEnabled};
         $databaseInstanceName = "${databaseInstanceName}";
         $version = "${version}";
@@ -202,7 +167,22 @@ function getWindowsPrepareScript(scriptParams: {
             if (-Not (Test-Path $filePath)) {
                 throw "The specified file does not exist."
             }
-            Start-Process -FilePath $filePath -ArgumentList "--logs-path $logsPath --sql-auth-enabled $sqlAuthEnabled --database-instance-name $databaseInstanceName --log-level info --region $region --model-id $modelId --model-region $modelRegion --job-id $jobId --instance-id $instanceId --temperature $temperature --maxTokens $maxTokens --topP $topP" -NoNewWindow -Wait
+
+            $argumentList = @(
+                '--logs-path', $logsPath,
+                '--sql-auth-enabled', $sqlAuthEnabled,
+                '--database-instance-name', $databaseInstanceName,
+                '--log-level', 'info',
+                '--region', $region,
+                '--model-id', $modelId,
+                '--model-region', $modelRegion,
+                '--job-id', $jobId,
+                '--instance-id', $instanceId,
+                '--temperature', $temperature,
+                '--max-tokens', $maxTokens,
+                '--top-p', $topP
+            )
+            Start-Process -FilePath $filePath -ArgumentList $argumentList -NoNewWindow -Wait
         } catch {
             throw "Failed to run Logs Analyzer: $($_.Exception.Message)"
         }

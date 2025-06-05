@@ -1,8 +1,6 @@
 import { readdirSync, mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
+import { Command } from 'commander';
 import { BedrockRuntimeClient, ConversationRole, InferenceConfiguration } from '@aws-sdk/client-bedrock-runtime';
 import { createHash } from 'node:crypto';
 import {
@@ -26,122 +24,60 @@ import collectLogs from '../operations/logs-filtering-operations';
 import TOOLS from './utils/tools';
 import { getPowershellScript, getBashScript, runPowerShellScript, deleteOlderFilesInDirectory } from './utils/utils';
 import logger from './utils/logging';
-import { ErrorLg, ToolUse, ToolSpec, ErrorLogWithScript, MessageObj } from './utils/interfaces';
+import {
+    ErrorLg,
+    ToolUse,
+    ToolSpec,
+    ErrorLogWithScript,
+    MessageObj,
+    ErrorLogWithAdditionalInfo
+} from './utils/interfaces';
 
-const { argv } = yargs(hideBin(process.argv))
-    .option('logs-path', {
-        alias: 'l',
-        type: 'string',
-        description: 'Database application logs folder path',
-        demandOption: true
-    })
-    .option('sql-auth-enabled', {
-        alias: 's',
-        type: 'boolean',
-        description: 'SQL authentication enabled',
-        default: false,
-        demandOption: false
-    })
-    .option('database-instance-name', {
-        alias: 'd',
-        type: 'string',
-        description: 'SQL instance name',
-        default: 'MSSQLSERVER',
-        demandOption: false
-    })
-    .option('job-id', {
-        alias: 'j',
-        type: 'string',
-        description: 'Workload Factory job ID',
-        demandOption: true
-    })
-    .option('instance-id', {
-        alias: 'i',
-        type: 'string',
-        description: 'EC2 instance ID',
-        demandOption: true
-    })
-    .option('region', {
-        alias: 'r',
-        type: 'string',
-        description: 'AWS region',
-        demandOption: true
-    })
-    .option('log-level', {
-        alias: 'll',
-        type: 'string',
-        description: 'Log level',
-        choices: ['debug', 'info', 'warn', 'error'],
-        default: 'info'
-    })
-    .option('timestamp', {
-        alias: 't',
-        type: 'number',
-        description: 'Timestamp of the last log statement in milliseconds',
-        default: Date.now() - 1000 * 60 * 60 * 24 * 120 // Default to 24 hours ago
-    })
-    .option('logs-count-to-consider', {
-        alias: 'c',
-        type: 'number',
-        description: 'Number of logs to consider for analysis',
-        default: 1000
-    })
-    .option('temperature', {
-        alias: 'e',
-        type: 'string',
-        description: 'Temperature for the model',
-        demandOption: false,
-        default: '0.5'
-    })
-    .option('top-p', {
-        alias: 'p',
-        type: 'string',
-        description: 'Top P for the model',
-        demandOption: false,
-        default: '0.9'
-    })
-    .option('max-tokens', {
-        alias: 'm',
-        type: 'string',
-        description: 'Max tokens for the model',
-        demandOption: false,
-        default: '1000'
-    })
-    .option('model-id', {
-        type: 'string',
-        description: 'Model ID to use for analysis',
-        demandOption: true
-    })
-    .option('model-region', {
-        type: 'string',
-        description: 'Model ID to use for analysis',
-        demandOption: true
-    })
-    .option('help', {
-        alias: 'h',
-        type: 'boolean',
-        description: 'Show help'
-    })
-    .help();
+const LIMIT_3 = pLimit(3); // Limit concurrency to 3
+const program = new Command();
 
+program
+    .requiredOption('-l, --logs-path <path>', 'Database application logs folder path')
+    .option('-s, --sql-auth-enabled <enabled>', 'SQL authentication enabled', false)
+    .option('-d, --database-instance-name <name>', 'SQL instance name', 'MSSQLSERVER')
+    .requiredOption('-j, --job-id <id>', 'Workload Factory job ID')
+    .requiredOption('-i, --instance-id <id>', 'EC2 instance ID')
+    .requiredOption('-r, --region <region>', 'AWS region')
+    .option('-g, --log-level <level>', 'Log level', 'info')
+    .option('-t, --timestamp <ms>', 'Timestamp of the last log statement in milliseconds', `${Date.now() - 1000 * 60 * 60 * 24 * 120}`)
+    .option('-c, --logs-count-to-consider <count>', 'Number of logs to consider for analysis', '1000')
+    .option('-e, --temperature <temp>', 'Temperature for the model', '0.5')
+    .option('-p, --top-p <topP>', 'Top P for the model', '0.9')
+    .option('-m, --max-tokens <tokens>', 'Max tokens for the model', '1000')
+    .requiredOption('-a, --model-id <id>', 'Model ID to use for analysis')
+    .requiredOption('-n, --model-region <region>', 'Model region to use for analysis');
+
+program.parse(process.argv);
+const argv = program.opts();
 logger.info('Command line arguments:', argv);
 
 const {
-    'logs-path': LOGS_FOLDER,
-    'sql-auth-enabled': SQL_AUTH_ENABLED,
-    'database-instance-name': DATABASE_INSTANCE_NAME,
-    'job-id': JOB_ID,
-    'instance-id': INSTANCE_ID,
-    'log-level': LOG_LEVEL,
+    logsPath,
+    'sqlAuthEnabled': SQL_AUTH_ENABLED,
+    'databaseInstanceName': DATABASE_INSTANCE_NAME,
+    'jobId': JOB_ID,
+    'instanceId': INSTANCE_ID,
+    'logLevel': LOG_LEVEL,
     region: REGION,
-    'model-id': MODEL_ID,
-    'model-region': MODEL_REGION,
+    'modelId': MODEL_ID,
+    'modelRegion': MODEL_REGION,
     timestamp: TIMESTAMP_LAST_LOG_PROCESSED,
-    'logs-count-to-consider': LOGS_COUNT,
-    'top-p': TOP_P,
+    'logsCountToConsider': LOGS_COUNT,
+    'topP': TOP_P,
     temperature: TEMP,
-    'max-tokens': MAX_TOKENS
+    'maxTokens': MAX_TOKENS
 } = argv as any;
+
+const LOGS_FOLDER = decodeURIComponent(logsPath);
+if (!existsSync(LOGS_FOLDER)) {
+    logger.error(`Logs folder does not exist: ${LOGS_FOLDER}`);
+    throw new Error(`Logs folder does not exist: ${LOGS_FOLDER}`);
+}
 
 const INFERENCE_CONFIG = {
     temperature: parseFloat(TEMP),
@@ -249,29 +185,33 @@ async function handleToolUse(
 ) {
     let stopReason = '';
     if (message?.content) {
-        for (const content of message.content) {
-            if (content?.toolUse) {
-                const tool = content.toolUse;
+        await Promise.all(
+            message.content?.map(content =>
+                LIMIT_3(async () => {
+                    if (content?.toolUse) {
+                        const tool = content.toolUse;
 
-                switch (tool?.name) {
-                    case 'analyze_db_logs': {
-                        await analyzeDatabaseApplicationLogs(tool, client, LOGS_FOLDER, SQL_AUTH_ENABLED, DATABASE_INSTANCE_NAME, messages, INFERENCE_CONFIG);
-                        stopReason = 'end_turn'; // Stop further tool use
-                        logger.info('Log analysis completed. Stopping further tool use.');
+                        switch (tool?.name) {
+                            case 'analyze_db_logs': {
+                                await analyzeDatabaseApplicationLogs(tool, client, LOGS_FOLDER, SQL_AUTH_ENABLED, DATABASE_INSTANCE_NAME, messages, INFERENCE_CONFIG);
+                                stopReason = 'end_turn'; // Stop further tool use
+                                logger.info('Log analysis completed. Stopping further tool use.');
 
-                        break;
+                                break;
+                            }
+                            default: {
+                                logger.info(`Tool ${tool.name} is not supported`);
+                                break;
+                            }
+                        }
+
+                        if (stopReason === 'tool_use') {
+                            await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, inferenceConfig);
+                        }
                     }
-                    default: {
-                        logger.info(`Tool ${tool.name} is not supported`);
-                        break;
-                    }
-                }
-
-                if (stopReason === 'tool_use') {
-                    await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, inferenceConfig);
-                }
-            }
-        }
+                })
+            )
+        );
     }
 }
 
@@ -378,7 +318,7 @@ async function runBashScript(scriptContent: string): Promise<string> {
 async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWithScripts: ErrorLogWithScript[], databaseInstanceName?: string, sqlAuthEnabled?: boolean) {
     logger.info('Checking and executing additional scripts.', { databaseType, databaseInstanceName, sqlAuthEnabled });
 
-    const result = [];
+    const result: ErrorLogWithAdditionalInfo[] = [];
 
     const uniqueQueryMap = new Map();
     errorLogsWithScripts.forEach((logWithScript: ErrorLogWithScript) => {
@@ -394,46 +334,48 @@ async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWi
         }
     });
 
-    for (const [, value] of uniqueQueryMap.entries()) {
-        const [{ sql }] = value;
-        if (!isEmpty(sql)) {
-            const response =
-                databaseType === DATABASE_TYPE.MSSQL
-                    ? await runPowerShellScript(getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled))
-                    : await runBashScript(getBashScript(sql));
-            const errorAndCauseWithAdditionalInfo = value.map(
-                ({ error, cause, count, severity, sql: sqlQueries }: ErrorLogWithScript) => ({
-                    error,
-                    cause,
-                    count,
-                    severity,
-                    sql: sqlQueries,
-                    additionalInfo: response
-                })
-            );
-            result.push(...errorAndCauseWithAdditionalInfo);
-        } else {
-            const errorAndCauseWithAdditionalInfo = value.map(
-                ({ error, cause, count, severity }: ErrorLogWithScript) => ({
-                    error,
-                    cause,
-                    count,
-                    severity,
-                    sql: [],
-                    additionalInfo: 'No additional script executed.'
-                })
-            );
-            result.push(...errorAndCauseWithAdditionalInfo);
-        }
-    }
+    await Promise.all(
+        Array.from(uniqueQueryMap.values()).map(value =>
+            LIMIT_3(async () => {
+                const [{ sql }] = value;
+                if (!isEmpty(sql)) {
+                    const response =
+                        databaseType === DATABASE_TYPE.MSSQL
+                            ? await runPowerShellScript(getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled))
+                            : await runBashScript(getBashScript(sql));
+                    const errorAndCauseWithAdditionalInfo = value.map(
+                        ({ error, cause, count, severity }: ErrorLogWithScript) => ({
+                            error,
+                            cause,
+                            count,
+                            severity,
+                            additionalInfo: response
+                        })
+                    );
+                    result.push(...errorAndCauseWithAdditionalInfo);
+                } else {
+                    const errorAndCauseWithAdditionalInfo = value.map(
+                        ({ error, cause, count, severity }: ErrorLogWithScript) => ({
+                            error,
+                            cause,
+                            count,
+                            severity,
+                            additionalInfo: 'No additional script executed.'
+                        })
+                    );
+                    result.push(...errorAndCauseWithAdditionalInfo);
+                }
+            })
+        )
+    );
 
-    return { result };
+    return { result: compact(result) };
 }
 
 async function recommendRemediation(
     databaseType: string,
     client: BedrockRuntimeClient,
-    result: string[],
+    result: ErrorLogWithAdditionalInfo[],
     inferenceConfig: InferenceConfiguration
 ) {
     logger.info('Recommending remediation for errors.', { databaseType });
@@ -443,29 +385,33 @@ async function recommendRemediation(
             ? REMIDIATION_RECOMMENDATION_PROMPT
             : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
 
-    for (const errorWithInfo of result) {
-        const response = await streamMessages(
-            client,
-            MODEL_ID,
-            [
-                {
-                    role: ConversationRole.USER,
-                    content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
-                }
-            ],
-            undefined,
-            inferenceConfig
-        );
+    await Promise.all(
+        result.map(errorWithInfo =>
+            LIMIT_3(async () => {
+                const response = await streamMessages(
+                    client,
+                    MODEL_ID,
+                    [
+                        {
+                            role: ConversationRole.USER,
+                            content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
+                        }
+                    ],
+                    undefined,
+                    inferenceConfig
+                );
 
-        const { message } = response;
-        const { content: [{ text }] = [] } = message;
-        if (text) {
-            const { error, cause, count, severity, remediation } = JSON.parse(text);
-            remediationRecommendation.push({ error, cause, count, severity, remediation });
-        } else {
-            logger.error('No text found in the response.');
-        }
-    }
+                const { message } = response;
+                const { content: [{ text }] = [] } = message;
+                if (text) {
+                    const { error, cause, count, severity, remediation } = JSON.parse(text);
+                    remediationRecommendation.push({ error, cause, count, severity, remediation });
+                } else {
+                    logger.error('No text found in the response.');
+                }
+            })
+        )
+    );
     return remediationRecommendation;
 }
 
@@ -477,36 +423,31 @@ async function getDatabaseDetails(logsFolderPath: string) {
         file => file.endsWith('.trc') || file.endsWith('.xel') || file.endsWith('.log') || file.startsWith('ERRORLOG')
     );
 
-    const limit = pLimit(3); // Limit concurrency to 3
+    for (const logFile of logFiles) {
+        const filePath = join(logsFolderPath, logFile);
+        const fileContent = readFileSync(filePath, 'utf-8').replace(/[^\x20-\x7E]/g, '');
+        let databaseType = 'Unknown';
+        let databaseVersion = 'Unknown';
 
-    await Promise.all(
-        logFiles.map(logFile =>
-            limit(async () => {
-                const filePath = join(logsFolderPath, logFile);
-                const fileContent = readFileSync(filePath, 'utf-8').replace(/[^\x20-\x7E]/g, '');
-                let databaseType = 'Unknown';
-                let databaseVersion = 'Unknown';
+        if (fileContent.includes('Microsoft SQL Server')) {
+            databaseType = DATABASE_TYPE.MSSQL;
+            const versionMatch = fileContent.match(/Microsoft SQL Server\s+([\d.]+)/);
+            if (versionMatch) {
+                [, databaseVersion] = versionMatch;
+            }
+        } else if (fileContent.includes('PostgreSQL')) {
+            databaseType = DATABASE_TYPE.POSTGRESQL;
+            const versionMatch = fileContent.match(/PostgreSQL\s+([\d.]+)/);
+            if (versionMatch) {
+                [, databaseVersion] = versionMatch;
+            }
+        }
 
-                if (fileContent.includes('Microsoft SQL Server')) {
-                    databaseType = DATABASE_TYPE.MSSQL;
-                    const versionMatch = fileContent.match(/Microsoft SQL Server\s+([\d.]+)/);
-                    if (versionMatch) {
-                        [, databaseVersion] = versionMatch;
-                    }
-                } else if (fileContent.includes('PostgreSQL')) {
-                    databaseType = DATABASE_TYPE.POSTGRESQL;
-                    const versionMatch = fileContent.match(/PostgreSQL\s+([\d.]+)/);
-                    if (versionMatch) {
-                        [, databaseVersion] = versionMatch;
-                    }
-                }
-
-                if (!databaseDetails) {
-                    databaseDetails = { logFile, databaseType, databaseVersion };
-                }
-            })
-        )
-    );
+        if (!databaseDetails) {
+            databaseDetails = { logFile, databaseType, databaseVersion };
+            break; // Stop as soon as we find a match
+        }
+    }
     if (isEmpty(databaseDetails)) {
         const errorMessage = 'No database type or version found in the logs.';
         logger.error(errorMessage);
