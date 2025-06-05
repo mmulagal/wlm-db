@@ -19,7 +19,7 @@ import {
     setSelectedMultiDetectInstances
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 
-import { getBulkDetectChecks, handleSingleInstanceManage } from './ManageInstanceUtils';
+import { getBulkDetectChecks, handleMultiInstanceManage, handleSingleInstanceManage } from './ManageInstanceUtils';
 import { useNavigate } from 'react-router-dom';
 import { ACTION_TYPE } from '../../../../utils/consts';
 import { useMemo } from 'react';
@@ -41,7 +41,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
-    const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
+    const { wizardOperationType, selectedMultiDetectInstances, bulkDetectedInstanceList } = useAppSelector(
+        state => state.inventoryV2
+    );
 
     const bulkInstanceData = useMemo(() => {
         return getBulkDetectChecks(selectedMultiDetectInstances);
@@ -246,7 +248,13 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const handleManage = () => {
         if (wizardOperationType === ACTION_TYPE.BULK) {
-            // ToDo
+            handleMultiInstanceManage(
+                bulkDetectedInstanceList,
+                dispatch,
+                manageBulkV2InstanceApi,
+                getJobDetailApi,
+                navigate
+            );
         } else {
             handleSingleInstanceManage(
                 manageSingleInstanceChecks,

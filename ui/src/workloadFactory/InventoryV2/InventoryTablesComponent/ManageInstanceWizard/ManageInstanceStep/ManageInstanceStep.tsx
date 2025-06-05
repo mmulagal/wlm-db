@@ -279,7 +279,8 @@ export const Content = () => {
                 readinessStatus: manageStates?.overallState,
                 readyCount: manageStates?.readyCount,
                 totalCount: 4,
-                perRowState: manageStates?.perRowState || []
+                perRowState: manageStates?.perRowState || [],
+                manageStates: manageStates
             });
         });
         setManageMultiChecks({
