@@ -284,10 +284,17 @@ const InstancesTable = () => {
         );
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
 
+        let resourceId = '';
+        if (targettedDbInstance?.resourceId) {
+            resourceId = targettedDbInstance?.resourceId;
+        } else {
+            resourceId = targettedHost?.resourceId;
+        }
+
         dispatch(
             setGwPageLoadInstanceData({
                 hostname: rowData?.name,
-                resourceId: targettedHost?.resourceId,
+                resourceId: resourceId,
                 instanceId: targettedDbInstance?.databaseInstanceId,
                 instanceName: targettedDbInstance?.databaseInstanceName,
                 credId: targettedHost?.credentialId,
@@ -301,7 +308,7 @@ const InstancesTable = () => {
         dispatch(setSelectedHostname(rowData?.name));
         dispatch(
             setSelectedResourcePageHostData({
-                resourceId: targettedHost?.resourceId,
+                resourceId: resourceId,
                 databaseInstanceId: targettedDbInstance?.databaseInstanceId,
                 databaseInstanceName: targettedDbInstance?.databaseInstanceName,
                 credentialId: targettedHost?.credentialId,
