@@ -119,7 +119,7 @@ function getWindowsPrepareScript(scriptParams: {
     try {
         $s3SignedUrl = "${s3SignedUrl}";
         $packageName = "${packageName}";
-        $logsPath = "${logsPath}";
+        $logsPath = "${encodeURIComponent(logsPath)}";
         $sqlAuthEnabled = $${sqlAuthEnabled};
         $databaseInstanceName = "${databaseInstanceName}";
         $version = "${version}";
@@ -167,7 +167,22 @@ function getWindowsPrepareScript(scriptParams: {
             if (-Not (Test-Path $filePath)) {
                 throw "The specified file does not exist."
             }
-            Start-Process -FilePath $filePath -ArgumentList "--logs-path $logsPath --sql-auth-enabled $sqlAuthEnabled --database-instance-name $databaseInstanceName --log-level info --region $region --model-id $modelId --model-region $modelRegion --job-id $jobId --instance-id $instanceId --temperature $temperature --max-tokens $maxTokens --top-p $topP" -NoNewWindow -Wait
+
+            $argumentList = @(
+                '--logs-path', $logsPath,
+                '--sql-auth-enabled', $sqlAuthEnabled,
+                '--database-instance-name', $databaseInstanceName,
+                '--log-level', 'info',
+                '--region', $region,
+                '--model-id', $modelId,
+                '--model-region', $modelRegion,
+                '--job-id', $jobId,
+                '--instance-id', $instanceId,
+                '--temperature', $temperature,
+                '--max-tokens', $maxTokens,
+                '--top-p', $topP
+            )
+            Start-Process -FilePath $filePath -ArgumentList $argumentList -NoNewWindow -Wait
         } catch {
             throw "Failed to run Logs Analyzer: $($_.Exception.Message)"
         }

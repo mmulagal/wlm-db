@@ -57,7 +57,7 @@ const argv = program.opts();
 logger.info('Command line arguments:', argv);
 
 const {
-    'logsPath': LOGS_FOLDER,
+    logsPath,
     'sqlAuthEnabled': SQL_AUTH_ENABLED,
     'databaseInstanceName': DATABASE_INSTANCE_NAME,
     'jobId': JOB_ID,
@@ -72,6 +72,12 @@ const {
     temperature: TEMP,
     'maxTokens': MAX_TOKENS
 } = argv as any;
+
+const LOGS_FOLDER = decodeURIComponent(logsPath);
+if (!existsSync(LOGS_FOLDER)) {
+    logger.error(`Logs folder does not exist: ${LOGS_FOLDER}`);
+    throw new Error(`Logs folder does not exist: ${LOGS_FOLDER}`);
+}
 
 const INFERENCE_CONFIG = {
     temperature: parseFloat(TEMP),
