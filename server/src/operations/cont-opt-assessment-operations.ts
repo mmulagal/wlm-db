@@ -883,7 +883,6 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     logger.info(errorMessage);
                 } else {
                     const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} registered instances in your account ${accountId} for best practice misalignments.`;
-                    let parentJobStatus = '';
                     const { id: parentJobId } = await registerJob(accountId, '', '', {
                         name: jobDescription,
                         description: jobDescription,
@@ -894,6 +893,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         type: JOBTYPE.ASSESSMENT
                     });
                     const assessmentErrors: unknown[] = [];
+                    let parentJobError = '';
                     try {
                         await Promise.all(
                             managedInstances.map(
@@ -1022,17 +1022,9 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         }
                     } catch (error: any) {
                         logger.info('Error while triggering drift assessment for account', { accountId, error });
-                        parentJobStatus = JOBSTATUS.FAILED;
-                        await updateJobDetails(accountId, parentJobId, {
-                            status: parentJobStatus,
-                            error: error.message,
-                            endTime: Date.now()
-                        });
+                        parentJobError = error.message;
                     } finally {
-                        if (parentJobStatus !== JOBSTATUS.FAILED) {
-                            await updateParentJobStatus(accountId, parentJobId);
-                        }
-
+                        await updateParentJobStatus(accountId, parentJobId, false, parentJobError);
                         // Lets update assessment result in instance metadata
                         // Host level assessments are run for all the instances in the account. So we will update the results from one of the instance
                         await Promise.all(

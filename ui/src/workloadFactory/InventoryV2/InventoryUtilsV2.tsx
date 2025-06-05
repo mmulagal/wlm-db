@@ -944,7 +944,8 @@ export const formatDiscoveredRows = (
         id: discoveredRow?.ec2InstanceId,
         ec2InstanceId: discoveredRow?.ec2InstanceId,
         ec2InstanceName: discoveredRow?.ec2InstanceName,
-        resourceId: discoveredRow?.key,
+        resourceId: '',
+        discoveredRowKey: discoveredRow?.key,
         name: getDiscoverHostname(discoveredRow, type),
         status: ssmState, // discover status will depends on ssmState only
         ssmState: ssmState,
@@ -998,7 +999,8 @@ export const formatPgsqlDiscoveredRows = (
         id: discoveredRow?.ec2InstanceId,
         ec2InstanceId: discoveredRow?.ec2InstanceId,
         ec2InstanceName: discoveredRow?.ec2InstanceName,
-        resourceId: discoveredRow?.key,
+        resourceId: '',
+        discoveredRowKey: discoveredRow?.key,
         name: getDiscoverHostname(discoveredRow, type),
         status: ssmState, // discover status will depends on ssmState only
         ssmState: ssmState,
@@ -2517,7 +2519,7 @@ export const updateInstanceStatus = (
             actionDisable:
                 inventoryTableData[targettedHostId].totalInstance ===
                     inventoryTableData[targettedHostId].managedInstance + responseData?.length || 0,
-            resourceId,
+            resourceId: inventoryTableData[targettedHostId]?.resourceId || resourceId,
             sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
                 const instanceInRes = responseData.find(
                     (item: any) => item?.databaseInstanceName === instanceItem?.databaseInstanceName
@@ -2525,6 +2527,7 @@ export const updateInstanceStatus = (
                 if (instanceInRes?.databaseInstanceName) {
                     return {
                         ...instanceItem,
+                        resourceId: resourceId,
                         databaseInstanceId: instanceInRes.databaseInstanceGuid,
                         statusColText: INVENTORY_STATUS.MANAGED
                     };
