@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import pLimit from 'p-limit';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAllMssqlHostAssessmentData,
@@ -87,6 +88,10 @@ import {
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
 import { OracleInstanceData } from '../../utils/types/inventoryV2Types';
+
+// Shared limiter and processing set to ensure only 10 concurrent API calls globally for getStorageSavings Api
+const storageSavingsApiLimit = pLimit(10);
+const limit = pLimit(5);
 
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
@@ -1056,12 +1061,11 @@ const InventoryApisV3 = () => {
         }
     };
 
-    // If any new row added than it will trigger getMssqlData (API2) function to get unmanagaed row data.
     const callInstanceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
-        let mssqlInstancesDataLoad: any = {};
-        let noRunningList: Array<string> = [];
+        const mssqlInstancesDataLoad: any = {};
+        const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
-            instancesList?.map((ec2InstanceIdComb: any) => {
+            instancesList?.forEach((ec2InstanceIdComb: any) => {
                 if (
                     runningInstanceListRef.current.includes(ec2InstanceIdComb) ||
                     mssqlInstancesDataRef.current?.[ec2InstanceIdComb]
@@ -1069,76 +1073,76 @@ const InventoryApisV3 = () => {
                     return;
                 }
                 mssqlInstancesDataLoad[ec2InstanceIdComb] = {
-                    isManagedHost: isManagedHost,
+                    isManagedHost,
                     loading: true,
                     data: null,
                     error: null,
-                    fields: fields
+                    fields
                 };
                 noRunningList.push(ec2InstanceIdComb);
             });
             dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
             setRunningInstanceList([...runningInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceIdComb: any) => {
-                setTimeout(() => {
-                    getMssqlData(ec2InstanceIdComb, isManagedHost, fields);
-                }, 1);
-            });
+            Promise.all(
+                noRunningList.map((ec2InstanceIdComb: any) =>
+                    limit(() => getMssqlData(ec2InstanceIdComb, isManagedHost, fields))
+                )
+            );
         }
     };
 
     // If any new row added than it will trigger getMssqlData (API2) function to get unmanagaed row data.
     const callPgsqlResourceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
-        let pgsqlInstancesDataLoad: any = {};
-        let noRunningList: Array<string> = [];
+        const pgsqlInstancesDataLoad: any = {};
+        const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
-            instancesList?.map((ec2InstanceIdComb: any) => {
+            instancesList.forEach((ec2InstanceIdComb: any) => {
                 if (runningPgsqlInstanceListRef.current.includes(ec2InstanceIdComb)) {
                     return;
                 }
                 pgsqlInstancesDataLoad[ec2InstanceIdComb] = {
-                    isManagedHost: isManagedHost,
+                    isManagedHost,
                     loading: true,
                     data: null,
                     error: null,
-                    fields: fields
+                    fields
                 };
                 noRunningList.push(ec2InstanceIdComb);
             });
             dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataLoad }));
             setRunningPgsqlInstanceList([...runningPgsqlInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceIdComb: any) => {
-                setTimeout(() => {
-                    getPgsqlData(ec2InstanceIdComb, isManagedHost, fields);
-                }, 1);
-            });
+            Promise.all(
+                noRunningList.map((ec2InstanceIdComb: any) =>
+                    limit(() => getPgsqlData(ec2InstanceIdComb, isManagedHost, fields))
+                )
+            );
         }
     };
 
     const callOracleResourceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
-        let oracleInstancesDataLoad: Record<string, OracleInstanceData> = {};
-        let noRunningList: Array<string> = [];
+        const oracleInstancesDataLoad: Record<string, OracleInstanceData> = {};
+        const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
-            instancesList?.map((ec2InstanceIdComb: any) => {
+            instancesList.forEach((ec2InstanceIdComb: any) => {
                 if (runningOracleInstanceListRef.current.includes(ec2InstanceIdComb)) {
                     return;
                 }
                 oracleInstancesDataLoad[ec2InstanceIdComb] = {
-                    isManagedHost: isManagedHost,
+                    isManagedHost,
                     loading: true,
                     data: null,
                     error: null,
-                    fields: fields
+                    fields
                 };
                 noRunningList.push(ec2InstanceIdComb);
             });
             dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataLoad }));
             setRunningOracleInstanceList([...runningOracleInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceIdComb: any) => {
-                setTimeout(() => {
-                    getOracleData(ec2InstanceIdComb, isManagedHost, fields);
-                }, 1);
-            });
+            Promise.all(
+                noRunningList.map((ec2InstanceIdComb: any) =>
+                    limit(() => getOracleData(ec2InstanceIdComb, isManagedHost, fields))
+                )
+            );
         }
     };
 
@@ -1393,16 +1397,17 @@ const InventoryApisV3 = () => {
         }
     };
 
+    // edit this also
     // This is to call instance API to get perf and protection data
     const callUnmanagedPerfInstanceApi = (
         instancesListComb: Array<string>,
         isManagedHost: boolean,
         fields: Array<string>
     ) => {
-        let mssqlInstancesDataLoad: any = {};
-        let noRunningList: Array<string> = [];
+        const mssqlInstancesDataLoad: any = {};
+        const noRunningList: Array<string> = [];
         if (instancesListComb && instancesListComb.length > 0) {
-            instancesListComb?.map((ec2InstanceIdComb: any) => {
+            instancesListComb.forEach((ec2InstanceIdComb: any) => {
                 if (
                     runningPerfInstanceListRef.current.includes(ec2InstanceIdComb) ||
                     perfMssqlInstancesDataRef.current?.[ec2InstanceIdComb]
@@ -1410,21 +1415,21 @@ const InventoryApisV3 = () => {
                     return;
                 }
                 mssqlInstancesDataLoad[ec2InstanceIdComb] = {
-                    isManagedHost: isManagedHost,
+                    isManagedHost,
                     loading: true,
                     data: null,
                     error: null,
-                    fields: fields
+                    fields
                 };
                 noRunningList.push(ec2InstanceIdComb);
             });
             dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
             setRunningPerfInstanceList([...runningPerfInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceIdComb: any) => {
-                setTimeout(() => {
-                    getUnmanagedPerfMssqlData(ec2InstanceIdComb, isManagedHost, fields);
-                }, 1);
-            });
+            Promise.all(
+                noRunningList.map((ec2InstanceIdComb: any) =>
+                    limit(() => getUnmanagedPerfMssqlData(ec2InstanceIdComb, isManagedHost, fields))
+                )
+            );
         }
     };
 
@@ -1482,6 +1487,9 @@ const InventoryApisV3 = () => {
                         loading: false,
                         storageType: savingsCalculatorType
                     };
+                    console.log('get storage savings data response', result?.data);
+                    console.log({ ...potentialSavingsHostDataRef.current });
+                    console.log('instance data', instanceData);
                     // Potential savings data is stored in inventoryV2 slice and
                     // it will be used in DatabaseHomeApis to format data for dashboard potential card UI.
                     dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
@@ -1506,80 +1514,88 @@ const InventoryApisV3 = () => {
         }
     };
 
-    const callPotentialSavings = (exploreSavingsRows: any, runningCredId: string, runningRegionId: string) => {
-        let instanceData: any = {};
-        // This will loop all unamanged EBS/FSXW rows
-        exploreSavingsRows?.map((row: any) => {
-            if (row?.credentialId !== runningCredId || row?.regionId !== runningRegionId) {
+    const callPotentialSavings = async (exploreSavingsRows: any, runningCredId: string, runningRegionId: string) => {
+        const instanceData: any = {};
+        const promises: Promise<void>[] = [];
+
+        exploreSavingsRows?.forEach((row: any) => {
+            const { credentialId, regionId: rowRegionId, storageType, id, isDetected } = row;
+
+            if (credentialId !== runningCredId || rowRegionId !== runningRegionId) {
                 return;
             }
             if (
-                row?.storageType &&
-                !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)] &&
-                row?.isDetected
+                storageType &&
+                !potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)] &&
+                isDetected
             ) {
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
                     headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     let isEbsProtected = null;
-                    // For EBS first checking is it is protected or not.
-                    // If not that first we need to call instance protection API to get protection.
-                    if (row?.storageType === GENERAL.EBS) {
+                    if (storageType === GENERAL.EBS) {
                         isEbsProtected = checkIfEbsProtected(row, null);
                     }
-                    instanceData[uniqueHostRow(row?.id, credId, regionId)] = {
+                    instanceData[uniqueHostRow(id, credId, rowRegionId)] = {
                         error: null,
                         data: null,
                         loading: true,
-                        storageType: row?.storageType,
-                        isProtected: isEbsProtected // If already protected that set protection info along with loading true
+                        storageType,
+                        isProtected: isEbsProtected
                     };
                     dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
-                    if (row?.storageType === GENERAL.EBS) {
-                        // Protection check is required to set snapshotFrequency in storage savings API.
+
+                    // Use p-limit for concurrency control
+                    if (storageType === GENERAL.EBS) {
                         if (isEbsProtected) {
-                            // If protected than directly we can call storage savings API.
-                            getStorageSavingsData(
-                                row?.storageType,
-                                row?.id,
-                                runningCredId,
-                                runningRegionId,
-                                isEbsProtected
+                            promises.push(
+                                storageSavingsApiLimit(() =>
+                                    getStorageSavingsData(
+                                        storageType,
+                                        id,
+                                        runningCredId,
+                                        runningRegionId,
+                                        isEbsProtected
+                                    )
+                                )
                             );
                         } else {
-                            // If not protected than first we need to call instance protection API to get protection.
-                            // This same flow is used to call instance API to get perf and protection data as well as in ES page.
                             addInstanceIdToGetPerf(row, dispatch);
                         }
-                    } else if (row?.storageType === GENERAL.FSX_FOR_WINDOWS) {
-                        // For FSxW snapshotFrequency in default Daily in storage savings API.
-                        getStorageSavingsData(row?.storageType, row?.id, runningCredId, runningRegionId, '');
+                    } else if (storageType === GENERAL.FSX_FOR_WINDOWS) {
+                        promises.push(
+                            storageSavingsApiLimit(() =>
+                                getStorageSavingsData(storageType, id, runningCredId, runningRegionId, '')
+                            )
+                        );
                     }
                 }
             } else if (
-                row?.storageType === GENERAL.EBS &&
-                potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]?.loading &&
-                !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]?.isProtected
+                storageType === GENERAL.EBS &&
+                potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)]?.loading &&
+                !potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)]?.isProtected
             ) {
-                // In above if we protection data is missing for EBS than we trigger instance API.
-                // This else is used to capture response once instance API is loaded for protection.
-                let isEbsProtected = checkIfEbsProtected(row, null);
-                // Again check if instance EBS is protected or not.
-                instanceData[uniqueHostRow(row?.id, credId, regionId)] = {
+                const isEbsProtected = checkIfEbsProtected(row, null);
+                instanceData[uniqueHostRow(id, credId, rowRegionId)] = {
                     error: null,
                     data: null,
                     loading: true,
-                    storageType: row?.storageType,
+                    storageType,
                     isProtected: isEbsProtected
                 };
                 dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
                 if (isEbsProtected) {
-                    // If protection data available after instance API call in EBS than call storage savings API.
-                    getStorageSavingsData(row?.storageType, row?.id, runningCredId, runningRegionId, isEbsProtected);
+                    promises.push(
+                        storageSavingsApiLimit(() =>
+                            getStorageSavingsData(storageType, id, runningCredId, runningRegionId, isEbsProtected)
+                        )
+                    );
                 }
             }
         });
+
+        await Promise.all(promises);
     };
 
     useEffect(() => {
