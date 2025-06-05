@@ -24,6 +24,7 @@ import {
     missingModules
 } from '../ManageInstanceUtils';
 import { useGetWlmdbPoliciesQuery } from '../../../../../utils/apiService';
+import { BulkDetectedInstance, ManageStates } from '../../../../../utils/types/registerTypes';
 
 export const Content = () => {
     const { t } = useTranslation();
@@ -46,7 +47,7 @@ export const Content = () => {
     const { data: policiesList, isFetching: policiesLoading, isError: policiesError } = useGetWlmdbPoliciesQuery({});
 
     const getManageReadinessData = (
-        data: any[],
+        data: BulkDetectedInstance[],
         ec2InstanceId: string,
         credentialId: string,
         regionId: string,
@@ -74,8 +75,8 @@ export const Content = () => {
 
     // Function to merge readiness data for any single instance
     const getMergedReadinessData = (
-        instanceData: any,
-        discoveredHostData: any[],
+        instanceData: BulkDetectedInstance['data'],
+        discoveredHostData: BulkDetectedInstance[],
         getManageReadinessData: Function,
         mergeReadinessData: Function
     ) => {
@@ -165,8 +166,8 @@ export const Content = () => {
     }, [manageSingleInstanceData, manageSingleInstanceReadiness]);
 
     // Manage checks for multiple instances
-    const manageCheck = (instance: any) => {
-        let manageCheckObj: any = {
+    const manageCheck = (instance: BulkDetectedInstance) => {
+        let manageCheckObj: Partial<ManageStates & { overallState: string; readyCount: number; perRowState: any[] }> = {
             installMissingAWS: false,
             installMissingAWSList: [],
             installMissingPowershell: false,
@@ -257,10 +258,10 @@ export const Content = () => {
         if (wizardOperationType !== ACTION_TYPE.BULK) {
             return;
         }
-        const newTableData: any = [];
+        const newTableData: BulkDetectedInstance[] = [];
         let installMissingAWSAll = false;
         let installMissingPowershellAll = false;
-        selectedMultiDetectInstances?.forEach((item: any) => {
+        selectedMultiDetectInstances?.forEach((item: BulkDetectedInstance) => {
             const manageStates = manageCheck(item);
             if (manageStates?.installMissingAWS) {
                 installMissingAWSAll = true;
@@ -280,7 +281,19 @@ export const Content = () => {
                 readyCount: manageStates?.readyCount,
                 totalCount: 4,
                 perRowState: manageStates?.perRowState || [],
-                manageStates: manageStates
+                manageStates: {
+                    installMissingAWS: manageStates?.installMissingAWS ?? false,
+                    installMissingAWSList: manageStates?.installMissingAWSList ?? [],
+                    installMissingPowershell: manageStates?.installMissingPowershell ?? false,
+                    assessment: manageStates?.assessment ?? GENERAL.NOT_AVAILABLE,
+                    remediation: manageStates?.remediation ?? GENERAL.NOT_AVAILABLE,
+                    dbcreation: manageStates?.dbcreation ?? GENERAL.NOT_AVAILABLE,
+                    sandbox: manageStates?.sandbox ?? GENERAL.NOT_AVAILABLE,
+                    ec2InstanceId: manageStates?.ec2InstanceId ?? '',
+                    region: manageStates?.region ?? '',
+                    credentialsId: manageStates?.credentialsId ?? '',
+                    databaseInstanceName: manageStates?.databaseInstanceName ?? ''
+                }
             });
         });
         setManageMultiChecks({

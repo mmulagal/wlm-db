@@ -1,0 +1,81 @@
+export interface ManageReadinessSection {
+    missingSqlPermissions: string[];
+    missingModules: string[];
+}
+
+export interface ManageReadinessData {
+    [key: string]: ManageReadinessSection;
+}
+
+export interface ManageStates {
+    installMissingAWS: boolean;
+    installMissingAWSList: string[];
+    installMissingPowershell: boolean;
+    assessment: string;
+    remediation: string;
+    dbcreation: string;
+    sandbox: string;
+    ec2InstanceId: string;
+    region: string;
+    credentialsId: string;
+    databaseInstanceName: string;
+    manageReadinessData?: ManageReadinessData;
+}
+
+export interface BulkDetectedInstance {
+    ec2InstanceId?: string;
+    region?: string;
+    credentialsId?: string;
+    databaseInstanceName?: string;
+    data?: {
+        ec2InstanceId?: string;
+        regionId?: string;
+        credentialId?: string;
+        databaseInstanceName?: string;
+        manageReadiness?: ManageReadinessData;
+        [key: string]: any;
+    };
+    manageStates?: ManageStates;
+    [key: string]: any;
+}
+
+export interface ManageApiPayloadItem {
+    ec2InstanceId: string;
+    region: string;
+    credentialsId: string;
+    databaseInstanceNames: string[];
+    modulesToInstall: string[];
+}
+
+export interface ManageApiPayload {
+    items: ManageApiPayloadItem[];
+}
+
+export interface SubJobMetadata {
+    ec2InstanceId?: string;
+    credentialsId?: string;
+    region?: string;
+    resourceId?: string;
+    instanceManagementStatus?: {
+        databaseInstanceName: string;
+        status: string;
+    }[];
+    [key: string]: any;
+}
+
+export interface SubJob {
+    status: string;
+    metadata: SubJobMetadata;
+    resourceName?: string;
+    credentialsId?: string;
+    region?: { code: string };
+    [key: string]: any;
+}
+
+export interface JobResponse {
+    data: {
+        status: string;
+        subJobs?: SubJob[];
+        [key: string]: any;
+    };
+}
