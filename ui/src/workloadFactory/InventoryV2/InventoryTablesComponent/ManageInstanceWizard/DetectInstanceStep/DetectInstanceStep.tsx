@@ -1,36 +1,40 @@
 import { useWizard } from '@netapp/design-system/dist/components/Wizard';
-
 import DetectHeader from './DetectHeader/DetectHeader';
 import styles from './DetectInstanceStep.module.scss';
 import DetectContent from './DetectContent/DetectContent';
 import ManageWizardFooter from '../ManageWizardFooter';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { DsTypography } from '@netapp/design-system';
-import { GENERAL } from '../../../../../utils/appConstants';
+import { useMemo } from 'react';
+import AuthenticatedScreen from './AuthenticatedScreen/AuthenticatedScreen';
+import { ACTION_TYPE } from '../../../../../utils/consts';
+import { BulkDetectedInstance, UseWizardReturn } from '../../../../../utils/types/registerTypes';
 
 export const Content = () => {
-    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
+    const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
+
+    const isAuth = useMemo(() => {
+        return selectedMultiDetectInstances?.every((item: BulkDetectedInstance) => item?.authorized);
+    }, []);
+
     return (
         <div className={styles['detect-step']}>
-            {wizardOperationType === 'single' && (
+            {wizardOperationType === ACTION_TYPE.SINGLE && (
                 <div style={{ width: '100%' }}>
                     <DetectHeader />
                 </div>
             )}
 
-            {wizardOperationType === 'bulk' && (
-                <DsTypography variant="Regular_14" className={styles.note}>
-                    {GENERAL.BULK_INSTANCE_SELECT_TEXT}
-                </DsTypography>
-            )}
+            {wizardOperationType === ACTION_TYPE.BULK && isAuth && <AuthenticatedScreen />}
 
-            <DetectContent />
+            {(wizardOperationType !== ACTION_TYPE.BULK || (wizardOperationType === ACTION_TYPE.BULK && !isAuth)) && (
+                <DetectContent />
+            )}
         </div>
     );
 };
 
 export const Footer = () => {
-    const { state }: any = useWizard();
+    const { state }: UseWizardReturn = useWizard();
     return (
         <ManageWizardFooter
             nextButtonProps={{

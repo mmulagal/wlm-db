@@ -1,126 +1,93 @@
-import { DsTypography, Table, useTable } from '@netapp/design-system';
-import styles from './DetectHeader.module.scss';
+import { DsTypography, Table, useTable, Popover } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import styles from './DetectHeader.module.scss';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
+import { ReactComponent as TooltipIcon } from '../../../../../../assets/tooltipGrey.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
-import { GENERAL } from '../../../../../../utils/appConstants';
-import {
-    checkOverallManageState,
-    getPermissionState,
-    hasMissingPowershell7,
-    missingModules
-} from '../../ManageInstanceUtils';
+import DotComponent from '../../../../../../common/DotComponent/DotComponent';
+import { MANAGE_STATES } from '../../../../../../utils/consts';
+import TooltipCard from '../../../../../../common/TooltipCard/TooltipCard';
 
 const DetectedInstanceTable = () => {
-    const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
-    const [tableData, setTableData] = useState<any>([]);
-
-    const manageCheck = (instance: any) => {
-        let manageCheckObj: any = {
-            installMissingAWS: false,
-            installMissingAWSList: [],
-            installMissingPowershell: false,
-            assessment: GENERAL.NOT_AVAILABLE,
-            remediation: GENERAL.NOT_AVAILABLE,
-            dbcreation: GENERAL.NOT_AVAILABLE,
-            sandbox: GENERAL.NOT_AVAILABLE,
-            ec2InstanceId: '',
-            region: '',
-            credentialsId: '',
-            databaseInstanceName: '',
-            overallState: GENERAL.NOT_AVAILABLE
-        };
-
-        let manageReadinessData: any = null;
-        if (!instance?.data?.windowsAuthentication && !instance?.data?.sqlServerAuthentication) {
-            manageReadinessData = instance?.manageReadiness;
-        } else {
-            manageReadinessData = instance?.data?.manageReadiness;
-        }
-        if (manageReadinessData) {
-            let missingModulesList = missingModules(manageReadinessData);
-            let assessment = getPermissionState('assessment', manageReadinessData);
-            let remediation = getPermissionState('remediation', manageReadinessData);
-            let dbcreation = getPermissionState('dbcreation', manageReadinessData);
-            let sandbox = getPermissionState('sandbox', manageReadinessData);
-            let overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox);
-            manageCheckObj = {
-                installMissingAWS: missingModulesList.length > 0 ? true : false,
-                installMissingAWSList: missingModulesList,
-                installMissingPowershell: hasMissingPowershell7(manageReadinessData),
-                assessment: assessment,
-                remediation: remediation,
-                dbcreation: dbcreation,
-                sandbox: sandbox,
-                ec2InstanceId: instance?.data?.ec2InstanceId,
-                region: instance?.data?.regionId,
-                credentialsId: instance?.data?.credentialId,
-                databaseInstanceName: instance?.data?.databaseInstanceName,
-                overallState: overallState
-            };
-            return manageCheckObj;
-        }
-        return manageCheckObj;
-    };
-
-    useEffect(() => {
-        let newTableData: any = [];
-        selectedMultiDetectInstances?.forEach((item: any) => {
-            if (item?.authorized) {
-                newTableData.push({
-                    id: item?.id,
-                    instanceName: item?.data?.databaseInstanceName,
-                    hostName: item?.data?.name,
-                    readinessStatus: manageCheck(item)?.overallState
-                });
-            }
-        });
-        setTableData(newTableData);
-    }, [selectedMultiDetectInstances]);
+    const { t } = useTranslation();
+    const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
 
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
-            Header: 'Instance name',
+            Header: t('databases.register-flow.detect-instance-table-col.instance-name'),
             accessor: 'instanceName',
-            width: '310px',
+            width: '180px',
             isSortable: true
         },
         {
             id: '2',
-            Header: 'Host name',
+            Header: t('databases.register-flow.detect-instance-table-col.host-name'),
             accessor: 'hostName',
-            width: '310px',
-            filterOptions: 'auto'
+            width: '180px',
+            filterOptions: 'auto',
+            isSortable: true
         },
         {
             id: '3',
-            Header: `Readiness status`,
-            accessor: 'readinessStatus',
-            width: '310px',
+            Header: t('databases.register-flow.detect-instance-table-col.authenticated-status'),
+            accessor: 'authenticationStatus',
+            width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {cellData === 'Ready' ? <Success /> : <Cross />}
-                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                    </div>
-                );
+            renderCell: (cellData: any) => {
+                if (cellData === t('databases.general.authenticated')) {
+                    return <DotComponent color="var(--success)" value={cellData} />;
+                }
+                if (cellData === t('databases.general.unauthenticated')) {
+                    return <DotComponent color="var(--toggle-off-bg)" value={cellData} />;
+                }
             }
+        },
+        {
+            id: '4',
+            Header: t('databases.register-flow.detect-instance-table-col.readiness-status'),
+            accessor: 'readinessStatus',
+            width: '200px',
+            filterOptions: 'auto',
+            renderCell: (cellData: any, rowData: any) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {cellData === MANAGE_STATES.READY ? <Success /> : <Cross />}
+                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                </div>
+            )
+        },
+        {
+            id: '5',
+            Header: t('databases.register-flow.detect-instance-table-col.prerequisite-check'),
+            accessor: 'readyCount',
+            width: '188px',
+            filterOptions: 'auto',
+            renderCell: (cellData: any, rowData: any) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Popover
+                        popoverClass=""
+                        children={<TooltipCard listObj={rowData?.perRowState} registerFlow />}
+                        trigger="hover"
+                        isAppendedToBody={false}
+                        container={<TooltipIcon />}
+                    />
+                    <DsTypography variant="Regular_14">{`${cellData}/${rowData?.totalCount}`}</DsTypography>
+                </div>
+            )
         }
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isSorting: false,
         selectionType: 'none',
         columns: ColDefs,
-        rows: tableData,
+        rows: bulkDetectedInstanceList,
         isHorizontalScroll: false,
         isVerticalScroll: true,
         isLazyLoading: false
@@ -129,9 +96,9 @@ const DetectedInstanceTable = () => {
     return (
         <div className={styles.table}>
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 variant="innerTable"
             />
         </div>

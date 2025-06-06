@@ -28,13 +28,10 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
-    BULK_INSTANCE_SELECT_TEXT:
-        'Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials.',
     MANAGE_MIN_PERMISSION_REQUIRED: [
         'Missing minimum prerequisites:',
         ' At least one capability must meet the minimum prerequisites and be in "Ready" status before proceeding. To register this SQL Server instance, please address the necessary prerequisites and try again.'
     ],
-    PREREQUISITE_LIST: 'Prerequisites list',
     WELL_ARCHITECTED_STATUS: 'Well-architected status',
     UPDATE: 'Update',
     UPDATE_FSX_ADMIN_PASSWORD: 'Update fsxadmin password',
@@ -808,8 +805,6 @@ export const GENERAL = {
     MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 / 2'],
     FAILED_TO_DETECT_HOST: 'Failed to authenticate host',
-    MANAGE_DETECT_FAIL_MESSAGE:
-        'Workload Factory was unable to authenticate the SQL Server instance. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.',
     DETECT_FAILED_WITH_NO_STORAGE:
         'Unable to identify attached storage. For SQL user authentication, reload the inventory page and try to manage again.',
     DONE: 'Done',

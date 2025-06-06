@@ -1,18 +1,16 @@
-import { useWizard, WizardContextProvider, WizardState } from '@netapp/design-system/dist/components/Wizard';
-import { BlueXPListeners, postBlueXPMessage, StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
+import { useWizard, WizardContextProvider } from '@netapp/design-system/dist/components/Wizard';
+import { StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
+import * as SelectInstancesStep from './SelectInstancesStep/SelectInstancesStep';
 import { useNavigate } from 'react-router-dom';
-import ManageOnlyWizard from './ManageOnlyWizard';
-import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo } from 'react';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const MANAGE_STEPS = [
+    { key: 'select-instances', label: 'Select instances', component: SelectInstancesStep },
     { key: 'detect-instance', label: 'Authenticate', component: DetectInstanceStep },
     { key: 'manage-instance', label: 'Prepare', component: ManageInstanceStep }
 ];
@@ -39,13 +37,6 @@ const Wizard = () => {
                     setTimeout(() => {
                         dispatch(setLandingFromWizard(true));
                         navigate('../databases/inventory');
-                        postBlueXPMessage({
-                            type: BlueXPListeners.navigate,
-                            payload: {
-                                pathname: './inventory',
-                                replace: true
-                            }
-                        });
                     }, 100);
                 }}
             />
@@ -63,36 +54,22 @@ const Wizard = () => {
     );
 };
 
-const ManageInstanceWizard = () => {
-    const initialState: Partial<WizardState> = {};
-    const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
-    const isAlreadyDetected = useMemo(() => {
-        if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-            return true;
-        }
-        return false;
-    }, [manageSingleInstanceData]);
+const RegisterBulkWizard = () => {
+    const initialState: any = {};
 
     return (
         <>
-            {isAlreadyDetected && (
-                <>
-                    <ManageOnlyWizard />
-                </>
-            )}
-            {!isAlreadyDetected && (
-                <WizardContextProvider
-                    stepsMap={stepsMap}
-                    stepPaths={stepPaths}
-                    initialStep={'detect-instance'}
-                    initialPath={'regular'}
-                    initialState={initialState}
-                >
-                    <Wizard />
-                </WizardContextProvider>
-            )}
+            <WizardContextProvider
+                stepsMap={stepsMap}
+                stepPaths={stepPaths}
+                initialStep={'select-instances'}
+                initialPath={'regular'}
+                initialState={initialState}
+            >
+                <Wizard />
+            </WizardContextProvider>
         </>
     );
 };
 
-export default ManageInstanceWizard;
+export default RegisterBulkWizard;

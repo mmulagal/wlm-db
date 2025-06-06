@@ -14,8 +14,7 @@ import { ReactComponent as SandboxImageDisabled } from '../../../../../../assets
 import styles from './PermissionListComponent.module.scss';
 import { useState } from 'react';
 import { PermissionContent } from './PermissionContent/PermissionContent';
-import { MANAGE_STATES } from '../../../../../../utils/consts';
-import { GENERAL } from '../../../../../../utils/appConstants';
+import { ACTION_TYPE, MANAGE_STATES } from '../../../../../../utils/consts';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 
 const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
@@ -32,18 +31,18 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
             readinessStatus: manageChecks?.assessment,
             missingPermission: manageChecks?.assessment !== MANAGE_STATES.READY,
             image:
-                wizardOperationType !== 'bulk' && manageChecks?.assessment !== MANAGE_STATES.READY ? (
+                wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.assessment !== MANAGE_STATES.READY ? (
                     <ReviewDisabled />
                 ) : (
                     <Review />
                 ),
             content: (
                 <PermissionContent
-                    title={GENERAL.PREREQUISITE_LIST}
+                    title={t('databases.register-flow.prerequisites-list')}
                     blocks={[
                         {
                             label: t('databases.register-flow.aws-iam-policy-permissions'),
-                            values: ['Databases workload - Read-only permissions'],
+                            values: [t('databases.register-flow.dbwl-read-only-permissions')],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
@@ -55,7 +54,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
-                            values: ['Databases workload - EC2 instance profile permissions'],
+                            values: [t('databases.register-flow.dbwl-ec2-instance-profile-permissions')],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
@@ -86,28 +85,28 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
             readinessStatus: manageChecks?.remediation,
             missingPermission: manageChecks?.remediation !== MANAGE_STATES.READY,
             image:
-                wizardOperationType !== 'bulk' && manageChecks?.remediation !== MANAGE_STATES.READY ? (
+                wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.remediation !== MANAGE_STATES.READY ? (
                     <FixDisabled />
                 ) : (
                     <Fix />
                 ),
             content: (
                 <PermissionContent
-                    title={GENERAL.PREREQUISITE_LIST}
+                    title={t('databases.register-flow.prerequisites-list')}
                     blocks={[
                         {
                             label: t('databases.register-flow.aws-iam-policy-permissions'),
                             values: [
                                 {
-                                    title: 'Databases workload - Read-only permissions',
+                                    title: t('databases.register-flow.dbwl-read-only-permissions'),
                                     items: []
                                 },
                                 {
-                                    title: 'Additional FSx for ONTAP permissions',
+                                    title: t('databases.register-flow.additional-fsx-ontap-permissions'),
                                     items: []
                                 },
                                 {
-                                    title: 'Additional Compute Optimizer permissions',
+                                    title: t('databases.register-flow.additional-compute-optimizer-permissions'),
                                     items: []
                                 }
                             ],
@@ -120,7 +119,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
-                            values: ['Databases workload - EC2 instance profile permissions'],
+                            values: [t('databases.register-flow.dbwl-ec2-instance-profile-permissions')],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
@@ -156,11 +155,11 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                 ),
             content: (
                 <PermissionContent
-                    title={GENERAL.PREREQUISITE_LIST}
+                    title={t('databases.register-flow.prerequisites-list')}
                     blocks={[
                         {
                             label: t('databases.register-flow.aws-iam-policy-permissions'),
-                            values: ['Databases workload - Read-only permissions'],
+                            values: [t('databases.register-flow.dbwl-read-only-permissions')],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
@@ -170,7 +169,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
-                            values: ['Databases workload - EC2 instance profile permissions'],
+                            values: [t('databases.register-flow.dbwl-ec2-instance-profile-permissions')],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
@@ -199,18 +198,18 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
             readinessStatus: manageChecks?.sandbox,
             missingPermission: manageChecks?.sandbox !== MANAGE_STATES.READY,
             image:
-                wizardOperationType !== 'bulk' && manageChecks?.sandbox !== MANAGE_STATES.READY ? (
+                wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.sandbox !== MANAGE_STATES.READY ? (
                     <SandboxImageDisabled />
                 ) : (
                     <SandboxImage />
                 ),
             content: (
                 <PermissionContent
-                    title={GENERAL.PREREQUISITE_LIST}
+                    title={t('databases.register-flow.prerequisites-list')}
                     blocks={[
                         {
                             label: t('databases.register-flow.aws-iam-policy-permissions'),
-                            values: ['Databases workload - Read-only permissions'],
+                            values: [t('databases.register-flow.dbwl-read-only-permissions')],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,
@@ -220,7 +219,7 @@ const PermissionListComponent = ({ manageChecks, policiesList }: any) => {
                         },
                         {
                             label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
-                            values: ['Databases workload - EC2 instance profile permissions'],
+                            values: [t('databases.register-flow.dbwl-ec2-instance-profile-permissions')],
                             showCopy: false,
                             viewPolicy: {
                                 value: true,

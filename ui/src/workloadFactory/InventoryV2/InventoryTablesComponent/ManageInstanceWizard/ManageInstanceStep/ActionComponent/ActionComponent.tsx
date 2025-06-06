@@ -1,43 +1,40 @@
-import { DsCheckbox, DsTypography, Popover, useWizard } from '@netapp/design-system';
+import { DsCheckbox, DsTypography, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
-import styles from './ActionComponent.module.scss';
 import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import styles from './ActionComponent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { setInstallType } from '../../../../../../store/workloadFactory/inventoryV2Slice';
-import { useEffect } from 'react';
+import { ACTION_TYPE } from '../../../../../../utils/consts';
+import { ManageStates, UseWizardReturn } from '../../../../../../utils/types/registerTypes';
 
-const ActionComponent = ({ manageChecks }: any) => {
+type ActionComponentProps = {
+    manageChecks: Partial<ManageStates>;
+};
+
+const ActionComponent = ({ manageChecks }: ActionComponentProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { state, setState }: any = useWizard();
+    const { state, setState }: UseWizardReturn = useWizard();
     const { installMissingAWS, installMissingPowershell } = useAppSelector(
         state => state.inventoryV2.manageInstanceInstallAction
     );
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
     useEffect(() => {
-        if (wizardOperationType === 'bulk') {
-            dispatch(
-                setInstallType({
-                    installMissingAWS: true,
-                    installMissingPowershell: true
-                })
-            );
-        } else {
-            dispatch(
-                setInstallType({
-                    installMissingAWS: manageChecks?.installMissingAWS,
-                    installMissingPowershell: manageChecks?.installMissingPowershell
-                })
-            );
-        }
+        dispatch(
+            setInstallType({
+                installMissingAWS: manageChecks?.installMissingAWS,
+                installMissingPowershell: manageChecks?.installMissingPowershell
+            })
+        );
     }, [wizardOperationType, manageChecks]);
 
     return (
         <div className={styles.actionComponent}>
-            <DsTypography variant="Semibold_16">Action Required</DsTypography>
+            <DsTypography variant="Semibold_16">{t('databases.general.action-required')}</DsTypography>
 
-            {wizardOperationType === 'bulk' ? (
+            {wizardOperationType === ACTION_TYPE.BULK ? (
                 <div className={styles.selectContainer}>
                     <DsCheckbox
                         id="wlm-db-install-missing-aws"
