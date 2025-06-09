@@ -8,6 +8,7 @@ import { ACTION_CTA } from '../../../../../../utils/consts';
 import { manageActionCol } from '../../../../InventoryUtilsV2';
 import SeparatorComponent from '../../../../../../common/SeparatorComponent/SeparatorComponent';
 import { DsSelectFsx } from '../../../../../../common/FsxSelectField/fsxSelectField';
+import { useTranslation } from 'react-i18next';
 
 interface OptionType {
     id: number;
@@ -17,6 +18,7 @@ interface OptionType {
 
 const SelectInstances = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
     const { instanceTableRows } = useAppSelector(state => state.inventoryV2);
 
@@ -100,9 +102,7 @@ const SelectInstances = () => {
                 data: row,
                 authorized: isAuthorized,
                 isDisabled,
-                disabledReason: isDisabled
-                    ? 'When selecting multiple instances, they must have the same status: authenticated or unauthenticated.'
-                    : ''
+                disabledReason: isDisabled ? t('databases.register-flow.drop_down_tooltip') : ''
             };
         });
     }, [instanceTableRows, selectionType, selectedOptions]);
