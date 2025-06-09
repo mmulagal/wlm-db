@@ -238,18 +238,19 @@ function getLinuxPrepareScript(scriptParams: {
     # Logs Analysis Linux Prepare Script
     #!/bin/bash
 
-s3SignedUrl="${s3SignedUrl}"
-packageName="${packageName}"
-logsPath="${logsPath}"
-version="${version}"
-instanceId="${instanceId}"
-region="${region}"
-jobId="${jobId}"
-    $modelId = "${inferenceProfileArn}";
-    $modelRegion = "${region}";
-    $temperature = ${temperature};
-    $maxTokens = ${maxTokens};
-    $topP = ${topP};
+    s3SignedUrl="${s3SignedUrl}"
+    packageName="${packageName}"
+    logsPath="${logsPath}"
+    version="${version}"
+    instanceId="${instanceId}"
+    region="${region}"
+    jobId="${jobId}"
+    modelId = "${inferenceProfileArn}";
+    modelRegion = "${region}";
+    temperature = ${temperature};
+    maxTokens = ${maxTokens};
+    topP = ${topP};
+    logLevel='${LOG_LEVEL}';
 
 retry_command() {
     local retries=5
@@ -276,7 +277,7 @@ if [ ! -f "$filePath" ]; then
     exit 1
 fi
 
-"$filePath" --logs-path "$logsPath" --log-level ${LOG_LEVEL} --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
+"$filePath" --logs-path "$logsPath" --log-level "$logLevel" --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
 
 if [ $? -ne 0 ]; then
     exit 1
