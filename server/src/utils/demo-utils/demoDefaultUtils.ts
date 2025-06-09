@@ -211,7 +211,7 @@ async function createDemoResourcesPerRegion(
         ];
         const resourceSandboxMetadata: any = { sandboxes: [], userDatabase: [] };
 
-        for (const instance of instances) {
+        for await (const instance of instances) {
             const { resourceId, hostName, protocol, sqlInstances, databaseType, deploymentType } = instance;
             // create hosts and default instances
             await createDemoResources(
@@ -227,7 +227,7 @@ async function createDemoResourcesPerRegion(
             );
             const instanceNames: string[] = [];
             let instanceIds: string = '';
-            for (const sqlInstance of sqlInstances) {
+            for await (const sqlInstance of sqlInstances) {
                 const { sqlInstanceId, sqlInstanceName } = sqlInstance;
                 const dismissedConfigurations = {
                     crr: {

@@ -795,6 +795,7 @@ async function updateVolumeSizeAndWaitForUpdate(
     let retries = 0;
     while (retries < maxRetries) {
         try {
+            // eslint-disable-next-line no-await-in-loop
             const [volumeDetails] = await getFsxVolumeDetails(credentialsId, region, fsxId, [fsxVolumeId]);
             currentVolumeSizeBytes = volumeDetails?.OntapConfiguration?.SizeInBytes;
             logger.info(`Current size of volume ${fsxVolumeId}: ${currentVolumeSizeBytes} bytes`);
@@ -806,10 +807,12 @@ async function updateVolumeSizeAndWaitForUpdate(
 
             retries += 1;
             logger.info(`Waiting for ${intervalSeconds} before checking again...`);
+            // eslint-disable-next-line no-await-in-loop
             await sleep(ms(intervalSeconds));
         } catch (error) {
             logger.error('Error while polling volume size:', error);
             retries += 1;
+            // eslint-disable-next-line no-await-in-loop
             await sleep(ms(intervalSeconds));
         }
     }

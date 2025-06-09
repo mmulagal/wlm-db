@@ -18,18 +18,16 @@ import {
     DeleteParametersCommand,
     DescribeInstancePatchStatesCommand,
     DescribeInstancePatchStatesCommandInput,
-    DescribeInstancePatchesCommand,
     DescribeInstancePatchesCommandInput,
-    DescribeInstancePatchesCommandOutput,
     PatchComplianceData,
     ListCommandsCommand,
     ListCommandsCommandInput,
-    DescribeAvailablePatchesCommand,
     DescribeAvailablePatchesCommandInput,
-    DescribeAvailablePatchesCommandOutput,
     Patch,
     DescribeInstanceInformationCommandInput,
-    paginateDescribeInstanceInformation
+    paginateDescribeInstanceInformation,
+    paginateDescribeAvailablePatches,
+    paginateDescribeInstancePatches
 } from '@aws-sdk/client-ssm';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -188,17 +186,12 @@ async function describeInstancePatches(
 
     const ssmClient = await getSSMClient(region, credentialsId);
     let allPatches: PatchComplianceData[] = [];
-    let nextToken: string | undefined;
-    do {
-        const { Patches: patches = [], NextToken }: DescribeInstancePatchesCommandOutput = await ssmClient.send(
-            new DescribeInstancePatchesCommand({
-                ...params,
-                NextToken: nextToken
-            })
-        );
-        allPatches = allPatches.concat(patches);
-        nextToken = NextToken;
-    } while (nextToken);
+
+    for await (const page of paginateDescribeInstancePatches({ client: ssmClient }, params)) {
+        if (page.Patches?.length) {
+            allPatches = [...allPatches, ...page.Patches];
+        }
+    }
 
     logger.debug('all patches', allPatches);
     return allPatches;
@@ -212,16 +205,12 @@ async function describeAvailablePatches(
 
     const ssmClient = await getSSMClient(region);
     let allPatches: Patch[] = [];
-    let nextToken: string | undefined;
 
-    do {
-        const { Patches: patches = [], NextToken }: DescribeAvailablePatchesCommandOutput = await ssmClient.send(
-            new DescribeAvailablePatchesCommand({ ...params, NextToken: nextToken })
-        );
-        logger.debug('describeAvailablePatches response', patches);
-        allPatches = allPatches.concat(patches);
-        nextToken = NextToken;
-    } while (nextToken);
+    for await (const page of paginateDescribeAvailablePatches({ client: ssmClient }, params)) {
+        if (page.Patches?.length) {
+            allPatches = [...allPatches, ...page.Patches];
+        }
+    }
 
     logger.debug('all MSSQL available patches', allPatches);
     return allPatches;

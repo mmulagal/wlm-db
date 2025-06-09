@@ -1758,7 +1758,7 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                         ]);
 
                     const node1InstanceId = ec2InstanceId;
-                    let node2InstanceId;
+                    let node2InstanceId: string | undefined;
                     const precheckErrorList: string[] = [];
                     const missingResourceJson = JSON.parse(missingResourceDetails!);
 
@@ -1889,191 +1889,197 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                         )};`;
                     }
 
-                    for (const dbInst of databaseInstanceNameList) {
-                        const sqlInstanceInfo = sqlServerInstances?.find(
-                            (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
-                        );
+                    await Promise.all(
+                        databaseInstanceNameList.map(async dbInst => {
+                            const sqlInstanceInfo = sqlServerInstances?.find(
+                                (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
+                            );
 
-                        if (alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
-                            itemsStatus.push({
-                                databaseInstanceName: dbInst,
-                                databaseInstanceGuid: sqlInstanceInfo?.serverGuid,
-                                status: 'failed',
-                                errorMessage: 'Instance is already managed.'
-                            });
-                        } else if (isEmpty(sqlInstanceInfo)) {
-                            itemsStatus.push({
-                                databaseInstanceName: dbInst,
-                                status: 'failed',
-                                errorMessage: 'SQL Server instance not found.'
-                            });
-                        } else {
-                            try {
-                                const { windowsAuthentication, sqlServerAuthentication, serverGuid, storage } =
-                                    sqlInstanceInfo;
-                                const storageInfo = storage?.find(
-                                    (elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN
-                                );
-                                const storageProtocols = storage
-                                    ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
-                                    .map((elem: any) => elem.protocol);
-
-                                if (windowsAuthentication === false && sqlServerAuthentication === false) {
-                                    throw Error(
-                                        'Authentication to SQL Server instance is not possible. Check if the SQL Server service is running, stored credentials are valid, or windows authentication is enabled.'
-                                    );
-                                }
-
-                                if (isEmpty(storageInfo)) {
-                                    throw Error('SQL Server instance is not hosted on storage of type FSx for NetApp.');
-                                }
-
-                                if (
-                                    sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
-                                ) {
-                                    throw Error('Always On availability group environments are not supported.');
-                                }
-
-                                try {
-                                    await verifyAndAddFSxOntapCredentials(
-                                        accountId,
-                                        credentialsId,
-                                        region,
-                                        storageInfo!.id
-                                    );
-                                } catch (error: any) {
-                                    // verifyAndAddFSxOntapCredentials() is used by both V1 and V2 versions
-                                    // of the API.  The prefix 'Unable to manage' is alredy added by V2 API.
-                                    // To avoid duplication of sentence, we remove the sentence, if present.
-                                    const errorMessage = error?.message?.replace(
-                                        'Unable to manage the instance. Reason: ',
-                                        ''
-                                    );
-                                    throw Error(isEmpty(errorMessage) ? error : errorMessage);
-                                }
-
-                                if (isResourceTobeCreated) {
-                                    const {
-                                        domainName: activeDirectoryDomainName,
-                                        ipAddresses: activeDirectoryIpAddresses
-                                    } = JSON.parse(adDetails!)[ACTIVE_DIRECTORY];
-                                    const ebsVolumes = await paginateDescribeEbsVolumes(
-                                        credentialsId,
-                                        region,
-                                        {
-                                            Filters: [
-                                                {
-                                                    Name: 'attachment.instance-id',
-                                                    Values: node2InstanceId
-                                                        ? [node1InstanceId, node2InstanceId]
-                                                        : [node1InstanceId]
-                                                }
-                                            ]
-                                        },
-                                        undefined,
-                                        { useCache: true }
-                                    );
-                                    const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
-                                        iops: volume.Iops,
-                                        size: volume.Size,
-                                        isRoot: volume.Attachments?.some(
-                                            attachment =>
-                                                attachment.Device === '/dev/xvda' || attachment.Device === '/dev/sda1'
-                                        ),
-                                        volumeType: volume.VolumeType,
-                                        volumeId: volume.VolumeId,
-                                        throughput: volume.Throughput
-                                    }));
-
-                                    await createResource(accountId, {
-                                        resourceId,
-                                        credentialsId,
-                                        storageType: STORAGE_TYPE.FSXN,
-                                        resourceName: sqlInstanceInfo.sqlServerName,
-                                        cloudProviderAccountId: awsAccountId!,
-                                        cloudProviderName: CloudProviders.AWS,
-                                        resourceType: RESOURCESTYPE.MSSQL,
-                                        coRelationId: storageInfo!.id,
-                                        region,
-                                        metadata: {
-                                            creationDate: Date.now(),
-                                            node1InstanceId,
-                                            node2InstanceId,
-                                            sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
-                                            source: RESOURCE_SOURCE.DISCOVER,
-                                            fsxSvmId: storageInfo!.svmId,
-                                            storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                                            ...(activeDirectoryDomainName && {
-                                                activeDirectoryName: activeDirectoryDomainName
-                                            }),
-                                            ...(activeDirectoryIpAddresses && {
-                                                activeDirectoryAddress: activeDirectoryIpAddresses.join()
-                                            }),
-                                            ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
-                                        }
-                                    });
-
-                                    isResourceTobeCreated = false;
-                                }
-
-                                tagResources(
-                                    credentialsId,
-                                    region,
-                                    awsAccountId!,
-                                    accountId,
-                                    storageInfo!.id,
-                                    node1InstanceId,
-                                    node2InstanceId
-                                );
-
-                                let dbInstanceName;
-                                if (isDemoFlow) {
-                                    dbInstanceName =
-                                        sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
-                                            ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
-                                            : sqlInstanceInfo.sqlServerInstance;
-                                } else {
-                                    dbInstanceName = sqlInstanceInfo.sqlServerInstance;
-                                }
-
-                                await upsertDatabaseInstance(accountId, {
-                                    credentialsId,
-                                    resourceId,
-                                    region,
-                                    databaseInstanceId: serverGuid!,
-                                    databaseInstanceName: dbInstanceName,
-                                    fsxnIds: storageInfo!.id,
-                                    isDefault: sqlInstanceInfo.isDefaultInstance,
-                                    source: RESOURCE_SOURCE.DISCOVER,
-                                    sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
-                                    fsxSvmId: { [storageInfo!.id]: storageInfo!.svmId },
-                                    storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                                    databaseType: DatabaseTypes.MS_SQL_SERVER
-                                });
-                                if (isDemoFlow) {
-                                    await createAssessmentData(
-                                        accountId,
-                                        credentialsId,
-                                        region,
-                                        resourceId,
-                                        serverGuid!
-                                    );
-                                }
-
+                            if (alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
                                 itemsStatus.push({
                                     databaseInstanceName: dbInst,
-                                    databaseInstanceGuid: serverGuid,
-                                    status: 'success'
+                                    databaseInstanceGuid: sqlInstanceInfo?.serverGuid,
+                                    status: 'failed',
+                                    errorMessage: 'Instance is already managed.'
                                 });
-                            } catch (error) {
+                            } else if (isEmpty(sqlInstanceInfo)) {
                                 itemsStatus.push({
                                     databaseInstanceName: dbInst,
                                     status: 'failed',
-                                    errorMessage: `${error}`
+                                    errorMessage: 'SQL Server instance not found.'
                                 });
+                            } else {
+                                try {
+                                    const { windowsAuthentication, sqlServerAuthentication, serverGuid, storage } =
+                                        sqlInstanceInfo;
+                                    const storageInfo = storage?.find(
+                                        (elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN
+                                    );
+                                    const storageProtocols = storage
+                                        ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
+                                        .map((elem: any) => elem.protocol);
+
+                                    if (windowsAuthentication === false && sqlServerAuthentication === false) {
+                                        throw Error(
+                                            'Authentication to SQL Server instance is not possible. Check if the SQL Server service is running, stored credentials are valid, or windows authentication is enabled.'
+                                        );
+                                    }
+
+                                    if (isEmpty(storageInfo)) {
+                                        throw Error(
+                                            'SQL Server instance is not hosted on storage of type FSx for NetApp.'
+                                        );
+                                    }
+
+                                    if (
+                                        sqlInstanceInfo.sqlServerDeploymentType ===
+                                        SqlServerDeploymentModel.SQL_AOAG_SHORT
+                                    ) {
+                                        throw Error('Always On availability group environments are not supported.');
+                                    }
+
+                                    try {
+                                        await verifyAndAddFSxOntapCredentials(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            storageInfo!.id
+                                        );
+                                    } catch (error: any) {
+                                        // verifyAndAddFSxOntapCredentials() is used by both V1 and V2 versions
+                                        // of the API.  The prefix 'Unable to manage' is alredy added by V2 API.
+                                        // To avoid duplication of sentence, we remove the sentence, if present.
+                                        const errorMessage = error?.message?.replace(
+                                            'Unable to manage the instance. Reason: ',
+                                            ''
+                                        );
+                                        throw Error(isEmpty(errorMessage) ? error : errorMessage);
+                                    }
+
+                                    if (isResourceTobeCreated) {
+                                        const {
+                                            domainName: activeDirectoryDomainName,
+                                            ipAddresses: activeDirectoryIpAddresses
+                                        } = JSON.parse(adDetails!)[ACTIVE_DIRECTORY];
+                                        const ebsVolumes = await paginateDescribeEbsVolumes(
+                                            credentialsId,
+                                            region,
+                                            {
+                                                Filters: [
+                                                    {
+                                                        Name: 'attachment.instance-id',
+                                                        Values: node2InstanceId
+                                                            ? [node1InstanceId, node2InstanceId]
+                                                            : [node1InstanceId]
+                                                    }
+                                                ]
+                                            },
+                                            undefined,
+                                            { useCache: true }
+                                        );
+                                        const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
+                                            iops: volume.Iops,
+                                            size: volume.Size,
+                                            isRoot: volume.Attachments?.some(
+                                                attachment =>
+                                                    attachment.Device === '/dev/xvda' ||
+                                                    attachment.Device === '/dev/sda1'
+                                            ),
+                                            volumeType: volume.VolumeType,
+                                            volumeId: volume.VolumeId,
+                                            throughput: volume.Throughput
+                                        }));
+
+                                        await createResource(accountId, {
+                                            resourceId,
+                                            credentialsId,
+                                            storageType: STORAGE_TYPE.FSXN,
+                                            resourceName: sqlInstanceInfo.sqlServerName,
+                                            cloudProviderAccountId: awsAccountId!,
+                                            cloudProviderName: CloudProviders.AWS,
+                                            resourceType: RESOURCESTYPE.MSSQL,
+                                            coRelationId: storageInfo!.id,
+                                            region,
+                                            metadata: {
+                                                creationDate: Date.now(),
+                                                node1InstanceId,
+                                                node2InstanceId,
+                                                sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
+                                                source: RESOURCE_SOURCE.DISCOVER,
+                                                fsxSvmId: storageInfo!.svmId,
+                                                storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                                                ...(activeDirectoryDomainName && {
+                                                    activeDirectoryName: activeDirectoryDomainName
+                                                }),
+                                                ...(activeDirectoryIpAddresses && {
+                                                    activeDirectoryAddress: activeDirectoryIpAddresses.join()
+                                                }),
+                                                ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
+                                            }
+                                        });
+
+                                        isResourceTobeCreated = false;
+                                    }
+
+                                    tagResources(
+                                        credentialsId,
+                                        region,
+                                        awsAccountId!,
+                                        accountId,
+                                        storageInfo!.id,
+                                        node1InstanceId,
+                                        node2InstanceId
+                                    );
+
+                                    let dbInstanceName;
+                                    if (isDemoFlow) {
+                                        dbInstanceName =
+                                            sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
+                                                ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
+                                                : sqlInstanceInfo.sqlServerInstance;
+                                    } else {
+                                        dbInstanceName = sqlInstanceInfo.sqlServerInstance;
+                                    }
+
+                                    await upsertDatabaseInstance(accountId, {
+                                        credentialsId,
+                                        resourceId,
+                                        region,
+                                        databaseInstanceId: serverGuid!,
+                                        databaseInstanceName: dbInstanceName,
+                                        fsxnIds: storageInfo!.id,
+                                        isDefault: sqlInstanceInfo.isDefaultInstance,
+                                        source: RESOURCE_SOURCE.DISCOVER,
+                                        sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
+                                        fsxSvmId: { [storageInfo!.id]: storageInfo!.svmId },
+                                        storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                                        databaseType: DatabaseTypes.MS_SQL_SERVER
+                                    });
+                                    if (isDemoFlow) {
+                                        await createAssessmentData(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            resourceId,
+                                            serverGuid!
+                                        );
+                                    }
+
+                                    itemsStatus.push({
+                                        databaseInstanceName: dbInst,
+                                        databaseInstanceGuid: serverGuid,
+                                        status: 'success'
+                                    });
+                                } catch (error) {
+                                    itemsStatus.push({
+                                        databaseInstanceName: dbInst,
+                                        status: 'failed',
+                                        errorMessage: `${error}`
+                                    });
+                                }
                             }
-                        }
-                    }
+                        })
+                    );
                     manageResponse.push({ resourceId, instances: itemsStatus, credentialsId, region, ec2InstanceId });
                 } catch (error: any) {
                     const err = `Unable to manage instance '${item.ec2InstanceId}'. Reason: ${error.message}`;

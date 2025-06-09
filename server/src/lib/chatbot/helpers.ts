@@ -117,10 +117,10 @@ async function validateParams(
     // const promises = [];
     let error: ValidationResponse = {};
 
-    for (const reqParam of schemaParams) {
+    for await (const reqParam of schemaParams) {
         // if (reqParam.required !== false) {
         const keys = Object.keys(reqParam);
-        for (const key of keys) {
+        for await (const key of keys) {
             logger.debug('KEY>>>', key, reqParam[key]);
 
             if (checkIfRequired(reqParam[key].required, params)) {

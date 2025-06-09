@@ -241,25 +241,27 @@ async function saveReportInWlmdbDatabase(
             };
         });
 
-        for (const report of reports) {
-            const existingReport = await getOnPremDatabaseResources(
-                accountId,
-                databaseType,
-                undefined,
-                undefined,
-                report.resource_id
-            );
-            if (existingReport.items.some(item => item.creationTime === report.creation_time.getTime())) {
-                logger.error(
-                    `Report already generated for the collected SQL Server data. Report with the same resource ID ${
-                        report.resource_id
-                    } and timestamp ${convertToDate(timestamp)} already exists.`
+        const validReports = await Promise.all(
+            reports.map(async report => {
+                const existingReport = await getOnPremDatabaseResources(
+                    accountId,
+                    databaseType,
+                    undefined,
+                    undefined,
+                    report.resource_id
                 );
-
-                reports.splice(reports.indexOf(report), 1);
-            }
-        }
-        if (reports.length === 0) {
+                if (existingReport.items.some(item => item.creationTime === report.creation_time.getTime())) {
+                    logger.error(
+                        `Report already generated for the collected SQL Server data. Report with the same resource ID ${
+                            report.resource_id
+                        } and timestamp ${convertToDate(timestamp)} already exists.`
+                    );
+                    return null; // Skip this report if it already exists
+                }
+                return report;
+            })
+        );
+        if (isEmpty(compact(validReports))) {
             throw new Error('Report already generated for the collected SQL Server data.');
         }
 
@@ -739,27 +741,29 @@ async function analyzeOnpremData(
     const hostIds = windowsConfig.nodeDetails.map(({ hostId }) => hostId);
     const sqlInstancesPerDeploymentType = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
 
-    const response = [];
-    for (const [deploymentType, instances] of Object.entries(sqlInstancesPerDeploymentType)) {
-        const instanceIds = instances.map(instance => instance.instanceGuid);
-        const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
+    const response: any[] = [];
+    await Promise.all(
+        Object.entries(sqlInstancesPerDeploymentType).map(async ([deploymentType, instances]) => {
+            const instanceIds = instances.map(instance => instance.instanceGuid);
+            const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
 
-        const { storageSavings, calculations } = await getStorageSavingsResponse(
-            accountId,
-            region,
-            deploymentType,
-            windowsConfig,
-            instances,
-            snapshotInfo
-        );
-        response.push({ accountId, resourceId, storageSavings, calculations });
-        if (!adHocRequest) {
-            // Update the record in the database as part of the initial report analysis only
-            await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, {
-                assessment_data: { storageSavings, calculations }
-            });
-        }
-    }
+            const { storageSavings, calculations } = await getStorageSavingsResponse(
+                accountId,
+                region,
+                deploymentType,
+                windowsConfig,
+                instances,
+                snapshotInfo
+            );
+            response.push({ accountId, resourceId, storageSavings, calculations });
+            if (!adHocRequest) {
+                // Update the record in the database as part of the initial report analysis only
+                await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, {
+                    assessment_data: { storageSavings, calculations }
+                });
+            }
+        })
+    );
     return response;
 }
 

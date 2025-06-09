@@ -233,97 +233,108 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
     logger.info(`Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
     const jobDescription = `Fix storage for ${serverNameWithHostName}`;
 
-    for (const data of optimizationTargets) {
-        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: `Fix storage for ${serverNameWithHostName}`,
-            description: jobDescription,
-            startTime: Date.now(),
-            type: JOBTYPE.WELL_ARCHITECTED,
-            status: JOBSTATUS.IN_PROGRESS,
-            resourceName: serverNameWithHostName,
-            parentJobId
-        });
-
-        logger.debug(`Job created with id ${jobId}`);
-
-        let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-        let newJobError;
-        let newJobDescription;
-        try {
-            const { configurationName, objectsToOptimize } = data;
-            const configKey = Object.keys(optimizationConfigs).find(
-                key => optimizationConfigs[key as keyof typeof optimizationConfigs] === configurationName
-            );
-
-            if (!configKey) {
-                throw new Error('Storage configuration not found');
-            }
-
-            const apiData = apiRequestData[configKey as keyof typeof apiRequestData];
-            const apiBody = JSON.stringify(apiData.body);
-            const optimizeType = apiData.type;
-            if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
-                throw new Error('objectsToOptimize must be an array with non-empty string elements.');
-            }
-            const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
-            const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
-            const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
-            const apiEndpoint = apiData.api;
-
-            const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
-                fsxId,
-                region,
-                apiEndpoint,
-                apiQueryFilter,
-                apiBody
+    await Promise.all(
+        optimizationTargets.map(async data => {
+            const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+                name: `Fix storage for ${serverNameWithHostName}`,
+                description: jobDescription,
+                startTime: Date.now(),
+                type: JOBTYPE.WELL_ARCHITECTED,
+                status: JOBSTATUS.IN_PROGRESS,
+                resourceName: serverNameWithHostName,
+                parentJobId
             });
-            const resp = await retryWithDelay(
-                callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
-                3,
-                5000
-            );
-            const parsedResp = sqlResponseParsing(resp);
-            let objectsOptimized = parsedResp.num_records || 0;
 
-            objectsOptimized = isDemoFlow ? objectsToOptimize.length : objectsOptimized;
-            // with bulk optimization of volumes, user can send 1/2/3 vol ids to optimize but ssm response will hardcoded to reply with 3 as optimized.
+            logger.debug(`Job created with id ${jobId}`);
 
-            const optimizeMessage = `Optimized ${objectsOptimized}/${
-                objectsToOptimize.length
-            } ${jobParamKey} in ${serverNameWithHostName} for configuration parameter '${
-                OptimizeStorageConfigsJobNames[configKey as keyof typeof OptimizeStorageConfigsJobNames]
-            }'`;
+            let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+            let newJobError;
+            let newJobDescription;
+            try {
+                const { configurationName, objectsToOptimize } = data;
+                const configKey = Object.keys(optimizationConfigs).find(
+                    key => optimizationConfigs[key as keyof typeof optimizationConfigs] === configurationName
+                );
 
-            if (objectsOptimized !== objectsToOptimize.length) {
-                if (objectsOptimized === 0) {
-                    const optimizeErrorMessage = `Failed to fix ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
-                    logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
-                    newJobStatus = JOBSTATUS.FAILED;
-                    newJobError = optimizeErrorMessage;
-                } else {
-                    const unOptimizedObjects = objectsToOptimize.filter(obj => !parsedResp.cli_output.includes(obj));
-                    const optimizeErrorMessage = `Failed to fix ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
-                    newJobStatus = JOBSTATUS.FAILED;
-                    newJobError = optimizeErrorMessage;
+                if (!configKey) {
+                    throw new Error('Storage configuration not found');
                 }
-            } else {
-                newJobDescription = optimizeMessage;
-                newJobStatus = JOBSTATUS.COMPLETED;
+
+                const apiData = apiRequestData[configKey as keyof typeof apiRequestData];
+                const apiBody = JSON.stringify(apiData.body);
+                const optimizeType = apiData.type;
+                if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
+                    throw new Error('objectsToOptimize must be an array with non-empty string elements.');
+                }
+                const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
+                const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
+                const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
+                const apiEndpoint = apiData.api;
+
+                const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
+                    fsxId,
+                    region,
+                    apiEndpoint,
+                    apiQueryFilter,
+                    apiBody
+                });
+                const resp = await retryWithDelay(
+                    callSsmExecution.bind(
+                        null,
+                        credentialsId,
+                        region,
+                        [ssmCommand],
+                        activeNodeInstanceId!,
+                        jobDescription
+                    ),
+                    3,
+                    5000
+                );
+                const parsedResp = sqlResponseParsing(resp);
+                let objectsOptimized = parsedResp.num_records || 0;
+
+                objectsOptimized = isDemoFlow ? objectsToOptimize.length : objectsOptimized;
+                // with bulk optimization of volumes, user can send 1/2/3 vol ids to optimize but ssm response will hardcoded to reply with 3 as optimized.
+
+                const optimizeMessage = `Optimized ${objectsOptimized}/${
+                    objectsToOptimize.length
+                } ${jobParamKey} in ${serverNameWithHostName} for configuration parameter '${
+                    OptimizeStorageConfigsJobNames[configKey as keyof typeof OptimizeStorageConfigsJobNames]
+                }'`;
+
+                if (objectsOptimized !== objectsToOptimize.length) {
+                    if (objectsOptimized === 0) {
+                        const optimizeErrorMessage = `Failed to fix ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
+                        logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
+                        newJobStatus = JOBSTATUS.FAILED;
+                        newJobError = optimizeErrorMessage;
+                    } else {
+                        const unOptimizedObjects = objectsToOptimize.filter(
+                            obj => !parsedResp.cli_output.includes(obj)
+                        );
+                        const optimizeErrorMessage = `Failed to fix ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                        newJobStatus = JOBSTATUS.FAILED;
+                        newJobError = optimizeErrorMessage;
+                    }
+                } else {
+                    newJobDescription = optimizeMessage;
+                    newJobStatus = JOBSTATUS.COMPLETED;
+                }
+            } catch (error) {
+                const errorMessage = `Error while fixing storage ${error}`;
+                logger.error(errorMessage);
+                newJobStatus = JOBSTATUS.FAILED;
+                newJobError = errorMessage;
+            } finally {
+                await updateJobDetails(accountId, jobId, {
+                    status: newJobStatus,
+                    endTime: Date.now(),
+                    error: newJobError,
+                    description: newJobDescription
+                });
             }
-        } catch (error) {
-            const errorMessage = `Error while fixing storage ${error}`;
-            logger.error(errorMessage);
-            newJobStatus = JOBSTATUS.FAILED;
-            newJobError = errorMessage;
-        } finally {
-            await updateJobDetails(accountId, jobId, {
-                status: newJobStatus,
-                endTime: Date.now(),
-                error: newJobError,
-                description: newJobDescription
-            });
-        }
-    }
+        })
+    );
 }
 
 async function activeSqlNodeDetails(
@@ -540,7 +551,7 @@ async function modifySizingAttributes(
         }
 
         const childJobsStatus = [];
-        for (const type of typesList) {
+        for await (const type of typesList) {
             switch (type) {
                 case OPTIMIZE_SIZING_CONFIGS.HEADROOM: {
                     const result = await headroomOptimization(
@@ -2967,6 +2978,7 @@ async function triggerAssessmentAfterOptimization(
         let retries = 10;
         while (retries > 0) {
             retries -= 1;
+            // eslint-disable-next-line no-await-in-loop
             const allSubJobs = await listJobs(accountId, '', '', parentJobId);
             masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
                 ? JOBSTATUS.IN_PROGRESS
@@ -2981,6 +2993,7 @@ async function triggerAssessmentAfterOptimization(
                 errorMessage = allSubJobs.find(job => job.status === JOBSTATUS.FAILED)?.error || '';
                 break;
             }
+            // eslint-disable-next-line no-await-in-loop
             await sleep(30000);
         }
     }

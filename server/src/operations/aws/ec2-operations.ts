@@ -896,6 +896,7 @@ async function waitForInstanceToBeStopped(credentialsId: string, region: string,
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         const { Reservations: [{ Instances: [{ State: { Name: instanceState = '' } = {} }] = [] } = {}] = [] } =
+            // eslint-disable-next-line no-await-in-loop
             await describeInstance(credentialsId, region, { InstanceIds: [instanceId] });
 
         if (!instanceState) {
@@ -906,6 +907,7 @@ async function waitForInstanceToBeStopped(credentialsId: string, region: string,
             return true;
         }
         if (instanceState === 'stopping') {
+            // eslint-disable-next-line no-await-in-loop
             await sleep(ms(delay));
         }
     }

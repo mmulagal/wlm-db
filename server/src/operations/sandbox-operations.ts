@@ -396,7 +396,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
         await Promise.all(
             Object.keys(fsxGroups).map(
                 throat(10, async fsxId => {
-                    for (const resourceDetail of fsxGroups[fsxId]) {
+                    for await (const resourceDetail of fsxGroups[fsxId]) {
                         const { metadata } = resourceDetail;
                         const { node1InstanceId, node2InstanceId, sandboxes } = metadata as unknown as Metadata;
 
@@ -1163,6 +1163,7 @@ async function invokeVirtualMount(
 
         // its required to sleep for 30 seconds so that initialization script will go through.. the ontap LUN configure can take time depending on busy system for the multiple API calls, and the disk initialize may take time to discover the created LUNs
         if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+            // eslint-disable-next-line no-await-in-loop
             await sleep(45000);
         }
 
@@ -1242,6 +1243,7 @@ async function invokeVirtualMount(
                 ];
             }
 
+            // eslint-disable-next-line no-await-in-loop
             const resp = await callSsmExecution(
                 credentialsId,
                 region,
@@ -1277,6 +1279,7 @@ async function invokeVirtualMount(
             }
         } finally {
             if (status === JOBSTATUS.FAILED || status === JOBSTATUS.COMPLETED) {
+                // eslint-disable-next-line no-await-in-loop
                 await updateJobDetails(accountId, invokeMountJob.id, {
                     error: errorMsg,
                     status,
