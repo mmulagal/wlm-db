@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import styles from './PostgreServerName.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 import { setPostgreServerName } from '../../../store/postgre/postgreFormSlice';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useDelayedError } from '../../../common/hooks/useDelayedError';
 import { GENERAL } from '../../../utils/appConstants';
@@ -22,32 +22,32 @@ const PostgreServerName = () => {
     useEffect(() => {
         setCredName(userName);
     }, [userName]);
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!credName) {
             return <ActionRequired />;
-        } else {
-            return <Typography variant="Regular_14">{credName}</Typography>;
         }
+        return <Typography variant="Regular_14">{credName}</Typography>;
     };
 
     useEffect(() => {
         if (isCreateHit && !isDBClusterNameFilled) {
             setTimeout(() => {
-                //@ts-ignore
+                // @ts-ignore
                 databasenameRef?.current?.focus();
             }, 60);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [!isDBClusterNameFilled, isCreateHit]);
 
-    //Check for valid server name
+    // Check for valid server name
     function isValidDBName() {
         const firstChar = credName && credName.charAt(0);
 
         if (!credName || credName.length === 0) {
             return GENERAL.ACTION_REQUIRED;
-        } else if (
+        }
+        if (
             credName &&
             credName.length > 0 &&
             (credName.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(credName))
@@ -61,14 +61,14 @@ const PostgreServerName = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="27"
-                title={<div className={CommonStyles.title}>{'Database server name'}</div>}
+                title={<div className={CommonStyles.title}>Database server name</div>}
             >
                 <AccordionCardContent>
                     <Typography>
                         <div className={styles.secondContainer}>
                             <TextField
                                 ref={databasenameRef}
-                                label={'Database server name'}
+                                label="Database server name"
                                 info={
                                     <div className={styles.userNameTooltip}>
                                         <div className={styles.list}>

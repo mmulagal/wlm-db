@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Popover as DesignPopover } from '@netapp/design-system';
-import CustomContentInfo from '../CustomContentInfo/CustomContentInfo';
 import { ReactComponent as ArrowRight } from '@netapp/icons/ic_arrow_right.svg';
+import CustomContentInfo from '../CustomContentInfo/CustomContentInfo';
 import { ReactComponent as MenuIcon } from '../../assets/menu-icon2.svg';
 import styles from './MenuPopover.module.scss';
 
@@ -80,37 +80,30 @@ function MenuPopover({
 
             if (item.disabled && item.infoText) {
                 return (
-                    <DesignPopover trigger={'hover'} placement="left" container={menuItem}>
+                    <DesignPopover trigger="hover" placement="left" container={menuItem}>
                         {item.infoText}
                     </DesignPopover>
                 );
-            } else {
-                return menuItem;
             }
-        } else {
-            return (
-                <>
-                    <li
-                        key={`menu-item-${index}`}
-                        className={`${styles.submenu} ${item.disabled ? styles.menuDisabled : ''}`}
-                    >
-                        <DesignPopover
-                            containerClass={styles.subMenuContainerWithArrow}
-                            popoverClass={styles.subMenuContainer}
-                            placement="left"
-                            trigger="click"
-                            children={<div>{item.subMenu.map((subItem, index) => renderMenuItem(subItem, index))}</div>}
-                            container={
-                                <div className={styles.menuWithArrow}>
-                                    {item.displayName}
-                                    <ArrowRight />
-                                </div>
-                            }
-                        />
-                    </li>
-                </>
-            );
+            return menuItem;
         }
+        return (
+            <li key={`menu-item-${index}`} className={`${styles.submenu} ${item.disabled ? styles.menuDisabled : ''}`}>
+                <DesignPopover
+                    containerClass={styles.subMenuContainerWithArrow}
+                    popoverClass={styles.subMenuContainer}
+                    placement="left"
+                    trigger="click"
+                    children={<div>{item.subMenu.map((subItem, index) => renderMenuItem(subItem, index))}</div>}
+                    container={
+                        <div className={styles.menuWithArrow}>
+                            {item.displayName}
+                            <ArrowRight />
+                        </div>
+                    }
+                />
+            </li>
+        );
     };
 
     useEffect(() => {
@@ -124,9 +117,8 @@ function MenuPopover({
     const ContentClass = () => {
         if (isBlackLayout) {
             return `${styles.content} ${styles.blackContent}`;
-        } else {
-            return `${styles.content}`;
         }
+        return `${styles.content}`;
     };
 
     const handleVisibleChange = (visible: boolean) => {
@@ -135,7 +127,7 @@ function MenuPopover({
         }
     };
 
-    //Function to display the Menu icon for popover
+    // Function to display the Menu icon for popover
     const menuIconDisplay = () => {
         if (menuType === 'default') {
             return (
@@ -150,7 +142,8 @@ function MenuPopover({
                     <span className={styles.menuPointer}>...</span>
                 </div>
             );
-        } else if (menuType === 'downIcon') {
+        }
+        if (menuType === 'downIcon') {
             return (
                 <div
                     onClick={() => {
@@ -166,88 +159,86 @@ function MenuPopover({
     };
 
     return (
-        <>
-            <DesignPopover
-                containerClass={styles.popover}
-                popoverClass={styles.subMenuContainer}
-                placement={preferredLocation}
-                isAppendedToBody={true}
-                trigger="click"
-                onVisibleChange={handleVisibleChange}
-                children={
-                    isMenuOpen && (
-                        <div className={styles.menuPopoverContainer}>
-                            <div className={`${styles.reactPopover} ${styles.infoTooltip}`}>
-                                <div ref={refMenuContent} className={ContentClass()}>
-                                    <ul>
-                                        {menuItems.map((menuItem, index) => {
-                                            const {
-                                                infoText = '',
-                                                displayName = '',
-                                                disabled = false,
-                                                id,
-                                                onlyInfoText
-                                            } = menuItem;
+        <DesignPopover
+            containerClass={styles.popover}
+            popoverClass={styles.subMenuContainer}
+            placement={preferredLocation}
+            isAppendedToBody
+            trigger="click"
+            onVisibleChange={handleVisibleChange}
+            children={
+                isMenuOpen && (
+                    <div className={styles.menuPopoverContainer}>
+                        <div className={`${styles.reactPopover} ${styles.infoTooltip}`}>
+                            <div ref={refMenuContent} className={ContentClass()}>
+                                <ul>
+                                    {menuItems.map((menuItem, index) => {
+                                        const {
+                                            infoText = '',
+                                            displayName = '',
+                                            disabled = false,
+                                            id,
+                                            onlyInfoText
+                                        } = menuItem;
 
-                                            return (
-                                                <div key={index}>
-                                                    {infoText ? (
-                                                        <CustomContentInfo
-                                                            tooltipText={infoText}
-                                                            CustomContent={
-                                                                <div
-                                                                    className={`${styles.menuInfoHover} ${styles.menuDisabled}`}
-                                                                >
-                                                                    {displayName}
-                                                                </div>
+                                        return (
+                                            <div key={index}>
+                                                {infoText ? (
+                                                    <CustomContentInfo
+                                                        tooltipText={infoText}
+                                                        CustomContent={
+                                                            <div
+                                                                className={`${styles.menuInfoHover} ${styles.menuDisabled}`}
+                                                            >
+                                                                {displayName}
+                                                            </div>
+                                                        }
+                                                    />
+                                                ) : onlyInfoText ? (
+                                                    <div
+                                                        onClick={() => {
+                                                            if (!disabled) {
+                                                                toggleMenu('selectedOption', id);
                                                             }
-                                                        ></CustomContentInfo>
-                                                    ) : onlyInfoText ? (
-                                                        <div
-                                                            onClick={() => {
-                                                                if (!disabled) {
-                                                                    toggleMenu('selectedOption', id);
-                                                                }
-                                                            }}
-                                                            key={index}
-                                                        >
-                                                            <CustomContentInfo
-                                                                tooltipText={onlyInfoText}
-                                                                CustomContent={<li>{displayName}</li>}
-                                                            ></CustomContentInfo>
-                                                        </div>
-                                                    ) : (
-                                                        renderMenuItem(menuItem, index)
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </ul>
-                                </div>
+                                                        }}
+                                                        key={index}
+                                                    >
+                                                        <CustomContentInfo
+                                                            tooltipText={onlyInfoText}
+                                                            CustomContent={<li>{displayName}</li>}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    renderMenuItem(menuItem, index)
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </ul>
                             </div>
                         </div>
-                    )
-                }
-                container={
-                    <>
-                        {CustomMenu ? (
-                            <div ref={refParent}>{CustomMenu}</div>
-                        ) : isDisabled ? (
-                            <CustomContentInfo
-                                tooltipText={disabledText}
-                                CustomContent={
-                                    <div className={styles.menuPointerDisabled}>
-                                        <span className={styles.menuPointer}>...</span>
-                                    </div>
-                                }
-                            />
-                        ) : (
-                            <div>{!isSubmenu && menuIconDisplay()}</div>
-                        )}
-                    </>
-                }
-            />
-        </>
+                    </div>
+                )
+            }
+            container={
+                <>
+                    {CustomMenu ? (
+                        <div ref={refParent}>{CustomMenu}</div>
+                    ) : isDisabled ? (
+                        <CustomContentInfo
+                            tooltipText={disabledText}
+                            CustomContent={
+                                <div className={styles.menuPointerDisabled}>
+                                    <span className={styles.menuPointer}>...</span>
+                                </div>
+                            }
+                        />
+                    ) : (
+                        <div>{!isSubmenu && menuIconDisplay()}</div>
+                    )}
+                </>
+            }
+        />
     );
 }
 

@@ -1,12 +1,12 @@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
@@ -35,8 +35,8 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { credentialData } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const tableData = useMemo(() => {
-        let awsBackupAssessmentData: any = [];
-        let uniqueResourceList: Array<string> = [];
+        const awsBackupAssessmentData: any = [];
+        const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
@@ -67,7 +67,7 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             performanceTier: awsBackupObj?.current,
                             totalObjectsAssessed: awsBackupObj?.totalObjectsAssessed,
                             totalObjectsInViolation: awsBackupObj?.totalObjectsInViolation,
-                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
+                            id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[awsBackupObj?.status],
                             data: instanceData,
@@ -102,12 +102,8 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
                 selectedRowsForOptimize
             );
-        } else {
-            return disableOptimizeCheckBoxForErrCase(
-                tableData,
-                ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
-            );
         }
+        return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
     }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
 
     const TableColDefs: ColumnProps[] = [
@@ -119,9 +115,7 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
             filterOptions: 'auto',
             isSticky: true,
             width: '376px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
-            }
+            renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
         {
             Header: 'Host name',
@@ -136,9 +130,8 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
             id: '3',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
-            }
+            renderCell: (cellData: string, rowData: any) =>
+                `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
         },
         {
             id: '4',
@@ -170,7 +163,7 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -202,15 +195,15 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
     return (
         <div className={styles.renderTable}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Not-optimized instances`}
-                singularTitle={'Not-optimized instance'}
+                pluralTitle="Not-optimized instances"
+                singularTitle="Not-optimized instance"
             />
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

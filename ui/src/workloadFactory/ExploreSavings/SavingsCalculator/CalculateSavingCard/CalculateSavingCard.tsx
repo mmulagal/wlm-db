@@ -1,15 +1,16 @@
 import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
 import { ReactComponent as StorageCredentials } from '../../../../assets/storage-credentials.svg';
 
 import styles from './CalculateSavingCard.module.scss';
 
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedExploreSavingsTab } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 import { handleExploreSavingsURL } from '../../../../utils/utilityFunctions';
-import { useEffect, useState } from 'react';
+
 const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }: any) => {
     const dispatch = useDispatch();
     const { selectedExploreSavingsTab } = useAppSelector(state => state?.exploreSavings);

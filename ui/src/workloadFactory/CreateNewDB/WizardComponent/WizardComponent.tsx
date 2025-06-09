@@ -14,7 +14,7 @@ const WizardComponent = () => {
         <div className={styles.wizardComponent}>
             {loading && (
                 <>
-                    <div className={styles.loaderOverlay}></div>
+                    <div className={styles.loaderOverlay} />
                     <div className={styles.spinnerPlacement}>
                         <Spinner isLarge />
                     </div>

@@ -1,7 +1,8 @@
 import { useDispatch } from 'react-redux';
+import { Button, DsTypography, useDialog } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import styles from './OptimizeInnerPage.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
-import { Button, DsTypography } from '@netapp/design-system';
 import {
     setInProgressHostData,
     setInProgressOptimizationData,
@@ -14,10 +15,8 @@ import {
 import CloneInsideWF from './InnerTables/CloneInsideWF';
 import CloneOutsideWF from './InnerTables/CloneOutsideWF';
 import { GENERAL } from '../../../utils/appConstants';
-import { useEffect, useState } from 'react';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
-import { useDialog } from '@netapp/design-system';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { useLazyGetSubTaskListQuery, useOptimizeCloneCleanupMutation } from '../../../utils/apiService';
 import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
@@ -43,8 +42,8 @@ const CloneTabs = ({ fromPage = '' }: any) => {
     const { setDialog, closeDialog } = useDialog();
 
     useEffect(() => {
-        let wfDbItems: any = [];
-        let otherDbItems: any = [];
+        const wfDbItems: any = [];
+        const otherDbItems: any = [];
         cloneDashboardData?.objectsInViolation?.map((item: any) => {
             const sourceVolumeNames = item?.clonedVolumeDetails?.map((detail: any) => detail?.sourceVolumeName) || [];
             if (item?.isOptimized) {
@@ -79,7 +78,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 host.sqlServerInstances.forEach((instance: any) => {
                     instanceList.push({
                         id: configurationName,
-                        name: name,
+                        name,
                         hostId: host.id,
                         instanceId: instance?.instanceId,
                         credentialId: host?.credentialsId,
@@ -248,7 +247,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
         });
     };
 
-    //Function to change clone tabs
+    // Function to change clone tabs
     const handleClick = (tab: string) => {
         dispatch(setSelectedCloneTab(tab));
     };
@@ -266,7 +265,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={'innerPage'}
+                customClass="innerPage"
             />
         );
     };
@@ -290,7 +289,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                         }
                         onClick={() => handleClick(GENERAL.CLONE_MANAGEMENT_TAB1)}
                     >
-                        {GENERAL.CLONE_MANAGEMENT_TAB1} {'(' + wfDatabase?.length + ')'}
+                        {GENERAL.CLONE_MANAGEMENT_TAB1} {`(${wfDatabase?.length})`}
                     </DsTypography>
                 </div>
                 <div
@@ -309,7 +308,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                         }
                         onClick={() => handleClick(GENERAL.CLONE_MANAGEMENT_TAB2)}
                     >
-                        {GENERAL.CLONE_MANAGEMENT_TAB2} {'(' + otherDatabase?.length + ')'}
+                        {GENERAL.CLONE_MANAGEMENT_TAB2} {`(${otherDatabase?.length})`}
                     </DsTypography>
                 </div>
             </div>

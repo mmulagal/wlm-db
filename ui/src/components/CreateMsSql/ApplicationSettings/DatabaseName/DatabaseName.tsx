@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import styles from './DatabaseName.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
-import { useDispatch } from 'react-redux';
 import { setDBName } from '../../../../store/mssql/mssqlFormSlice';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -21,7 +21,7 @@ const DatabaseName = () => {
     const isDBClusterNameFilled = useAppSelector(state => state.msSqlAction?.dbNameSelected);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
-    const [databaseName, setDatabaseName] = useState(selectedDBName ? selectedDBName : generateRandomDBName());
+    const [databaseName, setDatabaseName] = useState(selectedDBName || generateRandomDBName());
 
     const databasenameRef = useRef(null);
 
@@ -32,7 +32,7 @@ const DatabaseName = () => {
     useEffect(() => {
         if (isCreateHit && !isDBClusterNameFilled) {
             setTimeout(() => {
-                //@ts-ignore
+                // @ts-ignore
                 databasenameRef?.current?.focus();
             }, 60);
         }
@@ -48,7 +48,8 @@ const DatabaseName = () => {
 
         if (!databaseName || databaseName.length === 0) {
             return GENERAL.ACTION_REQUIRED;
-        } else if (
+        }
+        if (
             databaseName &&
             databaseName.length > 0 &&
             (databaseName.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(databaseName))
@@ -56,15 +57,15 @@ const DatabaseName = () => {
             return GENERAL.DB_NAME_TOOLTIP;
         }
     }
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!databaseName) {
-            return <ActionRequired error={!isDBClusterNameFilled ? true : false} />;
-        } else if (isValidDBName()) {
-            return <AccordionError />;
-        } else {
-            return <Typography variant="Regular_14">{databaseName}</Typography>;
+            return <ActionRequired error={!isDBClusterNameFilled} />;
         }
+        if (isValidDBName()) {
+            return <AccordionError />;
+        }
+        return <Typography variant="Regular_14">{databaseName}</Typography>;
     };
 
     return (

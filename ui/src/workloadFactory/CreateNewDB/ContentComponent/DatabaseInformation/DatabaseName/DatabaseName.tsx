@@ -6,18 +6,18 @@ import {
     useAccordionContext
 } from '@netapp/design-system';
 
+import { useDispatch } from 'react-redux';
+import { useEffect, useRef } from 'react';
 import styles from './DatabaseName.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { setNewUserDBName } from '../../../../../store/workloadFactory/createNewDBSlice';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { useDelayedError } from '../../../../../common/hooks/useDelayedError';
 import AccordionError from '../../../../../common/AccordionError/AccordionError';
 import { setDbCreatePressed } from '../../../../../store/mssql/msSqlActionSlice';
-import { useEffect, useRef } from 'react';
 import { isValidDatabaseName } from '../../../CreateNewDBFooter/createUserDBPayload';
 
 const DatabaseName = () => {
@@ -52,9 +52,9 @@ const DatabaseName = () => {
                 !dbCreateLogSizeValid)
         ) {
             accordionContext({
-                1: !dbCreateNameAdded ? true : false,
-                3: !dbCreateDataNameAdded || !dbCreateLogNameAdded ? true : false,
-                4: !dbCreateDataSizeValid || !dbCreateLogSizeValid ? true : false
+                1: !dbCreateNameAdded,
+                3: !!(!dbCreateDataNameAdded || !dbCreateLogNameAdded),
+                4: !!(!dbCreateDataSizeValid || !dbCreateLogSizeValid)
             });
             dispatch(setDbCreatePressed(false));
         }
@@ -71,19 +71,21 @@ const DatabaseName = () => {
     useEffect(() => {
         if (!dbCreateNameAdded && isDbCreateHit) {
             setTimeout(() => {
-                //@ts-ignore
+                // @ts-ignore
                 nameRef?.current?.focus();
             }, 110);
         }
     }, [dbCreateNameAdded, isDbCreateHit]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!newUserDBName) {
-            return <ActionRequired error={!dbCreateNameAdded ? true : false} />;
-        } else if (isValidDBName()) {
+            return <ActionRequired error={!dbCreateNameAdded} />;
+        }
+        if (isValidDBName()) {
             return <AccordionError />;
-        } else if (newUserDBName) {
+        }
+        if (newUserDBName) {
             return (
                 <DsTypography variant="Regular_14" className={styles.headerWrap} title={newUserDBName}>
                     {newUserDBName}
@@ -111,7 +113,7 @@ const DatabaseName = () => {
                     <DsTypography>
                         <div className={styles.dbNameField}>
                             <TextField
-                                id={'db-create-database-name'}
+                                id="db-create-database-name"
                                 ref={nameRef}
                                 info={
                                     <div className={styles.dbNameTooltip}>

@@ -1,8 +1,12 @@
 import { DoughnutChart, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
-import { getCssVariableValue } from '../../../../utils/utilityFunctions';
+import {
+    getCssVariableValue,
+    isNotNumberOrNA,
+    formatSizeSplit,
+    displayFormattedValue
+} from '../../../../utils/utilityFunctions';
 import styles from './ResourceDistribution.module.scss';
-import { isNotNumberOrNA, formatSizeSplit, displayFormattedValue } from '../../../../utils/utilityFunctions';
 
 type Utilisation = {
     percentUsed: string;
@@ -127,9 +131,7 @@ const ResourceDistribution = ({ mssqlCpu, mssqlMemory, mssqlDisk }: ResourceDist
                         plugins: {
                             tooltip: {
                                 callbacks: {
-                                    label: (item: any) => {
-                                        return `${tooltipList[item.dataIndex]}`;
-                                    }
+                                    label: (item: any) => `${tooltipList[item.dataIndex]}`
                                 }
                             }
                         }

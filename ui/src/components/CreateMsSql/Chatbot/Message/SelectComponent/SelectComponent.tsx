@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import styles from './SelectComponent.module.scss';
 import { Button, SelectField, Typography } from '@netapp/design-system';
-import { generateOptionType, openCredentialTab } from '../../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
+import styles from './SelectComponent.module.scss';
+import { generateOptionType, openCredentialTab } from '../../../../../utils/utilityFunctions';
 import { setSuggestionBubbles } from '../../../../../store/chatbot/chatbotSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { useAppSelector } from '../../../../../store/storeHooks';
@@ -20,13 +20,12 @@ type selectComponentPropType = {
     label?: string;
 };
 
-const delay = () => {
-    return new Promise(resolve => {
+const delay = () =>
+    new Promise(resolve => {
         setTimeout(() => {
             resolve('');
         }, 2000);
     });
-};
 
 const SelectComponent = ({
     options,
@@ -46,13 +45,9 @@ const SelectComponent = ({
     const dispatch = useDispatch();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
-    //@ts-ignore
+    // @ts-ignore
     useEffect(() => {
-        setOptionsToShow(
-            options.map((item: any) => {
-                return { label: item.label || item.value, value: item.value };
-            })
-        );
+        setOptionsToShow(options.map((item: any) => ({ label: item.label || item.value, value: item.value })));
     }, [options]);
 
     useEffect(() => {
@@ -83,7 +78,7 @@ const SelectComponent = ({
                     onBubbleClick: (label: string, value: string) => {
                         onChange(selectKey, value, label);
                         setSelected(value);
-                        handleSelectButtonClicked({ ...paramObj, [selectKey]: { label: label, value: value } });
+                        handleSelectButtonClicked({ ...paramObj, [selectKey]: { label, value } });
                         dispatch(
                             setSuggestionBubbles({
                                 list: []
@@ -137,12 +132,12 @@ const SelectComponent = ({
                 <div className={styles['dropdown-container']}>
                     <SelectField
                         id={selectKey}
-                        label={''}
+                        label=""
                         isClearable={false}
                         defaultValue={options[0]}
                         isCreatingOption={isCreating}
                         isOptionsAddingEnabled={allowCreate}
-                        //@ts-ignore
+                        // @ts-ignore
                         onCreateOption={addNewOption}
                         onChange={(selectedOptions: any): void => {
                             onChange(selectKey, selectedOptions.value, selectedOptions.label);

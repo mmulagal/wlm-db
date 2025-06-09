@@ -14,17 +14,15 @@ const Diagram = () => {
     const setDiagramForFCI = () => {
         if (isDarkTheme) {
             return <FCIDarkMode />;
-        } else {
-            return <FCILightMode />;
         }
+        return <FCILightMode />;
     };
 
     const setDiagramForStandAlone = () => {
         if (isDarkTheme) {
             return <StandaloneDarkMode />;
-        } else {
-            return <StandaloneLightMode />;
         }
+        return <StandaloneLightMode />;
     };
     return (
         <div

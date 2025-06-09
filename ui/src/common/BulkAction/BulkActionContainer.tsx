@@ -6,15 +6,13 @@ type BulkActionContainerProps = {
     onClick: () => void;
 };
 
-const BulkActionContainer = ({ action, onClick }: BulkActionContainerProps) => {
-    return (
-        <div className={styles.bulkContainer}>
-            <DsTypography variant="Semibold_14">Bulk actions:</DsTypography>
-            <DsButton type="text" onClick={onClick}>
-                {action}
-            </DsButton>
-        </div>
-    );
-};
+const BulkActionContainer = ({ action, onClick }: BulkActionContainerProps) => (
+    <div className={styles.bulkContainer}>
+        <DsTypography variant="Semibold_14">Bulk actions:</DsTypography>
+        <DsButton type="text" onClick={onClick}>
+            {action}
+        </DsButton>
+    </div>
+);
 
 export default BulkActionContainer;

@@ -1,7 +1,9 @@
 import { DsButton, useWizard, WizardFooter } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
-import styles from './ManageInstanceWizard.module.scss';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import styles from './ManageInstanceWizard.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
@@ -20,9 +22,7 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 import { getBulkDetectChecks, handleMultiInstanceManage, handleSingleInstanceManage } from './ManageInstanceUtils';
-import { useNavigate } from 'react-router-dom';
 import { ACTION_TYPE } from '../../../../utils/consts';
-import { useMemo } from 'react';
 import {
     BulkDetectedInstance,
     RegisterResourceCredResult,
@@ -38,7 +38,7 @@ type PlanningWizardFooterProps = {
 const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { nextButtonProps, validation, style } = props; //onClick must be taken out otherwise will override footer onClick when spread to button
+    const { nextButtonProps, validation, style } = props; // onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
 
     const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: UseWizardReturn =
@@ -51,9 +51,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         state => state.inventoryV2
     );
 
-    const bulkInstanceData = useMemo(() => {
-        return getBulkDetectChecks(selectedMultiDetectInstances);
-    }, [selectedMultiDetectInstances]);
+    const bulkInstanceData = useMemo(
+        () => getBulkDetectChecks(selectedMultiDetectInstances),
+        [selectedMultiDetectInstances]
+    );
 
     const dispatch = useDispatch();
 
@@ -70,11 +71,11 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const handleMultiRegisterResourceCred = async () => {
         dispatch(setIsDetectHostLoading(true));
         dispatch(setManageSingleInstanceReadiness(null));
-        let payload: Array<any> = [];
+        const payload: Array<any> = [];
         selectedMultiDetectInstances?.forEach((instance: BulkDetectedInstance) => {
             const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
-            let cred = createDetectHostPayload(sqlServerInstance, instance?.data?.fsxId, instance?.data);
-            let perPayload = {
+            const cred = createDetectHostPayload(sqlServerInstance, instance?.data?.fsxId, instance?.data);
+            const perPayload = {
                 ...cred,
                 credentialsId: instance?.data?.credentialId,
                 region: instance?.data?.regionId,
@@ -103,14 +104,13 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         });
                     } else {
                         // store fsx cred in register obj if payload has fsx register
-                        let filterRow: any = newSelectedMultiDetectInstances.filter((instance: any) => {
-                            return (
+                        const filterRow: any = newSelectedMultiDetectInstances.filter(
+                            (instance: any) =>
                                 instance?.data?.credentialId === res?.credentialsId &&
                                 instance?.data?.regionId === res?.region &&
                                 instance?.data?.ec2InstanceId === res?.ec2InstanceId
-                            );
-                        });
-                        let isFsxRegister = saveFsxInCredRegisteredObj(filterRow?.[0]?.data?.fsxId, dispatch);
+                        );
+                        const isFsxRegister = saveFsxInCredRegisteredObj(filterRow?.[0]?.data?.fsxId, dispatch);
                         const updatedInventoryTableData = updateInstanceStatus(
                             'detect',
                             filterRow?.[0]?.data,
@@ -173,7 +173,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             });
             if (result && !result?.error) {
                 if (result?.data?.sqlServerError || result?.data?.fsxnError) {
-                    let error = [];
+                    const error = [];
                     error.push(result?.data?.sqlServerError || '');
                     error.push(result?.data?.fsxnError || '');
                     dispatch(
@@ -184,7 +184,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     );
                 } else {
                     // store fsx cred in register obj if payload has fsx register
-                    let isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
+                    const isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
                     const updatedInventoryTableData = updateInstanceStatus(
                         'detect',
                         manageSingleInstanceData,
@@ -279,9 +279,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex !== 0 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={goBack}
-                            variant={'secondary'}
+                            variant="secondary"
                         >
                             {t('databases.register-flow.previous')}
                         </DsButton>
@@ -289,9 +289,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex < 1 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={goForward}
-                            variant={'primary'}
+                            variant="primary"
                             isLoading={detectHostLoading}
                             {...rest}
                         >
@@ -301,9 +301,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex === 1 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={handleManage}
-                            variant={'primary'}
+                            variant="primary"
                             {...rest}
                         >
                             {t('databases.register-flow.register')}
@@ -318,9 +318,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex !== 0 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={goBack}
-                            variant={'secondary'}
+                            variant="secondary"
                         >
                             {t('databases.register-flow.previous')}
                         </DsButton>
@@ -328,10 +328,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex < 2 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={() => bulkGoForward(currentStepIndex)}
                             isLoading={detectHostLoading && currentStepIndex === 1}
-                            variant={'primary'}
+                            variant="primary"
                             {...rest}
                         >
                             {t('databases.register-flow.next')}
@@ -340,9 +340,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex === 2 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={handleManage}
-                            variant={'primary'}
+                            variant="primary"
                             {...rest}
                         >
                             {t('databases.register-flow.register')}

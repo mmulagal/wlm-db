@@ -1,11 +1,11 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useMemo } from 'react';
 import styles from './HostDistribution.module.scss';
 import HostDistributionChart from './HostDistributionChart/HostDistributionChart';
 import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useMemo } from 'react';
 
 const HostDistribution = () => {
     const windowSize = useResize();
@@ -17,19 +17,21 @@ const HostDistribution = () => {
     );
     const { multiDataLoading } = useAppSelector(state => state.headers);
 
-    const ChartComponent = useMemo(() => {
-        return () => (
-            <HostDistributionChart
-                color1={'#0BAFFC'}
-                color2={'#A815F3'}
-                data1={mssqlHostData?.totalHosts || 0}
-                data2={pgsqlHostData?.totalHosts || 0}
-                centerText={'Total hosts'}
-                centerValue={((mssqlHostData?.totalHosts || 0) + (pgsqlHostData?.totalHosts || 0)).toString()}
-                loading={multiDataLoading}
-            />
-        );
-    }, [mssqlHostData, pgsqlHostData, multiDataLoading]);
+    const ChartComponent = useMemo(
+        () => () =>
+            (
+                <HostDistributionChart
+                    color1="#0BAFFC"
+                    color2="#A815F3"
+                    data1={mssqlHostData?.totalHosts || 0}
+                    data2={pgsqlHostData?.totalHosts || 0}
+                    centerText="Total hosts"
+                    centerValue={((mssqlHostData?.totalHosts || 0) + (pgsqlHostData?.totalHosts || 0)).toString()}
+                    loading={multiDataLoading}
+                />
+            ),
+        [mssqlHostData, pgsqlHostData, multiDataLoading]
+    );
 
     return (
         <div className={styles.hostDistribution}>

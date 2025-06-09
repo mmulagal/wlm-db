@@ -1,10 +1,10 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import styles from './InstanceDistribution.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { formatFractionalNumber, handleURL } from '../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { WLF_TABS } from '../../../utils/consts';
 import { ReactComponent as Instance } from '../../../assets/instance.svg';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
@@ -38,7 +38,7 @@ const InstanceDistribution = () => {
                     <DsButton
                         variant="secondary"
                         data-testid="wlm-db-manage-instances"
-                        isThin={true}
+                        isThin
                         onClick={() => handleClick(WLF_TABS.INVENTORY)}
                     >
                         Register instances

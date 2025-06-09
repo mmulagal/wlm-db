@@ -6,15 +6,15 @@ import {
     TextField,
     Typography
 } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './ProvisionedIOPS.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
 import AccordionError from '../../../../common/AccordionError/AccordionError';
-import { useDispatch } from 'react-redux';
 import { setProvisionedIOPSValue, setProvisionedType } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
 import { selectFsxIops } from '../../MSSqlServer/MSSqlUtils';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import { isFsxnExisting, isFsxnNew } from '../../../../utils/utilityFunctions';
@@ -57,7 +57,7 @@ const ProvisionedIOPS = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (checkError()) {
             return <AccordionError />;
@@ -65,7 +65,7 @@ const ProvisionedIOPS = () => {
         if (isDisable) {
             return (
                 <Popover
-                    popoverClass={styles['popover']}
+                    popoverClass={styles.popover}
                     children={GENERAL.IOPS_DISABLE_TEXT}
                     trigger="hover"
                     container={
@@ -75,13 +75,12 @@ const ProvisionedIOPS = () => {
                     }
                 />
             );
-        } else {
-            return (
-                <Typography variant="Regular_14">
-                    {provisionValue === GENERAL.AUTOMATIC ? GENERAL.AUTOMATIC : iopsValue}
-                </Typography>
-            );
         }
+        return (
+            <Typography variant="Regular_14">
+                {provisionValue === GENERAL.AUTOMATIC ? GENERAL.AUTOMATIC : iopsValue}
+            </Typography>
+        );
     };
 
     const checkError = () => {
@@ -148,7 +147,7 @@ const ProvisionedIOPS = () => {
                                     }}
                                     value={iopsValue}
                                     className={styles.textfield}
-                                    //@ts-ignore
+                                    // @ts-ignore
                                     type="number"
                                     error={checkError()}
                                 />

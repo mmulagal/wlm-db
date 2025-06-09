@@ -12,23 +12,21 @@ const HighlighterWord = ({ children, highlight, isAWSCli, count, apiResForSearch
 
     if (apiResForSearch) {
         content = apiResForSearch?.props?.textToHighlight;
+    } else if (children?.props?.children || children?.props?.children?.props?.textToHighlight) {
+        content = children?.props?.children?.props?.textToHighlight
+            ? children?.props?.children?.props?.textToHighlight
+            : children?.props?.children;
     } else {
-        if (children?.props?.children || children?.props?.children?.props?.textToHighlight) {
-            content = children?.props?.children?.props?.textToHighlight
-                ? children?.props?.children?.props?.textToHighlight
-                : children?.props?.children;
-        } else {
-            content = children;
-        }
+        content = children;
     }
 
     const matches = content.match(regexp)!;
-    var parts = content.split(new RegExp(`${highlight.replace()}`, 'g'));
+    const parts = content.split(new RegExp(`${highlight.replace()}`, 'g'));
 
-    //@ts-ignore
+    // @ts-ignore
     count(parts.length);
 
-    for (var i = 0; i < parts.length; i++) {
+    for (let i = 0; i < parts.length; i++) {
         if (i !== parts.length - 1) {
             let match = matches[i];
             // While the next part is an empty string, merge the corresponding match with the current
@@ -40,17 +38,17 @@ const HighlighterWord = ({ children, highlight, isAWSCli, count, apiResForSearch
                 }
             }
 
-            //@ts-ignore
+            // @ts-ignore
             parts[i] = (
                 <React.Fragment key={i}>
                     {parts[i]}
-                    <span className={'highlighted'}>{match}</span>
+                    <span className="highlighted">{match}</span>
                 </React.Fragment>
             );
         }
     }
     return (
-        <div className={'highlighter'}>
+        <div className="highlighter">
             {isAWSCli && <div className="aws-cli">{parts}</div>}
             {!isAWSCli && <pre className="fontFamily">{parts}</pre>}
         </div>

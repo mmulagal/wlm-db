@@ -2,12 +2,12 @@ import { useEffect, useMemo } from 'react';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { AccordionCard, AccordionCardContent, DsTypography, TextField, SelectField } from '@netapp/design-system';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
+import { useDispatch } from 'react-redux';
 import { generateOptionType } from '../../../../../utils/utilityFunctions';
 import useResize from '../../../../../common/hooks/useResize';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import styles from './SelectTarget.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
 import {
     setTargetDbHost,
     setTargetDbInstance,
@@ -29,17 +29,16 @@ const SelectTarget = () => {
     const { selectedDatabaseHost, selectedDatabase, selectedDatabaseInstance } = target;
     const { selectedDatabaseHost: selectedSourceDbHost, selectedDatabaseInstance: selectedSourceDbInstance } = source;
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateTargetName = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         const filteredHosts = selectedSourceDbHost
-            ? aggregatedDbHostList.filter((item: any) => {
-                  return (
+            ? aggregatedDbHostList.filter(
+                  (item: any) =>
                       item?.nodeTopology?.vpcId &&
                       item?.nodeTopology?.vpcId === selectedSourceDbHost?.data?.nodeTopology?.vpcId &&
                       item?.databaseHostStatus?.toLowerCase() === STATUS_CONST.ONLINE.toLowerCase()
-                  );
-              })
+              )
             : [];
         filteredHosts?.map((obj, idx: number) => {
             const option = generateOptionType(obj?.id, obj?.name, '', false, '', obj);
@@ -57,14 +56,12 @@ const SelectTarget = () => {
             (hostItem: any) => hostItem?.id === selectedDatabaseHost?.value
         );
         instanceList = selectedHostData?.databaseInstancesSummary
-            ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => {
-                  return {
-                      value: instanceItem?.databaseInstanceId,
-                      label: instanceItem?.databaseInstanceName,
-                      status: instanceItem?.status,
-                      fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
-                  };
-              })
+            ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => ({
+                  value: instanceItem?.databaseInstanceId,
+                  label: instanceItem?.databaseInstanceName,
+                  status: instanceItem?.status,
+                  fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
+              }))
             : [];
 
         const options: optionType[] = [];
@@ -107,36 +104,34 @@ const SelectTarget = () => {
         }
     }, [generateTargetInstance]);
 
-    const DatabaseNameInfoTooltip = () => {
-        return (
-            <div className={styles.dbNameTooltip}>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                        {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[0]}
-                    </DsTypography>
-                </div>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                        {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[1]}
-                    </DsTypography>
-                </div>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                        {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[2]}
-                    </DsTypography>
-                </div>
-                <div className={styles.listItem}>
-                    <Bullet />
-                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                        {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[3]}
-                    </DsTypography>
-                </div>
+    const DatabaseNameInfoTooltip = () => (
+        <div className={styles.dbNameTooltip}>
+            <div className={styles.listItem}>
+                <Bullet />
+                <DsTypography variant="Regular_13" className={styles.textWidth}>
+                    {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[0]}
+                </DsTypography>
             </div>
-        );
-    };
+            <div className={styles.listItem}>
+                <Bullet />
+                <DsTypography variant="Regular_13" className={styles.textWidth}>
+                    {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[1]}
+                </DsTypography>
+            </div>
+            <div className={styles.listItem}>
+                <Bullet />
+                <DsTypography variant="Regular_13" className={styles.textWidth}>
+                    {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[2]}
+                </DsTypography>
+            </div>
+            <div className={styles.listItem}>
+                <Bullet />
+                <DsTypography variant="Regular_13" className={styles.textWidth}>
+                    {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[3]}
+                </DsTypography>
+            </div>
+        </div>
+    );
 
     const setHeader = () => {
         if (!selectedDatabase) {
@@ -145,25 +140,24 @@ const SelectTarget = () => {
                     <ActionRequired />
                 </div>
             );
-        } else {
-            return (
-                <DsTypography
-                    variant="Regular_14"
-                    title={`${selectedDatabaseHost ? selectedDatabaseHost.label : ''}, ${
-                        selectedDatabaseInstance ? selectedDatabaseInstance.label : ''
-                    }, ${selectedDatabase ? selectedDatabase : ''}`}
-                    className={CommonStyles.setHeaderStyleSandbox}
-                >
-                    <span>
-                        {GENERAL.TARGET_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : 'NA'}
-                    </span>
-                    <span className={CommonStyles.separatorSandbox} />
-                    <span>
-                        {GENERAL.TARGET_DATABASES}: {selectedDatabase ? selectedDatabase : 'NA'}
-                    </span>
-                </DsTypography>
-            );
         }
+        return (
+            <DsTypography
+                variant="Regular_14"
+                title={`${selectedDatabaseHost ? selectedDatabaseHost.label : ''}, ${
+                    selectedDatabaseInstance ? selectedDatabaseInstance.label : ''
+                }, ${selectedDatabase || ''}`}
+                className={CommonStyles.setHeaderStyleSandbox}
+            >
+                <span>
+                    {GENERAL.TARGET_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : 'NA'}
+                </span>
+                <span className={CommonStyles.separatorSandbox} />
+                <span>
+                    {GENERAL.TARGET_DATABASES}: {selectedDatabase || 'NA'}
+                </span>
+            </DsTypography>
+        );
     };
     return (
         <div className={styles.selectTarget}>
@@ -185,13 +179,13 @@ const SelectTarget = () => {
                                 <SelectField
                                     label={GENERAL.TARGET_HOST}
                                     isClearable={false}
-                                    defaultValue={selectedDatabaseHost ? selectedDatabaseHost : generateTargetName[0]}
+                                    defaultValue={selectedDatabaseHost || generateTargetName[0]}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setTargetDbHost(selectedOptions));
                                         dispatch(setTargetDbInstance(null));
                                     }}
                                     value={selectedDatabaseHost}
-                                    isSearchable={true}
+                                    isSearchable
                                     options={generateTargetName}
                                     className={styles.selectField}
                                     error={showError && !selectedDatabaseHost ? GENERAL.ACTION_REQUIRED : ''}
@@ -204,7 +198,7 @@ const SelectTarget = () => {
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setTargetDbInstance(selectedOptions));
                                     }}
-                                    isSearchable={true}
+                                    isSearchable
                                     options={generateTargetInstance}
                                     className={styles.selectField}
                                 />

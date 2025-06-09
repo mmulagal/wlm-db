@@ -1,20 +1,18 @@
 import { DsTypography, FlashingDotsLoader, Typography } from '@netapp/design-system';
+import { useMemo } from 'react';
 import styles from './DBOverviewProtection.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import MultiRingDoughnut from '../../../DatabaseHomePage/MultiRingDoughnut/MultiRingDoughnut';
 import SquareComponent from '../../../DatabaseHomePage/SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { getAggrProtection } from '../../../../utils/utilityFunctions';
-import { useMemo } from 'react';
 import useResize from '../../../../common/hooks/useResize';
 
 const DBOverviewProtection = () => {
     const { databaseList, databaseListLoading } = useAppSelector(state => state.workloadFactoryResource);
     const windowSize = useResize();
 
-    const protectionData = useMemo(() => {
-        return getAggrProtection(databaseList);
-    }, [databaseList]);
+    const protectionData = useMemo(() => getAggrProtection(databaseList), [databaseList]);
 
     return (
         <>
@@ -29,7 +27,7 @@ const DBOverviewProtection = () => {
 
                     <div className={styles.mainContainer}>
                         <div className={styles.chartContainer}>
-                            <MultiRingDoughnut unProtectColor={'var(--chart-disabled)'} hostData={protectionData} />
+                            <MultiRingDoughnut unProtectColor="var(--chart-disabled)" hostData={protectionData} />
                         </div>
 
                         <div className={styles.protectionSeparator} />
@@ -38,8 +36,8 @@ const DBOverviewProtection = () => {
                             <SquareComponent
                                 value={`${protectionData.protectedDb} Databases`}
                                 color="var(--chart-4)"
-                                text={'Protected'}
-                                boldValue={true}
+                                text="Protected"
+                                boldValue
                             />
 
                             <div className={styles.dbHostSeparator} />
@@ -47,8 +45,8 @@ const DBOverviewProtection = () => {
                             <SquareComponent
                                 value={`${protectionData.unprotectedDb} Databases`}
                                 color="var(--chart-disabled)"
-                                text={'Unprotected'}
-                                boldValue={true}
+                                text="Unprotected"
+                                boldValue
                             />
                         </div>
                     </div>
@@ -66,7 +64,7 @@ const DBOverviewProtection = () => {
 
                     <div className={styles.mainContainer}>
                         <div className={styles.chartContainer}>
-                            <MultiRingDoughnut unProtectColor={'var(--chart-disabled)'} hostData={protectionData} />
+                            <MultiRingDoughnut unProtectColor="var(--chart-disabled)" hostData={protectionData} />
                         </div>
 
                         <div className={styles.textAreaSection}>
@@ -77,8 +75,8 @@ const DBOverviewProtection = () => {
                                 <SquareComponent
                                     value={`${protectionData.protectedDb} Databases`}
                                     color="var(--chart-4)"
-                                    text={'Protected'}
-                                    boldValue={true}
+                                    text="Protected"
+                                    boldValue
                                 />
 
                                 <div className={styles.dbHostSeparator} />
@@ -86,8 +84,8 @@ const DBOverviewProtection = () => {
                                 <SquareComponent
                                     value={`${protectionData.unprotectedDb} Databases`}
                                     color="var(--chart-disabled)"
-                                    text={'Unprotected'}
-                                    boldValue={true}
+                                    text="Unprotected"
+                                    boldValue
                                 />
                             </div>
 

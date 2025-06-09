@@ -1,8 +1,7 @@
-import { Chart } from 'chart.js';
-import { registerables } from 'chart.js';
+import { Chart, registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
-import styles from './OptimizationChart.module.scss';
 import { DsFlashingDotsLoader, DsTypography, Typography } from '@netapp/design-system';
+import styles from './OptimizationChart.module.scss';
 import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -32,18 +31,20 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
     const setColor = (value: any) => {
         if (value <= 25) {
             return '#FE5502';
-        } else if (value > 25 && value <= 50) {
-            return '#F7941D';
-        } else if (value > 50 && value <= 75) {
-            return '#FDC300';
-        } else if (value > 75 && value < 100) {
-            return '#68C6B3';
-        } else {
-            return unProtectedColor;
         }
+        if (value > 25 && value <= 50) {
+            return '#F7941D';
+        }
+        if (value > 50 && value <= 75) {
+            return '#FDC300';
+        }
+        if (value > 75 && value < 100) {
+            return '#68C6B3';
+        }
+        return unProtectedColor;
     };
 
-    var config = {
+    const config = {
         type: 'doughnut',
         data: {
             datasets: [
@@ -59,7 +60,7 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
 
     useEffect(() => {
         if (ref.current) {
-            //@ts-ignore
+            // @ts-ignore
             var myDoughnut = new Chart(ref.current, config);
             setDoughnutChart(myDoughnut);
         }
@@ -81,7 +82,7 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
                             {hostData?.percent || 0}%
                         </DsTypography>
                     ) : (
-                        <DsTypography variant="Semibold_16" style={{ lineHeight: 'unset' }} isDisabled={true}>
+                        <DsTypography variant="Semibold_16" style={{ lineHeight: 'unset' }} isDisabled>
                             {GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     ))}
@@ -93,9 +94,9 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
 
                 {optimizePageLoading && <DsFlashingDotsLoader />}
             </div>
-            {(!isAssessmentAvailable || optimizePageLoading) && <div className={styles.emptyCircle}></div>}
+            {(!isAssessmentAvailable || optimizePageLoading) && <div className={styles.emptyCircle} />}
             {isAssessmentAvailable && !optimizePageLoading ? (
-                <canvas ref={ref} id="chart-area" width={144} height={144}></canvas>
+                <canvas ref={ref} id="chart-area" width={144} height={144} />
             ) : null}
         </div>
     );

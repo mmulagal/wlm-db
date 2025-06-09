@@ -28,14 +28,14 @@ const OptimizationBreakdown = () => {
                     <OptimizeComponent
                         value={optimizationBreakDown?.storage?.percent || 0}
                         data={optimizationBreakDown?.storage}
-                        text={'Storage'}
+                        text="Storage"
                         image={<Storage />}
                         isComingSoon={false}
                     />
                     <OptimizeComponent
                         value={optimizationBreakDown?.compute?.percent || 0}
                         data={optimizationBreakDown?.compute}
-                        text={'Compute'}
+                        text="Compute"
                         image={<Compute />}
                         isComingSoon={false}
                     />
@@ -52,14 +52,14 @@ const OptimizationBreakdown = () => {
                     <OptimizeComponent
                         value={optimizationBreakDown?.resiliency?.percent || 0}
                         data={optimizationBreakDown?.resiliency}
-                        text={'Resiliency'}
+                        text="Resiliency"
                         image={<Resiliency />}
                         isComingSoon={false}
                     />
                     <OptimizeComponent
                         value={optimizationBreakDown?.cloning?.percent || 0}
                         data={optimizationBreakDown?.cloning}
-                        text={'Cloning'}
+                        text="Cloning"
                         image={<Cloning />}
                         isComingSoon={false}
                     />

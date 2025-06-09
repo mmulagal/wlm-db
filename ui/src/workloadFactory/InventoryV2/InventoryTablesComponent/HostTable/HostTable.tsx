@@ -1,5 +1,4 @@
 import { useDispatch } from 'react-redux';
-import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useRef, useState } from 'react';
 import {
     Typography,
@@ -12,6 +11,9 @@ import {
     postBlueXPMessage,
     BlueXPListeners
 } from '@netapp/design-system';
+import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../../../store/storeHooks';
 import { useManageBulkMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
@@ -40,10 +42,8 @@ import {
 import styles from '../InventoryTable.module.scss';
 import ManagedHostDialog from '../../InventoryTable/ManagedHostDialog/ManagedHostDialog';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
-import { useNavigate } from 'react-router-dom';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { useTable } from '../../../../common/Lib/Table/useTable';
@@ -106,7 +106,7 @@ const HostTable = () => {
                 header={`Manage database host ${rowData?.name} instances`}
                 content={<ManagedHostDialog dialogData={rowData} />}
                 primaryButton={INVENTORY_ACTIONS.MANAGE}
-                secondaryButton={'Close'}
+                secondaryButton="Close"
                 callback={() => {
                     const updatedState = store.getState();
                     const manageHostSelectedRows = updatedState?.inventoryV2?.manageHostSelectedRows;
@@ -142,30 +142,30 @@ const HostTable = () => {
         if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
             return GENERAL.PGSQL_CTA_NA;
         }
-        //Condition if installation mode is AOAG than disable manage
+        // Condition if installation mode is AOAG than disable manage
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
             return GENERAL.AOAG_MANAGE_DISABLE;
         }
-        //Condition for if all managed then showing disable managed button with tooltip
+        // Condition for if all managed then showing disable managed button with tooltip
         if (rowData?.action && checkForAllManaged) {
             return GENERAL.ALL_MANAGED_TEXT;
         }
-        //Check for all un-detect instances and storage type is N/A
+        // Check for all un-detect instances and storage type is N/A
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
             return GENERAL.ALL_UNDETECT_TEXT;
         }
 
-        //Check for all un-detect or managedinstances and storage type is N/A
+        // Check for all un-detect or managedinstances and storage type is N/A
         if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
             return GENERAL.NO_UNMANAGED_TO_MANAGE;
         }
 
-        //Check for all Explore Savings undetected rows
+        // Check for all Explore Savings undetected rows
         if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
             return GENERAL.ALL_ES_UNDETECTED_ROWS;
         }
 
-        //Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
+        // Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
         if (
             rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
             !checkForAllUnDetectInstance &&
@@ -173,7 +173,8 @@ const HostTable = () => {
             checkForAnyAOAG(rowData)
         ) {
             return GENERAL.ALL_ES_FSXW_AOAG_ROWS;
-        } else if (
+        }
+        if (
             rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
             rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
             !checkForAnySSD(rowData)
@@ -185,7 +186,7 @@ const HostTable = () => {
             return GENERAL.MIXED_STORAGE_ES_MSG;
         }
 
-        //Condition if storage type is not known and it is still loading for manage case
+        // Condition if storage type is not known and it is still loading for manage case
         if (
             rowData?.action === INVENTORY_ACTIONS.MANAGE &&
             !checkForAllManaged &&
@@ -194,16 +195,13 @@ const HostTable = () => {
             !checkForAllStorageType
         ) {
             return GENERAL.INVENTORY_LOADING_DISABLED;
-        } else if (
-            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
-            !checkForAllManaged &&
-            checkForAllFsxnManagedInstance
-        ) {
-            //Condition if all fsxn are managed and remaining storage type is unmanaged
+        }
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && !checkForAllManaged && checkForAllFsxnManagedInstance) {
+            // Condition if all fsxn are managed and remaining storage type is unmanaged
             return GENERAL.ALL_FSXN_MANAGED_TEXT;
         }
 
-        //Normal use case to show dialog or move to explore savings
+        // Normal use case to show dialog or move to explore savings
         if (
             rowData?.action &&
             !checkForAllManaged &&
@@ -269,13 +267,12 @@ const HostTable = () => {
             const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
                 (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
             );
-            const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
-                return (
+            const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every(
+                (item: any) =>
                     (item?.statusColText === INVENTORY_STATUS.MANAGED &&
                         item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
                     (item?.statusColText !== INVENTORY_STATUS.MANAGED && item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
-                );
-            });
+            );
             const checkForAllStorageType = rowData?.sqlServerInstances?.every(
                 (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
             );
@@ -336,15 +333,15 @@ const HostTable = () => {
                             {(rowData?.status === INVENTORY_STATUS.RUNNING ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP ||
                                 rowData?.status === INVENTORY_STATUS.ONLINE) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
                             )}
                             {(rowData?.status === INVENTORY_STATUS.STOPPED ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
                                 rowData?.status === INVENTORY_STATUS.OFFLINE) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
                             )}
                             {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
+                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
                             )}
                             <DsTypography variant="Regular_13">
                                 {rowData?.status === INVENTORY_STATUS.RUNNING ||
@@ -368,13 +365,11 @@ const HostTable = () => {
             accessor: 'hostType',
             filterOptions: getFilterOptions(hostTableRows, 'hostType'),
             width: '228px',
-            renderCell: (cellData: any) => {
-                return (
-                    <div>
-                        <Typography variant="Regular_13">{cellData || GENERAL.NOT_AVAILABLE}</Typography>
-                    </div>
-                );
-            }
+            renderCell: (cellData: any) => (
+                <div>
+                    <Typography variant="Regular_13">{cellData || GENERAL.NOT_AVAILABLE}</Typography>
+                </div>
+            )
         },
         {
             id: '2',
@@ -383,23 +378,21 @@ const HostTable = () => {
             width: '200px',
             isSortable: true,
             accessorForTextFilter: 'sqlServerInstancesText',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div>
-                        {cellData && rowData?.sqlServerInstancesText && cellData !== 0 ? (
-                            <>
-                                {/* <Typography variant="Semibold_14">
+            renderCell: (cellData: any, rowData: any) => (
+                <div>
+                    {cellData && rowData?.sqlServerInstancesText && cellData !== 0 ? (
+                        <>
+                            {/* <Typography variant="Semibold_14">
                                     {cellData === 1 ? cellData + ' instance' : cellData + ' instances'}
                                 </Typography> */}
-                                <Typography variant="Regular_13">{rowData?.sqlServerInstancesText}</Typography>
-                            </>
-                        ) : (
-                            ''
-                        )}
-                        {!cellData || !rowData?.sqlServerInstancesText ? GENERAL.NOT_AVAILABLE : ''}
-                    </div>
-                );
-            }
+                            <Typography variant="Regular_13">{rowData?.sqlServerInstancesText}</Typography>
+                        </>
+                    ) : (
+                        ''
+                    )}
+                    {!cellData || !rowData?.sqlServerInstancesText ? GENERAL.NOT_AVAILABLE : ''}
+                </div>
+            )
         },
         {
             id: '3',
@@ -407,9 +400,7 @@ const HostTable = () => {
             accessor: 'serverInstallationMode',
             width: '236px',
             filterOptions: getFilterOptions(hostTableRows, 'serverInstallationMode'),
-            renderCell: (cellData: string, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
+            renderCell: (cellData: string, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         {
             id: '4',
@@ -418,9 +409,7 @@ const HostTable = () => {
             isSortable: true,
             width: '329px',
             accessorForTextFilter: 'instanceListText',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderInstanceListText(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderInstanceListText(cellData, rowData, styles)
         },
         {
             id: '5',
@@ -428,9 +417,7 @@ const HostTable = () => {
             accessor: 'vpcName',
             isSortable: true,
             width: '150px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderVpcText(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderVpcText(cellData, rowData, styles)
         },
         {
             id: '6',
@@ -438,51 +425,47 @@ const HostTable = () => {
             accessor: 'ssmState',
             width: '200px',
             filterOptions: getFilterOptions(hostTableRows, 'ssmState'),
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.firstColText}>
-                        {rowData?.ssmState === INVENTORY_STATUS.ONLINE && (
-                            <>
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
-                                <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
-                            </>
-                        )}
-                        {rowData?.ssmState === INVENTORY_STATUS.OFFLINE && (
-                            <>
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
-                                <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.firstColText}>
+                    {rowData?.ssmState === INVENTORY_STATUS.ONLINE && (
+                        <>
+                            <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
+                            <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
+                        </>
+                    )}
+                    {rowData?.ssmState === INVENTORY_STATUS.OFFLINE && (
+                        <>
+                            <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
+                            <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
 
-                                <div className={styles.ssmOffline}>
-                                    <Popover
-                                        popoverClass={''}
-                                        children={
-                                            <div>
-                                                <Typography variant="Regular_14">
-                                                    {GENERAL.SSM_NO_CONNECTION[0]}
-                                                </Typography>
-                                                <Button
-                                                    className={styles.ssmLink}
-                                                    variant="link"
-                                                    onClick={() =>
-                                                        window.open(SSM_TROUBLESHOOTING_LINK, '_blank', 'noopener')
-                                                    }
-                                                >
-                                                    {GENERAL.SSM_NO_CONNECTION[1]}
-                                                </Button>
-                                            </div>
-                                        }
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        isAppendedToBody={true}
-                                        container={<TooltipIcon />}
-                                    />
-                                </div>
-                            </>
-                        )}
-                    </div>
-                );
-            }
+                            <div className={styles.ssmOffline}>
+                                <Popover
+                                    popoverClass=""
+                                    children={
+                                        <div>
+                                            <Typography variant="Regular_14">{GENERAL.SSM_NO_CONNECTION[0]}</Typography>
+                                            <Button
+                                                className={styles.ssmLink}
+                                                variant="link"
+                                                onClick={() =>
+                                                    window.open(SSM_TROUBLESHOOTING_LINK, '_blank', 'noopener')
+                                                }
+                                            >
+                                                {GENERAL.SSM_NO_CONNECTION[1]}
+                                            </Button>
+                                        </div>
+                                    }
+                                    trigger="hover"
+                                    delayHide={200}
+                                    interactive
+                                    isAppendedToBody
+                                    container={<TooltipIcon />}
+                                />
+                            </div>
+                        </>
+                    )}
+                </div>
+            )
         },
         {
             id: '7',
@@ -490,9 +473,7 @@ const HostTable = () => {
             accessor: 'totalCost',
             isSortable: true,
             width: '200px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderEstimatedCost(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderEstimatedCost(cellData, rowData, styles)
         },
         {
             id: '8',
@@ -501,9 +482,7 @@ const HostTable = () => {
             isSortable: true,
             filterOptions: getFilterOptions(hostTableRows, 'credentialName'),
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         {
             id: '9',
@@ -512,9 +491,7 @@ const HostTable = () => {
             isSortable: true,
             filterOptions: getFilterOptions(hostTableRows, 'accountId'),
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         {
             id: '10',
@@ -523,9 +500,7 @@ const HostTable = () => {
             isSortable: true,
             filterOptions: getFilterOptions(hostTableRows, 'regionName'),
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
         }
     ];
 
@@ -533,7 +508,7 @@ const HostTable = () => {
         isSorting: false,
         columns: DatabasesColDefs,
         rows: hostTableRows,
-        pageSize: pageSize,
+        pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
         isManagedColumns: true,
@@ -635,95 +610,93 @@ const HostTable = () => {
     }, [tableProps.columnsState]);
 
     return (
-        <>
-            <div className={styles.inventoryTable}>
-                <div
-                    //  @ts-ignore
-                    className={`${styles.table} ${styles.hostTable}`}
-                >
-                    <TableTopBar
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        pluralTitle="Hosts"
-                        singularTitle="Host"
-                        exportToCsvOptions={{ fileName: `HostTable-${new Date(Date.now()).toLocaleString()}.csv` }}
-                        className={styles.topBarStyle}
-                        subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
-                        actionsRight={
-                            <div className={styles.deployButton}>
-                                <DsButton
-                                    children="Deploy host"
-                                    variant="Default"
-                                    dropDown={{
-                                        trigger: 'click',
-                                        autoPosition: true,
-                                        items: [
-                                            {
-                                                id: 'wlm-db-deploy-mssql-host',
-                                                label: 'Microsoft SQL Server',
-                                                onClick: () => {
-                                                    if (isWorkloadFactory) {
-                                                        navigate(WLF_TO_FORM_NAVIGATE);
-                                                        postBlueXPMessage({
-                                                            type: BlueXPListeners.navigate,
-                                                            payload: {
-                                                                pathname: './mssql-deploy-wizard',
-                                                                replace: true
-                                                            }
-                                                        });
-                                                    } else {
-                                                        navigate('../../fsxdb/mssql-deploy-wizard');
-                                                        postBlueXPMessage({
-                                                            type: BlueXPListeners.navigate,
-                                                            payload: {
-                                                                pathname: '../../fsxdb/mssql-deploy-wizard',
-                                                                replace: true
-                                                            }
-                                                        });
-                                                    }
-                                                },
-                                                className: 'mssql-deployment-button'
+        <div className={styles.inventoryTable}>
+            <div
+                //  @ts-ignore
+                className={`${styles.table} ${styles.hostTable}`}
+            >
+                <TableTopBar
+                    // @ts-ignore
+                    tableProps={tableProps}
+                    pluralTitle="Hosts"
+                    singularTitle="Host"
+                    exportToCsvOptions={{ fileName: `HostTable-${new Date(Date.now()).toLocaleString()}.csv` }}
+                    className={styles.topBarStyle}
+                    subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
+                    actionsRight={
+                        <div className={styles.deployButton}>
+                            <DsButton
+                                children="Deploy host"
+                                variant="Default"
+                                dropDown={{
+                                    trigger: 'click',
+                                    autoPosition: true,
+                                    items: [
+                                        {
+                                            id: 'wlm-db-deploy-mssql-host',
+                                            label: 'Microsoft SQL Server',
+                                            onClick: () => {
+                                                if (isWorkloadFactory) {
+                                                    navigate(WLF_TO_FORM_NAVIGATE);
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: './mssql-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                } else {
+                                                    navigate('../../fsxdb/mssql-deploy-wizard');
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: '../../fsxdb/mssql-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                }
                                             },
-                                            {
-                                                id: 'wlm-db-deploy-pgsql-host',
-                                                label: 'PostgreSQL Server',
-                                                onClick: () => {
-                                                    if (isWorkloadFactory) {
-                                                        navigate(WLF_TO_PROTECT_NAVIGATE);
-                                                        postBlueXPMessage({
-                                                            type: BlueXPListeners.navigate,
-                                                            payload: {
-                                                                pathname: './postgreSQL-deploy-wizard',
-                                                                replace: true
-                                                            }
-                                                        });
-                                                    } else {
-                                                        navigate('../../fsxdb/postgreSQL-deploy-wizard');
-                                                        postBlueXPMessage({
-                                                            type: BlueXPListeners.navigate,
-                                                            payload: {
-                                                                pathname: '../../fsxdb/postgreSQL-deploy-wizard',
-                                                                replace: true
-                                                            }
-                                                        });
-                                                    }
-                                                },
-                                                className: 'pgsql-deployment-button'
-                                            }
-                                        ]
-                                    }}
-                                />
-                            </div>
-                        }
-                    />
-                    <Table
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        isDoubleRow={true}
-                    />
-                </div>
+                                            className: 'mssql-deployment-button'
+                                        },
+                                        {
+                                            id: 'wlm-db-deploy-pgsql-host',
+                                            label: 'PostgreSQL Server',
+                                            onClick: () => {
+                                                if (isWorkloadFactory) {
+                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: './postgreSQL-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                } else {
+                                                    navigate('../../fsxdb/postgreSQL-deploy-wizard');
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: '../../fsxdb/postgreSQL-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                }
+                                            },
+                                            className: 'pgsql-deployment-button'
+                                        }
+                                    ]
+                                }}
+                            />
+                        </div>
+                    }
+                />
+                <Table
+                    // @ts-ignore
+                    tableProps={tableProps}
+                    isDoubleRow
+                />
             </div>
-        </>
+        </div>
     );
 };
 

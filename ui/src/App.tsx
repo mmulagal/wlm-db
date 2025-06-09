@@ -22,20 +22,18 @@ function App() {
         }
     }, [accessToken]);
 
-    //@ts-ignore
+    // @ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     return (
-        <>
-            <ThemeProvider isIframe={true} theme={isDarkTheme ? 'dark' : 'light'}>
-                {loading && (
-                    <div className="App">
-                        <ComponentLoader style={{ margin: '0 auto' }} />
-                    </div>
-                )}
-                {!loading && (accountId ? <Home /> : <ErrorPage message={'Account Id required'} />)}
-            </ThemeProvider>
-        </>
+        <ThemeProvider isIframe theme={isDarkTheme ? 'dark' : 'light'}>
+            {loading && (
+                <div className="App">
+                    <ComponentLoader style={{ margin: '0 auto' }} />
+                </div>
+            )}
+            {!loading && (accountId ? <Home /> : <ErrorPage message="Account Id required" />)}
+        </ThemeProvider>
     );
 }
 

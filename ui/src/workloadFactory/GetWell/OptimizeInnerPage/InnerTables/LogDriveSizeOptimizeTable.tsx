@@ -1,16 +1,16 @@
 import { Table, useTable, TableTopBar, Typography, Popover, DsButton, DsTypography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
+import { title } from 'process';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useMemo } from 'react';
 import { checkBoxHandle, getSelectedFromSelectionState, getTruncatedItems } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { useDispatch } from 'react-redux';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { title } from 'process';
 
 const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -19,8 +19,8 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
 
     const tableData = useMemo(() => {
         let id = 0;
-        let uniqueViolatedRows: any = [];
-        let uniqueViolatedList: any = [];
+        const uniqueViolatedRows: any = [];
+        const uniqueViolatedList: any = [];
 
         data?.sizingViolations?.overProvisionedDrives?.map((row: any) => {
             if (!uniqueViolatedList.includes(row.logAccessPath)) {
@@ -72,14 +72,11 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             !data?.sizingViolations?.underProvisionedDrives?.length
         ) {
             return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
-        } else if (
-            !data?.sizingViolations?.underProvisionedDrives?.length &&
-            data?.sizingViolations?.ignoredDrives?.length
-        ) {
-            return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
-        } else {
-            return '';
         }
+        if (!data?.sizingViolations?.underProvisionedDrives?.length && data?.sizingViolations?.ignoredDrives?.length) {
+            return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
+        }
+        return '';
     }, [data]);
 
     const TableColDefs: ColumnProps[] = [
@@ -91,9 +88,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             filterOptions: 'auto',
             isSticky: true,
             width: '224px',
-            renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
 
         {
@@ -119,23 +114,21 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
                                     {truncatedItems?.maxItemsToShow.join(', ')}
                                 </Typography>
                                 {truncatedItems?.remaining.length > 0 && (
-                                    <>
-                                        <Popover
-                                            popoverClass={styles['log-drive-size-popover']}
-                                            children={truncatedItems?.remaining.map((item: any) => (
-                                                <Typography variant="Regular_14">{item}</Typography>
-                                            ))}
-                                            trigger="click"
-                                            interactive={true}
-                                            isAppendedToBody={true}
-                                            delayHide={200}
-                                            container={
-                                                <Typography variant="Regular_14" className={styles.colorText}>
-                                                    {`+ ${truncatedItems?.remaining.length}`}
-                                                </Typography>
-                                            }
-                                        />
-                                    </>
+                                    <Popover
+                                        popoverClass={styles['log-drive-size-popover']}
+                                        children={truncatedItems?.remaining.map((item: any) => (
+                                            <Typography variant="Regular_14">{item}</Typography>
+                                        ))}
+                                        trigger="click"
+                                        interactive
+                                        isAppendedToBody
+                                        delayHide={200}
+                                        container={
+                                            <Typography variant="Regular_14" className={styles.colorText}>
+                                                {`+ ${truncatedItems?.remaining.length}`}
+                                            </Typography>
+                                        }
+                                    />
                                 )}
                             </div>
                         ) : (
@@ -153,9 +146,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             id: '3',
             width: '224px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'Log drive size percentage',
@@ -163,15 +154,13 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             id: '4',
             width: 'auto',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => (cellData ? `${cellData}%` : GENERAL.NOT_AVAILABLE)
         },
-        lastColDetails(type, {}, '240px') //230
+        lastColDetails(type, {}, '240px') // 230
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -195,18 +184,18 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted drives`}
-                singularTitle={'Impacted drive'}
+                pluralTitle="Impacted drives"
+                singularTitle="Impacted drive"
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

@@ -1,10 +1,10 @@
-import styles from './EstimatedCost.module.scss';
 import { Button, FlashingDotsLoader, TooltipInfo, Typography, useDialog } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
+import styles from './EstimatedCost.module.scss';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import EstimatedCostDialogContent from './EstimatedCostDialogContent/EstimatedCostDialogContent';
-import { useEffect, useState } from 'react';
 import { formatNumberWithCustomComma } from '../../../utils/utilityFunctions';
 
 type EstimatedCostProps = {
@@ -23,18 +23,16 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
         }
     }, [hostData]);
 
-    const ToolTipContainer = () => {
-        return (
-            <div className={styles.tooltipContainerClass}>
-                <Typography variant="Regular_13">{GENERAL.ESTIMATED_COST_TOOLTIP}</Typography>
-                {linkChk && (
-                    <Button variant="text" onClick={() => costDialog()}>
-                        {GENERAL.LEARN_HOW_ESTIMATED_COST}
-                    </Button>
-                )}
-            </div>
-        );
-    };
+    const ToolTipContainer = () => (
+        <div className={styles.tooltipContainerClass}>
+            <Typography variant="Regular_13">{GENERAL.ESTIMATED_COST_TOOLTIP}</Typography>
+            {linkChk && (
+                <Button variant="text" onClick={() => costDialog()}>
+                    {GENERAL.LEARN_HOW_ESTIMATED_COST}
+                </Button>
+            )}
+        </div>
+    );
 
     const costDialog = () => {
         setDialog(
@@ -53,7 +51,7 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                     <Typography variant="Regular_16" className={styles.title}>
                         {GENERAL.ESTIMATED_MONTHLY_COST}
                     </Typography>
-                    <TooltipInfo interactive={true} delayHide={200} trigger="hover" placement="bottom-end">
+                    <TooltipInfo interactive delayHide={200} trigger="hover" placement="bottom-end">
                         <Typography variant="Regular_13" className={styles.textWidth}>
                             {ToolTipContainer()}
                         </Typography>
@@ -81,7 +79,7 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                                     width: `${100}%`,
                                     backgroundColor: 'var(--chart-disabled)'
                                 }}
-                            ></div>
+                            />
                         )}
                     {hostData?.storageCostPercent !== 0 && (
                         <div
@@ -96,9 +94,9 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                                 width: `${hostData?.storageCostPercent}%`,
                                 backgroundColor: 'var(--chart-9)'
                             }}
-                        ></div>
+                        />
                     )}
-                    <div className={styles.separator}></div>
+                    <div className={styles.separator} />
                     {hostData?.computeCostPercent !== 0 && (
                         <div
                             className={`${styles.progress} 
@@ -112,9 +110,9 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                                 width: `${hostData?.computeCostPercent}%`,
                                 backgroundColor: 'var(--chart-1)'
                             }}
-                        ></div>
+                        />
                     )}
-                    <div className={styles.separator}></div>
+                    <div className={styles.separator} />
                     {hostData?.connectivityCostPercent !== 0 && (
                         <div
                             className={`${styles.progress} 
@@ -128,9 +126,9 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                                 width: `${hostData?.connectivityCostPercent}%`,
                                 backgroundColor: 'var(--chart-3)'
                             }}
-                        ></div>
+                        />
                     )}
-                    <div className={styles.separator}></div>
+                    <div className={styles.separator} />
                     {hostData?.otherCostPercent !== 0 && (
                         <div
                             className={`${styles.progress} 
@@ -145,42 +143,42 @@ const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
                                 width: `${hostData?.otherCostPercent}%`,
                                 backgroundColor: 'var(--chart-4)'
                             }}
-                        ></div>
+                        />
                     )}
                 </div>
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={'$' + formatNumberWithCustomComma(hostData?.storageCost)}
+                        value={`$${formatNumberWithCustomComma(hostData?.storageCost)}`}
                         color="var(--chart-9)"
-                        text={'Storage'}
+                        text="Storage"
                         loadingInFirstRow={hostsLoading}
-                        isSmall={true}
+                        isSmall
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={'$' + formatNumberWithCustomComma(hostData?.computeCost)}
+                        value={`$${formatNumberWithCustomComma(hostData?.computeCost)}`}
                         color="var(--chart-1)"
-                        text={'Compute'}
+                        text="Compute"
                         loadingInFirstRow={hostsLoading}
-                        isSmall={true}
+                        isSmall
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={'$' + formatNumberWithCustomComma(hostData?.connectivityCost)}
+                        value={`$${formatNumberWithCustomComma(hostData?.connectivityCost)}`}
                         color="var(--chart-3)"
-                        text={'Connectivity'}
+                        text="Connectivity"
                         loadingInFirstRow={hostsLoading}
-                        isSmall={true}
+                        isSmall
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={'$' + formatNumberWithCustomComma(hostData?.otherCost)}
+                        value={`$${formatNumberWithCustomComma(hostData?.otherCost)}`}
                         color="var(--chart-4)"
-                        text={'Other'}
+                        text="Other"
                         loadingInFirstRow={hostsLoading}
-                        isSmall={true}
+                        isSmall
                     />
                 </div>
             </div>

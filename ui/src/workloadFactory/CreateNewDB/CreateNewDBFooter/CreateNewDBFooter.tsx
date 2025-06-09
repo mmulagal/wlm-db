@@ -1,8 +1,8 @@
 import { Button } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { handleCreateUserDb } from './createUserDBPayload';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { useCreateUserDBMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
@@ -47,7 +47,7 @@ const CreateNewUserFooter = () => {
                     credentialId: cdbCredId,
                     region: cdbRegionId,
                     id: resourceId,
-                    payload: payload
+                    payload
                 });
                 dispatch(setIsLoading(false));
                 if (result && !result?.error) {
@@ -109,7 +109,7 @@ const CreateNewUserFooter = () => {
 
     return (
         <>
-            <Button isThin onClick={handleCreate} id={'db-create-button'}>
+            <Button isThin onClick={handleCreate} id="db-create-button">
                 {GENERAL.CREATE}
             </Button>
             <Button isThin variant="secondary" onClick={closeHandler}>

@@ -15,7 +15,7 @@ const PostgressMainComponent = () => {
         <div className={styles.protectComponent}>
             {loading && (
                 <>
-                    <div className={styles.loaderOverlay}></div>
+                    <div className={styles.loaderOverlay} />
                     <div className={styles.spinnerPlacement}>
                         <Spinner isLarge />
                     </div>

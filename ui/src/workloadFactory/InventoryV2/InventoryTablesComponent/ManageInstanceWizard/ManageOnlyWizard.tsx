@@ -8,11 +8,11 @@ import {
     postBlueXPMessage
 } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { Content } from './ManageInstanceStep/ManageInstanceStep';
 import styles from './ManageInstanceWizard.module.scss';
-import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { handleSingleInstanceManage } from './ManageInstanceUtils';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { useLazyGetSubTaskListQuery, useManageBulkV2MssqlInstanceMutation } from '../../../../utils/apiService';

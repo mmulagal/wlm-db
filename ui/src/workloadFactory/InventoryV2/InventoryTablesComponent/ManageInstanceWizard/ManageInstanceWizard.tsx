@@ -1,15 +1,15 @@
 import { useWizard, WizardContextProvider, WizardState } from '@netapp/design-system/dist/components/Wizard';
 import { BlueXPListeners, postBlueXPMessage, StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
-import { useNavigate } from 'react-router-dom';
 import ManageOnlyWizard from './ManageOnlyWizard';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo } from 'react';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
-import { useDispatch } from 'react-redux';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const MANAGE_STEPS = [
@@ -75,17 +75,13 @@ const ManageInstanceWizard = () => {
 
     return (
         <>
-            {isAlreadyDetected && (
-                <>
-                    <ManageOnlyWizard />
-                </>
-            )}
+            {isAlreadyDetected && <ManageOnlyWizard />}
             {!isAlreadyDetected && (
                 <WizardContextProvider
                     stepsMap={stepsMap}
                     stepPaths={stepPaths}
-                    initialStep={'detect-instance'}
-                    initialPath={'regular'}
+                    initialStep="detect-instance"
+                    initialPath="regular"
                     initialState={initialState}
                 >
                     <Wizard />

@@ -1,12 +1,12 @@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
@@ -32,8 +32,8 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
-        let uniqueResourceList: Array<string> = [];
+        const storageTierAssessmentData: any = [];
+        const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
@@ -73,7 +73,7 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                             userDataFiles: logDataFilesObj?.current,
                             totalObjectsAssessed: logDataFilesObj?.totalObjectsAssessed,
                             totalObjectsInViolation: logDataFilesObj?.totalObjectsInViolation,
-                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
+                            id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[logDataFilesObj?.status],
                             data: instanceData,
@@ -107,9 +107,8 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                 ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
                 selectedRowsForOptimize
             );
-        } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF);
         }
+        return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF);
     }, [selectedRowsForOptimize, inProgressOptimizationData, tableData]);
 
     const TableColDefs: ColumnProps[] = [
@@ -121,9 +120,7 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
             filterOptions: 'auto',
             isSticky: true,
             width: '310px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
-            }
+            renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
         {
             Header: 'Host name',
@@ -138,9 +135,8 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
             id: '3',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
-            }
+            renderCell: (cellData: string, rowData: any) =>
+                `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
         },
         {
             id: '4',
@@ -167,9 +163,9 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -196,18 +192,18 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
     return (
         <div className={styles.renderTable}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Not-optimized instances`}
-                singularTitle={'Not-optimized instance'}
+                pluralTitle="Not-optimized instances"
+                singularTitle="Not-optimized instance"
             />
             {selectedRowsForOptimize.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
             />
         </div>
     );

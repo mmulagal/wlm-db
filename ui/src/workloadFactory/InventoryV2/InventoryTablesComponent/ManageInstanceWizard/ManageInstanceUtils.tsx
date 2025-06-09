@@ -417,7 +417,7 @@ export const updateInventoryDataforCompletedInstance = (
     subJobs.forEach((subJob: SubJob) => {
         // Only process if subJob is COMPLETED and WARNING
         if (subJob.status === JOB_MONITORING_STATUS.COMPLETED || subJob.status === JOB_MONITORING_STATUS.WARNING) {
-            const metadata = subJob.metadata;
+            const { metadata } = subJob;
             const resourceId = subJob.resourceName || subJob.metadata?.resourceId;
             const credentialsId = subJob.credentialsId || subJob.metadata?.credentialsId;
             const regionCode = subJob.region?.code || subJob.metadata?.region;
@@ -460,7 +460,7 @@ export const updateInventoryDataforCompletedInstance = (
     // Inside your manageBulkJobStatus function, after getting subJobs:
     const inProgressIDListFromSubJobs = subJobs.flatMap((subJob: any) => {
         const metadata = subJob.metadata || {};
-        const ec2InstanceId = metadata.ec2InstanceId;
+        const { ec2InstanceId } = metadata;
         const credentialsId = subJob.credentialsId || metadata.credentialsId;
         const region = subJob.region?.code || metadata.region;
         // Only include COMPLETED databaseInstanceNames

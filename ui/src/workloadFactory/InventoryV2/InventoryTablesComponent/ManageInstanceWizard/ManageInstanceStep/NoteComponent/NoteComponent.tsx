@@ -12,7 +12,7 @@ const NoteComponent = () => {
             <DsTypography variant="Semibold_16">{t('databases.register-flow.note')}</DsTypography>
 
             <div>
-                <div className={styles['noteContainer']} style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className={styles.noteContainer} style={{ borderBottom: '1px solid var(--border)' }}>
                     <DsTypography className={!installMissingPowershell ? styles.disabled : ''} variant="Regular_14">
                         {t('databases.register-flow.install-note')}
                     </DsTypography>

@@ -1,11 +1,11 @@
 import { AccordionCard, AccordionCardContent, DsTypography } from '@netapp/design-system';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './SqlServerCollation.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { setSqlServerCollation } from '../../../../store/mssql/mssqlFormSlice';

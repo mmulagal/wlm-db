@@ -1,10 +1,9 @@
-import { Table, useTable, DsFlashingDotsLoader, TooltipInfo } from '@netapp/design-system';
+import { Table, useTable, DsFlashingDotsLoader, TooltipInfo, DsTypography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { DsTypography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import styles from './InstanceInformation.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useState } from 'react';
 import { FINDINGS, SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
 const InstanceInformation = () => {
@@ -43,7 +42,7 @@ const InstanceInformation = () => {
             } else {
                 instanceTypelist = selectedHostDetails?.ec2Details?.map((inst: any) => inst?.instanceType);
             }
-            let serverEdition: any = [];
+            const serverEdition: any = [];
             selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
                 if (
                     perRow?.databaseServer?.serverEdition &&
@@ -52,7 +51,7 @@ const InstanceInformation = () => {
                     serverEdition.push(perRow?.databaseServer?.serverEdition);
                 }
             });
-            let data: any = [
+            const data: any = [
                 {
                     details: 'Instance type',
                     value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
@@ -80,21 +79,20 @@ const InstanceInformation = () => {
 
     useEffect(() => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
-            const findingsLicenseData =
-                storageSavingsResponse && (storageSavingsResponse?.license?.finding || '-');
+            const findingsLicenseData = storageSavingsResponse && (storageSavingsResponse?.license?.finding || '-');
             const findingsDbModel = selectedOnPremHostDetails?.deploymentModel?.includes(GENERAL.AOAG)
                 ? FINDINGS.NOT_OPTIMIZED
                 : FINDINGS.OPTIMIZED;
 
             setNoOfInstances(selectedOnPremHostDetails?.totalInstance || 0);
 
-            let serverEdition: any = [];
+            const serverEdition: any = [];
             selectedOnPremHostDetails?.sqlServerInstances?.map((perRow: any) => {
                 if (perRow?.sqlEdition && !serverEdition.includes(perRow?.sqlEdition)) {
                     serverEdition.push(perRow?.sqlEdition);
                 }
             });
-            let data: any = [
+            const data: any = [
                 {
                     details: 'SQL Edition',
                     value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
@@ -118,18 +116,16 @@ const InstanceInformation = () => {
             accessor: 'details',
             id: '1',
             width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '282px' : '178px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.tooltips}>
-                        {rowData.details === 'SQL Edition' && noOfInstances > 1 && (
-                            <TooltipInfo>{GENERAL.ES_SQL_EDITION_MULTI_TOOLTIP}</TooltipInfo>
-                        )}
-                        <DsTypography variant="Regular_14" style={{ minWidth: '125px' }}>
-                            {rowData.details}
-                        </DsTypography>
-                    </div>
-                );
-            }
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.tooltips}>
+                    {rowData.details === 'SQL Edition' && noOfInstances > 1 && (
+                        <TooltipInfo>{GENERAL.ES_SQL_EDITION_MULTI_TOOLTIP}</TooltipInfo>
+                    )}
+                    <DsTypography variant="Regular_14" style={{ minWidth: '125px' }}>
+                        {rowData.details}
+                    </DsTypography>
+                </div>
+            )
         },
 
         {
@@ -137,23 +133,22 @@ const InstanceInformation = () => {
             accessor: 'value',
             id: '2',
             width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '282px' : '220px',
-            renderCell: (cellData: any, rowData: any) => {
-                return !loading ? (
+            renderCell: (cellData: any, rowData: any) =>
+                !loading ? (
                     <DsTypography variant="Regular_14" style={{ minWidth: '200px' }}>
                         {rowData.value}
                     </DsTypography>
                 ) : (
                     <DsFlashingDotsLoader />
-                );
-            }
+                )
         },
         {
             Header: 'Findings',
             accessor: 'findings',
             id: '3',
             width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '282px' : '192px',
-            renderCell: (cellData: any, rowData: any) => {
-                return !storageSavingsLoading && !snapshotLoading ? (
+            renderCell: (cellData: any, rowData: any) =>
+                !storageSavingsLoading && !snapshotLoading ? (
                     <>
                         {rowData.details === 'Instance type' &&
                             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
@@ -194,15 +189,14 @@ const InstanceInformation = () => {
                     </>
                 ) : (
                     <DsFlashingDotsLoader />
-                );
-            }
+                )
         }
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
 
         columns: InstanceColDefs,
@@ -214,7 +208,7 @@ const InstanceInformation = () => {
             <DsTypography variant="Regular_14">{GENERAL.INSTANCE_INFORMATION}</DsTypography>
             <div className={styles.instanceTable}>
                 <Table
-                    //@ts-ignore
+                    // @ts-ignore
                     tableProps={tableProps}
                     variant="innerTable"
                 />

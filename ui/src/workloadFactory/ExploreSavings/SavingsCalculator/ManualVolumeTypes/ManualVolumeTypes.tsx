@@ -1,13 +1,10 @@
 import { DsTypography, TextField } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
 import styles from './ManualVolumeTypes.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
-import {
-    setSelectedVolumeType,
-    setVolumeFilledStatus
-} from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { setSelectedVolumeType, setVolumeFilledStatus } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import ManualTCOInputComponent from './ManualTCOInputComponent';
-import { useEffect, useState } from 'react';
 import { allPropertiesHaveValues, calculateTotalVolumes } from '../savingsUtil';
 
 const ManualVolumeTypes = () => {
@@ -123,18 +120,14 @@ const ManualVolumeTypes = () => {
             </div>
 
             <div className={styles.contentContainer}>
-                {selectedVolumeTab === 'io2' && (
-                    <ManualTCOInputComponent type="io2" throughPutDisable={true} from="primary" />
-                )}
-                {selectedVolumeTab === 'io1' && (
-                    <ManualTCOInputComponent type="io1" throughPutDisable={true} from="primary" />
-                )}
+                {selectedVolumeTab === 'io2' && <ManualTCOInputComponent type="io2" throughPutDisable from="primary" />}
+                {selectedVolumeTab === 'io1' && <ManualTCOInputComponent type="io1" throughPutDisable from="primary" />}
                 {selectedVolumeTab === 'gp2' && (
-                    <ManualTCOInputComponent type="gp2" throughPutDisable={true} IOPSDisable={true} from="primary" />
+                    <ManualTCOInputComponent type="gp2" throughPutDisable IOPSDisable from="primary" />
                 )}
                 {selectedVolumeTab === 'gp3' && <ManualTCOInputComponent type="gp3" from="primary" />}
                 {selectedVolumeTab === 'st1' && (
-                    <ManualTCOInputComponent type="st1" throughPutDisable={true} IOPSDisable={true} from="primary" />
+                    <ManualTCOInputComponent type="st1" throughPutDisable IOPSDisable from="primary" />
                 )}
             </div>
         </div>

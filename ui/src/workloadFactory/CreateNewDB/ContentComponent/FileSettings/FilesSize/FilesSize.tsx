@@ -1,8 +1,10 @@
 import { AccordionCard, AccordionCardContent, DsTypography, TextField } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import {
     setIsDataSizeValid,
     setIsLogSizeValid,
@@ -11,8 +13,6 @@ import {
     setNewUserLogFileSize,
     setNewUserLogFileSizeUnit
 } from '../../../../../store/workloadFactory/createNewDBSlice';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { formatSizeRoundOff, generateOptionType } from '../../../../../utils/utilityFunctions';
 
 import styles from './FilesSize.module.scss';
@@ -49,13 +49,13 @@ const FilesSize = () => {
         if (isDbCreateHit) {
             if (!dbCreateDataSizeValid) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     dataSizeRef?.current?.focus();
                 }, 80);
             }
             if (!dbCreateLogSizeValid) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     logSizeRef?.current?.focus();
                 }, 70);
             }
@@ -64,7 +64,7 @@ const FilesSize = () => {
 
     const calculateRoundOffMaxSize = (value: any) => {
         let compareMaxSize = 0;
-        let roundOffMaxSize = (value ? formatSizeRoundOff(value) : '').split(' ');
+        const roundOffMaxSize = (value ? formatSizeRoundOff(value) : '').split(' ');
         if (roundOffMaxSize && roundOffMaxSize.length > 1) {
             if (roundOffMaxSize[1] === 'GiB') {
                 compareMaxSize = Number(roundOffMaxSize[0]) * GIB_IN_BYTE;
@@ -87,7 +87,7 @@ const FilesSize = () => {
         }
     }, [driveLetter]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateUnitsForStorage = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         units?.map((val, idx: number) => {
@@ -119,26 +119,25 @@ const FilesSize = () => {
             }
         }
     }, [newUserDataSize, newUserDataSizeUnit]);
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (newUserDataSize && newUserDataSizeUnit?.label && newUserLogFileSize && newUserLogFileSizeUnit?.label) {
             if (errorCheckForDataSize() || errorCheckForLogSize()) {
                 return <AccordionError />;
-            } else {
-                return (
-                    <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
-                        <DsTypography variant="Regular_14">
-                            {`${GENERAL.DATA_FILE_SIZE} ${newUserDataSize} ${newUserDataSizeUnit?.label}`}{' '}
-                        </DsTypography>
-                        <div className={CommonStyles.separator} />
-                        <DsTypography variant="Regular_14">
-                            {`${GENERAL.LOG_FILE_SIZE} ${newUserLogFileSize} ${newUserLogFileSizeUnit?.label}`}{' '}
-                        </DsTypography>
-                    </DsTypography>
-                );
             }
+            return (
+                <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
+                    <DsTypography variant="Regular_14">
+                        {`${GENERAL.DATA_FILE_SIZE} ${newUserDataSize} ${newUserDataSizeUnit?.label}`}{' '}
+                    </DsTypography>
+                    <div className={CommonStyles.separator} />
+                    <DsTypography variant="Regular_14">
+                        {`${GENERAL.LOG_FILE_SIZE} ${newUserLogFileSize} ${newUserLogFileSizeUnit?.label}`}{' '}
+                    </DsTypography>
+                </DsTypography>
+            );
         }
-        return <ActionRequired error={!dbCreateDataSizeValid || !dbCreateLogSizeValid ? true : false} />;
+        return <ActionRequired error={!!(!dbCreateDataSizeValid || !dbCreateLogSizeValid)} />;
     };
 
     const errorCheckForDataSize = () => {
@@ -152,15 +151,16 @@ const FilesSize = () => {
         if (!currentSize || parseFloat(currentSize.toString()) < GIB_IN_BYTE) {
             dispatch(setIsDataSizeValid(false));
             return GENERAL.NO_DATA_SIZE_ERROR;
-        } else if (maxSize && maxSize < GIB_IN_BYTE && !isDataVirtualMountPoint) {
+        }
+        if (maxSize && maxSize < GIB_IN_BYTE && !isDataVirtualMountPoint) {
             dispatch(setIsDataSizeValid(false));
             return GENERAL.DATA_SIZE_MIN_ERROR;
-        } else if (maxSize && (currentSize < 1 || (currentSize > maxSize && !isDataVirtualMountPoint))) {
+        }
+        if (maxSize && (currentSize < 1 || (currentSize > maxSize && !isDataVirtualMountPoint))) {
             dispatch(setIsDataSizeValid(false));
             return `${GENERAL.DATA_SIZE_ERROR} ${formatSizeRoundOff(maxSize)}`;
-        } else {
-            dispatch(setIsDataSizeValid(true));
         }
+        dispatch(setIsDataSizeValid(true));
     };
 
     const errorCheckForLogSize = () => {
@@ -170,16 +170,12 @@ const FilesSize = () => {
                 if (+newUserLogFileSize > +newUserDataSize) {
                     logSizeValid = false;
                 }
-            } else {
-                if (newUserDataSizeUnit?.value === 'TiB') {
-                    if (+newUserLogFileSize > +newUserDataSize * 1024) {
-                        logSizeValid = false;
-                    }
-                } else {
-                    if (+newUserLogFileSize * 1024 > +newUserDataSize) {
-                        logSizeValid = false;
-                    }
+            } else if (newUserDataSizeUnit?.value === 'TiB') {
+                if (+newUserLogFileSize > +newUserDataSize * 1024) {
+                    logSizeValid = false;
                 }
+            } else if (+newUserLogFileSize * 1024 > +newUserDataSize) {
+                logSizeValid = false;
             }
         }
 
@@ -193,12 +189,12 @@ const FilesSize = () => {
         if (!currentLogSize || parseFloat(currentLogSize.toString()) < GIB_IN_BYTE) {
             dispatch(setIsLogSizeValid(false));
             return GENERAL.LOG_SIZE_MIN_ERROR;
-        } else if (!logSizeValid) {
+        }
+        if (!logSizeValid) {
             dispatch(setIsLogSizeValid(false));
             return GENERAL.LOG_SIZE_ERROR;
-        } else {
-            dispatch(setIsLogSizeValid(true));
         }
+        dispatch(setIsLogSizeValid(true));
     };
 
     return (
@@ -233,7 +229,7 @@ const FilesSize = () => {
                                 />
 
                                 <SelectField
-                                    label={'select'}
+                                    label="select"
                                     isClearable={false}
                                     info={
                                         maxSize &&
@@ -278,7 +274,7 @@ const FilesSize = () => {
                                 />
 
                                 <SelectField
-                                    label={'select'}
+                                    label="select"
                                     isClearable={false}
                                     value={
                                         newUserLogFileSizeUnit ? [newUserLogFileSizeUnit] : [generateUnitsForStorage[0]]

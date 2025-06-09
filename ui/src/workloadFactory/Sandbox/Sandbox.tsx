@@ -1,3 +1,4 @@
+import { Spinner } from '@netapp/design-system';
 import styles from './Sandbox.module.scss';
 import SandboxHeader from './SandboxHeader/SandboxHeader';
 import SourceInformation from './SourceInformation/SourceInformation';
@@ -6,7 +7,6 @@ import SandboxDistributionDate from './SandboxDistributionDate/SandboxDistributi
 import SandboxDistributionType from './SandboxDistributionType/SandboxDistributionType';
 import SandboxTable from './SandboxTable/SandboxTable';
 import { useAppSelector } from '../../store/storeHooks';
-import { Spinner } from '@netapp/design-system';
 import SandboxApis from './SandboxApis';
 
 const Sandbox = () => {
@@ -17,7 +17,7 @@ const Sandbox = () => {
         <div className={styles.sandbox}>
             {(connectionInfoLoading || splitEstimateLoading) && (
                 <>
-                    <div className={styles.loaderOverlay}></div>
+                    <div className={styles.loaderOverlay} />
                     <div className={styles.spinnerPlacement}>
                         <Spinner isLarge />
                     </div>

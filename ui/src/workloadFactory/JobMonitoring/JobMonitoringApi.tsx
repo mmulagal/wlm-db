@@ -73,9 +73,9 @@ const JobMonitoringApi = () => {
 
     useEffect(() => {
         if (!jmJobsListLoading) {
-            let oldList = jobsList || [];
-            let newList = jmJobsList?.items || [];
-            let mergedList = [...oldList, ...newList];
+            const oldList = jobsList || [];
+            const newList = jmJobsList?.items || [];
+            const mergedList = [...oldList, ...newList];
             dispatch(setJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             if (!jmJobsList?.nextToken || (jmJobsList?.nextToken && jmJobsList?.nextToken === lastToken)) {

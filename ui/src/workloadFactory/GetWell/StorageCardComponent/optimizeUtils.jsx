@@ -3,7 +3,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../../utils/consts';
 import DialogContent from './DialogContent/DialogContent';
 
-//Function for handling the dialog from getwell page
+// Function for handling the dialog from getwell page
 export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, cardData, operation, singleRowData) => {
     if (
         type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
@@ -21,14 +21,14 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
                         missingPatchList={cardData?.missingPatchList}
                     />
                 }
-                primaryButton={'Close'}
+                primaryButton="Close"
                 callback={() => {
                     closeDialog();
                 }}
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={'innerPage'}
+                customClass="innerPage"
             />
         );
     } else {
@@ -52,7 +52,7 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={'innerPage'}
+                customClass="innerPage"
                 hidePrimaryButton={
                     (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
@@ -65,9 +65,8 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
     }
 };
 
-const isDialogPrimaryBtnDisabled = rowData => {
-    return rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
-};
+const isDialogPrimaryBtnDisabled = rowData =>
+    rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
 
 export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
     setDialog(
@@ -82,7 +81,7 @@ export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowDa
             closeCallback={() => {
                 closeDialog();
             }}
-            customClass={'innerPage'}
+            customClass="innerPage"
             primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
             primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
         />

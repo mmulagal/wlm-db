@@ -1,4 +1,5 @@
 import { Button, useDialog } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -6,7 +7,6 @@ import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './AwsAccount.module.scss';
 import MissingPermissionTable from './MissingPermissionTable/MissingPermissionTable';
-import { useEffect, useState } from 'react';
 
 type permissionProp = {
     permissionData?: any;
@@ -23,26 +23,22 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     const modifyPermissions = (obj: any, msg: string) => {
         if (msg === 'missing') {
             return { ...obj, error: `${GENERAL.MISSING_PERMISSION}` };
-        } else if (msg === 'blocked') {
-            return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY}` };
-        } else {
-            return { ...obj, error: `${GENERAL.MISSING_PERMISSION}` };
         }
+        if (msg === 'blocked') {
+            return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY}` };
+        }
+        return { ...obj, error: `${GENERAL.MISSING_PERMISSION}` };
     };
 
     useEffect(() => {
         if (blockedPermissions) {
             const updatedMissingPermissions =
                 permissionData?.implicitlyDenied.length &&
-                permissionData?.implicitlyDenied.map((obj: any) => {
-                    return modifyPermissions(obj, 'missing');
-                });
+                permissionData?.implicitlyDenied.map((obj: any) => modifyPermissions(obj, 'missing'));
 
             const updatedBlockedByOrganization =
                 permissionData?.explicitlyDenied.length > 0 &&
-                permissionData?.explicitlyDenied.map((obj: any) => {
-                    return modifyPermissions(obj, 'blocked');
-                });
+                permissionData?.explicitlyDenied.map((obj: any) => modifyPermissions(obj, 'blocked'));
 
             let mergeData = [];
             if (updatedMissingPermissions.length && updatedBlockedByOrganization.length) {
@@ -60,9 +56,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
         } else {
             const updatedMissingPermissions =
                 permissionData?.implicitlyDenied.length &&
-                permissionData?.implicitlyDenied.map((obj: any) => {
-                    return modifyPermissions(obj, 'missing');
-                });
+                permissionData?.implicitlyDenied.map((obj: any) => modifyPermissions(obj, 'missing'));
 
             setDataToDisplay(updatedMissingPermissions);
             setPermissionCount(updatedMissingPermissions.length);
@@ -72,9 +66,8 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     const setHeading = (type: string) => {
         if (type === 'operate') {
             return GENERAL.REQUIRED_OPERATE_PERMISSIONS;
-        } else {
-            return `${permissionCount} ${GENERAL.MISSING_AND_BLOCKED_PERMISSIONS}`;
         }
+        return `${permissionCount} ${GENERAL.MISSING_AND_BLOCKED_PERMISSIONS}`;
     };
 
     const openDialog = (type: string) => {

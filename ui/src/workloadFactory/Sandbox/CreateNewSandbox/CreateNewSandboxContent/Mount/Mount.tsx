@@ -1,8 +1,11 @@
 import { AccordionCard, AccordionCardContent, DsRadioButton, DsTypography, TextField } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useMemo, useState } from 'react';
+import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import styles from './Mount.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import {
     setDataDriveMountPoint,
     setLogDriveMountPoint,
@@ -12,15 +15,12 @@ import {
 } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
-import { useEffect, useMemo, useState } from 'react';
-import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import {
     generateOptionType,
     isClusteredWithSelectedInstance,
     sortListOfDict
 } from '../../../../../utils/utilityFunctions';
 import { getDefaultDriveLetters } from '../../../SandboxUtility';
-import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 
 const Mount = () => {
     const { selectedMount, dataDriveMountPoint, logDriveMountPoint, getDbMountPoints, getDriveInfo, source, target } =
@@ -35,7 +35,8 @@ const Mount = () => {
     const setHeader = () => {
         if (selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT) {
             return <DsTypography variant="Regular_14">{GENERAL.AUTO_ASSIGN_MOUNT_POINT}</DsTypography>;
-        } else if (selectedMount === GENERAL.DEFINE_MOUNT_POINT_PATH && (!dataDriveMountPoint || !logDriveMountPoint)) {
+        }
+        if (selectedMount === GENERAL.DEFINE_MOUNT_POINT_PATH && (!dataDriveMountPoint || !logDriveMountPoint)) {
             return (
                 <div className={styles.actionRequired}>
                     <ActionRequired />
@@ -43,13 +44,13 @@ const Mount = () => {
             );
         }
         return (
-            <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyleSandbox} title={''}>
+            <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyleSandbox} title="">
                 {GENERAL.DEFINE_MOUNT_POINT_PATH}
             </DsTypography>
         );
     };
 
-    //useEffect to extract path based on response of database-mount-point API, driveInfo API and based on mount type
+    // useEffect to extract path based on response of database-mount-point API, driveInfo API and based on mount type
     useEffect(() => {
         const { dataDrive, logDrive } = getDefaultDriveLetters(
             dbMountPointsData,
@@ -63,7 +64,7 @@ const Mount = () => {
         dispatch(setLogDriveMountPoint(logDrive));
     }, [selectedMount, dbMountPointsData, driveInfoData, source, target]);
 
-    //useEffect to extract path based on response of database-mount-point API
+    // useEffect to extract path based on response of database-mount-point API
     useEffect(() => {
         const { databaseDataPath, databaseLogPath } = dbMountPointsData || {};
         const dataPathSuffix = databaseDataPath?.[0]?.split('\\')?.slice(1)?.join('\\');
@@ -72,7 +73,7 @@ const Mount = () => {
         setLogFilePathSuffix(logPathSuffix);
     }, [dbMountPointsData]);
 
-    //useEffect to generate data file path and log file path
+    // useEffect to generate data file path and log file path
     useEffect(() => {
         const truncatedDbName = target?.selectedDatabase
             ? target.selectedDatabase.substring(0, Math.min(target.selectedDatabase.length, 25))
@@ -86,7 +87,8 @@ const Mount = () => {
     const disableDriveMsg = (val: any) => {
         if (!val?.isNetappDrive) {
             return GENERAL.NON_NETAPP_DRIVE;
-        } else if (isClusteredWithSelectedInstance(val)) {
+        }
+        if (isClusteredWithSelectedInstance(val)) {
             return GENERAL.NON_CLUSTERED_DRIVE;
         }
         return '';
@@ -134,7 +136,7 @@ const Mount = () => {
                     <div className={`${CommonStyles['heading-content']} ${styles.headerSetter}`}>{setHeader()}</div>
                 )}
                 id="3"
-                title={<div className={CommonStyles.title}>{'Mount'}</div>}
+                title={<div className={CommonStyles.title}>Mount</div>}
                 isLoading={dbMountPointsLoading || driveInfoLoading}
                 isExpandDisabled={dbMountPointsLoading || driveInfoLoading}
             >

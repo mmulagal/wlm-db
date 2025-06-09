@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../store/storeHooks';
 import styles from './Inventory.module.scss';
 import InventoryCards from './InventoryCards/InventoryCards';
@@ -16,7 +17,6 @@ import {
     sortInventoryTableData,
     uniqueHostRow
 } from './InventoryUtilsV2';
-import { useDispatch } from 'react-redux';
 import { setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
 import store from '../../store/store';
 
@@ -35,11 +35,11 @@ const InventoryV2 = () => {
         if (inventoryTableData) {
             const state = store.getState();
             const { allmssqlHostAssessmentData: allmssqlHostAssessmentDataLatest } = state.inventoryV2;
-            let hostTableRows: any = [];
+            const hostTableRows: any = [];
             let instanceTableRows: any = [];
             let hostUniqueId: number = 0;
             let instanceUniqueId: number = 0;
-            let databaseTableRows: any = [];
+            const databaseTableRows: any = [];
             Object.keys(inventoryTableData).map((key: string) => {
                 if (removeSecNodeDiscoveredList.includes(key)) {
                     return;
@@ -53,8 +53,8 @@ const InventoryV2 = () => {
                 ) {
                     return;
                 }
-                let instanceList: any = [];
-                let instanceNameList: any = [];
+                const instanceList: any = [];
+                const instanceNameList: any = [];
                 let vpcIdAndNameText = '';
                 const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
                 inventoryTableData[key]?.ec2Details?.map((row: any) => {
@@ -62,30 +62,28 @@ const InventoryV2 = () => {
                         instanceNameList.push(row?.name);
                     }
                     if (row?.name && row?.id) {
-                        instanceList.push(row?.name + ' | ID: ' + row?.id);
+                        instanceList.push(`${row?.name} | ID: ${row?.id}`);
                     } else if (row?.id) {
-                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
+                        instanceList.push(`${GENERAL.NOT_AVAILABLE} | ID: ${row?.id}`);
                     }
                 });
                 if (inventoryTableData[key]?.vpcId && inventoryTableData[key]?.vpcName) {
-                    vpcIdAndNameText = inventoryTableData[key]?.vpcName + ' | ID: ' + inventoryTableData[key]?.vpcId;
+                    vpcIdAndNameText = `${inventoryTableData[key]?.vpcName} | ID: ${inventoryTableData[key]?.vpcId}`;
                 } else if (inventoryTableData[key]?.vpcId) {
-                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + inventoryTableData[key]?.vpcId;
+                    vpcIdAndNameText = `${GENERAL.NOT_AVAILABLE} | ID: ${inventoryTableData[key]?.vpcId}`;
                 } else {
-                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + GENERAL.NOT_AVAILABLE;
+                    vpcIdAndNameText = `${GENERAL.NOT_AVAILABLE} | ID: ${GENERAL.NOT_AVAILABLE}`;
                 }
                 const rowData = {
                     ...inventoryTableData[key],
                     id: String(hostUniqueId++),
                     sqlServerInstancesText:
                         inventoryTableData[key]?.totalInstance !== 0
-                            ? inventoryTableData[key]?.managedInstance +
-                              ' out of ' +
-                              inventoryTableData[key]?.totalInstance
+                            ? `${inventoryTableData[key]?.managedInstance} out of ${inventoryTableData[key]?.totalInstance}`
                             : '',
                     instanceListText: instanceList.join(','),
                     instanceNameListText: instanceNameList.join(', '),
-                    vpcIdAndNameText: vpcIdAndNameText,
+                    vpcIdAndNameText,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                     nameForSorting: inventoryTableData[key]?.name?.toLowerCase()
                 };
@@ -93,10 +91,10 @@ const InventoryV2 = () => {
 
                 // Instance table
                 if (inventoryTableData?.[key] && inventoryTableData?.[key]?.sqlServerInstances) {
-                    let perHost = inventoryTableData?.[key];
+                    const perHost = inventoryTableData?.[key];
                     let optimizationStatusLoading = false;
                     let optimizationStatusList: any = [];
-                    let assessRow = allmssqlHostAssessmentDataLatest?.filter(
+                    const assessRow = allmssqlHostAssessmentDataLatest?.filter(
                         (perRow: any) =>
                             uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === key
                     );
@@ -104,7 +102,7 @@ const InventoryV2 = () => {
                         optimizationStatusLoading = allmssqlHostAssessmentLoading;
                         optimizationStatusList = assessRow?.[0]?.instancesAssessment;
                     }
-                    let perInstanceData: any = [];
+                    const perInstanceData: any = [];
                     inventoryTableData?.[key]?.sqlServerInstances?.map((perRow: any) => {
                         if (
                             perRow?.fileSystemType === GENERAL.EBS ||
@@ -112,15 +110,15 @@ const InventoryV2 = () => {
                         ) {
                             return;
                         }
-                        let protectionText = getProtectionText(perRow);
-                        let optimizationStatus = getOptimizationStatus(
+                        const protectionText = getProtectionText(perRow);
+                        const optimizationStatus = getOptimizationStatus(
                             perRow?.databaseInstanceId,
                             optimizationStatusList
                         );
                         if (perRow?.statusColText === INVENTORY_STATUS.MANAGED) {
                             optimizationStatusLoading = allmssqlHostAssessmentLoading;
                         }
-                        let managementStatus = inProgressInstances.has(
+                        const managementStatus = inProgressInstances.has(
                             uniqueHostRow(
                                 `${perHost?.ec2InstanceId}_${perRow.databaseInstanceName}`,
                                 perHost?.credentialId || '',
@@ -131,7 +129,7 @@ const InventoryV2 = () => {
                             : perRow.statusColText === INVENTORY_STATUS.MANAGED
                             ? INVENTORY_STATUS.REGISTERED
                             : INVENTORY_STATUS.NOT_REGISTERED;
-                        let perRowData = {
+                        const perRowData = {
                             ...perRow,
                             id: String(instanceUniqueId++),
                             hostRow: perHost,
@@ -141,8 +139,8 @@ const InventoryV2 = () => {
                             loading: inventoryTableData?.[key]?.loading,
                             fullManagedInstanceLoading: inventoryTableData?.[key]?.fullManagedInstanceLoading,
                             subLoading: perRow?.loading,
-                            optimizationStatusLoading: optimizationStatusLoading,
-                            optimizationStatus: optimizationStatus,
+                            optimizationStatusLoading,
+                            optimizationStatus,
                             protectionText:
                                 protectionText === PROTECTION_TEXT_STATUS.YES
                                     ? GENERAL.PROTECTED
@@ -172,7 +170,7 @@ const InventoryV2 = () => {
                             regionName: perHost?.regionName,
                             resourceId: perHost?.resourceId,
                             ec2InstanceId: perHost?.ec2InstanceId,
-                            managementStatus: managementStatus
+                            managementStatus
                         };
                         perInstanceData.push(perRowData);
                     });
@@ -181,7 +179,7 @@ const InventoryV2 = () => {
 
                 // Database table
                 if (inventoryTableData?.[key] && inventoryTableData?.[key]?.sqlServerInstances) {
-                    let perHost = inventoryTableData?.[key];
+                    const perHost = inventoryTableData?.[key];
                     inventoryTableData?.[key]?.sqlServerInstances?.map((perRow: any) => {
                         if (
                             perRow?.fileSystemType === GENERAL.EBS ||
@@ -191,7 +189,7 @@ const InventoryV2 = () => {
                             return;
                         }
                         perRow?.databases?.map((perDatabase: any) => {
-                            let protectionText = getProtectionText({
+                            const protectionText = getProtectionText({
                                 ...perDatabase,
                                 fileSystemType: perRow?.fileSystemType
                             });
@@ -203,7 +201,7 @@ const InventoryV2 = () => {
                             } else {
                                 protectionVal = GENERAL.NOT_AVAILABLE;
                             }
-                            let perRowData = {
+                            const perRowData = {
                                 ...perDatabase,
                                 isProtected: protectionVal,
                                 hostRow: perHost,

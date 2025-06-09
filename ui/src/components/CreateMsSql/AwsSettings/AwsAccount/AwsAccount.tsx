@@ -40,7 +40,7 @@ const AwsAccount = () => {
     const noCredRef = useRef(null);
     const perWarningRef = useRef(null);
 
-    //Getting the Data from state
+    // Getting the Data from state
     const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
     const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
@@ -70,20 +70,20 @@ const AwsAccount = () => {
         if (isCreateHit) {
             if (permissionWarning) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     perWarningRef?.current?.focus();
                 }, 120);
             }
             if (noAccount) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     noCredRef?.current?.focus();
                 }, 120);
             }
         }
     }, [permissionWarning, isCreateHit, noAccount]);
 
-    //Code to open the Accordion
+    // Code to open the Accordion
     const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
     const isCreatePresed = useAppSelector(state => state.msSqlAction.isCreatePressed);
@@ -97,8 +97,8 @@ const AwsAccount = () => {
     const isProperPgSqlDbName = useAppSelector(state => state.msSqlAction.pgDbNameSelected);
 
     useEffect(() => {
-        const dbPasswordValPass = !dbPassVal(dbCredPassword) ? true : false;
-        const fsxPasswordValPass = !fsxPassVal(fsxCredPassword) ? true : false;
+        const dbPasswordValPass = !dbPassVal(dbCredPassword);
+        const fsxPasswordValPass = !fsxPassVal(fsxCredPassword);
         if (
             isCreatePresed &&
             (noAccount ||
@@ -115,15 +115,15 @@ const AwsAccount = () => {
                 !isProperPgSqlDbName)
         ) {
             accordionContext({
-                1: noAccount || permissionWarning ? true : false,
-                2: !isVPCNotFilled ? true : false,
-                3: !isAZNotFilled ? true : false,
-                11: !isDBCredPassword || !dbPasswordValPass ? true : false,
-                13: !isActiveDirectoryFilled ? true : false,
-                15: !isFsxNNameFilled || !fsxPasswordValPass ? true : false,
-                9: !licenseIdSelectedCheck ? true : false,
-                10: !isProperDBName ? true : false,
-                27: !isProperPgSqlDbName ? true : false
+                1: !!(noAccount || permissionWarning),
+                2: !isVPCNotFilled,
+                3: !isAZNotFilled,
+                11: !!(!isDBCredPassword || !dbPasswordValPass),
+                13: !isActiveDirectoryFilled,
+                15: !!(!isFsxNNameFilled || !fsxPasswordValPass),
+                9: !licenseIdSelectedCheck,
+                10: !isProperDBName,
+                27: !isProperPgSqlDbName
             });
             dispatch(setCreatePressed(false));
         }
@@ -143,11 +143,11 @@ const AwsAccount = () => {
         permissionWarning
     ]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         credentialData?.map((val, idx: number) => {
-            const credValue = val.name + ' | Account: ' + val.providerAccountId;
+            const credValue = `${val.name} | Account: ${val.providerAccountId}`;
             const option = generateOptionType(credValue, credValue, '', false, '', val);
             options.push(option);
         });
@@ -179,13 +179,12 @@ const AwsAccount = () => {
         }
     }, [selectedCredential]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (noAccount) {
             return <Typography variant="Regular_14">{GENERAL.NO_CREDENTIALS}</Typography>;
-        } else {
-            return <Typography variant="Regular_14">{selectedCredential?.value}</Typography>;
         }
+        return <Typography variant="Regular_14">{selectedCredential?.value}</Typography>;
     };
 
     // To open new tab with credential page on click of credential link
@@ -223,7 +222,7 @@ const AwsAccount = () => {
                 <AccordionCardContent>
                     <Typography>
                         {noAccount ? (
-                            <div className={styles['noaccount']}>
+                            <div className={styles.noaccount}>
                                 <div className={styles['default-sub-text']}>{GENERAL.DEFAULT_AWS_ACCOUNT_SUB_TEXT}</div>
                                 <div className={styles.noaccount_options}>
                                     <Typography variant="Semibold_14">{GENERAL.STEP_ONE}</Typography>

@@ -1,10 +1,10 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { Text } from '../../../../ui-components/Typography';
 import styles from './WindowFileServer.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
 import { getAzType } from '../../../../utils/utilityFunctions';
 
 const WindowFileServer = () => {
@@ -15,8 +15,8 @@ const WindowFileServer = () => {
 
     useEffect(() => {
         let deploymentType = '';
-        for (let instance of selectedHostDetails?.sqlServerInstances || []) {
-            for (let deployment of instance?.deploymentTypes || []) {
+        for (const instance of selectedHostDetails?.sqlServerInstances || []) {
+            for (const deployment of instance?.deploymentTypes || []) {
                 if (deployment?.type) {
                     deploymentType = deployment?.type;
                     break;
@@ -40,14 +40,14 @@ const WindowFileServer = () => {
             {
                 label: 'Total provisioned IOPS',
                 value: viewCalculationsResponse?.fsxwCalculation?.sumOfDefaultAndAdditionalProvisionedIops
-                    ? viewCalculationsResponse?.fsxwCalculation?.sumOfDefaultAndAdditionalProvisionedIops + ' IOPS'
+                    ? `${viewCalculationsResponse?.fsxwCalculation?.sumOfDefaultAndAdditionalProvisionedIops} IOPS`
                     : GENERAL.NOT_AVAILABLE,
                 loading: viewCalculationsLoading
             },
             {
                 label: 'Total throughput',
                 value: viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity
-                    ? viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity + ' MB/s'
+                    ? `${viewCalculationsResponse?.fsxwCalculation?.provisionedThroughputCapacity} MB/s`
                     : GENERAL.NOT_AVAILABLE,
                 loading: viewCalculationsLoading
             }
@@ -55,31 +55,29 @@ const WindowFileServer = () => {
         setTableData(dataValue);
     }, [selectedHostDetails, viewCalculationsLoading, viewCalculationsResponse]);
 
-    const ComparisonTableLayout = ({ data, calculatedResponse }: any) => {
-        return (
-            <div className={styles['comparison-table-column']} style={{ backgroundColor: 'var(--main-background)' }}>
-                <Grid>
-                    <GridItem lg="4">
-                        <Text
-                            color={!calculatedResponse && 'text-disabled'}
-                            level={'13'}
-                            style={{ color: 'var(--text-primary)' }}
-                        >
-                            {data?.label}
-                        </Text>
-                    </GridItem>
-                    <GridItem lg="4">
-                        {data?.loading && (
-                            <div className={styles.loading}>
-                                <DsFlashingDotsLoader />
-                            </div>
-                        )}
-                        {!data?.loading && <Text style={{ paddingLeft: 10 }}>{data?.value}</Text>}
-                    </GridItem>
-                </Grid>
-            </div>
-        );
-    };
+    const ComparisonTableLayout = ({ data, calculatedResponse }: any) => (
+        <div className={styles['comparison-table-column']} style={{ backgroundColor: 'var(--main-background)' }}>
+            <Grid>
+                <GridItem lg="4">
+                    <Text
+                        color={!calculatedResponse && 'text-disabled'}
+                        level="13"
+                        style={{ color: 'var(--text-primary)' }}
+                    >
+                        {data?.label}
+                    </Text>
+                </GridItem>
+                <GridItem lg="4">
+                    {data?.loading && (
+                        <div className={styles.loading}>
+                            <DsFlashingDotsLoader />
+                        </div>
+                    )}
+                    {!data?.loading && <Text style={{ paddingLeft: 10 }}>{data?.value}</Text>}
+                </GridItem>
+            </Grid>
+        </div>
+    );
     return (
         <div className={styles.winServer}>
             <DsTypography variant="Regular_14" className={styles.head}>
@@ -87,7 +85,7 @@ const WindowFileServer = () => {
             </DsTypography>
 
             {tableData.map((data: any, index: number) => (
-                <ComparisonTableLayout key={index} data={data} calculatedResponse={true} />
+                <ComparisonTableLayout key={index} data={data} calculatedResponse />
             ))}
         </div>
     );

@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Button } from '@netapp/design-system';
+import { useNavigate } from 'react-router-dom';
+import { isEqual } from 'lodash';
 import {
     delay,
     formatSize,
@@ -71,14 +74,11 @@ import {
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 import { setDeployRedirectToCfLink, setIsLoading, setPermissionData } from '../../../store/mssql/msSqlActionSlice';
-import { Button } from '@netapp/design-system';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { useNavigate } from 'react-router-dom';
 import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
 import store from '../../../store/store';
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../../store/workloadFactory/headersSlice';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { isEqual } from 'lodash';
 
 type optionsType = {
     value?: string | number;
@@ -116,7 +116,7 @@ const Chatbot = () => {
 
     const handleKeyPress = async (e: any) => {
         await delay(0);
-        const activeElement = document.activeElement;
+        const { activeElement } = document;
         if (activeElement?.tagName === 'INPUT') {
             if (activeElement.getAttribute('id') && activeElement.getAttribute('id')?.includes('react-select')) {
                 if (document?.activeElement?.parentElement?.parentElement?.parentElement) {
@@ -194,14 +194,14 @@ const Chatbot = () => {
                             {
                                 sender: 'bot',
                                 msg: message,
-                                key: key,
+                                key,
                                 list: allowedValues,
-                                allowCreate: allowCreate,
-                                intent: intent,
-                                type: type,
+                                allowCreate,
+                                intent,
+                                type,
                                 active: true,
-                                error: error,
-                                status: status
+                                error,
+                                status
                             }
                         ];
 
@@ -236,32 +236,28 @@ const Chatbot = () => {
         message = (
             <>
                 {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
-                {
-                    <>
-                        <Button
-                            Component="button"
-                            variant="text"
-                            onClick={() => {
-                                clearTimeout(notificationMsg);
-                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                if (isWorkloadFactoryStatus) {
-                                    navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
-                                } else {
-                                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
-                                }
+                <Button
+                    Component="button"
+                    variant="text"
+                    onClick={() => {
+                        clearTimeout(notificationMsg);
+                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                        if (isWorkloadFactoryStatus) {
+                            navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
+                        } else {
+                            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                        }
 
-                                dispatch(clearNotifications());
-                            }}
-                        >
-                            {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
-                        </Button>
-                    </>
-                }
+                        dispatch(clearNotifications());
+                    }}
+                >
+                    {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
+                </Button>
                 {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
             </>
         );
 
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message }));
         notificationMsg = setTimeout(() => {
             isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
         }, 3000);
@@ -275,18 +271,18 @@ const Chatbot = () => {
         if (payload) {
             dispatch(setIsLoading(true));
             dispatch(setDeployRedirectToCfLink(null));
-            deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
+            deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload })
                 .then((data: any) => {
                     dispatch(setIsLoading(false));
                     if (!data?.error) {
-                        let stackName = data?.data?.cloudFormationStackId;
+                        const stackName = data?.data?.cloudFormationStackId;
                         const url = data?.data?.cloudFormationUrl;
                         const warning = data?.data?.warningMessage;
                         if (stackName && !warning) {
                             // If stackname is present than goes to fullPermissionFlow
                             fullPermissionFlow(stackName, url);
-                            let defaultParams = getChatbotParamsFromPayload(mssqlFormData);
-                            let defaultObj: any = {};
+                            const defaultParams = getChatbotParamsFromPayload(mssqlFormData);
+                            const defaultObj: any = {};
                             Object.keys(defaultParams).map((key: string) => {
                                 defaultObj[key] = null;
                             });
@@ -348,10 +344,7 @@ const Chatbot = () => {
                         const selectedCredentialOption = mssqlData.getCredentials.credentialData?.filter(
                             item => item.credentialsId === value
                         )[0];
-                        const credValue =
-                            selectedCredentialOption?.name +
-                            ' | Account: ' +
-                            selectedCredentialOption?.providerAccountId;
+                        const credValue = `${selectedCredentialOption?.name} | Account: ${selectedCredentialOption?.providerAccountId}`;
                         const option = generateOptionType(
                             credValue,
                             credValue,
@@ -388,8 +381,7 @@ const Chatbot = () => {
                         const selectedRegionOption = mssqlData.getRegions.regionsData?.regions?.filter(
                             item => item.regionCode === value
                         )[0];
-                        const credValue =
-                            selectedRegionOption?.regionCode + ' | Account: ' + selectedRegionOption?.regionName;
+                        const credValue = `${selectedRegionOption?.regionCode} | Account: ${selectedRegionOption?.regionName}`;
                         const option = generateOptionType(credValue, credValue, '', false, '', selectedRegionOption);
                         dispatch(setSelectedRegionData(value ? option : null));
                     }
@@ -398,7 +390,7 @@ const Chatbot = () => {
                     if (mssqlFormData?.regionAndVpc?.selectedVPC?.data?.id !== value) {
                         const selectedVpcId = mssqlData.getVPCList.vpcData?.vpcs?.filter(item => item.id === value)[0];
                         const vpcValue =
-                            (selectedVpcId?.name ? selectedVpcId.name + ' | ' : '') +
+                            (selectedVpcId?.name ? `${selectedVpcId.name} | ` : '') +
                                 (selectedVpcId?.cidrBlock ? selectedVpcId.cidrBlock[0]?.CidrBlock : '') || '-';
                         const vpcLabel2 = selectedVpcId?.id!;
                         const vpcData = {
@@ -481,13 +473,13 @@ const Chatbot = () => {
                             )[0];
                         let label2 = '';
                         if (selectedInstance?.vCpus) {
-                            label2 += selectedInstance?.vCpus + 'vCPU, ';
+                            label2 += `${selectedInstance?.vCpus}vCPU, `;
                         }
                         if (selectedInstance?.ramInMib) {
-                            label2 += formatSize(selectedInstance?.ramInMib, 'mib') + ' RAM, ';
+                            label2 += `${formatSize(selectedInstance?.ramInMib, 'mib')} RAM, `;
                         }
                         if (selectedInstance?.iopsInMbps) {
-                            label2 += selectedInstance?.iopsInMbps + 'Mbps';
+                            label2 += `${selectedInstance?.iopsInMbps}Mbps`;
                         }
                         const option = generateOptionType(value, value, label2, false, '', selectedInstance);
                         dispatch(setInstanceType(value ? option : null));
@@ -568,7 +560,7 @@ const Chatbot = () => {
                         const selectedFsx = mssqlData?.getFsxnList?.fsxnData?.filesystems?.filter(
                             (item: any) => item.fileSystemId === value
                         )[0];
-                        const val = (selectedFsx?.name ? selectedFsx.name + ' | ' : '') + selectedFsx?.fileSystemId;
+                        const val = (selectedFsx?.name ? `${selectedFsx.name} | ` : '') + selectedFsx?.fileSystemId;
                         const data = {
                             fileSystemId: selectedFsx?.fileSystemId,
                             fileSystemName: selectedFsx?.name,
@@ -669,8 +661,8 @@ const Chatbot = () => {
                     }
                 ];
             }
-            dispatch(setMessages([...preResponseMsg, { sender: 'user', msg: msg }]));
-            updatedMessages = [...updatedMessages, { sender: 'user', msg: msg }];
+            dispatch(setMessages([...preResponseMsg, { sender: 'user', msg }]));
+            updatedMessages = [...updatedMessages, { sender: 'user', msg }];
         }
 
         const data = Object.entries(paramObject).reduce((acc: { [x: string]: string }, [key, obj]) => {
@@ -683,11 +675,11 @@ const Chatbot = () => {
                 ...(msg && {
                     prompt:
                         (currentIntent?.type
-                            ? wrapContext(
+                            ? `${wrapContext(
                                   `${currentIntent.type} with params ${JSON.stringify({
                                       ...currentIntent.params
                                   })}`
-                              ) + 'Sure!'
+                              )}Sure!`
                             : '') + wrapContext(msg)
                 }),
                 ...(currentIntent && {
@@ -723,14 +715,14 @@ const Chatbot = () => {
                         {
                             sender: 'bot',
                             msg: message,
-                            key: key,
+                            key,
                             list: allowedValues,
-                            allowCreate: allowCreate,
-                            intent: intent,
-                            type: type,
+                            allowCreate,
+                            intent,
+                            type,
                             active: true,
-                            error: error,
-                            status: status
+                            error,
+                            status
                         }
                     ];
 
@@ -792,14 +784,14 @@ const Chatbot = () => {
                         {
                             sender: 'bot',
                             msg: message,
-                            key: key,
+                            key,
                             list: allowedValues,
-                            allowCreate: allowCreate,
-                            intent: intent,
-                            type: type,
+                            allowCreate,
+                            intent,
+                            type,
                             active: true,
-                            error: error,
-                            status: status
+                            error,
+                            status
                         }
                     ];
 
@@ -836,7 +828,7 @@ const Chatbot = () => {
             };
         }
         updatedMessages.push({
-            sender: sender,
+            sender,
             msg: paramObj[Object.keys(paramObj)[0]].label
         });
         dispatch(setMessages(updatedMessages));
@@ -857,21 +849,22 @@ const Chatbot = () => {
     }, [currentIntent, payloadContent]);
 
     useEffect(() => {
-        var objDiv = document.getElementById('chat_id');
+        const objDiv = document.getElementById('chat_id');
         if (objDiv) {
             objDiv.scrollTop = objDiv.scrollHeight;
         }
     }, [messages]);
-    //@ts-ignore
+    // @ts-ignore
     const messagesToShow = useMemo(() => {
         const lastMsg = messages ? messages[messages.length - 1] : {};
         const updatedMsgs = messages
-            ? messages.map((msg: any, idx: number) => {
-                  return { ...msg, active: idx < messages.length - 1 ? false : msg.active };
-              })
+            ? messages.map((msg: any, idx: number) => ({
+                  ...msg,
+                  active: idx < messages.length - 1 ? false : msg.active
+              }))
             : null;
         if (showRetry) {
-            const existingMessages = updatedMsgs ? updatedMsgs : [];
+            const existingMessages = updatedMsgs || [];
             if (showRetry) {
                 setIsBotReplying(false);
             }
@@ -881,9 +874,9 @@ const Chatbot = () => {
                     sender: 'bot',
                     type: 'confirm',
                     active: true,
-                    msg: `Error getting response. Do you want to retry?`,
+                    msg: 'Error getting response. Do you want to retry?',
                     confirmData: {
-                        confirmMsg: `Error getting response. Do you want to retry?`,
+                        confirmMsg: 'Error getting response. Do you want to retry?',
                         confirmBtnTxt: 'Yes',
                         cancelBtnTxt: 'No',
                         onConfirm: async (messages: messageType[]) => {
@@ -928,7 +921,8 @@ const Chatbot = () => {
                     }
                 }
             ];
-        } else if (
+        }
+        if (
             lastMsg &&
             lastMsg.sender === 'bot' &&
             !lastMsg.intent &&
@@ -981,7 +975,8 @@ const Chatbot = () => {
             //         }
             //     }
             // ];
-        } else if (lastMsg?.status === 'error') {
+        }
+        if (lastMsg?.status === 'error') {
             dispatch(
                 setSuggestionBubbles({
                     list: [
@@ -992,9 +987,10 @@ const Chatbot = () => {
                         if (value === 'suggestions') {
                             dispatch(
                                 setSuggestionBubbles({
-                                    list: CHATBOT_WELCOME_CARDS.map(item => {
-                                        return { label: item.label, value: item.value || item.label };
-                                    }),
+                                    list: CHATBOT_WELCOME_CARDS.map(item => ({
+                                        label: item.label,
+                                        value: item.value || item.label
+                                    })),
                                     onBubbleClick: async (label?: string, value?: string) => {
                                         dispatch(
                                             setSuggestionBubbles({
@@ -1020,13 +1016,12 @@ const Chatbot = () => {
                 })
             );
             return updatedMsgs;
-        } else {
-            return updatedMsgs;
         }
+        return updatedMsgs;
     }, [messages, currentIntent, showRetry]);
 
     return (
-        <div className={styles['chatbot']}>
+        <div className={styles.chatbot}>
             <div className={styles['page-content']}>
                 <ChatbotHeader mapParamsToPayload={mapParamsToPayload} />
                 <ChatBox
@@ -1035,8 +1030,8 @@ const Chatbot = () => {
                         handleSelectButtonClicked(paramObj, sender)
                     }
                     sendMsg={sendMsg}
-                    messagesToShow={messagesToShow ? messagesToShow : []}
-                    messages={messages ? messages : []}
+                    messagesToShow={messagesToShow || []}
+                    messages={messages || []}
                     activeField={activeField}
                     setContext={setContext}
                     mapParamsToPayload={mapParamsToPayload}

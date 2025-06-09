@@ -1,4 +1,6 @@
 import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ReactComponent as KB } from '../assets/DS - KB illustration.svg';
 import { ReactComponent as Unflattened } from '../assets/un-flattened 2.svg';
 import { ReactComponent as UnflattenedLarge } from '../assets/un-flattened-enlarge.svg';
@@ -10,9 +12,7 @@ import { ReactComponent as Rocket } from '../assets/rocket.svg';
 import { ReactComponent as Thunder } from '../assets/thunder.svg';
 import { ReactComponent as Setting } from '../assets/settings.svg';
 import styles from './Marketing.module.scss';
-import { useState } from 'react';
 import CardComponent from './CardComponent/CardComponent';
-import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../utils/consts';
 import { useAppSelector } from '../store/storeHooks';
 

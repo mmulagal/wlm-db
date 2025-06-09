@@ -1,10 +1,10 @@
 import { Typography } from '@netapp/design-system';
 
+import { useDispatch } from 'react-redux';
 import { ReactComponent as BedrockPoweredIcon } from '../../../../assets/bedrock-powered-icon.svg';
 import styles from './WelcomePage.module.scss';
 import { CHATBOT_WELCOME_CARDS } from '../../../../utils/consts';
 import { CHATBOT } from '../../../../utils/appConstants';
-import { useDispatch } from 'react-redux';
 import { setLatestIntentMsg, setMessages } from '../../../../store/chatbot/chatbotSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 
@@ -34,7 +34,7 @@ const WelcomePage = ({ handleSendMsg }: WelcomePagePropTypes) => {
             <div className={styles['welcome-cards-container']}>
                 <div className={styles['card-row']}>
                     <div
-                        className={`${'chatbot-select-msg'} ${styles['card']}`}
+                        className={`${'chatbot-select-msg'} ${styles.card}`}
                         onClick={() => {
                             askSuggested(CHATBOT_WELCOME_CARDS[0]);
                             dispatch(setLatestIntentMsg(CHATBOT_WELCOME_CARDS[0].label));
@@ -45,7 +45,7 @@ const WelcomePage = ({ handleSendMsg }: WelcomePagePropTypes) => {
                         </Typography>
                     </div>
                     <div
-                        className={`${'chatbot-select-msg'} ${styles['card']}`}
+                        className={`${'chatbot-select-msg'} ${styles.card}`}
                         onClick={() => askSuggested(CHATBOT_WELCOME_CARDS[1])}
                     >
                         <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
@@ -55,7 +55,7 @@ const WelcomePage = ({ handleSendMsg }: WelcomePagePropTypes) => {
                 </div>
                 <div className={styles['card-row']}>
                     <div
-                        className={`${'chatbot-select-msg'} ${styles['card']}`}
+                        className={`${'chatbot-select-msg'} ${styles.card}`}
                         onClick={() => askSuggested(CHATBOT_WELCOME_CARDS[2])}
                     >
                         <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
@@ -63,7 +63,7 @@ const WelcomePage = ({ handleSendMsg }: WelcomePagePropTypes) => {
                         </Typography>
                     </div>
                     <div
-                        className={`${'chatbot-select-msg'} ${styles['card']}`}
+                        className={`${'chatbot-select-msg'} ${styles.card}`}
                         onClick={() => askSuggested(CHATBOT_WELCOME_CARDS[3])}
                     >
                         <Typography variant="Regular_14" className={styles['chatbot-card-text']}>

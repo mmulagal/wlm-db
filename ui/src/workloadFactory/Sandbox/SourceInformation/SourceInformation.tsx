@@ -1,9 +1,9 @@
+import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { ReactComponent as Source } from '../../../assets/Source.svg';
 import { ReactComponent as Sandbox } from '../../../assets/Sandbox.svg';
 
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './SourceInformation.module.scss';
-import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { getUniqueSourceDatabasesCount } from '../SandboxUtility';

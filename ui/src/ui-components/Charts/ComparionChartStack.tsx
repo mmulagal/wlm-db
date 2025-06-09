@@ -1,10 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
+import { Popover } from '@netapp/design-system/dist/components/Popover';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import styles from './ComparisonChart.module.scss';
 import { Span } from '../Typography';
 import { ChartColor, XCategories, fullColors, emptyColors, YTickFormatter } from './chartCommon';
-import { Popover } from '@netapp/design-system/dist/components/Popover';
-import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import SeparatorComponent from '../../common/SeparatorComponent/SeparatorComponent';
 import { compareDataAndCalculateDifference, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
 
@@ -64,7 +64,7 @@ const ComparisonChartStack = React.memo(
                                                 {yTickFormatter ? yTickFormatter(total, index, data) : total}
                                             </Span>
                                         )}
-                                        {loadingWithNoData && <Span bold>{'$0'}</Span>}
+                                        {loadingWithNoData && <Span bold>$0</Span>}
                                         {loading && (
                                             <span>
                                                 <DsFlashingDotsLoader />
@@ -111,8 +111,8 @@ const ComparisonChartStack = React.memo(
 
                                             return (
                                                 <Popover
-                                                    popoverClass={styles['popover']}
-                                                    isAppendedToBody={true}
+                                                    popoverClass={styles.popover}
+                                                    isAppendedToBody
                                                     placement="auto"
                                                     key={stackIndex}
                                                     children={
@@ -145,7 +145,7 @@ const ComparisonChartStack = React.memo(
                                                             </DsTypography>
                                                         </div>
                                                     }
-                                                    trigger={'hover'}
+                                                    trigger="hover"
                                                     container={
                                                         <div
                                                             key={stackIndex}
@@ -196,18 +196,16 @@ const ComparisonChartStack = React.memo(
                                                 </div>
                                             )}
                                             {!labelChange && (
-                                                <>
-                                                    <div className={styles.xContainer}>
-                                                        <div className={styles.xContainerInner}>
-                                                            <div className={styles.squareChart3} />
-                                                            <DsTypography variant="Semibold_14">EBS</DsTypography>
-                                                        </div>
-                                                        <div className={styles.xContainerInner}>
-                                                            <div className={styles.squareChart2} />
-                                                            <DsTypography variant="Semibold_14">FSxW</DsTypography>
-                                                        </div>
+                                                <div className={styles.xContainer}>
+                                                    <div className={styles.xContainerInner}>
+                                                        <div className={styles.squareChart3} />
+                                                        <DsTypography variant="Semibold_14">EBS</DsTypography>
                                                     </div>
-                                                </>
+                                                    <div className={styles.xContainerInner}>
+                                                        <div className={styles.squareChart2} />
+                                                        <DsTypography variant="Semibold_14">FSxW</DsTypography>
+                                                    </div>
+                                                </div>
                                             )}
                                         </div>
                                     )}

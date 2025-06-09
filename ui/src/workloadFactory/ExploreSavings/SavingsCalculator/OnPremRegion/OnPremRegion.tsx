@@ -1,10 +1,10 @@
 import { DsTypography } from '@netapp/design-system';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+import { useEffect, useMemo } from 'react';
 import styles from './OnPremRegion.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
-import { useEffect, useMemo } from 'react';
 import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
 import { setSelectedOnPremRegion } from '../../../../store/workloadFactory/exploreSavingsSlice';
 
@@ -13,13 +13,13 @@ const OnPremRegion = () => {
     const { selectedOnPremRegion, getOnPremRegionList } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedRegion } = useAppSelector(state => state.headers);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        //@ts-ignore
+        // @ts-ignore
         const sortedRegionsData = regionsSort(getOnPremRegionList?.onPremRegionsData?.regions || []);
         sortedRegionsData?.map((val: any, idx: number) => {
-            const regionValue = val.regionCode + ' | ' + val.regionName;
+            const regionValue = `${val.regionCode} | ${val.regionName}`;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
@@ -28,7 +28,7 @@ const OnPremRegion = () => {
 
     useEffect(() => {
         if (!selectedOnPremRegion) {
-            //@ts-ignore
+            // @ts-ignore
             const simplifiedRegions = generateRegionList.map(item => item?.data?.regionCode);
 
             const foundRegion = simplifiedRegions.indexOf(headerSelectedRegion?.data?.regionCode);

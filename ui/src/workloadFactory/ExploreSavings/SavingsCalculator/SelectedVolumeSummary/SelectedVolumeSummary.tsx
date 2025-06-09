@@ -1,10 +1,9 @@
-import { Table, useTable } from '@netapp/design-system';
+import { Table, useTable, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import styles from './SelectedVolumeSummary.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useState } from 'react';
 import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
 import { mergeAoagVolumesList } from '../savingsUtil';
 
@@ -17,8 +16,8 @@ const SelectedVolumeSummary = () => {
 
     const [columnsList, setCoulumnsList] = useState<ColumnProps[]>([]);
 
-    const getColumnsWidth = (volTypeList: Array<String>) => {
-        let typeLength = volTypeList.length;
+    const getColumnsWidth = (volTypeList: Array<string>) => {
+        const typeLength = volTypeList.length;
         let colWidth = '96.5px';
         if (typeLength === 4) {
             colWidth = '96.5px';
@@ -34,7 +33,7 @@ const SelectedVolumeSummary = () => {
         return colWidth;
     };
 
-    //For loading state
+    // For loading state
     const data = [
         { details: GENERAL.ES_TOTAL_VOLUMES, id: '1' },
         {
@@ -46,56 +45,52 @@ const SelectedVolumeSummary = () => {
         { details: GENERAL.ES_TOTAL_THROUGHPUT_MBPS, id: '4' }
     ];
 
-    //For loading state
+    // For loading state
     const getLoadingStateData: ColumnProps[] = [
         {
             Header: GENERAL.ES_DETAILS,
             accessor: 'details',
             id: '1',
             width: '576px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <DsTypography variant="Regular_14" style={{ minWidth: '146px', display: 'flex', gap: '24px' }}>
-                        <div style={{ width: '250px' }}>{rowData.details}</div>
-                        <DsFlashingDotsLoader />
-                    </DsTypography>
-                );
-            }
+            renderCell: (cellData: any, rowData: any) => (
+                <DsTypography variant="Regular_14" style={{ minWidth: '146px', display: 'flex', gap: '24px' }}>
+                    <div style={{ width: '250px' }}>{rowData.details}</div>
+                    <DsFlashingDotsLoader />
+                </DsTypography>
+            )
         }
     ];
 
-    const getColumnsList = (volTypeList: Array<String>, colWidth: string, ebsAvailable: any) => {
-        let colList = [];
+    const getColumnsList = (volTypeList: Array<string>, colWidth: string, ebsAvailable: any) => {
+        const colList = [];
         colList.push({
             Header: GENERAL.ES_DETAILS,
             accessor: 'details',
             id: '1',
             width: ebsAvailable.length === 0 ? '576px' : '190px',
-            renderCell: (cellData: any, rowData: any) => {
-                return ebsAvailable.length === 0 ? (
+            renderCell: (cellData: any, rowData: any) =>
+                ebsAvailable.length === 0 ? (
                     <DsTypography variant="Regular_14" style={{ minWidth: '146px', display: 'flex', gap: '24px' }}>
                         <div style={{ width: '250px' }}>{rowData.details}</div>
                         <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                     </DsTypography>
                 ) : (
                     <DsTypography variant="Regular_14">{rowData.details}</DsTypography>
-                );
-            }
+                )
         });
         let id = 2;
         volTypeList?.map(volType => {
             colList.push({
                 Header: volType,
                 accessor: volType,
-                id: id,
+                id,
                 width: colWidth,
-                renderCell: (cellData: any, rowData: any) => {
-                    return selectedHostDetails?.loading || getPartnerHostDetailsLoading ? (
+                renderCell: (cellData: any, rowData: any) =>
+                    selectedHostDetails?.loading || getPartnerHostDetailsLoading ? (
                         <DsFlashingDotsLoader />
                     ) : (
                         <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                    );
-                }
+                    )
             });
             id += 1;
         });
@@ -107,7 +102,7 @@ const SelectedVolumeSummary = () => {
     useEffect(() => {
         setLoading(selectedHostDetails?.loading || getPartnerHostDetailsLoading);
 
-        let mergedEbsResourceInfo = mergeAoagVolumesList(
+        const mergedEbsResourceInfo = mergeAoagVolumesList(
             selectedHostDetails?.ebsResourceInfo,
             selectedPartnerHostDetails?.ebsResourceInfo
         );
@@ -117,7 +112,7 @@ const SelectedVolumeSummary = () => {
         let iops: any = { details: GENERAL.ES_TOTAL_PROVISIONED_IOPS, id: '3' };
         let throughput: any = { details: GENERAL.ES_TOTAL_THROUGHPUT_MBPS, id: '4' };
 
-        let volTypeList: any = [];
+        const volTypeList: any = [];
 
         mergedEbsResourceInfo?.map((row: any) => {
             if (row?.volumeType && !volTypeList.find((volType: any) => volType === row?.volumeType)) {
@@ -146,20 +141,19 @@ const SelectedVolumeSummary = () => {
                 if (key === 'details' || key === 'id') {
                     newObj[key] = storageAmount[key];
                     return newObj;
-                } else {
-                    newObj[key] = formatSizeTwoPrecision(storageAmount[key]);
-                    return newObj;
                 }
+                newObj[key] = formatSizeTwoPrecision(storageAmount[key]);
+                return newObj;
             }, {});
-            let data = [volumes, storageAmount, iops, throughput];
+            const data = [volumes, storageAmount, iops, throughput];
             setTableData(data);
         }, 0);
     }, [selectedHostDetails, selectedPartnerHostDetails]);
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         columns: loading ? getLoadingStateData : columnsList,
         rows: loading ? data : tableData,
@@ -172,7 +166,7 @@ const SelectedVolumeSummary = () => {
 
             <div className={styles.instanceTable}>
                 <Table
-                    //@ts-ignore
+                    // @ts-ignore
                     tableProps={tableProps}
                     variant="innerTable"
                 />

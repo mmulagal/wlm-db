@@ -1,6 +1,6 @@
 import { AccordionController, DsTypography } from '@netapp/design-system';
-import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useDispatch } from 'react-redux';
+import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './ViewCalculations.module.scss';
 import { FSX_AZ_TYPE, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
@@ -92,7 +92,7 @@ const ViewCalculations = ({ statusCheck }: any) => {
                             {GENERAL.VIEW_CAL_SECONDARY_TEXT}
                         </DsTypography>
                     </div>
-                    <div></div>
+                    <div />
                 </div>
 
                 <AccordionController isGrouped={false}>

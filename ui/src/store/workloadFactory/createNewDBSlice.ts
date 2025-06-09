@@ -105,9 +105,7 @@ const createNewUserSlice = createSlice({
         setIsLogSizeValid: (state, action: PayloadAction<any>) => {
             state.isLogSizeValid = action.payload;
         },
-        addInitialDBCreateData: (state, action: PayloadAction<any>) => {
-            return { ...state, ...action.payload };
-        },
+        addInitialDBCreateData: (state, action: PayloadAction<any>) => ({ ...state, ...action.payload }),
         setIsDataVirtualMountPoint: (state, action: PayloadAction<any>) => {
             state.isDataVirtualMountPoint = action.payload;
         },

@@ -1,11 +1,11 @@
 import { DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
+import { useEffect, useState } from 'react';
 import { ReactComponent as CostSavingsImage } from '../../../../assets/cost-savings.svg';
 import { ReactComponent as CostSavingsDisabledImage } from '../../../../assets/Cost-Disabled.svg';
 import styles from './CostSavings.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useState } from 'react';
 import {
     formatFractionalNumber,
     formatFractionalNumberForCost,
@@ -123,7 +123,7 @@ const CostSavings = ({ disableState }: CS) => {
                     </div>
 
                     <Popover
-                        popoverClass={styles['popover']}
+                        popoverClass={styles.popover}
                         children={GENERAL.NOTICE_MESSAGE_COST_SAVINGS}
                         trigger="hover"
                         container={

@@ -1,5 +1,7 @@
 import { AccordionController, DsTypography } from '@netapp/design-system';
 
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './ContentComponent.module.scss';
 import DatabaseName from './DatabaseInformation/DatabaseName/DatabaseName';
 import FilesSize from './FileSettings/FilesSize/FilesSize';
@@ -9,8 +11,6 @@ import FileNames from './FileSettings/FileNames/FileNames';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { useGetCollationListV2Query, useGetDriveInfoV2Query } from '../../../utils/apiService';
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import {
     setCollationList,
     setCollationListLoading,

@@ -1,8 +1,8 @@
 import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useMemo } from 'react';
 import styles from './InnerTable.module.scss';
 
-import { useMemo } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 
 const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
@@ -23,16 +23,14 @@ const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             filterOptions: 'auto',
             isSticky: true,
             width: 'auto',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
 
         lastColDetails(type, {}, '230px')
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -46,16 +44,16 @@ const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted volumes`}
-                singularTitle={'Impacted volume'}
+                pluralTitle="Impacted volumes"
+                singularTitle="Impacted volume"
             />
 
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

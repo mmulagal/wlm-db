@@ -1,6 +1,6 @@
 import React from 'react';
-import styles from './StorageSavings.module.scss';
 import { FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
+import styles from './StorageSavings.module.scss';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
@@ -15,24 +15,22 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
     const handleProgressBar = () => {
         if (
             hostData?.storageSavingsPercent !== 0 &&
-            //@ts-ignore
+            // @ts-ignore
             hostData?.storageSavingsPercent <= 1
         ) {
             return (
-                <>
-                    <div
-                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                        style={{
-                            width: `${100}%`,
-                            backgroundColor: 'var(--chart-9)'
-                        }}
-                    ></div>
-                </>
+                <div
+                    className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                    style={{
+                        width: `${100}%`,
+                        backgroundColor: 'var(--chart-9)'
+                    }}
+                />
             );
         }
         if (
             hostData?.storageSavingsPercent !== 0 &&
-            //@ts-ignore
+            // @ts-ignore
             hostData?.storageSavingsPercent >= 1
         ) {
             return (
@@ -43,30 +41,28 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                             width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
                             backgroundColor: 'var(--chart-9)'
                         }}
-                    ></div>
-                    <div className={styles.separator}></div>
+                    />
+                    <div className={styles.separator} />
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
                             width: `${hostData?.storageSavingsPercent}%`,
                             backgroundColor: 'var(--chart-4)'
                         }}
-                    ></div>
+                    />
                 </>
             );
         }
 
         if (hostData?.storageSavingsPercent === 0) {
             return (
-                <>
-                    <div
-                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                        style={{
-                            width: `${100}%`,
-                            backgroundColor: 'var(--chart-disabled)'
-                        }}
-                    ></div>
-                </>
+                <div
+                    className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                    style={{
+                        width: `${100}%`,
+                        backgroundColor: 'var(--chart-disabled)'
+                    }}
+                />
             );
         }
     };
@@ -113,17 +109,17 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                     <SquareComponent
                         value={hostData?.storageConsumes || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-9)"
-                        text={'Consumed storage'}
+                        text="Consumed storage"
                         loadingInFirstRow={hostsLoading}
-                        isSmall={true}
+                        isSmall
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
                         value={hostData?.storageSavings || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-4)"
-                        text={'Storage Savings'}
+                        text="Storage Savings"
                         loadingInFirstRow={hostsLoading}
-                        isSmall={true}
+                        isSmall
                     />
                 </div>
             </div>

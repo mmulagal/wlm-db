@@ -17,19 +17,16 @@ const PolicyDialog = ({ data, label }: PolicyDialogProps) => {
             <div className={styles['dialog-content']}>
                 <div className={styles['dialog-body']}>
                     <div className={styles['code-box']}>
-                        <div className={styles['copy']}>
+                        <div className={styles.copy}>
                             <Popover
                                 popoverClass={styles['copy-popover']}
                                 children={t('databases.general.copied-to-clipboard')}
                                 container={
-                                    <CopyToClipboardCommon
-                                        value={data}
-                                        iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
-                                    />
+                                    <CopyToClipboardCommon value={data} iconProvided={<CopyIcon fill="#A7A7A7" />} />
                                 }
                             />
                         </div>
-                        <div className={styles['code']}>
+                        <div className={styles.code}>
                             <pre>
                                 <DsTypography variant="Regular_14">{data}</DsTypography>
                             </pre>

@@ -1,14 +1,14 @@
 import { DsTypography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
 import styles from './ManualVolumeTypes.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import {
     setSecondaryVolumeFilledStatus,
     setSelectedVolumeTabForSecondary
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import ManualTCOInputComponent from './ManualTCOInputComponent';
 import { allPropertiesHaveValues, calculateTotalVolumes } from '../savingsUtil';
-import { useEffect, useState } from 'react';
 
 const SecondaryManualVolType = () => {
     const dispatch = useDispatch();
@@ -133,18 +133,14 @@ const SecondaryManualVolType = () => {
             </div>
 
             <div className={styles.contentContainer}>
-                {selectedVolumeTabForSecondary === 'io2' && (
-                    <ManualTCOInputComponent type="io2" throughPutDisable={true} />
-                )}
-                {selectedVolumeTabForSecondary === 'io1' && (
-                    <ManualTCOInputComponent type="io1" throughPutDisable={true} />
-                )}
+                {selectedVolumeTabForSecondary === 'io2' && <ManualTCOInputComponent type="io2" throughPutDisable />}
+                {selectedVolumeTabForSecondary === 'io1' && <ManualTCOInputComponent type="io1" throughPutDisable />}
                 {selectedVolumeTabForSecondary === 'gp2' && (
-                    <ManualTCOInputComponent type="gp2" throughPutDisable={true} IOPSDisable={true} />
+                    <ManualTCOInputComponent type="gp2" throughPutDisable IOPSDisable />
                 )}
                 {selectedVolumeTabForSecondary === 'gp3' && <ManualTCOInputComponent type="gp3" />}
                 {selectedVolumeTabForSecondary === 'st1' && (
-                    <ManualTCOInputComponent type="st1" throughPutDisable={true} IOPSDisable={true} />
+                    <ManualTCOInputComponent type="st1" throughPutDisable IOPSDisable />
                 )}
             </div>
         </div>

@@ -14,7 +14,7 @@ const ComputeInformation = ({ printState }: any) => {
 
             <div className={styles.computeTable}>
                 <div className={styles.row1}>
-                    <div className={styles.col1}></div>
+                    <div className={styles.col1} />
                     <div className={styles.col2}>
                         <DsTypography variant="Semibold_14">Number of vCPUs in use</DsTypography>
                     </div>

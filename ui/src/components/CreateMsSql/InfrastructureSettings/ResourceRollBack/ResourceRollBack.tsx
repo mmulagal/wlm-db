@@ -5,9 +5,7 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 
 const ResourceRollBack = () => {
-    const setHeader = () => {
-        return <DsTypography variant="Regular_14">{'Disabled'}</DsTypography>;
-    };
+    const setHeader = () => <DsTypography variant="Regular_14">Disabled</DsTypography>;
     const handleChange = () => {};
     return (
         <div className={styles.resourceRollback}>
@@ -20,7 +18,7 @@ const ResourceRollBack = () => {
                     <DsTypography>
                         <Popover
                             popoverClass={styles['popover-resource']}
-                            children={"Resources rollback isn't supported"}
+                            children="Resources rollback isn't supported"
                             trigger="hover"
                             container={
                                 <ToggleSelector

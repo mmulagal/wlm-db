@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@netapp/design-system';
-import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { useDispatch, useSelector } from 'react-redux';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import styles from './SecurityGroup.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
-import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedExistingSecurityGroup, setSelectedSecurityGroup } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
@@ -30,7 +30,7 @@ const SecurityGroup = () => {
         (state: any) => state.mssqlForm.securityGroup.selectedExistingSecurityGroup
     );
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateExistingSecurity = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         sgData?.securityGroups?.map((val: any) => {
@@ -50,7 +50,7 @@ const SecurityGroup = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingSecurity]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (
@@ -58,7 +58,8 @@ const SecurityGroup = () => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
-        } else if (!selectedVPCData) {
+        }
+        if (!selectedVPCData) {
             return <ActionRequired disabled />;
         }
         if (selectedSecurityType === GENERAL.USE_AN_EXISTING_SECURITY) {
@@ -131,7 +132,9 @@ const SecurityGroup = () => {
                             </div>
                         )}
 
-                        {selectedSecurityType === GENERAL.GENERATED_SECURITY_GROUP && <div className={styles.createNew} />}
+                        {selectedSecurityType === GENERAL.GENERATED_SECURITY_GROUP && (
+                            <div className={styles.createNew} />
+                        )}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

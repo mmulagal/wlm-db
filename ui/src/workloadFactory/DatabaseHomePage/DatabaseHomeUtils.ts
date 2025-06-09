@@ -34,10 +34,10 @@ export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZ
     let isLoading = false;
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
-    let uniqueResourceList: Array<string> = [];
+    const uniqueResourceList: Array<string> = [];
 
     Object.keys(data).map((val: string) => {
-        let keyList = val.split('_');
+        const keyList = val.split('_');
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
@@ -55,7 +55,7 @@ export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZ
         });
 
         const state = store.getState();
-        const inventoryTableData = state.inventoryV2.inventoryTableData;
+        const { inventoryTableData } = state.inventoryV2;
         if (type === WIZARD_TYPE.MSSQL) {
             if (inventoryTableData?.[val]) {
                 inventoryTableData[val]?.sqlServerInstances?.map((per: any) => {
@@ -83,16 +83,16 @@ export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZ
 
     dispatch(setManagedHostInstanceLoading(isLoading));
     return {
-        totalDatabases: totalDatabases,
+        totalDatabases,
         totalHosts: totahosts,
-        managedDatabases: managedDatabases,
-        totalInstances: totalInstances,
-        managedInstances: managedInstances
+        managedDatabases,
+        totalInstances,
+        managedInstances
     };
 };
 
 export const getPotentialSavingsValues = (data: any) => {
-    let result = {
+    const result = {
         loading: false,
         ebsCost: 0,
         fsxwCost: 0,
@@ -106,10 +106,10 @@ export const getPotentialSavingsValues = (data: any) => {
 
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
-    let uniqueResourceList: Array<string> = [];
+    const uniqueResourceList: Array<string> = [];
 
     Object.keys(data).map((key: string) => {
-        let keyList = key.split('_');
+        const keyList = key.split('_');
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
@@ -119,7 +119,7 @@ export const getPotentialSavingsValues = (data: any) => {
         }
         uniqueResourceList.push(keyList?.[0]);
 
-        let val = data[key];
+        const val = data[key];
         if (val?.loading) {
             result.loading = true;
         }
@@ -157,10 +157,10 @@ export const getManagedAggrProtection = (data: any) => {
 
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
-    let uniqueResourceList: Array<string> = [];
+    const uniqueResourceList: Array<string> = [];
 
     Object.keys(data).map((key: string) => {
-        let keyList = key.split('_');
+        const keyList = key.split('_');
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
@@ -176,7 +176,7 @@ export const getManagedAggrProtection = (data: any) => {
         let perFsxOntapSnapshotsDb = 0;
         let perAwsBackupDb = 0;
         let perSqlServerBackupDb = 0;
-        let totalInstances = data[key]?.databaseInstancesSummary?.length || 0;
+        const totalInstances = data[key]?.databaseInstancesSummary?.length || 0;
         data[key]?.databaseInstancesSummary?.map((val: any) => {
             if (
                 isAwsBackupEnabled(val) ||
@@ -219,26 +219,26 @@ export const getManagedAggrProtection = (data: any) => {
     const totalHost = protectedDb + unprotectedDb;
 
     return {
-        protectedDb: protectedDb,
-        unprotectedDb: unprotectedDb,
+        protectedDb,
+        unprotectedDb,
         protectedPercent: (protectedDb / totalHost) * 100 || 0,
         unprotectedPercent: (unprotectedDb / totalHost) * 100 || 0,
-        awsBackupDb: awsBackupDb,
-        fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
-        sqlServerBackupDb: sqlServerBackupDb
+        awsBackupDb,
+        fsxOntapSnapshotsDb,
+        sqlServerBackupDb
     };
 };
 
 export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) => {
     let totalConsume = 0;
     let storageSavings = 0;
-    let storageList: (string | undefined)[] = [];
+    const storageList: (string | undefined)[] = [];
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
-    let uniqueResourceList: Array<string> = [];
+    const uniqueResourceList: Array<string> = [];
 
     Object.keys(data).map((key: string) => {
-        let keyList = key.split('_');
+        const keyList = key.split('_');
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
@@ -250,8 +250,8 @@ export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) =>
         uniqueResourceList.push(keyList?.[0]);
 
         data[key]?.databaseInstancesSummary?.map((val: any) => {
-            let fsxVal = val?.databaseInstanceTopology?.fileSystemId || '';
-            let storageType = val?.databaseInstanceTopology?.fileSystemType || '';
+            const fsxVal = val?.databaseInstanceTopology?.fileSystemId || '';
+            const storageType = val?.databaseInstanceTopology?.fileSystemType || '';
             let fsxType = '';
             if (storageType.includes(GENERAL.FSX_FOR_ONTAP)) {
                 fsxType = 'fsxn';
@@ -322,16 +322,16 @@ export const getManageAggrCost = (data: any) => {
     let connectivityCost = 0;
     let otherCost = 0;
 
-    let storageList: (string | undefined)[] = [];
-    let vpcList: (string | undefined)[] = [];
+    const storageList: (string | undefined)[] = [];
+    const vpcList: (string | undefined)[] = [];
     let requireBillingPerm = false;
     let noDeploymentChk = true;
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
-    let uniqueResourceList: Array<string> = [];
+    const uniqueResourceList: Array<string> = [];
 
     Object.keys(data).map((key: string) => {
-        let keyList = key.split('_');
+        const keyList = key.split('_');
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
@@ -348,7 +348,7 @@ export const getManageAggrCost = (data: any) => {
         }
 
         val?.estimatedUsageCost?.storage?.fsxnBreakDownById?.map((item: any) => {
-            let fsxVal = item?.id;
+            const fsxVal = item?.id;
             if (!fsxVal || !storageList.includes(fsxVal)) {
                 if (val?.estimatedUsageCost?.estimationType === 'pricing') {
                     storageCost += item?.capacityCost || 0;
@@ -413,54 +413,49 @@ export const getManageAggrCost = (data: any) => {
     };
 };
 
-export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) => {
-    return {
-        storageCost: (parseInt(mssqlCostObj.storageCost) + parseInt(pgsqlCostObj.storageCost)).toString(),
-        computeCost: (parseInt(mssqlCostObj.computeCost) + parseInt(pgsqlCostObj.computeCost)).toString(),
-        connectivityCost: formatFractionalNumber(
-            parseInt(mssqlCostObj.connectivityCost) + parseInt(pgsqlCostObj.connectivityCost),
-            2
-        ),
-        otherCost: formatFractionalNumber(parseInt(mssqlCostObj.otherCost) + parseInt(pgsqlCostObj.otherCost), 2),
-        totalCost: formatFractionalNumber(parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost), 2),
-        storageCostPercent: formatFractionalNumber(
-            ((parseInt(mssqlCostObj.storageCost) + parseInt(pgsqlCostObj.storageCost)) /
+export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) => ({
+    storageCost: (parseInt(mssqlCostObj.storageCost) + parseInt(pgsqlCostObj.storageCost)).toString(),
+    computeCost: (parseInt(mssqlCostObj.computeCost) + parseInt(pgsqlCostObj.computeCost)).toString(),
+    connectivityCost: formatFractionalNumber(
+        parseInt(mssqlCostObj.connectivityCost) + parseInt(pgsqlCostObj.connectivityCost),
+        2
+    ),
+    otherCost: formatFractionalNumber(parseInt(mssqlCostObj.otherCost) + parseInt(pgsqlCostObj.otherCost), 2),
+    totalCost: formatFractionalNumber(parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost), 2),
+    storageCostPercent: formatFractionalNumber(
+        ((parseInt(mssqlCostObj.storageCost) + parseInt(pgsqlCostObj.storageCost)) /
+            (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
+            100
+    ),
+    computeCostPercent: formatFractionalNumber(
+        ((parseInt(mssqlCostObj.computeCost) + parseInt(pgsqlCostObj.computeCost)) /
+            (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
+            100
+    ),
+    connectivityCostPercent: formatFractionalNumber(
+        (parseInt(mssqlCostObj.connectivityCost) +
+            parseInt(pgsqlCostObj.connectivityCost) /
                 (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
-        ),
-        computeCostPercent: formatFractionalNumber(
-            ((parseInt(mssqlCostObj.computeCost) + parseInt(pgsqlCostObj.computeCost)) /
-                (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
-        ),
-        connectivityCostPercent: formatFractionalNumber(
-            (parseInt(mssqlCostObj.connectivityCost) +
-                parseInt(pgsqlCostObj.connectivityCost) /
-                    (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
-        ),
-        otherCostPercent: formatFractionalNumber(
-            ((parseInt(mssqlCostObj.otherCost) + parseInt(pgsqlCostObj.otherCost)) /
-                (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
-        ),
-        requireBillingPerm:
-            mssqlCostObj.requireBillingPerm ||
-            pgsqlCostObj.requireBillingPerm ||
-            mssqlCostObj.noDeploymentChk ||
-            pgsqlCostObj.noDeploymentChk
-    };
-};
+            100
+    ),
+    otherCostPercent: formatFractionalNumber(
+        ((parseInt(mssqlCostObj.otherCost) + parseInt(pgsqlCostObj.otherCost)) /
+            (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
+            100
+    ),
+    requireBillingPerm:
+        mssqlCostObj.requireBillingPerm ||
+        pgsqlCostObj.requireBillingPerm ||
+        mssqlCostObj.noDeploymentChk ||
+        pgsqlCostObj.noDeploymentChk
+});
 
-export const isOptimized = (status?: string, dismissState?: string) => {
-    return (
-        status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
-        status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase() ||
-        dismissState === CONFIG_STATES.DISMISSED ||
-        dismissState === CONFIG_STATES.POSTPONED ||
-        dismissState === CONFIG_STATES.ACTIVATING
-    );
-};
+export const isOptimized = (status?: string, dismissState?: string) =>
+    status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
+    status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase() ||
+    dismissState === CONFIG_STATES.DISMISSED ||
+    dismissState === CONFIG_STATES.POSTPONED ||
+    dismissState === CONFIG_STATES.ACTIVATING;
 
 export const hasPostponedOrDismissed = (obj: any): boolean => {
     const checkState = (item: any): boolean => {
@@ -487,7 +482,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
 
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
-    let uniqueResourceList: Array<string> = [];
+    const uniqueResourceList: Array<string> = [];
 
     assessmentData?.map((databaseHost: any) => {
         if (
@@ -532,20 +527,18 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.clone?.configState
                 );
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
-                    let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
+                    const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
                         (config: any) => config.configurationName === item.name
                     )?.configState;
                     return isOptimized(item?.status, configState);
                 });
                 const isAllStorageSizingPresent =
                     instanceAssessmentData?.storage?.sizing?.length === 4 &&
-                    instanceAssessmentData?.storage.sizing.every((item: any) => {
-                        return ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(
-                            item?.name
-                        );
-                    });
+                    instanceAssessmentData?.storage.sizing.every((item: any) =>
+                        ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(item?.name)
+                    );
                 const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-                    let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                    const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
                         (config: any) => config.configurationName === item.name
                     )?.configState;
                     return isOptimized(item?.status, configState);
@@ -556,9 +549,10 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                     instanceAssessmentData?.storage?.configuration &&
                     Object.values(instanceAssessmentData?.storage?.configuration).every((item: any) =>
                         item?.every((subItem: any) => {
-                            let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[
-                                item
-                            ]?.find((config: any) => config.configurationName === subItem.name)?.configState;
+                            const configState =
+                                instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[item]?.find(
+                                    (config: any) => config.configurationName === subItem.name
+                                )?.configState;
                             return isOptimized(subItem?.status, configState);
                         })
                     );
@@ -595,7 +589,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
 };
 
 export const getAssessmentGroupedByCategory = (assessmentData: any) => {
-    let assessmentGroupedByCategory: any = {
+    const assessmentGroupedByCategory: any = {
         storage: 0,
         compute: 0,
         application: 0,
@@ -606,7 +600,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
 
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
-    let uniqueResourceList: Array<string> = [];
+    const uniqueResourceList: Array<string> = [];
 
     assessmentData.map((databaseHost: any) => {
         if (
@@ -635,33 +629,32 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
                 );
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
-                    let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
+                    const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
                         (config: any) => config.configurationName === item.name
                     )?.configState;
                     return isOptimized(item?.status, configState);
                 });
                 const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-                    let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                    const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
                         (config: any) => config.configurationName === item.name
                     )?.configState;
                     return isOptimized(item?.status, configState);
                 });
                 const isAllStorageSizingPresent =
                     instanceAssessmentData?.storage?.sizing?.length === 4 &&
-                    instanceAssessmentData?.storage.sizing.every((item: any) => {
-                        return ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(
-                            item?.name
-                        );
-                    });
+                    instanceAssessmentData?.storage.sizing.every((item: any) =>
+                        ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(item?.name)
+                    );
                 const isStorageConfigOptimized =
                     instanceAssessmentData &&
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
                     Object.values(instanceAssessmentData?.storage?.configuration).every((item: any) =>
                         item?.every((subItem: any) => {
-                            let configState = instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[
-                                item
-                            ]?.find((config: any) => config.configurationName === subItem.name)?.configState;
+                            const configState =
+                                instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[item]?.find(
+                                    (config: any) => config.configurationName === subItem.name
+                                )?.configState;
                             return isOptimized(subItem?.status, configState);
                         })
                     );
@@ -732,7 +725,7 @@ export const setConfigState = (configState: any, configName: string, state: stri
 };
 
 export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
-    let getAssessmentGroupedByConfigurations: any = {
+    const getAssessmentGroupedByConfigurations: any = {
         storageTier: 0,
         fileSystemHeadroom: 0,
         logDriveSize: 0,
@@ -756,7 +749,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         severityObj: {}
     };
 
-    let configState: any = {
+    const configState: any = {
         storageTier: [],
         fileSystemHeadroom: [],
         logDriveSize: [],
@@ -780,7 +773,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
 
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
-    let uniqueResourceList: Array<string> = [];
+    const uniqueResourceList: Array<string> = [];
 
     assessmentData.map((databaseHost: any) => {
         if (
@@ -874,7 +867,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
                     instanceAssessmentData?.storage?.configuration?.luns?.every((item: any) => {
-                        let configStateVal =
+                        const configStateVal =
                             instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.luns?.find(
                                 (config: any) => config?.configurationName === item.name
                             )?.configState;
@@ -882,7 +875,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                         return isOptimized(item?.status, configStateVal);
                     }) &&
                     instanceAssessmentData?.storage?.configuration?.volumes?.every((item: any) => {
-                        let configStateVal =
+                        const configStateVal =
                             instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.volumes?.find(
                                 (config: any) => config?.configurationName === item.name
                             )?.configState;
@@ -894,7 +887,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
                     instanceAssessmentData?.storage?.configuration?.os?.every((item: any) => {
-                        let configStateVal =
+                        const configStateVal =
                             instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.os?.find(
                                 (config: any) => config?.configurationName === item.name
                             )?.configState;
@@ -1079,7 +1072,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
     });
     return {
         ...getAssessmentGroupedByConfigurations,
-        configState: configState
+        configState
     };
 };
 
@@ -1090,7 +1083,7 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
     const state = store.getState();
     const { inventoryTableData, getDatabaseHosts } = state.inventoryV2;
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
-    let uniqueResourceList: Array<string> = [];
+    const uniqueResourceList: Array<string> = [];
 
     assessmentData.map((databaseHost: any) => {
         if (
@@ -1104,15 +1097,18 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
-                let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instance?.assessments, {});
-                let optBreakDown = formatOptimizationBreakDown(cardsData);
+                const { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(
+                    instance?.assessments,
+                    {}
+                );
+                const optBreakDown = formatOptimizationBreakDown(cardsData);
                 let score = '';
-                score = (optBreakDown?.total?.percent || '0') + '%';
+                score = `${optBreakDown?.total?.percent || '0'}%`;
                 if (score !== '100%') {
-                    let perTableData: any = {
+                    const perTableData: any = {
                         id: id++,
                         hostName: databaseHost?.databaseHostName,
-                        score: score,
+                        score,
                         databaseInstanceName: instance?.databaseInstanceName,
                         databaseHostId: databaseHost?.databaseHostId,
                         instanceId: instance?.databaseInstanceId,
@@ -1132,8 +1128,8 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
     return disableOfflineRows(tableData);
 };
 
-export const disableOfflineRows = (data: any) => {
-    return data.map((item: any) => {
+export const disableOfflineRows = (data: any) =>
+    data.map((item: any) => {
         if (
             item.status === INVENTORY_STATUS.STOPPED ||
             item.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
@@ -1151,7 +1147,8 @@ export const disableOfflineRows = (data: any) => {
                     }
                 }
             };
-        } else if (item?.configuration === '0 out of 0') {
+        }
+        if (item?.configuration === '0 out of 0') {
             return {
                 ...item,
                 cellProps: {
@@ -1167,11 +1164,10 @@ export const disableOfflineRows = (data: any) => {
         }
         return item;
     });
-};
 
 export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any, isLoading: boolean) => {
-    let result = assessmentData.map((instanceData: any) => {
-        let updatedAssessmentData = { ...instanceData };
+    const result = assessmentData.map((instanceData: any) => {
+        const updatedAssessmentData = { ...instanceData };
         const host =
             hostData?.[uniqueHostRow(instanceData.databaseHostId, instanceData?.credentialId, instanceData.regionId)];
         if (!host) {
@@ -1196,7 +1192,7 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
 };
 
 export const formatAssessmentTableData = (data: any) => {
-    let result: any = [];
+    const result: any = [];
     data.map((item: any) => {
         if (!item?.error && !item?.errorMessage) {
             result.push({
@@ -1224,7 +1220,7 @@ export const categorizeStateInstances = (data: any, type: string) => {
                         id: config?.configurationName,
                         name: type,
                         hostId: id,
-                        instanceId: instanceId,
+                        instanceId,
                         credentialId: credentialsId,
                         regionId: region,
                         state: config?.configState,
@@ -1238,7 +1234,7 @@ export const categorizeStateInstances = (data: any, type: string) => {
                         id: config?.configurationName,
                         name: type,
                         hostId: id,
-                        instanceId: instanceId,
+                        instanceId,
                         credentialId: credentialsId,
                         regionId: region,
                         state: config?.configState,
@@ -1252,7 +1248,7 @@ export const categorizeStateInstances = (data: any, type: string) => {
                             id: config?.configurationName,
                             name: type,
                             hostId: id,
-                            instanceId: instanceId,
+                            instanceId,
                             credentialId: credentialsId,
                             regionId: region,
                             state: config?.configState,
@@ -1263,7 +1259,7 @@ export const categorizeStateInstances = (data: any, type: string) => {
                             id: config?.configurationName,
                             name: type,
                             hostId: id,
-                            instanceId: instanceId,
+                            instanceId,
                             credentialId: credentialsId,
                             regionId: region,
                             state: config?.configState,

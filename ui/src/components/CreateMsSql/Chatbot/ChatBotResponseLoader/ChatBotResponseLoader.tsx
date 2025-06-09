@@ -6,19 +6,16 @@ type chatBotResponseLoaderProps = {
     isBotReplying: boolean;
 };
 
-const ChatBotResponseLoader = ({ isBotReplying }: chatBotResponseLoaderProps) => {
-    return (
-        isBotReplying && (
-            <div className={styles['message-item']}>
-                <div className={styles[`message-icon`]}>
-                    <ChatBotIcon />
-                </div>
-                <div className={styles[`message-text`]}>
-                    <Loader />
-                </div>
+const ChatBotResponseLoader = ({ isBotReplying }: chatBotResponseLoaderProps) =>
+    isBotReplying && (
+        <div className={styles['message-item']}>
+            <div className={styles['message-icon']}>
+                <ChatBotIcon />
             </div>
-        )
+            <div className={styles['message-text']}>
+                <Loader />
+            </div>
+        </div>
     );
-};
 
 export default ChatBotResponseLoader;

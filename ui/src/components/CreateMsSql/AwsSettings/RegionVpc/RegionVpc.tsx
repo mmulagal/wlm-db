@@ -8,8 +8,9 @@ import {
 } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
-import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
+import { useDispatch } from 'react-redux';
+import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import {
     formatVpcSubnetsData,
     generateOptionType,
@@ -21,7 +22,6 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { setSelectedRegionData, setSelectedVPC } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import { setHeaderSelectedMultiRegion, setHeaderSelectedRegion } from '../../../../store/workloadFactory/headersSlice';
@@ -33,7 +33,7 @@ const RegionVpc = () => {
 
     const vpcRef = useRef(null);
 
-    //Getting the Data from state
+    // Getting the Data from state
     const { regionsData, regionsLoading } = useAppSelector(state => state.mssql.getRegions);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const { vpcData, vpcLoading } = useAppSelector(state => state.mssql.getVPCList);
@@ -46,19 +46,19 @@ const RegionVpc = () => {
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         const sortedRegionsData = regionsSort(regionsData?.regions || []);
         sortedRegionsData?.map((val, idx: number) => {
-            const regionValue = val.regionCode + ' | ' + val.regionName;
+            const regionValue = `${val.regionCode} | ${val.regionName}`;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
         return options;
     }, [regionsData]);
 
-    //Update selected region in form data store
+    // Update selected region in form data store
     useEffect(() => {
         if (!isLoadConfig && !selectedRegionData && !movingFromChatbot) {
             dispatch(setSelectedRegionData(generateRegionsData[0]));
@@ -85,16 +85,16 @@ const RegionVpc = () => {
     useEffect(() => {
         if (!isVPCNotFilled && isCreateHit) {
             setTimeout(() => {
-                //@ts-ignore
+                // @ts-ignore
                 vpcRef?.current?.focus();
             }, 110);
         }
     }, [isVPCNotFilled, isCreateHit]);
 
-    //Setup for radio buttons
+    // Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
 
-    //To open accordion if default account is present
+    // To open accordion if default account is present
     useEffect(() => {
         if (credentialData && credentialData.length > 0 && regionsData && !isDefaultOpen) {
             accordionContext({
@@ -109,12 +109,12 @@ const RegionVpc = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [credentialData, regionsData, isLoadConfig]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         vpcData?.vpcs?.map((val, idx: number) => {
             const vpcValue =
-                (val?.name ? val.name + ' | ' : '') + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '') || '-';
+                (val?.name ? `${val.name} | ` : '') + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '') || '-';
             const vpcLabel2 = val.id!;
             const vpcData = {
                 id: val.id,
@@ -144,7 +144,7 @@ const RegionVpc = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData]);
 
-    //Update selected VPC in form data store
+    // Update selected VPC in form data store
     useEffect(() => {
         if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedVPC(null));
@@ -152,7 +152,7 @@ const RegionVpc = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateVPCOptions]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (
@@ -162,17 +162,16 @@ const RegionVpc = () => {
             );
         }
         if (!selectedRegionData || !selectedVPCData) {
-            return <ActionRequired error={!isVPCNotFilled ? true : false} />;
-        } else {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
-                    {/* @ts-ignore */}
-                    <div>{selectedRegionData.value}</div>
-                    <div className={CommonStyles.separator} />
-                    <div>{selectedVPCData.value}</div>
-                </Typography>
-            );
+            return <ActionRequired error={!isVPCNotFilled} />;
         }
+        return (
+            <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
+                {/* @ts-ignore */}
+                <div>{selectedRegionData.value}</div>
+                <div className={CommonStyles.separator} />
+                <div>{selectedVPCData.value}</div>
+            </Typography>
+        );
     };
     return (
         <div className={styles['region-vpc']}>
@@ -231,20 +230,20 @@ const RegionVpc = () => {
                                         ref={vpcRef}
                                         label={GENERAL.VPC}
                                         error={!isVPCNotFilled && !selectedVPCData ? GENERAL.ACTION_REQUIRED : ''}
-                                        //@ts-ignore
+                                        // @ts-ignore
                                         isErrorPrefixHidden
                                         customErrorWarningIcon={
                                             <WarningIcon
                                                 style={{
                                                     width: '16px',
                                                     height: '16px',
-                                                    //@ts-ignore
+                                                    // @ts-ignore
                                                     '--icon-primary-color': 'var(--error'
                                                 }}
                                             />
                                         }
                                         isClearable={false}
-                                        value={selectedVPCData ? selectedVPCData : null}
+                                        value={selectedVPCData || null}
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setSelectedVPC(selectedOptions));
                                             dispatch(setIsWizardTouched(true));

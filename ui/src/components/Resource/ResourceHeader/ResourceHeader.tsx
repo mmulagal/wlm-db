@@ -1,10 +1,10 @@
+import { NavLink, useLocation } from 'react-router-dom';
+import { Button, Typography, ButtonWithDropdown } from '@netapp/design-system';
+import { useMemo } from 'react';
 import styles from './ResourceHeader.module.scss';
 import { ReactComponent as SqlIcon } from '../../../assets/sql-icon.svg';
 import { ReactComponent as ReloadIcon } from '../../../assets/reload-icon.svg';
 import { ReactComponent as MenuIcon } from '../../../assets/menu-icon.svg';
-import { NavLink, useLocation } from 'react-router-dom';
-import { Button, Typography, ButtonWithDropdown } from '@netapp/design-system';
-import { useMemo } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import { navigateToCanvas } from '../../../utils/appConfig';
 
@@ -22,7 +22,7 @@ const ResourceHeader = ({ name, refresh, onDeleteMssql }: ResourceHeaderProps) =
     ];
     const { pathname } = useLocation();
 
-    //@ts-ignore
+    // @ts-ignore
     const selectedTab = useMemo(() => {
         const splitPath = pathname.split('/');
         return splitPath.length ? splitPath[splitPath.length - 1] : 'overview';
@@ -35,20 +35,16 @@ const ResourceHeader = ({ name, refresh, onDeleteMssql }: ResourceHeaderProps) =
                 {name}
             </Typography>
             <div className={styles.tabsContainer}>
-                {tabs.map((tabData: any) => {
-                    return (
-                        <NavLink to={tabData.url} className={({ isActive }) => (isActive ? styles['active'] : '')}>
-                            <Typography
-                                variant={selectedTab === tabData.url ? 'Semibold_16' : 'Regular_16'}
-                                className={`${styles.tabItem} ${
-                                    selectedTab === tabData.url ? styles.selectedItem : ''
-                                }`}
-                            >
-                                {tabData.name}
-                            </Typography>
-                        </NavLink>
-                    );
-                })}
+                {tabs.map((tabData: any) => (
+                    <NavLink to={tabData.url} className={({ isActive }) => (isActive ? styles.active : '')}>
+                        <Typography
+                            variant={selectedTab === tabData.url ? 'Semibold_16' : 'Regular_16'}
+                            className={`${styles.tabItem} ${selectedTab === tabData.url ? styles.selectedItem : ''}`}
+                        >
+                            {tabData.name}
+                        </Typography>
+                    </NavLink>
+                ))}
             </div>
             <div className={styles.rightContainer}>
                 <Button
@@ -84,7 +80,7 @@ const ResourceHeader = ({ name, refresh, onDeleteMssql }: ResourceHeaderProps) =
                             )
                         }
                     ]}
-                    placement={'bottom-end'}
+                    placement="bottom-end"
                 >
                     <MenuIcon />
                 </ButtonWithDropdown>

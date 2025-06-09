@@ -36,7 +36,7 @@ const SandboxInstanceApis = () => {
     const [getSandboxInstanceList] = useLazyGetSandboxInstanceListQuery();
 
     useEffect(() => {
-        if (!visitedTabs['Sandboxes']) {
+        if (!visitedTabs.Sandboxes) {
             runApiDetails();
         }
     }, []);
@@ -57,11 +57,11 @@ const SandboxInstanceApis = () => {
         dispatch(setSandboxInstanceLoading(true));
         try {
             const result = await getSandboxInstanceList({
-                credentialId: selectedResourceCredId || credIdFromJM, //|| condition is for when coming from JM
-                region: selectedResourceRegionId || regionFromJM, //|| condition is for when coming from JM
-                databaseHostId: selectedResourceId || getWellResourceId, //|| condition is for when coming from JM
-                databaseInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance, //|| condition is for when coming from JM
-                nextToken: nextToken
+                credentialId: selectedResourceCredId || credIdFromJM, // || condition is for when coming from JM
+                region: selectedResourceRegionId || regionFromJM, // || condition is for when coming from JM
+                databaseHostId: selectedResourceId || getWellResourceId, // || condition is for when coming from JM
+                databaseInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance, // || condition is for when coming from JM
+                nextToken
             });
 
             if (result?.data) {

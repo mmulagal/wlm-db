@@ -1,9 +1,9 @@
 import { AccordionCard, AccordionCardContent, DsTypography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { viewCalculationForEBS } from '../../../SavingsCalculator/savingsUtil';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
 import { TableLayout } from '../../ViewCalculationsUtils';
 
 const ClonesEBSCalculation = () => {
