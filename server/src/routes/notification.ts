@@ -2,11 +2,12 @@ import { MultipartFile } from '@fastify/multipart';
 import { FastifyInstance } from 'fastify/types/instance';
 import { FastifyRequest } from 'fastify';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import { emailSchema } from './schemas/notification-schema';
+import { emailSchema, notificationSchema } from './schemas/notification-schema';
 import castRequest from './utils';
 import processEmailRequest from '../operations/notification-operations';
+import { prepareWFNotificationRequest } from '../operations/wf-notification-operations';
 
-export default function storageSavingsRoutes(fastify: FastifyInstance) {
+export default function notificationRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
     const API_PATH_NOTIFICATION = '/v1/notification';
 
@@ -61,4 +62,18 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         }
     );
+
+    // Endpoint to send Workload Factory notification
+    // This endpoint prepares the notification request and sends it to the Workload Factory service
+    // TODO: This is added for the simulator to test the notification service.. can be removed later
+    server.post(`${API_PATH_NOTIFICATION}/send`, { schema: notificationSchema }, async (request, reply) => {
+        const {
+            params: { accountId },
+            body: { notificationData }
+        } = castRequest(request);
+
+        const result = await prepareWFNotificationRequest(accountId, notificationData);
+
+        return reply.send(result);
+    });
 }
