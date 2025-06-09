@@ -1,4 +1,4 @@
-import ms from 'ms';
+import ms, { StringValue } from 'ms';
 import { isEmpty } from 'lodash-es';
 import config from 'config';
 import { randomUUID } from 'crypto';
@@ -1204,7 +1204,7 @@ async function processCloudFormationMessages() {
                     `Delaying polling for SQS queue '${queueUrl}' due to error with messsage`,
                     JSON.stringify(err)
                 );
-                setTimeout(() => processCloudFormationMessages(), ms(config.get<string>('sqs-poll-interval')));
+                setTimeout(() => processCloudFormationMessages(), ms(config.get<StringValue>('sqs-poll-interval')));
             }
         }
     }

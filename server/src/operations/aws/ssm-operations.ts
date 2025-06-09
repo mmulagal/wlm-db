@@ -1,5 +1,5 @@
 import config from 'config';
-import ms from 'ms';
+import ms, { StringValue } from 'ms';
 import createError from 'http-errors';
 import throat from 'throat';
 import {
@@ -46,7 +46,7 @@ async function pollCommandStatusForAllInstances(
     region: string,
     commandId: string,
     instanceIds: string[],
-    pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
+    pollInterval: number = ms(config.get<StringValue>('ssm.poll-interval')),
     throttleSize: number = 5,
     accountId?: string
 ) {
@@ -94,7 +94,7 @@ async function pollCommandStatus(
     credentialsId: string,
     region: string,
     pollParams: GetCommandInvocationCommandInput,
-    pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
+    pollInterval: number = ms(config.get<StringValue>('ssm.poll-interval')),
     accountId?: string
 ): Promise<GetCommandInvocationCommandOutput> {
     logger.debug('Polling SSM command execution', { pollParams, pollInterval });
@@ -431,7 +431,7 @@ async function pollSSMConnectionStatus(
     region: string,
     instanceId: string,
     retryCount: number = 1,
-    pollInterval: number = ms(config.get<string>('ssm.connection-poll-interval'))
+    pollInterval: number = ms(config.get<StringValue>('ssm.connection-poll-interval'))
 ) {
     logger.info('Polling SSM connection status', {
         accountId,

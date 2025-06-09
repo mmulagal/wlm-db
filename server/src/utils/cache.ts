@@ -1,5 +1,5 @@
 import { LRUCache } from 'lru-cache';
-import ms from 'ms';
+import ms, { StringValue } from 'ms';
 import {
     BXP_USER_CRED_TYPE,
     USER_TENANCY_CACHE_TYPE,
@@ -125,7 +125,7 @@ function getCacheByType(type: string, checkCache: boolean = false) {
     }
 }
 
-function writeToCache(type: string, key: string, data: any, ttl?: number | string) {
+function writeToCache(type: string, key: string, data: any, ttl?: StringValue | number) {
     logger.debug('Writing to cache:', { key, data });
 
     const cache = getCacheByType(type);

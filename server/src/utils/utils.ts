@@ -12,6 +12,7 @@ import isBase64 from 'is-base64';
 import { inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
 import randomize from 'randomatic';
+import { StringValue } from 'ms';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { RegionDetailsType } from '../routes/types/generic.types';
 
@@ -982,7 +983,7 @@ function isPgsql(resourceType: string) {
     return resourceType === DatabaseTypes.PG_SQL;
 }
 
-const isRateLimited = (cacheType: string, cacheKey: string, LIMIT: number, ttl?: string): boolean => {
+const isRateLimited = (cacheType: string, cacheKey: string, LIMIT: number, ttl?: StringValue): boolean => {
     const cacheNum = readFromCacheByKey(cacheType, cacheKey);
     if (!cacheNum) {
         writeToCache(cacheType, cacheKey, 1, ttl);
