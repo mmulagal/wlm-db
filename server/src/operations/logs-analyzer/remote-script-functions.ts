@@ -1,5 +1,6 @@
 import { InferenceConfigType } from '../../routes/types/logs-analyzer.types';
 import getLogger from '../../utils/logger';
+import { LOG_LEVEL } from '../../utils/logs-analyzer/logs-analyzer-consts';
 
 const logger = getLogger();
 
@@ -172,7 +173,7 @@ function getWindowsPrepareScript(scriptParams: {
                 '--logs-path', $logsPath,
                 '--sql-auth-enabled', $sqlAuthEnabled,
                 '--database-instance-name', $databaseInstanceName,
-                '--log-level', 'info',
+                '--log-level', '${LOG_LEVEL}',
                 '--region', $region,
                 '--model-id', $modelId,
                 '--model-region', $modelRegion,
@@ -274,7 +275,7 @@ if [ ! -f "$filePath" ]; then
     exit 1
 fi
 
-"$filePath" --logs-path "$logsPath" --log-level info --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
+"$filePath" --logs-path "$logsPath" --log-level ${LOG_LEVEL} --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
 
 if [ $? -ne 0 ]; then
     exit 1
