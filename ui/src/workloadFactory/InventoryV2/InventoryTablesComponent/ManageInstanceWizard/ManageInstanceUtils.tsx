@@ -185,6 +185,7 @@ export const callManageSingleInstanceApi = async (
             // Update the in-progress instances state
             const updatedState = store.getState();
             const { inProgressInstances } = updatedState.inventoryV2;
+            const isWorkloadFactoryStatus = updatedState.auth?.isWorkloadFactory;
             const inProgressId = uniqueHostRow(
                 `${manageSingleInstanceChecks?.ec2InstanceId}_${manageSingleInstanceChecks?.databaseInstanceName}`,
                 manageSingleInstanceChecks?.credentialsId,
@@ -210,14 +211,19 @@ export const callManageSingleInstanceApi = async (
             );
             setTimeout(() => {
                 dispatch(setLandingFromWizard(true));
-                navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: {
-                        pathname: FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
-                        replace: true
-                    }
-                });
+                if (isWorkloadFactoryStatus) {
+                    navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: FORM_TO_WLF_NAVIGATE_INVENTORY,
+                            replace: true
+                        }
+                    });
+                } else {
+                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
+                }
+                
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
@@ -298,6 +304,7 @@ export const callManageMultiInstanceApi = async (
         if (result.data.jobId) {
             const updatedState = store.getState();
             const { inProgressInstances } = updatedState.inventoryV2;
+            const isWorkloadFactoryStatus = updatedState.auth?.isWorkloadFactory;
             // Use payload.items to create inProgressIDList, covering all databaseInstanceNames
             const inProgressIDList = payload.items.flatMap((item: any) =>
                 (item.databaseInstanceNames || [])?.map((dbInstanceName: string) =>
@@ -326,14 +333,18 @@ export const callManageMultiInstanceApi = async (
             );
             setTimeout(() => {
                 dispatch(setLandingFromWizard(true));
-                navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: {
-                        pathname: FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
-                        replace: true
-                    }
-                });
+                if (isWorkloadFactoryStatus) {
+                    navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: FORM_TO_WLF_NAVIGATE_INVENTORY,
+                            replace: true
+                        }
+                    });
+                } else {
+                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
+                }
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
