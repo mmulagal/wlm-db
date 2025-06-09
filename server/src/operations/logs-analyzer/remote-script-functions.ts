@@ -132,6 +132,7 @@ function getWindowsPrepareScript(scriptParams: {
         $temperature = ${temperature};
         $maxTokens = ${maxTokens};
         $topP = ${topP};
+        $logLevel = '${LOG_LEVEL}';
 
         function Invoke-RetryCommand {
             param ([scriptblock]$Command, [int]$Retries = 5)
@@ -173,7 +174,7 @@ function getWindowsPrepareScript(scriptParams: {
                 '--logs-path', $logsPath,
                 '--sql-auth-enabled', $sqlAuthEnabled,
                 '--database-instance-name', $databaseInstanceName,
-                '--log-level', '${LOG_LEVEL}',
+                '--log-level', '$logLevel',
                 '--region', $region,
                 '--model-id', $modelId,
                 '--model-region', $modelRegion,
