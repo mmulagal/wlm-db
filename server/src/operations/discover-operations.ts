@@ -249,14 +249,23 @@ async function getHostAndSqlServerInfo(
         */
         api1StartTime = performance.now();
         const [fsxList, svmList, subnetList, ebsVolumeList] = await Promise.all([
-            describeFSxFileSystems(credentialsId, region),
-            describeFSxStorageVirtualMachines(credentialsId, region),
-            paginatedDescribeSubnets(credentialsId, region, {}),
-            paginateDescribeEbsVolumes(credentialsId, region, {
-                Filters: [
-                    { Name: 'attachment.instance-id', Values: ssmConnectedNodes.map(target => target.ec2InstanceId) }
-                ]
-            })
+            describeFSxFileSystems(credentialsId, region, { useCache: true }),
+            describeFSxStorageVirtualMachines(credentialsId, region, undefined, { useCache: true }),
+            paginatedDescribeSubnets(credentialsId, region, {}, { useCache: true }),
+            paginateDescribeEbsVolumes(
+                credentialsId,
+                region,
+                {
+                    Filters: [
+                        {
+                            Name: 'attachment.instance-id',
+                            Values: ssmConnectedNodes.map(target => target.ec2InstanceId)
+                        }
+                    ]
+                },
+                undefined,
+                { useCache: true }
+            )
         ]);
         api1EndTime = performance.now();
         logger.info(`API1Performance: Time taken by describe FSxFS/SVM: ${api1EndTime - api1StartTime}ms`);
@@ -789,7 +798,8 @@ async function fetchUnmanagedHostsInformationV2(
                     sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) &&
                 nodeIps
             ) {
-                clusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
+                clusterNodeDetails =
+                    (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps, { useCache: true })) || [];
             }
             const resourceDetails: ResourceDetails = {
                 id: null,
@@ -1045,7 +1055,9 @@ async function validateAndStoreDiscoveredParameters(
         if (clusterNodesIpAddress && !isEmpty(clusterNodesIpAddress)) {
             try {
                 const clusterNodeDetails =
-                    (await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNodesIpAddress)) || [];
+                    (await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNodesIpAddress, {
+                        useCache: true
+                    })) || [];
                 instanceIds = clusterNodeDetails.map(e => e.ec2InstanceId);
             } catch (error) {
                 logger.error('Error while generating resource id for SSM parameter: ', error);
@@ -1710,7 +1722,12 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
 
                     const [ec2Details, discoverDetails, clusterNetworkIpDetails, adDetails, missingResourceDetails] =
                         await Promise.all([
-                            describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }),
+                            describeInstance(
+                                credentialsId,
+                                region,
+                                { InstanceIds: [ec2InstanceId] },
+                                { useCache: true }
+                            ),
                             getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
                                 ec2InstanceId
                             ]),
@@ -1775,7 +1792,8 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                             const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
                                 credentialsId,
                                 region,
-                                clusterNetworkIpDetailsJson.clusterNetworkIps
+                                clusterNetworkIpDetailsJson.clusterNetworkIps,
+                                { useCache: true }
                             );
                             const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
                             if (!isEmpty(temp)) {
@@ -1939,16 +1957,22 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                         domainName: activeDirectoryDomainName,
                                         ipAddresses: activeDirectoryIpAddresses
                                     } = JSON.parse(adDetails!)[ACTIVE_DIRECTORY];
-                                    const ebsVolumes = await paginateDescribeEbsVolumes(credentialsId, region, {
-                                        Filters: [
-                                            {
-                                                Name: 'attachment.instance-id',
-                                                Values: node2InstanceId
-                                                    ? [node1InstanceId, node2InstanceId]
-                                                    : [node1InstanceId]
-                                            }
-                                        ]
-                                    });
+                                    const ebsVolumes = await paginateDescribeEbsVolumes(
+                                        credentialsId,
+                                        region,
+                                        {
+                                            Filters: [
+                                                {
+                                                    Name: 'attachment.instance-id',
+                                                    Values: node2InstanceId
+                                                        ? [node1InstanceId, node2InstanceId]
+                                                        : [node1InstanceId]
+                                                }
+                                            ]
+                                        },
+                                        undefined,
+                                        { useCache: true }
+                                    );
                                     const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
                                         iops: volume.Iops,
                                         size: volume.Size,
@@ -2167,8 +2191,10 @@ async function discoverEc2Instances(
     }
 
     const [[reservations, NextToken], vpcs] = await Promise.all([
-        describeInstancesWithPagination(credentialsId, region, describeInstanceParams, pageSize, nextToken),
-        paginatedDescribeVpcs(credentialsId, region, {})
+        describeInstancesWithPagination(credentialsId, region, describeInstanceParams, pageSize, nextToken, {
+            useCache: true
+        }),
+        paginatedDescribeVpcs(credentialsId, region, {}, { useCache: true })
     ]);
 
     const vpcNames = new Map(vpcs?.map(({ Tags, VpcId }: Vpc) => [VpcId, getResourceNameFromTags(Tags)]));
@@ -2457,7 +2483,9 @@ function getEbsVolumeId(ebsVolumeIDs: (InstanceBlockDeviceMapping | undefined)[]
 async function getPrimaryHostDetails(credentialsId: string, region: string, primaryHostIp: string) {
     logger.info('Get primary host details', { credentialsId, region, primaryHostIp });
     if (isValidProp(primaryHostIp)) {
-        const [hostDetails] = await getInstanceDetailsByPrivateIp(credentialsId, region, [primaryHostIp]);
+        const [hostDetails] = await getInstanceDetailsByPrivateIp(credentialsId, region, [primaryHostIp], {
+            useCache: true
+        });
         return hostDetails;
     }
 }
@@ -2473,7 +2501,8 @@ async function getReplicaNodes(
         return getInstanceDetailsByPrivateIp(
             credentialsId,
             region,
-            replicaInfo.map((info: Record<string, string>) => info.client_addr)
+            replicaInfo.map((info: Record<string, string>) => info.client_addr),
+            { useCache: true }
         );
     }
 }
@@ -2851,17 +2880,23 @@ async function fetchFsxResourceMappings(
 
     const [fsxList, { StorageVirtualMachines: svmList }, subnetList, ebsVolumeList, ssmResponseList] =
         await Promise.all([
-            describeFSxFileSystems(credentialsId, region),
-            describeFSxStorageVirtualMachines(credentialsId, region),
-            paginatedDescribeSubnets(credentialsId, region, {}),
-            paginateDescribeEbsVolumes(credentialsId, region, {
-                Filters: [
-                    {
-                        Name: 'attachment.instance-id',
-                        Values: ssmConnectedEc2Instances.map(target => target.ec2InstanceId)
-                    }
-                ]
-            }),
+            describeFSxFileSystems(credentialsId, region, { useCache: true }),
+            describeFSxStorageVirtualMachines(credentialsId, region, undefined, { useCache: true }),
+            paginatedDescribeSubnets(credentialsId, region, {}, { useCache: true }),
+            paginateDescribeEbsVolumes(
+                credentialsId,
+                region,
+                {
+                    Filters: [
+                        {
+                            Name: 'attachment.instance-id',
+                            Values: ssmConnectedEc2Instances.map(target => target.ec2InstanceId)
+                        }
+                    ]
+                },
+                undefined,
+                { useCache: true }
+            ),
             !isEmpty(ssmConnectedEc2Instances)
                 ? (executeSSMDocumentMultipleInstances(
                       credentialsId,

@@ -56,7 +56,8 @@ import {
     VPC,
     NetworkInterface,
     Metadata,
-    NodeDetails
+    NodeDetails,
+    AWSSDKCacheParams
 } from '../../utils/common-types';
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import describeAutoscalingInstances from '../../lib/aws/auto-scaling';
@@ -620,7 +621,9 @@ async function isEbsAwsBackupEnabled(credentialsId: string, region: string, ebsV
         ]
     };
 
-    const backups = await describeSnapshots(credentialsId, region, input);
+    const backups = await describeSnapshots(credentialsId, region, input, {
+        useCache: true
+    });
 
     return backups.Snapshots?.length !== 0;
 }
@@ -844,17 +847,27 @@ async function getInstanceTypesFromInstanceRequirements(
     }
 }
 
-async function getInstanceDetailsByPrivateIp(credentialsId: string, region: string, privateIps: string[]) {
+async function getInstanceDetailsByPrivateIp(
+    credentialsId: string,
+    region: string,
+    privateIps: string[],
+    cacheParams?: AWSSDKCacheParams
+) {
     logger.info('Get instance details by private ip', { credentialsId, region, privateIps });
 
-    const { Reservations } = await describeInstance(credentialsId, region, {
-        Filters: [
-            {
-                Name: 'private-ip-address',
-                Values: privateIps
-            }
-        ]
-    });
+    const { Reservations } = await describeInstance(
+        credentialsId,
+        region,
+        {
+            Filters: [
+                {
+                    Name: 'private-ip-address',
+                    Values: privateIps
+                }
+            ]
+        },
+        cacheParams
+    );
     const instanceDetails: NodeDetails[] = [];
     Reservations?.forEach(({ Instances }) => {
         const [instance] = Instances || [];

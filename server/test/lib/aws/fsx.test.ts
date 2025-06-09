@@ -30,7 +30,9 @@ const tag = [{ Key: 'key', Value: 'value' }];
 
 describe('Testcases for Amazon FSx resources', () => {
     it('List FSx Filesystems', async () => {
-        const response = await describeFSxFileSystems(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION);
+        const response = await describeFSxFileSystems(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
+            useCache: true
+        });
         expect(response).toEqual(fsxFilesystems.FileSystems);
     });
 
@@ -42,40 +44,61 @@ describe('Testcases for Amazon FSx resources', () => {
     });
 
     it('List FSx SVMs', async () => {
-        const response = await describeFSxStorageVirtualMachines(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, [
-            FSX_FILESYSTEM_ID
-        ]);
+        const response = await describeFSxStorageVirtualMachines(
+            DEFAULT_AWS_CREDENTIALS_TYPE,
+            DEFAULT_AWS_REGION,
+            [FSX_FILESYSTEM_ID],
+            { useCache: true }
+        );
         expect(response).toEqual(fsxSvms);
     });
 
     it('List FSx Netapp Volume Backups', async () => {
-        const response = await describeFSxBackups(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
-            Filters: [
-                {
-                    Name: 'volume-id',
-                    Values: [VOLUME_ID]
-                }
-            ]
-        });
+        const response = await describeFSxBackups(
+            DEFAULT_AWS_CREDENTIALS_TYPE,
+            DEFAULT_AWS_REGION,
+            {
+                Filters: [
+                    {
+                        Name: 'volume-id',
+                        Values: [VOLUME_ID]
+                    }
+                ]
+            },
+            undefined,
+            { useCache: true }
+        );
         expect(response).toEqual(fsxnBackupWithModifiedCreationTime);
     });
 
     it('List FSx windows Backups', async () => {
-        const response = await describeFSxBackups(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
-            Filters: [
-                {
-                    Name: 'file-system-id',
-                    Values: [FSX_FILESYSTEM_ID]
-                }
-            ]
-        });
+        const response = await describeFSxBackups(
+            DEFAULT_AWS_CREDENTIALS_TYPE,
+            DEFAULT_AWS_REGION,
+            {
+                Filters: [
+                    {
+                        Name: 'file-system-id',
+                        Values: [FSX_FILESYSTEM_ID]
+                    }
+                ]
+            },
+            undefined,
+            { useCache: true }
+        );
         expect(response).toEqual(fsxwBackups);
     });
 
     it('Describe a FSxN filesystem', async () => {
-        const response = await describeFSx(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
-            FileSystemIds: [FSX_FILESYSTEM_ID]
-        });
+        const response = await describeFSx(
+            DEFAULT_AWS_CREDENTIALS_TYPE,
+            DEFAULT_AWS_REGION,
+            {
+                FileSystemIds: [FSX_FILESYSTEM_ID]
+            },
+            undefined,
+            { useCache: true }
+        );
 
         expect(response).toEqual(fsxFilesystems.FileSystems[0]);
     });

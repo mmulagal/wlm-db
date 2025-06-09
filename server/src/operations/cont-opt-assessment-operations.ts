@@ -597,9 +597,12 @@ async function driftAssessmentDataCollection(
         shouldRunMSSQLPatchAssessment;
 
     if (shouldRunInstanceLevelAssessment) {
-        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
-            databaseInstanceRecord.fsxFileSystem
-        ]);
+        const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            [databaseInstanceRecord.fsxFileSystem],
+            { useCache: true }
+        );
 
         databaseInstanceRecord.svmOntapUuid = svms.find(svm =>
             isDemoFlow ? svm : svm?.StorageVirtualMachineId === databaseInstanceRecord.svmId

@@ -49,7 +49,7 @@ async function calculateFsxnStorageEfficiencyUsingCloudwatch(
         ]
     };
     const [fsxnInfo, storageEfficiencySavingsData, storageUsedData] = await Promise.all([
-        describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId!] }),
+        describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId!] }, undefined, { useCache: true }),
         getMetricStatistics(credentialsId, region, storageEfficiencyParams),
         getMetricStatistics(credentialsId, region, storageUsedParams)
     ]);
@@ -126,7 +126,7 @@ async function calculateFsxwStorageEfficiencyUsingCloudwatch(
         ]
     };
     const [fsxwInfo, deduplicationSavedStorageAverageData, storageCapacityUtilizationData] = await Promise.all([
-        describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId!] }),
+        describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId!] }, undefined, { useCache: true }),
         getMetricStatistics(credentialsId, region, deduplicationSavedStorageAverageParams),
         getMetricStatistics(credentialsId, region, storageCapacityUtilizationParams)
     ]);

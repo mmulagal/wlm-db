@@ -360,7 +360,9 @@ async function initiateAWSBackupAssessment(
 
     let isAWSBackupEnabled = false;
     try {
-        const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, accountId);
+        const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, accountId, {
+            useCache: true
+        });
         isAWSBackupEnabled = fsxnInfo?.FileSystems?.[0]?.OntapConfiguration?.AutomaticBackupRetentionDays !== undefined;
         logger.debug('Is Scheduled FSx for ONTAP backup enabled:', isAWSBackupEnabled);
         if (!isAWSBackupEnabled) {
@@ -544,7 +546,8 @@ async function initiateCrossRegionResiliencyAssessment(
                             credentialsId,
                             region,
                             { FileSystemIds: [peerFileSystemId] },
-                            accountId
+                            accountId,
+                            { useCache: true }
                         );
                         const resourceArn = fsxInfo?.FileSystems?.[0]?.ResourceARN;
 

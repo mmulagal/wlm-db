@@ -402,9 +402,12 @@ async function activeSqlNodeDetails(
 async function getSvmNameFromId(credentialsId: string, region: string, fsxId: string, svmId: string) {
     logger.info('Getting SVM name from id', { credentialsId, region, fsxId, svmId });
 
-    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(credentialsId, region, [
-        fsxId as string
-    ]);
+    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region,
+        [fsxId as string],
+        { useCache: true }
+    );
 
     const { Name: svmName } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
 
@@ -688,7 +691,9 @@ async function headroomOptimization(
         if (headroomPercent < 35) {
             logger.info('Under provisioned: Headroom is less than 35%');
 
-            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
+            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, undefined, {
+                useCache: true
+            });
             const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
             const existingFsxStorageCapacityGiB = fileSystem?.StorageCapacity;
             const newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(

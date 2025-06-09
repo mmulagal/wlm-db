@@ -256,7 +256,9 @@ async function getPartnerNodeDetails(
     const clusterIps = [...new Set(fciInstanceDetails.map(fciInstance => fciInstance.clusterIps).flat())];
 
     // Fetch details of EC2 instances corresponding to the cluster IPs using their private IP addresses.
-    const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, compact(clusterIps));
+    const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, compact(clusterIps), {
+        useCache: true
+    });
 
     // Iterate over each FCI instance to determine the partner EC2 instance ID.
     // For each FCI instance, filter the cluster node details to find nodes that:
@@ -277,9 +279,15 @@ async function getPartnerNodeDetails(
 
 async function getEbsVolumeDetails(credentialsId: string, region: string, node1InstanceId: string) {
     logger.info('Get EBS volume details', { credentialsId, region, node1InstanceId });
-    const ebsVolumes = await paginateDescribeEbsVolumes(credentialsId, region, {
-        Filters: [{ Name: 'attachment.instance-id', Values: [node1InstanceId] }]
-    });
+    const ebsVolumes = await paginateDescribeEbsVolumes(
+        credentialsId,
+        region,
+        {
+            Filters: [{ Name: 'attachment.instance-id', Values: [node1InstanceId] }]
+        },
+        undefined,
+        { useCache: true }
+    );
     const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
         iops: volume.Iops,
         size: volume.Size,
@@ -332,7 +340,7 @@ async function manageSqlInstance(
         }
 
         const [ec2Details, discoverDetails, adDetails] = await Promise.all([
-            describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }),
+            describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }, { useCache: true }),
             getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
             callSsmExecution(
                 credentialsId,

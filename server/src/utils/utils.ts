@@ -833,7 +833,7 @@ const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 
 };
 
 function getRedisDetails() {
-    logger.info('in getRedisDetails');
+    logger.debug('in getRedisDetails');
     const url = SECRETS.REDIS_PASSWORD ? `${REDIS_SCHEMA}://${SECRETS.REDIS_PASSWORD}@${REDIS_URL}` : REDIS_URL;
     return { url };
 }

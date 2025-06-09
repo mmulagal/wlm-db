@@ -53,7 +53,15 @@
         "region": "us-east-1"
     },
     "ec2": {
-        "vcpu-filter": ["2", "4", "8", "16", "32", "64", "72"]
+        "vcpu-filter": [
+            "2",
+            "4",
+            "8",
+            "16",
+            "32",
+            "64",
+            "72"
+        ]
     },
     "ssm": {
         "poll-interval": "1s",
@@ -101,5 +109,10 @@
         "max-emails-per-day": 20
     },
     "clone-age-in-days": 0,
-    "postpone-age-in-days": 1
+    "postpone-age-in-days": 1,
+    "aws-sdk": {
+        "cache": {
+            "ttl": "5m"
+        }
+    }
 }

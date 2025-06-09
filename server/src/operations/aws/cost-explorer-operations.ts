@@ -254,7 +254,7 @@ async function getBillByResourceIds(
     try {
         const [costExplorerResponse, fileSystems] = await Promise.all([
             getCostAndUsage(region, input, credentialsId),
-            describeFSxFileSystems(credentialsId, region)
+            describeFSxFileSystems(credentialsId, region, { useCache: true })
         ]);
 
         const fileSystemStorageMap = new Map<string, number>();
