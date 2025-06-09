@@ -121,7 +121,7 @@ import DashboardDismissPage from '../../Dashboard/DashboardInnerPage/DashboardDi
 import DashboardOptimizeInnerPage from '../../Dashboard/DashboardInnerPage/DashboardOptimizeInnerPage';
 import { DsBlueXpMenu } from '../../../common/DsMenuBlueXP/DsBlueXpMenu';
 import WellArchitectDashboard from '../../GetWell/WellArchitectDashboard/WellArchitectDashboard';
-import ManageInstanceWizard from '../../InventoryV2/InventoryTablesComponent/ManageInstanceWizard/ManageInstanceWizard';
+import RegisterWizard from '../../InventoryV2/InventoryTablesComponent/ManageInstanceWizard/RegisterWizard';
 
 type Tab = {
     tab: string;
@@ -1194,7 +1194,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         </div>
     ) : checkConditionForHeaderComponent() ? (
         tab === WLF_TABS.REGISTER_COMPONENT ? (
-            <ManageInstanceWizard />
+            <RegisterWizard />
         ) : (
             <div className={styles.headerComponent}>
                 {!statusChk &&

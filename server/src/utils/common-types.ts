@@ -681,6 +681,12 @@ interface MappedVolumeResponseForClone {
     activeNodeInstanceId: string;
 }
 
+interface AWSSDKCacheParams {
+    useCache?: boolean;
+    ttl?: number;
+    credentialsId?: string; // Optional credentials ID for cache key generation
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -743,5 +749,6 @@ export {
     DatabaseHostConfigurations,
     CrrAssessment,
     CrrDetails,
-    OptimizeMpioTimeoutParams
+    OptimizeMpioTimeoutParams,
+    AWSSDKCacheParams
 };

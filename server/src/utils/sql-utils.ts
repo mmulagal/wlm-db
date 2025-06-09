@@ -56,9 +56,15 @@ async function getDatabaseInstanceTopology(
         let fileSystemStorageType;
         try {
             if (fileSystemId || fsxwId) {
-                const fsxInfo = await describeFSx(credentialsId, region, {
-                    FileSystemIds: [(fileSystemId || fsxwId) as string]
-                });
+                const fsxInfo = await describeFSx(
+                    credentialsId,
+                    region,
+                    {
+                        FileSystemIds: [(fileSystemId || fsxwId) as string]
+                    },
+                    undefined,
+                    { useCache: true }
+                );
                 const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
                 ({
                     Tags: fileSystemTags,

@@ -66,7 +66,7 @@ async function getPgSqlInstanceInfo(accountId: string, credentialsId: string, re
     const comment = 'pgsql instance info';
     let response;
     try {
-        for (const nodeId of nodeIds) {
+        for await (const nodeId of nodeIds) {
             logger.info('Fetching PGSQL instance GUID', nodeId);
             response = await callSsmExecution(
                 credentialsId,

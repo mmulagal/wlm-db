@@ -92,6 +92,7 @@ export interface InventorySliceData {
     manageSingleInstanceReadiness: any;
     manageSingleInstanceChecks: any;
     manageSingleInstanceData: any;
+    bulkDetectedInstanceList: any;
 }
 
 export interface InventoryTableData {

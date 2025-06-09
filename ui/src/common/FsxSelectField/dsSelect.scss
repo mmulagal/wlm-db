@@ -1,0 +1,145 @@
+.dsSelect {
+    position: relative;
+
+    &.isExpanded {
+        .dsTextFieldFrame {
+            .inputTextContainer {
+                .actionsContainer {
+                    .chevronIcon {
+                        transform: rotate(180deg);
+                    }
+                }
+
+                .extraInfoContainer {
+                    opacity: 0;
+                    height: 0;
+                }
+            }
+        }
+
+        .dsDropDownList {
+            .actionListRef {
+                .actionListContainer {
+                    .itemsContainer {
+                        .singleItem {
+                            display: inline-block;
+                            max-width: 100%;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            box-sizing: border-box;
+                            width: 100%;
+
+                            &.isSelected {
+                                color: var(--text-button-primary);
+                            }
+
+                            &.isDisabled {
+                                pointer-events: none;
+                            }
+                        }
+
+                        .dsCheckBoxContainer {
+                            padding: 0;
+                            width: 100%;
+
+                            .dsCheckboxBoundriesContainer {
+                                .dsCheckbox {
+                                    padding: 12px 8px 12px 24px;
+                                    width: 100%;
+                                    box-sizing: border-box;
+                                }
+
+                                .radioLabel {
+                                    display: inline-block;
+                                    max-width: 90%;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                    white-space: nowrap;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    &.underline {
+        display: flex;
+        flex-direction: row;
+
+        .underlineTooltip {
+            height: 16px;
+            position: relative;
+            top: 7px;
+            margin-right: 12px;
+        }
+
+        .dsTextFieldFrame {
+            .textFieldHeader {
+                display: none;
+            }
+
+            .inputTextContainer {
+                .textFieldInput {
+                    border-width: 0 0 1px 0;
+                    border-radius: 0;
+                    background-color: transparent;
+                    padding-left: 0;
+
+                    &:hover,
+                    &:focus,
+                    &.isHoverActions {
+                        outline: none;
+                        border-bottom-width: 2px;
+                        margin-bottom: -1px;
+                    }
+                }
+            }
+        }
+    }
+
+    .dsDropDownList {
+        .actionListRef {
+            .actionListContainer {
+                .itemsContainer {
+                    .selectItem {
+                        padding: 12px 8px 12px 24px;
+                        cursor: pointer;
+
+                        &:hover {
+                            background-color: var(--background-hover);
+                        }
+
+                        &.selectAll {
+                            border-bottom: 1px solid var(--border);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .dsTextFieldFrame {
+        .inputTextContainer {
+            padding-bottom: 1px;
+
+            .textFieldInput {
+                &.isInputSelect {
+                    padding-right: 45px;
+                }
+            }
+
+            .actionsContainer {
+                .chevronIcon {
+                    -webkit-transition: transform 0.3s ease;
+                    -moz-transition: transform 0.3s ease;
+                    -ms-transition: transform 0.3s ease;
+                    -o-transition: transform 0.3s ease;
+                    transition: transform 0.3s ease;
+                }
+            }
+        }
+    }
+}

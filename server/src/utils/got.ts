@@ -1,5 +1,5 @@
 import got, { Hooks, HTTPError, RequestError, TimeoutError } from 'got';
-import ms from 'ms';
+import ms, { StringValue } from 'ms';
 import config from 'config';
 import getLogger, { getTraceData } from './logger';
 import { HEADERS, WLMDB } from './consts';
@@ -100,9 +100,9 @@ const gotInstanceForInternalRequest = got.extend({
         limit: config.get<number>('got.internal.retry-count')
     },
     timeout: {
-        lookup: ms(config.get<string>('got.internal.lookup-timeout')),
-        connect: ms(config.get<string>('got.internal.connect-timeout')),
-        response: ms(config.get<string>('got.internal.response-timeout'))
+        lookup: ms(config.get<StringValue>('got.internal.lookup-timeout')),
+        connect: ms(config.get<StringValue>('got.internal.connect-timeout')),
+        response: ms(config.get<StringValue>('got.internal.response-timeout'))
     },
     resolveBodyOnly: true,
     responseType: 'json',
@@ -114,9 +114,9 @@ const gotInstanceForExternalRequest = got.extend({
         limit: config.get<number>('got.external.retry-count')
     },
     timeout: {
-        lookup: ms(config.get<string>('got.external.lookup-timeout')),
-        connect: ms(config.get<string>('got.external.connect-timeout')),
-        response: ms(config.get<string>('got.external.response-timeout'))
+        lookup: ms(config.get<StringValue>('got.external.lookup-timeout')),
+        connect: ms(config.get<StringValue>('got.external.connect-timeout')),
+        response: ms(config.get<StringValue>('got.external.response-timeout'))
     },
     resolveBodyOnly: true,
     responseType: 'json',
@@ -128,9 +128,9 @@ const gotInstanceForTextResponse = got.extend({
         limit: config.get<number>('got.external.retry-count')
     },
     timeout: {
-        lookup: ms(config.get<string>('got.external.lookup-timeout')),
-        connect: ms(config.get<string>('got.external.connect-timeout')),
-        response: ms(config.get<string>('got.external.response-timeout'))
+        lookup: ms(config.get<StringValue>('got.external.lookup-timeout')),
+        connect: ms(config.get<StringValue>('got.external.connect-timeout')),
+        response: ms(config.get<StringValue>('got.external.response-timeout'))
     },
     resolveBodyOnly: true,
     responseType: 'text',
@@ -142,9 +142,9 @@ const gotInstanceForBatchRequest = got.extend({
         limit: config.get<number>('got.batch.retry-count')
     },
     timeout: {
-        lookup: ms(config.get<string>('got.batch.lookup-timeout')),
-        connect: ms(config.get<string>('got.batch.connect-timeout')),
-        response: ms(config.get<string>('got.batch.response-timeout'))
+        lookup: ms(config.get<StringValue>('got.batch.lookup-timeout')),
+        connect: ms(config.get<StringValue>('got.batch.connect-timeout')),
+        response: ms(config.get<StringValue>('got.batch.response-timeout'))
     },
     resolveBodyOnly: true,
     responseType: 'json',

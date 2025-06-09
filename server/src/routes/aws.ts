@@ -118,10 +118,11 @@ export default function awsRoutes(fastify: FastifyInstance) {
 
     server.get(`${FSX_PREFIX_PATH}/regions`, { schema: GetFSxRegionsSchema }, async (request, reply) => {
         const {
-            params: { credentialsId }
+            params: { credentialsId },
+            query: { useCache = true }
         } = castRequest(request);
 
-        const response = await getFSxOntapRegionsList(credentialsId);
+        const response = await getFSxOntapRegionsList(credentialsId, { useCache });
         return reply.send(response);
     });
 

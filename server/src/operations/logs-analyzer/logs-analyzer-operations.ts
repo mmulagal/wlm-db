@@ -61,7 +61,7 @@ async function findFirstAvailableModel(accountId: string, credentialsId: string,
         modelIds
     });
 
-    for (const modelId of modelIds) {
+    for await (const modelId of modelIds) {
         try {
             const response = await getModelAvailability(accountId, credentialsId, region, modelId);
             if (!isEmpty(response)) {

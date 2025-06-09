@@ -24,8 +24,6 @@ import { setRoutePath, setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
-import ManageInstanceWizard from './workloadFactory/InventoryV2/InventoryTablesComponent/ManageInstanceWizard/ManageInstanceWizard';
-// import RegisterBulkWizard from './workloadFactory/InventoryV2/InventoryTablesComponent/ManageInstanceWizard/RegisterBulkWizard';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -141,7 +139,10 @@ const Home = () => {
                             path={'/manage-wizard'}
                             element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
                         />
-                        {/* <Route path={'/register-bulk-wizard'} element={<RegisterBulkWizard />} /> */}
+                        <Route
+                            path={'/register-bulk-wizard'}
+                            element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
+                        />
                     </Routes>
                 )}
                 {!isWorkloadFactory && (
@@ -215,7 +216,10 @@ const Home = () => {
                                 path={'/fsxdb/manage-wizard'}
                                 element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
                             />
-                            {/* <Route path={'/register-bulk-wizard'} element={<RegisterBulkWizard />} /> */}
+                            <Route
+                                path={'/fsxdb/register-bulk-wizard'}
+                                element={<HeaderComponent tab={WLF_TABS.REGISTER_COMPONENT} />}
+                            />
                         </Routes>
                     </Suspense>
                 )}

@@ -59,7 +59,7 @@ async function getOracleInstanceInfo(accountId: string, credentialsId: string, r
     const comment = 'oracle instance info';
     let response;
     try {
-        for (const nodeId of nodeIds) {
+        for await (const nodeId of nodeIds) {
             response = await callSsmExecution(
                 credentialsId,
                 region,

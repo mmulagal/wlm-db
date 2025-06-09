@@ -52,7 +52,7 @@
         "@typescript-eslint/no-shadow": "error",
         "consistent-return": "off",
         "no-param-reassign": "off",
-        "no-await-in-loop": "warn",
+        "no-await-in-loop": "error",
         "no-restricted-syntax": "off",
         "default-param-last": "off",
         "no-use-before-define": "off",
@@ -62,7 +62,7 @@
         "no-prototype-builtins": "off",
         "import/group-exports": "error",
         "import/prefer-default-export": "warn",
-        "import/no-duplicates": "warn",
+        "import/no-duplicates": "error",
         "import/extensions": "off",
         "import/no-extraneous-dependencies": "off",
         "import/no-unresolved": [

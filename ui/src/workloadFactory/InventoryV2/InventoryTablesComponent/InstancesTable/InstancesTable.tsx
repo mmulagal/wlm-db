@@ -1303,13 +1303,13 @@ const InstancesTable = () => {
                         singularTitle="Instance"
                         exportToCsvOptions={{ fileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
-                        // actionsRight={
-                        //     <div className={styles.manageInstanceButton}>
-                        //         <DsButton isThin onClick={() => handleManageBulk()}>
-                        //             Register multiple instances
-                        //         </DsButton>
-                        //     </div>
-                        // }
+                        actionsRight={
+                            <div className={styles.manageInstanceButton}>
+                                <DsButton isThin onClick={() => handleManageBulk()} isDisabled={loading}>
+                                    Register multiple instances
+                                </DsButton>
+                            </div>
+                        }
                     />
                     {/* {selectedRowsForManage.length > 0 && (
                         <BulkActionContainer action={'Manage'} onClick={handleBulkOperation} />

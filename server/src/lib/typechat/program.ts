@@ -151,18 +151,18 @@ function createModuleTextFromProgram(jsonObject: object): Result<string> {
  * @param onCall A callback function for handling function calls in the program.
  * @returns A `Promise` with the value of the last expression in the program.
  */
-async function evaluateJsonProgram(program: Program, onCall: (func: string, args: unknown[]) => Promise<unknown>) {
+function evaluateJsonProgram(program: Program, onCall: (func: string, args: unknown[]) => unknown) {
     const results: unknown[] = [];
     for (const expr of program['@steps']) {
-        results.push(await evaluate(expr));
+        results.push(evaluate(expr));
     }
     return results.length > 0 ? results[results.length - 1] : undefined;
 
-    async function evaluate(expr: unknown): Promise<unknown> {
+    function evaluate(expr: unknown): unknown {
         return typeof expr === 'object' && expr !== null ? evaluateObject(expr as Record<string, unknown>) : expr;
     }
 
-    async function evaluateObject(obj: Record<string, unknown>) {
+    function evaluateObject(obj: Record<string, unknown>) {
         if (Object.prototype.hasOwnProperty.call(obj, '@ref')) {
             const index = obj['@ref'];
             if (typeof index === 'number' && index < results.length) {
@@ -172,12 +172,12 @@ async function evaluateJsonProgram(program: Program, onCall: (func: string, args
             const func = obj['@func'];
             const args = Object.prototype.hasOwnProperty.call(obj, '@args') ? obj['@args'] : [];
             if (typeof func === 'string' && Array.isArray(args)) {
-                return onCall(func, await evaluateArray(args));
+                return onCall(func, evaluateArray(args));
             }
         } else if (Array.isArray(obj)) {
             return evaluateArray(obj);
         } else {
-            const values = await Promise.all(Object.values(obj).map(evaluate));
+            const values = Object.values(obj).map(evaluate);
             return Object.fromEntries(Object.keys(obj).map((k, i) => [k, values[i]]));
         }
 
@@ -185,7 +185,7 @@ async function evaluateJsonProgram(program: Program, onCall: (func: string, args
     }
 
     function evaluateArray(array: unknown[]) {
-        return Promise.all(array.map(evaluate));
+        return array.map(evaluate);
     }
 }
 

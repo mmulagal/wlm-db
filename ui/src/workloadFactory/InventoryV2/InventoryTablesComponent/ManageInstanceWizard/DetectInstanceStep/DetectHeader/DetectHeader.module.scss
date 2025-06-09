@@ -152,3 +152,7 @@
         text-overflow: ellipsis;
     }
 }
+
+[class*='Popover-module_base'] {
+    max-width: unset !important;
+}
