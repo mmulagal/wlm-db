@@ -186,7 +186,7 @@ async function getResilienceDriftAssessment(
         return acc;
     }, {} as Record<string, any>);
 
-    const mappedVolumesData = configDataMap.mappedVolumes;
+    const mappedVolumesData = configDataMap[AssessmentCategories.MAPPED_ONTAP_VOLUMES];
     const storageAssessmentData = configDataMap[AssessmentCategories.STORAGE];
     const awsbackupAssessmentData = configDataMap[AssessmentCategories.AWS_BACKUP];
     const crrAssessmentData = configDataMap[AssessmentCategories.CRR];
