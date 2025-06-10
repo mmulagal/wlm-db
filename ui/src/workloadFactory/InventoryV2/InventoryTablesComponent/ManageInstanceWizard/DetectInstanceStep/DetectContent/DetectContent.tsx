@@ -80,6 +80,7 @@ const DetectContent = () => {
     useEffect(() => {
         if (authenticationTypeSelected === undefined) {
             setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
+            // When the windows authentication was selected in previous dialog, we need to set the state accordingly
             if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
                 setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION });
             }
@@ -295,6 +296,7 @@ const DetectContent = () => {
         <div className={styles.detectContent}>
             {wizardOperationType === ACTION_TYPE.SINGLE && (
                 <>
+                    {/* When Action Type is Single and all the 3 types of authentication are false, we show the authentication mode radio buttons and based on authentication type selected, we show the respective input fields */}
                     {!manageSingleInstanceData?.sqlServerAuthentication &&
                         !manageSingleInstanceData?.windowsAuthentication &&
                         !manageSingleInstanceData?.windowsDomainUserAuthentication &&
@@ -318,6 +320,7 @@ const DetectContent = () => {
 
             {wizardOperationType === ACTION_TYPE.BULK && (
                 <>
+                    {/* When Action Type is Bulk and all the 3 types of authentication are false, we show the authentication mode radio buttons and based on authentication type selected, we show the respective input fields */}
                     {!bulkInstanceData?.sqlServerAuthentication &&
                         !bulkInstanceData?.windowsAuthentication &&
                         !bulkInstanceData?.windowsDomainUserAuthentication &&

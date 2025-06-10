@@ -1678,6 +1678,7 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
     } = state?.inventoryV2;
     let credList = [];
     let checkManageReadiness = false;
+    // Add SQL Server credentials when SQL Server Authentication is selected as authentication type
     if (
         detectManageUserName &&
         detectManagePassword &&
@@ -1690,7 +1691,9 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
             password: detectManagePassword
         });
         checkManageReadiness = true;
-    } else if (
+    }
+    // Add Windows credentials when Windows Authentication is selected as authentication type
+    else if (
         detectWindowsAuthentication.username &&
         detectWindowsAuthentication.password &&
         authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
@@ -1703,6 +1706,7 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         });
         checkManageReadiness = true;
     }
+    // Add FSx ONTAP credentials to the credential list
     if (detectOntapUsername && detectOntapPassword) {
         credList.push({
             resourceId: fsxId,

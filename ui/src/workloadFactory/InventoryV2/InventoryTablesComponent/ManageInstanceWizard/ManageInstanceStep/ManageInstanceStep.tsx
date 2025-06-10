@@ -190,6 +190,7 @@ export const Content = () => {
         };
 
         let manageReadinessData: ManageReadinessData | null = null;
+        // If no authentication methods are set, use manageReadiness
         if (
             !instance?.data?.windowsAuthentication &&
             !instance?.data?.sqlServerAuthentication &&
