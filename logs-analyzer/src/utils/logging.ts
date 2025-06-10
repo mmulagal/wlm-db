@@ -5,11 +5,10 @@ import { join } from 'path';
 // Configure log4js
 log4js.configure({
     appenders: {
-        out: { type: 'stdout' },
         app: { type: 'file', filename: 'logs/application.log', maxLogSize: 10485760, backups: 3 } // 10MB max size, keep 3 backups
     },
     categories: {
-        default: { appenders: ['out', 'app'], level: 'info' }
+        default: { appenders: ['app'], level: 'info' }
     }
 });
 
