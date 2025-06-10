@@ -15,7 +15,7 @@ const getMappedOntapDataVolume = (fsxnId: string, region: string) => `
     dataDir=$(systemctl cat postgresql | grep Environment=PGDATA | awk -F= '/Environment=PGDATA=/ {print $3}')
     check_status "Failed to get data directory"
 
-    mount_path=$(findmnt -n -o SOURCE $dataDir)
+    mount_path=$(sudo findmnt -n -o SOURCE --target $dataDir)
     check_status "Failed to get mount path"
 
     dnsName=$(echo "$mount_path" | cut -d':' -f1) 
