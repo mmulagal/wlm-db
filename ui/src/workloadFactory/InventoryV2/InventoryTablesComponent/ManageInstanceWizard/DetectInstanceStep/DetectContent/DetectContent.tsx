@@ -9,7 +9,8 @@ import {
     setDetectManagePassword,
     setDetectManageUserName,
     setDetectONTAPPassword,
-    setDetectONTAPUserName
+    setDetectONTAPUserName,
+    setDetectWindowsAuthentication
 } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
@@ -27,6 +28,8 @@ const DetectContent = () => {
         ontapPasswordFromWizard,
         mssqlUserNameFromWizard,
         mssqlPasswordFromWizard,
+        windowsAuthenticationUsernameFromWizard,
+        windowsAuthenticationPasswordFromWizard,
         authenticationTypeSelected,
         hitNext
     } = state;
@@ -37,6 +40,7 @@ const DetectContent = () => {
         selectedMultiDetectInstances,
         detectManageUserName,
         detectManagePassword,
+        detectWindowsAuthentication,
         detectOntapUsername,
         detectOntapPassword
     } = useAppSelector(state => state.inventoryV2);
@@ -56,14 +60,29 @@ const DetectContent = () => {
     const [ontapPassword, setOntapPassword] = useState(ontapPasswordFromWizard ? ontapPasswordFromWizard : '');
     const [detectUserName, setDetectUserName] = useState(mssqlUserNameFromWizard ? mssqlUserNameFromWizard : '');
     const [detectPassword, setDetectPassword] = useState(mssqlPasswordFromWizard ? mssqlPasswordFromWizard : '');
+    const [windowsAuthenticationUsername, setWindowsAuthenticationUsername] = useState(
+        windowsAuthenticationUsernameFromWizard ? windowsAuthenticationUsernameFromWizard : ''
+    );
+    const [windowsAuthenticationPassword, setWindowsAuthenticationPassword] = useState(
+        windowsAuthenticationPasswordFromWizard ? windowsAuthenticationPasswordFromWizard : ''
+    );
 
     useEffect(() => {
         dispatch(setIsDetectHostError(''));
-    }, [detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword]);
+    }, [
+        detectManageUserName,
+        detectManagePassword,
+        detectOntapUsername,
+        detectOntapPassword,
+        detectWindowsAuthentication
+    ]);
 
     useEffect(() => {
         if (authenticationTypeSelected === undefined) {
             setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
+            if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+                setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION });
+            }
         }
     }, []);
 
@@ -103,6 +122,14 @@ const DetectContent = () => {
         dispatch(setDetectManagePassword(detectPasswordSearch));
     }, [detectPasswordSearch]);
 
+    useEffect(() => {
+        dispatch(setDetectWindowsAuthentication({ username: windowsAuthenticationUsername }));
+    }, [windowsAuthenticationUsername]);
+
+    useEffect(() => {
+        dispatch(setDetectWindowsAuthentication({ password: windowsAuthenticationPassword }));
+    }, [windowsAuthenticationPassword]);
+
     const authModeRadio = () => {
         return (
             <>
@@ -120,25 +147,18 @@ const DetectContent = () => {
                         children={AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
                         className=""
                     />
-                    <Popover
-                        children={t('databases.general.coming-soon')}
-                        trigger="hover"
-                        container={
-                            <RadioButton
-                                id="select-windows-authentication"
-                                isDisabled={true} // Currently windows auth is not supported
-                                title="Windows authentication is not supported yet"
-                                isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
-                                onChange={() => {
-                                    dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
-                                    setState({
-                                        authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
-                                    });
-                                }}
-                                children={AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
-                                className=""
-                            />
-                        }
+                    <RadioButton
+                        id="select-windows-authentication"
+                        title="Windows authentication is not supported yet"
+                        isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                        onChange={() => {
+                            dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
+                            setState({
+                                authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+                            });
+                        }}
+                        children={AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                        className=""
                     />
                 </div>
             </>
@@ -176,6 +196,56 @@ const DetectContent = () => {
                             }}
                             className={styles.textFieldStyle}
                             error={!detectManagePassword && hitNext ? t('databases.general.action-required') : ''}
+                            placeholder={t('databases.general.enter-password')}
+                        />
+                    </div>
+                </div>
+            </>
+        );
+    };
+
+    const windowsAuthInputFields = () => {
+        return (
+            <>
+                <div className={styles.firstSection}>
+                    <DsTypography variant="Semibold_14">
+                        {' '}
+                        {t('databases.register-flow.detect-windows-heading')}
+                    </DsTypography>
+                    <div className={styles.textFieldContainer}>
+                        <TextField
+                            label={t('databases.register-flow.detect-windows-username')}
+                            value={windowsAuthenticationUsername}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                setWindowsAuthenticationUsername(e.target.value);
+                                setState({ windowsAuthenticationUsernameFromWizard: e.target.value });
+                            }}
+                            className={styles.textFieldStyle}
+                            error={
+                                authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                                !detectWindowsAuthentication?.username &&
+                                hitNext
+                                    ? t('databases.general.action-required')
+                                    : ''
+                            }
+                            placeholder={'Enter ' + t('databases.register-flow.detect-windows-username')}
+                        />
+
+                        <PasswordField
+                            label={t('databases.register-flow.detect-windows-password')}
+                            value={windowsAuthenticationPassword}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                setWindowsAuthenticationPassword(e.target.value);
+                                setState({ windowsAuthenticationPasswordFromWizard: e.target.value });
+                            }}
+                            className={styles.textFieldStyle}
+                            error={
+                                authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                                !detectWindowsAuthentication?.password &&
+                                hitNext
+                                    ? t('databases.general.action-required')
+                                    : ''
+                            }
                             placeholder={t('databases.general.enter-password')}
                         />
                     </div>
@@ -227,11 +297,20 @@ const DetectContent = () => {
                 <>
                     {!manageSingleInstanceData?.sqlServerAuthentication &&
                         !manageSingleInstanceData?.windowsAuthentication &&
+                        !manageSingleInstanceData?.windowsDomainUserAuthentication &&
                         authModeRadio()}
 
                     {!manageSingleInstanceData?.sqlServerAuthentication &&
                         !manageSingleInstanceData?.windowsAuthentication &&
+                        !manageSingleInstanceData?.windowsDomainUserAuthentication &&
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION &&
                         mssqlInputFields()}
+
+                    {!manageSingleInstanceData?.sqlServerAuthentication &&
+                        !manageSingleInstanceData?.windowsAuthentication &&
+                        !manageSingleInstanceData?.windowsDomainUserAuthentication &&
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                        windowsAuthInputFields()}
 
                     {manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered && fsxInputFields()}
                 </>
@@ -241,11 +320,20 @@ const DetectContent = () => {
                 <>
                     {!bulkInstanceData?.sqlServerAuthentication &&
                         !bulkInstanceData?.windowsAuthentication &&
+                        !bulkInstanceData?.windowsDomainUserAuthentication &&
                         authModeRadio()}
 
                     {!bulkInstanceData?.sqlServerAuthentication &&
                         !bulkInstanceData?.windowsAuthentication &&
+                        !bulkInstanceData?.windowsDomainUserAuthentication &&
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION &&
                         mssqlInputFields()}
+
+                    {!bulkInstanceData?.windowsAuthentication &&
+                        !bulkInstanceData?.sqlServerAuthentication &&
+                        !bulkInstanceData?.windowsDomainUserAuthentication &&
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                        windowsAuthInputFields()}
 
                     {bulkInstanceData?.fsxId && !bulkInstanceData?.isFsxRegistered && fsxInputFields()}
                 </>

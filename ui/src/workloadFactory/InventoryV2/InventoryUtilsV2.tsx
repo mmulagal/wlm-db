@@ -13,6 +13,7 @@ import {
 import { GENERAL } from '../../utils/appConstants';
 import {
     ACTION_CTA,
+    AUTHENTICATION_TYPE,
     DBType,
     DETECT_HOST_VAR,
     INVENTORY_ACTIONS,
@@ -1190,6 +1191,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
             if (perRow?.sqlServerInstance) {
                 const isWindowAuthentication = perRow?.windowsAuthentication;
                 const isSqlAuthentication = perRow?.sqlServerAuthentication;
+                const isWindowsDomainAuthentication = perRow?.windowsDomainUserAuthentication;
                 let fsxCredentialValidationFailed;
                 let storageTypeCheck;
                 let fsxIdObject = perRow?.storage?.find(
@@ -1210,7 +1212,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
 
                 if (
                     ssmState !== INVENTORY_STATUS.ONLINE ||
-                    (!isWindowAuthentication && !isSqlAuthentication) ||
+                    (!isWindowAuthentication && !isSqlAuthentication && !isWindowsDomainAuthentication) ||
                     fsxCredentialValidationFailed ||
                     !storageTypeCheck
                 ) {
@@ -1390,7 +1392,8 @@ export const getDetectOptionForInstance = (
     } else {
         state = perRow?.sqlServerState;
     }
-    let auth = perRow?.windowsAuthentication || perRow?.sqlServerAuthentication;
+    let auth =
+        perRow?.windowsAuthentication || perRow?.sqlServerAuthentication || perRow?.windowsDomainUserAuthentication;
     if (type === GENERAL.POSTGRESQL_TYPE) {
         auth = perRow?.defaultAuth;
     }
@@ -1512,6 +1515,7 @@ export const formatDiscoverInstanceData = (
             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
             sqlServerAuthentication: perRow?.sqlServerAuthentication,
             windowsAuthentication: perRow?.windowsAuthentication,
+            windowsDomainUserAuthentication: perRow?.windowsDomainUserAuthentication,
             detectOption: statusObj?.[0]?.detectOption,
             detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
             manageReadiness: perRow?.manageReadiness
@@ -2625,24 +2629,53 @@ export const updateInstanceBulkStatus = (action: InstanceActions, response: any)
 
 export const detectFieldsValidation = (entryData: any) => {
     const state = store.getState();
-    const { detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword } = state.inventoryV2;
+    const {
+        detectManageUserName,
+        detectManagePassword,
+        detectWindowsAuthentication,
+        detectOntapUsername,
+        detectOntapPassword,
+        authenticationType
+    } = state.inventoryV2;
+
+    // Checks if the respective authentication fields are present
+    const isSqlAuthValid = () => !!(detectManageUserName && detectManagePassword);
+    const isWindowsAuthValid = () => !!(detectWindowsAuthentication?.username && detectWindowsAuthentication?.password);
+    const isFsxAuthValid = () => !!(detectOntapUsername && detectOntapPassword);
+
+    // Check when neither SQL Server nor Windows Domain User is authenticated and FsxId is not registered
     if (
         !entryData?.sqlServerAuthentication &&
         !entryData?.windowsAuthentication &&
+        !entryData?.windowsDomainUserAuthentication &&
         entryData?.fsxId &&
         !entryData?.isFsxRegistered
     ) {
-        if (detectManageUserName && detectManagePassword && detectOntapUsername && detectOntapPassword) {
-            return true;
-        } else {
-            return false;
+        // Based on authentication type is SQL Server or Windows, check if the respective fields are valid
+        if (authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
+            return isSqlAuthValid() && isFsxAuthValid();
+        } else if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+            return isWindowsAuthValid() && isFsxAuthValid();
         }
-    } else if (!entryData?.sqlServerAuthentication && !entryData?.windowsAuthentication) {
-        if (detectManageUserName && detectManagePassword) {
-            return true;
-        } else {
-            return false;
-        }
+        return false;
+    }
+    // Check if SQL Server fields are valid when SQL Server Authentication is selected
+    else if (
+        !entryData?.sqlServerAuthentication &&
+        !entryData?.windowsAuthentication &&
+        !entryData?.windowsDomainUserAuthentication &&
+        authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+    ) {
+        return isSqlAuthValid();
+    }
+    // Check if Windows fields are valid when Windows Authentication is selected
+    else if (
+        !entryData?.windowsAuthentication &&
+        !entryData?.sqlServerAuthentication &&
+        !entryData?.windowsDomainUserAuthentication &&
+        authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+    ) {
+        return isWindowsAuthValid();
     } else if (entryData?.fsxId && !entryData?.isFsxRegistered) {
         if (detectOntapUsername && detectOntapPassword) {
             return true;

@@ -6,11 +6,10 @@ import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
-    COSTING_TYPES,
+    AUTHENTICATION_TYPE,
     CREATE_DATABASE_YAML,
     CREDENTIAL_PROD_LINK,
     CREDENTIAL_STAGE_LINK,
-    DBType,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DETECT_HOST_VAR,
@@ -19,7 +18,6 @@ import {
     ERR_MSG_TO_CHECK,
     FORM_OPTIONS,
     FSXN_STORAGE_PROTOCOLS,
-    FSX_DEPLOYMENT_MODE,
     GIB_IN_BYTE,
     JM_DOWNLOAD,
     JOBS_REPORT,
@@ -1670,18 +1668,38 @@ export const removeOldApisError = (data: any) => {
 // This function will create post payload for register credential API (registerResourceCredentials)
 export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string, rowData: any) => {
     const state = store.getState();
-    let detectManageUserName = state?.inventoryV2?.detectManageUserName;
-    let detectManagePassword = state?.inventoryV2?.detectManagePassword;
-    let detectOntapUsername = state?.inventoryV2?.detectOntapUsername;
-    let detectOntapPassword = state?.inventoryV2?.detectOntapPassword;
+    const {
+        detectManageUserName,
+        detectManagePassword,
+        detectWindowsAuthentication,
+        detectOntapUsername,
+        detectOntapPassword,
+        authenticationType
+    } = state?.inventoryV2;
     let credList = [];
     let checkManageReadiness = false;
-    if (detectManageUserName && detectManagePassword) {
+    if (
+        detectManageUserName &&
+        detectManagePassword &&
+        authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+    ) {
         credList.push({
             resourceId: sqlServerInstance,
             resourceType: DETECT_HOST_VAR.MSSQL,
             username: detectManageUserName,
             password: detectManagePassword
+        });
+        checkManageReadiness = true;
+    } else if (
+        detectWindowsAuthentication.username &&
+        detectWindowsAuthentication.password &&
+        authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+    ) {
+        credList.push({
+            resourceId: sqlServerInstance,
+            resourceType: DETECT_HOST_VAR.WINDOWS,
+            username: detectWindowsAuthentication.username,
+            password: detectWindowsAuthentication.password
         });
         checkManageReadiness = true;
     }

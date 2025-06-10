@@ -638,6 +638,7 @@ export const getBulkDetectChecks = (selectedMultiDetectInstances: any) => {
     const result = {
         sqlServerAuthentication: true,
         windowsAuthentication: true,
+        windowsDomainUserAuthentication: true,
         fsxId: false,
         isFsxRegistered: true
     };
@@ -646,6 +647,9 @@ export const getBulkDetectChecks = (selectedMultiDetectInstances: any) => {
             if (!item?.data?.sqlServerAuthentication && !item?.data?.windowsAuthentication) {
                 result.sqlServerAuthentication = false;
                 result.windowsAuthentication = false;
+            }
+            if (!item?.data?.windowsDomainUserAuthentication) {
+                result.windowsDomainUserAuthentication = false;
             }
             if (item?.data?.fsxId && !item?.data?.isFsxRegistered) {
                 result.fsxId = true;

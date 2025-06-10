@@ -81,7 +81,7 @@ const SelectInstances = () => {
             if (colText !== ACTION_CTA.MANAGE_INSTANCES || disableMsg !== '') return [];
 
             const isAuthorized =
-                (row?.sqlServerAuthentication || row?.windowsAuthentication) &&
+                (row?.sqlServerAuthentication || row?.windowsAuthentication || row?.windowsDomainUserAuthentication) &&
                 (!row?.fsxId || (row?.fsxId && row?.isFsxRegistered));
 
             const isSelected = selectedOptions.some(opt => opt.id === row.id);

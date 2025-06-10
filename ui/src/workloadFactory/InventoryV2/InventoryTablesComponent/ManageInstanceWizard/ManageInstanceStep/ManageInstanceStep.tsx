@@ -137,6 +137,7 @@ export const Content = () => {
         if (
             !manageSingleInstanceData?.windowsAuthentication &&
             !manageSingleInstanceData?.sqlServerAuthentication &&
+            !manageSingleInstanceReadiness?.windowsDomainUserAuthentication &&
             manageSingleInstanceReadiness
         ) {
             manageReadinessData = manageSingleInstanceReadiness;
@@ -189,7 +190,11 @@ export const Content = () => {
         };
 
         let manageReadinessData: ManageReadinessData | null = null;
-        if (!instance?.data?.windowsAuthentication && !instance?.data?.sqlServerAuthentication) {
+        if (
+            !instance?.data?.windowsAuthentication &&
+            !instance?.data?.sqlServerAuthentication &&
+            !instance?.manageReadiness?.windowsDomainUserAuthentication
+        ) {
             manageReadinessData = instance?.manageReadiness;
         } else {
             manageReadinessData = getMergedReadinessData(

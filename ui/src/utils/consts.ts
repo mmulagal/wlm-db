@@ -488,6 +488,7 @@ export const DETECT_HOST_VAR = {
     MOVE_TO_UNMANAGE: 'move_to_unmanage',
     FSX: 'FSX',
     MSSQL: 'MSSQL',
+    WINDOWS: 'WINDOWS_USER',
     RUNNING: 'Running',
     DISABLE: 'disable',
     SHOW: 'show',

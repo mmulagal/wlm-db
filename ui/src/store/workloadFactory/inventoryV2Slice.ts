@@ -50,6 +50,10 @@ const initialInventoryV2State: InventorySliceData = {
     detectManagePassword: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
+    detectWindowsAuthentication: {
+        username: '',
+        password: ''
+    },
     detectedInstanceId: '',
     inventoryExpandedRowHostData: null,
     resetManagedData: false,
@@ -252,6 +256,15 @@ const inventoryV2Slice = createSlice({
         setDetectONTAPPassword: (state, action: PayloadAction<any>) => {
             state.detectOntapPassword = action.payload;
         },
+        setDetectWindowsAuthentication: (
+            state,
+            action: PayloadAction<Partial<typeof state.detectWindowsAuthentication>>
+        ) => {
+            state.detectWindowsAuthentication = {
+                ...state.detectWindowsAuthentication,
+                ...action.payload
+            };
+        },
         setDetectedInstanceId: (state, action: PayloadAction<any>) => {
             state.detectedInstanceId = action.payload;
         },
@@ -435,6 +448,7 @@ export const {
     setMssqlInstancesData,
     setPgsqlInstancesData,
     setOracleInstancesData,
+    setDetectWindowsAuthentication,
     setPerfMssqlInstancesData,
     setInProgressInstances,
     setManageHostSelectedRows,

@@ -59,6 +59,10 @@ export interface InventorySliceData {
     detectManagePassword: string;
     detectOntapUsername: string;
     detectOntapPassword: string;
+    detectWindowsAuthentication: {
+        username: string;
+        password: string;
+    };
     detectedInstanceId: string;
     inventoryExpandedRowHostData: any;
     resetManagedData: boolean;
@@ -524,6 +528,7 @@ export interface SQLServerInstancesDiscovered {
     sqlServerProductYear?: string;
     isDefaultInstance?: boolean;
     windowsAuthentication?: boolean;
+    windowsDomainUserAuthentication?: boolean;
     sqlServerEdition?: string;
     sqlServerEngineEdition?: number;
     sqlServerName?: string;
