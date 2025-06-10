@@ -1,5 +1,6 @@
 import { InferenceConfigType } from '../../routes/types/logs-analyzer.types';
 import getLogger from '../../utils/logger';
+import { LOG_LEVEL } from '../../utils/logs-analyzer/logs-analyzer-consts';
 
 const logger = getLogger();
 
@@ -131,6 +132,7 @@ function getWindowsPrepareScript(scriptParams: {
         $temperature = ${temperature};
         $maxTokens = ${maxTokens};
         $topP = ${topP};
+        $logLevel = '${LOG_LEVEL}';
 
         function Invoke-RetryCommand {
             param ([scriptblock]$Command, [int]$Retries = 5)
@@ -172,7 +174,7 @@ function getWindowsPrepareScript(scriptParams: {
                 '--logs-path', $logsPath,
                 '--sql-auth-enabled', $sqlAuthEnabled,
                 '--database-instance-name', $databaseInstanceName,
-                '--log-level', 'info',
+                '--log-level', '$logLevel',
                 '--region', $region,
                 '--model-id', $modelId,
                 '--model-region', $modelRegion,
@@ -236,18 +238,19 @@ function getLinuxPrepareScript(scriptParams: {
     # Logs Analysis Linux Prepare Script
     #!/bin/bash
 
-s3SignedUrl="${s3SignedUrl}"
-packageName="${packageName}"
-logsPath="${logsPath}"
-version="${version}"
-instanceId="${instanceId}"
-region="${region}"
-jobId="${jobId}"
-    $modelId = "${inferenceProfileArn}";
-    $modelRegion = "${region}";
-    $temperature = ${temperature};
-    $maxTokens = ${maxTokens};
-    $topP = ${topP};
+    s3SignedUrl="${s3SignedUrl}"
+    packageName="${packageName}"
+    logsPath="${logsPath}"
+    version="${version}"
+    instanceId="${instanceId}"
+    region="${region}"
+    jobId="${jobId}"
+    modelId = "${inferenceProfileArn}";
+    modelRegion = "${region}";
+    temperature = ${temperature};
+    maxTokens = ${maxTokens};
+    topP = ${topP};
+    logLevel='${LOG_LEVEL}';
 
 retry_command() {
     local retries=5
@@ -274,7 +277,7 @@ if [ ! -f "$filePath" ]; then
     exit 1
 fi
 
-"$filePath" --logs-path "$logsPath" --log-level info --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
+"$filePath" --logs-path "$logsPath" --log-level "$logLevel" --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
 
 if [ $? -ne 0 ]; then
     exit 1

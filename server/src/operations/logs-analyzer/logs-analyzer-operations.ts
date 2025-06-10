@@ -269,7 +269,7 @@ async function handleLogsAnalysis(
                       inferenceConfig
                   });
 
-        await callSsmExecution(
+        const logsAnalysisResponse = await callSsmExecution(
             credentialsId,
             region,
             [logsAnalyserScriptCommand],
@@ -280,6 +280,16 @@ async function handleLogsAnalysis(
             '600',
             true // Cloud watch logs enabled
         );
+
+        const parsedAnalysisResponse = logsAnalysisResponse ? sqlResponseParsing(logsAnalysisResponse) : {};
+        if (parsedAnalysisResponse?.error || parsedAnalysisResponse?.success === false) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Could not complete logs analysis on the remote machine. ${
+                    parsedAnalysisResponse?.error ? parsedAnalysisResponse.error : ''
+                }`
+            );
+        }
 
         const logGroupName = 'netapp/wlmdb/ssm-response';
         const logStreamName = `${activeNodeInstanceId}-logs-analyzer/${jobId}/aws-runPowerShellScript/stdout`;
@@ -404,10 +414,8 @@ async function getLogsAnalysisReport(
 
     if (response && response.length > 0) {
         const [{ logs_analysis_data: logsAnalysisData } = {}] = response;
-        const {
-            data: { remediationRecommendation }
-        } = logsAnalysisData as LogsAnalysisReportObjectType;
-
+        const [{ data: { remediationRecommendation = [] } = {} }] =
+            (logsAnalysisData as LogsAnalysisReportObjectType[]) || [];
         return { remediationRecommendation };
     }
     const errorMessage = `No logs analysis report found for account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId}`;

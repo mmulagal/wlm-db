@@ -61,7 +61,7 @@
     [class*='Table-module_header-row'] {
         position: unset !important;
         [class*='Table-module_header-cell'] {
-            background-color: unset !important;
+            background-color: var(--content-background) !important;
             border-bottom: 1px solid var(--border);
         }
     }
