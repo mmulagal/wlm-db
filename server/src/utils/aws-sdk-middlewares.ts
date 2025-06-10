@@ -13,6 +13,10 @@ const redisClient = new Redis(getRedisDetails().url, {
     maxRetriesPerRequest: 2
 });
 
+function isRedisConnected() {
+    return redisClient.status === 'ready';
+}
+
 const cacheMiddlewareConfig = {
     step: 'deserialize' as const,
     name: 'cacheMiddleware',
@@ -25,9 +29,11 @@ function cacheMiddleware(ttl: number, credentialsId = '') {
         const { input } = args || {};
 
         const cacheKey = generateHash(stringify({ input, commandName, credentialsId }));
-        const cachedResponse = await redisClient.get(cacheKey);
-        if (cachedResponse) {
-            return parse(cachedResponse);
+        if (cacheKey && isRedisConnected()) {
+            const cachedResponse = await redisClient.get(cacheKey);
+            if (cachedResponse) {
+                return parse(cachedResponse);
+            }
         }
 
         // If not cached, proceed with the request
@@ -35,7 +41,7 @@ function cacheMiddleware(ttl: number, credentialsId = '') {
         const { output: { $metadata: sdkMetadata, ...rest } = {} } = response || {};
 
         // Cache the response
-        if (sdkMetadata && rest) {
+        if (sdkMetadata && rest && isRedisConnected()) {
             try {
                 await redisClient.set(cacheKey, stringify(response), 'EX', ttl);
             } catch (error) {
