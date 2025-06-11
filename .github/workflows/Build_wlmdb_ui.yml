@@ -65,7 +65,7 @@ jobs:
           echo "@TLVeng:registry=https://npm.pkg.github.com" > .npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ env.TOKEN }}" >> .npmrc
         working-directory: ./ui
-      - run: npm ci
+      - run: npm install --force
         working-directory: ./ui
       - run: npm install @rollup/rollup-linux-x64-gnu
         working-directory: ./ui
