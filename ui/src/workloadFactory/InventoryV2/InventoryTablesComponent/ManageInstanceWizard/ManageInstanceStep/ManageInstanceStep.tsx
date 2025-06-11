@@ -137,7 +137,7 @@ export const Content = () => {
         if (
             !manageSingleInstanceData?.windowsAuthentication &&
             !manageSingleInstanceData?.sqlServerAuthentication &&
-            !manageSingleInstanceReadiness?.windowsDomainUserAuthentication &&
+            !manageSingleInstanceData?.windowsDomainUserAuthentication &&
             manageSingleInstanceReadiness
         ) {
             manageReadinessData = manageSingleInstanceReadiness;
@@ -194,7 +194,7 @@ export const Content = () => {
         if (
             !instance?.data?.windowsAuthentication &&
             !instance?.data?.sqlServerAuthentication &&
-            !instance?.manageReadiness?.windowsDomainUserAuthentication
+            !instance?.data?.windowsDomainUserAuthentication
         ) {
             manageReadinessData = instance?.manageReadiness;
         } else {
