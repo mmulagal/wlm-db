@@ -18,7 +18,7 @@ env:
 
 jobs:
   build-wlmai-ui-and-upload-to-S3:
-    runs-on: wlmai-runner
+    runs-on: wlmdb-runner
 
     steps:
       - name: Echo SHORT_SHA
