@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import pLimit from 'p-limit';
 import isEqual from 'lodash/isEqual';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
@@ -88,6 +89,12 @@ import {
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
 import { OracleInstanceData } from '../../utils/types/inventoryV2Types';
+
+// Limit the number of concurrent API calls to avoid overloading the backend or hitting rate limits.
+// storageSavingsApiLimit: Used specifically for storage savings API calls, allowing up to 10 concurrent requests.
+// generalApiLimit: Used for general API calls (e.g., instance/resource data), allowing up to 5 concurrent requests.
+const storageSavingsApiLimit = pLimit(10);
+const generalApiLimit = pLimit(5);
 
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
@@ -1057,12 +1064,11 @@ const InventoryApisV3 = () => {
         }
     };
 
-    // If any new row added than it will trigger getMssqlData (API2) function to get unmanagaed row data.
     const callInstanceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
         const mssqlInstancesDataLoad: any = {};
         const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
-            instancesList?.map((ec2InstanceIdComb: any) => {
+            instancesList?.forEach((ec2InstanceIdComb: any) => {
                 if (
                     runningInstanceListRef.current.includes(ec2InstanceIdComb) ||
                     mssqlInstancesDataRef.current?.[ec2InstanceIdComb]
@@ -1080,11 +1086,13 @@ const InventoryApisV3 = () => {
             });
             dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
             setRunningInstanceList([...runningInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceIdComb: any) => {
-                setTimeout(() => {
-                    getMssqlData(ec2InstanceIdComb, isManagedHost, fields);
-                }, 1);
-            });
+            // generalApiLimit is used to limit the number of concurrent API calls. As of now Limited to 5 concurrent calls.
+            // This is used to avoid throttling error from API.
+            Promise.all(
+                noRunningList.map((ec2InstanceIdComb: any) =>
+                    generalApiLimit(() => getMssqlData(ec2InstanceIdComb, isManagedHost, fields))
+                )
+            );
         }
     };
 
@@ -1093,7 +1101,7 @@ const InventoryApisV3 = () => {
         const pgsqlInstancesDataLoad: any = {};
         const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
-            instancesList?.map((ec2InstanceIdComb: any) => {
+            instancesList.forEach((ec2InstanceIdComb: any) => {
                 if (runningPgsqlInstanceListRef.current.includes(ec2InstanceIdComb)) {
                     return;
                 }
@@ -1108,11 +1116,13 @@ const InventoryApisV3 = () => {
             });
             dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataLoad }));
             setRunningPgsqlInstanceList([...runningPgsqlInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceIdComb: any) => {
-                setTimeout(() => {
-                    getPgsqlData(ec2InstanceIdComb, isManagedHost, fields);
-                }, 1);
-            });
+            // generalApiLimit is used to limit the number of concurrent API calls. As of now Limited to 5 concurrent calls.
+            // This is used to avoid throttling error from API.
+            Promise.all(
+                noRunningList.map((ec2InstanceIdComb: any) =>
+                    generalApiLimit(() => getPgsqlData(ec2InstanceIdComb, isManagedHost, fields))
+                )
+            );
         }
     };
 
@@ -1120,7 +1130,7 @@ const InventoryApisV3 = () => {
         const oracleInstancesDataLoad: Record<string, OracleInstanceData> = {};
         const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
-            instancesList?.map((ec2InstanceIdComb: any) => {
+            instancesList.forEach((ec2InstanceIdComb: any) => {
                 if (runningOracleInstanceListRef.current.includes(ec2InstanceIdComb)) {
                     return;
                 }
@@ -1135,11 +1145,13 @@ const InventoryApisV3 = () => {
             });
             dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataLoad }));
             setRunningOracleInstanceList([...runningOracleInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceIdComb: any) => {
-                setTimeout(() => {
-                    getOracleData(ec2InstanceIdComb, isManagedHost, fields);
-                }, 1);
-            });
+            // generalApiLimit is used to limit the number of concurrent API calls. As of now Limited to 5 concurrent calls.
+            // This is used to avoid throttling error from API.
+            Promise.all(
+                noRunningList.map((ec2InstanceIdComb: any) =>
+                    generalApiLimit(() => getOracleData(ec2InstanceIdComb, isManagedHost, fields))
+                )
+            );
         }
     };
 
@@ -1403,7 +1415,7 @@ const InventoryApisV3 = () => {
         const mssqlInstancesDataLoad: any = {};
         const noRunningList: Array<string> = [];
         if (instancesListComb && instancesListComb.length > 0) {
-            instancesListComb?.map((ec2InstanceIdComb: any) => {
+            instancesListComb.forEach((ec2InstanceIdComb: any) => {
                 if (
                     runningPerfInstanceListRef.current.includes(ec2InstanceIdComb) ||
                     perfMssqlInstancesDataRef.current?.[ec2InstanceIdComb]
@@ -1421,11 +1433,13 @@ const InventoryApisV3 = () => {
             });
             dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
             setRunningPerfInstanceList([...runningPerfInstanceListRef.current, ...noRunningList]);
-            noRunningList?.map((ec2InstanceIdComb: any) => {
-                setTimeout(() => {
-                    getUnmanagedPerfMssqlData(ec2InstanceIdComb, isManagedHost, fields);
-                }, 1);
-            });
+            // generalApiLimit is used to limit the number of concurrent API calls. As of now Limited to 5 concurrent calls.
+            // This is used to avoid throttling error from API.
+            Promise.all(
+                noRunningList.map((ec2InstanceIdComb: any) =>
+                    generalApiLimit(() => getUnmanagedPerfMssqlData(ec2InstanceIdComb, isManagedHost, fields))
+                )
+            );
         }
     };
 
@@ -1507,80 +1521,89 @@ const InventoryApisV3 = () => {
         }
     };
 
-    const callPotentialSavings = (exploreSavingsRows: any, runningCredId: string, runningRegionId: string) => {
+    const callPotentialSavings = async (exploreSavingsRows: any, runningCredId: string, runningRegionId: string) => {
         const instanceData: any = {};
-        // This will loop all unamanged EBS/FSXW rows
-        exploreSavingsRows?.map((row: any) => {
-            if (row?.credentialId !== runningCredId || row?.regionId !== runningRegionId) {
+        const promises: Promise<void>[] = [];
+
+        exploreSavingsRows?.forEach((row: any) => {
+            const { credentialId, regionId: rowRegionId, storageType, id, isDetected } = row;
+
+            if (credentialId !== runningCredId || rowRegionId !== runningRegionId) {
                 return;
             }
             if (
-                row?.storageType &&
-                !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)] &&
-                row?.isDetected
+                storageType &&
+                !potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)] &&
+                isDetected
             ) {
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
                     headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     let isEbsProtected = null;
-                    // For EBS first checking is it is protected or not.
-                    // If not that first we need to call instance protection API to get protection.
-                    if (row?.storageType === GENERAL.EBS) {
+                    if (storageType === GENERAL.EBS) {
                         isEbsProtected = checkIfEbsProtected(row, null);
                     }
-                    instanceData[uniqueHostRow(row?.id, credId, regionId)] = {
+                    instanceData[uniqueHostRow(id, credId, rowRegionId)] = {
                         error: null,
                         data: null,
                         loading: true,
-                        storageType: row?.storageType,
-                        isProtected: isEbsProtected // If already protected that set protection info along with loading true
+                        storageType,
+                        isProtected: isEbsProtected
                     };
                     dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
-                    if (row?.storageType === GENERAL.EBS) {
-                        // Protection check is required to set snapshotFrequency in storage savings API.
+
+                    // storageSavingsApiLimit is used to limit the number of API calls to storage savings API. Limited to 10 For now.
+                    // This is to avoid hitting the API limit for storage savings API.
+                    if (storageType === GENERAL.EBS) {
                         if (isEbsProtected) {
-                            // If protected than directly we can call storage savings API.
-                            getStorageSavingsData(
-                                row?.storageType,
-                                row?.id,
-                                runningCredId,
-                                runningRegionId,
-                                isEbsProtected
+                            promises.push(
+                                storageSavingsApiLimit(() =>
+                                    getStorageSavingsData(
+                                        storageType,
+                                        id,
+                                        runningCredId,
+                                        runningRegionId,
+                                        isEbsProtected
+                                    )
+                                )
                             );
                         } else {
-                            // If not protected than first we need to call instance protection API to get protection.
-                            // This same flow is used to call instance API to get perf and protection data as well as in ES page.
                             addInstanceIdToGetPerf(row, dispatch);
                         }
-                    } else if (row?.storageType === GENERAL.FSX_FOR_WINDOWS) {
-                        // For FSxW snapshotFrequency in default Daily in storage savings API.
-                        getStorageSavingsData(row?.storageType, row?.id, runningCredId, runningRegionId, '');
+                    } else if (storageType === GENERAL.FSX_FOR_WINDOWS) {
+                        promises.push(
+                            storageSavingsApiLimit(() =>
+                                getStorageSavingsData(storageType, id, runningCredId, runningRegionId, '')
+                            )
+                        );
                     }
                 }
             } else if (
-                row?.storageType === GENERAL.EBS &&
-                potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]?.loading &&
-                !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]?.isProtected
+                storageType === GENERAL.EBS &&
+                potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)]?.loading &&
+                !potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)]?.isProtected
             ) {
-                // In above if we protection data is missing for EBS than we trigger instance API.
-                // This else is used to capture response once instance API is loaded for protection.
                 const isEbsProtected = checkIfEbsProtected(row, null);
-                // Again check if instance EBS is protected or not.
-                instanceData[uniqueHostRow(row?.id, credId, regionId)] = {
+                instanceData[uniqueHostRow(id, credId, rowRegionId)] = {
                     error: null,
                     data: null,
                     loading: true,
-                    storageType: row?.storageType,
+                    storageType,
                     isProtected: isEbsProtected
                 };
                 dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
                 if (isEbsProtected) {
-                    // If protection data available after instance API call in EBS than call storage savings API.
-                    getStorageSavingsData(row?.storageType, row?.id, runningCredId, runningRegionId, isEbsProtected);
+                    promises.push(
+                        storageSavingsApiLimit(() =>
+                            getStorageSavingsData(storageType, id, runningCredId, runningRegionId, isEbsProtected)
+                        )
+                    );
                 }
             }
         });
+
+        await Promise.all(promises);
     };
 
     useEffect(() => {
