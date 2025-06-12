@@ -115,3 +115,21 @@ export type RegisterResourceCredResult = {
     data?: { sqlServerError?: string; fsxnError?: string; manageReadiness?: any };
     error?: any;
 };
+
+export interface RegisterDetail {
+    resourceId: string;
+    databaseCount: string;
+    sqlServerEdition: string;
+    sqlServerError: string;
+    fsxnError: string;
+    requiredModuleError: string;
+    manageReadiness: ManageReadinessData; // Adjust type if you have a specific structure
+};
+
+export interface RegisterResourceCredBulkResultItem {
+    ec2InstanceId: string;
+    credentialsId: string;
+    region: string;
+    error: string;
+    registerDetails: RegisterDetail[];
+};

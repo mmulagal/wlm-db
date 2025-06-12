@@ -1,9 +1,9 @@
-import { ChartColor, XCategories, fullColors, emptyColors, YTickFormatter } from './chartCommon';
 import React from 'react';
-import styles from './ComparisonChart.module.scss';
-import { Span } from '../Typography';
 import classNames from 'classnames';
 import { DsFlashingDotsLoader } from '@netapp/design-system';
+import { ChartColor, XCategories, fullColors, emptyColors, YTickFormatter } from './chartCommon';
+import styles from './ComparisonChart.module.scss';
+import { Span } from '../Typography';
 
 const ComparisonChart = React.memo(
     ({
@@ -59,7 +59,7 @@ const ComparisonChart = React.memo(
                             <div className={styles.xLabel}>
                                 <Span
                                     bold
-                                    //ellipsis
+                                    // ellipsis
                                     className={styles.spanStyle}
                                     title={categories[index]}
                                     color={hasData ? undefined : 'text-disabled'}

@@ -1,6 +1,8 @@
 import { Button, FlashingDotsLoader, Popover, Table, Typography, useTable } from '@netapp/design-system';
-import styles from './SubJobTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useCallback, useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import styles from './SubJobTable.module.scss';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
@@ -16,10 +18,8 @@ import {
     jobMonitoringStatusMapping,
     sortListOfDict
 } from '../../../utils/utilityFunctions';
-import { useCallback, useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 import {
@@ -46,9 +46,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         setSubTaskList(sortedSubTaskList);
     }, [subJobsData, isDemoMode]);
 
-    const ExpandedRow = useCallback(({ rowData }: any) => {
-        return <TaskTable taskList={rowData?.subJobs || []} />;
-    }, []);
+    const ExpandedRow = useCallback(({ rowData }: any) => <TaskTable taskList={rowData?.subJobs || []} />, []);
 
     const navigateToContinuosOptimization = (message: string, rowData: any) => {
         const splitMessage = message.split(';');
@@ -81,7 +79,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         dispatch(
             setGwPageLoadInstanceData({
                 hostname: hostName,
-                resourceId: resourceId,
+                resourceId,
                 instanceId: databaseInstanceId,
                 instanceName: databaseInstanceName,
                 credId: rowData?.credentialsId,
@@ -156,13 +154,12 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                             </span>
                         </div>
                     );
-                } else {
-                    return (
-                        <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
-                            {cellData}
-                        </div>
-                    );
                 }
+                return (
+                    <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
+                        {cellData}
+                    </div>
+                );
             }
         },
         // {
@@ -181,14 +178,28 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             accessor: 'status',
             width: windowSize.width >= 1920 ? '15.35%' : '230px',
             isSortable: true,
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.statusCol}>
-                        <div>
-                            {cellData === JOB_MONITORING_STATUS.COMPLETED && <Success />}
-                            {cellData === JOB_MONITORING_STATUS.FAILED && (
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.statusCol}>
+                    <div>
+                        {cellData === JOB_MONITORING_STATUS.COMPLETED && <Success />}
+                        {cellData === JOB_MONITORING_STATUS.FAILED && (
+                            <Popover
+                                popoverClass={CommonStyles.popover}
+                                children={
+                                    <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
+                                        {rowData?.error}
+                                    </Typography>
+                                }
+                                trigger="hover"
+                                delayHide={200}
+                                interactive
+                                container={<ErrorIcon className={styles.statusIcon} />}
+                            />
+                        )}
+                        {cellData === JOB_MONITORING_STATUS.WARNING &&
+                            (rowData?.error ? (
                                 <Popover
-                                    popoverClass={CommonStyles['popover']}
+                                    popoverClass={CommonStyles.popover}
                                     children={
                                         <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
                                             {rowData?.error}
@@ -196,33 +207,17 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                                     }
                                     trigger="hover"
                                     delayHide={200}
-                                    interactive={true}
-                                    container={<ErrorIcon className={styles.statusIcon} />}
+                                    interactive
+                                    container={<Warning className={styles.statusIcon} />}
                                 />
-                            )}
-                            {cellData === JOB_MONITORING_STATUS.WARNING &&
-                                (rowData?.error ? (
-                                    <Popover
-                                        popoverClass={CommonStyles['popover']}
-                                        children={
-                                            <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
-                                                {rowData?.error}
-                                            </Typography>
-                                        }
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        container={<Warning className={styles.statusIcon} />}
-                                    />
-                                ) : (
-                                    <Warning />
-                                ))}
-                            {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
-                        </div>
-                        <div>{jobMonitoringStatusMapping(cellData)}</div>
+                            ) : (
+                                <Warning />
+                            ))}
+                        {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
                     </div>
-                );
-            }
+                    <div>{jobMonitoringStatusMapping(cellData)}</div>
+                </div>
+            )
         },
         {
             id: '4',
@@ -277,39 +272,37 @@ const SubJobTable = ({ jobId, statusType }: any) => {
     };
 
     return (
-        <>
-            <div className={styles.subJobTable}>
-                <div className={`${styles.statusbar} ${styles[statusType]} ${styles.extraDiv}`}>&nbsp;</div>
-                <div className={styles.extraDiv2} />
-                {subJobsDataLoading && (
-                    <Typography variant="Regular_14" className={styles.loadingTable}>
-                        <FlashingDotsLoader />
-                        <div>{GENERAL.LOADING_DATA}</div>
-                    </Typography>
-                )}
-                {!subJobsDataLoading && !subTaskList && (
-                    <Typography variant="Regular_14" className={styles.loadingTable}>
-                        <NoDataIcon />
-                        <div>{GENERAL.NO_DATA}</div>
-                    </Typography>
-                )}
-                {!subJobsDataLoading && subTaskList && (
-                    <div
-                        //  @ts-ignore
-                        className={`${styles.table}`}
-                        // style={{ position: 'relative', left: `${leftPos}px` }}
-                    >
-                        <Table
-                            {...tableComponentProps}
-                            //@ts-ignore
-                            tableProps={tableProps}
-                            isDoubleRow={true}
-                            variant="innerTable"
-                        />
-                    </div>
-                )}
-            </div>
-        </>
+        <div className={styles.subJobTable}>
+            <div className={`${styles.statusbar} ${styles[statusType]} ${styles.extraDiv}`}>&nbsp;</div>
+            <div className={styles.extraDiv2} />
+            {subJobsDataLoading && (
+                <Typography variant="Regular_14" className={styles.loadingTable}>
+                    <FlashingDotsLoader />
+                    <div>{GENERAL.LOADING_DATA}</div>
+                </Typography>
+            )}
+            {!subJobsDataLoading && !subTaskList && (
+                <Typography variant="Regular_14" className={styles.loadingTable}>
+                    <NoDataIcon />
+                    <div>{GENERAL.NO_DATA}</div>
+                </Typography>
+            )}
+            {!subJobsDataLoading && subTaskList && (
+                <div
+                    //  @ts-ignore
+                    className={`${styles.table}`}
+                    // style={{ position: 'relative', left: `${leftPos}px` }}
+                >
+                    <Table
+                        {...tableComponentProps}
+                        // @ts-ignore
+                        tableProps={tableProps}
+                        isDoubleRow
+                        variant="innerTable"
+                    />
+                </div>
+            )}
+        </div>
     );
 };
 

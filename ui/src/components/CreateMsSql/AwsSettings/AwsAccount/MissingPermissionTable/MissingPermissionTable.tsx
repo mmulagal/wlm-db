@@ -8,7 +8,7 @@ type MissingPerm = {
 };
 
 const MissingPermissionTable = ({ content }: MissingPerm) => {
-    //Fpr Missing and Blocked Permissions
+    // Fpr Missing and Blocked Permissions
     const MissingPerDefs: ColumnProps[] = [
         {
             Header: GENERAL.SERVICE,
@@ -34,9 +34,9 @@ const MissingPermissionTable = ({ content }: MissingPerm) => {
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
 
         isSorting: false,
@@ -48,7 +48,7 @@ const MissingPermissionTable = ({ content }: MissingPerm) => {
     return (
         <div className={styles.missingPermissionTable}>
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
                 variant="innerTable"
                 className={styles.addMargin}

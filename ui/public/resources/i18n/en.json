@@ -92,7 +92,8 @@
             "selected-instances": "Selected instances",
             "successfully-authenticated": "Successfully authenticated",
             "ready-for-management": "Ready for management",
-            "view-details": "View details"
+            "view-details": "View details",
+            "manage-detect-info-message": "The authentication process is in progress and may take up to 1 minute to complete."
         }
     }
 }

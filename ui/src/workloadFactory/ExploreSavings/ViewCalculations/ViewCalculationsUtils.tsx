@@ -21,7 +21,8 @@ export const TableLayout = ({ data }: any) => {
                 marginBottom: 3,
                 marginTop: 14
             };
-        } else if (
+        }
+        if (
             data.label === 'Single Availability Zone total monthly cost' ||
             data.label === 'Multi Availability Zone total monthly cost'
         ) {
@@ -33,7 +34,8 @@ export const TableLayout = ({ data }: any) => {
                 marginTop: 14,
                 paddingTop: 20
             };
-        } else if (
+        }
+        if (
             data.label === 'Total snapshot monthly cost' ||
             data.label === 'Clones total monthly cost' ||
             data.label === 'Total monthly cost'
@@ -46,9 +48,8 @@ export const TableLayout = ({ data }: any) => {
                 marginTop: 10,
                 paddingTop: 15
             };
-        } else {
-            return { backgroundColor: 'var(--main-background)', minHeight: 'auto', height: 'auto', marginBottom: 2 };
         }
+        return { backgroundColor: 'var(--main-background)', minHeight: 'auto', height: 'auto', marginBottom: 2 };
     };
     return (
         <Grid style={styleHandler(data)}>

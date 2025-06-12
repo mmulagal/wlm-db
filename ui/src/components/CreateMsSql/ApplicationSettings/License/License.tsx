@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { AccordionCard, AccordionCardContent, Button, RadioButton, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
-import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+import { GENERAL } from '../../../../utils/appConstants';
 import styles from './License.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setDBVersion,
@@ -28,7 +28,7 @@ import {
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const License = () => {
-    //Store related Data
+    // Store related Data
     const dispatch = useDispatch();
 
     // This is to get license included AMI data
@@ -71,8 +71,8 @@ const License = () => {
         }
     }, [operatingSystem]);
 
-    //Function to generate the options for Select Field
-    //@ts-ignore
+    // Function to generate the options for Select Field
+    // @ts-ignore
     const generateDbVersions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         versionArray?.map((val, idx: number) => {
@@ -113,7 +113,7 @@ const License = () => {
         }
     }, [selectedCustomAMI]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateCustomAMIId = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         customAmiData?.amis?.map((val, idx: number) => {
@@ -131,7 +131,7 @@ const License = () => {
         return options;
     }, [customAmiData]);
 
-    //Function to generate the options for Select Field for License
+    // Function to generate the options for Select Field for License
     const generateAMIIdForLicense = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         amiData?.amis?.map((val, idx: number) => {
@@ -161,7 +161,7 @@ const License = () => {
         }
     }, [dispatch, generateCustomAMIId]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (
@@ -172,13 +172,12 @@ const License = () => {
         }
         if (licenseType === FORM_OPTIONS.CUSTOM_AMI) {
             return <Typography variant="Regular_14">{GENERAL.CUSTOM_AMI}</Typography>;
-        } else {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
-                    {GENERAL.LICENSE_INCLUDED_AMI}
-                </Typography>
-            );
         }
+        return (
+            <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
+                {GENERAL.LICENSE_INCLUDED_AMI}
+            </Typography>
+        );
     };
 
     // To open new tab with credential page on click of credential link
@@ -281,15 +280,15 @@ const License = () => {
                                         <SelectField
                                             label={GENERAL.LICENSE_ID}
                                             error={!isLicenseFilled ? GENERAL.ACTION_REQUIRED : ''}
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             isErrorPrefixHidden
                                             customErrorWarningIcon={
                                                 <WarningIcon
-                                                    //@ts-ignore
+                                                    // @ts-ignore
                                                     style={{
                                                         width: '16px',
                                                         height: '16px',
-                                                        //@ts-ignore
+                                                        // @ts-ignore
                                                         '--icon-primary-color': 'var(--error'
                                                     }}
                                                 />

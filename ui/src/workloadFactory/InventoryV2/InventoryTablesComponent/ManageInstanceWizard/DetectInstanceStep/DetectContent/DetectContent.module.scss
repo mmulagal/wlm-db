@@ -63,3 +63,9 @@
         }
     }
 }
+
+.detectInstanceSelect {
+    [class*='dsCheckbox'] {
+        gap: 16px !important;
+    }
+}

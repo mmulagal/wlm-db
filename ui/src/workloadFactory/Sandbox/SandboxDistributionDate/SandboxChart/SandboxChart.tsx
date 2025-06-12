@@ -1,6 +1,5 @@
 import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
-import { Chart } from 'chart.js';
-import { registerables } from 'chart.js';
+import { Chart, registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './SandboxChart.module.scss';
@@ -23,7 +22,7 @@ const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
         }
     };
 
-    var config = {
+    const config = {
         type: 'doughnut',
         data: {
             datasets: [
@@ -39,7 +38,7 @@ const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
 
     useEffect(() => {
         if (ref.current) {
-            //@ts-ignore
+            // @ts-ignore
             var myDoughnut = new Chart(ref.current, config);
             setDoughnutChart(myDoughnut);
         }
@@ -69,9 +68,9 @@ const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
             </div>
             {/* @ts-ignore */}
 
-            {(isNA || aggregatedSandboxList.length === 0) && <div className={styles.emptyCircle}></div>}
+            {(isNA || aggregatedSandboxList.length === 0) && <div className={styles.emptyCircle} />}
 
-            {aggregatedSandboxList.length !== 0 && <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>}
+            {aggregatedSandboxList.length !== 0 && <canvas ref={ref} id="chart-area" width={184} height={184} />}
         </div>
     );
 };

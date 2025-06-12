@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './StorageCapacity.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setStorageCapacity, setStorageUnit } from '../../../../store/mssql/mssqlFormSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
@@ -31,7 +31,7 @@ const StorageCapacity = ({ wizardType = 'mssql' }: storageCapacityTypes) => {
 
     const units = ['TiB', 'GiB'];
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateUnitsForStorage = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         units?.map((val, idx: number) => {
@@ -56,7 +56,7 @@ const StorageCapacity = ({ wizardType = 'mssql' }: storageCapacityTypes) => {
         }
     }, [inputCapacity]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (checkError()) {
             return <AccordionError />;
@@ -98,13 +98,11 @@ const StorageCapacity = ({ wizardType = 'mssql' }: storageCapacityTypes) => {
         }
     };
 
-    const tooltipMessage = () => {
-        return (
-            <Typography variant="Regular_13" className={styles.infoMsg}>
-                {wizardType === WIZARD_TYPE.PGSQL ? GENERAL.CAPACITY_PGSQL_TOOLTIP : GENERAL.CAPACITY_TOOLTIP}
-            </Typography>
-        );
-    };
+    const tooltipMessage = () => (
+        <Typography variant="Regular_13" className={styles.infoMsg}>
+            {wizardType === WIZARD_TYPE.PGSQL ? GENERAL.CAPACITY_PGSQL_TOOLTIP : GENERAL.CAPACITY_TOOLTIP}
+        </Typography>
+    );
 
     return (
         <div className={styles['storage-capacity']}>
@@ -139,7 +137,7 @@ const StorageCapacity = ({ wizardType = 'mssql' }: storageCapacityTypes) => {
                                 className={styles.selectField}
                             />
                         </div>
-                        {<StorageCapacityTable wizardType={wizardType} />}
+                        <StorageCapacityTable wizardType={wizardType} />
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

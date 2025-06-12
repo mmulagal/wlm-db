@@ -1,6 +1,6 @@
+import { Typography } from '@netapp/design-system';
 import { ReactComponent as Add } from '../../../../assets/ic_add.svg';
 import { ReactComponent as Remove } from '../../../../assets/ic_remove.svg';
-import { Typography } from '@netapp/design-system';
 import styles from './DBAccordion.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 

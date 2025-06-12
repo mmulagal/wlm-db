@@ -1,15 +1,15 @@
+import { useDispatch } from 'react-redux';
+import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
+import { useEffect, useState, useMemo } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
-import { useEffect, useState, useMemo } from 'react';
 import {
     cardDataDefault,
     checkIfDisableForOptimize,
@@ -159,7 +159,7 @@ const DashboardInnerPage = () => {
                                             regionId: string;
                                         }
                                     ) => {
-                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
                                         if (!acc[uniqueRow]) {
                                             acc[uniqueRow] = {
                                                 id: databaseHostId,
@@ -194,7 +194,7 @@ const DashboardInnerPage = () => {
                         {
                             configurationName: 'rss-config',
                             databaseHosts: Object.values(
-                                //@ts-ignore
+                                // @ts-ignore
                                 rowData.reduce(
                                     (
                                         acc: Record<
@@ -221,7 +221,7 @@ const DashboardInnerPage = () => {
                                             networkAdapters: any;
                                         }
                                     ) => {
-                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
                                         if (!acc[uniqueRow]) {
                                             acc[uniqueRow] = {
                                                 id: databaseHostId,
@@ -301,7 +301,7 @@ const DashboardInnerPage = () => {
                                             regionId: string;
                                         }
                                     ) => {
-                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
                                         if (!acc[uniqueRow]) {
                                             acc[uniqueRow] = {
                                                 id: databaseHostId,
@@ -362,7 +362,7 @@ const DashboardInnerPage = () => {
                                             regionId: string;
                                         }
                                     ) => {
-                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
                                         if (!acc[uniqueRow]) {
                                             acc[uniqueRow] = {
                                                 id: databaseHostId,
@@ -389,7 +389,7 @@ const DashboardInnerPage = () => {
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
             apiCall = optimizeResiliency;
             const state = store.getState();
-            const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
+            const { selectedSnapshot } = state.getWellOptimize;
 
             payload = {
                 configurationName: ['snapshot-policy'],
@@ -406,7 +406,7 @@ const DashboardInnerPage = () => {
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
             apiCall = optimizeAwsBackup;
             const state = store.getState();
-            const selectedAWSBackup = state.getWellOptimize.selectedAWSBackup;
+            const { selectedAWSBackup } = state.getWellOptimize;
 
             payload = {
                 hostsToOptimize: [
@@ -457,7 +457,7 @@ const DashboardInnerPage = () => {
                                             regionId: string;
                                         }
                                     ) => {
-                                        let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
                                         if (!acc[uniqueRow]) {
                                             acc[uniqueRow] = {
                                                 id: databaseHostId,
@@ -548,7 +548,7 @@ const DashboardInnerPage = () => {
                     ...inProgressOptimizationData,
                     [type]: [
                         ...(inProgressOptimizationData[type] || []),
-                        selectedResourceId + '_' + selectedDatabaseInstance
+                        `${selectedResourceId}_${selectedDatabaseInstance}`
                     ]
                 })
             );
@@ -579,24 +579,22 @@ const DashboardInnerPage = () => {
         let apiData = {};
         if (operation === 'bulk') {
             apiData = {
-                payload: payload
+                payload
+            };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+            apiData = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                payload
             };
         } else {
-            if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
-                apiData = {
-                    credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                    regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                    payload: payload
-                };
-            } else {
-                apiData = {
-                    credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                    regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                    databaseHostId: selectedResourceId,
-                    instanceId: selectedDatabaseInstance,
-                    payload: payload
-                };
-            }
+            apiData = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                databaseHostId: selectedResourceId,
+                instanceId: selectedDatabaseInstance,
+                payload
+            };
         }
 
         apiCall(apiData).then((res: any) => {
@@ -672,9 +670,9 @@ const DashboardInnerPage = () => {
                 host.sqlServerInstances.forEach((instanceId: string) => {
                     instanceList.push({
                         id: type,
-                        name: name,
+                        name,
                         hostId: host.id,
-                        instanceId: instanceId,
+                        instanceId,
                         credentialId: host?.credentialsId,
                         regionId: host?.region
                     });
@@ -1100,60 +1098,58 @@ const DashboardInnerPage = () => {
         }
     }, [selectedConfig, selectedConfigSummary]);
 
-    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
-        return {
-            id: '7',
-            Header: '',
-            accessor: '',
-            isSticky: true,
-            width: '220px',
-            renderCell: (cellData: any, rowData: any) => {
-                let { isDisabled, errorMessage } = checkIfDisableForOptimize(
-                    inProgressHostData,
-                    name,
-                    rowData,
-                    selectedRowsForOptimize
-                );
-                const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.id);
-                return (
-                    <div className={styles.buttonContainer}>
-                        {isInProgress ? (
-                            <div className={styles['optimize-in-progress']}>
-                                <OptimizeInProgressIcon />
-                                <DsTypography variant="Semibold_14">Fixing</DsTypography>
-                            </div>
-                        ) : isDisabled && errorMessage ? (
-                            <Popover
-                                popoverClass={CommonStyles['popover']}
-                                isAppendedToBody={true}
-                                children={<DsTypography variant="Regular_14">{errorMessage}</DsTypography>}
-                                trigger="hover"
-                                delayHide={200}
-                                interactive={true}
-                                container={
-                                    <DsButton variant="secondary" isDisabled={true}>
-                                        {GENERAL.OPTIMIZE}
-                                    </DsButton>
-                                }
-                            />
-                        ) : (
-                            <DsButton
-                                isThin
-                                variant="secondary"
-                                isDisabled={isDisabled}
-                                onClick={() => {
-                                    optimizeAction(rowData);
-                                    handleDialog(name, rowData, 'single');
-                                }}
-                            >
-                                {GENERAL.OPTIMIZE}
-                            </DsButton>
-                        )}
-                    </div>
-                );
-            }
-        };
-    };
+    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => ({
+        id: '7',
+        Header: '',
+        accessor: '',
+        isSticky: true,
+        width: '220px',
+        renderCell: (cellData: any, rowData: any) => {
+            const { isDisabled, errorMessage } = checkIfDisableForOptimize(
+                inProgressHostData,
+                name,
+                rowData,
+                selectedRowsForOptimize
+            );
+            const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.id);
+            return (
+                <div className={styles.buttonContainer}>
+                    {isInProgress ? (
+                        <div className={styles['optimize-in-progress']}>
+                            <OptimizeInProgressIcon />
+                            <DsTypography variant="Semibold_14">Fixing</DsTypography>
+                        </div>
+                    ) : isDisabled && errorMessage ? (
+                        <Popover
+                            popoverClass={CommonStyles.popover}
+                            isAppendedToBody
+                            children={<DsTypography variant="Regular_14">{errorMessage}</DsTypography>}
+                            trigger="hover"
+                            delayHide={200}
+                            interactive
+                            container={
+                                <DsButton variant="secondary" isDisabled>
+                                    {GENERAL.OPTIMIZE}
+                                </DsButton>
+                            }
+                        />
+                    ) : (
+                        <DsButton
+                            isThin
+                            variant="secondary"
+                            isDisabled={isDisabled}
+                            onClick={() => {
+                                optimizeAction(rowData);
+                                handleDialog(name, rowData, 'single');
+                            }}
+                        >
+                            {GENERAL.OPTIMIZE}
+                        </DsButton>
+                    )}
+                </div>
+            );
+        }
+    });
 
     const handleBulkAction = (type: string, rowData: any) => {
         // optimizeAction(rowData[0]);
@@ -1211,9 +1207,10 @@ const DashboardInnerPage = () => {
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };
 
-    const configData = useMemo(() => {
-        return getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
-    }, [allmssqlHostAssessmentData]);
+    const configData = useMemo(
+        () => getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData),
+        [allmssqlHostAssessmentData]
+    );
 
     return (
         <div className={styles.dashboardInnerPage}>
@@ -1267,7 +1264,7 @@ const DashboardInnerPage = () => {
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>
                             <RecommendationText
                                 data={valueCardData?.data}
-                                from={'dashboard'}
+                                from="dashboard"
                                 cardName={valueCardData?.cardName}
                             />
                         </div>

@@ -1,7 +1,9 @@
+import { useDispatch } from 'react-redux';
+import { DsTypography, useDialog } from '@netapp/design-system';
+import { useEffect, useMemo, useState } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -11,10 +13,8 @@ import {
     WLF_TABS
 } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DsTypography, useDialog } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
-import { useEffect, useMemo, useState } from 'react';
 import { cardDataDefault, setOptimizeInnerpageSummary, updateConfigStateStatus } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -123,7 +123,7 @@ const DashboardDismissPage = () => {
         const state = store.getState();
         const { inProgressStateData } = state.getWellOptimize;
 
-        let name = getPayloadType(type);
+        const name = getPayloadType(type);
 
         const payload = {
             configurationsToDismiss: [
@@ -159,7 +159,7 @@ const DashboardDismissPage = () => {
                                 }
                             ) => {
                                 if (configState !== action) {
-                                    let uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                    const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
                                     if (!acc[uniqueRow]) {
                                         acc[uniqueRow] = {
                                             id: databaseHostId,
@@ -194,10 +194,10 @@ const DashboardDismissPage = () => {
             })
         );
 
-        dismissMssqlAssessment({ payload: payload })
+        dismissMssqlAssessment({ payload })
             .then((res: any) => {
                 if (!res.error) {
-                    let { successList, failedList } = categorizeStateInstances(res?.data, type);
+                    const { successList, failedList } = categorizeStateInstances(res?.data, type);
                     updateConfigStateStatus(successList, dispatch, action);
                     dispatch(
                         setInProgressStateData({
@@ -541,7 +541,7 @@ const DashboardDismissPage = () => {
         }
     }, [selectedConfig, selectedConfigSummary]);
 
-    /**type = like Storage tier
+    /** type = like Storage tier
      * rowData = row data values
      * action = activate, dismiss, postpone
      */
@@ -553,7 +553,7 @@ const DashboardDismissPage = () => {
         let setHeader = '';
         let setContent: Array<string> = [];
         let setPrimaryButton = '';
-        let typeText = type?.toLowerCase() || '';
+        const typeText = type?.toLowerCase() || '';
         if (dialogCheck && action === CONFIG_STATE_ACTIONS.ACTIVE) {
             setHeader = `Reactivate ${typeText} analysis`;
             setContent = [
@@ -659,13 +659,12 @@ const DashboardDismissPage = () => {
             case ASSESSMENT_CONFIG_NAMES.CRR:
                 return instanceData?.assessments?.dismissedConfigurations?.crr;
             default:
-                return;
         }
     };
 
     const getTableData = (type: string) => {
-        let newAssessmentData: any = [];
-        let uniqueResourceList: Array<string> = [];
+        const newAssessmentData: any = [];
+        const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
@@ -684,7 +683,7 @@ const DashboardDismissPage = () => {
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    let configObj: any = getConfigObj(type, instanceData);
+                    const configObj: any = getConfigObj(type, instanceData);
 
                     newAssessmentData.push({
                         credentialId: hostData?.credentialId,
@@ -692,9 +691,9 @@ const DashboardDismissPage = () => {
                         databaseHostId: hostData?.databaseHostId,
                         instanceId: instanceData?.databaseInstanceId,
                         serverInstanceName: instanceData?.databaseInstanceName,
-                        id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
+                        id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
                         hostName: hostData?.databaseHostName,
-                        configObj: configObj,
+                        configObj,
                         configState: configObj?.configState || CONFIG_STATES.ACTIVE,
                         credentialName: matchingCredEntry?.name,
                         regionName: matchingRegionEntry?.regionName,
@@ -746,31 +745,30 @@ const DashboardDismissPage = () => {
                     ]}
                 />
             );
-        } else {
-            return (
-                <BreadCrumbs
-                    items={[
-                        {
-                            title: 'Dashboard',
-                            onClick: () => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
-                            }
-                        },
-                        {
-                            title: `Fix configuration (${selectedConfig})`,
-                            onClick: () => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
-                            }
-                        },
-
-                        {
-                            title: `Update configuration analysis state for ${selectedConfig}`,
-                            dataTestId: 'wlm-db-dismiss-configuration'
-                        }
-                    ]}
-                />
-            );
         }
+        return (
+            <BreadCrumbs
+                items={[
+                    {
+                        title: 'Dashboard',
+                        onClick: () => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                        }
+                    },
+                    {
+                        title: `Fix configuration (${selectedConfig})`,
+                        onClick: () => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
+                        }
+                    },
+
+                    {
+                        title: `Update configuration analysis state for ${selectedConfig}`,
+                        dataTestId: 'wlm-db-dismiss-configuration'
+                    }
+                ]}
+            />
+        );
     };
 
     return (
@@ -809,7 +807,7 @@ const DashboardDismissPage = () => {
                         <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>
                             <RecommendationText
                                 data={valueCardData?.data}
-                                from={'dashboard'}
+                                from="dashboard"
                                 cardName={valueCardData?.cardName}
                             />
                         </div>

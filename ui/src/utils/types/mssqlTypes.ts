@@ -15,7 +15,7 @@ export interface VPC {
     name?: string;
     cidrBlock?: [
         {
-            CidrBlock?: String;
+            CidrBlock?: string;
         }
     ];
     subnets: [];

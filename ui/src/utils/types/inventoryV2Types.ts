@@ -158,7 +158,7 @@ export interface InventoryTableInstanceDatInterface {
     };
     storage?: {
         fsxn?: {
-            protocol?: Array<String>;
+            protocol?: Array<string>;
             size?: number;
             used?: number;
             spaceSavings?: number;
@@ -190,7 +190,7 @@ export interface InventoryTableInstanceDatInterface {
 
 export interface StorageInterface {
     fsxn?: {
-        protocol?: Array<String>;
+        protocol?: Array<string>;
         size?: number;
         used?: number;
         spaceSavings?: number;
@@ -314,7 +314,7 @@ export interface ManagedHostsRowInterface {
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
-    ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
+    ssmStatus?: string; // Connected,NotConnected,Connecting,Disconnected, N\A
     loading?: boolean;
     databaseInstanceDetails?: Array<{
         databaseInstanceId?: string;
@@ -393,7 +393,7 @@ export interface InstancesHostsRowInterface {
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
-    ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
+    ssmStatus?: string; // Connected,NotConnected,Connecting,Disconnected, N\A
     loading?: boolean;
     databaseInstanceDetails?: Array<DatabaseInstanceDetailsInterface>;
     clusterNodeDetails?: Array<{

@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './CreateMsSqlLayout.module.scss';
 import DeploymentTabs from './DeploymentTabs/DeploymentTabs';
 import MSSqlServer from '../MSSqlServer/MSSqlServer';
 import Chatbot from '../Chatbot/Chatbot';
 import { setIsShow, setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
-import { useDispatch } from 'react-redux';
 import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 

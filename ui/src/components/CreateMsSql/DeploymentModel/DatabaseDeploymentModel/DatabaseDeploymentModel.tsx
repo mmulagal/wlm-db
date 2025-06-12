@@ -1,8 +1,8 @@
 import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './DatabaseDeploymentModel.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
 import { setSelectedDBDeploymentModel } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
@@ -12,10 +12,8 @@ const DatabaseDeploymentModel = () => {
     const dispatch = useDispatch();
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
-    //Set the Header text here
-    const setHeader = () => {
-        return <Typography variant="Regular_14">{deploymentModel?.label}</Typography>;
-    };
+    // Set the Header text here
+    const setHeader = () => <Typography variant="Regular_14">{deploymentModel?.label}</Typography>;
     return (
         <div className={styles['db-deployment']}>
             <AccordionCard

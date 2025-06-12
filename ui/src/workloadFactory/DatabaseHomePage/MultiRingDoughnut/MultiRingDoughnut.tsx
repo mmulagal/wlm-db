@@ -1,9 +1,7 @@
-import React from 'react';
-import { Chart } from 'chart.js';
-import { registerables } from 'chart.js';
-import { useEffect, useRef, useState } from 'react';
-import styles from './MultiRingDoughnut.module.scss';
+import React, { useEffect, useRef, useState } from 'react';
+import { Chart, registerables } from 'chart.js';
 import { Typography } from '@netapp/design-system';
+import styles from './MultiRingDoughnut.module.scss';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 
@@ -14,10 +12,7 @@ type MultiRingDoughnutPropType = {
     hostData?: any;
 };
 
-const MultiRingDoughnut = ({
-    unProtectColor,
-    hostData
-}: MultiRingDoughnutPropType) => {
+const MultiRingDoughnut = ({ unProtectColor, hostData }: MultiRingDoughnutPropType) => {
     const unProtectedColor = unProtectColor ? '#E0E0E0' : '#FDC300';
 
     const ref = useRef<HTMLCanvasElement>(null);
@@ -31,7 +26,7 @@ const MultiRingDoughnut = ({
         }
     };
 
-    var config = {
+    const config = {
         type: 'doughnut',
         data: {
             datasets: [
@@ -47,7 +42,7 @@ const MultiRingDoughnut = ({
 
     useEffect(() => {
         if (ref.current) {
-            //@ts-ignore
+            // @ts-ignore
             var myDoughnut = new Chart(ref.current, config);
             setDoughnutChart(myDoughnut);
         }
@@ -66,10 +61,10 @@ const MultiRingDoughnut = ({
                 <Typography variant="Regular_14">{GENERAL.PROTECTION_CHART}</Typography>
             </div>
             {(!hostData || (hostData?.protectedPercent === 0 && hostData?.unprotectedPercent === 0)) && (
-                <div className={styles.emptyCircle}></div>
+                <div className={styles.emptyCircle} />
             )}
             {(hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) && (
-                <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
+                <canvas ref={ref} id="chart-area" width={162} height={162} />
             )}
         </div>
     );

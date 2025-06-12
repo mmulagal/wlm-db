@@ -18,24 +18,23 @@ const CodeBoxScroll = ({ dropDownValue, setDisplayedDataInCodeBox }: CodeBoxScro
 
     const handleScrollLeft = () => {
         const container = containerRef?.current;
-        //@ts-ignore
+        // @ts-ignore
         const isEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth;
-        //@ts-ignore
+        // @ts-ignore
         const isTopEnd = container.scrollTop + container.clientHeight >= container.scrollHeight;
         setReachedVerticalEnd(isTopEnd);
         setReachedHorizontalEnd(isEnd);
-        //@ts-ignore
+        // @ts-ignore
         setScrollPosition(containerRef?.current?.scrollLeft);
-        //@ts-ignore
+        // @ts-ignore
         setScrollTopPosition(containerRef?.current?.scrollTop);
     };
 
     const dynamicClassForContent = () => {
         if (reachedHorizontalEnd && !reachedVerticalEnd) {
             return `${styles.firstBlock} ${styles.addMargin}`;
-        } else {
-            return `${styles.firstBlock}`;
         }
+        return `${styles.firstBlock}`;
     };
     return (
         <div

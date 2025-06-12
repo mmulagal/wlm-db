@@ -1,15 +1,15 @@
 import { Table, TableTopBar, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useOutletContext } from 'react-router-dom';
+import { useMemo } from 'react';
 import TablesSummary from './TablesSummary/TablesSummary';
 import StatusComponent from '../../../common/StatusComponent/StatusComponent';
 import { isNotNumberOrNA, formatSizeOrString, formatSizeSplit } from '../../../utils/utilityFunctions';
 import styles from './Tables.module.scss';
-import { useOutletContext } from 'react-router-dom';
-import { useMemo } from 'react';
 
 const Tables = () => {
-    let { tables, batchingCompleted } = useOutletContext<{ tables: any; batchingCompleted: boolean }>();
-    //@ts-ignore
+    const { tables, batchingCompleted } = useOutletContext<{ tables: any; batchingCompleted: boolean }>();
+    // @ts-ignore
     const summaryData = useMemo(() => {
         const totalSize = tables.reduce((sum: number, item: any) => sum + parseInt(item.tableSize), 0);
         const totalSizeObj = formatSizeSplit(totalSize);
@@ -54,7 +54,7 @@ const Tables = () => {
             accessor: 'tableSize',
             renderCell: (value: number) =>
                 isNotNumberOrNA(value) ? (
-                    <StatusComponent status={'INFO'} statusText={String(value)} useIcon={true} />
+                    <StatusComponent status="INFO" statusText={String(value)} useIcon />
                 ) : (
                     formatSizeOrString(value)
                 ),
@@ -81,14 +81,14 @@ const Tables = () => {
             </div>
             <div className={styles.table}>
                 <TableTopBar
-                    //@ts-ignore
+                    // @ts-ignore
                     tableProps={tableProps}
-                    pluralTitle={'Tables'}
-                    singularTitle={'Table'}
+                    pluralTitle="Tables"
+                    singularTitle="Table"
                     lazyLoadingText="Loading Tables"
                 />
                 <Table
-                    //@ts-ignore
+                    // @ts-ignore
                     tableProps={tableProps}
                 />
             </div>

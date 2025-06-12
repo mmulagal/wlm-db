@@ -1,14 +1,14 @@
 import { useDispatch } from 'react-redux';
 import { ReactComponent as Download } from '@netapp/icons/ic_download.svg';
+import { DsTypography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import { ReactComponent as Calculate } from '../../../../assets/ic_calculate.svg';
 import { ReactComponent as Email } from '../../../../assets/ic_email.svg';
 import { WLF_TABS } from '../../../../utils/consts';
 import styles from './ExportPDF.module.scss';
-import { DsTypography } from '@netapp/design-system';
 
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useState } from 'react';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus }: any) => {
@@ -45,9 +45,8 @@ const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus }: any)
     const setCSSForExportPDF = () => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
             return `${styles.exportPdf} ${styles.exportPdfOnPrem}`;
-        } else {
-            return styles.exportPdf;
         }
+        return styles.exportPdf;
     };
 
     return (
@@ -96,60 +95,56 @@ const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus }: any)
             </div>
 
             {isDemoMode && (
-                <>
-                    <div
-                        className={
-                            viewLoading || disableState || !viewCalculationsResponse
-                                ? `${styles.insideContainer} ${styles.disabled}`
-                                : styles.insideContainer
-                        }
-                    >
-                        <div>
-                            <Calculate />
-                        </div>
-                        <DsTypography
-                            variant="Semibold_14"
-                            className={styles.text}
-                            style={{ width: '147px' }}
-                            onClick={() =>
-                                viewLoading || disableState || !viewCalculationsResponse
-                                    ? () => {}
-                                    : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
-                            }
-                            id="view-calculations"
-                        >
-                            {GENERAL.VIEW_THE_CALCULATIONS}
-                        </DsTypography>
+                <div
+                    className={
+                        viewLoading || disableState || !viewCalculationsResponse
+                            ? `${styles.insideContainer} ${styles.disabled}`
+                            : styles.insideContainer
+                    }
+                >
+                    <div>
+                        <Calculate />
                     </div>
-                </>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={styles.text}
+                        style={{ width: '147px' }}
+                        onClick={() =>
+                            viewLoading || disableState || !viewCalculationsResponse
+                                ? () => {}
+                                : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
+                        }
+                        id="view-calculations"
+                    >
+                        {GENERAL.VIEW_THE_CALCULATIONS}
+                    </DsTypography>
+                </div>
             )}
             {!isDemoMode && (
-                <>
-                    <div
-                        className={
-                            viewLoading || disableState || !viewCalculationsResponse
-                                ? `${styles.insideContainer} ${styles.disabled}`
-                                : styles.insideContainer
-                        }
-                    >
-                        <div>
-                            <Calculate />
-                        </div>
-                        <DsTypography
-                            variant="Semibold_14"
-                            className={styles.text}
-                            style={{ width: '147px' }}
-                            onClick={() =>
-                                viewLoading || disableState || !viewCalculationsResponse
-                                    ? () => {}
-                                    : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
-                            }
-                            id="view-calculations"
-                        >
-                            {GENERAL.VIEW_THE_CALCULATIONS}
-                        </DsTypography>
+                <div
+                    className={
+                        viewLoading || disableState || !viewCalculationsResponse
+                            ? `${styles.insideContainer} ${styles.disabled}`
+                            : styles.insideContainer
+                    }
+                >
+                    <div>
+                        <Calculate />
                     </div>
-                </>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={styles.text}
+                        style={{ width: '147px' }}
+                        onClick={() =>
+                            viewLoading || disableState || !viewCalculationsResponse
+                                ? () => {}
+                                : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
+                        }
+                        id="view-calculations"
+                    >
+                        {GENERAL.VIEW_THE_CALCULATIONS}
+                    </DsTypography>
+                </div>
             )}
         </div>
     );

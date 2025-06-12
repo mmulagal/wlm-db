@@ -22,48 +22,46 @@ const CardComponentConfig = ({
     content,
     tickIcon,
     isDisabled = false
-}: CC) => {
-    return (
-        <div className={styles.cardComponent} style={{ width: '50%' }}>
-            <div
-                id={idToAdd}
-                className={
-                    selectedConfigCondition ? `${styles['easy-create']} ${styles['add-border']}` : styles['easy-create']
-                }
-                onClick={isDisabled ? () => {} : handleClick}
-            >
-                <div className={styles.level}>
-                    <div>{icon}</div>
+}: CC) => (
+    <div className={styles.cardComponent} style={{ width: '50%' }}>
+        <div
+            id={idToAdd}
+            className={
+                selectedConfigCondition ? `${styles['easy-create']} ${styles['add-border']}` : styles['easy-create']
+            }
+            onClick={isDisabled ? () => {} : handleClick}
+        >
+            <div className={styles.level}>
+                <div>{icon}</div>
 
-                    <div className={styles['easy-create-content']}>
-                        <div className={styles.headingContent}>
-                            <div
-                                className={styles['easy-create-heading']}
-                                style={{ color: isDisabled ? 'var(--text-disabled)' : 'var(--text-primary)' }}
-                            >
-                                {heading}
-                            </div>
-                            {isDisabled && (
-                                <div className={styles.tagClass}>
-                                    <ComingSoon />
-                                </div>
-                            )}
-                        </div>
-
-                        <Typography
-                            variant="Regular_13"
+                <div className={styles['easy-create-content']}>
+                    <div className={styles.headingContent}>
+                        <div
+                            className={styles['easy-create-heading']}
                             style={{ color: isDisabled ? 'var(--text-disabled)' : 'var(--text-primary)' }}
-                            className={styles['easy-create-content-text']}
                         >
-                            {content}
-                        </Typography>
+                            {heading}
+                        </div>
+                        {isDisabled && (
+                            <div className={styles.tagClass}>
+                                <ComingSoon />
+                            </div>
+                        )}
                     </div>
-                </div>
 
-                {selectedConfigCondition && <div className={styles['tick-placement']}>{tickIcon}</div>}
+                    <Typography
+                        variant="Regular_13"
+                        style={{ color: isDisabled ? 'var(--text-disabled)' : 'var(--text-primary)' }}
+                        className={styles['easy-create-content-text']}
+                    >
+                        {content}
+                    </Typography>
+                </div>
             </div>
+
+            {selectedConfigCondition && <div className={styles['tick-placement']}>{tickIcon}</div>}
         </div>
-    );
-};
+    </div>
+);
 
 export default CardComponentConfig;

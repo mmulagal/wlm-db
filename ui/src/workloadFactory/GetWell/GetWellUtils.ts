@@ -763,11 +763,11 @@ export const formatApplicationCardMainConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.license;
-    let categoryVal = 'application';
+    const item: any = data?.license;
+    const categoryVal = 'application';
     let itemName = item?.name || 'sql-license';
     let status = item?.status || '';
-    let severity = item?.severity || '';
+    const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
@@ -830,11 +830,11 @@ export const formatMicrosoftSqlPatchCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.mssqlPatch;
-    let categoryVal = 'application';
+    const item: any = data?.mssqlPatch;
+    const categoryVal = 'application';
     let itemName = item?.name || 'mssql-patch';
     let status = item?.status || '';
-    let severity = item?.severity || '';
+    const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
@@ -891,7 +891,7 @@ export const formatMicrosoftSqlPatchCardConfig = (
                 important: importantPatches
             },
             recommendationText: item?.recommendation,
-            missingPatchList: missingPatchList,
+            missingPatchList,
             dismissedObj: data?.dismissedConfigurations?.mssqlPatch
         }
     };
@@ -903,11 +903,11 @@ export const formatMaxdopPatchCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.maxDOP;
-    let categoryVal = 'application';
+    const item: any = data?.maxDOP;
+    const categoryVal = 'application';
     let itemName = item?.name || 'maxdop';
     let status = item?.status || '';
-    let severity = item?.severity || '';
+    const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
@@ -953,11 +953,11 @@ export const formatSnapshotPolicyCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.snapshotPolicy;
-    let categoryVal = 'resiliency';
+    const item: any = data?.snapshotPolicy;
+    const categoryVal = 'resiliency';
     let itemName = 'snapshot-policy';
     let status = item?.status || '';
-    let severity = item?.severity || '';
+    const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
@@ -1008,11 +1008,11 @@ export const formatAWSBackUpPolicyCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.awsBackup;
-    let categoryVal = 'resiliency';
+    const item: any = data?.awsBackup;
+    const categoryVal = 'resiliency';
     let itemName = 'aws-backup-policy';
     let status = item?.status || '';
-    let severity = item?.severity || '';
+    const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
@@ -1063,11 +1063,11 @@ export const formatCRRCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.crr;
-    let categoryVal = 'resiliency';
+    const item: any = data?.crr;
+    const categoryVal = 'resiliency';
     let itemName = item?.name || 'crr';
     let status = item?.status || '';
-    let severity = item?.severity || '';
+    const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
@@ -1119,11 +1119,11 @@ export const formatCloneCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.clone;
-    let categoryVal = 'cloning';
+    const item: any = data?.clone;
+    const categoryVal = 'cloning';
     let itemName = item?.name || 'clone-management';
     let status = item?.status || '';
-    let severity = item?.severity || '';
+    const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
@@ -1175,11 +1175,11 @@ export const formatOsPatchCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.hostOsPatch;
-    let categoryVal = 'compute';
+    const item: any = data?.hostOsPatch;
+    const categoryVal = 'compute';
     let itemName = item?.name || 'host-os-patch';
     let status = item?.status || '';
-    let severity = item?.severity || '';
+    const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
@@ -1234,7 +1234,7 @@ export const formatOsPatchCardConfig = (
                 other: otherViolations
             },
             recommendationText: item?.recommendation,
-            missingPatchList: missingPatchList,
+            missingPatchList,
             dismissedObj: data?.dismissedConfigurations?.hostOsPatch
         }
     };
@@ -1246,25 +1246,25 @@ export const formatRssConfigCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.rssConfig;
-    let categoryVal = 'compute';
+    const item: any = data?.rssConfig;
+    const categoryVal = 'compute';
     let itemName = item?.name || 'rss-config';
     let status = item?.status || '';
-    let severity = item?.severity || '';
+    const severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
     let findingReasons = 0;
-    let optimizedRows: any = {
+    const optimizedRows: any = {
         tcpOffloading: GENERAL.FINDINGS.OPTIMIZED,
         receiveQueues: GENERAL.FINDINGS.OPTIMIZED,
         rssProfile: GENERAL.FINDINGS.OPTIMIZED,
         rssStatus: GENERAL.FINDINGS.OPTIMIZED,
         baseProcessorNumber: GENERAL.FINDINGS.OPTIMIZED
     };
-    let optimizedValue: any = {
+    const optimizedValue: any = {
         tcpOffloading: item?.tcpOffloadState,
         receiveQueues: item?.recommendedAdapterSettings?.recommendedReceiveQueues,
         rssProfile: item?.recommendedAdapterSettings?.recommendedRssProfile,
@@ -1272,14 +1272,14 @@ export const formatRssConfigCardConfig = (
         baseProcessorNumber: item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
     };
 
-    let totalAdapters = item?.rssAdapters?.length || 0;
+    const totalAdapters = item?.rssAdapters?.length || 0;
     let nonOptimizedAdapters = 0;
-    let notOptimizedAdapters: any = [];
+    const notOptimizedAdapters: any = [];
 
     if (item?.tcpOffloadState?.toLowerCase() === 'enabled') {
         findingReasons++;
-        optimizedRows['tcpOffloading'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-        optimizedValue['tcpOffloading'] = 'Enabled';
+        optimizedRows.tcpOffloading = GENERAL.FINDINGS.NOT_OPTIMIZED;
+        optimizedValue.tcpOffloading = 'Enabled';
     }
 
     item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
@@ -1296,40 +1296,40 @@ export const formatRssConfigCardConfig = (
                 tcpOffloadState: optimizedValue?.tcpOffloading,
                 tcpOffloadStateStatus: optimizedRows?.tcpOffloading
             });
-            optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-            optimizedValue['rssProfile'] = adapter?.rssProfile;
-            optimizedRows['rssStatus'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-            optimizedValue['rssStatus'] = 'Disabled';
-            optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-            optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
-            optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-            optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
+            optimizedRows.rssProfile = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue.rssProfile = adapter?.rssProfile;
+            optimizedRows.rssStatus = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue.rssStatus = 'Disabled';
+            optimizedRows.baseProcessorNumber = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue.baseProcessorNumber = adapter?.baseProcessorNumber;
+            optimizedRows.receiveQueues = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue.receiveQueues = adapter?.numberOfReceiveQueues;
         } else {
             if (adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile) {
                 findingReasons++;
-                if (optimizedRows?.['rssProfile'] === GENERAL.FINDINGS.NOT_OPTIMIZED) {
-                    optimizedValue['rssProfile'] = GENERAL.MULTIPLE_VALUES;
+                if (optimizedRows?.rssProfile === GENERAL.FINDINGS.NOT_OPTIMIZED) {
+                    optimizedValue.rssProfile = GENERAL.MULTIPLE_VALUES;
                 } else {
-                    optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                    optimizedValue['rssProfile'] = adapter?.rssProfile;
+                    optimizedRows.rssProfile = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                    optimizedValue.rssProfile = adapter?.rssProfile;
                 }
             }
             if (adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber) {
                 findingReasons++;
-                if (optimizedRows?.['baseProcessorNumber'] === GENERAL.FINDINGS.NOT_OPTIMIZED) {
-                    optimizedValue['baseProcessorNumber'] = GENERAL.MULTIPLE_VALUES;
+                if (optimizedRows?.baseProcessorNumber === GENERAL.FINDINGS.NOT_OPTIMIZED) {
+                    optimizedValue.baseProcessorNumber = GENERAL.MULTIPLE_VALUES;
                 } else {
-                    optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                    optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
+                    optimizedRows.baseProcessorNumber = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                    optimizedValue.baseProcessorNumber = adapter?.baseProcessorNumber;
                 }
             }
             if (adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues) {
                 findingReasons++;
-                if (optimizedRows?.['receiveQueues'] === GENERAL.FINDINGS.NOT_OPTIMIZED) {
-                    optimizedValue['receiveQueues'] = GENERAL.MULTIPLE_VALUES;
+                if (optimizedRows?.receiveQueues === GENERAL.FINDINGS.NOT_OPTIMIZED) {
+                    optimizedValue.receiveQueues = GENERAL.MULTIPLE_VALUES;
                 } else {
-                    optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                    optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
+                    optimizedRows.receiveQueues = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                    optimizedValue.receiveQueues = adapter?.numberOfReceiveQueues;
                 }
             }
 
@@ -1398,7 +1398,7 @@ export const formatRssConfigCardConfig = (
             errorMessage: item?.errorMessage,
             rssAdapters: item?.rssAdapters,
             recommendedAdapterSettings: item?.recommendedAdapterSettings,
-            notOptimizedAdapters: notOptimizedAdapters,
+            notOptimizedAdapters,
             tcpOffloadState: item?.tcpOffloadState,
             rssOptimizedRows: optimizedRows,
             rssOptimizedValues: optimizedValue,
@@ -1414,14 +1414,14 @@ const mapDismissedValues = (data: any, itemName: string | any) => {
     for (const key in data) {
         const section = data[key];
         if (Array.isArray(section)) {
-            //For sizing and layout
+            // For sizing and layout
             for (const item of section) {
                 if (item?.configurationName === itemName) {
                     return item;
                 }
             }
         } else if (typeof section === 'object') {
-            //For configuration
+            // For configuration
             for (const subKey in section) {
                 const subSection = section[subKey];
                 if (Array.isArray(subSection)) {
@@ -1443,7 +1443,7 @@ export const formatIndividualCardMainConfig = (
     optimizingData: { [key: string]: string }
 ) => {
     let cardsData: any = cardDataDefault;
-    let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
+    const cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
     let computeMissingPermissions = false;
     if (data?.compute?.name === 'compute-rightsizing') {
         cardMainConfig?.push([data?.compute]);
@@ -1477,7 +1477,7 @@ export const formatIndividualCardMainConfig = (
         category?.map((item: PerConfigInterface) => {
             let itemName = item?.name || '';
             let status = item?.status || '';
-            let severity = item?.severity || '';
+            const severity = item?.severity || '';
             if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
                 status = optimizingData?.[itemName];
             }
@@ -1498,7 +1498,7 @@ export const formatIndividualCardMainConfig = (
                 itemName === 'user_data_files' ||
                 itemName === 'transaction_log_files'
             ) {
-                blockSixValue = (item?.totalObjectsInViolation || 0) + ' out of ' + (item?.totalObjectsAssessed || 0);
+                blockSixValue = `${item?.totalObjectsInViolation || 0} out of ${item?.totalObjectsAssessed || 0}`;
                 blockSixCountObject = {
                     totalObjectsInViolation: item?.totalObjectsInViolation || 0,
                     totalObjectsAssessed: item?.totalObjectsAssessed || 0
@@ -1569,10 +1569,10 @@ export const formatIndividualCardMainConfig = (
 export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     let ontapTagsList: Array<string> = [];
     let highestOntapSeverity = 'None';
-    let formatOntapConfigList: PerConfigInterface[] = [];
+    const formatOntapConfigList: PerConfigInterface[] = [];
     let ontapCritical = 0;
     let ontapWarning = 0;
-    let volumesList = data?.storage?.configuration?.volumes;
+    const volumesList = data?.storage?.configuration?.volumes;
     if (volumesList && !volumesList?.[0]?.errorMessage) {
         data?.storage?.configuration?.volumes?.map((item: PerConfigInterface) => {
             let status = item?.status || '';
@@ -1596,7 +1596,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
         });
     }
 
-    let lunsList = data?.storage?.configuration?.luns;
+    const lunsList = data?.storage?.configuration?.luns;
     if (lunsList && !lunsList?.[0]?.errorMessage) {
         data?.storage?.configuration?.luns?.map((item: PerConfigInterface) => {
             let status = item?.status || '';
@@ -1629,7 +1629,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
     let ontapOptimizedConfig = 0;
     let ontapNotOptimizedConfig = 0;
 
-    let ontapVolAndLunList = [];
+    const ontapVolAndLunList = [];
     if (volumesList && !volumesList?.[0]?.errorMessage) {
         ontapVolAndLunList.push(data?.storage?.configuration?.volumes);
     }
@@ -1665,7 +1665,7 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
     let formatOsConfigList: PerConfigInterface[] = [];
     let osCritical = 0;
     let osWarning = 0;
-    let osList = data?.storage?.configuration?.os;
+    const osList = data?.storage?.configuration?.os;
     if (osList && !osList?.[0]?.errorMessage) {
         data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
             let status = item?.status || '';
@@ -1728,7 +1728,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let optimizedCloning = 0;
     let notOptimizedCloning = 0;
 
-    //For warning and critical
+    // For warning and critical
     let warningStorage = 0;
     let criticalStorage = 0;
     let warningCompute = 0;
@@ -1825,7 +1825,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         }
     });
 
-    let storageCount = {
+    const storageCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedStorage,
         total: optimizedStorage + notOptimizedStorage,
         critical: criticalStorage,
@@ -1836,7 +1836,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             ? formatNumberWithCustomComma((optimizedStorage / (optimizedStorage + notOptimizedStorage)) * 100)
             : 0
     };
-    let computeCount = {
+    const computeCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedCompute,
         total: optimizedCompute + notOptimizedCompute,
         critical: criticalCompute,
@@ -1847,7 +1847,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             ? formatNumberWithCustomComma((optimizedCompute / (optimizedCompute + notOptimizedCompute)) * 100)
             : 0
     };
-    let applicationCount = {
+    const applicationCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedApplication,
         total: optimizedApplication + notOptimizedApplication,
         critical: criticalApplication,
@@ -1861,7 +1861,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             : 0
     };
 
-    let resiliencyCount = {
+    const resiliencyCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedResiliency,
         total: optimizedResiliency + notOptimizedResiliency,
         critical: criticalResiliency,
@@ -1873,7 +1873,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             : 0
     };
 
-    let cloningCount = {
+    const cloningCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedCloning,
         total: optimizedCloning + notOptimizedCloning,
         critical: criticalCloning,
@@ -1885,7 +1885,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             : 0
     };
 
-    let optBreakDown = {
+    const optBreakDown = {
         storage: storageCount,
         compute: computeCount,
         application: applicationCount,
@@ -1979,7 +1979,7 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = {
         ...cardsData,
-        ['ontap_configuration']: {
+        ontap_configuration: {
             ...cardDataDefault?.ontap_configuration,
             block_two: {
                 ...cardDataDefault?.ontap_configuration?.block_two,
@@ -1994,9 +1994,9 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 ...cardDataDefault?.ontap_configuration?.block_three,
                 value:
                     ontapNotOptimizedConfig !== 0
-                        ? formatNumberWithCustomComma(
+                        ? `${formatNumberWithCustomComma(
                               (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
-                          ) + '%'
+                          )}%`
                         : '0%'
             },
             block_four: {
@@ -2005,10 +2005,9 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             },
             block_five: {
                 ...cardDataDefault?.ontap_configuration?.block_five,
-                value:
-                    (ontapNotOptimizedConfig || 0) +
-                    ' out of ' +
-                    ((ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0)),
+                value: `${ontapNotOptimizedConfig || 0} out of ${
+                    (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0)
+                }`,
                 count: {
                     totalObjectsAssessed: (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0),
                     totalObjectsInViolation: ontapNotOptimizedConfig || 0
@@ -2024,7 +2023,7 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = {
         ...cardsData,
-        ['os_configuration']: {
+        os_configuration: {
             ...cardDataDefault?.os_configuration,
             block_two: {
                 ...cardDataDefault?.os_configuration?.block_two,
@@ -2039,9 +2038,9 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 ...cardDataDefault?.os_configuration?.block_three,
                 value:
                     osNotOptimizedConfig !== 0
-                        ? formatNumberWithCustomComma(
+                        ? `${formatNumberWithCustomComma(
                               (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
-                          ) + '%'
+                          )}%`
                         : '0%'
             },
             block_four: {
@@ -2050,8 +2049,7 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             },
             block_five: {
                 ...cardDataDefault?.os_configuration?.block_five,
-                value:
-                    (osNotOptimizedConfig || 0) + ' out of ' + ((osOptimizedConfig || 0) + (osNotOptimizedConfig || 0)),
+                value: `${osNotOptimizedConfig || 0} out of ${(osOptimizedConfig || 0) + (osNotOptimizedConfig || 0)}`,
                 count: {
                     totalObjectsAssessed: (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0),
                     totalObjectsInViolation: osNotOptimizedConfig || 0
@@ -2072,14 +2070,14 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
     if (!data) {
         data = state.getWellOptimize.driftAssessmentData || undefined;
     }
-    let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(
+    const { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(
         data || ({} as AssessmentResponseInterface),
         optimizingData
     );
 
-    let optBreakDown = formatOptimizationBreakDown(cardsData);
+    const optBreakDown = formatOptimizationBreakDown(cardsData);
 
-    //For Reset Password data
+    // For Reset Password data
     dispatch(
         setInstanceDetailsData({
             fsxId: data?.fileSystemId,
@@ -2120,15 +2118,14 @@ export const getUniqueEntries = (arrays: any) => {
         const serializedItem = JSON.stringify(item);
         if (seen.has(serializedItem)) {
             return false;
-        } else {
-            seen.add(serializedItem);
-            return true;
         }
+        seen.add(serializedItem);
+        return true;
     });
 };
 
-export const groupByType = (array: any, returnType: string = 'id') => {
-    return array.reduce((acc: any, item: any) => {
+export const groupByType = (array: any, returnType: string = 'id') =>
+    array.reduce((acc: any, item: any) => {
         const { type, id, value } = item;
         if (!acc[type]) {
             acc[type] = [];
@@ -2139,7 +2136,6 @@ export const groupByType = (array: any, returnType: string = 'id') => {
         }
         return acc;
     }, {});
-};
 
 export const removeEntry = (input: any, obj: any) => {
     const { id, type } = obj;
@@ -2155,11 +2151,11 @@ export const removeEntry = (input: any, obj: any) => {
     return updatedInput;
 };
 
-export const removeObjectFromArray = (array: any, obj: any) => {
-    return array.filter((item: any) => {
-        return !(item.id === obj.id && item.label === obj.label && item.value === obj.value && item.type === obj.type);
-    });
-};
+export const removeObjectFromArray = (array: any, obj: any) =>
+    array.filter(
+        (item: any) =>
+            !(item.id === obj.id && item.label === obj.label && item.value === obj.value && item.type === obj.type)
+    );
 
 export const generateDate = () => {
     const now = new Date();
@@ -2175,7 +2171,7 @@ export const generateDate = () => {
 
 // filters card data based on filter tags
 export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
-    let filteredCardData: any = {};
+    const filteredCardData: any = {};
     let configCount = 0;
     const filters = groupByType(optimizeFilterTags, 'value');
 
@@ -2207,28 +2203,28 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         const checkSubCategory =
             !filters['sub-catagories'] || filters['sub-catagories']?.includes(categoryData[key]?.subCategory);
 
-        const isOptmized = isOptimized(cardData[key]['block_two'].value, cardData[key]['dismissedObj']?.configState);
+        const isOptmized = isOptimized(cardData[key].block_two.value, cardData[key].dismissedObj?.configState);
         const checkStatus =
             !filters.status ||
             (filters.status?.includes(GETWELL_VALUES.optimized) && isOptmized) ||
             (filters.status?.includes('Not optimized') && !isOptmized);
 
-        const checkSeverity = !filters.severity || filters.severity?.includes(cardData[key]['block_four'].value);
+        const checkSeverity = !filters.severity || filters.severity?.includes(cardData[key].block_four.value);
 
         const checkTags =
             !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags?.includes(tag)).length > 0;
 
         let configVal = '';
-        if (!cardData[key]['dismissedObj']?.configState) {
+        if (!cardData[key].dismissedObj?.configState) {
             configVal = CONFIG_STATES.ACTIVE;
-        } else if (cardData[key]['dismissedObj']?.configState === CONFIG_STATES.ACTIVATING) {
+        } else if (cardData[key].dismissedObj?.configState === CONFIG_STATES.ACTIVATING) {
             configVal = CONFIG_STATES.ACTIVE;
         } else {
-            configVal = cardData[key]['dismissedObj']?.configState;
+            configVal = cardData[key].dismissedObj?.configState;
         }
         const checkConfigState = !filters.configState || filters.configState?.includes(configVal);
 
-        let resourceType = cardData[key]['block_five'].value;
+        let resourceType = cardData[key].block_five.value;
         if (
             key === 'ontap_configuration' &&
             filters.resourceType &&
@@ -2254,7 +2250,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
             checkResourceType
         ) {
             filteredCardData[key] = cardData[key];
-            if (categoryData[key] && cardData[key]['block_two'].value) {
+            if (categoryData[key] && cardData[key].block_two.value) {
                 configCount++;
             }
         }
@@ -2285,8 +2281,8 @@ const updateProgressResourceForBulk = (
 ) => {
     const state = store.getState();
     const { cloneDashboardData, cloneIsOptimizedRows } = state.getWellOptimize;
-    let uniqueRanList: any = [];
-    let newInProgressResourceOptimizationData: any = {
+    const uniqueRanList: any = [];
+    const newInProgressResourceOptimizationData: any = {
         ...inProgressResourceOptimizeData,
         [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
             const jobInstances =
@@ -2304,7 +2300,7 @@ const updateProgressResourceForBulk = (
     dispatch(setInProgressResourceOptimizeData(newInProgressResourceOptimizationData));
 
     let cloneIsOptimizedRowsList = {};
-    let newCloneDashboardData = cloneDashboardData?.objectsInViolation?.map((row: any) => {
+    const newCloneDashboardData = cloneDashboardData?.objectsInViolation?.map((row: any) => {
         if (uniqueRanList.includes(`${row?.resourceId}_${row?.instanceId}_${row?.cloneDatabaseName}`)) {
             cloneIsOptimizedRowsList = {
                 ...cloneIsOptimizedRowsList,
@@ -2314,9 +2310,8 @@ const updateProgressResourceForBulk = (
                 ...row,
                 isOptimized: true
             };
-        } else {
-            return row;
         }
+        return row;
     });
     dispatch(
         setCloneIsOptimizedRows({
@@ -2332,7 +2327,7 @@ const updateProgressResourceForBulk = (
         })
     );
 
-    let newInProgressOptimizationData = {
+    const newInProgressOptimizationData = {
         ...inProgressOptimizationData,
         [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
             const jobInstances =
@@ -2344,10 +2339,10 @@ const updateProgressResourceForBulk = (
     };
     dispatch(setInProgressOptimizationData(newInProgressOptimizationData));
 
-    let newInProgressHostData = {
+    const newInProgressHostData = {
         ...inProgressHostData,
         [type]: inProgressHostData?.[type]?.filter(
-            //Data host id to check
+            // Data host id to check
             (hostId: any) => {
                 const jobHostIds = jobToInstanceMapForBulk[jobId]?.databaseHosts.map((host: any) => host.id) || [];
 
@@ -2382,7 +2377,7 @@ const updateProgressForBulk = (
         setInProgressHostData({
             ...inProgressHostData,
             [type]: inProgressHostData?.[type]?.filter(
-                //Data host id to check
+                // Data host id to check
                 (hostId: any) => {
                     const jobHostIds = jobToInstanceMapForBulk[jobId]?.databaseHosts.map((host: any) => host.id) || [];
 
@@ -2406,7 +2401,7 @@ const updateProgressForSingle = (
             ...inProgressOptimizationData,
             [type]: inProgressOptimizationData?.[type]?.filter(
                 (instanceId: any) =>
-                    instanceId !== jobToInstanceMap[jobId]?.hostId + '_' + jobToInstanceMap[jobId]?.instanceId
+                    instanceId !== `${jobToInstanceMap[jobId]?.hostId}_${jobToInstanceMap[jobId]?.instanceId}`
             )
         })
     );
@@ -2516,13 +2511,12 @@ const updateAssessmentWithWarningJobs = (
         );
         let successJobCount = 0;
         bulkRowData?.map((row: any) => {
-            const isSuccess = subjobs?.filter((subjob: any) => {
-                return (
+            const isSuccess = subjobs?.filter(
+                (subjob: any) =>
                     subjob?.status === JOB_MONITORING_STATUS.COMPLETED &&
                     subjob?.hostsToOptimize?.[0]?.resourceId === row?.hostId &&
                     subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0] === row?.instanceId
-                );
-            });
+            );
             if (isSuccess?.length) {
                 successJobCount++;
                 updateOptimizationStatus(row, dispatch);
@@ -2635,7 +2629,7 @@ export const handleOptimizeResourceJob = (
     bulkRowData?: any
 ) => {
     const state = store.getState();
-    let optimizingData = state.getWellOptimize.optimizingData || {};
+    const optimizingData = state.getWellOptimize.optimizingData || {};
     setTimeout(() => {
         if (res?.data) {
             const jobInterval = setInterval(() => {
@@ -2670,7 +2664,7 @@ export const handleOptimizeResourceJob = (
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                    message: `Clone databases fixed successfully.`
+                                    message: 'Clone databases fixed successfully.'
                                 })
                             );
                         }, 0);
@@ -2690,13 +2684,12 @@ export const handleOptimizeResourceJob = (
 
                         let successJobCount = 0;
                         bulkRowData?.map((row: any) => {
-                            const isSuccess = subjobs?.filter((subjob: any) => {
-                                return (
+                            const isSuccess = subjobs?.filter(
+                                (subjob: any) =>
                                     subjob?.status === JOB_MONITORING_STATUS.COMPLETED &&
                                     subjob?.hostsToOptimize?.[0]?.resourceId === row?.hostId &&
                                     subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0] === row?.instanceId
-                                );
-                            });
+                            );
                             if (isSuccess?.length) {
                                 successJobCount++;
                                 updateOptimizationStatus(row, dispatch);
@@ -2741,7 +2734,7 @@ export const handleOptimizeResourceJob = (
                 });
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {
-            let { inProgressOptimizationData, inProgressHostData, inProgressResourceOptimizeData } =
+            const { inProgressOptimizationData, inProgressHostData, inProgressResourceOptimizeData } =
                 state.getWellOptimize;
             if (bulkRowData?.[0]?.id) {
                 dispatch(
@@ -2783,7 +2776,7 @@ export const handleOptimizeResourceJob = (
                 setInProgressHostData({
                     ...inProgressHostData,
                     [type]: inProgressHostData?.[type]?.filter(
-                        //Data host id to check
+                        // Data host id to check
                         (hostId: any) => {
                             const jobHostIds = bulkRowData?.map((host: any) => host?.hostId) || [];
                             return !jobHostIds.includes(hostId);
@@ -2810,7 +2803,7 @@ export const handleOptimizeStorageJob = (
     isOptimizeInnerPage?: boolean
 ) => {
     const state = store.getState();
-    let optimizingData = state.getWellOptimize.optimizingData || {};
+    const optimizingData = state.getWellOptimize.optimizingData || {};
 
     setTimeout(() => {
         if (res?.data) {
@@ -2859,7 +2852,7 @@ export const handleOptimizeStorageJob = (
                 });
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {
-            let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
+            const { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
             if (operation === 'bulk') {
                 if (bulkRowData?.[0]?.id) {
                     dispatch(
@@ -2885,7 +2878,7 @@ export const handleOptimizeStorageJob = (
                     setInProgressHostData({
                         ...inProgressHostData,
                         [type]: inProgressHostData?.[type]?.filter(
-                            //Data host id to check
+                            // Data host id to check
                             (hostId: any) => {
                                 const jobHostIds = bulkRowData?.map((host: any) => host?.hostId) || [];
                                 return !jobHostIds.includes(hostId);
@@ -2897,8 +2890,8 @@ export const handleOptimizeStorageJob = (
                 // formatGetWellData(dispatch);
                 dispatch(setOptimizingInstanceData(false));
             } else {
-                let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstance || '';
-                let selectedResourceId = state.getWellOptimize.selectedResourceId || '';
+                const selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstance || '';
+                const selectedResourceId = state.getWellOptimize.selectedResourceId || '';
                 dispatch(
                     setOptimizingData({
                         ...optimizingData,
@@ -2909,7 +2902,7 @@ export const handleOptimizeStorageJob = (
                     setInProgressOptimizationData({
                         ...inProgressOptimizationData,
                         [type]: inProgressOptimizationData?.[type]?.filter(
-                            (instanceId: any) => instanceId !== selectedResourceId + '_' + selectedDatabaseInstance
+                            (instanceId: any) => instanceId !== `${selectedResourceId}_${selectedDatabaseInstance}`
                         )
                     })
                 );
@@ -2952,14 +2945,14 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                                 ...item,
                                                 status: 'optimized'
                                             };
-                                        } else {
-                                            return item;
                                         }
+                                        return item;
                                     })
                                 }
                             }
                         };
-                    } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
+                    }
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
                         return {
                             ...instance,
                             assessments: {
@@ -2967,7 +2960,8 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                 compute: { ...instance.assessments.compute, status: 'optimized' }
                             }
                         };
-                    } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+                    }
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
                         return {
                             ...instance,
                             assessments: {
@@ -2975,7 +2969,8 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                 maxDOP: { ...instance.assessments.maxDOP, status: 'optimized' }
                             }
                         };
-                    } else if (storageConfigurationMap[rowData?.id]) {
+                    }
+                    if (storageConfigurationMap[rowData?.id]) {
                         const key = storageConfigurationMap[rowData?.id];
                         return {
                             ...instance,
@@ -2988,15 +2983,15 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                         [key]: instance?.assessments?.storage?.configuration[key].map((item: any) => {
                                             if (item.name === rowData?.id) {
                                                 return { ...item, status: 'optimized' };
-                                            } else {
-                                                return item;
                                             }
+                                            return item;
                                         })
                                     }
                                 }
                             }
                         };
-                    } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+                    }
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
                         const state = store.getState();
                         const { cloneDashboardData } = state.getWellOptimize;
 
@@ -3019,27 +3014,23 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                     clone: { ...instance.assessments.clone, status: 'optimized' }
                                 }
                             };
-                        } else {
-                            // If not all clone databases are optimized for a instance
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    clone: { ...instance.assessments.clone, status: 'not-optimized' }
-                                }
-                            };
                         }
-                    } else {
-                        return instance;
+                        // If not all clone databases are optimized for a instance
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                clone: { ...instance.assessments.clone, status: 'not-optimized' }
+                            }
+                        };
                     }
-                } else {
                     return instance;
                 }
+                return instance;
             });
             return { ...hostData, instancesAssessment: updatedInstancesAssessment };
-        } else {
-            return hostData;
         }
+        return hostData;
     });
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
@@ -3101,17 +3092,16 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                                                     }
                                                                   : item
                                                           );
-                                                      } else {
-                                                          // Add a new item to the list
-                                                          return [
-                                                              ...existingSizing,
-                                                              {
-                                                                  configurationName: storageSizingMap[rowData?.name],
-                                                                  configState: setAction,
-                                                                  endTime: rowData?.endTime
-                                                              }
-                                                          ];
                                                       }
+                                                      // Add a new item to the list
+                                                      return [
+                                                          ...existingSizing,
+                                                          {
+                                                              configurationName: storageSizingMap[rowData?.name],
+                                                              configState: setAction,
+                                                              endTime: rowData?.endTime
+                                                          }
+                                                      ];
                                                   })()
                                                 : [
                                                       {
@@ -3134,7 +3124,8 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                     }
                                 }
                             };
-                        } else if (storageLayoutMap[rowData?.name]) {
+                        }
+                        if (storageLayoutMap[rowData?.name]) {
                             return {
                                 ...instance,
                                 assessments: {
@@ -3165,17 +3156,16 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                                                     }
                                                                   : item
                                                           );
-                                                      } else {
-                                                          // Add a new item to the list
-                                                          return [
-                                                              ...existingLayout,
-                                                              {
-                                                                  configurationName: storageLayoutMap[rowData?.name],
-                                                                  configState: setAction,
-                                                                  endTime: rowData?.endTime
-                                                              }
-                                                          ];
                                                       }
+                                                      // Add a new item to the list
+                                                      return [
+                                                          ...existingLayout,
+                                                          {
+                                                              configurationName: storageLayoutMap[rowData?.name],
+                                                              configState: setAction,
+                                                              endTime: rowData?.endTime
+                                                          }
+                                                      ];
                                                   })()
                                                 : [
                                                       {
@@ -3198,7 +3188,8 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                     }
                                 }
                             };
-                        } else if (storageConfigurationMap[rowData?.id]) {
+                        }
+                        if (storageConfigurationMap[rowData?.id]) {
                             const key = storageConfigurationMap[rowData?.id];
                             return {
                                 ...instance,
@@ -3222,9 +3213,8 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                                                   configState: setAction,
                                                                   endTime: rowData?.endTime
                                                               };
-                                                          } else {
-                                                              return item;
                                                           }
+                                                          return item;
                                                       })
                                                     : [
                                                           {
@@ -3238,8 +3228,9 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                     }
                                 }
                             };
-                        } else if (otherConfigMap[rowData?.name]) {
-                            let name = otherConfigMap[rowData?.name];
+                        }
+                        if (otherConfigMap[rowData?.name]) {
+                            const name = otherConfigMap[rowData?.name];
                             return {
                                 ...instance,
                                 assessments: {
@@ -3260,17 +3251,14 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
                                     }
                                 }
                             };
-                        } else {
-                            return instance;
                         }
-                    } else {
                         return instance;
                     }
+                    return instance;
                 });
                 return { ...hostData, instancesAssessment: updatedInstancesAssessment };
-            } else {
-                return hostData;
             }
+            return hostData;
         });
     });
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
@@ -3315,27 +3303,26 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                                           ? {
                                                 ...item,
                                                 configState: setAction,
-                                                endTime: endTime
+                                                endTime
                                             }
                                           : item
                                   );
-                              } else {
-                                  // Add a new item to the list
-                                  return [
-                                      ...existingSizing,
-                                      {
-                                          configurationName: name,
-                                          configState: setAction,
-                                          endTime: endTime
-                                      }
-                                  ];
                               }
+                              // Add a new item to the list
+                              return [
+                                  ...existingSizing,
+                                  {
+                                      configurationName: name,
+                                      configState: setAction,
+                                      endTime
+                                  }
+                              ];
                           })()
                         : [
                               {
                                   configurationName: name,
                                   configState: setAction,
-                                  endTime: endTime
+                                  endTime
                               }
                           ]
                 }
@@ -3345,13 +3332,14 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                         {
                             configurationName: name,
                             configState: setAction,
-                            endTime: endTime
+                            endTime
                         }
                     ]
                 }
             }
         };
-    } else if (storageLayoutMap.includes(name)) {
+    }
+    if (storageLayoutMap.includes(name)) {
         return {
             ...driftAssessmentData,
             dismissedConfigurations: {
@@ -3372,27 +3360,26 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                                           ? {
                                                 ...item,
                                                 configState: setAction,
-                                                endTime: endTime
+                                                endTime
                                             }
                                           : item
                                   );
-                              } else {
-                                  // Add a new item to the list
-                                  return [
-                                      ...existingLayout,
-                                      {
-                                          configurationName: name,
-                                          configState: setAction,
-                                          endTime: endTime
-                                      }
-                                  ];
                               }
+                              // Add a new item to the list
+                              return [
+                                  ...existingLayout,
+                                  {
+                                      configurationName: name,
+                                      configState: setAction,
+                                      endTime
+                                  }
+                              ];
                           })()
                         : [
                               {
                                   configurationName: name,
                                   configState: setAction,
-                                  endTime: endTime
+                                  endTime
                               }
                           ]
                 }
@@ -3402,13 +3389,14 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                         {
                             configurationName: name,
                             configState: setAction,
-                            endTime: endTime
+                            endTime
                         }
                     ]
                 }
             }
         };
-    } else if (storageConfigurationMap[name]) {
+    }
+    if (storageConfigurationMap[name]) {
         const key = storageConfigurationMap[name];
         return {
             ...driftAssessmentData,
@@ -3422,25 +3410,25 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                             ? driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key].map(
                                   (item: any) => {
                                       if (item?.configurationName === key) {
-                                          return { ...item, configState: setAction, endTime: endTime };
-                                      } else {
-                                          return item;
+                                          return { ...item, configState: setAction, endTime };
                                       }
+                                      return item;
                                   }
                               )
                             : [
                                   {
                                       configurationName: key,
                                       configState: setAction,
-                                      endTime: endTime
+                                      endTime
                                   }
                               ]
                     }
                 }
             }
         };
-    } else if (otherConfigMap[name]) {
-        let key = otherConfigMap[name];
+    }
+    if (otherConfigMap[name]) {
+        const key = otherConfigMap[name];
         return {
             ...driftAssessmentData,
             dismissedConfigurations: {
@@ -3449,18 +3437,17 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                     ? {
                           ...driftAssessmentData?.dismissedConfigurations?.[key],
                           configState: setAction,
-                          endTime: endTime
+                          endTime
                       }
                     : {
                           configurationName: name,
                           configState: setAction,
-                          endTime: endTime
+                          endTime
                       }
             }
         };
-    } else {
-        return driftAssessmentData;
     }
+    return driftAssessmentData;
 };
 
 export const checkIfDisableForOptimize = (
@@ -3482,7 +3469,7 @@ export const checkIfDisableForOptimize = (
         rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
     ) {
         isDisabled = true;
-        errorMessage = name + ' ' + GENERAL.NO_ASSESSMENT_DATA;
+        errorMessage = `${name} ${GENERAL.NO_ASSESSMENT_DATA}`;
     } else if (
         name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&
         (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
@@ -3562,9 +3549,9 @@ export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) 
     });
 };
 
-export const disableDismissCheckBoxForErrCase = (tableData: any, type: string) => {
+export const disableDismissCheckBoxForErrCase = (tableData: any, type: string) =>
     // If no rows are selected, reset `isDisabled` for all rows
-    return tableData.map((row: any) => {
+    tableData.map((row: any) => {
         const { isDisabled, errorMessage } = checkIfDisableForDismiss(row);
         return {
             ...row,
@@ -3580,7 +3567,6 @@ export const disableDismissCheckBoxForErrCase = (tableData: any, type: string) =
             }
         };
     });
-};
 
 // This function is used to disable the checkboxes for the selected rows in the optimize resource page table
 export const disableOptimizeResourceCheckBoxForOptimizeCase = (
@@ -3600,8 +3586,8 @@ export const disableOptimizeResourceCheckBoxForOptimizeCase = (
             selectedDatabaseRows.includes(row.id) && inProgressResourceOptimizeData?.[type]?.includes(row.id);
 
         // Combine both conditions
-        let isDisabled = isBeingOptimized;
-        let errorMessage = '';
+        const isDisabled = isBeingOptimized;
+        const errorMessage = '';
 
         return {
             ...row,
@@ -3656,8 +3642,8 @@ export const disableOptimizeCheckBoxForOptimizeCase = (tableData: any, type: str
     });
 };
 
-export const nameToIdConfigMapping = (name: string) => {
-    return name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
+export const nameToIdConfigMapping = (name: string) =>
+    name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
         ? 'log-drive-size'
         : name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
         ? 'headroom'
@@ -3672,7 +3658,6 @@ export const nameToIdConfigMapping = (name: string) => {
         : name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
         ? 'clone'
         : '';
-};
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {
     let configKey = '';
@@ -3757,12 +3742,12 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
     dispatch(
         setSelectedConfigSummary({
             totalInstances: configData?.total || 0,
-            optimizedInstances: optimizedInstances,
+            optimizedInstances,
             notOptimizedInstances: configData?.total - optimizedInstances,
             optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
             severity: configData?.severityObj?.[configKey] || '',
             configState: configStateValue,
-            tooltipText: tooltipText
+            tooltipText
         })
     );
 };

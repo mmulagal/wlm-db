@@ -22,9 +22,9 @@ const DatabaseHostTile = () => {
                         <Typography
                             variant="Semibold_14"
                             className={styles.textManage}
-                            title={selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
+                            title={`${selectedHostname} \\ ${selectedDatabaseInstanceName}`}
                         >
-                            {selectedHostname + ' \\ ' + selectedDatabaseInstanceName}
+                            {`${selectedHostname} \\ ${selectedDatabaseInstanceName}`}
                         </Typography>
                     )}
 

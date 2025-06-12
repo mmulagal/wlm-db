@@ -1,6 +1,4 @@
 import React, { ReactNode, useState } from 'react';
-import styles from './TableTopBar.module.scss';
-import { TableProps } from './Table';
 import classNames from 'classnames';
 import { Parser } from '@json2csv/plainjs';
 import { ReactComponent as ExportIcon } from '@netapp/icons/ic_download.svg';
@@ -8,6 +6,8 @@ import _pick from 'lodash/pick';
 import _mapKeys from 'lodash/mapKeys';
 import _map from 'lodash/map';
 import { Button, DsFlashingDotsLoader, SearchInput, TooltipInfo, Typography } from '@netapp/design-system';
+import { TableProps } from './Table';
+import styles from './TableTopBar.module.scss';
 import { HashTable } from '../../../utils/utilityFunctions';
 
 interface ExportToCsvProps {
@@ -104,11 +104,11 @@ export const TableTopBar = ({
     return (
         <div className={classNames(styles.base, className)}>
             {LeftComponent}
-            <Typography variant={'Semibold_16'} isEllipsis={true} className={classNames(styles.title, titleClassName)}>
+            <Typography variant="Semibold_16" isEllipsis className={classNames(styles.title, titleClassName)}>
                 <div className={styles.tableMainTitleContainer}>
                     <span>{itemCount === 1 ? singularTitle : pluralTitle}</span>
-                    <span>({itemCount === filteredItemCount ? itemCount : filteredItemCount + '/' + itemCount})</span>
-                    {info && <TooltipInfo isAppendedToBody={true}>{info}</TooltipInfo>}
+                    <span>({itemCount === filteredItemCount ? itemCount : `${filteredItemCount}/${itemCount}`})</span>
+                    {info && <TooltipInfo isAppendedToBody>{info}</TooltipInfo>}
                     {showFilterText && (
                         <span>{`| Filtered by${textFilter ? ' search' : ''}${
                             textFilter && filterState?.count > 0 ? ' & ' : ''
@@ -125,7 +125,7 @@ export const TableTopBar = ({
                     )}
                     {showFilterText && (
                         <Button
-                            variant={'text'}
+                            variant="text"
                             className={styles['reset-button']}
                             onClick={() => {
                                 resetFilters();
@@ -137,9 +137,9 @@ export const TableTopBar = ({
                     )}
                     {isLazyLoading && (
                         <div className={styles['lazy-loading-indication']}>
-                            <Typography variant={'Semibold_16'}>|</Typography>
+                            <Typography variant="Semibold_16">|</Typography>
                             <DsFlashingDotsLoader className={styles['lazy-loading']} />
-                            <Typography variant={'Regular_14'} color={'var(--text-disabled)'}>
+                            <Typography variant="Regular_14" color="var(--text-disabled)">
                                 {lazyLoadingText}
                             </Typography>
                         </div>
@@ -161,9 +161,9 @@ export const TableTopBar = ({
                 {exportToCsvOptions && (
                     <Button
                         className={styles.export}
-                        variant={'icon'}
+                        variant="icon"
                         isDisabled={tableProps?.organizedRows?.length === 0 || isLazyLoading}
-                        title={'Export to CSV'}
+                        title="Export to CSV"
                         onClick={() => exportToCsv(exportToCsvOptions, tableProps)}
                     >
                         <ExportIcon />

@@ -9,8 +9,8 @@ type inputComponentPropType = {
     onChange: (key: string, val: string) => void;
 };
 
-const TagsComponent = ({onChange} : inputComponentPropType) => {
-    const [tags, setTags] = useState<any>([{key: '', value: ''}]);
+const TagsComponent = ({ onChange }: inputComponentPropType) => {
+    const [tags, setTags] = useState<any>([{ key: '', value: '' }]);
 
     useEffect(() => {
         setTimeout(() => {
@@ -18,18 +18,15 @@ const TagsComponent = ({onChange} : inputComponentPropType) => {
         }, 0);
     }, []);
 
-    //@ts-ignore
-    const emptyTagItems = useMemo(() => {
-        return tags.filter((tag: TagObj) => !tag.key);
-    }, [tags]);
+    // @ts-ignore
+    const emptyTagItems = useMemo(() => tags.filter((tag: TagObj) => !tag.key), [tags]);
 
-    //@ts-ignore
+    // @ts-ignore
     const isAddDisabled = useMemo(() => {
         if (emptyTagItems.length || tags.length >= 40) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }, [tags]);
 
     const handleAddNewTag = () => {
@@ -39,11 +36,7 @@ const TagsComponent = ({onChange} : inputComponentPropType) => {
     const handleChange = (idx: number, prop: string, value: string) => {
         const re = /^([a-zA-Z0-9+\\=._:/@+-]*)$/;
         if (!value || re.test(value)) {
-            const updatedTags = [
-                ...tags.map((tag: TagObj) => {
-                    return { key: tag.key, value: tag.value };
-                })
-            ];
+            const updatedTags = [...tags.map((tag: TagObj) => ({ key: tag.key, value: tag.value }))];
             updatedTags[idx][prop] = value;
             setTags(updatedTags);
             onChange('tags', JSON.stringify(updatedTags.filter((tag: TagObj) => tag.key)));
@@ -58,30 +51,29 @@ const TagsComponent = ({onChange} : inputComponentPropType) => {
 
     return (
         <>
-        <div className={styles.contentHeadingContainer}>
-            <Typography variant="Regular_14" className={styles.contentHeading}>
-                {GENERAL.TAGS_HEADING_MSG}
-            </Typography>
-            <Button
-                variant={'text'}
-                className={styles.addNewButton}
-                isDisabled={isAddDisabled}
-                onClick={handleAddNewTag}
-                isThin={true}
+            <div className={styles.contentHeadingContainer}>
+                <Typography variant="Regular_14" className={styles.contentHeading}>
+                    {GENERAL.TAGS_HEADING_MSG}
+                </Typography>
+                <Button
+                    variant="text"
+                    className={styles.addNewButton}
+                    isDisabled={isAddDisabled}
+                    onClick={handleAddNewTag}
+                    isThin
                 >
-                {GENERAL.ADD_NEW_TAG}
-            </Button>
-        </div>
-        <div className={styles.keyValueHeading}>
-            <Typography variant="Semibold_14" className={styles.keyText}>
-                {GENERAL.TAG_KEY}
-            </Typography>
-            <Typography variant="Semibold_14" className={styles.keyText}>
-                {GENERAL.TAG_VALUE}
-            </Typography>
-        </div>
-        {tags.map((tagData: TagObj, index: number) => {
-            return (
+                    {GENERAL.ADD_NEW_TAG}
+                </Button>
+            </div>
+            <div className={styles.keyValueHeading}>
+                <Typography variant="Semibold_14" className={styles.keyText}>
+                    {GENERAL.TAG_KEY}
+                </Typography>
+                <Typography variant="Semibold_14" className={styles.keyText}>
+                    {GENERAL.TAG_VALUE}
+                </Typography>
+            </div>
+            {tags.map((tagData: TagObj, index: number) => (
                 <div className={styles.tagItemContainer}>
                     <div className={styles.itemKey}>
                         <TextField
@@ -109,17 +101,12 @@ const TagsComponent = ({onChange} : inputComponentPropType) => {
                         />
                     </div>
                     {tags.length > 1 && (
-                        <Button
-                            variant="text"
-                            onClick={() => handleDeleteTag(index)}
-                            className={styles.closeButton}
-                            >
+                        <Button variant="text" onClick={() => handleDeleteTag(index)} className={styles.closeButton}>
                             <CloseIcon />
                         </Button>
                     )}
                 </div>
-            );
-        })}
+            ))}
         </>
     );
 };

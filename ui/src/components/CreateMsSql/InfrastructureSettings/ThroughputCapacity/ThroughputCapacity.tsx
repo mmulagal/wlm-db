@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AccordionCard, AccordionCardContent, Popover, SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../../utils/appConstants';
 import { generateOptionType, isFsxnExisting } from '../../../../utils/utilityFunctions';
 import styles from './ThroughputCapacity.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setThroughputValue } from '../../../../store/mssql/mssqlFormSlice';
 import { selectFsxThroughput } from '../../MSSqlServer/MSSqlUtils';
@@ -39,7 +39,7 @@ const ThroughputCapacity = () => {
 
     const [isDisable, setIsDisable] = useState(false);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateThroughputUnits = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         units?.map((val: any, idx: number) => {
@@ -70,12 +70,12 @@ const ThroughputCapacity = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (isDisable) {
             return (
                 <Popover
-                    popoverClass={styles['popover']}
+                    popoverClass={styles.popover}
                     children={GENERAL.THROUGHPUT_DISABLE_TEXT}
                     trigger="hover"
                     container={
@@ -85,9 +85,8 @@ const ThroughputCapacity = () => {
                     }
                 />
             );
-        } else {
-            return <Typography variant="Regular_14">{selectedThroughput?.label}</Typography>;
         }
+        return <Typography variant="Regular_14">{selectedThroughput?.label}</Typography>;
     };
     return (
         <div className={styles.container}>
@@ -104,7 +103,7 @@ const ThroughputCapacity = () => {
                             <SelectField
                                 label={GENERAL.THROUGHPUT}
                                 isClearable={false}
-                                defaultValue={selectedThroughput ? selectedThroughput : [generateThroughputUnits[0]]}
+                                defaultValue={selectedThroughput || [generateThroughputUnits[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setThroughputValue(selectedOptions));
                                     dispatch(setIsWizardTouched(true));

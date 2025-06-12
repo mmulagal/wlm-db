@@ -1,8 +1,8 @@
 import { ReactComponent as MenuIcon } from '@netapp/icons/ic_menu.svg';
 import { ReactComponent as ExternalLinkIcon } from '@netapp/icons/ic_external_link.svg';
 
-import styles from './DsBlueXpMenu.module.scss';
 import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
+import styles from './DsBlueXpMenu.module.scss';
 
 export interface DsBlueXpMenuProps {
     id?: string;
@@ -11,7 +11,7 @@ export interface DsBlueXpMenuProps {
     className?: string;
 }
 
-//DsMenu
+// DsMenu
 
 export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) => {
     enum MenuItems {
@@ -46,7 +46,7 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                             return (
                                 <DsTypography
                                     variant="Semibold_13"
-                                    className={styles['blueMenuItem']}
+                                    className={styles.blueMenuItem}
                                     onClick={() => navigateTo('/fsxhome/links')}
                                 >
                                     Links
@@ -56,11 +56,11 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                             return (
                                 <a
                                     href={`https://${domain}/api-doc`}
-                                    className={styles['blueMenuItem']}
-                                    target={'_blank'}
+                                    className={styles.blueMenuItem}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    <DsTypography variant="Semibold_13" className={styles['extenalLink']}>
+                                    <DsTypography variant="Semibold_13" className={styles.extenalLink}>
                                         API Hub
                                         <ExternalLinkIcon />
                                     </DsTypography>
@@ -70,11 +70,11 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                             return (
                                 <a
                                     href="https://github.com/NetApp/FSx-ONTAP-samples-scripts/tree/main/Monitoring"
-                                    className={styles['blueMenuItem']}
-                                    target={'_blank'}
+                                    className={styles.blueMenuItem}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    <DsTypography variant="Semibold_13" className={styles['extenalLink']}>
+                                    <DsTypography variant="Semibold_13" className={styles.extenalLink}>
                                         Monitoring GitHub repository
                                         <ExternalLinkIcon />
                                     </DsTypography>
@@ -84,11 +84,11 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                             return (
                                 <a
                                     href="https://docs.netapp.com/us-en/workload-relnotes/feed.xml"
-                                    className={styles['blueMenuItem']}
-                                    target={'_blank'}
+                                    className={styles.blueMenuItem}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    <DsTypography variant="Semibold_13" className={styles['extenalLink']}>
+                                    <DsTypography variant="Semibold_13" className={styles.extenalLink}>
                                         Subscribe to RSS
                                         <svg
                                             width="16"
@@ -118,7 +118,7 @@ export const DsBlueXpMenu = ({ domain, className, ...rest }: DsBlueXpMenuProps) 
                             return (
                                 <DsTypography
                                     variant="Semibold_13"
-                                    className={styles['blueMenuItem']}
+                                    className={styles.blueMenuItem}
                                     onClick={() => navigateTo('/fsxhome/credentials')}
                                 >
                                     Workload Factory credentials

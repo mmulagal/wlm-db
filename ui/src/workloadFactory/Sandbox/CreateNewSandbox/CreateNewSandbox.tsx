@@ -1,5 +1,7 @@
 import { Spinner, StepLayout, WizardContent, WizardFooter } from '@netapp/design-system';
 
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './CreateNewSandbox.module.scss';
 import CreateNewSandboxHeader from './CreateNewSandboxHeader/CreateNewSandboxHeader';
 import CreateNewSandboxFooter from './CreateNewSandboxFooter/CreateNewSandboxFooter';
@@ -7,8 +9,6 @@ import CreateNewSandboxContent from './CreateNewSandboxContent/CreateNewSandboxC
 import CreateNewSandboxCodebox from './CreateNewSandboxCodebox/CreateNewSandboxCodebox';
 import CreateSandboxApis from './CreateNewSandboxContent/CreateNewSandboxApis';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import {
     setShowError,
     setSourceDatabase,
@@ -22,7 +22,7 @@ const CreateNewSandbox = () => {
 
     CreateSandboxApis();
 
-    //To intialize values on first render
+    // To intialize values on first render
     useEffect(() => {
         dispatch(setTargetDatabase(`sandbox_${Date.now()}`));
         dispatch(setSourceDatabase(null));
@@ -34,7 +34,7 @@ const CreateNewSandbox = () => {
         <div className={styles.createNewSandbox}>
             {loading && (
                 <>
-                    <div className={styles.loaderOverlay}></div>
+                    <div className={styles.loaderOverlay} />
                     <div className={styles.spinnerPlacement}>
                         <Spinner isLarge />
                     </div>

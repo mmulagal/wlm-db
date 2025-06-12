@@ -1,12 +1,12 @@
 import { AccordionCard, AccordionCardContent, DsTypography } from '@netapp/design-system';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 
 import styles from './Collation.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { useMemo } from 'react';
 import { generateOptionType } from '../../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { setSelectedCollation } from '../../../../../store/workloadFactory/createNewDBSlice';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
@@ -46,7 +46,7 @@ const Collation = () => {
                     <DsTypography>
                         <div className={styles.collationField}>
                             <SelectField
-                                id={'db-create-collation'}
+                                id="db-create-collation"
                                 isLoading={collationListLoading}
                                 label={GENERAL.COLLATION}
                                 isClearable={false}

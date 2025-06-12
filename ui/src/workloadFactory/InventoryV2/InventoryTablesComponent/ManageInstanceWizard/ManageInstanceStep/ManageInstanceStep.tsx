@@ -186,7 +186,25 @@ export const Content = () => {
             credentialsId: '',
             databaseInstanceName: '',
             overallState: GENERAL.NOT_AVAILABLE,
-            readyCount: 0
+            readyCount: 0,
+            perRowState: [
+                {
+                    key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
+                    value: GENERAL.NOT_AVAILABLE
+                },
+                {
+                    key: t('databases.register-flow.fix-well-architected-issues'),
+                    value: GENERAL.NOT_AVAILABLE
+                },
+                {
+                    key: t('databases.register-flow.create-database'),
+                    value: GENERAL.NOT_AVAILABLE
+                },
+                {
+                    key: t('databases.register-flow.create-database-copies-sandbox'),
+                    value: GENERAL.NOT_AVAILABLE
+                }
+            ]
         };
 
         let manageReadinessData: ManageReadinessData | null = null;
@@ -288,7 +306,7 @@ export const Content = () => {
                     ? t('databases.general.authenticated')
                     : t('databases.general.unauthenticated'),
                 hostName: item?.data?.name,
-                readinessStatus: manageStates?.overallState,
+                readinessStatus: item?.authorized? manageStates?.overallState : MANAGE_STATES.NOT_READY,
                 readyCount: manageStates?.readyCount,
                 totalCount: 4,
                 perRowState: manageStates?.perRowState || [],

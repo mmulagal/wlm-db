@@ -147,9 +147,7 @@ const databaseHomeSlice = createSlice({
         addAggregatedCosts: (state, action: PayloadAction<any>) => {
             state.aggregatedCosts = action.payload;
         },
-        addInitialData: (state, action: PayloadAction<any>) => {
-            return { ...state, ...action.payload };
-        },
+        addInitialData: (state, action: PayloadAction<any>) => ({ ...state, ...action.payload }),
         setSelectedAssessmentRow: (state, action: PayloadAction<any>) => {
             state.selectedAssessmentRow = action.payload;
         },

@@ -59,11 +59,12 @@ const DialogComponent = ({
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
-    //const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
+    // const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
     const { password, confirmPassword } = useAppSelector(state => {
         if (dialogFrom === FROM_DIALOG.FSXADMIN) {
             return state.workloadFactoryResource.fsxAdminPasswords;
-        } else if (dialogFrom === FROM_DIALOG.SQLSERVER) {
+        }
+        if (dialogFrom === FROM_DIALOG.SQLSERVER) {
             return state.workloadFactoryResource.sqlServerPasswords;
         }
         return { password: '', confirmPassword: '' };
@@ -71,20 +72,16 @@ const DialogComponent = ({
     const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
     const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
 
-    //Managed Host table button disable
+    // Managed Host table button disable
     const { manageHostSelectedRows } = useAppSelector(state => state.inventoryV2);
 
     // To show loader on primary button in load config and save config dialog
-    const primaryButtonLoad = (() => {
-        return (
-            (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) ||
-            ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) &&
-                isSaveConfigLoading) ||
-            (dialogFrom === FROM_DIALOG.DETECT_HOST && detectHostLoading) ||
-            (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading) ||
-            (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading)
-        );
-    })();
+    const primaryButtonLoad = (() =>
+        (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) ||
+        ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading) ||
+        (dialogFrom === FROM_DIALOG.DETECT_HOST && detectHostLoading) ||
+        (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading) ||
+        (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading))();
 
     // Load and save config dialog will be closed once data is available. So closeDialog is taken care in LoadConfiguration.ts file.
     const primaryButtonClick = () => {
@@ -107,7 +104,7 @@ const DialogComponent = ({
         closeDialog(null);
     };
 
-    //Data check for AWS backup dialog
+    // Data check for AWS backup dialog
     const dataCheckForAWSBackup = () => {
         if (
             Number(selectedAWSBackup?.numberOfDays) < 1 ||
@@ -125,7 +122,7 @@ const DialogComponent = ({
         dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
 
     const disabledCheck = () => {
-        //Condition to disable Apply in FSX Admin and SQL Server password dialogs
+        // Condition to disable Apply in FSX Admin and SQL Server password dialogs
         if (
             (dialogFrom === FROM_DIALOG.SQLSERVER &&
                 ((password.length === 0 && confirmPassword.length === 0) ||
@@ -144,7 +141,7 @@ const DialogComponent = ({
         ) {
             return true;
         }
-        //Condition to disable primary button for AWS backup dialog
+        // Condition to disable primary button for AWS backup dialog
         if (
             dialogFrom === FROM_DIALOG.OPTIMIZE &&
             (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
@@ -178,9 +175,8 @@ const DialogComponent = ({
     const setClassName = () => {
         if (customClass?.includes('innerPage')) {
             return styles.innerPageClass;
-        } else {
-            return customClass;
         }
+        return customClass;
     };
 
     return (
@@ -197,12 +193,12 @@ const DialogComponent = ({
                         </DsTypography>
                         <div className={styles.dialogFooterDialog}>
                             <Popover
-                                popoverClass={''}
+                                popoverClass=""
                                 children={detectHostError}
                                 trigger="hover"
                                 delayHide={200}
-                                interactive={true}
-                                isAppendedToBody={true}
+                                interactive
+                                isAppendedToBody
                                 container={<TooltipIcon />}
                             />
                         </div>
@@ -211,9 +207,9 @@ const DialogComponent = ({
 
                 {!hidePrimaryButton && (
                     <Button
-                        variant={'primary'}
-                        className={'continue-button'}
-                        isThin={true}
+                        variant="primary"
+                        className="continue-button"
+                        isThin
                         isDisabled={disabledCheck() || refreshSandboxDisabled}
                         isLoading={primaryButtonLoad}
                         onClick={primaryButtonClick}
@@ -225,7 +221,7 @@ const DialogComponent = ({
                 )}
 
                 {secondaryButton && (
-                    <Button variant={'secondary'} isThin={true} onClick={secButtonClick}>
+                    <Button variant="secondary" isThin onClick={secButtonClick}>
                         {secondaryButton}
                     </Button>
                 )}

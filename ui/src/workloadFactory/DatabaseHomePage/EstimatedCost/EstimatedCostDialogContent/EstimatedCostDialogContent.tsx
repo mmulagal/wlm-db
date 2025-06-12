@@ -37,21 +37,19 @@ const EstimatedCostDialogContent = () => {
                                                 <div>{GENERAL.STEP1POINT2}</div>
                                                 <div className={styles['dialog-body']}>
                                                     <div className={styles['code-box']}>
-                                                        <div className={styles['code']}>
+                                                        <div className={styles.code}>
                                                             <pre>
                                                                 <Typography variant="Regular_14">{data}</Typography>
                                                             </pre>
                                                         </div>
-                                                        <div className={styles['copy']}>
+                                                        <div className={styles.copy}>
                                                             <Popover
                                                                 popoverClass={styles['copy-popover']}
-                                                                children={'Permissions copied'}
+                                                                children="Permissions copied"
                                                                 container={
                                                                     <CopyToClipboardCommon
                                                                         value={data}
-                                                                        iconProvided={
-                                                                            <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                                                        }
+                                                                        iconProvided={<CopyIcon fill="#A7A7A7" />}
                                                                     />
                                                                 }
                                                             />

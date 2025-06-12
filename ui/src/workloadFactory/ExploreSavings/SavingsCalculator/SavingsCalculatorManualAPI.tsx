@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isEqual } from 'lodash';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetManualStorageSavingsMutation,
@@ -24,8 +25,6 @@ import {
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 import { generateManualStorageSavingsPayload } from './savingsUtil';
 import { SAVINGS_CALC_MODE } from '../../../utils/consts';
-
-import { isEqual } from 'lodash';
 
 const SavingsCalculatorManualApi = () => {
     const dispatch = useAppDispatch();
@@ -109,7 +108,7 @@ const SavingsCalculatorManualApi = () => {
         try {
             const result = await getManualStorageSavingsApi({
                 regionId: selectedManualRegion?.data?.regionCode,
-                payload: payload,
+                payload,
                 type:
                     savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                     savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
@@ -128,7 +127,7 @@ const SavingsCalculatorManualApi = () => {
         try {
             const result = await getManualViewCalculationsApi({
                 regionId: selectedManualRegion?.data?.regionCode,
-                payload: payload,
+                payload,
                 type:
                     savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                     savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
@@ -208,9 +207,8 @@ const SavingsCalculatorManualApi = () => {
                     (selectedManualStorageCapacityUnit.label === 'TiB' && Number(manualStorageCapacity) > 64)
                 ) {
                     return false;
-                } else {
-                    return true;
                 }
+                return true;
             };
 
             const checkValidation = () => {
@@ -226,9 +224,8 @@ const SavingsCalculatorManualApi = () => {
                     storageCapCHeck()
                 ) {
                     return true;
-                } else {
-                    return false;
                 }
+                return false;
             };
 
             if (!comparedPayloadValues && selectedManualRegion && checkValidation() && selectedManualInstanceType) {

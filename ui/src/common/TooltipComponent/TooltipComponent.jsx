@@ -30,13 +30,13 @@ export default function TooltipComponent(props) {
     const isTitleEmpty = !title || title?.length === 0;
     const isPopup = !isTitleEmpty && isHover;
     const { Portal } = usePortalBox({
-        title: title,
-        padding: padding,
-        isPopup: isPopup,
-        parentRect: parentRect,
-        placement: placement,
-        width: width,
-        height: height
+        title,
+        padding,
+        isPopup,
+        parentRect,
+        placement,
+        width,
+        height
     });
 
     const handleMouseOver = e => {
@@ -51,7 +51,7 @@ export default function TooltipComponent(props) {
 
     return (
         <>
-            <div className={'select-none'} onMouseEnter={handleMouseOver} onMouseLeave={handleMouseOut}>
+            <div className="select-none" onMouseEnter={handleMouseOver} onMouseLeave={handleMouseOut}>
                 {children}
             </div>
             {Portal}

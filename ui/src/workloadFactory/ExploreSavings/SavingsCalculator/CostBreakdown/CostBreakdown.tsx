@@ -1,4 +1,5 @@
 import { DsTypography, DsFlashingDotsLoader, TooltipInfo } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import styles from './CostBreakdown.module.scss';
 import { Card, CardContent, CardTableContent } from '../../../../ui-components/Cards/Card';
 import { Text } from '../../../../ui-components/Typography';
@@ -6,7 +7,6 @@ import { comparisonData, comparisonDataFsxw } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useState } from 'react';
 import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 type CB = {
@@ -127,7 +127,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                             ? { backgroundColor: 'var(--border)' }
                                             : { backgroundColor: 'var(--chart-9)' }
                                     }
-                                ></div>
+                                />
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
@@ -148,7 +148,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                             ? { backgroundColor: 'var(--border)' }
                                             : { backgroundColor: 'var(--chart-6)' }
                                     }
-                                ></div>
+                                />
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
@@ -174,7 +174,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                       key={index}
                                       data={data}
                                       calculatedResponse={calculatedResponse}
-                                      existingType={'fsxw'}
+                                      existingType="fsxw"
                                   />
                               ))
                             : comparisonData(calculatedResponse).map((data: any, index: number) => (
@@ -182,7 +182,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                       key={index}
                                       data={data}
                                       calculatedResponse={calculatedResponse}
-                                      existingType={'ebs'}
+                                      existingType="ebs"
                                   />
                               ))}
                     </CardContent>

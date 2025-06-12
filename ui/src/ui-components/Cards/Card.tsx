@@ -1,9 +1,9 @@
 import React from 'react';
-import styles from './Card.module.scss';
 import classNames from 'classnames';
 
-//@ts-ignore
+// @ts-ignore
 import _ from 'lodash';
+import styles from './Card.module.scss';
 
 export const Card = ({
     children,
@@ -20,21 +20,17 @@ export const Card = ({
     Component?: any;
     style?: any;
     flex?: boolean;
-}) => {
-    return (
-        <Component className={classNames(styles.base, className, { [styles.flex]: flex })} style={style} {...rest}>
-            {children}
-        </Component>
-    );
-};
+}) => (
+    <Component className={classNames(styles.base, className, { [styles.flex]: flex })} style={style} {...rest}>
+        {children}
+    </Component>
+);
 
-export const CardHeader = ({ children, className, style }: { children: any; className?: string; style?: any }) => {
-    return (
-        <div className={classNames(styles.header, className)} style={style}>
-            {children}
-        </div>
-    );
-};
+export const CardHeader = ({ children, className, style }: { children: any; className?: string; style?: any }) => (
+    <div className={classNames(styles.header, className)} style={style}>
+        {children}
+    </div>
+);
 
 type CardContentSize = 'default' | 'small';
 
@@ -48,13 +44,11 @@ export const CardContent = ({
     className?: string;
     style?: any;
     size?: CardContentSize;
-}) => {
-    return (
-        <div className={classNames(styles.content, styles[size], className)} style={style}>
-            {children}
-        </div>
-    );
-};
+}) => (
+    <div className={classNames(styles.content, styles[size], className)} style={style}>
+        {children}
+    </div>
+);
 
 export const CardTitle = ({
     children,
@@ -106,22 +100,18 @@ export const CardTableContent = ({
     className?: string;
     style?: any;
     columns?: CardTableColumns;
-}) => {
-    return (
-        <div className={classNames(styles['table-content'], styles[columns], className)} style={style}>
-            {children}
-        </div>
-    );
-};
+}) => (
+    <div className={classNames(styles['table-content'], styles[columns], className)} style={style}>
+        {children}
+    </div>
+);
 
-export const CardTableItem = ({ children }: { children: any }) => {
-    return <div className={styles['table-item']}>{children}</div>;
-};
+export const CardTableItem = ({ children }: { children: any }) => (
+    <div className={styles['table-item']}>{children}</div>
+);
 
-export const CardWidgets = ({ children }: { children: any }) => {
-    return <div className={styles.cardWidgets}>{children}</div>;
-};
+export const CardWidgets = ({ children }: { children: any }) => <div className={styles.cardWidgets}>{children}</div>;
 
-export const CardMetricContent = ({ children }: { children: any }) => {
-    return <div className={styles.cardMetricContent}>{children}</div>;
-};
+export const CardMetricContent = ({ children }: { children: any }) => (
+    <div className={styles.cardMetricContent}>{children}</div>
+);

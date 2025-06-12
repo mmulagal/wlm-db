@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import _ from 'lodash';
-import styles from './DonutChart.module.scss';
 import classNames from 'classnames';
 import Measure from 'react-measure';
 
-import { fullColorsToken, ChartColor, ValueFormatter, ChartDisabled } from './chartCommon';
 import { Doughnut } from 'react-chartjs-2';
 
 import { ArcElement, Chart as ChartJS } from 'chart.js';
+import { fullColorsToken, ChartColor, ValueFormatter, ChartDisabled } from './chartCommon';
+import styles from './DonutChart.module.scss';
 import { useCurrentTheme } from '../../../../common/ThemeProvider/ThemeProvider2';
 import { Heading, Span } from '../../../../ui-components/Typography';
 
@@ -96,7 +96,7 @@ const DonutChart = React.memo(
         includeTotalRing?: boolean;
         totalRingColor?: ChartColor | ChartDisabled;
     }) => {
-        const tokens = useCurrentTheme().tokens;
+        const { tokens } = useCurrentTheme();
         const isMulti = Array.isArray(data[0]);
         const sizePx = styles[`var_${size}`];
 
@@ -144,7 +144,7 @@ const DonutChart = React.memo(
                 : {
                       labels: [],
                       datasets: (isMulti ? data : [data]).map((values, index) => {
-                          let weight = undefined;
+                          let weight;
 
                           if (isMulti || includeTotalRing) {
                               weight = index === 0 ? 0.57 : 0.43;

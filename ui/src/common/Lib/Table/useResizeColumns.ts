@@ -26,7 +26,7 @@ const createResizableColumn = function (
     };
 
     const mouseMoveHandler = _throttle(
-        function (e: any) {
+        (e: any) => {
             // Determine how far the mouse has been moved
             const dx = e.clientX - x;
 

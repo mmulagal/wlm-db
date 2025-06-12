@@ -28,6 +28,7 @@ import {
     ManageApiPayload,
     ManageApiPayloadItem,
     ManageStates,
+    RegisterResourceCredBulkResultItem,
     SubJob
 } from '../../../../utils/types/registerTypes';
 
@@ -127,7 +128,7 @@ export const handleMultiInstanceManage = (
     const anyInstanceReady =
         Array.isArray(bulkDetectedInstanceList) &&
         bulkDetectedInstanceList.some(
-            (instance: any) => instance?.data?.manageReadiness && isAllowManage(instance.data.manageReadiness || {})
+            (instance: any) => instance.authorized && instance?.data?.manageReadiness && isAllowManage(instance.data.manageReadiness || {})
         );
 
     if (anyInstanceReady) {
@@ -260,7 +261,7 @@ export const callManageMultiInstanceApi = async (
     // Build payload for each instance, grouping by ec2InstanceId, region, credentialsId
     const instanceMap = new Map<string, ManageApiPayloadItem>();
     bulkDetectedInstanceList
-        ?.filter((instance: BulkDetectedInstance) => isAllowManage(instance?.data?.manageReadiness || {}))
+        ?.filter((instance: BulkDetectedInstance) => instance.authorized && isAllowManage(instance?.data?.manageReadiness || {}))
         .forEach((instance: BulkDetectedInstance) => {
             let installModules: Array<string> = [];
             if (instance?.manageStates?.installMissingAWS && installMissingAWS) {
@@ -431,7 +432,7 @@ export const updateInventoryDataforCompletedInstance = (
     subJobs.forEach((subJob: SubJob) => {
         // Only process if subJob is COMPLETED and WARNING
         if (subJob.status === JOB_MONITORING_STATUS.COMPLETED || subJob.status === JOB_MONITORING_STATUS.WARNING) {
-            const metadata = subJob.metadata;
+            const { metadata } = subJob;
             const resourceId = subJob.resourceName || subJob.metadata?.resourceId;
             const credentialsId = subJob.credentialsId || subJob.metadata?.credentialsId;
             const regionCode = subJob.region?.code || subJob.metadata?.region;
@@ -474,7 +475,7 @@ export const updateInventoryDataforCompletedInstance = (
     // Inside your manageBulkJobStatus function, after getting subJobs:
     const inProgressIDListFromSubJobs = subJobs.flatMap((subJob: any) => {
         const metadata = subJob.metadata || {};
-        const ec2InstanceId = metadata.ec2InstanceId;
+        const { ec2InstanceId } = metadata;
         const credentialsId = subJob.credentialsId || metadata.credentialsId;
         const region = subJob.region?.code || metadata.region;
         // Only include COMPLETED databaseInstanceNames
@@ -600,6 +601,8 @@ export const checkOverallManageState = (
         overallState = MANAGE_STATES.MISSING_PREREQUISITES;
     } else if ([assessment, remediation, dbcreation, sandbox].includes(MANAGE_STATES.MISSING_POWERSHELL)) {
         overallState = MANAGE_STATES.MISSING_POWERSHELL;
+    } else {
+        overallState = MANAGE_STATES.NOT_READY;
     }
 
     return overallState;
@@ -776,7 +779,7 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
     return payload;
 };
 
-export const updateDetectBulkResponse = (newSelectedMultiDetectInstances: any[], result: any, dispatch: any) => {
+export const updateDetectBulkResponse = (newSelectedMultiDetectInstances: BulkDetectedInstance[], result: {data: RegisterResourceCredBulkResultItem[]}, dispatch: AppDispatch) => {
     newSelectedMultiDetectInstances = newSelectedMultiDetectInstances?.map((instance: any) => {
         const isSqlAuthRequired =
             !instance?.data?.sqlServerAuthentication &&
@@ -784,9 +787,9 @@ export const updateDetectBulkResponse = (newSelectedMultiDetectInstances: any[],
             !instance?.data?.windowsDomainUserAuthentication;
         const isFsxRegisterRequired = instance?.data?.fsxId && !instance?.data?.isFsxRegistered;
 
-        const { credentialsId, region, ec2InstanceId } = instance?.data;
+        const { credentialId, regionId, ec2InstanceId } = instance?.data;
         const res = result.data.find(
-            (r: any) => r.credentialsId === credentialsId && r.region === region && r.ec2InstanceId === ec2InstanceId
+            (r: any) => r.credentialsId === credentialId && r.region === regionId && r.ec2InstanceId === ec2InstanceId
         );
 
         if (!res) return instance;
@@ -799,13 +802,13 @@ export const updateDetectBulkResponse = (newSelectedMultiDetectInstances: any[],
                 (d: any) => d.resourceId === instance?.data?.databaseInstanceName
             );
             sqlAuthSuccess =
-                sqlDetail && !(sqlDetail.sqlServerError || sqlDetail.fsxnError || sqlDetail.requiredModuleError);
+                !!sqlDetail && !(sqlDetail.sqlServerError || sqlDetail.fsxnError || sqlDetail.requiredModuleError);
         }
 
         if (isFsxRegisterRequired) {
             const fsxDetail = res.registerDetails?.find((d: any) => d.resourceId === instance?.data?.fsxId);
             fsxSuccess =
-                fsxDetail && !(fsxDetail.sqlServerError || fsxDetail.fsxnError || fsxDetail.requiredModuleError);
+                (fsxDetail && !(fsxDetail.sqlServerError || fsxDetail.fsxnError || fsxDetail.requiredModuleError)) ?? false;
         }
 
         let authorized = false;
@@ -838,7 +841,7 @@ export const updateDetectBulkResponse = (newSelectedMultiDetectInstances: any[],
         return {
             ...instance,
             authorized,
-            manageReadiness: authorized ? manageReadiness : instance.manageReadiness
+            manageReadiness: manageReadiness || instance?.data?.manageReadiness
         };
     });
     return newSelectedMultiDetectInstances;

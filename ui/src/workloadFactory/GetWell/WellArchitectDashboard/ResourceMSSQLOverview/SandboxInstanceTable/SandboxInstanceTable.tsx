@@ -1,12 +1,13 @@
 import { Table, useTable, useDialog, TableTopBar, Button, DsTypography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
-import styles from './SandboxInstanceTable.module.scss';
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import styles from './SandboxInstanceTable.module.scss';
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useEffect, useRef, useState } from 'react';
 import {
     getBaseUrl,
     useCheckIntegrityMutation,
@@ -35,7 +36,6 @@ import {
     updateConnectionInfoLoading,
     updateSplitEstimateLoading
 } from '../../../../../store/workloadFactory/sandboxSlice';
-import { useDispatch } from 'react-redux';
 
 import DialogComponent from '../../../../../common/Dialog/DialogComponent';
 import RebaseLineContent from '../../../../Sandbox/SandboxTable/RebaseLineContent/RebaseLineContent';
@@ -88,40 +88,38 @@ const SandboxInstanceTable = () => {
         }
     }, [aggregatedSandboxInstanceList]);
 
-    const menuItems = (row: any) => {
-        return [
-            {
-                id: 'reBaseline',
-                displayName: 'Re-baseline'
-            },
-            {
-                id: 'refresh',
-                displayName: 'Refresh'
-            },
-            {
-                id: 'connectToTools',
-                displayName: 'Connect to CI/CD tools'
-            },
-            {
-                id: 'showConnectionInfo',
-                displayName: 'Show connection info'
-            },
-            {
-                id: 'split',
-                displayName: 'Split'
-            },
-            {
-                id: 'integrityCheck',
-                displayName: 'Check integrity'
-            },
-            {
-                id: 'delete',
-                displayName: 'Delete'
-            }
-        ];
-    };
+    const menuItems = (row: any) => [
+        {
+            id: 'reBaseline',
+            displayName: 'Re-baseline'
+        },
+        {
+            id: 'refresh',
+            displayName: 'Refresh'
+        },
+        {
+            id: 'connectToTools',
+            displayName: 'Connect to CI/CD tools'
+        },
+        {
+            id: 'showConnectionInfo',
+            displayName: 'Show connection info'
+        },
+        {
+            id: 'split',
+            displayName: 'Split'
+        },
+        {
+            id: 'integrityCheck',
+            displayName: 'Check integrity'
+        },
+        {
+            id: 'delete',
+            displayName: 'Delete'
+        }
+    ];
 
-    //To set initial filter when navigate from Dashboard
+    // To set initial filter when navigate from Dashboard
     const getInitialFilter = () => {
         if (sandboxAgeRange?.from === 'Dashboard') {
             return {
@@ -141,9 +139,8 @@ const SandboxInstanceTable = () => {
                     }
                 }
             };
-        } else {
-            return undefined;
         }
+        return undefined;
     };
 
     const showJobInProgressNotification = (action: SandboxActions, resourceName: string) => {
@@ -193,7 +190,7 @@ const SandboxInstanceTable = () => {
                                 message: `${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.SUCCESS[action][0]}${resourceName}${GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS.SUCCESS[action][1]}`
                             })
                         );
-                        let output =
+                        const output =
                             action === 'delete'
                                 ? aggregatedSandboxInstanceList.filter((item: any) => rowData?.id !== item?.id)
                                 : aggregatedSandboxInstanceList.map((obj: any) => {
@@ -209,7 +206,7 @@ const SandboxInstanceTable = () => {
                                   });
                         dispatch(setAggregatedSandboxInstanceList(output));
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                        let output = aggregatedSandboxInstanceList.map((obj: any) => {
+                        const output = aggregatedSandboxInstanceList.map((obj: any) => {
                             if (obj?.id === rowData?.id && obj.name === rowData.name) {
                                 return {
                                     ...obj,
@@ -232,7 +229,7 @@ const SandboxInstanceTable = () => {
                 });
             }, SANDBOX_ACTIONS_POLLING_INTERVAL);
         } else {
-            let output = aggregatedSandboxInstanceList.map((obj: any) => {
+            const output = aggregatedSandboxInstanceList.map((obj: any) => {
                 if (obj?.id === rowData?.id && obj.name === rowData.name) {
                     return {
                         ...obj,
@@ -255,7 +252,7 @@ const SandboxInstanceTable = () => {
                 primaryButton={GENERAL.REBASE_LINE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    let output = data.map((obj: any) => {
+                    const output = data.map((obj: any) => {
                         if (obj?.id === rowData?.id && obj.name === rowData.name) {
                             return { ...obj, cellProps: { isDisabled: true }, status: 'rebaseline', menuDisable: true };
                         }
@@ -284,14 +281,14 @@ const SandboxInstanceTable = () => {
     const handleRefresh = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Refresh'}
+                header="Refresh"
                 content={
                     <RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} rowData={rowData} />
                 }
-                primaryButton={'Refresh'}
+                primaryButton="Refresh"
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    let output = data.map((obj: any) => {
+                    const output = data.map((obj: any) => {
                         if ((obj?.id === rowData?.id && obj.name) === rowData.name) {
                             return {
                                 ...obj,
@@ -332,17 +329,17 @@ const SandboxInstanceTable = () => {
     const handleDelete = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Delete'}
+                header="Delete"
                 content={
                     <DsTypography variant="Regular_14">
                         Are you sure you want to delete this sandbox database{' '}
                         <span style={{ fontWeight: '590' }}>{rowData?.name}</span>?
                     </DsTypography>
                 }
-                primaryButton={'Delete'}
+                primaryButton="Delete"
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    let output = data.map((obj: any) => {
+                    const output = data.map((obj: any) => {
                         if (obj?.id === rowData?.id && obj.name === rowData.name) {
                             return { ...obj, cellProps: { isDisabled: true }, status: 'delete', menuDisable: true };
                         }
@@ -373,7 +370,7 @@ const SandboxInstanceTable = () => {
         getSplitEstimateApi({
             credentialsId: selectedResourceCredId,
             regionId: selectedResourceRegionId,
-            databaseHostId: databaseHostId,
+            databaseHostId,
             instanceId,
             sandboxName: name
         }).then((splitEstimateRes: any) => {
@@ -382,7 +379,7 @@ const SandboxInstanceTable = () => {
                 const aggSplitEstimate = getAggregatedSplitEstimate(splitEstimateRes?.data?.volumes || []);
                 setDialog(
                     <DialogComponent
-                        header={'Split'}
+                        header="Split"
                         content={
                             <RebaseSplitContent
                                 databaseName={rowData?.source}
@@ -390,10 +387,10 @@ const SandboxInstanceTable = () => {
                                 aggSplitEstimate={aggSplitEstimate}
                             />
                         }
-                        primaryButton={'Split'}
+                        primaryButton="Split"
                         secondaryButton={GENERAL.CANCEL}
                         callback={() => {
-                            let output = data.map((obj: any) => {
+                            const output = data.map((obj: any) => {
                                 if (obj?.id === rowData?.id && obj.name === rowData.name) {
                                     return {
                                         ...obj,
@@ -445,7 +442,7 @@ const SandboxInstanceTable = () => {
         };
         setDialog(
             <DialogComponent
-                header={'Connect to CI/CD tools'}
+                header="Connect to CI/CD tools"
                 content={
                     <ViewDialog
                         data={
@@ -487,7 +484,7 @@ const SandboxInstanceTable = () => {
                     : '';
                 setDialog(
                     <DialogComponent
-                        header={' Show connection info'}
+                        header=" Show connection info"
                         content={<ViewDialog data={connectionString} />}
                         primaryButton={GENERAL.CLOSE}
                         callback={() => {}}
@@ -502,17 +499,17 @@ const SandboxInstanceTable = () => {
     const handleIntegrityCheck = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Check integrity'}
+                header="Check integrity"
                 content={
                     <DsTypography variant="Regular_14">
                         Do you want to perform integrity check for sandbox{' '}
                         <span style={{ fontWeight: '590' }}>{rowData.name}</span>?
                     </DsTypography>
                 }
-                primaryButton={'Check integrity'}
+                primaryButton="Check integrity"
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    let output = data.map((obj: any) => {
+                    const output = data.map((obj: any) => {
                         if (obj?.id === rowData?.id && obj.name === rowData.name) {
                             return {
                                 ...obj,
@@ -542,77 +539,73 @@ const SandboxInstanceTable = () => {
         );
     };
 
-    const lastColDetails = () => {
-        return {
-            id: '9',
-            Header: '',
-            accessor: '',
-            width: '56px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        {!rowData?.menuDisable && (
-                            <MenuPopover
-                                isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                                menuItems={menuItems(rowData)}
-                                toggleMenu={(toggleType: string, menuId: string) => {
-                                    if (toggleType === 'close') {
-                                        menuOpenedRowDetail.current = null;
-                                        setOpenedRow(null);
-                                    } else if (toggleType === 'open') {
-                                        menuOpenedRowDetail.current = null;
-                                        setOpenedRow(rowData.id);
-                                        menuOpenedRowDetail.current = rowData.id;
-                                    } else if (toggleType === 'selectedOption') {
-                                        menuOpenedRowDetail.current = null;
-                                        setOpenedRow(null);
+    const lastColDetails = () => ({
+        id: '9',
+        Header: '',
+        accessor: '',
+        width: '56px',
+        renderCell: (cellData: any, rowData: any) => (
+            <div className={styles.jobMenuPopover}>
+                {!rowData?.menuDisable && (
+                    <MenuPopover
+                        isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                        menuItems={menuItems(rowData)}
+                        toggleMenu={(toggleType: string, menuId: string) => {
+                            if (toggleType === 'close') {
+                                menuOpenedRowDetail.current = null;
+                                setOpenedRow(null);
+                            } else if (toggleType === 'open') {
+                                menuOpenedRowDetail.current = null;
+                                setOpenedRow(rowData.id);
+                                menuOpenedRowDetail.current = rowData.id;
+                            } else if (toggleType === 'selectedOption') {
+                                menuOpenedRowDetail.current = null;
+                                setOpenedRow(null);
 
-                                        switch (menuId) {
-                                            case 'reBaseline':
-                                                handleRebaseLine(rowData);
-                                                break;
-                                            case 'refresh':
-                                                handleRefresh(rowData);
-                                                break;
+                                switch (menuId) {
+                                    case 'reBaseline':
+                                        handleRebaseLine(rowData);
+                                        break;
+                                    case 'refresh':
+                                        handleRefresh(rowData);
+                                        break;
 
-                                            case 'delete':
-                                                handleDelete(rowData);
-                                                break;
-                                            case 'split':
-                                                handleSplit(rowData);
-                                                break;
-                                            case 'connectToTools':
-                                                handleConnectToTools(rowData);
-                                                break;
+                                    case 'delete':
+                                        handleDelete(rowData);
+                                        break;
+                                    case 'split':
+                                        handleSplit(rowData);
+                                        break;
+                                    case 'connectToTools':
+                                        handleConnectToTools(rowData);
+                                        break;
 
-                                            case 'showConnectionInfo':
-                                                handleShowConnectionInfo(rowData);
-                                                break;
+                                    case 'showConnectionInfo':
+                                        handleShowConnectionInfo(rowData);
+                                        break;
 
-                                            case 'integrityCheck':
-                                                handleIntegrityCheck(rowData);
-                                                break;
-                                        }
-                                    }
-                                }}
-                                isDisabled={rowData?.menuDisable}
-                                CustomMenu={undefined}
-                                disabledText={undefined}
-                            />
-                        )}
+                                    case 'integrityCheck':
+                                        handleIntegrityCheck(rowData);
+                                        break;
+                                }
+                            }
+                        }}
+                        isDisabled={rowData?.menuDisable}
+                        CustomMenu={undefined}
+                        disabledText={undefined}
+                    />
+                )}
 
-                        {rowData?.menuDisable && (
-                            <div className={styles.menuPointerDisabled}>
-                                <span className={styles.menuPointer}>...</span>
-                            </div>
-                        )}
+                {rowData?.menuDisable && (
+                    <div className={styles.menuPointerDisabled}>
+                        <span className={styles.menuPointer}>...</span>
                     </div>
-                );
-            },
-            showHide: true,
-            isSticky: true
-        };
-    };
+                )}
+            </div>
+        ),
+        showHide: true,
+        isSticky: true
+    });
 
     const SandboxColDefs: ColumnProps[] = [
         {
@@ -650,9 +643,9 @@ const SandboxInstanceTable = () => {
             id: '5',
             width: '12.44%',
             isSortable: true,
-            renderCell: (cellData: any) => {
-                return <DsTypography variant="Regular_14">{formatDateWithTime(cellData)}</DsTypography>;
-            }
+            renderCell: (cellData: any) => (
+                <DsTypography variant="Regular_14">{formatDateWithTime(cellData)}</DsTypography>
+            )
         },
         {
             Header: GENERAL.AGE,
@@ -665,9 +658,9 @@ const SandboxInstanceTable = () => {
                 { label: GENERAL.THIRTY_SIXTY_DAYS, value: GENERAL.THIRTY_SIXTY_DAYS },
                 { label: GENERAL.SIXTY_PLUS_DAYS, value: GENERAL.SIXTY_PLUS_DAYS }
             ],
-            renderCell: (cellData: any, rowData: any) => {
-                return <DsTypography variant="Regular_14">{rowData?.age}</DsTypography>;
-            }
+            renderCell: (cellData: any, rowData: any) => (
+                <DsTypography variant="Regular_14">{rowData?.age}</DsTypography>
+            )
         },
 
         {
@@ -683,56 +676,54 @@ const SandboxInstanceTable = () => {
             id: '8',
             width: '11.20%',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
-                return (
-                    <div className={styles.statusCol}>
-                        {cellData === 'active' && (
-                            <>
-                                <Success />
-                                <DsTypography variant="Regular_14">Active</DsTypography>
-                            </>
-                        )}
-                        {cellData === 'refresh' && (
-                            <>
-                                <SmallLoader />
-                                <DsTypography variant="Regular_14">Refresh</DsTypography>
-                            </>
-                        )}
-                        {cellData === 'delete' && (
-                            <>
-                                <SmallLoader />
-                                <DsTypography variant="Regular_14">{GENERAL.DELETING}</DsTypography>
-                            </>
-                        )}
-                        {cellData === 'rebaseline' && (
-                            <>
-                                <SmallLoader />
-                                <DsTypography variant="Regular_14">{GENERAL.REBASELINE}</DsTypography>
-                            </>
-                        )}
-                        {cellData === 'split' && (
-                            <>
-                                <SmallLoader />
-                                <DsTypography variant="Regular_14">{GENERAL.SPLIT}</DsTypography>
-                            </>
-                        )}
-                        {cellData === 'integrityCheck' && (
-                            <>
-                                <SmallLoader />
-                                <DsTypography variant="Regular_14">{GENERAL.INTEGRITY_CHECK}</DsTypography>
-                            </>
-                        )}
-                    </div>
-                );
-            }
+            renderCell: (cellData: any) => (
+                <div className={styles.statusCol}>
+                    {cellData === 'active' && (
+                        <>
+                            <Success />
+                            <DsTypography variant="Regular_14">Active</DsTypography>
+                        </>
+                    )}
+                    {cellData === 'refresh' && (
+                        <>
+                            <SmallLoader />
+                            <DsTypography variant="Regular_14">Refresh</DsTypography>
+                        </>
+                    )}
+                    {cellData === 'delete' && (
+                        <>
+                            <SmallLoader />
+                            <DsTypography variant="Regular_14">{GENERAL.DELETING}</DsTypography>
+                        </>
+                    )}
+                    {cellData === 'rebaseline' && (
+                        <>
+                            <SmallLoader />
+                            <DsTypography variant="Regular_14">{GENERAL.REBASELINE}</DsTypography>
+                        </>
+                    )}
+                    {cellData === 'split' && (
+                        <>
+                            <SmallLoader />
+                            <DsTypography variant="Regular_14">{GENERAL.SPLIT}</DsTypography>
+                        </>
+                    )}
+                    {cellData === 'integrityCheck' && (
+                        <>
+                            <SmallLoader />
+                            <DsTypography variant="Regular_14">{GENERAL.INTEGRITY_CHECK}</DsTypography>
+                        </>
+                    )}
+                </div>
+            )
         },
         lastColDetails()
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -745,16 +736,16 @@ const SandboxInstanceTable = () => {
     return (
         <div className={styles.sandboxTable}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
                 pluralTitle="Sandboxes"
                 singularTitle="Sandbox"
                 actionsRight={
                     <div className={styles.sandboxButton}>
                         <Button
-                            variant={'primary'}
-                            className={'continue-button'}
-                            isThin={true}
+                            variant="primary"
+                            className="continue-button"
+                            isThin
                             onClick={() => {
                                 dispatch(
                                     setSelectedSandboxHeaderValue({
@@ -779,7 +770,7 @@ const SandboxInstanceTable = () => {
                 }
             />
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
             />
         </div>

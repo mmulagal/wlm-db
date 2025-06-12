@@ -12,19 +12,13 @@ const styles: any = {
  * Template function does nothing, but webstorm uses it to properly syntax highlight css
  */
 // @ts-ignore
-const css = (strings, ...values) => {
+const css = (strings, ...values) =>
     // @ts-ignore
-    return (
-        strings
-            // @ts-ignore
-            .map(function (e, i) {
-                return [e, values[i]];
-            })
-            .flat()
-            .join(' ')
-    );
-};
-
+    strings
+        // @ts-ignore
+        .map((e, i) => [e, values[i]])
+        .flat()
+        .join(' ');
 type Tokens = { [key: string]: string };
 
 interface ThemeContextType {
@@ -36,9 +30,7 @@ interface ThemeContextType {
 const emptyTheme = { theme: '', styleString: '', tokens: {} };
 const ThemeContext = React.createContext<ThemeContextType>(emptyTheme);
 
-export const useCurrentTheme = () => {
-    return useContext<ThemeContextType>(ThemeContext);
-};
+export const useCurrentTheme = () => useContext<ThemeContextType>(ThemeContext);
 
 const ThemeProvider = React.memo(
     ({
@@ -102,30 +94,30 @@ const ThemeProvider = React.memo(
                 return () => {
                     document.head.removeChild(styleTag);
                 };
-            } else {
-                if (container) {
-                    const styleTag = window.document.createElement('style');
-                    const className = `theme-provider-${crypto.randomUUID()}`;
+            }
+            if (container) {
+                const styleTag = window.document.createElement('style');
+                const className = `theme-provider-${crypto.randomUUID()}`;
 
-                    // Use textContent to set the CSS rules safely
-                    const styleContent = `
+                // Use textContent to set the CSS rules safely
+                const styleContent = `
                         .${className}, .${className}::before, .${className}::after {
                             ${themeState.styleString}
                         }
                     `;
-                    styleTag.textContent = styleContent;
+                styleTag.textContent = styleContent;
 
-                    styleTag.setAttribute('data-component', 'ThemeProviderStyle');
-                    container.appendChild(styleTag);
-                    container.classList.add(className);
+                styleTag.setAttribute('data-component', 'ThemeProviderStyle');
+                container.appendChild(styleTag);
+                container.classList.add(className);
 
-                    return () => {
-                        container.removeChild(styleTag);
-                        container.classList.remove(className);
-                    };
-                } else if (wrapperRef.current) {
-                    wrapperRef.current.style.cssText = themeState.styleString;
-                }
+                return () => {
+                    container.removeChild(styleTag);
+                    container.classList.remove(className);
+                };
+            }
+            if (wrapperRef.current) {
+                wrapperRef.current.style.cssText = themeState.styleString;
             }
         }, [themeState, isRoot]);
 

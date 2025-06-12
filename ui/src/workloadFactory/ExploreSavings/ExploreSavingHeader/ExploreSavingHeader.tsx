@@ -1,4 +1,6 @@
 import { DsTypography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { ReactComponent as ExploreSaving } from '../../../assets/ES_252.svg';
 import { ReactComponent as ExploreSaving1600 } from '../../../assets/exploreSaving1600.svg';
 import { ReactComponent as ExploreSavingCommon } from '../../../assets/exploreSavingsCommon.svg';
@@ -10,9 +12,7 @@ import { GENERAL } from '../../../utils/appConstants';
 
 import ExploreSavingsTableV2 from '../ExploreSavingsTableV2/ExploreSavingsTableV2';
 import { handleManualTCOEBS, handleManualTCOFSXW } from '../ExploreSavingsUtils';
-import { useDispatch } from 'react-redux';
 import useResize from '../../../common/hooks/useResize';
-import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../store/storeHooks';
 import { WLF_TABS } from '../../../utils/consts';
 import ExploreSavingsOnPremiseTable from '../ExploreSavingsOnPremiseTable/ExploreSavingsOnPremiseTable';

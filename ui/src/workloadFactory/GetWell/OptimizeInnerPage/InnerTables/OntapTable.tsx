@@ -1,13 +1,12 @@
 import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useMemo } from 'react';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useState } from 'react';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 
@@ -44,16 +43,14 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
             filterOptions: 'auto',
             isSticky: true,
             width: 'auto',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
 
         lastColDetails(type, {})
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -77,7 +74,7 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
                 pluralTitle={`Impacted ${tableHeader}s`}
                 singularTitle={`Impacted ${tableHeader}`}
@@ -86,9 +83,9 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

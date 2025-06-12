@@ -1,10 +1,10 @@
 import { TextField, Typography } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import sanitizeHTML from 'sanitize-html';
 import { setSaveConfigName } from '../../../store/mssql/mssqlFormSlice';
 import { GENERAL } from '../../../utils/appConstants';
-//@ts-ignore
-import sanitizeHTML from 'sanitize-html';
+// @ts-ignore
 import styles from './SaveConfig.module.scss';
 import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
 

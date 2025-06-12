@@ -25,7 +25,7 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
                         {!isAssessmentAvailable && !loading ? (
-                            <DsTypography variant="Semibold_14" isDisabled={true}>
+                            <DsTypography variant="Semibold_14" isDisabled>
                                 {text}
                             </DsTypography>
                         ) : (
@@ -41,13 +41,13 @@ const OptimizeComponent = ({ text, value, data, image, isComingSoon }: OptimizeC
                                 <DsTypography
                                     variant="Regular_14"
                                     style={{ lineHeight: 'unset', marginTop: '5px' }}
-                                    isDisabled={true}
+                                    isDisabled
                                 >
                                     {GENERAL.NOT_AVAILABLE}
                                 </DsTypography>
                             ) : (
                                 <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
-                                    {value + '%'}
+                                    {`${value}%`}
                                 </DsTypography>
                             ))}
                         {isComingSoon && (

@@ -1,8 +1,8 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import styles from './SavingsSelectedHost.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useState } from 'react';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
 const SavingsSelectedHost = () => {

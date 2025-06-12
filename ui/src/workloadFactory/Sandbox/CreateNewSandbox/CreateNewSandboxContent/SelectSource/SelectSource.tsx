@@ -8,12 +8,12 @@ import {
     useAccordionContext
 } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
 import styles from './SelectSource.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { generateOptionType, isSmbProtocol } from '../../../../../utils/utilityFunctions';
 import useResize from '../../../../../common/hooks/useResize';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import {
     setCreateSandboxPressed,
     setDbMountPointsState,
@@ -55,15 +55,15 @@ const SelectSource = () => {
     useEffect(() => {
         if (isCreateSandboxPressed && (!isSourceSelected || !isTargetSelected || isMountPathAdded)) {
             accordionContext({
-                1: !isSourceSelected ? true : false,
-                2: !isTargetSelected ? true : false,
-                3: !isMountPathAdded ? true : false
+                1: !isSourceSelected,
+                2: !isTargetSelected,
+                3: !isMountPathAdded
             });
             dispatch(setCreateSandboxPressed(false));
         }
     }, [accordionContext, isCreateSandboxPressed, isSourceSelected, isTargetSelected, isMountPathAdded]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateHostName = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         let selected_item = null;
@@ -102,14 +102,12 @@ const SelectSource = () => {
             (hostItem: any) => hostItem?.id === selectedDatabaseHost?.value
         );
         instanceList = selectedHostData?.databaseInstancesSummary
-            ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => {
-                  return {
-                      value: instanceItem?.databaseInstanceId,
-                      label: instanceItem?.databaseInstanceName,
-                      status: instanceItem?.status,
-                      fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
-                  };
-              })
+            ? selectedHostData.databaseInstancesSummary.map((instanceItem: any) => ({
+                  value: instanceItem?.databaseInstanceId,
+                  label: instanceItem?.databaseInstanceName,
+                  status: instanceItem?.status,
+                  fileSystemId: instanceItem?.databaseInstanceTopology?.fileSystemId
+              }))
             : [];
         const options: optionType[] = [];
         instanceList?.map((obj: any, idx: number) => {
@@ -167,25 +165,23 @@ const SelectSource = () => {
         }
     }, [generateSourceInstance]);
 
-    const setHeader = () => {
-        return (
-            <DsTypography
-                variant="Regular_14"
-                title={`${selectedDatabaseHost ? selectedDatabaseHost.label : ''}, ${
-                    selectedDatabaseInstance ? selectedDatabaseInstance.label : ''
-                }, ${selectedDatabase ? selectedDatabase.label : ''}`}
-                className={CommonStyles.setHeaderStyleSandbox}
-            >
-                <span>
-                    {GENERAL.SOURCE_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : 'NA'}
-                </span>
-                <span className={CommonStyles.separatorSandbox} />
-                <span>
-                    {GENERAL.SOURCE_DATABASE}: {selectedDatabase ? selectedDatabase.label : 'NA'}
-                </span>
-            </DsTypography>
-        );
-    };
+    const setHeader = () => (
+        <DsTypography
+            variant="Regular_14"
+            title={`${selectedDatabaseHost ? selectedDatabaseHost.label : ''}, ${
+                selectedDatabaseInstance ? selectedDatabaseInstance.label : ''
+            }, ${selectedDatabase ? selectedDatabase.label : ''}`}
+            className={CommonStyles.setHeaderStyleSandbox}
+        >
+            <span>
+                {GENERAL.SOURCE_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : 'NA'}
+            </span>
+            <span className={CommonStyles.separatorSandbox} />
+            <span>
+                {GENERAL.SOURCE_DATABASE}: {selectedDatabase ? selectedDatabase.label : 'NA'}
+            </span>
+        </DsTypography>
+    );
     return (
         <div className={styles.selectSource}>
             <AccordionCard
@@ -214,7 +210,7 @@ const SelectSource = () => {
                                         );
                                     }}
                                     value={selectedDatabaseHost}
-                                    isSearchable={true}
+                                    isSearchable
                                     options={generateHostName}
                                     className={styles.selectField}
                                     isLoading={databaseHostsLoading}
@@ -236,7 +232,7 @@ const SelectSource = () => {
                                         );
                                     }}
                                     isLoading={databaseHostsLoading}
-                                    isSearchable={true}
+                                    isSearchable
                                     options={generateSourceInstance}
                                     className={styles.selectField}
                                 />
@@ -245,7 +241,7 @@ const SelectSource = () => {
                                     <SelectField
                                         label={GENERAL.SOURCE_DATABASE}
                                         isClearable={false}
-                                        defaultValue={selectedDatabase ? selectedDatabase : [generateSourceDatabase[0]]}
+                                        defaultValue={selectedDatabase || [generateSourceDatabase[0]]}
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setSourceDatabase(selectedOptions));
                                             dispatch(
@@ -256,7 +252,7 @@ const SelectSource = () => {
                                             );
                                         }}
                                         value={selectedDatabase}
-                                        isSearchable={true}
+                                        isSearchable
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
                                         isLoading={databaseListLoading}
@@ -270,7 +266,7 @@ const SelectSource = () => {
                                     <SelectField
                                         label={GENERAL.SOURCE_DATABASE}
                                         isClearable={false}
-                                        defaultValue={selectedDatabase ? selectedDatabase : [generateSourceDatabase[0]]}
+                                        defaultValue={selectedDatabase || [generateSourceDatabase[0]]}
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setSourceDatabase(selectedOptions));
                                             dispatch(
@@ -281,7 +277,7 @@ const SelectSource = () => {
                                             );
                                         }}
                                         value={selectedDatabase}
-                                        isSearchable={true}
+                                        isSearchable
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
                                         isLoading={databaseListLoading}

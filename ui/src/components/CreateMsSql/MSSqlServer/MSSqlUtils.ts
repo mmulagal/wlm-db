@@ -31,13 +31,13 @@ export const selectDefaultInstanceType = (instanceTypeData: any, dispatch: any) 
         const value = firstInstanceName?.instanceType || '';
         let label2 = '';
         if (firstInstanceName?.vCpus) {
-            label2 += firstInstanceName?.vCpus + 'vCPU, ';
+            label2 += `${firstInstanceName?.vCpus}vCPU, `;
         }
         if (firstInstanceName?.ramInMib) {
-            label2 += formatSize(firstInstanceName?.ramInMib, 'mib') + ' RAM, ';
+            label2 += `${formatSize(firstInstanceName?.ramInMib, 'mib')} RAM, `;
         }
         if (firstInstanceName?.iopsInMbps) {
-            label2 += firstInstanceName?.iopsInMbps + 'Mbps';
+            label2 += `${firstInstanceName?.iopsInMbps}Mbps`;
         }
         const option = generateOptionType(value, value, label2, false, '', firstInstanceName);
         dispatch(setInstanceType(option));
@@ -99,9 +99,9 @@ export const selectFsxThroughput = (
     if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName && throughput !== 0) {
         let val = '';
         if (throughput <= 512) {
-            val = throughput + ' MBps';
+            val = `${throughput} MBps`;
         } else {
-            val = throughput / 1024 + ' GBps';
+            val = `${throughput / 1024} GBps`;
         }
         const option = generateOptionType(val, val, '', false, '');
         dispatch(setThroughputValue(option));

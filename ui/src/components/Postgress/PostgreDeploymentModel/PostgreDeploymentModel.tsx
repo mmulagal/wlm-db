@@ -1,8 +1,8 @@
 import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@netapp/design-system';
 
+import { useDispatch } from 'react-redux';
 import styles from './PostgreDeploymentModel.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
 
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -13,16 +13,14 @@ const PostgreDeploymentModel = () => {
     const dispatch = useDispatch();
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
-    //Set the Header text here
-    const setHeader = () => {
-        return (
-            <Typography variant="Regular_14">
-                {deploymentModel?.label === GENERAL.FAILOVER_CLUSTER
-                    ? GENERAL.HIGH_AVAILABILITY
-                    : GENERAL.STANDALONE_INSTANCE}
-            </Typography>
-        );
-    };
+    // Set the Header text here
+    const setHeader = () => (
+        <Typography variant="Regular_14">
+            {deploymentModel?.label === GENERAL.FAILOVER_CLUSTER
+                ? GENERAL.HIGH_AVAILABILITY
+                : GENERAL.STANDALONE_INSTANCE}
+        </Typography>
+    );
     return (
         <div className={styles['db-deployment']}>
             <AccordionCard

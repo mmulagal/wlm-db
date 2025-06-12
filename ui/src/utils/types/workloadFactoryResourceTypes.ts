@@ -23,6 +23,11 @@ export interface WorkloadFactoryResourceEntities {
     sqlServerPasswords: any;
 }
 
+export type ResourceTrendMetric = {
+    timestamp: string; // ISO date string
+    value: number;
+};
+
 export interface WorkloadFactoryResourceDetails {
     id: string;
     name: string;
@@ -38,6 +43,15 @@ export interface WorkloadFactoryResourceDetails {
         creationDate: string;
         clusterName: string;
         activeNode: string;
+    };
+    resourceTrend: {
+        cpuUsed: ResourceTrendMetric[];
+        readThroughput: ResourceTrendMetric[];
+        writeThroughput: ResourceTrendMetric[];
+        readIops: ResourceTrendMetric[];
+        writeIops: ResourceTrendMetric[];
+        readLatency: ResourceTrendMetric[];
+        writeLatency: ResourceTrendMetric[];
     };
     topology: {
         awsAccount: string;

@@ -1,7 +1,7 @@
 import React from 'react';
-import styles from './ManageInstanceAccordion.module.scss';
 import { DsTypography } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import styles from './ManageInstanceAccordion.module.scss';
 import { ReactComponent as Arrow } from '../../../../../../assets/row arrow2.svg';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
@@ -45,10 +45,8 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                 <div
                     key={item.id}
                     className={`${styles['accordion-item']} 
-            ${expandedId === item.id ? styles['expanded'] : ''} 
-            ${
-                wizardOperationType !== ACTION_TYPE.BULK ? disableAll || item.disabled : false ? styles['disabled'] : ''
-            }`}
+            ${expandedId === item.id ? styles.expanded : ''} 
+            ${wizardOperationType !== ACTION_TYPE.BULK ? disableAll || item.disabled : false ? styles.disabled : ''}`}
                 >
                     <div className={styles['accordion-header-wrapper']}>
                         {wizardOperationType !== ACTION_TYPE.BULK && (

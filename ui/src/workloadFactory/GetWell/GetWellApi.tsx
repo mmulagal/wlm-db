@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
-import { useAppSelector } from '../../store/storeHooks';
 import { useEffect } from 'react';
+import { useAppSelector } from '../../store/storeHooks';
 import {
     setDriftAssessmentData,
     setOptimizePageLoading,
@@ -31,7 +31,7 @@ const GetWellApi = () => {
     const [assessmentDetailsApi] = useGetMssqlAssessmentDataMutation();
 
     useEffect(() => {
-        //On page load, call the API to get the assessment details
+        // On page load, call the API to get the assessment details
         if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
             viewOptimizeAction();
         } else {
@@ -86,8 +86,6 @@ const GetWellApi = () => {
             dispatch(setGwRefreshPage(false));
         }
     }, [gwRefreshPage]);
-
-    return;
 };
 
 export default GetWellApi;

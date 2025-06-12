@@ -48,7 +48,7 @@ function isProtrude(position) {
         right: fullWidth > rSpace,
         bottom: fullHeight > bSpace,
         left: fullWidth > lSpace,
-        detail: detail,
+        detail,
         find: 0
     };
 }
@@ -56,7 +56,7 @@ function isProtrude(position) {
 // change to [start,center,end] position not implement yet
 function swap(placement, protrude) {
     let { top, right, bottom, left, detail, find } = protrude;
-    let p = { ...protrude, find: ++find };
+    const p = { ...protrude, find: ++find };
     const { x, y } = detail;
 
     // cant find location return bottom
@@ -105,7 +105,7 @@ function horizontal(isTop, position) {
     isProtrude(position);
 
     const transform = `translate3d(${x}px, ${y}px, 10px)`;
-    return { transform: transform };
+    return { transform };
 }
 
 function vertical(isRight, position) {
@@ -124,7 +124,7 @@ function vertical(isRight, position) {
     }
 
     const transform = `translate3d(${x}px, ${y}px, 10px)`;
-    return { transform: transform };
+    return { transform };
 }
 
 function positionCalculator(rect, customize) {
@@ -142,7 +142,7 @@ function positionCalculator(rect, customize) {
         left: rect.left + window.pageXOffset,
         right: rect.right + window.pageXOffset,
         padding: customize.padding,
-        suffix: suffix
+        suffix
     };
 
     const protrude = isProtrude(position);
@@ -174,8 +174,8 @@ export default function usePortalBox(props) {
 
     const customize = {
         ref: spanref,
-        placement: placement,
-        padding: padding
+        placement,
+        padding
     };
 
     const box = document.createElement('div');
@@ -196,7 +196,7 @@ export default function usePortalBox(props) {
 
     return {
         Portal: createPortal(
-            <span className={styleModule['tooltip-text']} style={{ width: width, height: height }} ref={spanref}>
+            <span className={styleModule['tooltip-text']} style={{ width, height }} ref={spanref}>
                 {title}
             </span>,
             box

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router';
+import { useDispatch } from 'react-redux';
+import { Spinner, useDialog } from '@netapp/design-system';
 import ResourceHeader from './ResourceHeader/ResourceHeader';
 import styles from './ResourcePage.module.scss';
 import { useAppSelector } from '../../store/storeHooks';
@@ -15,9 +17,7 @@ import {
 } from '../../utils/apiService';
 import { BatchEntry, Method } from '../../utils/types/resourceTypes';
 import { addNotification, NOTIFICATION_TYPES, clearNotifications } from '../../store/notificationSlice';
-import { useDispatch } from 'react-redux';
 import { resetMssqlTables } from '../../store/resource/resourceSlice';
-import { Spinner, useDialog } from '@netapp/design-system'; 
 import { navigateToCanvas } from '../../utils/appConfig';
 import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
@@ -28,23 +28,23 @@ const ResourcePage = () => {
     const dispatch = useDispatch();
     const [removeMssql] = useRemoveMSSQLMutation();
     const [batchTables] = useBatchTablesMutation();
-    const {setDialog} = useDialog();
+    const { setDialog } = useDialog();
 
     useEffect(() => {
         navigate('overview');
     }, []);
 
-    const {resourceId, resourceName} = useAppSelector(state => state.auth);
-    const {tables, ready} = useAppSelector(state => state.resources)
+    const { resourceId, resourceName } = useAppSelector(state => state.auth);
+    const { tables, ready } = useAppSelector(state => state.resources);
 
-    //To fetch databases
+    // To fetch databases
     const {
         data: databases,
         isLoading: databasesLoading,
         refetch: databasesRefetch
     } = useGetMSSQLDatabasesQuery(resourceId);
 
-    //To fetch summary data
+    // To fetch summary data
     const {
         data: mssqlSummary,
         isLoading: mssqlSummaryLoading,
@@ -72,8 +72,8 @@ const ResourcePage = () => {
         refetch: mssqlMemoryRefetch
     } = useGetMSSQLMemoryUtilizationQuery(resourceId);
 
-    const loading = databasesLoading || mssqlSummaryLoading || mssqlCpuLoading || 
-    mssqlDiskLoading || mssqlMemoryLoading;
+    const loading =
+        databasesLoading || mssqlSummaryLoading || mssqlCpuLoading || mssqlDiskLoading || mssqlMemoryLoading;
 
     const [batchingCompleted, setBatchingCompleted] = useState(false);
 
@@ -96,16 +96,15 @@ const ResourcePage = () => {
             await removeMssql(resourceId).unwrap();
             navigateToCanvas('/');
         } catch (error) {
-            dispatch(addNotification({message: error, notificationType: NOTIFICATION_TYPES.ERROR}));
+            dispatch(addNotification({ message: error, notificationType: NOTIFICATION_TYPES.ERROR }));
         }
-    }
+    };
 
     const onDeleteMssql = (event: any) => {
         setDialog(
             <DialogComponent
                 header={GENERAL.REMOVE_FROM_WORKSPACE}
-                content={<RemoveDialog weType={GENERAL.MSSQL}
-                name={resourceName!}/>}
+                content={<RemoveDialog weType={GENERAL.MSSQL} name={resourceName!} />}
                 primaryButton={GENERAL.REMOVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -117,14 +116,14 @@ const ResourcePage = () => {
 
     // To fetch tables data
     useEffect(() => {
-        if(databases?.databases.length > 0){
+        if (databases?.databases.length > 0) {
             const tablesBatchBody: BatchEntry[] = databases.databases.map((databaseRow: any) => {
                 const databaseName = databaseRow?.databaseName;
                 return {
                     url: `mssql/resources/${resourceId}/databases/${databaseName}/tables`,
                     method: Method.GET,
-                    inputs: {databaseName}
-                }
+                    inputs: { databaseName }
+                };
             });
             const chunkData = [];
             const chunkSize = 30;
@@ -133,38 +132,41 @@ const ResourcePage = () => {
                 chunkData.push(chunk);
             }
             const tablesChunks: BatchEntry[][] = chunkData;
-            batchTables(tablesChunks).unwrap()
+            batchTables(tablesChunks)
+                .unwrap()
                 .then(() => {
                     setBatchingCompleted(true);
                 })
                 .catch(error => {
-                    dispatch(addNotification({message: error?.data?.message, notificationType: NOTIFICATION_TYPES.ERROR}));
-                })
-        };
+                    dispatch(
+                        addNotification({ message: error?.data?.message, notificationType: NOTIFICATION_TYPES.ERROR })
+                    );
+                });
+        }
     }, [databases?.databases, resourceId, batchTables, loading, navigate, dispatch]);
 
     return (
         <div className={styles.resourcePageContainer}>
-            <ResourceHeader name={resourceName} refresh={refresh} onDeleteMssql={(e) => onDeleteMssql(e)}/>
+            <ResourceHeader name={resourceName} refresh={refresh} onDeleteMssql={e => onDeleteMssql(e)} />
             {loading && (
                 <div className={styles['loading-screen']}>
-                    <Spinner isLarge
-                        className={styles['general-loader']}
-                    />
+                    <Spinner isLarge className={styles['general-loader']} />
                 </div>
             )}
-            {!loading && <Outlet
-                context={{
-                    databasesList,
-                    tables,
-                    ready,
-                    mssqlSummary,
-                    mssqlCpu,
-                    mssqlDisk,
-                    mssqlMemory,
-                    batchingCompleted: batchingCompleted || databasesList.length === 0,
-                }}
-            />}
+            {!loading && (
+                <Outlet
+                    context={{
+                        databasesList,
+                        tables,
+                        ready,
+                        mssqlSummary,
+                        mssqlCpu,
+                        mssqlDisk,
+                        mssqlMemory,
+                        batchingCompleted: batchingCompleted || databasesList.length === 0
+                    }}
+                />
+            )}
         </div>
     );
 };

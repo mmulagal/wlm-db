@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
-import { GENERAL } from '../../../../utils/appConstants';
 import { optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+import { GENERAL } from '../../../../utils/appConstants';
 import styles from './KepPair.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedKeyPair } from '../../../../store/mssql/mssqlFormSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
@@ -14,7 +14,7 @@ import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 const KeyPair = () => {
     const dispatch = useDispatch();
 
-    //Getting the Data from state
+    // Getting the Data from state
     const { keyPairData, keyPairLoading } = useAppSelector(state => state.mssql.getKeyPairList);
 
     const selectedKey = useAppSelector((state: any) => state.mssqlForm.keyPair.selectedKeyPair);
@@ -23,7 +23,7 @@ const KeyPair = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateKey = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         keyPairData?.keyPairs?.map((val, idx: number) => {
@@ -42,7 +42,7 @@ const KeyPair = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateKey]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (

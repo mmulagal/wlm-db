@@ -192,166 +192,156 @@ export const comparisonDataFsxw = (calculatedResponse: any) => {
     ];
 };
 
-export const calculatedFSXData = (fsxData: any, storageType: string, selectedExploreSavingsTab?: string) => {
-    return [
-        {
-            label: 'Region',
-            value: fsxData?.regionName || GENERAL.NOT_AVAILABLE,
-            text: 'The AWS region that you selected.'
-        },
-        {
-            label: 'Deployment type',
-            value:
-                fsxData?.deploymentType === 'Single'
-                    ? 'Single Availability Zone'
-                    : fsxData?.deploymentType === 'Multi'
-                    ? 'Multi Availability Zone'
-                    : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
-            text:
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                    ? `${fsxData?.deploymentType} Availability Zones is the equivalent deployment type for your on-premises configuration.`
-                    : `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon ${storageType}.`
-        },
-        {
-            label: 'Total storage capacity',
-            value: fsxData?.totalStorageCapacity
-                ? formatSizeTwoPrecision(fsxData?.totalStorageCapacity)
-                : GENERAL.NOT_AVAILABLE,
-            text:
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                    ? `According to on-premises total capacity of primary database volumes.`
-                    : `According to ${storageType} total capacity of primary database volumes.`
-        },
+export const calculatedFSXData = (fsxData: any, storageType: string, selectedExploreSavingsTab?: string) => [
+    {
+        label: 'Region',
+        value: fsxData?.regionName || GENERAL.NOT_AVAILABLE,
+        text: 'The AWS region that you selected.'
+    },
+    {
+        label: 'Deployment type',
+        value:
+            fsxData?.deploymentType === 'Single'
+                ? 'Single Availability Zone'
+                : fsxData?.deploymentType === 'Multi'
+                ? 'Multi Availability Zone'
+                : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
+        text:
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                ? `${fsxData?.deploymentType} Availability Zones is the equivalent deployment type for your on-premises configuration.`
+                : `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon ${storageType}.`
+    },
+    {
+        label: 'Total storage capacity',
+        value: fsxData?.totalStorageCapacity
+            ? formatSizeTwoPrecision(fsxData?.totalStorageCapacity)
+            : GENERAL.NOT_AVAILABLE,
+        text:
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                ? 'According to on-premises total capacity of primary database volumes.'
+                : `According to ${storageType} total capacity of primary database volumes.`
+    },
 
-        {
-            label: 'Percentage of data on SSD storage',
-            value: fsxData?.percentageSsd
-                ? formatFractionalNumber(fsxData?.percentageSsd, 2) + '%'
-                : GENERAL.NOT_AVAILABLE,
-            text:
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                    ? `The percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} database workload when using FSx for ONTAP.`
-                    : `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
-        },
-        {
-            label: 'Savings from compression and deduplication',
-            value: fsxData?.savings ? formatFractionalNumber(fsxData?.savings, 2) + '%' : '0 %',
-            text: `Potential storage savings for ${fsxData?.useCase} workload. Storage efficiency is based on a typical customer deployment.`
-        },
-        {
-            label: 'Effective capacity',
-            value: fsxData?.effectiveCapacity
-                ? formatSizeTwoPrecision(fsxData?.effectiveCapacity)
-                : GENERAL.NOT_AVAILABLE,
-            text:
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                    ? `Effective capacity reduces costs based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
-                    : `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
-        },
-        {
-            label: 'SSD tier required capacity',
-            value: fsxData?.ssdTierReqCapacity
-                ? formatSizeTwoPrecision(fsxData?.ssdTierReqCapacity)
-                : GENERAL.NOT_AVAILABLE,
-            text: `Based on a typical ${fsxData?.useCase} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
-        },
-        {
-            label: 'Capacity pool tier required capacity',
-            value: fsxData?.capacityPoolTier ? formatSizeTwoPrecision(fsxData?.capacityPoolTier) : '0 TiB',
-            text: `Based on a typical ${fsxData?.useCase} workload, ${
-                100 - fsxData?.percentageSsd
-            }% of the data is on the capacity pool tier.`
-        },
-        {
-            label: 'Provisioned SSD IOPS',
-            value: fsxData?.ssdIop ? Number(fsxData?.ssdIop).toLocaleString() : GENERAL.NOT_AVAILABLE,
-            text:
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                    ? `Based on your on-premises configuration.`
-                    : 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
-        },
-        {
-            label: 'Throughput capacity',
-            value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
-            text:
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                    ? `Based on your on-premises configuration.`
-                    : `Supported FSx for ONTAP throughput according to the consolidated ${storageType} throughput required (${
-                          fsxData?.numberOfVolumes * fsxData?.throughput
-                      } Mbps).`
-        },
-        {
-            label: 'Monthly snapshot capacity',
-            value: fsxData?.monthlySnapshotCapacity
-                ? formatSizeTwoPrecision(fsxData?.monthlySnapshotCapacity)
-                : GENERAL.NOT_AVAILABLE,
-            text:
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                    ? `FSx for ONTAP data tiering reduces costs by tiering 90% of snapshot data to the capacity pool storage tier.`
-                    : 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
-        }
-    ];
-};
+    {
+        label: 'Percentage of data on SSD storage',
+        value: fsxData?.percentageSsd ? `${formatFractionalNumber(fsxData?.percentageSsd, 2)}%` : GENERAL.NOT_AVAILABLE,
+        text:
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                ? `The percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} database workload when using FSx for ONTAP.`
+                : `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
+    },
+    {
+        label: 'Savings from compression and deduplication',
+        value: fsxData?.savings ? `${formatFractionalNumber(fsxData?.savings, 2)}%` : '0 %',
+        text: `Potential storage savings for ${fsxData?.useCase} workload. Storage efficiency is based on a typical customer deployment.`
+    },
+    {
+        label: 'Effective capacity',
+        value: fsxData?.effectiveCapacity ? formatSizeTwoPrecision(fsxData?.effectiveCapacity) : GENERAL.NOT_AVAILABLE,
+        text:
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                ? `Effective capacity reduces costs based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
+                : `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
+    },
+    {
+        label: 'SSD tier required capacity',
+        value: fsxData?.ssdTierReqCapacity
+            ? formatSizeTwoPrecision(fsxData?.ssdTierReqCapacity)
+            : GENERAL.NOT_AVAILABLE,
+        text: `Based on a typical ${fsxData?.useCase} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
+    },
+    {
+        label: 'Capacity pool tier required capacity',
+        value: fsxData?.capacityPoolTier ? formatSizeTwoPrecision(fsxData?.capacityPoolTier) : '0 TiB',
+        text: `Based on a typical ${fsxData?.useCase} workload, ${
+            100 - fsxData?.percentageSsd
+        }% of the data is on the capacity pool tier.`
+    },
+    {
+        label: 'Provisioned SSD IOPS',
+        value: fsxData?.ssdIop ? Number(fsxData?.ssdIop).toLocaleString() : GENERAL.NOT_AVAILABLE,
+        text:
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                ? 'Based on your on-premises configuration.'
+                : 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
+    },
+    {
+        label: 'Throughput capacity',
+        value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
+        text:
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                ? 'Based on your on-premises configuration.'
+                : `Supported FSx for ONTAP throughput according to the consolidated ${storageType} throughput required (${
+                      fsxData?.numberOfVolumes * fsxData?.throughput
+                  } Mbps).`
+    },
+    {
+        label: 'Monthly snapshot capacity',
+        value: fsxData?.monthlySnapshotCapacity
+            ? formatSizeTwoPrecision(fsxData?.monthlySnapshotCapacity)
+            : GENERAL.NOT_AVAILABLE,
+        text:
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                ? 'FSx for ONTAP data tiering reduces costs by tiering 90% of snapshot data to the capacity pool storage tier.'
+                : 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
+    }
+];
 
-export const MSSQLServerInstance = (sqlData: any, storageType: string) => {
-    return [
-        {
-            label: 'Database deployment mode',
-            value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-            text:
-                sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                    ? `The equivalent deployment mode of Failover Cluster Instances in ${storageType} is failover cluster instance in FSx for ONTAP`
-                    : `Database deployment mode selected based on the current ${storageType} database deployment mode`
-        },
-        {
-            label: 'Database edition',
-            value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
-            text: 'Database edition selected based on the source SQL database edition'
-        },
-        {
-            label: 'Database version',
-            value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
-            text: `Database version selected based on your current ${storageType} SQL server version`
-        },
-        {
-            label: 'Database instance type',
-            value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
-            text: 'Database instance type selected based on the EC2 instance type'
-        }
-    ];
-};
+export const MSSQLServerInstance = (sqlData: any, storageType: string) => [
+    {
+        label: 'Database deployment mode',
+        value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+        text:
+            sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                ? `The equivalent deployment mode of Failover Cluster Instances in ${storageType} is failover cluster instance in FSx for ONTAP`
+                : `Database deployment mode selected based on the current ${storageType} database deployment mode`
+    },
+    {
+        label: 'Database edition',
+        value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
+        text: 'Database edition selected based on the source SQL database edition'
+    },
+    {
+        label: 'Database version',
+        value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
+        text: `Database version selected based on your current ${storageType} SQL server version`
+    },
+    {
+        label: 'Database instance type',
+        value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
+        text: 'Database instance type selected based on the EC2 instance type'
+    }
+];
 
-export const MSSQLServerInstanceForOnPremise = (sqlData: any, storageType: string) => {
-    return [
-        {
-            label: 'Database deployment mode',
-            value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-            text:
-                sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                    ? `Failover cluster instance (FCI) is the equivalent deployment mode for FCI on-premises.`
-                    : `Database deployment mode selected based on the current ${storageType} database deployment mode`
-        },
-        {
-            label: 'Database edition',
-            value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
-            text: sqlData?.editionUpgradeCheck
-                ? sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                    ? `Enterprise features are not in use. Failover cluster instance (FCI) is selected as the deployment mode because it doesn’t require an Enterprise license.`
-                    : `Enterprise features are not in use. Standalone is selected as the deployment mode because it doesn’t require an Enterprise license.`
-                : `The selected database edition is based on the source on-premises SQL Server database.`
-        },
-        {
-            label: 'Database version',
-            value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
-            text: `Supported database version selected based on your on-premises SQL Server version.`
-        },
-        {
-            label: 'Database instance type',
-            value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
-            text: 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-        }
-    ];
-};
+export const MSSQLServerInstanceForOnPremise = (sqlData: any, storageType: string) => [
+    {
+        label: 'Database deployment mode',
+        value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+        text:
+            sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                ? 'Failover cluster instance (FCI) is the equivalent deployment mode for FCI on-premises.'
+                : `Database deployment mode selected based on the current ${storageType} database deployment mode`
+    },
+    {
+        label: 'Database edition',
+        value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
+        text: sqlData?.editionUpgradeCheck
+            ? sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                ? 'Enterprise features are not in use. Failover cluster instance (FCI) is selected as the deployment mode because it doesn’t require an Enterprise license.'
+                : 'Enterprise features are not in use. Standalone is selected as the deployment mode because it doesn’t require an Enterprise license.'
+            : 'The selected database edition is based on the source on-premises SQL Server database.'
+    },
+    {
+        label: 'Database version',
+        value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
+        text: 'Supported database version selected based on your on-premises SQL Server version.'
+    },
+    {
+        label: 'Database instance type',
+        value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
+        text: 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+    }
+];
 
 export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: string) => {
     const state = store.getState();
@@ -500,7 +490,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'The greater of SSD storage GiB per month and the minimum allowed SSD storage capacity',
                 value: `${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'SSD monthly cost ',
@@ -535,7 +525,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file system - Capacity pool storage capacity',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyCostForCapacity}`,
-                text: ` `
+                text: ' '
             },
             {
                 label: 'Total monthly storage cost',
@@ -560,12 +550,12 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Required number of FSx for ONTAP file systems - fractional',
                 value: `${viewCalculation.fsxOntapCalculation.requiredNumOfFsxFractional} file system(s)`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Required number of FSx for ONTAP file systems',
                 value: `${viewCalculation.fsxOntapCalculation.requiredNumOfFsx}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Minimum throughput capacity required',
@@ -575,7 +565,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Provisioned throughput capacity',
                 value: `${viewCalculation.fsxOntapCalculation.provisionedThroughputCapacity}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file server - Throughput capacity',
@@ -595,7 +585,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Billed additional SSD IOPS',
                 value: `${viewCalculation.fsxOntapCalculation.billedAdditionalSsdIops} IOPS`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Additional billed cost for SSD IOPS',
@@ -683,7 +673,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file server - Capacity pool storage capacity',
                 value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalMonthlyCostForCapacity}`,
-                text: ` `
+                text: ' '
             },
             {
                 label: 'Total snapshot monthly cost',
@@ -699,7 +689,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Monthly change rate',
                 value: `${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%`,
-                text: `Based on user input`
+                text: 'Based on user input'
             },
             {
                 label: 'Desired storage capacity',
@@ -709,7 +699,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Percentage of data on SSD storage',
                 value: `${viewCalculation.fsxCloneCalculation.percentageOfDataOnSsdStorage}%`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Savings from compression & deduplication',
@@ -743,29 +733,29 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 label: 'Total clones monthly cost',
                 value: `$${viewCalculation.fsxCloneCalculation.totalCloneMonthlyCost}`,
                 secondaryHeading: true,
-                text: ``
+                text: ''
             }
         ],
         totalMonthlyCost: [
             {
                 label: 'Total monthly EC2 machine cost',
                 value: `$${viewCalculation.totalFsxEc2MachineCost}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Total monthly storage cost',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}`,
-                text: `Total all FSx for ONTAP storage costs`
+                text: 'Total all FSx for ONTAP storage costs'
             },
             {
                 label: 'Total monthly iops cost',
                 value: `$${viewCalculation.fsxOntapCalculation.additionalBilledCostForSsdIops}`,
-                text: `Total all FSx for ONTAP iops costs`
+                text: 'Total all FSx for ONTAP iops costs'
             },
             {
                 label: 'Total monthly throughput cost',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyFsxnThroughputCapacityCost}`,
-                text: `Total all FSx for ONTAP througput costs`
+                text: 'Total all FSx for ONTAP througput costs'
             },
             {
                 label: 'Total monthly snapshots cost',
@@ -910,27 +900,27 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Billable IOPS',
                 value: `${viewCalculation.ebsCalculation.billableIops} IOPS`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Total billable IOPS ',
                 value: `${viewCalculation.ebsCalculation.totalBillableIops} IOPS`,
-                text: ``
+                text: ''
             },
             {
                 label: 'EBS IOPS cost',
                 value: `$${viewCalculation.ebsCalculation.ebsIopsCost}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Billable MB/s',
                 value: `${viewCalculation.ebsCalculation.billableMbps} MB/s`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Billable throughput (MB/s)',
                 value: `${viewCalculation.ebsCalculation.billableThroughputMbps} MB/s`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Billable throughput (GB/s))',
@@ -940,14 +930,14 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'EBS throughput cost',
                 value: `$${viewCalculation.ebsCalculation.ebsThroughputCost}`,
-                text: ``
+                text: ''
             }
         ],
         SnapshotCalculation: [
             {
                 label: 'Total snapshots',
                 value: `${viewCalculation.ebsSnapshotCalculation.totalSnapshots}`,
-                text: `Storage amount of primary database volumes`
+                text: 'Storage amount of primary database volumes'
             },
             {
                 label: 'Amount changed in GiB per snapshot',
@@ -984,22 +974,22 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Number of Cloned copies',
                 value: `${viewCalculation.ebsCloneCalculation.clonedCopiesCount}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'EBS storage cost for clone',
                 value: `$${viewCalculation.ebsCloneCalculation.capacity}`,
-                text: `EBS storage cost of primary dbs volumes not including replica dbs volumes`
+                text: 'EBS storage cost of primary dbs volumes not including replica dbs volumes'
             },
             {
                 label: 'EBS iops cost for clone',
                 value: `$${viewCalculation.ebsCloneCalculation.iops}`,
-                text: `EBS iops cost of primary dbs volumes not including replica dbs volumes`
+                text: 'EBS iops cost of primary dbs volumes not including replica dbs volumes'
             },
             {
                 label: 'EBS throughput cost for clone',
                 value: `$${viewCalculation.ebsCloneCalculation.throughput}`,
-                text: `EBS throughput cost of primary dbs volumes not including replica dbs volumes`
+                text: 'EBS throughput cost of primary dbs volumes not including replica dbs volumes'
             },
             {
                 label: 'Clones total monthly cost',
@@ -1011,22 +1001,22 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Total monthly EC2 machine cost',
                 value: `$${viewCalculation.totalEBSEc2MachineCost}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Total monthly storage cost',
                 value: `$${viewCalculation.ebsCalculation.totalEbsStorageCost}`,
-                text: `Total storage cost across all volume disc types`
+                text: 'Total storage cost across all volume disc types'
             },
             {
                 label: 'Total monthly iops cost',
                 value: `$${viewCalculation.ebsCalculation.totalEbsIopsCost}`,
-                text: `Total iops cost across all volume disc types`
+                text: 'Total iops cost across all volume disc types'
             },
             {
                 label: 'Total monthly throughput cost',
                 value: `$${viewCalculation.ebsCalculation.totalEbsThroughputCost}`,
-                text: `Total throughput cost across all volume disc types`
+                text: 'Total throughput cost across all volume disc types'
             },
             {
                 label: 'Total monthly snapshots cost',
@@ -1052,7 +1042,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.gp3.storageAmountPerVol}`,
-                      text: `Storage capacity per disk type in GiB`
+                      text: 'Storage capacity per disk type in GiB'
                   },
                   {
                       label: 'Pricing calculations'
@@ -1065,17 +1055,17 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Billable IOPS',
                       value: `${viewCalculation.ebsCalculation.gp3.billableIops} IOPS`,
-                      text: ``
+                      text: ''
                   },
                   {
                       label: 'EBS IOPS cost',
                       value: `$${viewCalculation.ebsCalculation.gp3.ebsIopsCost}`,
-                      text: ``
+                      text: ''
                   },
                   {
                       label: 'Billable throughout (MiB/s)',
                       value: `${viewCalculation.ebsCalculation.gp3.billableThroughputMbps} MiB/s`,
-                      text: ``
+                      text: ''
                   },
                   {
                       label: 'Billable throughout (GiB/s)',
@@ -1085,7 +1075,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'EBS throughput cost',
                       value: `$${viewCalculation.ebsCalculation.gp3.ebsThroughputCost}`,
-                      text: ``
+                      text: ''
                   }
               ]
             : [],
@@ -1097,7 +1087,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.io2.storageAmountPerVol}`,
-                      text: `Storage capacity per disk type in GiB`
+                      text: 'Storage capacity per disk type in GiB'
                   },
                   {
                       label: 'Pricing calculations'
@@ -1110,12 +1100,12 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Billable IOPS',
                       value: `${viewCalculation.ebsCalculation.io2.billableIops} IOPS`,
-                      text: ``
+                      text: ''
                   },
                   {
                       label: 'EBS IOPS cost',
                       value: `$${viewCalculation.ebsCalculation.io2.ebsIopsCost}`,
-                      text: ``
+                      text: ''
                   }
               ]
             : [],
@@ -1127,7 +1117,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.io1.storageAmountPerVol}`,
-                      text: `Storage capacity per disk type in GiB`
+                      text: 'Storage capacity per disk type in GiB'
                   },
                   {
                       label: 'Pricing calculations'
@@ -1140,12 +1130,12 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Billable IOPS',
                       value: `${viewCalculation.ebsCalculation.io1.billableIops} IOPS`,
-                      text: ``
+                      text: ''
                   },
                   {
                       label: 'EBS IOPS cost',
                       value: `$${viewCalculation.ebsCalculation.io1.ebsIopsCost}`,
-                      text: ``
+                      text: ''
                   }
               ]
             : [],
@@ -1157,7 +1147,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.gp2.storageAmountPerVol}`,
-                      text: `Storage capacity per disk type in GiB`
+                      text: 'Storage capacity per disk type in GiB'
                   },
                   {
                       label: 'Pricing calculations'
@@ -1177,7 +1167,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.st1.storageAmountPerVol}`,
-                      text: `Storage capacity per disk type in GiB`
+                      text: 'Storage capacity per disk type in GiB'
                   },
                   {
                       label: 'Pricing calculations'
@@ -1310,7 +1300,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxwCalculation.desiredStorageCapacity}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Deduplication savings',
@@ -1338,12 +1328,12 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Total default provisioned IOPS',
                 value: `${viewCalculation.fsxwCalculation.totalDefaultProvisionedIops} IOPS`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Additional user-provisioned IOPS',
                 value: `${viewCalculation.fsxwCalculation.additionalUserProvisionedIops} IOPS`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Billed IOPS',
@@ -1368,12 +1358,12 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Required fractional number of file systems',
                 value: `${viewCalculation.fsxwCalculation.requiredFractionalFileSystems} file system(s)`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Required whole number of file systems',
                 value: `${viewCalculation.fsxwCalculation.requiredFileSystems} file system(s)`,
-                text: ` `
+                text: ' '
             },
             {
                 label: 'Minimum throughput capacity required',
@@ -1383,7 +1373,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Provisioned throughput capacity',
                 value: `${viewCalculation.fsxwCalculation.provisionedThroughputCapacity} MB/s`,
-                text: `Calculated as the greater of desired aggregate throughput and the minimum throughput capacity required`
+                text: 'Calculated as the greater of desired aggregate throughput and the minimum throughput capacity required'
             },
             {
                 label: 'Total monthly cost for throughput capacity',
@@ -1408,7 +1398,7 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Deduplication savings',
                 value: `${viewCalculation.fsxwCalculation.deduplicationSavings}%`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Pricing calculations'
@@ -1433,22 +1423,22 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Number of Cloned copies',
                 value: `${viewCalculation.fsxwCloneCalculation.clonedCopiesCount}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'FSx for Windows File Server storage cost for clone',
                 value: `$${viewCalculation.fsxwCloneCalculation.capacity}`,
-                text: `FSx for Windows File Server storage cost of primary dbs volumes not including replica dbs volumes`
+                text: 'FSx for Windows File Server storage cost of primary dbs volumes not including replica dbs volumes'
             },
             {
                 label: 'FSx for Windows File Server IOPS cost for clone',
                 value: `$${viewCalculation.fsxwCloneCalculation.iops}`,
-                text: `FSx for Windows File Server IOPS cost of primary dbs volumes not including replica dbs volumes`
+                text: 'FSx for Windows File Server IOPS cost of primary dbs volumes not including replica dbs volumes'
             },
             {
                 label: 'FSx for Windows File Server throughput cost for clone',
                 value: `$${viewCalculation.fsxwCloneCalculation.throughput}`,
-                text: `FSx for Windows File Server throughput cost of primary dbs volumes not including replica dbs volumes`
+                text: 'FSx for Windows File Server throughput cost of primary dbs volumes not including replica dbs volumes'
             },
             {
                 label: 'Clones total monthly cost',
@@ -1460,27 +1450,27 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
             {
                 label: 'Total monthly EC2 machine cost',
                 value: `$${viewCalculation.totalFsxwEc2MachineCost}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Total monthly storage cost',
                 value: `$${viewCalculation.fsxwCalculation.monthlyCostForStorageCapacity}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Total monthly IOPS cost',
                 value: `$${viewCalculation.fsxwCalculation.totalMonthlyCostForProvisionedSsdIops}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Total monthly throughput cost',
                 value: `$${viewCalculation.fsxwCalculation.totalMonthlyCostForThroughputCapacity}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Total monthly shadow cost',
                 value: `$${viewCalculation.fsxwSnapshotCalculation.totalMonthlyCostForFsxwSnapshotStorageCapacity}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Total monthly clones cost',
@@ -1631,7 +1621,7 @@ export const ExploreSaveConfiguration = (
     configRefetch: any
 ) => {
     const state = store.getState();
-    const saveConfigName = state.exploreSavings.saveConfigName;
+    const { saveConfigName } = state.exploreSavings;
     const existingSavedConfig = state.msSqlAction.savedConfig;
     const payload = {
         name: saveConfigName,
@@ -1648,7 +1638,7 @@ export const ExploreSaveConfiguration = (
         closeDialog();
     } else {
         dispatch(setIsSaveConfigLoading(true));
-        saveConfigData({ payload: payload })
+        saveConfigData({ payload })
             .then((data: any) => {
                 if (!data?.error) {
                     dispatch(setSavedConfig(state.mssqlForm));
@@ -1692,7 +1682,7 @@ export const mergeAoagVolumesList = (listA: any[], listB: any[]) => {
 };
 
 export const allPropertiesHaveValues = (obj: any) => {
-    for (let key in obj) {
+    for (const key in obj) {
         if (obj[key] === null || obj[key] === undefined || obj[key] === '' || parseInt(obj[key]) === 0) {
             return 0;
         }
@@ -1707,19 +1697,14 @@ export const calculateTotalVolumes = (
     gp3Complete: number,
     st1Complete: number,
     manualTCOVolumeTypes: any
-) => {
-    return (
-        Number(io1Complete ? manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes : 0) +
-        Number(io2Complete ? manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes : 0) +
-        Number(gp2Complete ? manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes : 0) +
-        Number(gp3Complete ? manualTCOVolumeTypes?.gp3?.manualTCONumberOfVolumes : 0) +
-        Number(st1Complete ? manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes : 0)
-    );
-};
+) =>
+    Number(io1Complete ? manualTCOVolumeTypes?.io1?.manualTCONumberOfVolumes : 0) +
+    Number(io2Complete ? manualTCOVolumeTypes?.io2?.manualTCONumberOfVolumes : 0) +
+    Number(gp2Complete ? manualTCOVolumeTypes?.gp2?.manualTCONumberOfVolumes : 0) +
+    Number(gp3Complete ? manualTCOVolumeTypes?.gp3?.manualTCONumberOfVolumes : 0) +
+    Number(st1Complete ? manualTCOVolumeTypes?.st1?.manualTCONumberOfVolumes : 0);
 
-const byteConversion = (gib: number) => {
-    return gib * Math.pow(1024, 3);
-};
+const byteConversion = (gib: number) => gib * 1024 ** 3;
 
 export const checkForIO1Valid = (data: any) => {
     const volIops = Number(data?.manualTCOProvisionedIOPS);
@@ -1863,8 +1848,8 @@ const generateFsxwData = (state: any) => {
         storageCapacity = manualStorageCapacity * TIB_IN_BYTE;
     }
 
-    let result = {
-        deploymentType: deploymentType,
+    const result = {
+        deploymentType,
         storageVolumeType: selectedManualStorageType?.value,
         storageAmount: storageCapacity,
         volumeIops: selectedManualFSXIOPS,
@@ -1940,12 +1925,10 @@ const deploymentTypeSelection = (value: string, savingsCalculatorFrom: string | 
     if (value !== 'Standalone') {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
             return 'FCI';
-        } else {
-            return 'AOAG';
         }
-    } else {
-        return value;
+        return 'AOAG';
     }
+    return value;
 };
 
 export const generateManualStorageSavingsPayload = () => {
@@ -1984,7 +1967,7 @@ export const checkIfByolFieldRequired = (
     if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
         return false;
     }
-    let serverEdition: any = [];
+    const serverEdition: any = [];
     selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
         if (perRow?.databaseServer?.serverEdition && !serverEdition.includes(perRow?.databaseServer?.serverEdition)) {
             serverEdition.push(perRow?.databaseServer?.serverEdition);
@@ -2000,11 +1983,11 @@ export const checkIfByolFieldRequired = (
         sqlEdition.includes('developer')
     ) {
         return false;
-    } else if (licenseIncluded !== undefined && !licenseIncluded) {
-        return true;
-    } else {
-        return isByolField;
     }
+    if (licenseIncluded !== undefined && !licenseIncluded) {
+        return true;
+    }
+    return isByolField;
 };
 
 /**
@@ -2037,9 +2020,11 @@ export const checkIfEbsProtected = (selectedHostDetailsD?: any, perfMssqlInstanc
 
         if (protectedVal) {
             return EBS_PROTECTED_OPTIONS.PROTECTED;
-        } else if (unprotected) {
+        }
+        if (unprotected) {
             return EBS_PROTECTED_OPTIONS.UNPROTECTED;
-        } else if (
+        }
+        if (
             !selectedHostDetails?.loading &&
             perfMssqlInstancesData?.[
                 uniqueHostRow(selectedHostDetails?.id, selectedHostDetails?.credentialId, selectedHostDetails?.regionId)

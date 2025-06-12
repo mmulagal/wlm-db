@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../../utils/appConstants';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import styles from './AvailabilityZone.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setSelectedAzNode1,
@@ -48,7 +48,7 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
     const [backupSubnetNode2, setBackupSubnetNode2] = useState(undefined);
     const [backupRouteTable2, setBackupRouteTable2] = useState(undefined);
 
-    //Refs
+    // Refs
     const az1Ref = useRef(null);
     const az2Ref = useRef(null);
     const sub1Ref = useRef(null);
@@ -91,7 +91,7 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
         setBackupRouteTable2(undefined);
     }, [selectedZone1]);
 
-    //Function to generate the options for Select Field for Zone 1
+    // Function to generate the options for Select Field for Zone 1
     const generateZones1 = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         const azData = selectedVPCData?.data?.availabilityZones;
@@ -112,7 +112,7 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone2]);
 
-    //Function to generate the options for Select Field for Zone 2
+    // Function to generate the options for Select Field for Zone 2
     const generateZones2 = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         const azData = selectedVPCData?.data?.availabilityZones;
@@ -133,9 +133,9 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone1]);
 
-    //Subnet related code
+    // Subnet related code
 
-    //Function to generate the options for Select Field subnet 1
+    // Function to generate the options for Select Field subnet 1
     const generateSubnet1Options = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         let subnetsList: Subnets[] = [];
@@ -146,7 +146,7 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
         subnetsList?.map((val: Subnets, idx: number) => {
             const label2 = val?.id;
             const value = val?.cidrBlock;
-            const label = (val?.name ? val.name + ' | ' : '') + val?.cidrBlock;
+            const label = (val?.name ? `${val.name} | ` : '') + val?.cidrBlock;
             const option = generateOptionType(value, label, label2, false, '', val);
             options.push(option);
         });
@@ -165,33 +165,33 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
         if (isCreateHit) {
             if (!isAZNotFilled && !selectedZone1) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     az1Ref?.current?.focus();
                 }, 100);
             }
             if (!isAZNotFilled && !selectedSubnet1) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     sub1Ref?.current?.focus();
                 }, 90);
             }
             if (!isAZNotFilled && !selectedZone2) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     az2Ref?.current?.focus();
                 }, 80);
             }
 
             if (!isAZNotFilled && !selectedSubnet2) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     sub2Ref?.current?.focus();
                 }, 70);
             }
         }
     }, [isAZNotFilled, selectedZone1, selectedSubnet1, selectedZone2, selectedSubnet2, isCreateHit]);
 
-    //Function to generate the options for Select Field subnet 2
+    // Function to generate the options for Select Field subnet 2
     const generateSubnet2Options = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         let subnetsList: Subnets[] = [];
@@ -202,7 +202,7 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
         subnetsList?.map((val: Subnets, idx: number) => {
             const label2 = val?.id;
             const value = val?.cidrBlock;
-            const label = (val?.name ? val.name + ' | ' : '') + val?.cidrBlock;
+            const label = (val?.name ? `${val.name} | ` : '') + val?.cidrBlock;
             const option = generateOptionType(value, label, label2, false, '', val);
             options.push(option);
         });
@@ -217,7 +217,7 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateSubnet2Options]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (
@@ -225,47 +225,44 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
-        } else if (!selectedVPCData) {
+        }
+        if (!selectedVPCData) {
             return <ActionRequired disabled />;
         }
 
         if (deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
             if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.value || !selectedSubnet2?.value) {
-                return <ActionRequired error={!isAZNotFilled ? true : false} />;
-            } else {
-                return (
-                    <div className={CommonStyles.setHeaderStyle}>
-                        <div className={CommonStyles.regular}>
-                            Node 1:{selectedZone1?.label} ({selectedSubnet1?.value})
-                        </div>
-                        <div className={CommonStyles.separator} />
-                        <div className={CommonStyles.regular}>
-                            Node 2:{selectedZone2?.label} ({selectedSubnet2?.value})
-                        </div>
-                    </div>
-                );
+                return <ActionRequired error={!isAZNotFilled} />;
             }
-        } else {
-            if (!selectedZone1?.label || !selectedSubnet1?.label) {
-                return <ActionRequired error={!isAZNotFilled ? true : false} />;
-            } else {
-                return (
-                    <div className={CommonStyles.setHeaderStyle}>
-                        <div className={CommonStyles.regular}>
-                            Node 1:{selectedZone1?.label} ({selectedSubnet1?.label})
-                        </div>
+            return (
+                <div className={CommonStyles.setHeaderStyle}>
+                    <div className={CommonStyles.regular}>
+                        Node 1:{selectedZone1?.label} ({selectedSubnet1?.value})
                     </div>
-                );
-            }
+                    <div className={CommonStyles.separator} />
+                    <div className={CommonStyles.regular}>
+                        Node 2:{selectedZone2?.label} ({selectedSubnet2?.value})
+                    </div>
+                </div>
+            );
         }
+        if (!selectedZone1?.label || !selectedSubnet1?.label) {
+            return <ActionRequired error={!isAZNotFilled} />;
+        }
+        return (
+            <div className={CommonStyles.setHeaderStyle}>
+                <div className={CommonStyles.regular}>
+                    Node 1:{selectedZone1?.label} ({selectedSubnet1?.label})
+                </div>
+            </div>
+        );
     };
 
     const pqsqlNode1 = () => {
         if (deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
             return 'HA configuration - Node 1:';
-        } else {
-            return GENERAL.CLUSTER_CONFIG_PGSQL;
         }
+        return GENERAL.CLUSTER_CONFIG_PGSQL;
     };
 
     return (
@@ -295,20 +292,20 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                                 ref={az1Ref}
                                 placeholder="Select an availability zone"
                                 isClearable={false}
-                                value={selectedZone1 ? selectedZone1 : undefined}
+                                value={selectedZone1 || undefined}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedAzNode1(selectedOptions));
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 error={!isAZNotFilled && !selectedZone1 ? GENERAL.ACTION_REQUIRED : ''}
-                                //@ts-ignore
+                                // @ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
                                     <WarningIcon
                                         style={{
                                             width: '16px',
                                             height: '16px',
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             '--icon-primary-color': 'var(--error'
                                         }}
                                     />
@@ -324,19 +321,19 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                                 ref={sub1Ref}
                                 isClearable={false}
                                 error={!isAZNotFilled && !selectedSubnet1 ? GENERAL.ACTION_REQUIRED : ''}
-                                //@ts-ignore
+                                // @ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
                                     <WarningIcon
                                         style={{
                                             width: '16px',
                                             height: '16px',
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             '--icon-primary-color': 'var(--error'
                                         }}
                                     />
                                 }
-                                value={selectedSubnet1 ? selectedSubnet1 : undefined}
+                                value={selectedSubnet1 || undefined}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedSubnetNode1(selectedOptions));
                                     setRouteTable1(selectedOptions?.data?.routeTableId);
@@ -364,16 +361,16 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                                     placeholder="Select an availability zone"
                                     ref={az2Ref}
                                     isClearable={false}
-                                    value={selectedZone2 ? selectedZone2 : undefined}
+                                    value={selectedZone2 || undefined}
                                     error={!isAZNotFilled && !selectedZone2 ? GENERAL.ACTION_REQUIRED : ''}
-                                    //@ts-ignore
+                                    // @ts-ignore
                                     isErrorPrefixHidden
                                     customErrorWarningIcon={
                                         <WarningIcon
                                             style={{
                                                 width: '16px',
                                                 height: '16px',
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--error'
                                             }}
                                         />
@@ -392,16 +389,16 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                                     placeholder="Select a subnet"
                                     isClearable={false}
                                     ref={sub2Ref}
-                                    value={selectedSubnet2 ? selectedSubnet2 : undefined}
+                                    value={selectedSubnet2 || undefined}
                                     error={!isAZNotFilled && !selectedSubnet2 ? GENERAL.ACTION_REQUIRED : ''}
-                                    //@ts-ignore
+                                    // @ts-ignore
                                     isErrorPrefixHidden
                                     customErrorWarningIcon={
                                         <WarningIcon
                                             style={{
                                                 width: '16px',
                                                 height: '16px',
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--error'
                                             }}
                                         />

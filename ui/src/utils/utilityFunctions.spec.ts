@@ -1,3 +1,4 @@
+import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import { CREATE_DATABASE_YAML, SQL_DEPLOYMENT_MODE } from './consts';
 import {
@@ -43,7 +44,6 @@ import {
     groupByTime,
     groupByJobSummaryTimeline
 } from './utilityFunctions';
-import numeral from 'numeral';
 
 const databaseHostItem: any = [
     {
@@ -522,7 +522,7 @@ describe('getSelectedFromSelectionState', () => {
             { id: '3', name: 'Row 3' }
         ];
 
-        //@ts-ignore
+        // @ts-ignore
         const selectedRows = getSelectedFromSelectionState(selectionState, data);
 
         expect(selectedRows).toEqual([
@@ -537,7 +537,7 @@ describe('getSelectedFromSelectionState', () => {
             { id: '1', name: 'Row 1' },
             { id: '2', name: 'Row 2' }
         ];
-        //@ts-ignore
+        // @ts-ignore
         const selectedRows = getSelectedFromSelectionState(selectionState, data);
 
         expect(selectedRows).toEqual([]);
@@ -555,7 +555,7 @@ describe('getSelectedFromSelectionState', () => {
             { id: '1', name: 'Row 1' },
             { id: '2', name: 'Row 2' }
         ];
-        //@ts-ignore
+        // @ts-ignore
         const selectedRows = getSelectedFromSelectionState(selectionState, data);
 
         expect(selectedRows).toEqual([]);
@@ -573,7 +573,7 @@ describe('getSelectedFromSelectionState', () => {
             { id: '2', name: 'Row 2' },
             { id: '3', name: 'Row 3' }
         ];
-        //@ts-ignore
+        // @ts-ignore
         const selectedRows = getSelectedFromSelectionState(selectionState, data);
 
         expect(selectedRows).toEqual([]);
@@ -882,7 +882,7 @@ describe('getAggrStorageSavings', () => {
 describe('wrapContext', () => {
     it('Return wrap context string', () => {
         const result = wrapContext('Deploy SQL');
-        expect(result).toEqual(`\n\nHuman: Deploy SQL \n\nAssistant:`);
+        expect(result).toEqual('\n\nHuman: Deploy SQL \n\nAssistant:');
     });
 });
 
@@ -1213,7 +1213,7 @@ describe('createJobMonitorCSV', () => {
 describe('cfDownloadName', () => {
     it('Return CF download name', () => {
         const result = cfDownloadName('dev');
-        expect(result).toContain(CREATE_DATABASE_YAML + '_dev');
+        expect(result).toContain(`${CREATE_DATABASE_YAML}_dev`);
     });
 });
 

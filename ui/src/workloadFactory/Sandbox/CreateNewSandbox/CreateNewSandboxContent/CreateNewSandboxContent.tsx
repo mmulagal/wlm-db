@@ -6,23 +6,21 @@ import Mount from './Mount/Mount';
 import DefineTag from './DefineTag/DefineTag';
 import { GENERAL } from '../../../../utils/appConstants';
 
-const CreateNewSandboxContent = () => {
-    return (
-        <div className={styles.createNewSandboxContent}>
-            <DsTypography variant="Semibold_16" className={styles.heading}>
-                {GENERAL.CREATE_NEW_SANDBOX}
-            </DsTypography>
+const CreateNewSandboxContent = () => (
+    <div className={styles.createNewSandboxContent}>
+        <DsTypography variant="Semibold_16" className={styles.heading}>
+            {GENERAL.CREATE_NEW_SANDBOX}
+        </DsTypography>
 
-            <div className={styles.accordionContainer}>
-                <AccordionController isGrouped>
-                    <SelectSource />
-                    <SelectTarget />
-                    <Mount />
-                    <DefineTag />
-                </AccordionController>
-            </div>
+        <div className={styles.accordionContainer}>
+            <AccordionController isGrouped>
+                <SelectSource />
+                <SelectTarget />
+                <Mount />
+                <DefineTag />
+            </AccordionController>
         </div>
-    );
-};
+    </div>
+);
 
 export default CreateNewSandboxContent;

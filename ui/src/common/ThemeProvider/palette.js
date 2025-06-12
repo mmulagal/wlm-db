@@ -1,6 +1,6 @@
 const hexToRgb = hex =>
     hex
-        .replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => '#' + r + r + g + g + b + b)
+        .replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => `#${r}${r}${g}${g}${b}${b}`)
         .substring(1)
         .match(/.{2}/g)
         .map(x => parseInt(x, 16));
@@ -71,7 +71,7 @@ const palette = {
 const enhance = palette => {
     const out = { ...palette };
     for (const key in palette) {
-        out[key + '_RGB'] = hexToRgb(palette[key]).join(' ');
+        out[`${key}_RGB`] = hexToRgb(palette[key]).join(' ');
     }
 
     return out;

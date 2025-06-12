@@ -1,9 +1,9 @@
 import { RadioButton, Spinner } from '@netapp/design-system';
 import { useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './LoadConfig.module.scss';
 import { useDeleteConfigMutation, useGetConfigListQuery } from '../../../utils/apiService';
-import { useDispatch } from 'react-redux';
 import { setLoadConfig } from '../../../store/mssql/mssqlFormSlice';
 import { ReactComponent as DeleteIcon } from '../../../assets/delete-icon.svg';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -24,9 +24,10 @@ const LoadConfig = ({ formType = WIZARD_TYPE.MSSQL }: any) => {
 
     const [selectedConfig, setSelectedConfig] = useState('');
 
-    const filteredConfigdata = useMemo(() => {
-        return configData?.filter((item: any) => item?.databaseType === formType);
-    }, [configData]);
+    const filteredConfigdata = useMemo(
+        () => configData?.filter((item: any) => item?.databaseType === formType),
+        [configData]
+    );
 
     useEffect(() => {
         if (filteredConfigdata && filteredConfigdata.length > 0) {
@@ -60,13 +61,11 @@ const LoadConfig = ({ formType = WIZARD_TYPE.MSSQL }: any) => {
     };
 
     const configRows = (item: any) => {
-        const value = item?.name + '_' + item?.user + '_' + formatDateWithTime(item?.creationTime || '');
+        const value = `${item?.name}_${item?.user}_${formatDateWithTime(item?.creationTime || '')}`;
         return (
-            <>
-                <div className={styles.setRowWithSeperator} title={value}>
-                    {value}
-                </div>
-            </>
+            <div className={styles.setRowWithSeperator} title={value}>
+                {value}
+            </div>
         );
     };
 

@@ -69,7 +69,6 @@ export const LoadConfiguration = (
                 closeDialog();
             }
         });
-    return;
 };
 
 /*
@@ -129,7 +128,7 @@ Get APIs calls are required on change fields as to show latest data in accordion
 */
 export const apiCallsList = (dispatch: Dispatch, loadData: any, databaseType: string) => {
     const state = store.getState();
-    let apis = [];
+    const apis = [];
     const credId = loadData?.awsAccount?.selectedCredential?.data?.credentialsId;
     const regionId = loadData?.regionAndVpc?.selectedRegion?.data?.regionCode;
     const vpcId = loadData?.regionAndVpc?.selectedVPC?.label2;
@@ -196,7 +195,7 @@ export const SaveConfiguration = (
     databaseType: string = WIZARD_TYPE.MSSQL
 ) => {
     const state = store.getState();
-    const saveConfigName = state.mssqlForm.saveConfigName;
+    const { saveConfigName } = state.mssqlForm;
     const existingSavedConfig = state.msSqlAction.savedConfig;
     const formData =
         databaseType === WIZARD_TYPE.MSSQL ? state.mssqlForm : { ...state.mssqlForm, ...state.postgreForm };
@@ -216,7 +215,7 @@ export const SaveConfiguration = (
         closeSaveDialog(dialogFrom, closeDialog);
     } else {
         dispatch(setIsSaveConfigLoading(true));
-        saveConfigData({ payload: payload })
+        saveConfigData({ payload })
             .then((data: any) => {
                 if (!data?.error) {
                     dispatch(setSavedConfig(state.mssqlForm));
@@ -315,9 +314,8 @@ export const duplicateSaveCheck = (newConfig: any, oldConfig: any) => {
             oldConfigEncryption.length > 0
         ) {
             return newConfigEncryption[0]?.id === oldConfigEncryption[0]?.id;
-        } else {
-            return true;
         }
+        return true;
     })();
     const encryptionArn = newConfig?.encryption?.encryptionArn === oldConfig?.encryption?.encryptionArn;
     const tags = newConfig?.tags === oldConfig?.tags;

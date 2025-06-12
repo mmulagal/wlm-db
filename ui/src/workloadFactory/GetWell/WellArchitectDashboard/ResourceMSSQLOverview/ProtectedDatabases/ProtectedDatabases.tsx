@@ -1,16 +1,14 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useMemo } from 'react';
 import styles from './ProtectedDatabases.module.scss';
 import ProgressBar from '../../../../../common/ProgressBar/ProgressBar';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useMemo } from 'react';
 import { getAggrProtection } from '../../../../../utils/utilityFunctions';
 
 const ProtectedDatabases = () => {
     const { databaseList, databaseListLoading } = useAppSelector(state => state.workloadFactoryResource);
 
-    const protectionData = useMemo(() => {
-        return getAggrProtection(databaseList);
-    }, [databaseList]);
+    const protectionData = useMemo(() => getAggrProtection(databaseList), [databaseList]);
     return (
         <div className={styles.protectedDatabases}>
             <div className={styles.headSection}>
@@ -39,7 +37,7 @@ const ProtectedDatabases = () => {
                     </div>
 
                     <div className={styles.barSection}>
-                        <ProgressBar color={'var(--chart-4)'} value={protectionData?.protectedPercent} />
+                        <ProgressBar color="var(--chart-4)" value={protectionData?.protectedPercent} />
                     </div>
                 </div>
 
@@ -57,7 +55,7 @@ const ProtectedDatabases = () => {
                     </div>
 
                     <div className={styles.barSection}>
-                        <ProgressBar color={'var(--chart-4)'} value={protectionData?.crrEnabledPercent || 0} />
+                        <ProgressBar color="var(--chart-4)" value={protectionData?.crrEnabledPercent || 0} />
                     </div>
                 </div>
             </div>

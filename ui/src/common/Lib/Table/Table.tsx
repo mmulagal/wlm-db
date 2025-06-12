@@ -15,13 +15,13 @@ import { ReactComponent as ArrowUpIcon } from '@netapp/icons/ic_arrow_up.svg';
 import { ReactComponent as FileIcon } from '@netapp/icons/ic_file.svg';
 import { ReactComponent as SearchIcon } from '@netapp/icons/ic_search.svg';
 import get from 'lodash/get';
+import classNames from 'classnames';
+import { css } from '@emotion/css';
+import _isString from 'lodash/isString';
+import { Button, DsTypography, TooltipInfo } from '@netapp/design-system';
 import styles from './Table.module.scss';
 import { FilterButton } from './FilterPanel';
 import { PaginationPanel } from './PaginationPanel';
-
-import classNames from 'classnames';
-
-import { css } from '@emotion/css';
 
 import {
     ColumnFilterStateType,
@@ -32,10 +32,8 @@ import {
     SortOrderType,
     SortStateType
 } from './useTable';
-import _isString from 'lodash/isString';
 
 import { useResizeColumn } from './useResizeColumns';
-import { Button, DsTypography, TooltipInfo } from '@netapp/design-system';
 import useHover from '../../hooks/useHover';
 import { HashTable } from '../../../utils/utilityFunctions';
 
@@ -55,13 +53,12 @@ const renderCellValue = ({ column, data, updateRowState, rowsState, isRowHovered
             rowsState,
             isRowHovered
         });
-    } else {
-        return (
-            <DsTypography color="unset" variant="Regular_14" isEllipsis title={_isString(value) ? value : ''}>
-                {value}
-            </DsTypography>
-        );
     }
+    return (
+        <DsTypography color="unset" variant="Regular_14" isEllipsis title={_isString(value) ? value : ''}>
+            {value}
+        </DsTypography>
+    );
 };
 
 interface RowsProps {
@@ -96,7 +93,7 @@ const Row = ({
         <>
             <div
                 key={data.id}
-                className={classNames(styles['row'], {
+                className={classNames(styles.row, {
                     [styles['disabled-row']]: isDisabled,
                     [styles['highlighted-row']]: currentRowState?.isExpanded || isSelected
                 })}
@@ -113,15 +110,15 @@ const Row = ({
                     const { className: columnClassName = '' } = column;
                     return (
                         <span
-                            className={classNames(styles['cell'], className, columnClassName, styles[`col-${index}`], {
+                            className={classNames(styles.cell, className, columnClassName, styles[`col-${index}`], {
                                 [styles['last-col']]: index === columns.length - 1,
-                                [styles['sticky']]: column?.isSticky,
+                                [styles.sticky]: column?.isSticky,
                                 [styles['high-row']]: isDoubleRow
                             })}
                             key={column.id}
                             {...cellProps}
                         >
-                            {isLoading ? <div className={styles['skeleton']} /> : cellValue}
+                            {isLoading ? <div className={styles.skeleton} /> : cellValue}
                         </span>
                     );
                 })}
@@ -175,17 +172,17 @@ const HeaderCell = ({
         <div
             className={classNames(styles['header-cell'], styles[`col-${index}`], className, {
                 [styles['last-col']]: isLast,
-                [styles['sticky']]: isSticky
+                [styles.sticky]: isSticky
             })}
             key={id}
             ref={columnRef}
         >
             {info && (
-                <TooltipInfo isAppendedToBody={true} className={styles['table-header-tooltip']} {...infoProps}>
+                <TooltipInfo isAppendedToBody className={styles['table-header-tooltip']} {...infoProps}>
                     {info}
                 </TooltipInfo>
             )}
-            <DsTypography variant={'Semibold_14'} isEllipsis={true} className={styles['header-name']}>
+            <DsTypography variant="Semibold_14" isEllipsis className={styles['header-name']}>
                 <span>{typeof Header === 'function' ? <Header /> : Header}</span>
                 <span>{filterState?.activeCount ? ` (${filterState.activeCount})` : ''}</span>
             </DsTypography>
@@ -305,17 +302,19 @@ const useHorizontalScroll = (columns: ColumnProps[], pagesCount: number) => {
         return () => scrollbar?.removeEventListener('scroll', syncTableScroll);
     }, []);
 
-    const scrollWidthClass = useMemo(() => {
-        return css`
+    const scrollWidthClass = useMemo(
+        () => css`
             width: ${scrollWidth}px;
-        `;
-    }, [scrollWidth]);
+        `,
+        [scrollWidth]
+    );
 
-    const scrollBottomClass = useMemo(() => {
-        return css`
+    const scrollBottomClass = useMemo(
+        () => css`
             --horizontal-scroll-bottom: ${pagesCount > 1 ? '40px' : 0};
-        `;
-    }, [pagesCount]);
+        `,
+        [pagesCount]
+    );
 
     return {
         tableBodyRef,
@@ -549,14 +548,14 @@ export const Table = React.forwardRef(
             <div className={classNames(styles['table-wrapper'], styles[variant])}>
                 <div
                     className={classNames(
-                        styles['table'],
+                        styles.table,
                         gridTemplateColumnsClass,
                         { [styles['fixed-cell-width']]: isHorizontalScroll },
                         className
                     )}
                 >
                     <div
-                        key={'header-row'}
+                        key="header-row"
                         className={classNames(styles['header-row'], gridTemplateColumnsClass)}
                         ref={tableHeaderRef}
                     >
@@ -575,7 +574,7 @@ export const Table = React.forwardRef(
                         ))}
                     </div>
 
-                    <div className={classNames(styles['body'], gridTemplateColumnsClass)} ref={tableBodyCallbackRef}>
+                    <div className={classNames(styles.body, gridTemplateColumnsClass)} ref={tableBodyCallbackRef}>
                         {pagination?.pageRows?.map((dataRow: rowDataType) => (
                             <Row
                                 key={dataRow.id}
@@ -595,7 +594,7 @@ export const Table = React.forwardRef(
                 {organizedRows.length === 0 && rows.length !== 0 && (
                     <div className={styles['empty-table']}>
                         <SearchIcon />
-                        <DsTypography variant={'Semibold_14'} color={'var(--text-secondary)'}>
+                        <DsTypography variant="Semibold_14" color="var(--text-secondary)">
                             No results
                         </DsTypography>
                     </div>
@@ -605,14 +604,14 @@ export const Table = React.forwardRef(
                     (isLazyLoading ? (
                         <div className={classNames(styles['empty-table'], styles['smaller-table'])}>
                             <SearchIcon />
-                            <DsTypography variant={'Semibold_14'} color={'var(--text-secondary)'}>
+                            <DsTypography variant="Semibold_14" color="var(--text-secondary)">
                                 {lazyLoadingText}
                             </DsTypography>
                         </div>
                     ) : (
                         <div className={styles['empty-table']}>
                             <FileIcon />
-                            <DsTypography variant={'Semibold_14'} color={'var(--text-secondary)'}>
+                            <DsTypography variant="Semibold_14" color="var(--text-secondary)">
                                 No data
                             </DsTypography>
                         </div>
@@ -629,7 +628,7 @@ export const Table = React.forwardRef(
                             }
                         }}
                     >
-                        <div className={classNames(styles['scroll'], scrollWidthClass)} />
+                        <div className={classNames(styles.scroll, scrollWidthClass)} />
                     </div>
                 )}
                 {pagination?.pageCount > 1 && (
@@ -648,17 +647,10 @@ const SortButton = ({
     handleSort?: MouseEventHandler<HTMLButtonElement>;
     columnSortState: SortOrderType;
     isDisabled: boolean;
-}) => {
-    return (
-        <Button
-            variant={'icon'}
-            isDisabled={isDisabled}
-            className={classNames(styles['sort-button'])}
-            onClick={handleSort}
-        >
-            {columnSortState === null && <SortIcon />}
-            {columnSortState === 'asc' && <ArrowUpIcon />}
-            {columnSortState === 'desc' && <ArrowDownIcon />}
-        </Button>
-    );
-};
+}) => (
+    <Button variant="icon" isDisabled={isDisabled} className={classNames(styles['sort-button'])} onClick={handleSort}>
+        {columnSortState === null && <SortIcon />}
+        {columnSortState === 'asc' && <ArrowUpIcon />}
+        {columnSortState === 'desc' && <ArrowDownIcon />}
+    </Button>
+);
