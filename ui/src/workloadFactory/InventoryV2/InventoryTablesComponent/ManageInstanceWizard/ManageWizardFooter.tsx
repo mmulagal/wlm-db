@@ -46,8 +46,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const { nextButtonProps, style } = props; // onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
 
-    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, setState }: UseWizardReturn =
-        useWizard();
+    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, setState }: UseWizardReturn = useWizard();
 
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);

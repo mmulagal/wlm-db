@@ -539,8 +539,8 @@ export const handleMultiInstanceManage = (
 // Checks if the manage readiness data has missing PowerShell 7 modules
 export const hasMissingPowershell7 = (manageReadinessData: any) => {
     if (!manageReadinessData) return false;
-    return Object.keys(manageReadinessData).some(
-        key => (manageReadinessData[key]?.missingModules || []).includes(MANAGE_STATES.POWERSHELL7)
+    return Object.keys(manageReadinessData).some(key =>
+        (manageReadinessData[key]?.missingModules || []).includes(MANAGE_STATES.POWERSHELL7)
     );
 };
 
@@ -750,12 +750,12 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
             });
         } else {
             instanceMap[ec2InstanceId] = {
-                    credentials,
-                    checkManageReadiness,
-                    credentialsId: instance?.data?.credentialId,
-                    region: instance?.data?.regionId,
-                    ec2InstanceId
-                };
+                credentials,
+                checkManageReadiness,
+                credentialsId: instance?.data?.credentialId,
+                region: instance?.data?.regionId,
+                ec2InstanceId
+            };
             // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
             if (instance?.data?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
                 const addresses = instance?.data?.windowsClusterNodes?.map(
@@ -787,7 +787,10 @@ export const updateDetectBulkResponse = (
         const isFsxRegisterRequired = instance?.data?.fsxId && !instance?.data?.isFsxRegistered;
 
         const res = result.data.find(
-            (r: any) => r.credentialsId === instance?.data?.credentialId && r.region === instance?.data?.regionId && r.ec2InstanceId === instance?.data?.ec2InstanceId
+            (r: any) =>
+                r.credentialsId === instance?.data?.credentialId &&
+                r.region === instance?.data?.regionId &&
+                r.ec2InstanceId === instance?.data?.ec2InstanceId
         );
 
         if (!res) return instance;

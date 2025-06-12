@@ -62,10 +62,8 @@ export const Content = () => {
             return null; // Return null if data is not an array
         }
         const instance = data.find(
-            (inst) =>
-                inst.ec2InstanceId === ec2InstanceId &&
-                inst.credentialId === credentialId &&
-                inst.regionId === regionId
+            inst =>
+                inst.ec2InstanceId === ec2InstanceId && inst.credentialId === credentialId && inst.regionId === regionId
         );
         if (instance) {
             const sqlInstance = instance.sqlServerInstances.find(
@@ -92,7 +90,13 @@ export const Content = () => {
         // Get primary readiness data
         const primaryReadiness =
             manageReadiness ||
-            getManageReadinessData(discoveredHostDataL, ec2InstanceId || '', credentialId || '', regionId || '', databaseInstanceName || '');
+            getManageReadinessData(
+                discoveredHostDataL,
+                ec2InstanceId || '',
+                credentialId || '',
+                regionId || '',
+                databaseInstanceName || ''
+            );
 
         // Get partner readiness data (if partner exists)
         let partnerReadiness = null;
@@ -140,10 +144,7 @@ export const Content = () => {
         ) {
             manageReadinessData = manageSingleInstanceReadiness;
         } else {
-            manageReadinessData = getMergedReadinessData(
-                manageSingleInstanceData,
-                discoveredHostData
-            );
+            manageReadinessData = getMergedReadinessData(manageSingleInstanceData, discoveredHostData);
         }
         if (manageReadinessData) {
             const missingModulesList = missingModules(manageReadinessData);
@@ -165,7 +166,7 @@ export const Content = () => {
             return manageCheckObj;
         }
         return manageCheckObj;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [manageSingleInstanceData, manageSingleInstanceReadiness]);
 
     // Manage checks for multiple instances
@@ -213,10 +214,7 @@ export const Content = () => {
         ) {
             manageReadinessData = instance?.manageReadiness;
         } else {
-            manageReadinessData = getMergedReadinessData(
-                instance?.data,
-                discoveredHostData
-            );
+            manageReadinessData = getMergedReadinessData(instance?.data, discoveredHostData);
         }
         if (manageReadinessData) {
             const missingModulesList = missingModules(manageReadinessData);
@@ -325,7 +323,7 @@ export const Content = () => {
             installMissingPowershell: installMissingPowershellAll
         });
         dispatch(setBulkDetectedInstanceList(newTableData));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedMultiDetectInstances]);
 
     return (
