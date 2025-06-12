@@ -20,19 +20,17 @@ const cacheMiddlewareConfig = {
 };
 
 function cacheMiddleware(ttl: number, credentialsId = '') {
-    logger.info(`Cache middleware initialized with TTL: ${ttl}ms and credentialsId: ${credentialsId}`);
+    logger.debug(`Cache middleware initialized with TTL: ${ttl}ms and credentialsId: ${credentialsId}`);
     return (next: any, context: any) => async (args: DeserializeHandlerArguments<any>) => {
         const { commandName } = context || {};
         const { input } = args || {};
         const redisClient = getRedisConnection();
 
         const cacheKey = generateHash(stringify({ input, commandName, credentialsId }));
-        logger.info(`Is redis connected? ${isRedisConnected(redisClient)}`);
         if (cacheKey && isRedisConnected(redisClient)) {
             const cachedResponse = await redisClient.get(cacheKey);
             if (cachedResponse) {
-                logger.info(`Redis cache hit for ${commandName} with key: ${cacheKey}`);
-                logger.info(`Cached response: ${cachedResponse}`);
+                logger.debug(`Redis cache hit for ${commandName} with key: ${cacheKey}`);
                 return parse(cachedResponse);
             }
         }
