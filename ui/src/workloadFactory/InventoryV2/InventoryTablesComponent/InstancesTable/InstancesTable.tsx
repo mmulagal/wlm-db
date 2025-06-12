@@ -715,7 +715,7 @@ const InstancesTable = () => {
                         (!cellData && !rowData?.optimizationStatusLoading) ||
                         cellData === INVENTORY_STATUS.IN_PROGRESS
                     ) {
-                        disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
+                        disableMsg = t('databases.well-architect.assessment-in-progress');
                         return true;
                     }
                     return false;
@@ -729,9 +729,8 @@ const InstancesTable = () => {
                                     popoverClass=""
                                     children={<DsTypography variant="Regular_14">{disableMsg}</DsTypography>}
                                     trigger="hover"
-                                    delayHide={200}
-                                    interactive
-                                    isAppendedToBody={false}
+                                    isAppendedToBody
+                                    placement="auto"
                                     container={<TooltipIcon />}
                                 />
                                 <DsTypography variant="Regular_14">Not analyzed</DsTypography>

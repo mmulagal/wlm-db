@@ -618,6 +618,8 @@ export const MAX_IOPS_VALUE = 160000;
 
 export const MANAGE_POLLING_INTERVAL = 5000;
 
+export const DETECT_PAYLOAD_SIZE = 10;
+
 export const INVENTORY_STATUS = {
     MANAGED: 'Managed',
     UNMANAGED: 'Unmanaged',
@@ -923,6 +925,7 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
 
 export const MANAGE_STATES = {
     READY: 'Ready',
+    NOT_READY: 'Not ready',
     MISSING_POWERSHELL: 'Missing PowerShell modules',
     MISSING_PREREQUISITES: 'Missing prerequisites',
     POWERSHELL7: 'Powershell 7'
