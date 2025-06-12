@@ -979,14 +979,14 @@ const InstancesTable = () => {
                     }
                     menu.push(
                         {
-                            id: 'optimize',
-                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
+                            id: 'viewInstance',
+                            displayName: 'Manage instance',
                             disabled: disableOption,
                             infoText: disableMessage
                         },
                         {
-                            id: 'viewInstance',
-                            displayName: 'Manage instance',
+                            id: 'optimize',
+                            displayName: GENERAL.WELL_ARCHITECTED_STATUS,
                             disabled: disableOption,
                             infoText: disableMessage
                         },
