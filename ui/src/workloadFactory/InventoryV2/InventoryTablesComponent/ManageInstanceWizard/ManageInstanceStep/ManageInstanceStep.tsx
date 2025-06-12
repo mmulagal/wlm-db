@@ -1,4 +1,4 @@
-import { DsTypography, useWizard } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -34,7 +34,6 @@ import {
 export const Content = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { state, setState } = useWizard();
     const [manageMultiChecks, setManageMultiChecks] = useState<Partial<ManageStates>>({});
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
     const { manageSingleInstanceData, manageSingleInstanceReadiness, selectedMultiDetectInstances } = useAppSelector(
@@ -49,7 +48,7 @@ export const Content = () => {
         return false;
     }, [manageSingleInstanceData]);
 
-    const { data: policiesList, isFetching: policiesLoading, isError: policiesError } = useGetWlmdbPoliciesQuery({});
+    const { data: policiesList } = useGetWlmdbPoliciesQuery({});
 
     const getManageReadinessData = (
         data: BulkDetectedInstance[],
@@ -62,17 +61,18 @@ export const Content = () => {
         if (!Array.isArray(data)) {
             return null; // Return null if data is not an array
         }
-        for (const instance of data) {
-            if (
-                instance.ec2InstanceId === ec2InstanceId &&
-                instance.credentialId === credentialId &&
-                instance.regionId === regionId
-            ) {
-                for (const sqlInstance of instance.sqlServerInstances) {
-                    if (sqlInstance.sqlServerInstance === sqlServerName) {
-                        return sqlInstance.manageReadiness;
-                    }
-                }
+        const instance = data.find(
+            (inst) =>
+                inst.ec2InstanceId === ec2InstanceId &&
+                inst.credentialId === credentialId &&
+                inst.regionId === regionId
+        );
+        if (instance) {
+            const sqlInstance = instance.sqlServerInstances.find(
+                (sqlInst: any) => sqlInst.sqlServerInstance === sqlServerName
+            );
+            if (sqlInstance) {
+                return sqlInstance.manageReadiness;
             }
         }
         return null; // Return null if no match is found
@@ -81,9 +81,7 @@ export const Content = () => {
     // Function to merge readiness data for any single instance
     const getMergedReadinessData = (
         instanceData: BulkDetectedInstance['data'],
-        discoveredHostData: BulkDetectedInstance[],
-        getManageReadinessData: Function,
-        mergeReadinessData: Function
+        discoveredHostDataL: BulkDetectedInstance[]
     ) => {
         const { ec2InstanceId, credentialId, regionId, databaseInstanceName, hostRow, manageReadiness } =
             instanceData || {};
@@ -94,17 +92,17 @@ export const Content = () => {
         // Get primary readiness data
         const primaryReadiness =
             manageReadiness ||
-            getManageReadinessData(discoveredHostData, ec2InstanceId, credentialId, regionId, databaseInstanceName);
+            getManageReadinessData(discoveredHostDataL, ec2InstanceId || '', credentialId || '', regionId || '', databaseInstanceName || '');
 
         // Get partner readiness data (if partner exists)
         let partnerReadiness = null;
         if (partnerInstance?.id) {
             partnerReadiness = getManageReadinessData(
-                discoveredHostData,
+                discoveredHostDataL,
                 partnerInstance.id,
-                credentialId,
-                regionId,
-                databaseInstanceName
+                credentialId || '',
+                regionId || '',
+                databaseInstanceName || ''
             );
         }
 
@@ -144,9 +142,7 @@ export const Content = () => {
         } else {
             manageReadinessData = getMergedReadinessData(
                 manageSingleInstanceData,
-                discoveredHostData,
-                getManageReadinessData,
-                mergeReadinessData
+                discoveredHostData
             );
         }
         if (manageReadinessData) {
@@ -169,6 +165,7 @@ export const Content = () => {
             return manageCheckObj;
         }
         return manageCheckObj;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [manageSingleInstanceData, manageSingleInstanceReadiness]);
 
     // Manage checks for multiple instances
@@ -218,9 +215,7 @@ export const Content = () => {
         } else {
             manageReadinessData = getMergedReadinessData(
                 instance?.data,
-                discoveredHostData,
-                getManageReadinessData,
-                mergeReadinessData
+                discoveredHostData
             );
         }
         if (manageReadinessData) {
@@ -330,6 +325,7 @@ export const Content = () => {
             installMissingPowershell: installMissingPowershellAll
         });
         dispatch(setBulkDetectedInstanceList(newTableData));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedMultiDetectInstances]);
 
     return (

@@ -112,7 +112,7 @@ export interface ExtendedManageStates extends ManageStates {
 }
 
 export type RegisterResourceCredResult = {
-    data?: { sqlServerError?: string; fsxnError?: string; manageReadiness?: any };
+    data?: { sqlServerError?: string; fsxnError?: string; manageReadiness?: ManageReadinessData };
     error?: any;
 };
 

@@ -715,7 +715,7 @@ const InstancesTable = () => {
                         (!cellData && !rowData?.optimizationStatusLoading) ||
                         cellData === INVENTORY_STATUS.IN_PROGRESS
                     ) {
-                        disableMsg = t('databases.well-architected.assessment-in-progress');
+                        disableMsg = t('databases.well-architect.assessment-in-progress');
                         return true;
                     }
                     return false;

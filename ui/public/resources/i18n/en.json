@@ -95,7 +95,7 @@
             "view-details": "View details",
             "manage-detect-info-message": "The authentication process is in progress and may take up to 1 minute to complete."
         },
-        "well-architected": {
+        "well-architect": {
             "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis."
         }
     }

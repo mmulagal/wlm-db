@@ -30,7 +30,6 @@ import {
 import { ACTION_TYPE, DETECT_PAYLOAD_SIZE } from '../../../../utils/consts';
 import {
     BulkDetectedInstance,
-    RegisterResourceCredBulkResultItem,
     RegisterResourceCredResult,
     UseWizardReturn
 } from '../../../../utils/types/registerTypes';
@@ -44,10 +43,10 @@ type PlanningWizardFooterProps = {
 const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { nextButtonProps, validation, style } = props; // onClick must be taken out otherwise will override footer onClick when spread to button
+    const { nextButtonProps, style } = props; // onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
 
-    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: UseWizardReturn =
+    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, setState }: UseWizardReturn =
         useWizard();
 
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
@@ -170,7 +169,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     );
                 } else {
                     // store fsx cred in register obj if payload has fsx register
-                    const isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
+                    saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
                     const updatedInventoryTableData = updateInstanceStatus(
                         'detect',
                         manageSingleInstanceData,
@@ -186,7 +185,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message || t('databases.register-flow.manage-detect-fail-message')
+                        message: t('databases.register-flow.manage-detect-fail-message')
                     })
                 );
             }
@@ -212,8 +211,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
     };
 
-    const bulkGoForward = (currentStepIndex: number) => {
-        if (currentStepIndex === 0) {
+    const bulkGoForward = (currentStepIndexVal: number) => {
+        if (currentStepIndexVal === 0) {
             if (selectedMultiDetectInstances.length > 0) {
                 goToNextStep();
             } else {
@@ -224,7 +223,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     })
                 );
             }
-        } else if (currentStepIndex === 1) {
+        } else if (currentStepIndexVal === 1) {
             const isAuth = selectedMultiDetectInstances.every((instance: any) => instance?.authorized);
             if (isAuth) {
                 goToNextStep();
