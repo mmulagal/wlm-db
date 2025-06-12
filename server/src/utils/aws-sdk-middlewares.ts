@@ -3,17 +3,13 @@ import Redis from 'ioredis';
 import config from 'config';
 import ms, { StringValue } from 'ms';
 import { parse, stringify } from 'flatted';
-import { generateHash, getRedisDetails } from './utils';
+import { generateHash, getRedisConnection } from './utils';
 import { AWSSDKCacheParams } from './common-types';
 import getLogger from './logger';
 
 const logger = getLogger();
 
-const redisClient = new Redis(getRedisDetails().url, {
-    maxRetriesPerRequest: 2
-});
-
-function isRedisConnected() {
+function isRedisConnected(redisClient: Redis) {
     return redisClient.status === 'ready';
 }
 
@@ -28,10 +24,11 @@ function cacheMiddleware(ttl: number, credentialsId = '') {
     return (next: any, context: any) => async (args: DeserializeHandlerArguments<any>) => {
         const { commandName } = context || {};
         const { input } = args || {};
+        const redisClient = getRedisConnection();
 
         const cacheKey = generateHash(stringify({ input, commandName, credentialsId }));
-        logger.info(`Is redis connected? ${isRedisConnected()}`);
-        if (cacheKey && isRedisConnected()) {
+        logger.info(`Is redis connected? ${isRedisConnected(redisClient)}`);
+        if (cacheKey && isRedisConnected(redisClient)) {
             const cachedResponse = await redisClient.get(cacheKey);
             if (cachedResponse) {
                 logger.info(`Redis cache hit for ${commandName} with key: ${cacheKey}`);
@@ -45,7 +42,7 @@ function cacheMiddleware(ttl: number, credentialsId = '') {
         const { output: { $metadata: sdkMetadata, ...rest } = {} } = response || {};
 
         // Cache the response
-        if (sdkMetadata && rest && isRedisConnected()) {
+        if (sdkMetadata && rest && isRedisConnected(redisClient)) {
             try {
                 await redisClient.set(cacheKey, stringify(response), 'EX', ttl);
             } catch (error) {

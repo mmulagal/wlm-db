@@ -13,6 +13,7 @@ import { inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
 import randomize from 'randomatic';
 import { StringValue } from 'ms';
+import IORedis from 'ioredis';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { RegionDetailsType } from '../routes/types/generic.types';
 
@@ -838,6 +839,38 @@ function getRedisDetails() {
     return { url };
 }
 
+let redisConnection: IORedis | null = null;
+
+function getRedisConnection() {
+    if (redisConnection) {
+        logger.debug('Reusing existing Redis connection');
+        return redisConnection;
+    }
+
+    const redisDetails = getRedisDetails();
+
+    redisConnection = new IORedis(redisDetails.url, {
+        maxRetriesPerRequest: null,
+        retryStrategy: times => {
+            if (times > 2) {
+                logger.error('Max retries reached for Redis connection');
+                return null;
+            } // return null to stop retrying
+            return Math.min(times * 100, 2000); // Exponential backoff with a max delay of 2 seconds
+        }
+    });
+
+    redisConnection.on('error', error => {
+        logger.error('Redis connection error:', error);
+    });
+
+    redisConnection.on('ready', () => {
+        logger.info('Connected to Redis server and status is ready');
+    });
+
+    return redisConnection;
+}
+
 function getTimeDifferenceInMinutes(startTime: number, endTime: number = Date.now()) {
     // Calculate the time difference in minutes
     logger.debug('Calculate time difference in minutes', { startTime, endTime });
@@ -1131,5 +1164,6 @@ export {
     extractSqlInstanceName,
     escapeBackslash,
     getEc2Hostname,
-    getInstancesWithResourceForDemo
+    getInstancesWithResourceForDemo,
+    getRedisConnection
 };

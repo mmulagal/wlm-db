@@ -22,7 +22,7 @@ import {
     manageInstanceRecommendationPreReqs,
     manageInstanceRecommendationPreReqsForManagedInstances
 } from './aws/compute-optimizer-operations';
-import { getEc2Arn, getRedisDetails } from '../utils/utils';
+import { getEc2Arn, getRedisConnection } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import {
     checkComputeOptimizerEnrollmentStatus,
@@ -31,7 +31,7 @@ import {
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { triggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { DriftAssessmentJob, Metadata } from '../utils/common-types';
-import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy, REDIS_URL } from '../utils/continous-optimization-consts';
+import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import { purgeOlderAssessmentRecords } from './database/instance-config-operations';
 import { listAllManagedInstances } from './database/database-operations';
 
@@ -262,24 +262,9 @@ async function logQueueMetrics(queue: Queue) {
 }
 
 function scheduledAssessment() {
-    const redisDetails = getRedisDetails();
     let redisConnection: IORedis;
     try {
-        redisConnection = new IORedis(redisDetails.url, {
-            maxRetriesPerRequest: null,
-            retryStrategy(times) {
-                if (times > 2) {
-                    logger.error(`Unable to connect to redis server at ${REDIS_URL}.`);
-                    return null;
-                } // return null to stop retrying
-                return Math.min(times + 1, 0);
-            }
-        });
-
-        redisConnection.on('error', error => {
-            logger.error('Redis connection error:', error);
-        });
-
+        redisConnection = getRedisConnection();
         const driftAssessmentQueue = new Queue(DRIFT_ASSESSMENT_QUEUE, {
             connection: redisConnection
         });
