@@ -692,7 +692,7 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
         if (!ec2InstanceId) return;
 
         // Build credentials array for this instance
-        let credentials: any[] = [];
+        const credentials: any[] = [];
         let checkManageReadiness = false;
 
         // Add SQL credential if not already registered
@@ -757,24 +757,24 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
         } else {
             // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
             if (instance?.data?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
-                let addresses = instance?.data?.windowsClusterNodes?.map(
+                const addresses = instance?.data?.windowsClusterNodes?.map(
                     (obj: { Address: string; Node: string }) => obj?.Address
                 );
                 instanceMap[ec2InstanceId] = {
-                    credentials: credentials,
+                    credentials,
                     clusterNodesIpAddress: addresses,
-                    checkManageReadiness: checkManageReadiness,
+                    checkManageReadiness,
                     credentialsId: instance?.data?.credentialId,
                     region: instance?.data?.regionId,
-                    ec2InstanceId: ec2InstanceId
+                    ec2InstanceId
                 };
             } else {
                 instanceMap[ec2InstanceId] = {
-                    credentials: credentials,
-                    checkManageReadiness: checkManageReadiness,
+                    credentials,
+                    checkManageReadiness,
                     credentialsId: instance?.data?.credentialId,
                     region: instance?.data?.regionId,
-                    ec2InstanceId: ec2InstanceId
+                    ec2InstanceId
                 };
             }
         }
