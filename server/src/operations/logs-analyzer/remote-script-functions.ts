@@ -1,5 +1,6 @@
 import { InferenceConfigType } from '../../routes/types/logs-analyzer.types';
 import getLogger from '../../utils/logger';
+import { LOG_LEVEL } from '../../utils/logs-analyzer/logs-analyzer-consts';
 
 const logger = getLogger();
 
@@ -131,6 +132,7 @@ function getWindowsPrepareScript(scriptParams: {
         $temperature = ${temperature};
         $maxTokens = ${maxTokens};
         $topP = ${topP};
+        $logLevel = '${LOG_LEVEL}';
 
         function Invoke-RetryCommand {
             param ([scriptblock]$Command, [int]$Retries = 5)
@@ -153,15 +155,16 @@ function getWindowsPrepareScript(scriptParams: {
         if (-not (Test-Path $filePath)) {
             Invoke-RetryCommand {
                 Invoke-WebRequest -Uri $s3SignedUrl -OutFile $filePath
+            }           
+            try {
+                icacls $filePath /grant Everyone:F > $null 2>&1
+            } catch {
+                throw "Failed to set permissions: $($_.Exception.Message)"
             }
+            
             Get-ChildItem -Path . -Filter "$packageName-*.exe" | Where-Object { $_.Name -ne "$packageName-$version.exe" } | Remove-Item -Force
         }
 
-        try {
-            icacls $filePath /grant Everyone:F
-        } catch {
-            throw "Failed to set permissions: $($_.Exception.Message)"
-        }
 
         try {
             if (-Not (Test-Path $filePath)) {
@@ -172,7 +175,7 @@ function getWindowsPrepareScript(scriptParams: {
                 '--logs-path', $logsPath,
                 '--sql-auth-enabled', $sqlAuthEnabled,
                 '--database-instance-name', $databaseInstanceName,
-                '--log-level', 'info',
+                '--log-level', $logLevel,
                 '--region', $region,
                 '--model-id', $modelId,
                 '--model-region', $modelRegion,
@@ -182,7 +185,7 @@ function getWindowsPrepareScript(scriptParams: {
                 '--max-tokens', $maxTokens,
                 '--top-p', $topP
             )
-            Start-Process -FilePath $filePath -ArgumentList $argumentList -NoNewWindow -Wait
+            Start-Process -FilePath $filePath -ArgumentList $argumentList -NoNewWindow -Wait  > $null 2>&1
         } catch {
             throw "Failed to run Logs Analyzer: $($_.Exception.Message)"
         }
@@ -236,18 +239,19 @@ function getLinuxPrepareScript(scriptParams: {
     # Logs Analysis Linux Prepare Script
     #!/bin/bash
 
-s3SignedUrl="${s3SignedUrl}"
-packageName="${packageName}"
-logsPath="${logsPath}"
-version="${version}"
-instanceId="${instanceId}"
-region="${region}"
-jobId="${jobId}"
-    $modelId = "${inferenceProfileArn}";
-    $modelRegion = "${region}";
-    $temperature = ${temperature};
-    $maxTokens = ${maxTokens};
-    $topP = ${topP};
+    s3SignedUrl="${s3SignedUrl}"
+    packageName="${packageName}"
+    logsPath="${logsPath}"
+    version="${version}"
+    instanceId="${instanceId}"
+    region="${region}"
+    jobId="${jobId}"
+    modelId = "${inferenceProfileArn}";
+    modelRegion = "${region}";
+    temperature = ${temperature};
+    maxTokens = ${maxTokens};
+    topP = ${topP};
+    logLevel='${LOG_LEVEL}';
 
 retry_command() {
     local retries=5
@@ -274,7 +278,7 @@ if [ ! -f "$filePath" ]; then
     exit 1
 fi
 
-"$filePath" --logs-path "$logsPath" --log-level info --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
+"$filePath" --logs-path "$logsPath" --log-level "$logLevel" --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
 
 if [ $? -ne 0 ]; then
     exit 1

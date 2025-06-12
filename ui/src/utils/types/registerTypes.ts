@@ -86,6 +86,8 @@ export interface WizardState {
     ontapPasswordFromWizard?: string;
     mssqlUserNameFromWizard?: string;
     mssqlPasswordFromWizard?: string;
+    windowsAuthenticationUsernameFromWizard?: string;
+    windowsAuthenticationPasswordFromWizard?: string;
     authenticationTypeSelected?: string;
     hitNext?: boolean;
     installMissingAWS?: boolean;

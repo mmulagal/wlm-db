@@ -732,6 +732,7 @@ const DialogContent = ({
 
             case 'Multipath I/O Status':
             case 'Multipath I/O Policy':
+            case 'Multipath I/O Timeout':
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -858,7 +859,6 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
-
             case 'NTFS allocation unit size':
                 return (
                     <div className={styles['storage-tier-block']}>

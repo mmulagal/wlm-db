@@ -175,7 +175,12 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     };
 
     const innerPageCheck = (name: string) => {
-        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status' || from === WLF_TABS.DASHBOARD) {
+        if (
+            name === 'Multipath I/O Sessions' ||
+            name === 'Multipath I/O Status' ||
+            name === 'Multipath I/O Timeout' ||
+            from === WLF_TABS.DASHBOARD
+        ) {
             return false;
         }
         return true;
@@ -279,7 +284,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
                 return (
                     <>
-                        {rowData?.name !== 'Multipath I/O Sessions' && rowData?.name !== 'Multipath I/O Status' ? (
+                        {rowData?.name !== 'Multipath I/O Sessions' &&
+                        rowData?.name !== 'Multipath I/O Status' &&
+                        rowData?.name !== 'Multipath I/O Timeout' ? (
                             <div>
                                 <DsTypography variant="Regular_13" className={`${styles.colText}`}>
                                     {`${rowData?.totalObjectsInViolation || 0} out of ${
@@ -339,74 +346,93 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '6',
             Header: '',
             accessor: 'recommendation',
-            width: from === WLF_TABS.INVENTORY ? '406px' : '575px',
-            renderCell: (cellData: any, rowData: any) => (
-                <div className={styles.recommendation}>
-                    <div className={styles.tooltipContainer}>
-                        {cellData?.length === 0 && (
-                            <div>
-                                <DisabledTooltipIcon />
+            width: from === WLF_TABS.INVENTORY ? '202px' : '290px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <>
+                        <div className={styles.recommendation}>
+                            <div className={styles.tooltipContainer}>
+                                {cellData?.length === 0 && (
+                                    <div>
+                                        <DisabledTooltipIcon />
+                                    </div>
+                                )}
+                                {cellData?.length > 0 && (
+                                    <div className={styles.tooltip}>
+                                        <Popover
+                                            popoverClass={''}
+                                            children={cellData && <RecommendationTooltip data={cellData} />}
+                                            trigger="hover"
+                                            delayHide={200}
+                                            container={<TooltipIcon />}
+                                            placement="bottom"
+                                        />
+                                    </div>
+                                )}
+                                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                    {'View recommendation'}
+                                </DsTypography>
                             </div>
-                        )}
-                        {cellData?.length > 0 && (
-                            <div className={styles.tooltip}>
-                                <Popover
-                                    popoverClass=""
-                                    children={cellData && <RecommendationTooltip data={cellData} />}
-                                    trigger="hover"
-                                    delayHide={200}
-                                    container={<TooltipIcon />}
-                                    placement="bottom"
-                                />
-                            </div>
-                        )}
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            View recommendation
-                        </DsTypography>
-                    </div>
-                    {!optimizePrintState &&
-                        (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
-                        rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
-                            <TooltipComponent
-                                title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                                placement="bottom"
-                                width="120px"
-                                height="30px"
-                            >
-                                <div>
-                                    <DsButton variant="secondary" isDisabled>
-                                        {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
-                                    </DsButton>
-                                </div>
-                            </TooltipComponent>
-                        ) : optimizingInstanceData &&
-                          rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
-                          rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
-                            <TooltipComponent
-                                title={GENERAL.OPTIMIZATION_IN_PROGRESS}
-                                placement="bottom"
-                                width="310px"
-                                height="50px"
-                            >
-                                <div>
-                                    <DsButton variant="secondary" isDisabled>
-                                        View and fix
-                                    </DsButton>
-                                </div>
-                            </TooltipComponent>
-                        ) : (
-                            <div id={`${rowData?.id}-optimize`}>
-                                <DsButton
-                                    variant="secondary"
-                                    onClick={() => handleDifferentNavigation(rowData)}
-                                    isDisabled={rowData?.status !== 'Not optimized'}
-                                >
-                                    View and fix
-                                </DsButton>
-                            </div>
-                        ))}
-                </div>
-            )
+                        </div>
+                    </>
+                );
+            }
+        },
+        {
+            id: '7',
+            Header: '',
+            accessor: '',
+            isSticky: true,
+            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <>
+                        <div className={styles.recommendation}>
+                            {!optimizePrintState &&
+                                (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
+                                rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
+                                    <TooltipComponent
+                                        title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                                        placement="bottom"
+                                        width="120px"
+                                        height="30px"
+                                    >
+                                        <div>
+                                            <DsButton variant="secondary" isDisabled={true}>
+                                                {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
+                                            </DsButton>
+                                        </div>
+                                    </TooltipComponent>
+                                ) : optimizingInstanceData &&
+                                  rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
+                                  rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
+                                    <TooltipComponent
+                                        title={GENERAL.OPTIMIZATION_IN_PROGRESS}
+                                        placement="bottom"
+                                        width="310px"
+                                        height="50px"
+                                    >
+                                        <div>
+                                            <DsButton variant="secondary" isDisabled={true}>
+                                                View and fix
+                                            </DsButton>
+                                        </div>
+                                    </TooltipComponent>
+                                ) : (
+                                    <div id={`${rowData?.id}-optimize`}>
+                                        <DsButton
+                                            variant="secondary"
+                                            onClick={() => handleDifferentNavigation(rowData)}
+                                            isDisabled={rowData?.status === 'Not optimized' ? false : true}
+                                        >
+                                            View and fix
+                                        </DsButton>
+                                    </div>
+                                ))}
+                        </div>
+                    </>
+                );
+            }
         }
     ];
 

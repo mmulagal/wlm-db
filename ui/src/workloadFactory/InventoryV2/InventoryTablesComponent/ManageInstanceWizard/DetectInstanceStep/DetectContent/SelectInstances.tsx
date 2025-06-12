@@ -75,39 +75,37 @@ const SelectInstances = () => {
         setSelectedOptions(newSelected);
     };
 
-    const options = useMemo(
-        () =>
-            instanceTableRows?.flatMap((row: any) => {
-                const { colText, disableMsg } = manageActionCol(row);
-                if (colText !== ACTION_CTA.MANAGE_INSTANCES || disableMsg !== '') return [];
+    const options = useMemo(() => {
+        return instanceTableRows?.flatMap((row: any) => {
+            const { colText, disableMsg } = manageActionCol(row);
+            if (colText !== ACTION_CTA.MANAGE_INSTANCES || disableMsg !== '') return [];
 
-                const isAuthorized =
-                    (row?.sqlServerAuthentication || row?.windowsAuthentication) &&
-                    (!row?.fsxId || (row?.fsxId && row?.isFsxRegistered));
+            const isAuthorized =
+                (row?.sqlServerAuthentication || row?.windowsAuthentication || row?.windowsDomainUserAuthentication) &&
+                (!row?.fsxId || (row?.fsxId && row?.isFsxRegistered));
 
-                const isSelected = selectedOptions.some(opt => opt.id === row.id);
+            const isSelected = selectedOptions.some(opt => opt.id === row.id);
 
-                // Only disable unselected options of the other type
-                const isDisabled =
-                    !isSelected &&
-                    selectionType !== null &&
-                    ((selectionType === 'authorized' && !isAuthorized) ||
-                        (selectionType === 'unauthorized' && isAuthorized));
+            // Only disable unselected options of the other type
+            const isDisabled =
+                !isSelected &&
+                selectionType !== null &&
+                ((selectionType === 'authorized' && !isAuthorized) ||
+                    (selectionType === 'unauthorized' && isAuthorized));
 
-                return {
-                    id: row.id,
-                    label: `${row.databaseInstanceName}, ${row.name}, ${
-                        isAuthorized ? 'Authenticated' : 'Unauthenticated'
-                    }`,
-                    value: row.name,
-                    data: row,
-                    authorized: isAuthorized,
-                    isDisabled,
-                    disabledReason: isDisabled ? t('databases.register-flow.drop_down_tooltip') : ''
-                };
-            }),
-        [instanceTableRows, selectionType, selectedOptions]
-    );
+            return {
+                id: row.id,
+                label: `${row.databaseInstanceName}, ${row.name}, ${
+                    isAuthorized ? 'Authenticated' : 'Unauthenticated'
+                }`,
+                value: row.name,
+                data: row,
+                authorized: isAuthorized,
+                isDisabled,
+                disabledReason: isDisabled ? t('databases.register-flow.drop_down_tooltip') : ''
+            };
+        });
+    }, [instanceTableRows, selectionType, selectedOptions]);
     // ...existing code...
 
     const handleSelect = (selected: OptionType[]) => {

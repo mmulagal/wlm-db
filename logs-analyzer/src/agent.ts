@@ -34,6 +34,8 @@ import {
 } from './utils/interfaces';
 
 const LIMIT_3 = pLimit(3); // Limit concurrency to 3
+logger.info('Starting logs analysis agent...');
+
 const program = new Command();
 
 program
@@ -54,6 +56,7 @@ program
 
 program.parse(process.argv);
 const argv = program.opts();
+
 logger.info('Command line arguments:', argv);
 
 const {
@@ -509,7 +512,7 @@ async function analyzeDatabaseApplicationLogs(
 }
 
 async function writeToCloudWatchLogGroup(message: string) {
-    logger.info('Writing to CloudWatch Logs:', message);
+    logger.info('Writing to CloudWatch Logs', { logGroupName, logStreamName });
 
     const client = new CloudWatchLogsClient({ region: REGION });
 

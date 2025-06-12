@@ -1,0 +1,93 @@
+name: UI Build & Deploy Staging
+
+on:
+ # push:
+ #   branches:
+ #     - master
+ #   paths:
+ #     - ui/**
+ # schedule:
+ #     - cron: '40 3 * * *' # Every Day at 05:05AM (Cron is UTC)
+  workflow_dispatch:
+
+env:
+  ENVIRONMENT: staging
+  REGION: us-east-1
+  TOKEN: ${{ secrets.UI_PKGS }}
+
+
+jobs:
+  build-wlmai-ui-and-upload-to-S3:
+    runs-on: wlmdb-runner
+
+    steps:
+      - name: Echo SHORT_SHA
+        run: echo ${{env.SHORT_SHA}}
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ vars.APP_ID }}
+          private_key: ${{ secrets.GG_PEM }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Use Inputs
+        run: |
+          echo "DeployToStandbyOnly Value Is: ${{env.DEPLOY_TO_STANDBY_ONLY}}"
+
+      - name: Install aws cli
+        id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+        with:
+          version: 2
+          verbose: false
+          arch: amd64
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.WLMDB_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.WLMDB_SECRET_KEY }}
+          aws-region: ${{env.REGION}}
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Configure npm for GitHub Packages
+        run: |
+          echo "@TLVeng:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ env.TOKEN }}" >> .npmrc
+        working-directory: ./ui
+      - run: npm install --force
+        working-directory: ./ui
+      - run: npm install @rollup/rollup-linux-x64-gnu
+        working-directory: ./ui
+      - run: npm run build:staging
+        working-directory: ./ui
+      - name: Upload UI to AWS s3 Active
+        run: |
+          aws s3 rm s3://staging-workloads-components/wlmdb/ --recursive
+          echo "Uploading to S3"
+          aws s3 cp ./build s3://staging-workloads-components/wlmdb/ --recursive --include "*"
+          aws s3 cp ./build/index.html s3://staging-workloads-components/wlmdb/index.html --cache-control='no-store'
+          aws s3 cp ./build/workload-config.json s3://staging-workloads-components/wlmdb/workload-config.json --cache-control='no-store'
+          aws s3 cp ./build/workload-policies.json s3://staging-workloads-components/wlmdb/workload-policies.json --cache-control='no-store'
+          echo "Create-Invalidation"
+          aws configure set preview.cloudfront true
+          aws cloudfront create-invalidation --distribution-id E17H3MZ1OBF4FR --paths '/wlmdb/*'
+        working-directory: ./ui
+
+      - name: Send failure notification
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" -d '{
+          "type": "message",
+          "text": "<br> 🚨 GitHub Actions Workflow Failed! <br> Check the Workflow: ${{ github.workflow }} <br> <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>GitHub Actions Logs</a> <br>"
+          }' "https://prod-70.westus.logic.azure.com:443/workflows/f0883fc97dc1488aae03ea7750871c43/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nNHeajZMm0ljBig3uFUsXXssb-m3_u5rUpyv7cbnQJs"

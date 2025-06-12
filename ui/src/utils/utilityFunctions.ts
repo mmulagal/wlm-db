@@ -9,11 +9,10 @@ import classNames from 'classnames';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
-    COSTING_TYPES,
+    AUTHENTICATION_TYPE,
     CREATE_DATABASE_YAML,
     CREDENTIAL_PROD_LINK,
     CREDENTIAL_STAGE_LINK,
-    DBType,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DETECT_HOST_VAR,
@@ -22,7 +21,6 @@ import {
     ERR_MSG_TO_CHECK,
     FORM_OPTIONS,
     FSXN_STORAGE_PROTOCOLS,
-    FSX_DEPLOYMENT_MODE,
     GIB_IN_BYTE,
     JM_DOWNLOAD,
     JOBS_REPORT,
@@ -159,17 +157,17 @@ export const getFilterOptions = (data: any[], propName: string, renderLabel?: (v
     !data
         ? []
         : sortBy(
-              uniqBy(
-                  compact(
-                      map(data, row => {
-                          const value = get(row, propName, null);
-                          return { value, label: renderLabel ? renderLabel(value) : value };
-                      })
-                  ),
-                  'label'
-              ),
-              'value'
-          );
+            uniqBy(
+                compact(
+                    map(data, row => {
+                        const value = get(row, propName, null);
+                        return { value, label: renderLabel ? renderLabel(value) : value };
+                    })
+                ),
+                'label'
+            ),
+            'value'
+        );
 
 export const formatSize = (value: number, passedformat?: string) =>
     numeral(getByteVal(value, passedformat)).format('0.[00] ib');
@@ -626,8 +624,8 @@ export const getAzType = (deploymentType: string | undefined) => {
     return singleAzPattern.test(deploymentType)
         ? GENERAL.SINGLE_AZ
         : multiAzPattern.test(deploymentType)
-        ? GENERAL.MULTI_AZ
-        : deploymentType;
+            ? GENERAL.MULTI_AZ
+            : deploymentType;
 };
 
 export const getPgsqlAzType = (perRow: PgsqlInstancesDiscovered) => {
@@ -1486,7 +1484,7 @@ export const collapseAllRows = (updateRowState: any, rowState: any) => {
 };
 
 export const expandTableRow = (
-    updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
+    updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new(): any },
     rowData: { id: any },
     currentRowState: { isExpanded: any },
     rowState: any
@@ -1601,12 +1599,12 @@ export const getStickyClass = (columns: any, columnIndex: number) => {
     const isLast = isLastSticky(columns, columnIndex);
     const stickyStyling = isStickyLeft
         ? {
-              left: getLeft(columns, columnIndex),
-              ...(isLast && { boxShadow: '4px 0 4px 0 var(--Grey200)' })
-          }
+            left: getLeft(columns, columnIndex),
+            ...(isLast && { boxShadow: '4px 0 4px 0 var(--Grey200)' })
+        }
         : {
-              right: getLeft(columns.slice().reverse(), columns.length - columnIndex - 1)
-          };
+            right: getLeft(columns.slice().reverse(), columns.length - columnIndex - 1)
+        };
     return css({
         '&': stickyStyling
     });
@@ -1641,13 +1639,22 @@ export const removeOldApisError = (data: any) => {
 // This function will create post payload for register credential API (registerResourceCredentials)
 export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string, rowData: any) => {
     const state = store.getState();
-    const detectManageUserName = state?.inventoryV2?.detectManageUserName;
-    const detectManagePassword = state?.inventoryV2?.detectManagePassword;
-    const detectOntapUsername = state?.inventoryV2?.detectOntapUsername;
-    const detectOntapPassword = state?.inventoryV2?.detectOntapPassword;
-    const credList = [];
+    const {
+        detectManageUserName,
+        detectManagePassword,
+        detectWindowsAuthentication,
+        detectOntapUsername,
+        detectOntapPassword,
+        authenticationType
+    } = state?.inventoryV2;
+    let credList = [];
     let checkManageReadiness = false;
-    if (detectManageUserName && detectManagePassword) {
+    // Add SQL Server credentials when SQL Server Authentication is selected as authentication type
+    if (
+        detectManageUserName &&
+        detectManagePassword &&
+        authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+    ) {
         credList.push({
             resourceId: sqlServerInstance,
             resourceType: DETECT_HOST_VAR.MSSQL,
@@ -1656,6 +1663,21 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         });
         checkManageReadiness = true;
     }
+    // Add Windows credentials when Windows Authentication is selected as authentication type
+    else if (
+        detectWindowsAuthentication.username &&
+        detectWindowsAuthentication.password &&
+        authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+    ) {
+        credList.push({
+            resourceId: sqlServerInstance,
+            resourceType: DETECT_HOST_VAR.WINDOWS,
+            username: detectWindowsAuthentication.username,
+            password: detectWindowsAuthentication.password
+        });
+        checkManageReadiness = true;
+    }
+    // Add FSx ONTAP credentials to the credential list
     if (detectOntapUsername && detectOntapPassword) {
         credList.push({
             resourceId: fsxId,

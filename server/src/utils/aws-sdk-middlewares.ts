@@ -13,6 +13,10 @@ const redisClient = new Redis(getRedisDetails().url, {
     maxRetriesPerRequest: 2
 });
 
+function isRedisConnected() {
+    return redisClient.status === 'ready';
+}
+
 const cacheMiddlewareConfig = {
     step: 'deserialize' as const,
     name: 'cacheMiddleware',
@@ -20,14 +24,20 @@ const cacheMiddlewareConfig = {
 };
 
 function cacheMiddleware(ttl: number, credentialsId = '') {
+    logger.info(`Cache middleware initialized with TTL: ${ttl}ms and credentialsId: ${credentialsId}`);
     return (next: any, context: any) => async (args: DeserializeHandlerArguments<any>) => {
         const { commandName } = context || {};
         const { input } = args || {};
 
         const cacheKey = generateHash(stringify({ input, commandName, credentialsId }));
-        const cachedResponse = await redisClient.get(cacheKey);
-        if (cachedResponse) {
-            return parse(cachedResponse);
+        logger.info(`Is redis connected? ${isRedisConnected()}`);
+        if (cacheKey && isRedisConnected()) {
+            const cachedResponse = await redisClient.get(cacheKey);
+            if (cachedResponse) {
+                logger.info(`Redis cache hit for ${commandName} with key: ${cacheKey}`);
+                logger.info(`Cached response: ${cachedResponse}`);
+                return parse(cachedResponse);
+            }
         }
 
         // If not cached, proceed with the request
@@ -35,7 +45,7 @@ function cacheMiddleware(ttl: number, credentialsId = '') {
         const { output: { $metadata: sdkMetadata, ...rest } = {} } = response || {};
 
         // Cache the response
-        if (sdkMetadata && rest) {
+        if (sdkMetadata && rest && isRedisConnected()) {
             try {
                 await redisClient.set(cacheKey, stringify(response), 'EX', ttl);
             } catch (error) {

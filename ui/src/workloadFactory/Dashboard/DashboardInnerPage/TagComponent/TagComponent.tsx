@@ -47,6 +47,7 @@ const TagComponent = ({ tagHeight, type }: TagComponentProps) => {
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
             case 'Space allocation':
             case 'Space reservation':
+            case 'Multipath I/O Timeout':
                 setTagData(['Reliability']);
                 break;
 
