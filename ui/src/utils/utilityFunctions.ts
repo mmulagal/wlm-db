@@ -50,6 +50,7 @@ import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSa
 import { setSelectedRowsForManage } from '../store/workloadFactory/inventoryV2Slice';
 import { PgsqlInstancesDiscovered } from './types/inventoryV2Types';
 import classNames from 'classnames';
+import { BulkDetectedInstance } from './types/registerTypes';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {

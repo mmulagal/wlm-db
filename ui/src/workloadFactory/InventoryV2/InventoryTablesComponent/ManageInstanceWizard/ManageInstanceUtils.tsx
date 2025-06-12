@@ -9,15 +9,18 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
+    AUTHENTICATION_TYPE,
+    DETECT_HOST_VAR,
     FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
     FORM_TO_WLF_NAVIGATE_INVENTORY,
     JOB_MONITORING_STATUS,
     MANAGE_POLLING_INTERVAL,
     MANAGE_STATES,
+    SQL_DEPLOYMENT_MODE,
     WLF_TABS
 } from '../../../../utils/consts';
 import store, { AppDispatch } from '../../../../store/store';
-import { uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
+import { saveFsxInCredRegisteredObj, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
 import {
     BulkDetectedInstance,
@@ -223,7 +226,7 @@ export const callManageSingleInstanceApi = async (
                 } else {
                     navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
                 }
-                
+
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
@@ -658,4 +661,185 @@ export const getBulkDetectChecks = (selectedMultiDetectInstances: any) => {
         });
     }
     return result;
+};
+
+export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDetectedInstance[]) => {
+    // New logic to combine credentials by ec2InstanceId and skip already registered resources
+    const instanceMap: { [key: string]: any } = {};
+
+    const state = store.getState();
+    const {
+        detectManageUserName,
+        detectManagePassword,
+        detectWindowsAuthentication,
+        detectOntapUsername,
+        detectOntapPassword,
+        authenticationType
+    } = state?.inventoryV2;
+
+    selectedMultiDetectInstances?.forEach((instance: BulkDetectedInstance) => {
+        const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
+        const ec2InstanceId = instance?.data?.ec2InstanceId;
+        if (!ec2InstanceId) return;
+
+        // Build credentials array for this instance
+        let credentials: any[] = [];
+        let checkManageReadiness = false;
+
+        // Add SQL credential if not already registered
+        if (
+            !instance?.data?.sqlServerAuthentication &&
+            !instance?.data?.windowsAuthentication &&
+            !instance?.data?.windowsDomainUserAuthentication &&
+            detectManageUserName &&
+            detectManagePassword &&
+            authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+        ) {
+            credentials.push({
+                resourceId: sqlServerInstance,
+                resourceType: DETECT_HOST_VAR.MSSQL,
+                username: detectManageUserName,
+                password: detectManagePassword
+            });
+            checkManageReadiness = true;
+        }
+
+        if (
+            !instance?.data?.sqlServerAuthentication &&
+            !instance?.data?.windowsAuthentication &&
+            !instance?.data?.windowsDomainUserAuthentication &&
+            detectWindowsAuthentication.username &&
+            detectWindowsAuthentication.password &&
+            authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+        ) {
+            credentials.push({
+                resourceId: sqlServerInstance,
+                resourceType: DETECT_HOST_VAR.WINDOWS,
+                username: detectWindowsAuthentication.username,
+                password: detectWindowsAuthentication.password
+            });
+            checkManageReadiness = true;
+        }
+
+        // Add FSX credential if not already registered
+        if (instance?.data?.fsxId && !instance?.data?.isFsxRegistered && detectOntapUsername && detectOntapPassword) {
+            credentials.push({
+                resourceId: instance?.data?.fsxId,
+                resourceType: DETECT_HOST_VAR.FSX,
+                username: detectOntapUsername,
+                password: detectOntapPassword
+            });
+        }
+
+        // If already present, merge credentials arrays
+        if (instanceMap[ec2InstanceId]) {
+            // Avoid duplicate resourceId/resourceType combos
+            const existing = instanceMap[ec2InstanceId].credentials;
+            credentials.forEach(cred => {
+                if (
+                    !existing.some(
+                        (e: { resourceId: any; resourceType: any }) =>
+                            e.resourceId === cred.resourceId && e.resourceType === cred.resourceType
+                    )
+                ) {
+                    existing.push(cred);
+                }
+            });
+        } else {
+            // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
+            if (instance?.data?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+                let addresses = instance?.data?.windowsClusterNodes?.map(
+                    (obj: { Address: string; Node: string }) => obj?.Address
+                );
+                instanceMap[ec2InstanceId] = {
+                    credentials: credentials,
+                    clusterNodesIpAddress: addresses,
+                    checkManageReadiness: checkManageReadiness,
+                    credentialsId: instance?.data?.credentialId,
+                    region: instance?.data?.regionId,
+                    ec2InstanceId: ec2InstanceId
+                };
+            } else {
+                instanceMap[ec2InstanceId] = {
+                    credentials: credentials,
+                    checkManageReadiness: checkManageReadiness,
+                    credentialsId: instance?.data?.credentialId,
+                    region: instance?.data?.regionId,
+                    ec2InstanceId: ec2InstanceId
+                };
+            }
+        }
+    });
+
+    // Convert map to array for payload
+    const payload = Object.values(instanceMap);
+    return payload;
+};
+
+export const updateDetectBulkResponse = (newSelectedMultiDetectInstances: any[], result: any, dispatch: any) => {
+    newSelectedMultiDetectInstances = newSelectedMultiDetectInstances?.map((instance: any) => {
+        const isSqlAuthRequired =
+            !instance?.data?.sqlServerAuthentication &&
+            !instance?.data?.windowsAuthentication &&
+            !instance?.data?.windowsDomainUserAuthentication;
+        const isFsxRegisterRequired = instance?.data?.fsxId && !instance?.data?.isFsxRegistered;
+
+        const { credentialsId, region, ec2InstanceId } = instance?.data;
+        const res = result.data.find(
+            (r: any) => r.credentialsId === credentialsId && r.region === region && r.ec2InstanceId === ec2InstanceId
+        );
+
+        if (!res) return instance;
+
+        let sqlAuthSuccess = true;
+        let fsxSuccess = true;
+
+        if (isSqlAuthRequired) {
+            const sqlDetail = res.registerDetails?.find(
+                (d: any) => d.resourceId === instance?.data?.databaseInstanceName
+            );
+            sqlAuthSuccess =
+                sqlDetail && !(sqlDetail.sqlServerError || sqlDetail.fsxnError || sqlDetail.requiredModuleError);
+        }
+
+        if (isFsxRegisterRequired) {
+            const fsxDetail = res.registerDetails?.find((d: any) => d.resourceId === instance?.data?.fsxId);
+            fsxSuccess =
+                fsxDetail && !(fsxDetail.sqlServerError || fsxDetail.fsxnError || fsxDetail.requiredModuleError);
+        }
+
+        let authorized = false;
+        if (isSqlAuthRequired && isFsxRegisterRequired) {
+            authorized = sqlAuthSuccess && fsxSuccess;
+        } else if (isSqlAuthRequired) {
+            authorized = sqlAuthSuccess;
+        } else if (isFsxRegisterRequired) {
+            authorized = fsxSuccess;
+        }
+
+        // Optionally update manageReadiness from the first successful detail
+        let manageReadiness = null;
+        if (authorized) {
+            const detail = res.registerDetails?.find(
+                (d: any) =>
+                    (isSqlAuthRequired && d.resourceId === instance?.data?.databaseInstanceName) ||
+                    (isFsxRegisterRequired && d.resourceId === instance?.data?.fsxId)
+            );
+            manageReadiness = detail?.manageReadiness || null;
+        }
+
+        // Optionally update FSX registration if successful
+        if (authorized && isFsxRegisterRequired && fsxSuccess) {
+            saveFsxInCredRegisteredObj(instance?.data?.fsxId, dispatch);
+            const updatedInventoryTableData = updateInstanceStatus('detect', instance?.data, instance?.data);
+            dispatch(setInventoryTableData(updatedInventoryTableData));
+        }
+
+        return {
+            ...instance,
+            authorized,
+            manageReadiness: authorized ? manageReadiness : instance.manageReadiness
+        };
+    });
+    return newSelectedMultiDetectInstances;
 };

@@ -19,15 +19,22 @@ import {
     setSelectedMultiDetectInstances
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 
-import { getBulkDetectChecks, handleMultiInstanceManage, handleSingleInstanceManage } from './ManageInstanceUtils';
+import {
+    createDetectHostPayloadBulk,
+    getBulkDetectChecks,
+    handleMultiInstanceManage,
+    handleSingleInstanceManage,
+    updateDetectBulkResponse
+} from './ManageInstanceUtils';
 import { useNavigate } from 'react-router-dom';
-import { ACTION_TYPE } from '../../../../utils/consts';
+import { ACTION_TYPE, AUTHENTICATION_TYPE, DETECT_HOST_VAR, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import { useMemo } from 'react';
 import {
     BulkDetectedInstance,
     RegisterResourceCredResult,
     UseWizardReturn
 } from '../../../../utils/types/registerTypes';
+import store from '../../../../store/store';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -70,79 +77,41 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const handleMultiRegisterResourceCred = async () => {
         dispatch(setIsDetectHostLoading(true));
         dispatch(setManageSingleInstanceReadiness(null));
-        let payload: Array<any> = [];
-        selectedMultiDetectInstances?.forEach((instance: BulkDetectedInstance) => {
-            const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
-            let cred = createDetectHostPayload(sqlServerInstance, instance?.data?.fsxId, instance?.data);
-            let perPayload = {
-                ...cred,
-                credentialsId: instance?.data?.credentialId,
-                region: instance?.data?.regionId,
-                ec2InstanceId: instance?.data?.ec2InstanceId
-            };
-            payload.push(perPayload);
-        });
+
+        // Create payload for all selected instances
+        const fullPayload = createDetectHostPayloadBulk(selectedMultiDetectInstances);
+
+        // Helper to split array into batches of 10
+        const chunkArray = (arr: any[], size: number) =>
+            Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+
+        const batches = chunkArray(fullPayload, 10);
+        let newSelectedMultiDetectInstances = selectedMultiDetectInstances;
+
         try {
-            const result: any = await registerResourceCredBulk({ payload });
-            if (result && !result?.error) {
-                let newSelectedMultiDetectInstances = selectedMultiDetectInstances;
-                result?.data?.forEach((res: any) => {
-                    if (res?.sqlServerError || res?.fsxnError) {
-                        newSelectedMultiDetectInstances = newSelectedMultiDetectInstances.map((instance: any) => {
-                            if (
-                                instance?.data?.credentialId === res?.credentialsId &&
-                                instance?.data?.regionId === res?.region &&
-                                instance?.data?.ec2InstanceId === res?.ec2InstanceId
-                            ) {
-                                return {
-                                    ...instance,
-                                    authorized: false
-                                };
-                            }
-                            return instance;
-                        });
-                    } else {
-                        // store fsx cred in register obj if payload has fsx register
-                        let filterRow: any = newSelectedMultiDetectInstances.filter((instance: any) => {
-                            return (
-                                instance?.data?.credentialId === res?.credentialsId &&
-                                instance?.data?.regionId === res?.region &&
-                                instance?.data?.ec2InstanceId === res?.ec2InstanceId
-                            );
-                        });
-                        let isFsxRegister = saveFsxInCredRegisteredObj(filterRow?.[0]?.data?.fsxId, dispatch);
-                        const updatedInventoryTableData = updateInstanceStatus(
-                            'detect',
-                            filterRow?.[0]?.data,
-                            filterRow?.[0]?.data
-                        );
-                        dispatch(setInventoryTableData(updatedInventoryTableData));
-                        newSelectedMultiDetectInstances = newSelectedMultiDetectInstances.map((instance: any) => {
-                            if (
-                                instance?.data?.credentialId === res?.credentialsId &&
-                                instance?.data?.regionId === res?.region &&
-                                instance?.data?.ec2InstanceId === res?.ec2InstanceId
-                            ) {
-                                return {
-                                    ...instance,
-                                    authorized: true,
-                                    manageReadiness: res?.manageReadiness || null
-                                };
-                            }
-                            return instance;
-                        });
-                    }
-                });
-                dispatch(setSelectedMultiDetectInstances(newSelectedMultiDetectInstances));
-                goToNextStep();
-            } else {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: t('databases.register-flow.manage-detect-fail-message')
-                    })
-                );
+            for (let i = 0; i < batches.length; i++) {
+                const batchPayload = batches[i];
+                const result: any = await registerResourceCredBulk({ payload: batchPayload });
+
+                if (result && !result?.error) {
+                    // Process response for this batch
+                    newSelectedMultiDetectInstances = updateDetectBulkResponse(
+                        newSelectedMultiDetectInstances,
+                        result,
+                        dispatch
+                    );
+                    dispatch(setSelectedMultiDetectInstances([...newSelectedMultiDetectInstances]));
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.register-flow.manage-detect-fail-message')
+                        })
+                    );
+                    break; // Stop further batches on error
+                }
             }
+            goToNextStep();
         } catch (error) {
             dispatch(
                 addNotification({
