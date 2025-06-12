@@ -1,9 +1,9 @@
 import { useDispatch } from 'react-redux';
-import styles from './WellArchitectTabs.module.scss';
 import { useEffect, useState } from 'react';
+import { DsTypography } from '@netapp/design-system';
+import styles from './WellArchitectTabs.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { DsTypography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 
 const WellArchitectTabs = () => {

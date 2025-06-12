@@ -9,8 +9,8 @@ type AR = {
     disabled?: boolean;
 };
 
-const ActionRequired = ({ error = false, disabled = false }: AR) => {
-    return disabled ? (
+const ActionRequired = ({ error = false, disabled = false }: AR) =>
+    disabled ? (
         <Popover
             popoverClass={styles['copy-popover']}
             children={GENERAL.SELECT_ANY_VPC}
@@ -33,6 +33,5 @@ const ActionRequired = ({ error = false, disabled = false }: AR) => {
             </Typography>
         </div>
     );
-};
 
 export default ActionRequired;

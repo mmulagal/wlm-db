@@ -1,8 +1,8 @@
-import styles from './PermissionContent.module.scss';
-import { ReactComponent as Copy } from '../../../../../../../assets/code snippets copy.svg';
 import { DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import React from 'react';
+import { ReactComponent as Copy } from '../../../../../../../assets/code snippets copy.svg';
+import styles from './PermissionContent.module.scss';
 import CopyToClipboardCommon from '../../../../../../../common/CopyToClipboard/copyToClipboard';
 import DialogComponent from '../../../../../../../common/Dialog/DialogComponent';
 import PolicyDialog from './PolicyDialog/PolicyDialog';
@@ -80,7 +80,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                                                 <React.Fragment key={i}>
                                                     <span className={styles['value-inline']}>{val}</span>
                                                     {i < inlineValues.length - 1 && (
-                                                        <span className={styles['separator']}>|</span>
+                                                        <span className={styles.separator}>|</span>
                                                     )}
                                                 </React.Fragment>
                                             ))}

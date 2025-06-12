@@ -60,19 +60,17 @@ import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUti
 import { HostAssessmentResponseInterface } from '../../utils/types/getWellTypes';
 import CopyToClipboardCommon from '../../common/CopyToClipboard/copyToClipboard';
 
-export const uniqueHostRow = (id: string, cred: string, region: string) => {
-    return id + '_' + cred + '_' + region;
-};
+export const uniqueHostRow = (id: string, cred: string, region: string) => `${id}_${cred}_${region}`;
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
     if (!managedData) {
         return result;
     }
-    let state = store.getState();
+    const state = store.getState();
     const { credentialMapping, regionMapping } = state?.headers;
     Object.keys(managedData).map((key: string) => {
-        let awsKeys = key.split('_');
+        const awsKeys = key.split('_');
         result = {
             ...result,
             ...{ [key]: formatManagedRows(managedData[key], awsKeys, credentialMapping, regionMapping) }
@@ -92,7 +90,7 @@ export const getInventoryDataCount = (data: { [key: string]: InventoryTableData 
     let managedInst = 0;
     let totalInstance = 0;
     const state = store.getState();
-    const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
+    const { removeSecNodeDiscoveredList } = state.inventoryV2;
     Object.keys(data).map((key: string) => {
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
@@ -123,10 +121,10 @@ export const formatManagedRows = (
     credentialMapping: any,
     regionMapping: any
 ) => {
-    let managedInstanceCount = managedInstancesCount(managedRow);
-    let totalInstanceCount = managedRow?.databaseInstanceDetails?.length || 0;
-    let ssmState = getSsmState(managedRow);
-    let allocatedCapacity = getAllocatedCapacity(managedRow);
+    const managedInstanceCount = managedInstancesCount(managedRow);
+    const totalInstanceCount = managedRow?.databaseInstanceDetails?.length || 0;
+    const ssmState = getSsmState(managedRow);
+    const allocatedCapacity = getAllocatedCapacity(managedRow);
 
     const result = {
         hostType: managedRow?.hostType,
@@ -136,7 +134,7 @@ export const formatManagedRows = (
         resourceId: managedRow?.id,
         name: managedRow?.name,
         status: getNodeStatus(managedRow),
-        ssmState: ssmState,
+        ssmState,
         totalInstance: totalInstanceCount,
         managedInstance: managedInstanceCount,
         serverInstallationMode: getInstallationMode(managedRow),
@@ -152,7 +150,7 @@ export const formatManagedRows = (
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
         totalCost: getTotalCost(managedRow?.estimatedUsageCost || {}),
-        allocatedCapacity: allocatedCapacity,
+        allocatedCapacity,
         allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
         storageType: GENERAL.FSX_FOR_ONTAP,
         isDetected: true,
@@ -167,13 +165,13 @@ export const formatManagedRows = (
 };
 
 export const getInstanceStatusForMixedCase = (managedHostRow: any) => {
-    let state = store.getState();
+    const state = store.getState();
     const discoveredHostData = state?.inventoryV2?.discoveredHosts?.discoveredHostData;
     const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id;
     if (ec2Id && discoveredHostData) {
-        let selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
+        const selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
         if (selectedEc2 && selectedEc2?.length > 0) {
-            let ssmState = getDiscoverSsmState(selectedEc2[0]);
+            const ssmState = getDiscoverSsmState(selectedEc2[0]);
             return getDiscoveredPerInstanceStatus(selectedEc2[0], ssmState);
         }
     }
@@ -184,12 +182,10 @@ export const getNodeStatus = (row: ManagedHostsRowInterface) => {
     if (row?.databaseHostStatus && row?.databaseHostStatus !== INVENTORY_STATUS.NOT_AVAILABLE) {
         if (row?.databaseHostStatus?.toLowerCase() === INVENTORY_STATUS.HOST_ONLINE) {
             return INVENTORY_STATUS.ONLINE;
-        } else {
-            return INVENTORY_STATUS.OFFLINE;
         }
-    } else {
-        return INVENTORY_STATUS.UNKNOWN;
+        return INVENTORY_STATUS.OFFLINE;
     }
+    return INVENTORY_STATUS.UNKNOWN;
 };
 
 export const getSsmState = (row: ManagedHostsRowInterface) => {
@@ -199,21 +195,18 @@ export const getSsmState = (row: ManagedHostsRowInterface) => {
             row?.ssmStatus?.toLowerCase() === INVENTORY_STATUS.SSM_ONLINE
         ) {
             return INVENTORY_STATUS.ONLINE;
-        } else {
-            return INVENTORY_STATUS.OFFLINE;
         }
-    } else {
-        return INVENTORY_STATUS.UNKNOWN;
+        return INVENTORY_STATUS.OFFLINE;
     }
+    return INVENTORY_STATUS.UNKNOWN;
 };
 
 export const managedInstancesCount = (row: ManagedHostsRowInterface) => {
     if (row?.databaseInstanceDetails && row?.databaseInstanceDetails?.length > 0) {
-        let managedRows = row?.databaseInstanceDetails?.filter(per => per?.isManaged);
+        const managedRows = row?.databaseInstanceDetails?.filter(per => per?.isManaged);
         return managedRows?.length;
-    } else {
-        return '';
     }
+    return '';
 };
 
 export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) => {
@@ -239,13 +232,12 @@ export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) =
             installationMode = GENERAL.STANDALONE;
         }
         return installationMode;
-    } else {
-        return '';
     }
+    return '';
 };
 
 export const getAllInstallationMode = (row: ManagedHostsRowInterface | undefined) => {
-    let installationMode: Array<string> = [];
+    const installationMode: Array<string> = [];
     if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
         for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
             const val = row?.databaseInstancesSummary[i];
@@ -270,9 +262,8 @@ export const getAllInstallationMode = (row: ManagedHostsRowInterface | undefined
             }
         }
         return installationMode;
-    } else {
-        return '';
     }
+    return '';
 };
 
 export const getTotalCost = (estimatedUsageCost: EstimatedUsageCostInterface) => {
@@ -285,18 +276,17 @@ export const getTotalCost = (estimatedUsageCost: EstimatedUsageCostInterface) =>
             (estimatedUsageCost?.connectivity || 0) +
             (estimatedUsageCost?.others || 0)
         ).toString();
-    } else {
-        return 0;
     }
+    return 0;
 };
 
 export const getAllocatedCapacity = (row: ManagedHostsRowInterface | undefined) => {
     let fsxnCapacity = 0;
     let fsxwCapacity = 0;
     let ebsCapacity = 0;
-    let uniqueFsxnId: Array<String> = [];
-    let uniqueFsxwId: Array<String> = [];
-    let uniqueVolId: Array<String> = [];
+    const uniqueFsxnId: Array<string> = [];
+    const uniqueFsxwId: Array<string> = [];
+    const uniqueVolId: Array<string> = [];
     row?.fsxnResourceInfo?.map((perFsx: any) => {
         if (!uniqueFsxnId.includes(perFsx?.id)) {
             fsxnCapacity += perFsx?.size || 0;
@@ -318,7 +308,7 @@ export const getAllocatedCapacity = (row: ManagedHostsRowInterface | undefined) 
         }
     });
 
-    let allocatedCapacity = fsxnCapacity + fsxwCapacity + ebsCapacity;
+    const allocatedCapacity = fsxnCapacity + fsxwCapacity + ebsCapacity;
     return allocatedCapacity;
 };
 
@@ -326,7 +316,7 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
     let storagePercent = 0;
     let storageSavingsText: string = '';
     let fsxType: string = '';
-    let fileSystemType = val?.databaseInstanceTopology?.fileSystemType || '';
+    const fileSystemType = val?.databaseInstanceTopology?.fileSystemType || '';
     if (fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
         fsxType = 'fsxn';
     } else if (fileSystemType.includes(GENERAL.FSX_FOR_WINDOWS)) {
@@ -336,14 +326,12 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
     }
 
     if (fsxType) {
-        let fsxTypeValue = val?.storage?.[fsxType] || {};
+        const fsxTypeValue = val?.storage?.[fsxType] || {};
         storagePercent = fsxTypeValue ? (Number(fsxTypeValue?.spaceSavings) / Number(fsxTypeValue?.used)) * 100 : 0;
         if (val?.storage?.[fsxType]?.spaceSavings && val?.storage?.[fsxType]?.used) {
-            storageSavingsText =
-                formatFractionalNumber(storagePercent, 2) +
-                '% (' +
-                formatSizeOnePrecision(Number(fsxTypeValue?.spaceSavings)) +
-                ')';
+            storageSavingsText = `${formatFractionalNumber(storagePercent, 2)}% (${formatSizeOnePrecision(
+                Number(fsxTypeValue?.spaceSavings)
+            )})`;
         } else if (val?.storage?.[fsxType]?.spaceSavings === 0) {
             storageSavingsText = '0%';
         } else {
@@ -354,9 +342,7 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
 };
 
 export const formatInstanceData = (row: ManagedHostsRowInterface) => {
-    const isAllManaged = row?.databaseInstanceDetails?.every(perRow => {
-        return perRow?.isManaged ? true : false;
-    });
+    const isAllManaged = row?.databaseInstanceDetails?.every(perRow => !!perRow?.isManaged);
 
     let nonManagedStatus: any = [];
     if (!isAllManaged) {
@@ -417,13 +403,12 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     performance: perRow?.performance,
                     storage: perRow?.storage,
                     storageSavingsText: getStorageSavingsText(perRow || {}),
-                    allocatedCapacity: allocatedCapacity,
+                    allocatedCapacity,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                     manageReadiness: statusObj?.[0]?.manageReadiness
                 };
-            } else {
-                return instRow;
             }
+            return instRow;
         });
     }
 
@@ -431,12 +416,12 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
 };
 
 export const getFsxIdsFromdiscover = (data: Array<DiscoverHostInterface>) => {
-    let fsxIds: Array<string> = [];
+    const fsxIds: Array<string> = [];
     data?.map((instances: DiscoverHostInterface) => {
         instances?.sqlServerInstances?.map((inst: SQLServerInstancesDiscovered) => {
             inst?.storage?.map((storageObj: DiscoveredStorageObj) => {
                 if (storageObj.type === DETECT_HOST_VAR.FSXN) {
-                    let fsxId = storageObj?.id || '';
+                    const fsxId = storageObj?.id || '';
                     if (!fsxIds.includes(fsxId)) {
                         fsxIds.push(fsxId);
                     }
@@ -455,7 +440,7 @@ export const getPrimaryClusterNode = (
     clusterDiscoveredHost: any,
     isDemoMode: boolean | undefined
 ) => {
-    let testedNodes: string[] = [];
+    const testedNodes: string[] = [];
 
     newDiscoveredHostData.map((host: DiscoverHostInterface) => {
         if (host?.nodesList) {
@@ -464,20 +449,17 @@ export const getPrimaryClusterNode = (
             }
             // To find partner node in a cluster
             const partnerNode = newDiscoveredHostData.filter((perHost: DiscoverHostInterface) => {
-                const isSameCluster = host?.nodesList?.every((val: string) => {
-                    return (
+                const isSameCluster = host?.nodesList?.every(
+                    (val: string) =>
                         perHost?.ec2InstanceId !== host?.ec2InstanceId &&
                         perHost?.nodesList &&
                         perHost.nodesList.includes(val) &&
                         perHost?.credentialId === host?.credentialId &&
                         perHost?.regionId === host?.regionId
-                    );
-                });
+                );
                 // checking same vpc or not
                 if (isSameCluster && perHost?.vpc?.id === host?.vpc?.id) {
                     return perHost;
-                } else {
-                    return;
                 }
             })?.[0];
 
@@ -509,9 +491,8 @@ export const getPrimaryClusterNode = (
                             uniqueHostRow(host?.ec2InstanceId, host?.credentialId || '', host?.regionId || '')
                         );
                     }
-                    return;
                 } else {
-                    let combinedData = combineClusterData(host, partnerNode, removeRows);
+                    const combinedData = combineClusterData(host, partnerNode, removeRows);
                     if (combinedData) {
                         clusterDiscoveredHost[
                             uniqueHostRow(combinedData?.key, host?.credentialId || '', host?.regionId || '')
@@ -533,12 +514,10 @@ export const getPrimaryClusterNode = (
                             uniqueHostRow(host?.ec2InstanceId, host?.credentialId || '', host?.regionId || '')
                         );
                     }
-                    return;
                 }
             }
         }
     });
-    return;
 };
 
 export const getPrimaryPgsqlNode = (
@@ -549,10 +528,10 @@ export const getPrimaryPgsqlNode = (
     clusterDiscoveredHost: any,
     isDemoMode: boolean | undefined
 ) => {
-    let testedNodes: string[] = [];
+    const testedNodes: string[] = [];
 
     discoveredPgsqlHostData?.map((host: any) => {
-        let perHostNodesList: any = [];
+        const perHostNodesList: any = [];
         perHostNodesList.push(host?.ec2InstanceId);
         if (host?.pgsqlServerInstances) {
             host?.pgsqlServerInstances?.map((perSql: any) => {
@@ -575,26 +554,23 @@ export const getPrimaryPgsqlNode = (
             }
             // To find partner node in a cluster
             let partnerNode = newDiscoveredPgsqlHostData?.filter((perHost: DiscoverHostInterface) => {
-                const isSameCluster = host?.nodesList?.filter((val: string) => {
-                    return (
+                const isSameCluster = host?.nodesList?.filter(
+                    (val: string) =>
                         perHost?.ec2InstanceId !== host?.ec2InstanceId &&
                         perHost?.nodesList &&
                         perHost.nodesList.includes(val) &&
                         perHost?.credentialId === host?.credentialId &&
                         perHost?.regionId === host?.regionId
-                    );
-                });
+                );
                 // checking same vpc or not
                 if (isSameCluster && isSameCluster.length > 0 && perHost?.vpc?.id === host?.vpc?.id) {
                     return perHost;
-                } else {
-                    return;
                 }
             });
 
             if (partnerNode && !isDemoMode) {
                 partnerNode = [host, ...partnerNode];
-                let ec2Details: Array<{ id: string; name: string }> = [];
+                const ec2Details: Array<{ id: string; name: string }> = [];
                 partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
                     ec2Details.push({
                         id: perPartnerNode?.ec2InstanceId || '',
@@ -602,12 +578,10 @@ export const getPrimaryPgsqlNode = (
                     });
                 });
 
-                partnerNode = partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
-                    return {
-                        ...perPartnerNode,
-                        ec2Details: ec2Details
-                    };
-                });
+                partnerNode = partnerNode?.map((perPartnerNode: DiscoverHostInterface) => ({
+                    ...perPartnerNode,
+                    ec2Details
+                }));
 
                 let anyManagedNode = false;
                 partnerNode?.map((perPartnerNode: DiscoverHostInterface) => {
@@ -625,9 +599,8 @@ export const getPrimaryPgsqlNode = (
                             );
                         }
                     });
-                    return;
                 } else {
-                    let combinedData: any = combinePgsqlClusterData(partnerNode, removeRows);
+                    const combinedData: any = combinePgsqlClusterData(partnerNode, removeRows);
                     if (combinedData) {
                         clusterDiscoveredHost[
                             uniqueHostRow(combinedData?.key, host?.credentialId || '', host?.regionId || '')
@@ -648,7 +621,6 @@ export const getPrimaryPgsqlNode = (
                             uniqueHostRow(host?.ec2InstanceId, host?.credentialId || '', host?.regionId || '')
                         );
                     }
-                    return;
                 }
             }
         }
@@ -661,9 +633,9 @@ export const combineClusterData = (
     removeRows: Array<string>
 ) => {
     let result = null;
-    let key = (node?.ec2InstanceId || '') + ',' + (partner?.ec2InstanceId || '');
-    let sqlServerInstancesList: Array<SQLServerInstancesDiscovered> = [];
-    let uniqueSqlServerList: Array<string> = [];
+    const key = `${node?.ec2InstanceId || ''},${partner?.ec2InstanceId || ''}`;
+    const sqlServerInstancesList: Array<SQLServerInstancesDiscovered> = [];
+    const uniqueSqlServerList: Array<string> = [];
     let primaryNode: string = '';
     node?.sqlServerInstances?.map((perRow: SQLServerInstancesDiscovered) => {
         primaryNode = findingRunningInstance(
@@ -695,7 +667,7 @@ export const combineClusterData = (
             key: primaryNode,
             data: {
                 ...node,
-                key: key,
+                key,
                 sqlServerInstances: sqlServerInstancesList
             }
         };
@@ -707,7 +679,7 @@ export const combineClusterData = (
             key: primaryNode,
             data: {
                 ...partner,
-                key: key,
+                key,
                 sqlServerInstances: sqlServerInstancesList
             }
         };
@@ -717,9 +689,9 @@ export const combineClusterData = (
 
 export const combinePgsqlClusterData = (allNodes: Array<DiscoverPgsqlHostInterface>, removeRows: Array<string>) => {
     let result = null;
-    let key = allNodes?.map(perPartner => perPartner.ec2InstanceId).join(',') || '';
-    let pgsqlInstanceList: Array<PgsqlInstancesDiscovered> = [];
-    let uniqueSqlServerList: Array<string> = [];
+    const key = allNodes?.map(perPartner => perPartner.ec2InstanceId).join(',') || '';
+    const pgsqlInstanceList: Array<PgsqlInstancesDiscovered> = [];
+    const uniqueSqlServerList: Array<string> = [];
     let primaryNode: string = '';
 
     primaryNode =
@@ -753,7 +725,7 @@ export const combinePgsqlClusterData = (allNodes: Array<DiscoverPgsqlHostInterfa
                 key: primaryNode,
                 data: {
                     ...node,
-                    key: key,
+                    key,
                     sqlServerInstances: pgsqlInstanceList
                 }
             };
@@ -782,9 +754,9 @@ export const findingRunningInstance = (
             primaryNode = node?.ec2InstanceId || '';
         }
     } else {
-        let partnerInstance = partner?.sqlServerInstances?.filter((perPartnerRow: any) => {
-            return perPartnerRow?.sqlServerInstance === perRow?.sqlServerInstance;
-        });
+        const partnerInstance = partner?.sqlServerInstances?.filter(
+            (perPartnerRow: any) => perPartnerRow?.sqlServerInstance === perRow?.sqlServerInstance
+        );
         if (partnerInstance && partnerInstance?.length > 0) {
             uniqueSqlServerList.push(partnerInstance[0]?.sqlServerInstance!);
             sqlServerInstancesList.push(partnerInstance[0]);
@@ -811,7 +783,7 @@ export const formatDiscoveredInventoryData = (
     if (!discoveredData) {
         return result;
     }
-    let state = store.getState();
+    const state = store.getState();
     const { credentialMapping, regionMapping } = state?.headers;
     discoveredData?.map((perRow: DiscoverHostInterface) => {
         if (
@@ -865,7 +837,7 @@ export const formatDiscoveredPgsqlInventoryData = (
     if (!discoveredData) {
         return result;
     }
-    let state = store.getState();
+    const state = store.getState();
     const { credentialMapping, regionMapping } = state?.headers;
     discoveredData?.map((perRow: DiscoverPgsqlHostInterface) => {
         if (
@@ -910,7 +882,7 @@ export const formatDiscoveredOracleInventoryData = (discoveredData: Array<Discov
     if (!discoveredData) {
         return result;
     }
-    let state = store.getState();
+    const state = store.getState();
     const { credentialMapping, regionMapping } = state?.headers;
     discoveredData?.map((perRow: DiscoverHostInterface) => {
         result = {
@@ -930,12 +902,12 @@ export const formatDiscoveredRows = (
     regionMapping: any,
     type: string
 ) => {
-    let totalInstanceCount = discoveredRow?.sqlServerInstances?.length || 0;
-    let ssmState = getDiscoverSsmState(discoveredRow);
-    let perInstanceStatus = getDiscoveredPerInstanceStatus(discoveredRow, ssmState);
-    let installationMode = getDiscoverInstallationMode(discoveredRow, type);
-    let actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
-    let ec2Details = [
+    const totalInstanceCount = discoveredRow?.sqlServerInstances?.length || 0;
+    const ssmState = getDiscoverSsmState(discoveredRow);
+    const perInstanceStatus = getDiscoveredPerInstanceStatus(discoveredRow, ssmState);
+    const installationMode = getDiscoverInstallationMode(discoveredRow, type);
+    const actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
+    const ec2Details = [
         {
             id: discoveredRow?.ec2InstanceId,
             name: discoveredRow?.ec2InstanceName
@@ -949,7 +921,7 @@ export const formatDiscoveredRows = (
         discoveredRowKey: discoveredRow?.key,
         name: getDiscoverHostname(discoveredRow, type),
         status: ssmState, // discover status will depends on ssmState only
-        ssmState: ssmState,
+        ssmState,
         totalInstance: totalInstanceCount,
         managedInstance: 0,
         serverInstallationMode: installationMode,
@@ -963,7 +935,7 @@ export const formatDiscoveredRows = (
         loading: false,
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
-        ec2Details: ec2Details,
+        ec2Details,
         hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE,
         // **** Below values will get from Instances API *****
         // estimatedUsageCost: {}, // Initially it will be blank
@@ -985,12 +957,12 @@ export const formatPgsqlDiscoveredRows = (
     regionMapping: any,
     type: string
 ) => {
-    let totalInstanceCount = discoveredRow?.pgsqlServerInstances?.length || 0;
-    let ssmState = getDiscoverSsmState(discoveredRow);
-    let perInstanceStatus = getPgsqlPerInstanceStatus(discoveredRow, ssmState);
-    let installationMode = getDiscoverInstallationMode(discoveredRow, type);
-    let actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
-    let ec2Details = [
+    const totalInstanceCount = discoveredRow?.pgsqlServerInstances?.length || 0;
+    const ssmState = getDiscoverSsmState(discoveredRow);
+    const perInstanceStatus = getPgsqlPerInstanceStatus(discoveredRow, ssmState);
+    const installationMode = getDiscoverInstallationMode(discoveredRow, type);
+    const actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
+    const ec2Details = [
         {
             id: discoveredRow?.ec2InstanceId,
             name: discoveredRow?.ec2InstanceName
@@ -1004,7 +976,7 @@ export const formatPgsqlDiscoveredRows = (
         discoveredRowKey: discoveredRow?.key,
         name: getDiscoverHostname(discoveredRow, type),
         status: ssmState, // discover status will depends on ssmState only
-        ssmState: ssmState,
+        ssmState,
         totalInstance: totalInstanceCount,
         managedInstance: 0,
         serverInstallationMode: installationMode,
@@ -1039,12 +1011,12 @@ export const formatOracleDiscoveredRows = (
     credentialMapping: any,
     regionMapping: any
 ) => {
-    let totalInstanceCount = discoveredRow?.databaseInstanceDetails?.length || 0;
-    let ssmState = getDiscoverSsmState(discoveredRow);
-    let perInstanceStatus = getOracleDiscoverPerInstanceStatus(discoveredRow, ssmState);
-    let installationMode = discoveredRow?.oracleServerDeploymentType || '';
-    let actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
-    let ec2Details = [
+    const totalInstanceCount = discoveredRow?.databaseInstanceDetails?.length || 0;
+    const ssmState = getDiscoverSsmState(discoveredRow);
+    const perInstanceStatus = getOracleDiscoverPerInstanceStatus(discoveredRow, ssmState);
+    const installationMode = discoveredRow?.oracleServerDeploymentType || '';
+    const actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
+    const ec2Details = [
         {
             id: discoveredRow?.ec2InstanceId,
             name: discoveredRow?.ec2InstanceName
@@ -1056,7 +1028,7 @@ export const formatOracleDiscoveredRows = (
         ec2InstanceName: discoveredRow?.ec2InstanceName,
         name: discoveredRow?.ec2InstanceName,
         status: ssmState, // discover status will depends on ssmState only
-        ssmState: ssmState,
+        ssmState,
         totalInstance: totalInstanceCount,
         managedInstance: 0,
         serverInstallationMode: installationMode,
@@ -1070,7 +1042,7 @@ export const formatOracleDiscoveredRows = (
         loading: false,
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
-        ec2Details: ec2Details,
+        ec2Details,
         hostType: GENERAL.ORACLE_TYPE,
         // **** Below values will get from Instances API *****
         // estimatedUsageCost: {}, // Initially it will be blank
@@ -1114,12 +1086,10 @@ export const getDiscoverSsmState = (row: DiscoverHostInterface) => {
     if (row?.ssmState && row?.ssmState !== INVENTORY_STATUS.NOT_AVAILABLE) {
         if (row?.ssmState?.toLowerCase() === INVENTORY_STATUS.SSM_CONNECTED) {
             return INVENTORY_STATUS.ONLINE;
-        } else {
-            return INVENTORY_STATUS.OFFLINE;
         }
-    } else {
         return INVENTORY_STATUS.OFFLINE;
     }
+    return INVENTORY_STATUS.OFFLINE;
 };
 
 export const getDiscoverInstallationMode = (row: any, type: string) => {
@@ -1157,7 +1127,7 @@ export const getDiscoverInstallationMode = (row: any, type: string) => {
 };
 
 export const getAllDiscoverInstallationMode = (row: DiscoverHostInterface) => {
-    let installationMode: Array<string> = [];
+    const installationMode: Array<string> = [];
     if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
         for (let i = 0; i < row?.sqlServerInstances?.length; i++) {
             const val = row?.sqlServerInstances[i];
@@ -1176,14 +1146,13 @@ export const getAllDiscoverInstallationMode = (row: DiscoverHostInterface) => {
             }
         }
         return installationMode;
-    } else {
-        return [];
     }
+    return [];
 };
 
 export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmState: string) => {
     let result: Array<StatusObjInterface> = [];
-    let state = store.getState();
+    const state = store.getState();
     const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj;
     if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
         row?.sqlServerInstances?.map((perRow: SQLServerInstancesDiscovered) => {
@@ -1194,7 +1163,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                 const isWindowsDomainAuthentication = perRow?.windowsDomainUserAuthentication;
                 let fsxCredentialValidationFailed;
                 let storageTypeCheck;
-                let fsxIdObject = perRow?.storage?.find(
+                const fsxIdObject = perRow?.storage?.find(
                     (item: DiscoveredStorageObj) => item.type === DETECT_HOST_VAR.FSXN
                 );
                 if (perRow?.storage && perRow?.storage?.length > 0) {
@@ -1216,7 +1185,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                     fsxCredentialValidationFailed ||
                     !storageTypeCheck
                 ) {
-                    let detectOptionObj = getDetectOptionForInstance(
+                    const detectOptionObj = getDetectOptionForInstance(
                         perRow,
                         row?.ssmState,
                         fsxIdObject?.id,
@@ -1251,7 +1220,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
 
 export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterface, ssmState: string) => {
     let result: Array<StatusObjInterface> = [];
-    let state = store.getState();
+    const state = store.getState();
     const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj;
     if (row?.databaseInstanceDetails && row?.databaseInstanceDetails?.length > 0) {
         row?.databaseInstanceDetails?.map((perRow: OracleInstancesDiscovered) => {
@@ -1259,7 +1228,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
             if (perRow?.instanceName) {
                 let fsxCredentialValidationFailed;
                 let storageTypeCheck;
-                let fsxIdObject = perRow?.storage?.find(
+                const fsxIdObject = perRow?.storage?.find(
                     (item: DiscoveredStorageObj) => item.type === DETECT_HOST_VAR.FSXN
                 );
                 if (perRow?.storage && perRow?.storage?.length > 0) {
@@ -1276,7 +1245,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                 }
 
                 if (ssmState !== INVENTORY_STATUS.ONLINE || fsxCredentialValidationFailed || !storageTypeCheck) {
-                    let detectOptionObj = getDetectOptionForInstance(
+                    const detectOptionObj = getDetectOptionForInstance(
                         perRow,
                         row?.ssmState,
                         fsxIdObject?.id,
@@ -1309,7 +1278,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
 
 export const getPgsqlPerInstanceStatus = (row: DiscoverPgsqlHostInterface, ssmState: string) => {
     let result: Array<StatusObjInterface> = [];
-    let state = store.getState();
+    const state = store.getState();
     const fsxCredentialStatusObj = state?.inventoryV2?.fsxCredentialStatusObj;
     if (row?.pgsqlServerInstances && row?.pgsqlServerInstances?.length > 0) {
         row?.pgsqlServerInstances?.map((perRow: PgsqlInstancesDiscovered) => {
@@ -1318,7 +1287,7 @@ export const getPgsqlPerInstanceStatus = (row: DiscoverPgsqlHostInterface, ssmSt
                 const isdefaultAuth = perRow?.defaultAuth;
                 let fsxCredentialValidationFailed;
                 let storageTypeCheck;
-                let fsxIdObject = perRow?.storage?.find(
+                const fsxIdObject = perRow?.storage?.find(
                     (item: DiscoveredStorageObj) => item.type === DETECT_HOST_VAR.FSXN
                 );
                 if (perRow?.storage && perRow?.storage?.length > 0) {
@@ -1340,7 +1309,7 @@ export const getPgsqlPerInstanceStatus = (row: DiscoverPgsqlHostInterface, ssmSt
                     fsxCredentialValidationFailed ||
                     !storageTypeCheck
                 ) {
-                    let detectOptionObj = getDetectOptionForInstance(
+                    const detectOptionObj = getDetectOptionForInstance(
                         perRow,
                         row?.ssmState,
                         fsxIdObject?.id,
@@ -1397,7 +1366,7 @@ export const getDetectOptionForInstance = (
     if (type === GENERAL.POSTGRESQL_TYPE) {
         auth = perRow?.defaultAuth;
     }
-    let isSqlRunning = state === DETECT_HOST_VAR.RUNNING || state === STATUS_CONST.OPEN;
+    const isSqlRunning = state === DETECT_HOST_VAR.RUNNING || state === STATUS_CONST.OPEN;
     if (ssmState?.toLowerCase() !== INVENTORY_STATUS.SSM_CONNECTED) {
         detectOption = DETECT_HOST_VAR.HIDE;
         detectOptionDisableMsg = GENERAL.SSM_CONNECTION_DOWN;
@@ -1411,17 +1380,17 @@ export const getDetectOptionForInstance = (
         detectOption = DETECT_HOST_VAR.SHOW;
     }
     return {
-        detectOption: detectOption,
-        detectOptionDisableMsg: detectOptionDisableMsg
+        detectOption,
+        detectOptionDisableMsg
     };
 };
 
 export const getDiscoveredActions = (row: Array<StatusObjInterface>, installationMode: string | null) => {
     let action = '';
     let actionDisable = false;
-    let undetected = row?.filter((per: StatusObjInterface) => per?.status === INVENTORY_STATUS.UNDETECTED);
-    let unmanaged = row?.filter((per: StatusObjInterface) => per?.status === INVENTORY_STATUS.UNMANAGED);
-    let isStorage = row?.find((per: StatusObjInterface) => {
+    const undetected = row?.filter((per: StatusObjInterface) => per?.status === INVENTORY_STATUS.UNDETECTED);
+    const unmanaged = row?.filter((per: StatusObjInterface) => per?.status === INVENTORY_STATUS.UNMANAGED);
+    const isStorage = row?.find((per: StatusObjInterface) => {
         if (per?.storageType && per?.storageType?.length > 0) {
             return per;
         }
@@ -1446,7 +1415,7 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>, installatio
     });
     if (!isFsxn && isStorage) {
         action = INVENTORY_ACTIONS.EXPLORE_SAVINGS;
-        actionDisable = undetected?.length > 0 && unmanaged?.length === 0 ? true : false;
+        actionDisable = !!(undetected?.length > 0 && unmanaged?.length === 0);
     } else {
         action = INVENTORY_ACTIONS.MANAGE;
         if ((undetected?.length > 0 && unmanaged?.length > 0) || (undetected?.length === 0 && unmanaged?.length > 0)) {
@@ -1469,10 +1438,10 @@ export const getDiscoveredActions = (row: Array<StatusObjInterface>, installatio
         storageType = GENERAL.EBS;
     }
     return {
-        action: action,
-        actionDisable: actionDisable,
-        storageType: storageType,
-        isDetected: unmanaged?.length > 0 ? true : false
+        action,
+        actionDisable,
+        storageType,
+        isDetected: unmanaged?.length > 0
     };
 };
 
@@ -1496,7 +1465,7 @@ export const formatDiscoverInstanceData = (
     row: DiscoverHostInterface,
     perInstanceStatus: Array<StatusObjInterface>
 ) => {
-    let instanceRows = row?.sqlServerInstances?.map((perRow: SQLServerInstancesDiscovered) => {
+    const instanceRows = row?.sqlServerInstances?.map((perRow: SQLServerInstancesDiscovered) => {
         const statusObj = perInstanceStatus?.filter(
             (per: StatusObjInterface) => per?.name === perRow?.sqlServerInstance
         );
@@ -1535,7 +1504,7 @@ export const formatPgsqlDiscoverInstanceData = (
     row: DiscoverPgsqlHostInterface,
     perInstanceStatus: Array<StatusObjInterface>
 ) => {
-    let instanceRows = row?.pgsqlServerInstances?.map((perRow: PgsqlInstancesDiscovered) => {
+    const instanceRows = row?.pgsqlServerInstances?.map((perRow: PgsqlInstancesDiscovered) => {
         const statusObj = perInstanceStatus?.filter(
             (per: StatusObjInterface) => per?.name === perRow?.pgsqlServerInstanceName
         );
@@ -1571,7 +1540,7 @@ export const formatOracleDiscoverInstanceData = (
     row: DiscoverOracleHostInterface,
     perInstanceStatus: Array<StatusObjInterface>
 ) => {
-    let instanceRows = row?.databaseInstanceDetails?.map((perRow: OracleInstancesDiscovered) => {
+    const instanceRows = row?.databaseInstanceDetails?.map((perRow: OracleInstancesDiscovered) => {
         const statusObj = perInstanceStatus?.filter((per: StatusObjInterface) => per?.name === perRow?.instanceName);
         const instanceStatus =
             perRow?.instanceState === STATUS_CONST.OPEN
@@ -1734,9 +1703,9 @@ export const getMhUnmanagedInstances = (
     databaseHostsData: { [key: string]: InventoryTableData },
     runningInstanceList: Array<string>
 ) => {
-    let instanceList: Array<string> = [];
-    let updatedState = store.getState();
-    let { headerSelectedCred, headerSelectedRegion }: any = updatedState?.headers;
+    const instanceList: Array<string> = [];
+    const updatedState = store.getState();
+    const { headerSelectedCred, headerSelectedRegion }: any = updatedState?.headers;
     Object.keys(databaseHostsData).map((key: string) => {
         if (
             runningInstanceList.includes(
@@ -1766,7 +1735,7 @@ export const getUnmanagedHostInstances = (
     databaseHostsData: { [key: string]: InventoryTableData },
     runningInstanceList: Array<string>
 ) => {
-    let instanceList: Array<string> = [];
+    const instanceList: Array<string> = [];
     Object.keys(databaseHostsData).map((key: string) => {
         if (
             runningInstanceList.includes(
@@ -1800,7 +1769,7 @@ export const getUnmanagedPgsqlHostInstances = (
     databaseHostsData: { [key: string]: InventoryTableData },
     runningPgsqlInstanceListRef: Array<string>
 ) => {
-    let instanceList: Array<string> = [];
+    const instanceList: Array<string> = [];
     Object.keys(databaseHostsData).map((key: string) => {
         if (
             runningPgsqlInstanceListRef.includes(
@@ -1834,7 +1803,7 @@ export const getUnmanagedOracleHostInstances = (
     databaseHostsData: { [key: string]: InventoryTableData },
     runningOracleInstanceListRef: Array<string>
 ) => {
-    let instanceList: Array<string> = [];
+    const instanceList: Array<string> = [];
     Object.keys(databaseHostsData).forEach((key: string) => {
         if (
             runningOracleInstanceListRef.includes(
@@ -1879,7 +1848,7 @@ export const updateInstancesApiResponse = (
             let inventoryRow;
             let resourceId = '';
             Object.keys(inventoryTableData).map((inst: string) => {
-                let currInst = inventoryTableData[inst];
+                const currInst = inventoryTableData[inst];
                 if (
                     currInst?.ec2InstanceId &&
                     currInst?.credentialId &&
@@ -1945,7 +1914,7 @@ export const updateInventoryDatawithInstancesRes = (
             const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data]);
             result = {
                 ...result,
-                allocatedCapacity: allocatedCapacity,
+                allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
             };
         }
@@ -1967,9 +1936,9 @@ export const updateInventoryDatawithInstancesRes = (
             };
         } else if (partnerInstanceData && !partnerInstanceData?.loading) {
             const ec2Details = getEc2DetailsForUnmanagedHost(instanceRow, inventoryRow);
-            let mergedCost = mergeEstimatedCost(instanceRow, partnerInstanceData);
-            let allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data, partnerInstanceData?.data]);
-            let ebsResourceInfo = mergeEbsResourceInfo(instanceRow, partnerInstanceData);
+            const mergedCost = mergeEstimatedCost(instanceRow, partnerInstanceData);
+            const allocatedCapacity = getMergedAllocatedCapacity([instanceRow?.data, partnerInstanceData?.data]);
+            const ebsResourceInfo = mergeEbsResourceInfo(instanceRow, partnerInstanceData);
             result = {
                 ...inventoryRow,
                 name: inventoryRow?.name || instanceRow?.data?.name,
@@ -1978,7 +1947,7 @@ export const updateInventoryDatawithInstancesRes = (
                 ec2Details: ec2Details?.length > 0 ? ec2Details : inventoryRow?.ec2Details,
                 estimatedUsageCost: mergedCost,
                 totalCost: getTotalCost(mergedCost || {}),
-                allocatedCapacity: allocatedCapacity,
+                allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: true,
                 sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
@@ -1987,8 +1956,8 @@ export const updateInventoryDatawithInstancesRes = (
                     partnerInstanceData?.data,
                     inventoryRow
                 ),
-                //For explore savings
-                ebsResourceInfo: ebsResourceInfo,
+                // For explore savings
+                ebsResourceInfo,
                 clusterNodeDetails: instanceRow?.data?.clusterNodeDetails
             };
         } else {
@@ -2002,7 +1971,7 @@ export const updateInventoryDatawithInstancesRes = (
                 ec2Details: ec2Details?.length > 0 ? ec2Details : inventoryRow?.ec2Details,
                 estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
                 totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
-                allocatedCapacity: allocatedCapacity,
+                allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: false,
                 sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
@@ -2011,7 +1980,7 @@ export const updateInventoryDatawithInstancesRes = (
                     inventoryRow,
                     instanceRow?.isManagedHost
                 ),
-                //For explore savings
+                // For explore savings
                 ebsResourceInfo: instanceRow?.data?.ebsResourceInfo,
                 clusterNodeDetails: instanceRow?.data?.clusterNodeDetails
             };
@@ -2025,16 +1994,16 @@ export const updateInventoryDatawithInstancesRes = (
 };
 
 export const partnerNodeInstanceData = (partnerInstanceId: string) => {
-    let updatedState = store.getState();
-    let { mssqlInstancesData }: any = updatedState?.inventoryV2;
+    const updatedState = store.getState();
+    const { mssqlInstancesData }: any = updatedState?.inventoryV2;
     return mssqlInstancesData?.[partnerInstanceId];
 };
 
 export const mergeEstimatedCost = (instanceData: any, partnerInstanceData: any) => {
     let fsxnCost = 0;
     let fsxwCost = 0;
-    let uniqueFsxnId: Array<String> = [];
-    let uniqueFsxwId: Array<String> = [];
+    const uniqueFsxnId: Array<string> = [];
+    const uniqueFsxwId: Array<string> = [];
     instanceData?.data?.fsxnResourceInfo?.map((perFsx: any) => {
         if (!uniqueFsxnId.includes(perFsx?.id)) {
             fsxnCost += perFsx?.capacityCost;
@@ -2064,19 +2033,19 @@ export const mergeEstimatedCost = (instanceData: any, partnerInstanceData: any) 
             uniqueFsxwId.push(perFsxw?.id);
         }
     });
-    let estimatedUsageCost = {
+    const estimatedUsageCost = {
         compute:
             (instanceData?.data?.estimatedUsageCost?.compute || 0) +
             (partnerInstanceData?.data?.estimatedUsageCost?.compute || 0),
         storage: {
-            fsxw: fsxwCost
-                ? fsxwCost
-                : (instanceData?.data?.estimatedUsageCost?.storage?.fsxw || 0) +
-                  (partnerInstanceData?.data?.estimatedUsageCost?.storage?.fsxw || 0),
-            fsxn: fsxnCost
-                ? fsxnCost
-                : (instanceData?.data?.estimatedUsageCost?.storage?.fsxn || 0) +
-                  (partnerInstanceData?.data?.estimatedUsageCost?.storage?.fsxn || 0),
+            fsxw:
+                fsxwCost ||
+                (instanceData?.data?.estimatedUsageCost?.storage?.fsxw || 0) +
+                    (partnerInstanceData?.data?.estimatedUsageCost?.storage?.fsxw || 0),
+            fsxn:
+                fsxnCost ||
+                (instanceData?.data?.estimatedUsageCost?.storage?.fsxn || 0) +
+                    (partnerInstanceData?.data?.estimatedUsageCost?.storage?.fsxn || 0),
             ebs:
                 (instanceData?.data?.estimatedUsageCost?.storage?.ebs || 0) +
                 (partnerInstanceData?.data?.estimatedUsageCost?.storage?.ebs || 0)
@@ -2095,8 +2064,8 @@ export const mergeEstimatedCost = (instanceData: any, partnerInstanceData: any) 
 };
 
 export const mergeEbsResourceInfo = (instanceRow: any, partnerInstanceData: any) => {
-    let instanceEbsData = instanceRow?.data?.ebsResourceInfo || [];
-    let partnerInstanceEbsData = partnerInstanceData?.data?.ebsResourceInfo || [];
+    const instanceEbsData = instanceRow?.data?.ebsResourceInfo || [];
+    const partnerInstanceEbsData = partnerInstanceData?.data?.ebsResourceInfo || [];
     return [...instanceEbsData, ...partnerInstanceEbsData];
 };
 
@@ -2104,9 +2073,9 @@ export const getMergedAllocatedCapacity = (nodeList: Array<ManagedHostsRowInterf
     let fsxnCapacity = 0;
     let fsxwCapacity = 0;
     let ebsCapacity = 0;
-    let uniqueFsxnId: Array<String> = [];
-    let uniqueFsxwId: Array<String> = [];
-    let uniqueVolId: Array<String> = [];
+    const uniqueFsxnId: Array<string> = [];
+    const uniqueFsxwId: Array<string> = [];
+    const uniqueVolId: Array<string> = [];
     nodeList?.map(node => {
         node?.fsxnResourceInfo?.map((perFsx: any) => {
             if (!uniqueFsxnId.includes(perFsx?.id)) {
@@ -2134,7 +2103,7 @@ export const getMergedAllocatedCapacity = (nodeList: Array<ManagedHostsRowInterf
         });
     });
 
-    let allocatedCapacity = fsxnCapacity + fsxwCapacity + ebsCapacity;
+    const allocatedCapacity = fsxnCapacity + fsxwCapacity + ebsCapacity;
     return allocatedCapacity;
 };
 
@@ -2157,7 +2126,7 @@ export const getEc2DetailsForUnmanagedHost = (
     }
     if (instanceRow?.data?.clusterNodeDetails) {
         if (instanceId) {
-            let partnerNode = instanceRow?.data?.clusterNodeDetails?.filter(
+            const partnerNode = instanceRow?.data?.clusterNodeDetails?.filter(
                 perInst => perInst?.ec2InstanceId !== instanceId
             );
             if (partnerNode && partnerNode?.length > 0) {
@@ -2168,8 +2137,8 @@ export const getEc2DetailsForUnmanagedHost = (
                 });
             }
         } else {
-            let node1 = instanceRow?.data?.clusterNodeDetails?.[0];
-            let node2 = instanceRow?.data?.clusterNodeDetails?.[1];
+            const node1 = instanceRow?.data?.clusterNodeDetails?.[0];
+            const node2 = instanceRow?.data?.clusterNodeDetails?.[1];
             if (node1) {
                 ec2Details.push({
                     id: node1?.ec2InstanceId,
@@ -2263,7 +2232,7 @@ export const updateSqlServerInstancesForBothNodes = (
                 performance: perfData?.performance || instRow?.performance || perRow?.performance,
                 storage: instRow?.storage || perRow?.storage,
                 storageSavingsText: getStorageSavingsText(perRow || {}),
-                allocatedCapacity: allocatedCapacity,
+                allocatedCapacity,
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 databaseServer: perRow?.databaseServer,
                 fileSystemDeploymentMode:
@@ -2288,9 +2257,7 @@ export const updateSqlServerInstancesForUnmanaged = (
         // To check if manage/unmanage/undetected mixed case
         let nonManagedStatus: any = [];
         if (isManagedHost) {
-            const isAllManaged = instanceData?.databaseInstanceDetails?.every(perRow => {
-                return perRow?.isManaged ? true : false;
-            });
+            const isAllManaged = instanceData?.databaseInstanceDetails?.every(perRow => !!perRow?.isManaged);
             if (!isAllManaged) {
                 nonManagedStatus = getInstanceStatusForMixedCase(instanceData);
                 // to call data for mixed case. use in statusColText for unmanaged case
@@ -2327,7 +2294,7 @@ export const updateSqlServerInstancesForUnmanaged = (
                     performance: instRow?.performance || perfData?.performance,
                     storage: instRow?.storage || perRow?.storage,
                     storageSavingsText: getStorageSavingsText(perRow || {}),
-                    allocatedCapacity: allocatedCapacity,
+                    allocatedCapacity,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                     databaseServer: instRow?.databaseServer || perRow?.databaseServer,
                     statusColText:
@@ -2337,20 +2304,19 @@ export const updateSqlServerInstancesForUnmanaged = (
                         getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
                     sqlServerDeploymentType: instRow?.sqlServerDeploymentType || perRow?.sqlServerDeploymentType
                 };
-            } else {
-                const perfData = getPerfUnmanagedData(
-                    existingInstanceRow?.ec2InstanceId || '',
-                    existingInstanceRow?.credentialId || '',
-                    existingInstanceRow?.regionId || '',
-                    instRow
-                );
-                return {
-                    ...instRow,
-                    loading: false,
-                    protection: instRow?.protection || perfData?.protection,
-                    performance: instRow?.performance || perfData?.performance
-                };
             }
+            const perfData = getPerfUnmanagedData(
+                existingInstanceRow?.ec2InstanceId || '',
+                existingInstanceRow?.credentialId || '',
+                existingInstanceRow?.regionId || '',
+                instRow
+            );
+            return {
+                ...instRow,
+                loading: false,
+                protection: instRow?.protection || perfData?.protection,
+                performance: instRow?.performance || perfData?.performance
+            };
         });
     }
     return instanceRows;
@@ -2368,8 +2334,8 @@ export const getPerfUnmanagedData = (
     // pgsqlInstancesData - This is used for PGSQL as we get PGSQL protection and perf data together with cost
     // Will handle oracle also
     const { perfMssqlInstancesData, pgsqlInstancesData, oracleInstancesData } = updatedState.inventoryV2;
-    let uniqueInstanceId = uniqueHostRow(instanceId, credentialId, regionId);
-    let uniquePartnerId = uniqueHostRow(partnerId || '', credentialId, regionId);
+    const uniqueInstanceId = uniqueHostRow(instanceId, credentialId, regionId);
+    const uniquePartnerId = uniqueHostRow(partnerId || '', credentialId, regionId);
     let perfData1: any = null;
     let perfData2: any = null;
     let perfData: any = null;
@@ -2401,27 +2367,29 @@ export const getPerfUnmanagedData = (
                 protection: perRow1?.protection || perRow2?.protection,
                 performance: perRow1?.performance || perRow2?.performance
             };
-        } else if (perfData1?.loading || perfData2?.loading) {
+        }
+        if (perfData1?.loading || perfData2?.loading) {
             return {
                 loading: true,
                 protection: null,
                 performance: null
             };
-        } else {
-            return {
-                loading: false,
-                protection: null,
-                performance: null
-            };
         }
-    } else if (perfData) {
+        return {
+            loading: false,
+            protection: null,
+            performance: null
+        };
+    }
+    if (perfData) {
         if (perfData?.loading) {
             return {
                 loading: true,
                 protection: null,
                 performance: null
             };
-        } else if (perfData?.data?.databaseInstancesSummary && perfData?.data?.databaseInstancesSummary?.length > 0) {
+        }
+        if (perfData?.data?.databaseInstancesSummary && perfData?.data?.databaseInstancesSummary?.length > 0) {
             const perRow = perfData?.data?.databaseInstancesSummary?.find(
                 (per: DatabaseInstancesSummaryInterface) =>
                     (per?.databaseInstanceName ?? '').toLowerCase() ===
@@ -2432,23 +2400,22 @@ export const getPerfUnmanagedData = (
                 protection: perRow?.protection,
                 performance: perRow?.performance
             };
-        } else {
-            return {
-                loading: false,
-                protection: null,
-                performance: null
-            };
         }
+        return {
+            loading: false,
+            protection: null,
+            performance: null
+        };
     }
 };
 
 export const getExploreSavingsRows = (inventoryTableData: { [key: string]: InventoryTableData }) => {
     // If ES row is disabled than it should come in inventory but not in explore savings table
-    let nonFsxnStorageList: Array<InventoryTableData> = [];
+    const nonFsxnStorageList: Array<InventoryTableData> = [];
     const state = store.getState();
-    const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
+    const { removeSecNodeDiscoveredList } = state.inventoryV2;
     Object.keys(inventoryTableData).map((key: string) => {
-        let item = inventoryTableData[key];
+        const item = inventoryTableData[key];
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
         }
@@ -2474,8 +2441,8 @@ export const updateInstanceStatus = (
     responseData?: any,
     resourceId?: any
 ) => {
-    let updatedState = store.getState();
-    let { inventoryTableData }: any = updatedState?.inventoryV2;
+    const updatedState = store.getState();
+    const { inventoryTableData }: any = updatedState?.inventoryV2;
 
     let targettedHostIdVal = inventoryTableData?.[
         uniqueHostRow(hostData?.resourceId, hostData?.credentialId, hostData?.regionId)
@@ -2486,7 +2453,7 @@ export const updateInstanceStatus = (
         : '';
     if (!targettedHostIdVal) {
         Object.keys(inventoryTableData).map((perObj: any) => {
-            let item = inventoryTableData[perObj];
+            const item = inventoryTableData[perObj];
             if (
                 item?.ec2InstanceId === hostData?.ec2InstanceId &&
                 item?.credentialId === hostData?.credentialId &&
@@ -2531,7 +2498,7 @@ export const updateInstanceStatus = (
                 if (instanceInRes?.databaseInstanceName) {
                     return {
                         ...instanceItem,
-                        resourceId: resourceId,
+                        resourceId,
                         databaseInstanceId: instanceInRes.databaseInstanceGuid,
                         statusColText: INVENTORY_STATUS.MANAGED
                     };
@@ -2562,13 +2529,13 @@ export const updateInstanceStatus = (
 };
 
 export const updateInstanceBulkStatus = (action: InstanceActions, response: any) => {
-    let updatedState = store.getState();
-    let { inventoryTableData }: any = updatedState?.inventoryV2;
+    const updatedState = store.getState();
+    const { inventoryTableData }: any = updatedState?.inventoryV2;
     const updatedInventoryTableData = { ...inventoryTableData };
 
     response?.map((hostData: any) => {
-        let successFullInstances: any = [];
-        let failedInstances = [];
+        const successFullInstances: any = [];
+        const failedInstances = [];
         hostData?.instances?.map((item: any) => {
             if (item.status === NOTIFICATION_TYPES.SUCCESS) {
                 successFullInstances.push(item);
@@ -2585,7 +2552,7 @@ export const updateInstanceBulkStatus = (action: InstanceActions, response: any)
             : '';
         if (!targettedHostIdVal) {
             Object.keys(inventoryTableData).map((perObj: any) => {
-                let item = inventoryTableData[perObj];
+                const item = inventoryTableData[perObj];
                 if (
                     item?.ec2InstanceId === hostData?.ec2InstanceId &&
                     item?.credentialId === hostData?.credentialsId &&
@@ -2654,13 +2621,14 @@ export const detectFieldsValidation = (entryData: any) => {
         // Based on authentication type is SQL Server or Windows, check if the respective fields are valid
         if (authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
             return isSqlAuthValid() && isFsxAuthValid();
-        } else if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+        }
+        if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
             return isWindowsAuthValid() && isFsxAuthValid();
         }
         return false;
     }
     // Check if SQL Server fields are valid when SQL Server Authentication is selected
-    else if (
+    if (
         !entryData?.sqlServerAuthentication &&
         !entryData?.windowsAuthentication &&
         !entryData?.windowsDomainUserAuthentication &&
@@ -2669,19 +2637,19 @@ export const detectFieldsValidation = (entryData: any) => {
         return isSqlAuthValid();
     }
     // Check if Windows fields are valid when Windows Authentication is selected
-    else if (
+    if (
         !entryData?.windowsAuthentication &&
         !entryData?.sqlServerAuthentication &&
         !entryData?.windowsDomainUserAuthentication &&
         authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
     ) {
         return isWindowsAuthValid();
-    } else if (entryData?.fsxId && !entryData?.isFsxRegistered) {
+    }
+    if (entryData?.fsxId && !entryData?.isFsxRegistered) {
         if (detectOntapUsername && detectOntapPassword) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 };
 
@@ -2706,7 +2674,7 @@ export const getDiscoveredHostDeploymentV2 = (host: any) => {
 };
 
 export const saveFsxInCredRegisteredObj = (fsxId: string, dispatch: any) => {
-    let state = store.getState();
+    const state = store.getState();
     const { fsxCredentialStatusObj, detectOntapUsername, detectOntapPassword } = state?.inventoryV2;
     if (detectOntapUsername && detectOntapPassword && fsxId) {
         dispatch(
@@ -2716,9 +2684,8 @@ export const saveFsxInCredRegisteredObj = (fsxId: string, dispatch: any) => {
             })
         );
         return true;
-    } else {
-        return false;
     }
+    return false;
 };
 
 export const handleManageTriggerNotification = (instancesToManage: any, dispatch: any, styles: any) => {
@@ -2789,47 +2756,45 @@ export const handleManageNotification = (
                 })
             );
         }
+    } else if (successfullInstances.length === 0) {
+        const msgObj = isDetected
+            ? GENERAL.MULTIPLE_INSTANCE_DETECT_MANAGE_FAILED
+            : GENERAL.MULTIPLE_INSTANCE_MANAGE_FAILED;
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: (
+                    <div className={styles.notification}>
+                        {msgObj[0]}
+                        <span className={styles.bold}>{instancesToManage.length}</span>
+                        {msgObj[1]}
+                        {additionalError}
+                    </div>
+                )
+            })
+        );
+    } else if (successfullInstances.length < instancesToManage.length) {
+        const msgObj = isDetected
+            ? GENERAL.MULTIPLE_INSTANCE_DETECT_MANAGE_PARTIAL_SUCCESS
+            : GENERAL.MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS;
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: `${successfullInstances.length}${msgObj[0]}${instancesToManage.length}${msgObj[1]}`
+            })
+        );
     } else {
-        if (successfullInstances.length === 0) {
-            const msgObj = isDetected
-                ? GENERAL.MULTIPLE_INSTANCE_DETECT_MANAGE_FAILED
-                : GENERAL.MULTIPLE_INSTANCE_MANAGE_FAILED;
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: (
-                        <div className={styles.notification}>
-                            {msgObj[0]}
-                            <span className={styles.bold}>{instancesToManage.length}</span>
-                            {msgObj[1]}
-                            {additionalError}
-                        </div>
-                    )
-                })
-            );
-        } else if (successfullInstances.length < instancesToManage.length) {
-            const msgObj = isDetected
-                ? GENERAL.MULTIPLE_INSTANCE_DETECT_MANAGE_PARTIAL_SUCCESS
-                : GENERAL.MULTIPLE_INSTANCE_MANAGE_PARTIAL_SUCCESS;
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.INFO,
-                    message: `${successfullInstances.length}${msgObj[0]}${instancesToManage.length}${msgObj[1]}`
-                })
-            );
-        } else {
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.SUCCESS,
-                    message: (
-                        <div className={styles.notification}>
-                            <span className={styles.bold}>{instancesToManage.length}</span>
-                            {GENERAL.MUTLI_INSTANCE_MANAGE_SUCCESS[0]}
-                        </div>
-                    )
-                })
-            );
-        }
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                message: (
+                    <div className={styles.notification}>
+                        <span className={styles.bold}>{instancesToManage.length}</span>
+                        {GENERAL.MUTLI_INSTANCE_MANAGE_SUCCESS[0]}
+                    </div>
+                )
+            })
+        );
     }
 };
 
@@ -2837,7 +2802,9 @@ export const getPartnerInstanceId = (instanceRow: InstancesHostsRowInterface, in
     let partnerInstanceId: string = '';
     if (instanceRow?.clusterNodeDetails) {
         if (instanceId) {
-            let partnerNode = instanceRow?.clusterNodeDetails?.filter(perInst => perInst?.ec2InstanceId !== instanceId);
+            const partnerNode = instanceRow?.clusterNodeDetails?.filter(
+                perInst => perInst?.ec2InstanceId !== instanceId
+            );
             if (partnerNode && partnerNode?.length > 0) {
                 partnerInstanceId = partnerNode[0]?.ec2InstanceId || '';
             }
@@ -2847,7 +2814,7 @@ export const getPartnerInstanceId = (instanceRow: InstancesHostsRowInterface, in
 };
 
 export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
-    let awsProtection = val?.protection?.isAwsBackupEnabled;
+    const awsProtection = val?.protection?.isAwsBackupEnabled;
     let protectionText: any = '';
     if (fsxType) {
         if (awsProtection?.[fsxType] && String(awsProtection?.[fsxType])?.toLowerCase() !== GENERAL.NOT_AVAILABLE) {
@@ -2859,24 +2826,22 @@ export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
         } else {
             protectionText = GENERAL.NOT_AVAILABLE;
         }
+    } else if (
+        (awsProtection?.fsxn && String(awsProtection?.fsxn)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+        (awsProtection?.fsxw && String(awsProtection?.fsxw)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+        (awsProtection?.ebs && String(awsProtection?.ebs)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
+    ) {
+        protectionText = true;
+    } else if (
+        String(awsProtection?.fsxn)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+        String(awsProtection?.fsxw)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+        String(awsProtection?.ebs)?.toLowerCase() === GENERAL.NOT_AVAILABLE
+    ) {
+        protectionText = GENERAL.NOT_AVAILABLE;
+    } else if (awsProtection) {
+        protectionText = false;
     } else {
-        if (
-            (awsProtection?.fsxn && String(awsProtection?.fsxn)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
-            (awsProtection?.fsxw && String(awsProtection?.fsxw)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
-            (awsProtection?.ebs && String(awsProtection?.ebs)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
-        ) {
-            protectionText = true;
-        } else if (
-            String(awsProtection?.fsxn)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
-            String(awsProtection?.fsxw)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
-            String(awsProtection?.ebs)?.toLowerCase() === GENERAL.NOT_AVAILABLE
-        ) {
-            protectionText = GENERAL.NOT_AVAILABLE;
-        } else if (awsProtection) {
-            protectionText = false;
-        } else {
-            protectionText = GENERAL.NOT_AVAILABLE;
-        }
+        protectionText = GENERAL.NOT_AVAILABLE;
     }
 
     return protectionText;
@@ -2885,7 +2850,7 @@ export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
 export const getProtectionText = (data: any) => {
     let protectionText = '';
     let fsxType = '';
-    let fileSystemType = data?.fileSystemType || '';
+    const fileSystemType = data?.fileSystemType || '';
     if (fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
         fsxType = 'fsxn';
     } else if (fileSystemType.includes(GENERAL.FSX_FOR_WINDOWS)) {
@@ -2894,9 +2859,9 @@ export const getProtectionText = (data: any) => {
         fsxType = 'ebs';
     }
 
-    let awsBackupEnabled = isAwsBackupEnabledText(data, fsxType);
-    let fsxOntapEnabled = data?.protection?.isFsxOntapSnapshotsEnabled;
-    let sqlNativeEnabled = data?.protection?.isSqlNativeEnabled;
+    const awsBackupEnabled = isAwsBackupEnabledText(data, fsxType);
+    const fsxOntapEnabled = data?.protection?.isFsxOntapSnapshotsEnabled;
+    const sqlNativeEnabled = data?.protection?.isSqlNativeEnabled;
 
     if (fsxType === 'ebs' || fsxType === 'fsxw') {
         if (
@@ -2914,24 +2879,22 @@ export const getProtectionText = (data: any) => {
         } else {
             protectionText = '';
         }
+    } else if (
+        (awsBackupEnabled && String(awsBackupEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+        (fsxOntapEnabled && String(fsxOntapEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+        (sqlNativeEnabled && String(sqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
+    ) {
+        protectionText = PROTECTION_TEXT_STATUS.YES;
+    } else if (
+        String(awsBackupEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+        String(fsxOntapEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+        String(sqlNativeEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE
+    ) {
+        protectionText = '';
+    } else if (data?.protection) {
+        protectionText = PROTECTION_TEXT_STATUS.NO;
     } else {
-        if (
-            (awsBackupEnabled && String(awsBackupEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
-            (fsxOntapEnabled && String(fsxOntapEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
-            (sqlNativeEnabled && String(sqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
-        ) {
-            protectionText = PROTECTION_TEXT_STATUS.YES;
-        } else if (
-            String(awsBackupEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
-            String(fsxOntapEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
-            String(sqlNativeEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE
-        ) {
-            protectionText = '';
-        } else if (data?.protection) {
-            protectionText = PROTECTION_TEXT_STATUS.NO;
-        } else {
-            protectionText = '';
-        }
+        protectionText = '';
     }
 
     return protectionText;
@@ -2944,16 +2907,16 @@ export const getOptimizationStatus = (
     if (!optimizationStatusList) {
         return '';
     }
-    let instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
+    const instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
     let optimizationStatus = '';
     if (instanceRow && instanceRow?.assessments && instanceRow?.assessments?.lastAssessmentTimestamp) {
-        let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessments, {});
-        let optBreakDown = formatOptimizationBreakDown(cardsData);
+        const { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessments, {});
+        const optBreakDown = formatOptimizationBreakDown(cardsData);
         optimizationStatus =
             optBreakDown?.total?.notOptimized !== 0
                 ? optBreakDown?.total?.notOptimized === 1
-                    ? optBreakDown?.total?.notOptimized + ' issues'
-                    : optBreakDown?.total?.notOptimized + ' issues'
+                    ? `${optBreakDown?.total?.notOptimized} issues`
+                    : `${optBreakDown?.total?.notOptimized} issues`
                 : ACTION_CTA.WELL_ARCHITECTED;
     } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
@@ -2977,18 +2940,18 @@ export const getPartnerNodeEc2InstanceId = (error: string) => {
 export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
     // First check if this is already opened or closed. If this data is already available or not.
     const state = store.getState();
-    const unManagedPerfInstanceIdsList = state.inventoryV2.unManagedPerfInstanceIdsList;
+    const { unManagedPerfInstanceIdsList } = state.inventoryV2;
     if (
         !unManagedPerfInstanceIdsList.includes(
             uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId)
         )
     ) {
         // If this has unmanaged rows or not ?
-        let unmanagedRows = rowData?.sqlServerInstances?.filter(
+        const unmanagedRows = rowData?.sqlServerInstances?.filter(
             (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
         );
         if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
-            let instanceList = [];
+            const instanceList = [];
             instanceList.push(uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId));
             const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
             if (partnerData && partnerData?.length > 0) {
@@ -3006,7 +2969,7 @@ export const addInstanceIdToGetAssessment = (rowData: any, dispatch: any) => {
     const managedAssessmentIdsList = state.inventoryV2.managedAssessmentHostIdsList;
     if (!managedAssessmentIdsList.includes(rowData?.resourceId)) {
         // If this has unmanaged rows or not ?
-        let managedRows = rowData?.sqlServerInstances?.filter(
+        const managedRows = rowData?.sqlServerInstances?.filter(
             (per: any) => per?.statusColText === INVENTORY_STATUS.MANAGED
         );
         if (managedRows && managedRows?.length > 0 && rowData?.resourceId) {
@@ -3015,12 +2978,11 @@ export const addInstanceIdToGetAssessment = (rowData: any, dispatch: any) => {
     }
 };
 
-export const checkForAnyAOAG = (rowData: any) => {
+export const checkForAnyAOAG = (rowData: any) =>
     // If any instance have AOAG than ES is disabled for it
-    return rowData?.sqlServerInstances?.some((item: any) => {
-        return item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG;
-    });
-};
+    rowData?.sqlServerInstances?.some(
+        (item: any) => item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+    );
 
 export const checkForAnySSD = (rowData: any) => {
     for (const item of rowData?.sqlServerInstances || []) {
@@ -3034,7 +2996,7 @@ export const checkForAnySSD = (rowData: any) => {
 };
 
 export const checkForMixedStorageType = (rowData: any) => {
-    let storageType: Array<String> = [];
+    const storageType: Array<string> = [];
     for (const item of rowData?.sqlServerInstances || []) {
         if (item?.fileSystemType && !storageType.includes(item?.fileSystemType)) {
             storageType.push(item?.fileSystemType);
@@ -3046,55 +3008,51 @@ export const checkForMixedStorageType = (rowData: any) => {
     return false;
 };
 
-export const renderVpcText = (cellData: any, rowData: any, styles: any) => {
-    return (
-        <>
-            <div className={styles.ec2Container}>
-                <div className={styles.ssmOffline}>
-                    <Popover
-                        popoverClass={''}
-                        children={
-                            <>
-                                {rowData?.vpcIdAndNameText && (
-                                    <div className={styles.tooltipContainer}>
-                                        <DsTypography variant="Regular_14">{rowData?.vpcIdAndNameText}</DsTypography>
-                                        <Popover
-                                            popoverClass={styles['copy-popover']}
-                                            children={'Copied'}
-                                            container={
-                                                <CopyToClipboardCommon
-                                                    value={rowData?.vpcIdAndNameText}
-                                                    iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
-                                                />
-                                            }
+export const renderVpcText = (cellData: any, rowData: any, styles: any) => (
+    <div className={styles.ec2Container}>
+        <div className={styles.ssmOffline}>
+            <Popover
+                popoverClass=""
+                children={
+                    <>
+                        {rowData?.vpcIdAndNameText && (
+                            <div className={styles.tooltipContainer}>
+                                <DsTypography variant="Regular_14">{rowData?.vpcIdAndNameText}</DsTypography>
+                                <Popover
+                                    popoverClass={styles['copy-popover']}
+                                    children="Copied"
+                                    container={
+                                        <CopyToClipboardCommon
+                                            value={rowData?.vpcIdAndNameText}
+                                            iconProvided={<CopyIcon fill="#A7A7A7" />}
                                         />
-                                    </div>
-                                )}
-                            </>
-                        }
-                        trigger="hover"
-                        delayHide={200}
-                        interactive={true}
-                        isAppendedToBody={false}
-                        container={<TooltipIcon />}
-                    />
-                </div>
-                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                    {cellData || GENERAL.NOT_AVAILABLE}
-                </DsTypography>
-            </div>
-        </>
-    );
-};
+                                    }
+                                />
+                            </div>
+                        )}
+                    </>
+                }
+                trigger="hover"
+                delayHide={200}
+                interactive
+                isAppendedToBody={false}
+                container={<TooltipIcon />}
+            />
+        </div>
+        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+            {cellData || GENERAL.NOT_AVAILABLE}
+        </DsTypography>
+    </div>
+);
 
 export const renderInstanceListText = (cellData: any, rowData: any, styles: any) => {
-    let instanceList: any = cellData ? cellData.split(',') : null;
+    const instanceList: any = cellData ? cellData.split(',') : null;
     return (
         <>
             <div className={styles.ec2Container}>
                 <div className={styles.ssmOffline}>
                     <Popover
-                        popoverClass={''}
+                        popoverClass=""
                         children={
                             <>
                                 {instanceList && instanceList[0] && (
@@ -3102,11 +3060,11 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
                                         <DsTypography variant="Regular_14">{instanceList[0]}</DsTypography>
                                         <Popover
                                             popoverClass={styles['copy-popover']}
-                                            children={'Copied'}
+                                            children="Copied"
                                             container={
                                                 <CopyToClipboardCommon
                                                     value={instanceList[0]}
-                                                    iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
+                                                    iconProvided={<CopyIcon fill="#A7A7A7" />}
                                                 />
                                             }
                                         />
@@ -3119,11 +3077,11 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
                                             <DsTypography variant="Regular_14">{instanceList[1]}</DsTypography>
                                             <Popover
                                                 popoverClass={styles['copy-popover']}
-                                                children={'Copied'}
+                                                children="Copied"
                                                 container={
                                                     <CopyToClipboardCommon
                                                         value={instanceList[1]}
-                                                        iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
+                                                        iconProvided={<CopyIcon fill="#A7A7A7" />}
                                                     />
                                                 }
                                             />
@@ -3134,7 +3092,7 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
                         }
                         trigger="hover"
                         delayHide={200}
-                        interactive={true}
+                        interactive
                         isAppendedToBody={false}
                         container={<TooltipIcon />}
                     />
@@ -3156,20 +3114,16 @@ export const installModuleNotification = (styles: any, dispatch: any, initialMsg
             {initialMsg[0]}
             {hostname && <span className={styles.bold}>{hostname}</span>}
             {initialMsg[1]}
-            {
-                <>
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => {
-                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                            dispatch(clearNotifications());
-                        }}
-                    >
-                        {initialMsg[2]}
-                    </Button>
-                </>
-            }
+            <Button
+                Component="button"
+                variant="text"
+                onClick={() => {
+                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                    dispatch(clearNotifications());
+                }}
+            >
+                {initialMsg[2]}
+            </Button>
             {initialMsg[3]}
         </div>
     );
@@ -3180,8 +3134,8 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
     let azList = '';
     let deploymentType = '';
 
-    for (let instance of rowData?.sqlServerInstances || []) {
-        for (let deployment of instance?.deploymentTypes || []) {
+    for (const instance of rowData?.sqlServerInstances || []) {
+        for (const deployment of instance?.deploymentTypes || []) {
             if (deployment?.zones) {
                 azList = deployment.zones.join(',');
             }
@@ -3210,19 +3164,17 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
     );
 };
 
-export const renderCellData = (cellData: any, rowData: any, styles: any) => {
-    return (
-        <>
-            {cellData && (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData}
-                </DsTypography>
-            )}
-            {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-            {!cellData && cellData !== 0 && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-        </>
-    );
-};
+export const renderCellData = (cellData: any, rowData: any, styles: any) => (
+    <>
+        {cellData && (
+            <DsTypography variant="Regular_13" className={styles.colText}>
+                {cellData}
+            </DsTypography>
+        )}
+        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+        {!cellData && cellData !== 0 && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+    </>
+);
 
 export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) => {
     const costData = rowData?.estimatedUsageCost;
@@ -3232,7 +3184,7 @@ export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) =>
             {costData && !rowData?.loading && (
                 <div className={styles.cost}>
                     <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
-                        {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
+                        {EstimatedCostPopover({ ...costData, totalCost })}
                     </TooltipInfo>
                     <DsTypography variant="Regular_14">{`$${formatFractionalNumber(totalCost, 2)}`}</DsTypography>
                 </div>
@@ -3243,14 +3195,12 @@ export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) =>
     );
 };
 
-export const renderAllocatedCapacity = (cellData: any, rowData: any) => {
-    return (
-        <>
-            {!rowData?.loading && (cellData || cellData === 0 ? cellData : GENERAL.NOT_AVAILABLE)}
-            {rowData?.loading && <DsFlashingDotsLoader />}
-        </>
-    );
-};
+export const renderAllocatedCapacity = (cellData: any, rowData: any) => (
+    <>
+        {!rowData?.loading && (cellData || cellData === 0 ? cellData : GENERAL.NOT_AVAILABLE)}
+        {rowData?.loading && <DsFlashingDotsLoader />}
+    </>
+);
 
 export const handleManageInstances = (
     rowData: any,
@@ -3269,7 +3219,7 @@ export const handleManageInstances = (
     );
     dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
     handleManageTriggerNotification(instances, dispatch, styles);
-    let payloadItem: any = {
+    const payloadItem: any = {
         ec2InstanceId: rowData?.ec2InstanceId,
         databaseInstanceNames: instances,
         credentialsId: rowData?.credentialId,
@@ -3279,7 +3229,7 @@ export const handleManageInstances = (
         payloadItem.databaseHostId = rowData.resourceId;
     }
 
-    let payload = {
+    const payload = {
         items: [payloadItem]
     };
 
@@ -3288,15 +3238,15 @@ export const handleManageInstances = (
     }).then((res: any) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState?.inventoryV2;
-        let updatedInProgressInstances = new Set([...inProgressInstances]);
+        const updatedInProgressInstances = new Set([...inProgressInstances]);
         inProgressIds.map((inProgressId: any) => {
             updatedInProgressInstances.delete(inProgressId);
         });
         dispatch(setInProgressInstances(updatedInProgressInstances));
 
         if (res?.data) {
-            let successFullInstances: any = [];
-            let failedInstances: any = [];
+            const successFullInstances: any = [];
+            const failedInstances: any = [];
             res?.data?.hosts?.map((resource: any) => {
                 resource?.instances.map((item: any) => {
                     if (item.status === NOTIFICATION_TYPES.SUCCESS) {
@@ -3319,7 +3269,7 @@ export const handleManageInstances = (
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else {
                 // handle prepare API
-                let errorList = res?.data?.hosts?.[0]?.hostErrorMessage?.split('\n');
+                const errorList = res?.data?.hosts?.[0]?.hostErrorMessage?.split('\n');
                 let prepareApiRequired = false;
                 let sourceNodePrepareRequired = false;
                 let partnerNodeEc2Id;
@@ -3419,14 +3369,14 @@ export const handleManageInstancesBulk = (
         )
     );
     dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
-    let instancesList = selectedRowsForManage.map((instance: any) => instance?.databaseInstanceName);
+    const instancesList = selectedRowsForManage.map((instance: any) => instance?.databaseInstanceName);
     handleManageTriggerNotification(instancesList, dispatch, styles);
 
-    let payloadList: any = [];
-    let hostInstanceMapping: any = {};
-    let resourceInstanceMapping: any = {};
+    const payloadList: any = [];
+    const hostInstanceMapping: any = {};
+    const resourceInstanceMapping: any = {};
     selectedRowsForManage?.map((rowData: any) => {
-        let uniqueRow = uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId);
+        const uniqueRow = uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId);
         if (hostInstanceMapping?.[uniqueRow]) {
             hostInstanceMapping[uniqueRow].push(rowData?.databaseInstanceName);
         } else {
@@ -3436,8 +3386,8 @@ export const handleManageInstancesBulk = (
     });
 
     Object.keys(hostInstanceMapping).map((key: any) => {
-        let itemArray: any = key.split('_');
-        let perItem: any = {
+        const itemArray: any = key.split('_');
+        const perItem: any = {
             ec2InstanceId: itemArray[0],
             credentialsId: itemArray[1],
             region: itemArray[2],
@@ -3449,7 +3399,7 @@ export const handleManageInstancesBulk = (
         payloadList.push(perItem);
     });
 
-    let payload = {
+    const payload = {
         items: payloadList
     };
 
@@ -3458,14 +3408,14 @@ export const handleManageInstancesBulk = (
     }).then((res: any) => {
         const updatedState = store.getState();
         const { inProgressInstances } = updatedState?.inventoryV2;
-        let updatedInProgressInstances = new Set([...inProgressInstances]);
+        const updatedInProgressInstances = new Set([...inProgressInstances]);
         inProgressIds.map((inProgressId: any) => {
             updatedInProgressInstances.delete(inProgressId);
         });
         dispatch(setInProgressInstances(updatedInProgressInstances));
         if (res?.data) {
-            let successFullInstances: any = [];
-            let failedInstances: any = [];
+            const successFullInstances: any = [];
+            const failedInstances: any = [];
             res?.data?.hosts?.map((resource: any) => {
                 resource?.instances.map((item: any) => {
                     if (item.status === NOTIFICATION_TYPES.SUCCESS) {
@@ -3482,7 +3432,7 @@ export const handleManageInstancesBulk = (
             const updatedInventoryTableData = updateInstanceBulkStatus('manage', res?.data?.hosts);
             dispatch(setInventoryTableData(updatedInventoryTableData));
 
-            let triggeredPrepare = handleBulkPrepareCall(res?.data?.hosts, dispatch, styles, prepareHostApi);
+            const triggeredPrepare = handleBulkPrepareCall(res?.data?.hosts, dispatch, styles, prepareHostApi);
             if (triggeredPrepare) {
                 const msgObj = GENERAL.PREPARE_BULK_INSTANCES_INFO;
                 installModuleNotification(styles, dispatch, msgObj);
@@ -3500,7 +3450,7 @@ export const handleManageInstancesBulk = (
 export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any, prepareHostApi: any) => {
     let triggeredPrepare = false;
     response?.map((resource: any) => {
-        let errorList = resource?.hostErrorMessage?.split('\n');
+        const errorList = resource?.hostErrorMessage?.split('\n');
         let prepareApiRequired = false;
         let sourceNodePrepareRequired = false;
         let partnerNodeEc2Id;
@@ -3588,8 +3538,8 @@ export const manageActionCol = (rowData?: any) => {
         disableMsg = fixIssueDisableMsg(rowData);
     }
     return {
-        colText: colText,
-        disableMsg: disableMsg
+        colText,
+        disableMsg
     };
 };
 
@@ -3632,7 +3582,8 @@ export const fixIssueDisableMsg = (rowData: any) => {
         if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
             disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
             return disableMsg;
-        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+        }
+        if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
             disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
             return disableMsg;
         }
@@ -3644,7 +3595,8 @@ export const fixIssueDisableMsg = (rowData: any) => {
         ) {
             disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
             return disableMsg;
-        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+        }
+        if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
             disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
             return disableMsg;
         }

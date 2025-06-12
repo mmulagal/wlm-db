@@ -28,12 +28,10 @@ const StatusComponent = ({
     return (
         <div className={styles['status-component']}>
             {!useIcon && (
-                <div
-                    className={`${styles['icon']} ${styles[actualClassName]} ${isCircle ? styles['circle'] : ''}`}
-                ></div>
+                <div className={`${styles.icon} ${styles[actualClassName]} ${isCircle ? styles.circle : ''}`} />
             )}
             {useIcon && <div className={`${styles['svg-icon']} ${styles[actualClassName]}`}>{iconsMap[status]}</div>}
-            <div className={styles['status']}>{statusText}</div>
+            <div className={styles.status}>{statusText}</div>
         </div>
     );
 };

@@ -1,4 +1,7 @@
 import { DsAccordion, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
+import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './MSSQLAccordion.module.scss';
 import {
     ExploreSaveConfiguration,
@@ -8,7 +11,6 @@ import {
     setRecommendedConfig
 } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
-import { useNavigate } from 'react-router-dom';
 import { Text } from '../../../../ui-components/Typography';
 import {
     FROM_DIALOG,
@@ -21,31 +23,27 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
 import { setSaveConfigName } from '../../../../store/workloadFactory/exploreSavingsSlice';
-import { useDispatch } from 'react-redux';
 import { useGetConfigListQuery, useSaveConfigDataMutation } from '../../../../utils/apiService';
 import { LoadRecommendedConfig } from '../../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { setIsLoadConfig, setIsLoading, setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
 
-const TableLayout = ({ data, type }: any) => {
-    return (
-        <Grid className={styles['fsx-table-column']} style={{ marginBottom: 3 }}>
-            <GridItem lg={'4'}>
-                <Text>{data.label}</Text>
-            </GridItem>
-            <GridItem lg="3">
-                <Text bold style={{ fontWeight: '505' }}>
-                    {data.value}
-                </Text>
-            </GridItem>
-            <GridItem lg={'5'}>
-                <Text>{data.text}</Text>
-                {data?.text2 && <Text style={{ padding: '0', marginTop: '-15px' }}>{data?.text2}</Text>}
-            </GridItem>
-        </Grid>
-    );
-};
+const TableLayout = ({ data, type }: any) => (
+    <Grid className={styles['fsx-table-column']} style={{ marginBottom: 3 }}>
+        <GridItem lg="4">
+            <Text>{data.label}</Text>
+        </GridItem>
+        <GridItem lg="3">
+            <Text bold style={{ fontWeight: '505' }}>
+                {data.value}
+            </Text>
+        </GridItem>
+        <GridItem lg="5">
+            <Text>{data.text}</Text>
+            {data?.text2 && <Text style={{ padding: '0', marginTop: '-15px' }}>{data?.text2}</Text>}
+        </GridItem>
+    </Grid>
+);
 
 const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const dispatch = useDispatch();
@@ -69,7 +67,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const [fsxData, setFsxData] = useState({});
     const [msSqlInstance, setMsSqlInstance] = useState({});
     const [storageType, setStorageType] = useState('');
-    //To get configDatalist
+    // To get configDatalist
     const [configData, setConfigData] = useState<any>([]);
 
     const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
@@ -97,11 +95,11 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         ) {
             const matchingRegionEntry =
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === selectedExRegionId);
-            selectedRegion = matchingRegionEntry?.regionName + ' | ' + matchingRegionEntry?.regionCode;
+            selectedRegion = `${matchingRegionEntry?.regionName} | ${matchingRegionEntry?.regionCode}`;
         } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
-            selectedRegion = selectedOnPremRegion?.data?.regionName + ' | ' + selectedOnPremRegion?.data?.regionCode;
+            selectedRegion = `${selectedOnPremRegion?.data?.regionName} | ${selectedOnPremRegion?.data?.regionCode}`;
         } else {
-            selectedRegion = selectedManualRegion?.data?.regionName + ' | ' + selectedManualRegion?.data?.regionCode;
+            selectedRegion = `${selectedManualRegion?.data?.regionName} | ${selectedManualRegion?.data?.regionCode}`;
         }
         if (storageSavingsResponse?.single) {
             setFsxData({
@@ -140,19 +138,19 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
             mssqlInstanceData = {
                 serverInstallationMode: selectedOnPremHostDetails?.recommendedInstance?.serverInstallationMode,
-                serverEdition: serverEdition,
+                serverEdition,
                 serverVersion: selectedOnPremHostDetails?.recommendedInstance?.serverVersion,
-                instanceType: instanceType,
-                windowsServer: windowsServer,
-                editionUpgradeCheck: editionUpgradeCheck
+                instanceType,
+                windowsServer,
+                editionUpgradeCheck
             };
         } else {
             mssqlInstanceData = {
                 serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
-                serverEdition: serverEdition,
+                serverEdition,
                 serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
-                instanceType: instanceType,
-                windowsServer: windowsServer
+                instanceType,
+                windowsServer
             };
         }
         if (
@@ -212,19 +210,18 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const setCSS = () => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
             return `${styles.mssqlAccordion} ${styles.mssqlAccordionOnPremises}`;
-        } else {
-            return `${styles.mssqlAccordion}`;
         }
+        return `${styles.mssqlAccordion}`;
     };
 
     const saveIsDisabled = () => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && isMutliFsx) {
             return GENERAL.ONPREM_CREATE_TEMPLATE_DISABLE;
-        } else if (configData?.length >= MAX_SAVED_CONFIG) {
-            return SELECT_CONFIG.MAX_CONFIG_LIMIT;
-        } else {
-            return '';
         }
+        if (configData?.length >= MAX_SAVED_CONFIG) {
+            return SELECT_CONFIG.MAX_CONFIG_LIMIT;
+        }
+        return '';
     };
 
     return (
@@ -247,12 +244,12 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                 headerActions={[
                     isMutliFsx ? (
                         <Popover
-                            popoverClass={styles['popover']}
+                            popoverClass={styles.popover}
                             children={GENERAL.ES_SAVE_ERROR}
                             trigger="hover"
                             container={
                                 <div id="es-save-config">
-                                    <DsButton type="text" isDisabled={true}>
+                                    <DsButton type="text" isDisabled>
                                         {GENERAL.ES_SAVE_CONFIG}
                                     </DsButton>
                                 </div>
@@ -263,12 +260,12 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             <div id="es-save-config">
                                 {saveIsDisabled() ? (
                                     <Popover
-                                        popoverClass={styles['popover']}
+                                        popoverClass={styles.popover}
                                         children={saveIsDisabled()}
                                         trigger="hover"
                                         container={
                                             <div id="es-save-config">
-                                                <DsButton type="text" isDisabled={true}>
+                                                <DsButton type="text" isDisabled>
                                                     {GENERAL.ES_SAVE_CONFIG}
                                                 </DsButton>
                                             </div>
@@ -299,12 +296,12 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                         <div style={{ height: '32px' }} id="es-create" className={styles.buttonContainer}>
                             {savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && isMutliFsx ? (
                                 <Popover
-                                    popoverClass={styles['popover']}
+                                    popoverClass={styles.popover}
                                     children={GENERAL.ONPREM_CREATE_TEMPLATE_DISABLE}
                                     trigger="hover"
                                     container={
                                         <div id="es-create-template">
-                                            <DsButton type="button" isDisabled={true}>
+                                            <DsButton type="button" isDisabled>
                                                 {GENERAL.CREATE_TEMPLATE}
                                             </DsButton>
                                         </div>

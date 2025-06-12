@@ -1,12 +1,12 @@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
@@ -37,8 +37,8 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     const tableData = useMemo(() => {
-        let licenseAssessmentData: any = [];
-        let uniqueResourceList: Array<string> = [];
+        const licenseAssessmentData: any = [];
+        const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
@@ -68,7 +68,7 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             performanceTier: licenseObj?.current,
-                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
+                            id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[licenseObj?.status],
                             data: instanceData,
@@ -102,9 +102,8 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
                 ASSESSMENT_CONFIG_NAMES.LICENSE,
                 selectedRowsForOptimize
             );
-        } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.LICENSE);
         }
+        return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.LICENSE);
     }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
 
     const TableColDefs: ColumnProps[] = [
@@ -116,9 +115,7 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
             filterOptions: 'auto',
             isSticky: true,
             width: '310px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
-            }
+            renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
         {
             Header: 'Host name',
@@ -133,9 +130,7 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
             id: '3',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             id: '4',
@@ -162,7 +157,7 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -191,18 +186,18 @@ const LicenseTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
     return (
         <div className={styles.renderTable}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Not-optimized instances`}
-                singularTitle={'Not-optimized instance'}
+                pluralTitle="Not-optimized instances"
+                singularTitle="Not-optimized instance"
             />
             {selectedRowsForOptimize.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

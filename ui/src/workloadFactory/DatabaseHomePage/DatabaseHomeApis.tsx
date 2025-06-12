@@ -67,7 +67,7 @@ const DatabaseHomeApis = () => {
             return;
         }
 
-        let mergedData = {
+        const mergedData = {
             ...(databaseHostsDataV2 || {}),
             ...(pgsqlHostData || {})
         };

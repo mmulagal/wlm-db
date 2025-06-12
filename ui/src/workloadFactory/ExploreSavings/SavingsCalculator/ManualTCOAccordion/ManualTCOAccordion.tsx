@@ -1,10 +1,10 @@
 import { DsAccordion } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './ManualTCOAccordion.module.scss';
 import SecondaryManualEC2 from '../ManualEC2/SecondaryManualEC2';
 import SecondaryManualVolType from '../ManualVolumeTypes/SecondaryManualVolType';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import {
     setSecondaryVolDetails,
     setSelectedSecondaryManualInstanceType
@@ -54,7 +54,7 @@ const ManualTCOAccordion = () => {
         <div className={styles.manualAccordion}>
             <DsAccordion
                 id="1"
-                title={'Secondary EC2 specifications'}
+                title="Secondary EC2 specifications"
                 variant="Default"
                 value=""
                 children={

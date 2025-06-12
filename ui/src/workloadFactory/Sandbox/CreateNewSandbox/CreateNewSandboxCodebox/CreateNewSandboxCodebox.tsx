@@ -37,14 +37,12 @@ const CreateNewSandboxCodebox = () => {
     const setDisplayedDataInCodeBox = () => {
         const payload = generateCreateSandboxPayload(createSandboxState);
         return (
-            <>
-                <CodeBoxColor
-                    credID={createSandboxState?.selectedSandboxCredId || CRED_PLACEHOLDERS.CRED_ID}
-                    region={createSandboxState?.selectedSandboxRegionId || CRED_PLACEHOLDERS.REGION}
-                    actualData={payload}
-                    endpoint={CREATE_SANDBOX_ENDPOINT}
-                />
-            </>
+            <CodeBoxColor
+                credID={createSandboxState?.selectedSandboxCredId || CRED_PLACEHOLDERS.CRED_ID}
+                region={createSandboxState?.selectedSandboxRegionId || CRED_PLACEHOLDERS.REGION}
+                actualData={payload}
+                endpoint={CREATE_SANDBOX_ENDPOINT}
+            />
         );
     };
 

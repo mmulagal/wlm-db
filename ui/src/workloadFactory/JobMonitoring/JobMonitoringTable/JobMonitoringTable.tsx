@@ -1,6 +1,8 @@
 import { Button, Popover, Typography, useDialog } from '@netapp/design-system';
-import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useDispatch } from 'react-redux';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import styles from './JobMonitoringTable.module.scss';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
@@ -22,7 +24,6 @@ import {
     jobMonitoringTypeMapping
 } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
-import { useDispatch } from 'react-redux';
 import {
     setDownloadJobsList,
     setDownloadJobsLoading,
@@ -30,7 +31,6 @@ import {
     setSubJobsData,
     setSubJobsDataLoading
 } from '../../../store/workloadFactory/jobMonitoringSlice';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -76,46 +76,47 @@ const JobMonitoringTable = React.memo(() => {
     const setRegion = (name: string, code: string) => {
         if (name && code) {
             return `${name} | ${code}`;
-        } else if (name && !code) {
-            return name;
-        } else if (!name && code) {
-            return code;
-        } else {
-            return GENERAL.NOT_AVAILABLE;
         }
+        if (name && !code) {
+            return name;
+        }
+        if (!name && code) {
+            return code;
+        }
+        return GENERAL.NOT_AVAILABLE;
     };
 
-    const tableFullData = useMemo(() => {
-        return jobsList.map((job: any) => {
-            const matchingEntry =
-                credentialData && credentialData?.find(entry => entry.credentialsId === job.credentialsId);
+    const tableFullData = useMemo(
+        () =>
+            jobsList.map((job: any) => {
+                const matchingEntry =
+                    credentialData && credentialData?.find(entry => entry.credentialsId === job.credentialsId);
 
-            return {
-                ...job,
-                regions: setRegion(job?.region?.name, job?.region?.code),
-                credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
-                providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
-            };
-        });
-    }, [jobsList, credentialData]);
+                return {
+                    ...job,
+                    regions: setRegion(job?.region?.name, job?.region?.code),
+                    credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
+                    providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
+                };
+            }),
+        [jobsList, credentialData]
+    );
 
-    const menuItems = (row: any) => {
-        return [
-            {
-                id: 'goToCf',
-                displayName: '',
-                customComponent:
-                    row?.name && row.name.includes('href') ? (
-                        <Button Component="text" variant="link" className={CommonStyles.buttonClass}>
-                            {GENERAL.GO_TO_CLOUDFORMATION}
-                        </Button>
-                    ) : (
-                        GENERAL.GO_TO_CLOUDFORMATION
-                    ),
-                disabled: row?.name && row.name.includes('href') ? false : true
-            }
-        ];
-    };
+    const menuItems = (row: any) => [
+        {
+            id: 'goToCf',
+            displayName: '',
+            customComponent:
+                row?.name && row.name.includes('href') ? (
+                    <Button Component="text" variant="link" className={CommonStyles.buttonClass}>
+                        {GENERAL.GO_TO_CLOUDFORMATION}
+                    </Button>
+                ) : (
+                    GENERAL.GO_TO_CLOUDFORMATION
+                ),
+            disabled: !(row?.name && row.name.includes('href'))
+        }
+    ];
 
     const openDemoInfoDialog = () => {
         setDialog(
@@ -223,9 +224,9 @@ const JobMonitoringTable = React.memo(() => {
     // Logic to read API response and download file
     useEffect(() => {
         if (!jmJobsListLoading) {
-            let oldList = downloadJobsList || [];
+            const oldList = downloadJobsList || [];
             // let newList = jmJobsList?.items || [];
-            let newList =
+            const newList =
                 (jmJobsList &&
                     jmJobsList?.items.map((job: any) => {
                         const matchingEntry =
@@ -239,7 +240,7 @@ const JobMonitoringTable = React.memo(() => {
                         };
                     })) ||
                 [];
-            let mergedList = [...oldList, ...newList];
+            const mergedList = [...oldList, ...newList];
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             if (jmJobsList && !jmJobsList?.nextToken) {
@@ -308,9 +309,9 @@ const JobMonitoringTable = React.memo(() => {
             isSortable: true,
             width: '220px',
             isSticky: true,
-            renderCell: (cellData: any) => {
-                return <CopyToClipboardCommon value={cellData} iconProvided={<div title={cellData}>{cellData}</div>} />;
-            }
+            renderCell: (cellData: any) => (
+                <CopyToClipboardCommon value={cellData} iconProvided={<div title={cellData}>{cellData}</div>} />
+            )
         },
         {
             id: '2',
@@ -325,9 +326,7 @@ const JobMonitoringTable = React.memo(() => {
                 { value: JOB_MONITORING_TYPE.WELL_ARCHITECTED, label: GENERAL.JM_TYPE_OPTIMIZE },
                 { value: JOB_MONITORING_TYPE.REGISTER_RESOURCE, label: GENERAL.JM_TYPE_REGISTER_RESOURCE }
             ],
-            renderCell: (cellData: any) => {
-                return jobMonitoringTypeMapping(cellData);
-            }
+            renderCell: (cellData: any) => jobMonitoringTypeMapping(cellData)
         },
         {
             id: '3',
@@ -340,14 +339,29 @@ const JobMonitoringTable = React.memo(() => {
                 { value: JOB_MONITORING_STATUS.FAILED, label: GENERAL.JM_FAILED },
                 { value: JOB_MONITORING_STATUS.WARNING, label: GENERAL.JM_WARNING }
             ],
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.statusCol}>
-                        <div>
-                            {cellData === JOB_MONITORING_STATUS.COMPLETED && <Success />}
-                            {cellData === JOB_MONITORING_STATUS.FAILED && (
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.statusCol}>
+                    <div>
+                        {cellData === JOB_MONITORING_STATUS.COMPLETED && <Success />}
+                        {cellData === JOB_MONITORING_STATUS.FAILED && (
+                            <Popover
+                                popoverClass={CommonStyles.popover}
+                                children={
+                                    <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
+                                        {rowData?.error}
+                                    </Typography>
+                                }
+                                trigger="hover"
+                                delayHide={200}
+                                interactive
+                                container={<ErrorIcon className={styles.statusIcon} />}
+                            />
+                        )}
+                        {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
+                        {cellData === JOB_MONITORING_STATUS.WARNING &&
+                            (rowData?.error ? (
                                 <Popover
-                                    popoverClass={CommonStyles['popover']}
+                                    popoverClass={CommonStyles.popover}
                                     children={
                                         <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
                                             {rowData?.error}
@@ -355,33 +369,16 @@ const JobMonitoringTable = React.memo(() => {
                                     }
                                     trigger="hover"
                                     delayHide={200}
-                                    interactive={true}
-                                    container={<ErrorIcon className={styles.statusIcon} />}
+                                    interactive
+                                    container={<Warning className={styles.statusIcon} />}
                                 />
-                            )}
-                            {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
-                            {cellData === JOB_MONITORING_STATUS.WARNING &&
-                                (rowData?.error ? (
-                                    <Popover
-                                        popoverClass={CommonStyles['popover']}
-                                        children={
-                                            <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
-                                                {rowData?.error}
-                                            </Typography>
-                                        }
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        container={<Warning className={styles.statusIcon} />}
-                                    />
-                                ) : (
-                                    <Warning />
-                                ))}
-                        </div>
-                        <div>{jobMonitoringStatusMapping(cellData)}</div>
+                            ) : (
+                                <Warning />
+                            ))}
                     </div>
-                );
-            }
+                    <div>{jobMonitoringStatusMapping(cellData)}</div>
+                </div>
+            )
         },
         {
             id: '4',
@@ -418,7 +415,7 @@ const JobMonitoringTable = React.memo(() => {
             isSortable: true,
             width: '320px',
             renderCell: (cellData: any) => {
-                let jobName = cellData ? cellData.split(';href')[0] : '';
+                const jobName = cellData ? cellData.split(';href')[0] : '';
                 return (
                     <CopyToClipboardCommon
                         value={jobName}
@@ -474,35 +471,33 @@ const JobMonitoringTable = React.memo(() => {
         isManagedColumns: true,
         initialColumnState: initialJobMonitorColState,
         manageColumnsProps: {
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems(rowData)}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.jobMenuPopover}>
+                    <MenuPopover
+                        isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                        menuItems={menuItems(rowData)}
+                        toggleMenu={(toggleType: string, menuId: string) => {
+                            if (toggleType === 'close') {
+                                menuOpenedRowDetail.current = null;
+                                setOpenedRow(null);
+                            } else if (toggleType === 'open') {
+                                menuOpenedRowDetail.current = null;
+                                setOpenedRow(rowData.id);
+                                menuOpenedRowDetail.current = rowData.id;
+                            } else if (toggleType === 'selectedOption') {
+                                menuOpenedRowDetail.current = null;
+                                setOpenedRow(null);
 
-                                    if (menuId === 'goToCf') {
-                                        handleGoToCfClick(rowData?.name);
-                                    }
+                                if (menuId === 'goToCf') {
+                                    handleGoToCfClick(rowData?.name);
                                 }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    </div>
-                );
-            }
+                            }
+                        }}
+                        CustomMenu={undefined}
+                        disabledText={undefined}
+                    />
+                </div>
+            )
         },
         ...(isDemoMode
             ? {
@@ -519,7 +514,7 @@ const JobMonitoringTable = React.memo(() => {
         const filters = tableProps?.filterState?.columns;
         JobsColDefs.map((col: any) => {
             if (col?.id in filters) {
-                let filterValues = Object.keys(filters[col?.id]?.values);
+                const filterValues = Object.keys(filters[col?.id]?.values);
                 if (col?.accessor === 'type' && filterValues) {
                     setTypeFilter(filterValues.join(','));
                 }
@@ -567,56 +562,54 @@ const JobMonitoringTable = React.memo(() => {
     };
 
     return (
-        <>
-            <div className={styles.jobMonitoringTable}>
-                <div
-                    //  @ts-ignore
-                    className={`${styles.table}`}
-                >
-                    <TableTopBar
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        pluralTitle="Jobs"
-                        singularTitle="Job"
-                        className={styles.topBarStyle}
-                        actionsRight={
-                            <div className={styles.downloadButton}>
-                                {(jobsListLoading && !downloadJobsLoading) ||
-                                    (jobsList.length === 0 && (
+        <div className={styles.jobMonitoringTable}>
+            <div
+                //  @ts-ignore
+                className={`${styles.table}`}
+            >
+                <TableTopBar
+                    // @ts-ignore
+                    tableProps={tableProps}
+                    pluralTitle="Jobs"
+                    singularTitle="Job"
+                    className={styles.topBarStyle}
+                    actionsRight={
+                        <div className={styles.downloadButton}>
+                            {(jobsListLoading && !downloadJobsLoading) ||
+                                (jobsList.length === 0 && (
+                                    <div className={styles.downloadDisable}>
+                                        <DownloadIcon />
+                                    </div>
+                                ))}
+                            {downloadJobsLoading && (
+                                <Popover
+                                    popoverClass={CommonStyles.popover}
+                                    children={
+                                        <Typography variant="Regular_14">{GENERAL.JM_DOWNLOAD_PROGRESS}</Typography>
+                                    }
+                                    trigger="hover"
+                                    container={
                                         <div className={styles.downloadDisable}>
                                             <DownloadIcon />
                                         </div>
-                                    ))}
-                                {downloadJobsLoading && (
-                                    <Popover
-                                        popoverClass={CommonStyles['popover']}
-                                        children={
-                                            <Typography variant="Regular_14">{GENERAL.JM_DOWNLOAD_PROGRESS}</Typography>
-                                        }
-                                        trigger="hover"
-                                        container={
-                                            <div className={styles.downloadDisable}>
-                                                <DownloadIcon />
-                                            </div>
-                                        }
-                                    />
-                                )}
-                                {!downloadJobsLoading && !jobsListLoading && jobsList.length > 0 && (
-                                    <DownloadIcon onClick={downloadJobMonitoring} />
-                                )}
-                            </div>
-                        }
-                    />
+                                    }
+                                />
+                            )}
+                            {!downloadJobsLoading && !jobsListLoading && jobsList.length > 0 && (
+                                <DownloadIcon onClick={downloadJobMonitoring} />
+                            )}
+                        </div>
+                    }
+                />
 
-                    <Table
-                        {...tableComponentProps}
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        isDoubleRow={true}
-                    />
-                </div>
+                <Table
+                    {...tableComponentProps}
+                    // @ts-ignore
+                    tableProps={tableProps}
+                    isDoubleRow
+                />
             </div>
-        </>
+        </div>
     );
 });
 

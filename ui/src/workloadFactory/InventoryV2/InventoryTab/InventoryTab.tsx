@@ -1,8 +1,8 @@
 import { DsTypography } from '@netapp/design-system';
-import styles from './InventoryTab.module.scss';
 import { useDispatch } from 'react-redux';
-import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
+import styles from './InventoryTab.module.scss';
+import { WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectedInventoryTab } from '../../../store/workloadFactory/inventoryV2Slice';
 

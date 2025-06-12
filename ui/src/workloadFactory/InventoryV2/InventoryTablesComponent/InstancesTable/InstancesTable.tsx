@@ -7,10 +7,13 @@ import {
     postBlueXPMessage,
     useDialog
 } from '@netapp/design-system';
-import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
+import { useTranslation } from 'react-i18next';
+import { useAppSelector } from '../../../../store/storeHooks';
 import {
     useManageBulkMssqlInstanceMutation,
     usePrepareHostMutation,
@@ -96,9 +99,6 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
-import { useTranslation } from 'react-i18next';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -191,15 +191,14 @@ const InstancesTable = () => {
                     }
                 }
             };
-        } else {
-            return undefined;
         }
+        return undefined;
     };
 
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Deregister instance'}
+                header="Deregister instance"
                 content={
                     <>
                         <DsTypography variant="Regular_14">
@@ -211,8 +210,8 @@ const InstancesTable = () => {
                         </DsTypography>
                     </>
                 }
-                primaryButton={'Deregister'}
-                secondaryButton={'Close'}
+                primaryButton="Deregister"
+                secondaryButton="Close"
                 callback={() => {
                     const updatedState = store.getState();
                     const { inProgressInstances, inventoryTableData }: any = updatedState.inventoryV2;
@@ -240,7 +239,7 @@ const InstancesTable = () => {
                     }).then((res: any) => {
                         const updatedState = store.getState();
                         const { inProgressInstances } = updatedState?.inventoryV2;
-                        let updatedInProgressInstances = new Set([...inProgressInstances]);
+                        const updatedInProgressInstances = new Set([...inProgressInstances]);
                         updatedInProgressInstances.delete(inProgressId);
                         dispatch(setInProgressInstances(updatedInProgressInstances));
                         if (res?.data?.items) {
@@ -294,7 +293,7 @@ const InstancesTable = () => {
         dispatch(
             setGwPageLoadInstanceData({
                 hostname: rowData?.name,
-                resourceId: resourceId,
+                resourceId,
                 instanceId: targettedDbInstance?.databaseInstanceId,
                 instanceName: targettedDbInstance?.databaseInstanceName,
                 credId: targettedHost?.credentialId,
@@ -303,12 +302,12 @@ const InstancesTable = () => {
             })
         );
 
-        //For overview and database
+        // For overview and database
         dispatch(resetWorkloadFactoryResourceData());
         dispatch(setSelectedHostname(rowData?.name));
         dispatch(
             setSelectedResourcePageHostData({
-                resourceId: resourceId,
+                resourceId,
                 databaseInstanceId: targettedDbInstance?.databaseInstanceId,
                 databaseInstanceName: targettedDbInstance?.databaseInstanceName,
                 credentialId: targettedHost?.credentialId,
@@ -329,7 +328,7 @@ const InstancesTable = () => {
     // This function is used to check if user wants to manage the detected host vis workload factory
     const handleMoveToManage = async (rowData: any, fsxId: any, isFsxRegister?: boolean) => {
         const state = store.getState();
-        const detectHostRadio = state.inventoryV2.detectHostRadio;
+        const { detectHostRadio } = state.inventoryV2;
         if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
             handleManageInstances(
                 rowData?.hostRow,
@@ -379,13 +378,13 @@ const InstancesTable = () => {
                 });
                 if (result && !result?.error) {
                     if (result?.data?.sqlServerError || result?.data?.fsxnError) {
-                        let error = [];
+                        const error = [];
                         error.push(result?.data?.sqlServerError || '');
                         error.push(result?.data?.fsxnError || '');
                         dispatch(setIsDetectHostError(error.join(' ')));
                     } else {
                         // store fsx cred in register obj if payload has fsx register
-                        let isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
+                        const isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
 
                         if ((rowData?.storage && rowData?.storage?.length > 0) || rowData?.storage?.fsxn) {
                             setTimeout(() => {
@@ -497,35 +496,34 @@ const InstancesTable = () => {
             rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
         ) {
             return INVENTORY_STATUS.ONLINE;
-        } else if (
-            rowData?.status === INVENTORY_STATUS.STOPPED ||
-            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-        ) {
-            return INVENTORY_STATUS.OFFLINE;
-        } else {
-            return rowData?.status;
         }
+        if (rowData?.status === INVENTORY_STATUS.STOPPED || rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) {
+            return INVENTORY_STATUS.OFFLINE;
+        }
+        return rowData?.status;
     };
 
-    const updatedTableData = useMemo(() => {
-        return instanceTableRows?.map((row: any) => {
-            const { isDisabled, errorMessage } = disableManageCheck(row);
-            return {
-                ...row,
-                statusAccessor: setStatusForFilter(row),
-                cellProps: {
-                    ...row.cellProps,
-                    isDisabled: isDisabled,
-                    selectionProps: {
-                        title: errorMessage,
-                        titleProps: {
-                            placement: 'bottom'
+    const updatedTableData = useMemo(
+        () =>
+            instanceTableRows?.map((row: any) => {
+                const { isDisabled, errorMessage } = disableManageCheck(row);
+                return {
+                    ...row,
+                    statusAccessor: setStatusForFilter(row),
+                    cellProps: {
+                        ...row.cellProps,
+                        isDisabled,
+                        selectionProps: {
+                            title: errorMessage,
+                            titleProps: {
+                                placement: 'bottom'
+                            }
                         }
                     }
-                }
-            };
-        });
-    }, [instanceTableRows, selectedRowsForManage]);
+                };
+            }),
+        [instanceTableRows, selectedRowsForManage]
+    );
 
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
@@ -554,14 +552,14 @@ const InstancesTable = () => {
                         <div className={styles.firstColText}>
                             {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
                             )}
                             {(rowData?.status === INVENTORY_STATUS.STOPPED ||
                                 rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
                             )}
                             {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
+                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
                             )}
                             <DsTypography variant="Regular_13">
                                 {rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
@@ -585,17 +583,15 @@ const InstancesTable = () => {
             id: '2',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'name'),
-            renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <DsTypography
-                        title={cellData || GENERAL.NOT_AVAILABLE}
-                        variant="Regular_13"
-                        className={`${styles.colText} ${styles.textClass}`}
-                    >
-                        {cellData || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                );
-            }
+            renderCell: (cellData: string, rowData: any) => (
+                <DsTypography
+                    title={cellData || GENERAL.NOT_AVAILABLE}
+                    variant="Regular_13"
+                    className={`${styles.colText} ${styles.textClass}`}
+                >
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            )
         },
         {
             Header: 'Engine type',
@@ -603,13 +599,11 @@ const InstancesTable = () => {
             id: '3',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'hostType'),
-            renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
-                        {cellData || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                );
-            }
+            renderCell: (cellData: string, rowData: any) => (
+                <DsTypography variant="Regular_13" className={styles.colText}>
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            )
         },
         {
             Header: 'Deployment model',
@@ -617,13 +611,11 @@ const InstancesTable = () => {
             id: '4',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
-            renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
-                        {cellData || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                );
-            }
+            renderCell: (cellData: string, rowData: any) => (
+                <DsTypography variant="Regular_13" className={styles.colText}>
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            )
         },
         {
             Header: 'Registration status',
@@ -634,9 +626,7 @@ const InstancesTable = () => {
             filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.NOT_REGISTERED) {
-                    return (
-                        <DotComponent color={'var(--toggle-off-bg)'} value={t('databases.general.not_registered')} />
-                    );
+                    return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
                 }
                 if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
@@ -647,7 +637,7 @@ const InstancesTable = () => {
                     );
                 }
                 if (cellData === INVENTORY_STATUS.REGISTERED) {
-                    return <DotComponent color={'var(--success)'} value={t('databases.general.registered')} />;
+                    return <DotComponent color="var(--success)" value={t('databases.general.registered')} />;
                 }
             }
         },
@@ -659,7 +649,7 @@ const InstancesTable = () => {
             filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
             renderCell: (cellData: string, rowData: any) => {
                 let disableMsg = '';
-                let disableMenu = () => {
+                const disableMenu = () => {
                     if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
                         disableMsg = GENERAL.NON_MSSQL_ASSESSMENT_NA;
                         return true;
@@ -700,7 +690,8 @@ const InstancesTable = () => {
                         if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
                             disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
                             return true;
-                        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                        }
+                        if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
                             disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
                             return true;
                         }
@@ -713,7 +704,8 @@ const InstancesTable = () => {
                         ) {
                             disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
                             return true;
-                        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                        }
+                        if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
                             disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
                             return true;
                         }
@@ -734,15 +726,15 @@ const InstancesTable = () => {
                         {disableMenu() ? (
                             <div className={styles.naContainer}>
                                 <Popover
-                                    popoverClass={''}
+                                    popoverClass=""
                                     children={<DsTypography variant="Regular_14">{disableMsg}</DsTypography>}
                                     trigger="hover"
                                     delayHide={200}
-                                    interactive={true}
+                                    interactive
                                     isAppendedToBody={false}
                                     container={<TooltipIcon />}
                                 />
-                                <DsTypography variant="Regular_14">{'Not analyzed'}</DsTypography>
+                                <DsTypography variant="Regular_14">Not analyzed</DsTypography>
                             </div>
                         ) : rowData?.optimizationStatusLoading ? (
                             <DsFlashingDotsLoader />
@@ -774,7 +766,7 @@ const InstancesTable = () => {
                                     {cellData === GENERAL.PROTECTED && (
                                         <ProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--green-60)'
                                             }}
                                         />
@@ -782,7 +774,7 @@ const InstancesTable = () => {
                                     {cellData === GENERAL.NOT_PROTECTED && (
                                         <NotProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--grey-45)'
                                             }}
                                         />
@@ -836,13 +828,11 @@ const InstancesTable = () => {
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'credentialName'),
             width: '213px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
-                        {cellData || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                );
-            }
+            renderCell: (cellData: any, rowData: any) => (
+                <DsTypography variant="Regular_13" className={styles.colText}>
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            )
         },
         {
             id: '10',
@@ -851,13 +841,11 @@ const InstancesTable = () => {
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'accountId'),
             width: '213px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
-                        {cellData || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                );
-            }
+            renderCell: (cellData: any, rowData: any) => (
+                <DsTypography variant="Regular_13" className={styles.colText}>
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            )
         },
         {
             id: '11',
@@ -866,13 +854,11 @@ const InstancesTable = () => {
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'regionName'),
             width: '213px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
-                        {cellData || GENERAL.NOT_AVAILABLE}
-                    </DsTypography>
-                );
-            }
+            renderCell: (cellData: any, rowData: any) => (
+                <DsTypography variant="Regular_13" className={styles.colText}>
+                    {cellData || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            )
         },
         {
             id: '12',
@@ -887,12 +873,12 @@ const InstancesTable = () => {
                     <>
                         {disableMsg ? (
                             <Popover
-                                isAppendedToBody={true}
+                                isAppendedToBody
                                 children={disableMsg}
                                 trigger="hover"
                                 container={
                                     <div className={styles.buttonContainer}>
-                                        <DsButton variant="secondary" isThin isDisabled={true}>
+                                        <DsButton variant="secondary" isThin isDisabled>
                                             {colText}
                                         </DsButton>
                                     </div>
@@ -1034,7 +1020,7 @@ const InstancesTable = () => {
                 let disableMsg = '';
                 let width = '';
                 let height = '';
-                let disableMenu = () => {
+                const disableMenu = () => {
                     if (
                         rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
                         rowData.statusColText === INVENTORY_STATUS.UNDETECTED
@@ -1113,7 +1099,7 @@ const InstancesTable = () => {
                 return (
                     <div className={styles.jobMenuPopover}>
                         {disableMenu() ? (
-                            <TooltipComponent placement={'bottom'} title={disableMsg} width={width} height={height}>
+                            <TooltipComponent placement="bottom" title={disableMsg} width={width} height={height}>
                                 <div className={styles.menuPointerDisabled}>
                                     <span className={styles.menuPointer}>...</span>
                                 </div>
@@ -1134,7 +1120,7 @@ const InstancesTable = () => {
                                         menuOpenedRowDetail.current = null;
                                         setOpenedRow(null);
 
-                                        //Protect POC code
+                                        // Protect POC code
                                         if (menuId === 'protect') {
                                             if (isWorkloadFactory) {
                                                 window.open(
@@ -1142,11 +1128,9 @@ const InstancesTable = () => {
                                                     '_blank',
                                                     'noopener,noreferrer'
                                                 );
-                                            } else {
-                                                if (window.top) {
-                                                    window.top.location.href =
-                                                        'https://staging.console.bluexp.netapp.com/unified-backup-restore';
-                                                }
+                                            } else if (window.top) {
+                                                window.top.location.href =
+                                                    'https://staging.console.bluexp.netapp.com/unified-backup-restore';
                                             }
                                         }
 
@@ -1290,38 +1274,36 @@ const InstancesTable = () => {
     };
 
     return (
-        <>
-            <div className={styles.inventoryTable}>
-                <div
-                    //  @ts-ignore
-                    className={`${styles.table} ${styles.leftBorder}`}
-                >
-                    <TableTopBar
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        pluralTitle="Instances"
-                        singularTitle="Instance"
-                        exportToCsvOptions={{ fileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv` }}
-                        subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
-                        actionsRight={
-                            <div className={styles.manageInstanceButton}>
-                                <DsButton isThin onClick={() => handleManageBulk()} isDisabled={loading}>
-                                    Register multiple instances
-                                </DsButton>
-                            </div>
-                        }
-                    />
-                    {/* {selectedRowsForManage.length > 0 && (
+        <div className={styles.inventoryTable}>
+            <div
+                //  @ts-ignore
+                className={`${styles.table} ${styles.leftBorder}`}
+            >
+                <TableTopBar
+                    // @ts-ignore
+                    tableProps={tableProps}
+                    pluralTitle="Instances"
+                    singularTitle="Instance"
+                    exportToCsvOptions={{ fileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv` }}
+                    subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
+                    actionsRight={
+                        <div className={styles.manageInstanceButton}>
+                            <DsButton isThin onClick={() => handleManageBulk()} isDisabled={loading}>
+                                Register multiple instances
+                            </DsButton>
+                        </div>
+                    }
+                />
+                {/* {selectedRowsForManage.length > 0 && (
                         <BulkActionContainer action={'Manage'} onClick={handleBulkOperation} />
                     )} */}
-                    <Table
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        isDoubleRow={true}
-                    />
-                </div>
+                <Table
+                    // @ts-ignore
+                    tableProps={tableProps}
+                    isDoubleRow
+                />
             </div>
-        </>
+        </div>
     );
 };
 

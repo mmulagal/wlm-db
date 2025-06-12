@@ -1,3 +1,4 @@
+import { Typography } from '@netapp/design-system';
 import { ReactComponent as WizardIcon } from '../../../../assets/wizard-icon.svg';
 import { ReactComponent as WizardSelectedInLightIcon } from '../../../../assets/Wizard_Selected_light.svg';
 import { ReactComponent as ChatbotIcon } from '../../../../assets/chatbot-tab-icon.svg';
@@ -7,7 +8,6 @@ import { ReactComponent as ChatbotDarkModeNotSelectedIcon } from '../../../../as
 
 import { ReactComponent as WizardSelectedInLightMode } from '../../../../assets/WizardSelectedInLightMode.svg';
 import { ReactComponent as WizardUnSelectedInLightMode } from '../../../../assets/WizardUnSelectInLightMode.svg';
-import { Typography } from '@netapp/design-system';
 
 import styles from './DeploymentTabs.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -28,44 +28,38 @@ const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
                         <WizardSelectedInLightIcon />
                     </div>
                 );
-            } else {
-                return (
-                    <div className={styles.wizardUnselect}>
-                        <WizardIcon />
-                    </div>
-                );
             }
-        } else {
-            if (selectedTab === 'wizard') {
-                return (
-                    <div>
-                        <WizardSelectedInLightMode />
-                    </div>
-                );
-            } else {
-                return (
-                    <div className={styles.wizardUnselect}>
-                        <WizardUnSelectedInLightMode />
-                    </div>
-                );
-            }
+            return (
+                <div className={styles.wizardUnselect}>
+                    <WizardIcon />
+                </div>
+            );
         }
+        if (selectedTab === 'wizard') {
+            return (
+                <div>
+                    <WizardSelectedInLightMode />
+                </div>
+            );
+        }
+        return (
+            <div className={styles.wizardUnselect}>
+                <WizardUnSelectedInLightMode />
+            </div>
+        );
     };
 
     const setChatbotIcon = () => {
         if (isDarkTheme) {
             if (selectedTab === 'wizard') {
                 return <ChatbotDarkModeNotSelectedIcon />;
-            } else {
-                return <ChatbotDarkModeSelectedIcon />;
             }
-        } else {
-            if (selectedTab === 'chatbot') {
-                return <ChatbotIcon />;
-            } else {
-                return <ChatbotLightModeIcon />;
-            }
+            return <ChatbotDarkModeSelectedIcon />;
         }
+        if (selectedTab === 'chatbot') {
+            return <ChatbotIcon />;
+        }
+        return <ChatbotLightModeIcon />;
     };
 
     return (

@@ -1,19 +1,20 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useMemo } from 'react';
 import styles from './DatabaseDistribution.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import { ReactComponent as Database } from '../../../assets/icon database.svg';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useMemo } from 'react';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 
 const DatabaseDistribution = () => {
     const { aggregatedHostsCount, aggregatedPgSqlHostsCount } = useAppSelector(state => state.databaseHome);
     const { getDatabaseHosts, getPgSqlDatabaseHosts } = useAppSelector(state => state.inventoryV2);
     const { multiDataLoading } = useAppSelector(state => state.headers);
-    const loading = useMemo(() => {
-        return getDatabaseHosts.fullHostDataLoading || getPgSqlDatabaseHosts.fullHostDataLoading || multiDataLoading;
-    }, [getDatabaseHosts, getPgSqlDatabaseHosts, multiDataLoading]);
+    const loading = useMemo(
+        () => getDatabaseHosts.fullHostDataLoading || getPgSqlDatabaseHosts.fullHostDataLoading || multiDataLoading,
+        [getDatabaseHosts, getPgSqlDatabaseHosts, multiDataLoading]
+    );
 
     return (
         <div className={styles.databaseDistribution}>

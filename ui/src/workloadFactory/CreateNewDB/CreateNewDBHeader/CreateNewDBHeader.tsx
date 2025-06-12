@@ -1,12 +1,13 @@
 import { DsTypography, Header } from '@netapp/design-system';
 
-import styles from './CreateNewDBHeader.module.scss';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import styles from './CreateNewDBHeader.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
-import { useDispatch } from 'react-redux';
 import { updateRefreshBlocked } from '../../../store/authSlice';
 import { FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY, FORM_TO_WLF_NAVIGATE_INVENTORY } from '../../../utils/consts';
+
 const CreateNewUserHeader = () => {
     const navigate = useNavigate();
     const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
@@ -42,7 +43,7 @@ const CreateNewUserHeader = () => {
                     </div>
                 }
                 style={{ width: '100vw' }}
-            ></Header>
+            />
         </div>
     );
 };

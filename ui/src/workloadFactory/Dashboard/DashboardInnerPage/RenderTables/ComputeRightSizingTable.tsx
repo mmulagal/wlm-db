@@ -1,12 +1,12 @@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
+import { useMemo, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo, useEffect } from 'react';
 import { checkBoxHandle, getFilterOptions, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { setEnableFilter, setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
@@ -36,8 +36,8 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { credentialData } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
-        let uniqueResourceList: Array<string> = [];
+        const storageTierAssessmentData: any = [];
+        const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
@@ -76,7 +76,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             findingReasons: `${computeRightSizingObj?.objectsInViolation?.length || 0} Findings`,
-                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
+                            id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[computeRightSizingObj?.status],
                             recommendationOptions: computeRightSizingObj?.recommendationOptions,
@@ -138,9 +138,8 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
                 selectedRowsForOptimize
             );
-        } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING);
         }
+        return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING);
     }, [selectedRowsForOptimize, inProgressOptimizationData, tableData]);
 
     const TableColDefs: ColumnProps[] = [
@@ -152,9 +151,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
             filterOptions: 'auto',
             isSticky: true,
             width: '310px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
-            }
+            renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
         {
             Header: 'Host name',
@@ -169,9 +166,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
             id: '3',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             id: '4',
@@ -198,14 +193,14 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: {
             isDisabled: enableFilter,
             title:
                 enableFilter &&
                 'Multi-select is available for instances associated with the same host. To activate the multi-select checkbox, first filter the host column.'
         },
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -240,18 +235,18 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     return (
         <div className={styles.renderTable}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Not-optimized instances`}
-                singularTitle={'Not-optimized instance'}
+                pluralTitle="Not-optimized instances"
+                singularTitle="Not-optimized instance"
             />
             {selectedRowsForOptimize.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
             />
         </div>
     );

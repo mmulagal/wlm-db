@@ -1,8 +1,7 @@
-import { Chart } from 'chart.js';
-import { registerables } from 'chart.js';
+import { Chart, registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
-import styles from './HostDistributionChart.module.scss';
 import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
+import styles from './HostDistributionChart.module.scss';
 
 Chart.register(...registerables);
 
@@ -29,7 +28,7 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText, cente
         }
     };
 
-    var config = {
+    const config = {
         type: 'doughnut',
         data: {
             datasets: [
@@ -45,7 +44,7 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText, cente
 
     useEffect(() => {
         if (ref.current) {
-            //@ts-ignore
+            // @ts-ignore
             chartInstanceRef.current = new Chart(ref.current, config);
         }
         return () => {
@@ -69,7 +68,7 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText, cente
                 )}
             </div>
             {/* {!totalHosts && <div className={styles.emptyCircle}></div>} */}
-            <canvas ref={ref} id="chart-area" width={200} height={200}></canvas>
+            <canvas ref={ref} id="chart-area" width={200} height={200} />
         </div>
     );
 };

@@ -32,10 +32,11 @@ type AppNotificationParams = {
 };
 
 const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
-    //@ts-ignore
-    const showGroupNotificationMessage = useMemo(() => {
-        return notifications && notifications.messages.length > 1 && notifications.showDetailedView === false;
-    }, [notifications]);
+    // @ts-ignore
+    const showGroupNotificationMessage = useMemo(
+        () => notifications && notifications.messages.length > 1 && notifications.showDetailedView === false,
+        [notifications]
+    );
     const manualNotificationPlacement =
         notifications.messages.length === 1 && notifications.messages[0].notificationPlacement;
 
@@ -69,7 +70,7 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
         <div
             className={styles['app-notification-container']}
             style={{
-                bottom: manualNotificationPlacement ? manualNotificationPlacement : ''
+                bottom: manualNotificationPlacement || ''
             }}
         >
             <div
@@ -78,12 +79,12 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
                         ? { display: 'flex', backgroundColor: '#ffffff' }
                         : notifications.messages.length === 1
                         ? {
-                              //display: 'flex',
-                              //backgroundColor: getTypeBGColor(notifications.messages[0]),
+                              // display: 'flex',
+                              // backgroundColor: getTypeBGColor(notifications.messages[0]),
                           }
                         : { display: 'initial', backgroundColor: '#ffffff' }
                 }
-                className={styles[`app-notification-content-container`]}
+                className={styles['app-notification-content-container']}
             >
                 {notifications.messages.length > 1 ? (
                     <NotificationPanel
@@ -121,7 +122,7 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
                         const compData = notification.linkComp && notification.linkComp.data;
                         const label = notification.linkComp && notification.linkComp.label;
                         return notification.additionalText ? (
-                            //This condition is for restore scenario requirement SFR-2262
+                            // This condition is for restore scenario requirement SFR-2262
                             notification.notificationType === 'INFO_DETAIL' ? (
                                 <Notification
                                     onClose={() => {
@@ -147,7 +148,7 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
                                     </div>
                                 </Notification>
                             ) : (
-                                <Notification //With show more option
+                                <Notification // With show more option
                                     onClose={() => {
                                         onClose(idx, totalCount);
                                     }}

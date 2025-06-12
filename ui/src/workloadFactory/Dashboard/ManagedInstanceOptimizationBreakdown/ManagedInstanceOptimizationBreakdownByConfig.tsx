@@ -1,14 +1,14 @@
 import { DsButton, DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useMemo } from 'react';
 import styles from './ManagedInstanceOptimizationBreakdownByConfig.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
-import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATES_UI, WLF_TABS } from '../../../utils/consts';
 import { setDismissPageLanding, setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useMemo } from 'react';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { GENERAL } from '../../../utils/appConstants';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
@@ -38,24 +38,27 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         setOptimizeInnerpageSummary(type, configData, dispatch);
     };
 
-    const loading = useMemo(() => {
-        return allmssqlHostAssessmentLoading || multiDataLoading;
-    }, [allmssqlHostAssessmentLoading, multiDataLoading]);
+    const loading = useMemo(
+        () => allmssqlHostAssessmentLoading || multiDataLoading,
+        [allmssqlHostAssessmentLoading, multiDataLoading]
+    );
 
-    const configData = useMemo(() => {
-        return getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
-    }, [allmssqlHostAssessmentData]);
+    const configData = useMemo(
+        () => getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData),
+        [allmssqlHostAssessmentData]
+    );
 
     const hasDismissedOrPosponed = (state: any) => {
         if (state.includes(CONFIG_STATES.ACTIVE)) {
             return '';
-        } else if (state.includes(CONFIG_STATES.POSTPONED)) {
-            return CONFIG_STATES_UI.POSTPONED;
-        } else if (state.includes(CONFIG_STATES.DISMISSED)) {
-            return CONFIG_STATES_UI.DISMISSED;
-        } else {
-            return '';
         }
+        if (state.includes(CONFIG_STATES.POSTPONED)) {
+            return CONFIG_STATES_UI.POSTPONED;
+        }
+        if (state.includes(CONFIG_STATES.DISMISSED)) {
+            return CONFIG_STATES_UI.DISMISSED;
+        }
+        return '';
     };
 
     const hasMixedState = (state: any) => {
@@ -64,9 +67,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             (state.includes(CONFIG_STATES.POSTPONED) || state.includes(CONFIG_STATES.DISMISSED))
         ) {
             return GENERAL.MIXED_STATE_CONFIG_TOOLTIP;
-        } else {
-            return '';
         }
+        return '';
     };
 
     const renderOptimizationBar = (
@@ -126,7 +128,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
                             }}
@@ -176,7 +178,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             data-testid="wlm-db-optimize-file-system-headroom"
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
@@ -226,7 +228,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE);
                             }}
@@ -276,7 +278,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             data-testid="wlm-db-optimize-temdb-drive-size"
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
@@ -331,11 +333,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-data-files"
-                                    variant="secondary"
-                                    isDisabled={true}
-                                >
+                                <DsButton data-testid="wlm-db-optimize-data-files" variant="secondary" isDisabled>
                                     {GENERAL.VIEW_AND_FIX}
                                 </DsButton>
                             </div>
@@ -380,7 +378,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton data-testid="wlm-db-optimize-log-files" variant="secondary" isDisabled={true}>
+                                <DsButton data-testid="wlm-db-optimize-log-files" variant="secondary" isDisabled>
                                     {GENERAL.VIEW_AND_FIX}
                                 </DsButton>
                             </div>
@@ -425,11 +423,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-temdb-placement"
-                                    variant="secondary"
-                                    isDisabled={true}
-                                >
+                                <DsButton data-testid="wlm-db-optimize-temdb-placement" variant="secondary" isDisabled>
                                     {GENERAL.VIEW_AND_FIX}
                                 </DsButton>
                             </div>
@@ -469,7 +463,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             data-testid="wlm-db-optimize-ontap"
                             onClick={() => {
                                 handleOptimize('ONTAP');
@@ -509,7 +503,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             data-testid="wlm-db-optimize-operating-system"
                             onClick={() => {
                                 handleOptimize('Operating system');
@@ -549,7 +543,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             data-testid="wlm-db-optimize-compute-right-sizing"
                             onClick={() => {
                                 handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
@@ -606,7 +600,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 <DsButton
                                     data-testid="wlm-db-optimize-operating-system-patch"
                                     variant="secondary"
-                                    isDisabled={true}
+                                    isDisabled
                                 >
                                     {GENERAL.VIEW_AND_FIX}
                                 </DsButton>
@@ -647,7 +641,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             onClick={() => {
                                 handleOptimize(GENERAL.RSS_CONFIGURATION);
                             }}
@@ -704,7 +698,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 <DsButton
                                     data-testid="wlm-db-optimize-license-sql-server"
                                     variant="secondary"
-                                    isDisabled={true}
+                                    isDisabled
                                 >
                                     {GENERAL.VIEW_AND_FIX}
                                 </DsButton>
@@ -753,7 +747,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 <DsButton
                                     data-testid="wlm-db-optimize-microsoft-sql-server"
                                     variant="secondary"
-                                    isDisabled={true}
+                                    isDisabled
                                 >
                                     {GENERAL.VIEW_AND_FIX}
                                 </DsButton>
@@ -794,7 +788,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.MAXDOP);
                             }}
@@ -844,7 +838,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
                             }}
@@ -892,9 +886,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent title={''} placement="bottom" width="120px" height="30px">
+                        <TooltipComponent title="" placement="bottom" width="120px" height="30px">
                             <div>
-                                <DsButton data-testid="wlm-db-optimize-crr" variant="secondary" isDisabled={true}>
+                                <DsButton data-testid="wlm-db-optimize-crr" variant="secondary" isDisabled>
                                     {GENERAL.VIEW_AND_FIX}
                                 </DsButton>
                             </div>
@@ -934,7 +928,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
                             }}
@@ -1014,7 +1008,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.buttonContainer}>
                         <DsButton
                             variant="secondary"
-                            isThin={true}
+                            isThin
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
                             }}

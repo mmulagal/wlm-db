@@ -1,6 +1,8 @@
 import { Button, Header, useDialog, Popover, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { uniq } from 'lodash';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -22,8 +24,6 @@ import SaveConfig from '../../SaveConfig/SaveConfig';
 import styles from './MSSqlHeader.module.scss';
 import { setIsLoadConfig } from '../../../../store/mssql/msSqlActionSlice';
 import { navigateToCanvas } from '../../../../utils/appConfig';
-import { useNavigate } from 'react-router-dom';
-import { uniq } from 'lodash';
 
 const MSSqlHeader = () => {
     const { setDialog, closeDialog } = useDialog();
@@ -110,15 +110,13 @@ const MSSqlHeader = () => {
                             } else {
                                 navigate('../../fsxdb');
                             }
+                        } else if (isWorkloadFactory) {
+                            navigateToCanvas('/');
                         } else {
-                            if (isWorkloadFactory) {
-                                navigateToCanvas('/');
-                            } else {
-                                postBlueXPMessage({
-                                    type: BlueXPListeners.navigate,
-                                    payload: { pathname: '../../../../../fsxhome', replace: true }
-                                });
-                            }
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: '../../../../../fsxhome', replace: true }
+                            });
                         }
                     }
                 }}
@@ -127,7 +125,7 @@ const MSSqlHeader = () => {
         );
     };
 
-    //Function to call when hit cross without dialog
+    // Function to call when hit cross without dialog
     const handleNavigateWithoutDialog = () => {
         if (databaseHostEntryPoint === 'inventory') {
             navigate('databases/inventory');
@@ -137,15 +135,13 @@ const MSSqlHeader = () => {
             } else {
                 navigate('../../fsxdb');
             }
+        } else if (isWorkloadFactory) {
+            navigateToCanvas('/');
         } else {
-            if (isWorkloadFactory) {
-                navigateToCanvas('/');
-            } else {
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: { pathname: '../../../../../fsxhome', replace: true }
-                });
-            }
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: { pathname: '../../../../../fsxhome', replace: true }
+            });
         }
     };
 
@@ -178,14 +174,14 @@ const MSSqlHeader = () => {
                     </Button>
                 )}
 
-                <div className={styles.separator}></div>
+                <div className={styles.separator} />
                 {configData?.length >= MAX_SAVED_CONFIG && (
                     <Popover
-                        popoverClass={styles['popover']}
+                        popoverClass={styles.popover}
                         children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
                         trigger="hover"
                         container={
-                            <Button Component="button" variant="text" isDisabled={true}>
+                            <Button Component="button" variant="text" isDisabled>
                                 {SELECT_CONFIG.SAVE_CONFIG}
                             </Button>
                         }

@@ -1,7 +1,7 @@
 import { AccordionCard, AccordionCardContent, DsTypography, RadioButton } from '@netapp/design-system';
 
-import { useAppSelector } from '../../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../../../store/storeHooks';
 import { setSelectedNewUserConfig } from '../../../../../store/workloadFactory/createNewDBSlice';
 import styles from './FileSettingsMode.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
@@ -11,10 +11,8 @@ const FileSettingsMode = () => {
     const dispatch = useDispatch();
     const selectedConfigNewUser = useAppSelector(state => state.createNewUser.selectedNewUserConfig);
 
-    //Set the Header text here
-    const setHeader = () => {
-        return <DsTypography variant="Regular_14">{selectedConfigNewUser}</DsTypography>;
-    };
+    // Set the Header text here
+    const setHeader = () => <DsTypography variant="Regular_14">{selectedConfigNewUser}</DsTypography>;
 
     return (
         <div className={styles.fileSettingsMode}>

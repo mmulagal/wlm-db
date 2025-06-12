@@ -1,8 +1,8 @@
 import domToImage from 'dom-to-image';
-//@ts-ignore
+// @ts-ignore
 import { jsPDF } from 'jspdf';
 
-let _cloneNode = (node, javascriptEnabled) => {
+const _cloneNode = (node, javascriptEnabled) => {
     let child;
     let clone;
     clone = node.nodeType === 3 ? document.createTextNode(node.nodeValue) : node.cloneNode(false);
@@ -33,8 +33,8 @@ let _cloneNode = (node, javascriptEnabled) => {
     return clone;
 };
 
-let _createElement = (tagName, { className, html, style }) => {
-    let el = document.createElement(tagName);
+const _createElement = (tagName, { className, html, style }) => {
+    const el = document.createElement(tagName);
 
     if (className) {
         el.className = className;
@@ -59,7 +59,7 @@ let _createElement = (tagName, { className, html, style }) => {
     return el;
 };
 
-let _isCanvasBlank = canvas => {
+const _isCanvasBlank = canvas => {
     let blank;
     let ctx;
     blank = document.createElement('canvas');
@@ -151,14 +151,12 @@ const downloadPdf = (dom, options, cb) => {
 
     for (let i = 0, len = excludeClassNames.length; i < len; i++) {
         const clName = excludeClassNames[i];
-        container.querySelectorAll(`.${clName}`).forEach(function (a) {
-            return a.remove();
-        });
+        container.querySelectorAll(`.${clName}`).forEach(a => a.remove());
     }
 
     for (let j = 0, len1 = excludeTagNames.length; j < len1; j++) {
         const tName = excludeTagNames[j];
-        let els = container.getElementsByTagName(tName);
+        const els = container.getElementsByTagName(tName);
 
         for (let k = els.length - 1; k >= 0; k--) {
             if (!els[k]) {
@@ -227,7 +225,7 @@ const downloadPdf = (dom, options, cb) => {
         offsetHeight = container.offsetHeight;
         style = {
             transform: `scale(${scale})`,
-            transformOrigin: transformOrigin,
+            transformOrigin,
             width: `${offsetWidth}px`,
             height: `${offsetHeight}px`
         };
@@ -235,7 +233,7 @@ const downloadPdf = (dom, options, cb) => {
             width: offsetWidth * scale,
             height: offsetHeight * scale,
             quality: 1,
-            style: style
+            style
         };
         opts = Object.assign(opts, scaleObj);
     }

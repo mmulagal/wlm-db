@@ -1,3 +1,5 @@
+import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
 import { ReactComponent as StandardCreate } from '../../../assets/Advanced create.svg';
 import { ReactComponent as BlueTick } from '../../../assets/blue-tick.svg';
 import { ReactComponent as EasyCreate } from '../../../assets/Quick create.svg';
@@ -6,12 +8,10 @@ import styles from './SelectConfig.module.scss';
 
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
 import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
 import CardComponentConfig from '../../../common/CardComponent/CardComponentConfig';
-import { useEffect } from 'react';
 import { DBType, WIZARD_TYPE } from '../../../utils/consts';
 
 type SC = {
@@ -32,7 +32,7 @@ const SelectConfig = ({ isDisabled = false, wizardType }: SC) => {
         <div className={styles['select-config']}>
             {/* Easy create section from here */}
             <CardComponentConfig
-                idToAdd={'quick-create'}
+                idToAdd="quick-create"
                 selectedConfigCondition={selectedConfig === SELECT_CONFIG.EASY_CREATE}
                 icon={<EasyCreate />}
                 tickIcon={<BlueTick />}
@@ -44,7 +44,7 @@ const SelectConfig = ({ isDisabled = false, wizardType }: SC) => {
 
             {/* Standard create section here */}
             <CardComponentConfig
-                idToAdd={'advanced-create'}
+                idToAdd="advanced-create"
                 selectedConfigCondition={selectedConfig === SELECT_CONFIG.STANDARD_CREATE}
                 icon={<StandardCreate />}
                 tickIcon={<BlueTick />}

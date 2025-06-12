@@ -1,10 +1,9 @@
-import { StepLayout, WizardContent, WizardFooter } from '@netapp/design-system';
+import { StepLayout, WizardContent, WizardFooter, Spinner } from '@netapp/design-system';
 
 import DiscoveryFooter from './DiscoverPageComponents/DiscoveryFooter/DiscoveryFooter';
 import DiscoveryHeader from './DiscoverPageComponents/DiscoveryHeader/DiscoveryHeader';
 import DiscoveryForm from './DiscoverPageComponents/DiscoveryForm/DiscoveryForm';
 import styles from './DiscoverPage.module.scss';
-import { Spinner } from '@netapp/design-system';
 import { useAppSelector } from '../../store/storeHooks';
 
 const DiscoverPage = () => {

@@ -1,10 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, DsTypography } from '@netapp/design-system';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './PostgreVersion.module.scss';
-
-import { useDispatch } from 'react-redux';
 
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -19,7 +18,10 @@ const PostgreVersion = () => {
 
     const generateOSValues = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        const osValues = [{label: 'postgresql16', value: 'postgresql16'}, {label:'postgresql15', value: 'postgresql15'}];
+        const osValues = [
+            { label: 'postgresql16', value: 'postgresql16' },
+            { label: 'postgresql15', value: 'postgresql15' }
+        ];
         osValues.map((val: any, idx: number) => {
             const option = generateOptionType(val?.value, val?.label, val?.label, false, '');
             options.push(option);
@@ -28,7 +30,7 @@ const PostgreVersion = () => {
     }, []);
 
     useEffect(() => {
-        //@ts-ignore
+        // @ts-ignore
         dispatch(setPostgreVersion(generateOSValues[0]));
     }, [generateOSValues]);
 
@@ -44,13 +46,13 @@ const PostgreVersion = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="26"
-                title={<div className={CommonStyles.title}>{'PostgreSQL version'}</div>}
+                title={<div className={CommonStyles.title}>PostgreSQL version</div>}
             >
                 <AccordionCardContent>
                     <DsTypography>
                         <div className={styles.collationField}>
                             <SelectField
-                                label={'PostgreSQL version'}
+                                label="PostgreSQL version"
                                 isClearable={false}
                                 placeholder={GENERAL.SELECT_COLLATION}
                                 defaultValue={postGreVersion ? [postGreVersion] : [generateOSValues[0]]}

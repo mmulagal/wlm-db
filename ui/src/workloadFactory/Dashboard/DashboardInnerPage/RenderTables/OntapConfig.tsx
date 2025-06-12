@@ -1,21 +1,20 @@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
+import { useCallback, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './RenderTables.module.scss';
 import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
 import { GENERAL } from '../../../../utils/appConstants';
 import { WLF_TABS } from '../../../../utils/consts';
 import { expandTableRow } from '../../../../utils/utilityFunctions';
-import { useCallback } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import RecommendationTable from '../../../GetWell/RecommendationTable/RecommendationTable';
-import { useMemo } from 'react';
 import {
     disableOfflineRows,
     formatAssessmentTableData,
     mapHostStatusToAssessmentData
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
-import { useDispatch } from 'react-redux';
 import { setGwPageLoadInstanceData } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import FirstColumnComponent from './FirstColumnComponent';
 import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
@@ -34,8 +33,8 @@ const OntapConfig = () => {
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     const tableData = useMemo(() => {
-        let ontapConfigAssessmentData: any = [];
-        let uniqueResourceList: Array<string> = [];
+        const ontapConfigAssessmentData: any = [];
+        const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
@@ -57,12 +56,8 @@ const OntapConfig = () => {
                     const lunsData = instanceData?.assessments?.storage?.configuration?.luns;
                     const volData = instanceData?.assessments?.storage?.configuration?.volumes;
                     const mergedData = [
-                        ...(lunsData?.map((item: any) => {
-                            return { ...item, type: 'lun', id: item?.name };
-                        }) || []),
-                        ...(volData?.map((item: any) => {
-                            return { ...item, type: 'volume', id: item?.name };
-                        }) || [])
+                        ...(lunsData?.map((item: any) => ({ ...item, type: 'lun', id: item?.name })) || []),
+                        ...(volData?.map((item: any) => ({ ...item, type: 'volume', id: item?.name })) || [])
                     ];
                     const notOptimized = mergedData.filter(
                         (item: any) => item.status !== 'optimized' && !item?.errorMessage
@@ -80,7 +75,7 @@ const OntapConfig = () => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             configuration: !errorCase
                                 ? `${notOptimized.length} out of ${mergedData.length}`
-                                : `0 out of 0`,
+                                : '0 out of 0',
                             hostName: hostData?.databaseHostName,
                             fullData: formatAssessmentTableData(notOptimized),
                             credentialName: matchingCredEntry?.name,
@@ -91,7 +86,7 @@ const OntapConfig = () => {
                 }
             });
         });
-        let tableRows = mapHostStatusToAssessmentData(
+        const tableRows = mapHostStatusToAssessmentData(
             inventoryTableData,
             ontapConfigAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
@@ -105,45 +100,43 @@ const OntapConfig = () => {
         headerSelectedMultiRegionIdsList
     ]);
 
-    const lastColDetails = () => {
-        return {
-            id: '7',
-            Header: '',
-            accessor: '',
-            isSticky: true,
-            width: '250px',
-            renderCell: (cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
-                const currentRowState = rowsState[rowData.id];
-                return (
-                    <>
-                        {!rowData?.cellProps?.isDisabled && (
-                            <div className={styles.arrow}>
-                                <ArrowIcon
-                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                    onClick={(e: any) => {
-                                        e.stopPropagation();
-                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                    }}
-                                />
-                            </div>
-                        )}
-                        {rowData?.cellProps?.isDisabled && (
-                            <div className={styles.arrow}>
-                                <TooltipComponent
-                                    title={rowData?.cellProps?.selectionProps?.title}
-                                    placement="bottom"
-                                    width="278px"
-                                    height="30px"
-                                >
-                                    <ArrowIcon className={styles['arrow-disable']} />
-                                </TooltipComponent>
-                            </div>
-                        )}
-                    </>
-                );
-            }
-        };
-    };
+    const lastColDetails = () => ({
+        id: '7',
+        Header: '',
+        accessor: '',
+        isSticky: true,
+        width: '250px',
+        renderCell: (cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
+            const currentRowState = rowsState[rowData.id];
+            return (
+                <>
+                    {!rowData?.cellProps?.isDisabled && (
+                        <div className={styles.arrow}>
+                            <ArrowIcon
+                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                }}
+                            />
+                        </div>
+                    )}
+                    {rowData?.cellProps?.isDisabled && (
+                        <div className={styles.arrow}>
+                            <TooltipComponent
+                                title={rowData?.cellProps?.selectionProps?.title}
+                                placement="bottom"
+                                width="278px"
+                                height="30px"
+                            >
+                                <ArrowIcon className={styles['arrow-disable']} />
+                            </TooltipComponent>
+                        </div>
+                    )}
+                </>
+            );
+        }
+    });
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -154,9 +147,7 @@ const OntapConfig = () => {
             filterOptions: 'auto',
             isSticky: true,
             width: '376px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
-            }
+            renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
         {
             Header: 'Host name',
@@ -171,9 +162,7 @@ const OntapConfig = () => {
             id: '3',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             id: '4',
@@ -228,9 +217,9 @@ const OntapConfig = () => {
     };
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -243,16 +232,16 @@ const OntapConfig = () => {
     return (
         <div className={styles.renderTable}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Not-optimized instances`}
-                singularTitle={'Not-optimized instance'}
+                pluralTitle="Not-optimized instances"
+                singularTitle="Not-optimized instance"
             />
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
                 {...tableComponentProps}
-                isDoubleRow={true}
+                isDoubleRow
             />
         </div>
     );

@@ -17,30 +17,28 @@ const Bubbles = ({ bubbleList, onBubbleClick }: BubblesPropsType) => {
 
     return (
         <div className={styles['bubbles-container']}>
-            {bubbleList.map((bubble: bubbleItemType) => {
-                return (
-                    <div
-                        className={`${'chatbot-select-msg'} ${
+            {bubbleList.map((bubble: bubbleItemType) => (
+                <div
+                    className={`${'chatbot-select-msg'} ${
+                        isDarkTheme
+                            ? `${styles['bubble-item']} ${styles['bubble-item-dark-mode']}`
+                            : styles['bubble-item']
+                    }`}
+                    onClick={() => onBubbleClick(bubble?.label, bubble?.value)}
+                    id={bubble.value === 'deploy' ? 'chatbot-deploy-btn' : ''}
+                >
+                    <Typography
+                        variant="Semibold_13"
+                        className={
                             isDarkTheme
-                                ? `${styles['bubble-item']} ${styles['bubble-item-dark-mode']}`
-                                : styles['bubble-item']
-                        }`}
-                        onClick={() => onBubbleClick(bubble?.label, bubble?.value)}
-                        id={bubble.value === 'deploy' ? 'chatbot-deploy-btn' : ''}
+                                ? `${styles['bubble-label']} ${styles['bubble-item-dark-mode-label']}`
+                                : styles['bubble-label']
+                        }
                     >
-                        <Typography
-                            variant="Semibold_13"
-                            className={
-                                isDarkTheme
-                                    ? `${styles['bubble-label']} ${styles['bubble-item-dark-mode-label']}`
-                                    : styles['bubble-label']
-                            }
-                        >
-                            {bubble.label}
-                        </Typography>
-                    </div>
-                );
-            })}
+                        {bubble.label}
+                    </Typography>
+                </div>
+            ))}
         </div>
     );
 };

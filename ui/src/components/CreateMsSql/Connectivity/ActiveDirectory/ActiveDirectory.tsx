@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
-import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
-import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
+import { useDispatch } from 'react-redux';
+import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
+import { GENERAL } from '../../../../utils/appConstants';
 import styles from './ActiveDirectory.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { adPassVal, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setSelectedADDomainAddress,
@@ -19,13 +19,12 @@ import {
 import { AWS_MANAGED_AD, USER_MANAGED_AD } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
-const delay = () => {
-    return new Promise(resolve => {
+const delay = () =>
+    new Promise(resolve => {
         setTimeout(() => {
             resolve('');
         }, 2000);
     });
-};
 
 const ActiveDirectory = () => {
     const dispatch = useDispatch();
@@ -46,7 +45,7 @@ const ActiveDirectory = () => {
     const userName = useAppSelector(state => state.mssqlForm.activeDirectory.userName);
     const password = useAppSelector(state => state.mssqlForm.activeDirectory.password);
 
-    //Refs
+    // Refs
     const domainNameRef = useRef(null);
     const DNSAddressRef = useRef(null);
     const userNameRef = useRef(null);
@@ -96,7 +95,7 @@ const ActiveDirectory = () => {
         setVersions(sortListOfDict(verList, 'domainName'));
     }, [adsData]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateActiveDirectories = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         versions?.map((val, idx: number) => {
@@ -124,39 +123,39 @@ const ActiveDirectory = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateActiveDirectories]);
 
-    //Refs to highlight required field
+    // Refs to highlight required field
     useEffect(() => {
         if (isCreateHit) {
             if (!isADNotFilled && !selectedADDomainName) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     domainNameRef?.current?.focus();
                 }, 50);
             }
 
             if (!isADNotFilled && !selectedADDomainAddress) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     DNSAddressRef?.current?.focus();
                 }, 40);
             }
 
             if (!isADNotFilled && !userName) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     userName?.current?.focus();
                 }, 30);
             }
             if (!isADNotFilled && !password) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     passwordRefAD?.current?.focus();
                 }, 20);
             }
         }
     }, [isADNotFilled, selectedADDomainName, isCreateHit]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (
@@ -164,23 +163,23 @@ const ActiveDirectory = () => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
-        } else if (!selectedVPCData) {
+        }
+        if (!selectedVPCData) {
             return <ActionRequired disabled />;
         }
 
         if (!selectedADDomainName?.label || !selectedADDomainAddress || !userName || !password) {
-            return <ActionRequired error={!isADNotFilled ? true : false} />;
-        } else {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
-                    <div>{selectedADDomainName?.label}</div>
-                    <div className={CommonStyles.separator} />
-                    <div>{selectedADDomainAddress}</div>
-                    <div className={CommonStyles.separator} />
-                    <div>{userName}</div>
-                </Typography>
-            );
+            return <ActionRequired error={!isADNotFilled} />;
         }
+        return (
+            <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
+                <div>{selectedADDomainName?.label}</div>
+                <div className={CommonStyles.separator} />
+                <div>{selectedADDomainAddress}</div>
+                <div className={CommonStyles.separator} />
+                <div>{userName}</div>
+            </Typography>
+        );
     };
     return (
         <div className={styles.active}>
@@ -204,9 +203,9 @@ const ActiveDirectory = () => {
                                 isClearable={false}
                                 isCreatingOption={isCreating}
                                 isOptionsAddingEnabled
-                                //@ts-ignore
+                                // @ts-ignore
                                 onCreateOption={addNewOption}
-                                defaultValue={selectedADDomainName ? selectedADDomainName : null}
+                                defaultValue={selectedADDomainName || null}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedADDomainName(selectedOptions));
                                     dispatch(setSelectedADDomainAddress(selectedOptions?.data?.dnsIpAddress));
@@ -218,18 +217,18 @@ const ActiveDirectory = () => {
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 placeholder="example.com"
-                                isSearchable={true}
+                                isSearchable
                                 options={generateActiveDirectories}
                                 className={styles.textField}
                                 error={!isADNotFilled && !selectedADDomainName ? GENERAL.ACTION_REQUIRED : ''}
-                                //@ts-ignore
+                                // @ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
                                     <WarningIcon
                                         style={{
                                             width: '16px',
                                             height: '16px',
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             '--icon-primary-color': 'var(--error'
                                         }}
                                     />
@@ -241,14 +240,14 @@ const ActiveDirectory = () => {
                                 placeholder="DNS IP addresses"
                                 ref={DNSAddressRef}
                                 error={!isADNotFilled && !selectedADDomainAddress ? GENERAL.ACTION_REQUIRED : ''}
-                                //@ts-ignore
+                                // @ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
                                     <WarningIcon
                                         style={{
                                             width: '16px',
                                             height: '16px',
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             '--icon-primary-color': 'var(--error'
                                         }}
                                     />
@@ -258,7 +257,7 @@ const ActiveDirectory = () => {
                                     dispatch(setSelectedADDomainAddress(inputVal));
                                     dispatch(setIsWizardTouched(true));
                                 }}
-                                value={selectedADDomainAddress ? selectedADDomainAddress : ''}
+                                value={selectedADDomainAddress || ''}
                                 className={styles.textField}
                             />
                         </div>
@@ -268,14 +267,14 @@ const ActiveDirectory = () => {
                                 placeholder="Username"
                                 error={!isADNotFilled && !userName ? GENERAL.ACTION_REQUIRED : ''}
                                 ref={userNameRef}
-                                //@ts-ignore
+                                // @ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
                                     <WarningIcon
                                         style={{
                                             width: '16px',
                                             height: '16px',
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             '--icon-primary-color': 'var(--error'
                                         }}
                                     />
@@ -295,14 +294,14 @@ const ActiveDirectory = () => {
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 error={!isADNotFilled && !password ? GENERAL.ACTION_REQUIRED : adPassVal(password)}
-                                //@ts-ignore
+                                // @ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
                                     <WarningIcon
                                         style={{
                                             width: '16px',
                                             height: '16px',
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             '--icon-primary-color': 'var(--error'
                                         }}
                                     />

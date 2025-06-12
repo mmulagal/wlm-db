@@ -1,10 +1,10 @@
 import { useWizard } from '@netapp/design-system/dist/components/Wizard';
+import { useMemo } from 'react';
 import DetectHeader from './DetectHeader/DetectHeader';
 import styles from './DetectInstanceStep.module.scss';
 import DetectContent from './DetectContent/DetectContent';
 import ManageWizardFooter from '../ManageWizardFooter';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useMemo } from 'react';
 import AuthenticatedScreen from './AuthenticatedScreen/AuthenticatedScreen';
 import { ACTION_TYPE } from '../../../../../utils/consts';
 import { BulkDetectedInstance, UseWizardReturn } from '../../../../../utils/types/registerTypes';
@@ -12,9 +12,10 @@ import { BulkDetectedInstance, UseWizardReturn } from '../../../../../utils/type
 export const Content = () => {
     const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
 
-    const isAuth = useMemo(() => {
-        return selectedMultiDetectInstances?.every((item: BulkDetectedInstance) => item?.authorized);
-    }, []);
+    const isAuth = useMemo(
+        () => selectedMultiDetectInstances?.every((item: BulkDetectedInstance) => item?.authorized),
+        []
+    );
 
     return (
         <div className={styles['detect-step']}>

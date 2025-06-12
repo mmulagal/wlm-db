@@ -85,7 +85,7 @@ const DsDropDownListContainer = forwardRef<HTMLDivElement, DsDropDownListContain
                     <DsPopover
                         trigger={!isDisabled ? 'triggerDisabled' : 'hover'}
                         title={disabledReason}
-                        monitorPosition={'all'}
+                        monitorPosition="all"
                         placement="top"
                     >
                         <div
@@ -112,7 +112,7 @@ const DsDropDownListContainer = forwardRef<HTMLDivElement, DsDropDownListContain
                     {!isDisabled && (
                         <DsDropDownList
                             {...dropdownlist}
-                            //@ts-ignore
+                            // @ts-ignore
                             boundariesRef={parentRef}
                             isExpanded={isExpanded}
                             className="dropDownChild"
@@ -124,8 +124,8 @@ const DsDropDownListContainer = forwardRef<HTMLDivElement, DsDropDownListContain
                                 setIsExpanded(false);
                                 onClickChild(event);
                             }}
-                            autoPosition={true}
-                            isAsubMenu={true}
+                            autoPosition
+                            isAsubMenu
                         />
                     )}
                 </div>
@@ -204,7 +204,7 @@ export const DsDropDownList = forwardRef<HTMLDivElement, DsDropDownListProps>(
         const [searchInput, setSearchInput] = useState<string>('');
         const [scrollTop, setScrollTop] = useState<number>(0);
 
-        //@ts-ignore
+        // @ts-ignore
         useChangePosition({ parentRef: boundariesRef, childRef: actionListRef, offsets: offset, monitorPosition });
 
         const clickOutsideRef = useOutsideClick(() => {
@@ -293,7 +293,8 @@ export const DsDropDownList = forwardRef<HTMLDivElement, DsDropDownListProps>(
 
             if (searchMethod?.method === 'smart') {
                 return;
-            } else if (typeof searchMethod?.method === 'function') {
+            }
+            if (typeof searchMethod?.method === 'function') {
                 filteredOptions = searchMethod.method(options, searchInput);
             } else {
                 filteredOptions = options.filter(option =>
@@ -310,7 +311,7 @@ export const DsDropDownList = forwardRef<HTMLDivElement, DsDropDownListProps>(
             if (trigger === 'hover') {
                 setTimeout(() => {
                     if (
-                        !isMouseOverDropdown.current && //This is not a mistake! even that on above line we set isMouseOverDropdown.current = false, in the setTimeout it can be true due to hover on child element
+                        !isMouseOverDropdown.current && // This is not a mistake! even that on above line we set isMouseOverDropdown.current = false, in the setTimeout it can be true due to hover on child element
                         !isMouseOverTrigger.current
                     ) {
                         onExpandChange(false, actionListRef.current?.clientWidth);
@@ -335,8 +336,8 @@ export const DsDropDownList = forwardRef<HTMLDivElement, DsDropDownListProps>(
             } = item;
             const childRef = useRef<HTMLDivElement>(null);
 
-            const customeLabel = (option: DsDropDownListItemProps) => {
-                return formatOptionLabel ? (
+            const customeLabel = (option: DsDropDownListItemProps) =>
+                formatOptionLabel ? (
                     formatOptionLabel(option)
                 ) : (
                     <DsTypography
@@ -361,7 +362,6 @@ export const DsDropDownList = forwardRef<HTMLDivElement, DsDropDownListProps>(
                         {label}
                     </DsTypography>
                 );
-            };
 
             const offset = useMemo((): string => {
                 const dropDownWidth = actionListRef.current?.clientWidth || 0;
@@ -388,7 +388,7 @@ export const DsDropDownList = forwardRef<HTMLDivElement, DsDropDownListProps>(
                             </DsTypography>
                         }
                         dropdownlist={{
-                            //@ts-ignore
+                            // @ts-ignore
                             boundariesRef: childRef,
                             options: childItems,
                             offsetX: offset,
@@ -472,13 +472,13 @@ export const DsDropDownList = forwardRef<HTMLDivElement, DsDropDownListProps>(
                             <div
                                 className="itemsContainer"
                                 onScroll={event => setScrollTop(event.currentTarget.scrollTop)}
-                                style={{ maxHeight: maxHeight }}
+                                style={{ maxHeight }}
                                 onMouseOver={() => (isMouseOverDropdown.current = true)}
                                 onMouseLeave={() => handleonMouseLeave()}
                             >
-                                {dropOptions.map((item, index) => {
-                                    return <DropdownItems key={index} {...item} />;
-                                })}
+                                {dropOptions.map((item, index) => (
+                                    <DropdownItems key={index} {...item} />
+                                ))}
                             </div>
                             {actions && (
                                 <div className="actionsContainer">

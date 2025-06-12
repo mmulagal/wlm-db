@@ -1,4 +1,5 @@
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
+import { NavigateFunction } from 'react-router-dom';
 import store from '../../store/store';
 import {
     setDisableState,
@@ -24,7 +25,6 @@ import {
     formatFractionalNumberForCost,
     formatNumberWithCustomComma
 } from '../../utils/utilityFunctions';
-import { NavigateFunction } from 'react-router-dom';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     postBlueXPMessage({
@@ -44,31 +44,28 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
     dispatch(setMonthlyChangeRate(3));
 
     if (rowData?.sqlServerInstances?.length) {
-        let storagePerfAndCompute: any = {};
+        const storagePerfAndCompute: any = {};
         rowData?.sqlServerInstances?.map((instance: any) => {
             if (!storagePerfAndCompute?.[instance?.sqlInstanceName]) {
                 storagePerfAndCompute[instance?.sqlInstanceName] = {};
             }
-            storagePerfAndCompute[instance?.sqlInstanceName]['totalStorage'] = formatFractionalNumber(
+            storagePerfAndCompute[instance?.sqlInstanceName].totalStorage = formatFractionalNumber(
                 Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
                 3
             );
-            storagePerfAndCompute[instance?.sqlInstanceName]['totalIops'] = formatFractionalNumber(
-                instance?.totalIops,
-                3
-            );
-            storagePerfAndCompute[instance?.sqlInstanceName]['totalThroughput'] = formatFractionalNumber(
+            storagePerfAndCompute[instance?.sqlInstanceName].totalIops = formatFractionalNumber(instance?.totalIops, 3);
+            storagePerfAndCompute[instance?.sqlInstanceName].totalThroughput = formatFractionalNumber(
                 instance?.totalThroughput,
                 3
             );
-            storagePerfAndCompute[instance?.sqlInstanceName]['noOfVcpusInUse'] = instance?.noOfVcpusInUse;
-            storagePerfAndCompute[instance?.sqlInstanceName]['memory'] = formatFractionalNumber(
+            storagePerfAndCompute[instance?.sqlInstanceName].noOfVcpusInUse = instance?.noOfVcpusInUse;
+            storagePerfAndCompute[instance?.sqlInstanceName].memory = formatFractionalNumber(
                 Number(instance?.memory || 0) / GIB_IN_BYTE,
                 3
             );
-            storagePerfAndCompute[instance?.sqlInstanceName]['sqlInstanceName'] = instance?.sqlInstanceName;
-            storagePerfAndCompute[instance?.sqlInstanceName]['sqlInstanceId'] = instance?.sqlInstanceId;
-            storagePerfAndCompute[instance?.sqlInstanceName]['networkPerformance'] =
+            storagePerfAndCompute[instance?.sqlInstanceName].sqlInstanceName = instance?.sqlInstanceName;
+            storagePerfAndCompute[instance?.sqlInstanceName].sqlInstanceId = instance?.sqlInstanceId;
+            storagePerfAndCompute[instance?.sqlInstanceName].networkPerformance =
                 rowData?.sqlServerInstances?.[0]?.networkPerformance;
         });
         dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
@@ -92,9 +89,7 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
 };
 
 export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean, navigate?: NavigateFunction) => {
-    const deploymentModel = (() => {
-        return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
-    })();
+    const deploymentModel = (() => rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase())();
     if (rowData?.storageType === GENERAL.EBS) {
         if (navigate && isWorkloadFactory) {
             navigate('../databases/saving-calculator');
@@ -136,7 +131,7 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
             instanceId: rowData?.ec2InstanceId,
             credentialId: rowData?.credentialId,
             regionId: rowData?.regionId,
-            deploymentModel: deploymentModel,
+            deploymentModel,
             serverName: rowData?.name || GENERAL.ES_SERVER_NAME
         })
     );
@@ -188,7 +183,7 @@ export const setESInstanceOnPremData = (data: any, dispatch: any) => {
             ...data,
             totalInstance: data?.sqlServerInstances?.length || 0,
             recommendedInstance: {
-                serverInstallationMode: serverInstallationMode,
+                serverInstallationMode,
                 serverVersion: data?.sqlServerInstances?.[0]?.sqlVersion
             }
         })
@@ -202,7 +197,7 @@ export const setESInstanceData = (data: any, dispatch: any) => {
     }
 
     let serverVersion = '';
-    for (let instance of data?.sqlServerInstances || []) {
+    for (const instance of data?.sqlServerInstances || []) {
         if (instance?.databaseServer?.serverVersion) {
             serverVersion = instance.databaseServer.serverVersion;
             break;
@@ -212,7 +207,7 @@ export const setESInstanceData = (data: any, dispatch: any) => {
         setSelectedHostDetails({
             ...data,
             recommendedInstance: {
-                serverInstallationMode: serverInstallationMode,
+                serverInstallationMode,
                 serverVersion: data?.databaseServer?.serverVersion || serverVersion
             }
         })
@@ -221,34 +216,30 @@ export const setESInstanceData = (data: any, dispatch: any) => {
 
 export const formatCalcSize = (val: any) => {
     if (val) {
-        return String(Number(val / GIB_IN_BYTE).toLocaleString()) + ' GiB';
-    } else {
-        return '0 GiB';
+        return `${String(Number(val / GIB_IN_BYTE).toLocaleString())} GiB`;
     }
+    return '0 GiB';
 };
 
 export const formatPrice = (val: any) => {
     if (val || val === 0) {
-        return '$' + Number(val).toLocaleString();
-    } else {
-        return GENERAL.NOT_AVAILABLE;
+        return `$${Number(val).toLocaleString()}`;
     }
+    return GENERAL.NOT_AVAILABLE;
 };
 
 export const formatNumbers = (val: any) => {
     if (val || val === 0) {
         return Number(val).toLocaleString();
-    } else {
-        return GENERAL.NOT_AVAILABLE;
     }
+    return GENERAL.NOT_AVAILABLE;
 };
 
 export const formatPercentage = (val: any) => {
     if (val || val === 0) {
         return Number(100 * val).toLocaleString();
-    } else {
-        return GENERAL.NOT_AVAILABLE;
     }
+    return GENERAL.NOT_AVAILABLE;
 };
 
 export const formatViewCalcInstance = (
@@ -279,24 +270,23 @@ export const formatViewCalcInstance = (
                     hoursInAMonth: formatNumbers(computeDetails?.[0]?.hoursInMonth)
                 }
             ];
-        } else {
-            const detailsList: any = [];
-            computeDetails?.forEach((detail: any, index: number) => {
-                detailsList.push({
-                    instanceType: detail?.instanceType || instanceTypelist?.[index] || GENERAL.NOT_AVAILABLE,
-                    computeHourlyPrice: `$${formatNumbers(detail?.price)}`,
-                    computeMonthlyPrice: `$${formatNumbers(detail?.computeMonthlyPrice)}`,
-                    instanceMonthlyPrice: `$${formatNumberWithCustomComma(detail?.instanceMonthlyPrice)}`,
-                    sqlEdition:
-                        licenseDetails?.sqlServerEdition ||
-                        selectedHostDetails?.databaseServer?.serverEdition ||
-                        GENERAL.NOT_AVAILABLE,
-                    sqlLicense: licenseDetails?.licenseIncluded ? 'Yes' : 'No',
-                    hoursInAMonth: formatNumbers(detail?.hoursInMonth)
-                });
-            });
-            return detailsList;
         }
+        const detailsList: any = [];
+        computeDetails?.forEach((detail: any, index: number) => {
+            detailsList.push({
+                instanceType: detail?.instanceType || instanceTypelist?.[index] || GENERAL.NOT_AVAILABLE,
+                computeHourlyPrice: `$${formatNumbers(detail?.price)}`,
+                computeMonthlyPrice: `$${formatNumbers(detail?.computeMonthlyPrice)}`,
+                instanceMonthlyPrice: `$${formatNumberWithCustomComma(detail?.instanceMonthlyPrice)}`,
+                sqlEdition:
+                    licenseDetails?.sqlServerEdition ||
+                    selectedHostDetails?.databaseServer?.serverEdition ||
+                    GENERAL.NOT_AVAILABLE,
+                sqlLicense: licenseDetails?.licenseIncluded ? 'Yes' : 'No',
+                hoursInAMonth: formatNumbers(detail?.hoursInMonth)
+            });
+        });
+        return detailsList;
     })();
     return instanceCalculationData;
 };
@@ -305,7 +295,7 @@ export const formatViewCalcRecommendedData = (data: ViewCalculationsInterface, s
     let result: ViewCalculationsInterface = {};
     if (data) {
         const state = store.getState();
-        const recommendedTargetInstance = state.exploreSavings.recommendedTargetInstance;
+        const { recommendedTargetInstance } = state.exploreSavings;
         let recommendeRow: any = null;
         if (recommendedTargetInstance) {
             recommendeRow = data?.recommendedComputeCalculation?.recommendationOptions?.filter(
@@ -338,7 +328,7 @@ export const formatViewCalcData = (
     monthlyChangeRate: string
 ) => {
     const state = store.getState();
-    const savingsCalculatorFrom = state.exploreSavings.savingsCalculatorFrom;
+    const { savingsCalculatorFrom } = state.exploreSavings;
     let viewCalculationsResponse = formatViewCalcRecommendedData(viewCalculations, selectedDeploymentModel);
     let azType = '';
     if (viewCalculationsResponse?.single) {
@@ -519,10 +509,12 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsxFractional
             ),
             requiredNumOfFsx: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsx),
-            minThroughputCapacityRequired:
-                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.minThroughputCapacityRequired) + ' MB/s',
-            provisionedThroughputCapacity:
-                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.provisionedThroughputCapacity) + ' MB/s',
+            minThroughputCapacityRequired: `${formatNumbers(
+                viewCalculationsResponse?.fsxOntapCalculation?.minThroughputCapacityRequired
+            )} MB/s`,
+            provisionedThroughputCapacity: `${formatNumbers(
+                viewCalculationsResponse?.fsxOntapCalculation?.provisionedThroughputCapacity
+            )} MB/s`,
             totalMonthlyFsxnThroughputCapacityCost: formatNumberWithCustomComma(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyFsxnThroughputCapacityCost
             ),
@@ -632,12 +624,12 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.fsxCloneCalculation?.totalCloneMonthlyCost
             )
         },
-        totalFsxEc2MachineCost: totalFsxEc2MachineCost,
+        totalFsxEc2MachineCost,
         fsxTotalCost: totalFsxCost,
         fsxSnapshotTotalCost: totalFsxSnapshotCost,
-        totalAzCost: totalAzCost,
-        azType: azType,
-        monthlyChangeRate: monthlyChangeRate
+        totalAzCost,
+        azType,
+        monthlyChangeRate
     };
 
     if (
@@ -878,20 +870,20 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
 };
 
 export const EbsCalculationUpdates = (data: { [key: string]: EBSCalculation }) => {
-    let result: any = {};
+    const result: any = {};
     let totalEbsThroughputCost = 0;
     let totalEbsIopsCost = 0;
     let totalEbsStorageCost = 0;
-    let throughPutTextList: any = [];
-    let iopsTextList: any = [];
-    let storageTextList: any = [];
+    const throughPutTextList: any = [];
+    const iopsTextList: any = [];
+    const storageTextList: any = [];
     Object.keys(data).map((key: string) => {
         totalEbsThroughputCost += Number(data[key]?.ebsThroughputCost);
         totalEbsIopsCost += Number(data[key]?.ebsIopsCost);
         totalEbsStorageCost += Number(data[key]?.ebsStorageCost);
-        throughPutTextList.push(key + ' throughput cost');
-        iopsTextList.push(key + ' IOPS cost');
-        storageTextList.push(key + ' storage cost');
+        throughPutTextList.push(`${key} throughput cost`);
+        iopsTextList.push(`${key} IOPS cost`);
+        storageTextList.push(`${key} storage cost`);
         result[key] = {
             numberOfVolumes: formatNumbers(data[key]?.numberOfVolumes),
             storageAmountPerVol: formatCalcSize(data[key]?.storageAmountPerVol),
@@ -912,12 +904,12 @@ export const EbsCalculationUpdates = (data: { [key: string]: EBSCalculation }) =
         };
     });
 
-    result['totalEbsThroughputCost'] = totalEbsThroughputCost;
-    result['totalEbsIopsCost'] = totalEbsIopsCost;
-    result['totalEbsStorageCost'] = totalEbsStorageCost;
-    result['totalEbsThroughputCostText'] = throughPutTextList.join(' + ');
-    result['totalEbsIopsCostText'] = iopsTextList.join(' + ');
-    result['totalEbsStorageCostText'] = storageTextList.join(' + ');
+    result.totalEbsThroughputCost = totalEbsThroughputCost;
+    result.totalEbsIopsCost = totalEbsIopsCost;
+    result.totalEbsStorageCost = totalEbsStorageCost;
+    result.totalEbsThroughputCostText = throughPutTextList.join(' + ');
+    result.totalEbsIopsCostText = iopsTextList.join(' + ');
+    result.totalEbsStorageCostText = storageTextList.join(' + ');
     return result;
 };
 
@@ -962,7 +954,7 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
             if (recommendeRow && recommendeRow?.length) {
                 // For standalone compute and license cost is added only 1 time
                 if (deploymentModelValue.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-                    let recommendedTotal =
+                    const recommendedTotal =
                         Number(data?.totalSummary?.recommended || 0) -
                         Number(data?.compute?.recommended?.machineDetails?.[0]?.computeMonthlyPrice || 0) -
                         Number(data?.compute?.recommended?.machineDetails?.[0]?.licenseMonthlyPrice || 0) +
@@ -973,12 +965,12 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
                         recommendedInstance: recommendeRow?.[0],
                         totalSummary: {
                             ...data?.totalSummary,
-                            recommendedTotal: recommendedTotal
+                            recommendedTotal
                         }
                     };
                 } else {
                     // For AOAG compute and license cost is added 2 times for each node
-                    let recommendedTotal =
+                    const recommendedTotal =
                         Number(data?.totalSummary?.recommended || 0) -
                         Number(data?.compute?.recommended?.machineDetails?.[0]?.computeMonthlyPrice || 0) * 2 -
                         Number(data?.compute?.recommended?.machineDetails?.[0]?.licenseMonthlyPrice || 0) * 2 +
@@ -993,46 +985,44 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
                         },
                         totalSummary: {
                             ...data?.totalSummary,
-                            recommendedTotal: recommendedTotal
+                            recommendedTotal
                         }
                     };
                 }
+            } else if (data?.license?.existing?.sqlServerEdition === data?.license?.recommended?.sqlServerEdition) {
+                result = {
+                    ...data,
+                    recommendedInstance: {
+                        ...data?.compute?.recommended?.machineDetails?.[0],
+                        licenseMonthlyPrice: data?.license?.existing?.licenseMonthlyPrice,
+                        computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
+                    },
+                    totalSummary: {
+                        ...data?.totalSummary,
+                        recommendedTotal:
+                            Number(data?.totalSummary?.recommended || 0) -
+                            Number(data?.compute?.recommended?.computeMonthlyPrice || 0) -
+                            Number(data?.license?.recommended?.licenseMonthlyPrice || 0) +
+                            Number(data?.compute?.existing?.computeMonthlyPrice || 0) +
+                            Number(data?.license?.existing?.licenseMonthlyPrice || 0)
+                    }
+                };
             } else {
-                if (data?.license?.existing?.sqlServerEdition === data?.license?.recommended?.sqlServerEdition) {
-                    result = {
-                        ...data,
-                        recommendedInstance: {
-                            ...data?.compute?.recommended?.machineDetails?.[0],
-                            licenseMonthlyPrice: data?.license?.existing?.licenseMonthlyPrice,
-                            computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
-                        },
-                        totalSummary: {
-                            ...data?.totalSummary,
-                            recommendedTotal:
-                                Number(data?.totalSummary?.recommended || 0) -
-                                Number(data?.compute?.recommended?.computeMonthlyPrice || 0) -
-                                Number(data?.license?.recommended?.licenseMonthlyPrice || 0) +
-                                Number(data?.compute?.existing?.computeMonthlyPrice || 0) +
-                                Number(data?.license?.existing?.licenseMonthlyPrice || 0)
-                        }
-                    };
-                } else {
-                    result = {
-                        ...data,
-                        recommendedInstance: {
-                            ...data?.compute?.recommended?.machineDetails?.[0],
-                            licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice,
-                            computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
-                        },
-                        totalSummary: {
-                            ...data?.totalSummary,
-                            recommendedTotal:
-                                Number(data?.totalSummary?.recommended || 0) -
-                                Number(data?.compute?.recommended?.computeMonthlyPrice || 0) +
-                                Number(data?.compute?.existing?.computeMonthlyPrice || 0)
-                        }
-                    };
-                }
+                result = {
+                    ...data,
+                    recommendedInstance: {
+                        ...data?.compute?.recommended?.machineDetails?.[0],
+                        licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice,
+                        computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
+                    },
+                    totalSummary: {
+                        ...data?.totalSummary,
+                        recommendedTotal:
+                            Number(data?.totalSummary?.recommended || 0) -
+                            Number(data?.compute?.recommended?.computeMonthlyPrice || 0) +
+                            Number(data?.compute?.existing?.computeMonthlyPrice || 0)
+                    }
+                };
             }
         }
     } else {
@@ -1044,21 +1034,20 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
 export const generateLabel2ForInstanceType = (options: any, option: any, existingTypeObj: any) => {
     if (option === existingTypeObj?.instanceType) {
         return 'Current instance type';
-    } else {
-        const selectedOption = options.find((item: any) => item.instanceType === option);
-        if (selectedOption?.computeMonthlyPrice) {
-            const existingComputePrice: number = existingTypeObj?.computeMonthlyPrice
-                ? parseFloat(existingTypeObj?.computeMonthlyPrice?.toString())
-                : 0;
-            const computeCostSavingPercent =
-                existingComputePrice && selectedOption?.computeMonthlyPrice
-                    ? Math.round(
-                          (100 * (existingComputePrice - selectedOption?.computeMonthlyPrice)) / existingComputePrice
-                      )
-                    : 0;
-            const label2 = computeCostSavingPercent ? `Saves up to ${computeCostSavingPercent}% in compute costs` : '';
-            return label2;
-        }
-        return '';
     }
+    const selectedOption = options.find((item: any) => item.instanceType === option);
+    if (selectedOption?.computeMonthlyPrice) {
+        const existingComputePrice: number = existingTypeObj?.computeMonthlyPrice
+            ? parseFloat(existingTypeObj?.computeMonthlyPrice?.toString())
+            : 0;
+        const computeCostSavingPercent =
+            existingComputePrice && selectedOption?.computeMonthlyPrice
+                ? Math.round(
+                      (100 * (existingComputePrice - selectedOption?.computeMonthlyPrice)) / existingComputePrice
+                  )
+                : 0;
+        const label2 = computeCostSavingPercent ? `Saves up to ${computeCostSavingPercent}% in compute costs` : '';
+        return label2;
+    }
+    return '';
 };

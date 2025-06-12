@@ -1,11 +1,11 @@
 import { DsRadioButton, SelectField } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
-import styles from './RebaseRollbackContent.module.scss';
 import { useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import styles from './RebaseRollbackContent.module.scss';
 import { formatDateWithTime, generateOptionType } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import {
     resetRefreshDialog,
     updateIsRollbackSelected,
@@ -25,11 +25,12 @@ const RebaseRollbackContent = ({ rowData }: any) => {
 
     const [getRollbackSnapshotApi] = useLazyGetRollbackSnapshotsQuery();
 
-    useEffect(() => {
-        return () => {
+    useEffect(
+        () => () => {
             dispatch(resetRefreshDialog());
-        };
-    }, []);
+        },
+        []
+    );
 
     useEffect(() => {
         if (isRollbackSelected && !snapshotsFetched) {
@@ -52,7 +53,7 @@ const RebaseRollbackContent = ({ rowData }: any) => {
         }
     }, [isRollbackSelected]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateRollbackOptions = useMemo<optionType[]>((): optionType[] => {
         const frequency = rollbackSnapshotList;
         const options: optionType[] = [];
@@ -89,13 +90,13 @@ const RebaseRollbackContent = ({ rowData }: any) => {
                 />
             </div>
             <SelectField
-                label={'Original database snapshot'}
+                label="Original database snapshot"
                 isClearable={false}
                 onChange={(selectedOptions: any): void => {
                     dispatch(updateSelectedRollbackSnapshot(selectedOptions));
                 }}
                 value={selectedRollbackSnapshot}
-                isSearchable={true}
+                isSearchable
                 options={generateRollbackOptions}
                 className={styles.widthSet}
                 isDisabled={!isRollbackSelected}

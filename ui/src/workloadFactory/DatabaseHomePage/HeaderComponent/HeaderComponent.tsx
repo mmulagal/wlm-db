@@ -1,6 +1,4 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import styles from './HeaderComponent.module.scss';
-
 import {
     BlueXPListeners,
     DsButton,
@@ -11,8 +9,13 @@ import {
     Typography,
     postBlueXPMessage
 } from '@netapp/design-system';
-//@ts-ignore
 import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
+import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { useDispatch } from 'react-redux';
+import { useNavigate, useNavigationType, NavigationType } from 'react-router-dom';
+import styles from './HeaderComponent.module.scss';
+
+// @ts-ignore
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
 import {
@@ -30,10 +33,8 @@ import {
     setTabValue
 } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
-import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as BlueXPDatabase } from '../../../assets/blueXPDatabase.svg';
 import { ReactComponent as Close } from '../../../assets/ic_close.svg';
-import { useDispatch } from 'react-redux';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
@@ -90,7 +91,6 @@ import { updateRefreshBlocked } from '../../../store/authSlice';
 
 import SavingsCalculatorManualApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorManualAPI';
 import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice';
-import { useNavigate, useNavigationType, NavigationType } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 
 import {
@@ -173,7 +173,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const { discoverHostLoading } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     const { discoverOracleHostLoading } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
     const { discoverPgsqlHostLoading } = useAppSelector(state => state.inventoryV2.discoveredPgsqlHosts);
-    //Added for widget
+    // Added for widget
     const [currentCred, setCurrentCred] = useState<string | null>(null);
     const [currentRegion, setCurrentRegion] = useState<string | null>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -202,14 +202,15 @@ const HeaderComponent = ({ tab }: Tab) => {
     SavingsCalculatorApi();
     SavingsCalculatorManualApi();
 
-    useEffect(() => {
-        return () => {
+    useEffect(
+        () => () => {
             dispatch(setLandingFromWizard(false));
-        };
-    }, [dispatch]);
+        },
+        [dispatch]
+    );
 
     useEffect(() => {
-        let tabValue = setTabValue(tab, selectedHeaderTab);
+        const tabValue = setTabValue(tab, selectedHeaderTab);
 
         setTabInfo(tabValue);
         dispatch(setSelectedHeaderTab(tabValue));
@@ -279,18 +280,16 @@ const HeaderComponent = ({ tab }: Tab) => {
                     dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM));
                     setExploreSavingsSubTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM, dispatch);
                 }
+            } else if (!isWorkloadFactory) {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../fsxdb/marketing', replace: true }
+                });
             } else {
-                if (!isWorkloadFactory) {
-                    postBlueXPMessage({
-                        type: BlueXPListeners.navigate,
-                        payload: { pathname: '../fsxdb/marketing', replace: true }
-                    });
-                } else {
-                    postBlueXPMessage({
-                        type: BlueXPListeners.navigate,
-                        payload: { pathname: './marketing', replace: true }
-                    });
-                }
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: './marketing', replace: true }
+                });
             }
         } else {
             setStatusChk(false);
@@ -298,7 +297,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData, tabInfo]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateSandboxAWSAccounts = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         credentialData?.map((val: any, idx: number) => {
@@ -309,7 +308,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         });
         if (options.length > 0 && !headerSelectedCredSandbox) {
             if (localStorage.getItem('selectedSandboxCred')) {
-                //@ts-ignore
+                // @ts-ignore
                 const value = JSON.parse(localStorage.getItem('selectedSandboxCred'));
 
                 if (checkValueSavedForCred(options, value)) {
@@ -324,7 +323,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         return options;
     }, [credentialData]);
 
-    //Function to generate the options for Multi Select Field
+    // Function to generate the options for Multi Select Field
     const generateAccountsForMultiSelect = useMemo<optionTypeMulti[]>((): optionTypeMulti[] => {
         const options: optionTypeMulti[] = [];
         credentialData?.map((val: any, idx: number) => {
@@ -335,7 +334,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         });
         if (options.length > 0 && !headerSelectedMultiCred) {
             if (localStorage.getItem('selectedCred')) {
-                //@ts-ignore
+                // @ts-ignore
                 const value = JSON.parse(localStorage.getItem('selectedCred'));
 
                 if (checkValueSavedForCred(options, value)) {
@@ -350,7 +349,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         return options;
     }, [credentialData]);
 
-    //Function to generate the options for Multi Select Field
+    // Function to generate the options for Multi Select Field
     const generateRegionsForMultiSelect = useMemo<optionTypeMulti[]>((): optionTypeMulti[] => {
         const options: optionTypeMulti[] = [];
         const sortedRegionsData = regionsSort(regionsData?.regions || []);
@@ -363,7 +362,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (options.length > 0 && !headerSelectedMultiRegion) {
             const defaultOption: any = options[0];
             if (localStorage.getItem('selectedRegion')) {
-                //@ts-ignore
+                // @ts-ignore
                 const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
 
                 if (checkValueSavedForRegion(options, regionValue)) {
@@ -390,7 +389,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (options.length > 0 && !headerSelectedRegionSandbox) {
             const defaultOption: any = options[0];
             if (localStorage.getItem('selectedSandboxRegion')) {
-                //@ts-ignore
+                // @ts-ignore
                 const regionValue = JSON.parse(localStorage.getItem('selectedSandboxRegion'));
 
                 if (checkValueSavedForRegion(options, regionValue)) {
@@ -404,20 +403,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     } else {
                         dispatch(setHeaderSelectedRegionSandbox(regionValue));
                     }
-                } else {
-                    if (isDemoMode) {
-                        createDemoResourcesApi({
-                            credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
-                            regionId: defaultOption?.data?.regionCode
-                        }).then(() => {
-                            dispatch(setHeaderSelectedRegionSandbox(defaultOption));
-                        });
-                    } else {
-                        dispatch(setHeaderSelectedRegionSandbox(defaultOption));
-                    }
-                }
-            } else {
-                if (isDemoMode) {
+                } else if (isDemoMode) {
                     createDemoResourcesApi({
                         credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
                         regionId: defaultOption?.data?.regionCode
@@ -427,6 +413,15 @@ const HeaderComponent = ({ tab }: Tab) => {
                 } else {
                     dispatch(setHeaderSelectedRegionSandbox(defaultOption));
                 }
+            } else if (isDemoMode) {
+                createDemoResourcesApi({
+                    credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                    regionId: defaultOption?.data?.regionCode
+                }).then(() => {
+                    dispatch(setHeaderSelectedRegionSandbox(defaultOption));
+                });
+            } else {
+                dispatch(setHeaderSelectedRegionSandbox(defaultOption));
             }
         }
         return options;
@@ -434,10 +429,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     useEffect(() => {
         if (headerSelectedMultiCred?.length > 0) {
-            const credValue =
-                headerSelectedMultiCred?.[0]?.data?.name +
-                ' | Account: ' +
-                headerSelectedMultiCred?.[0]?.data?.providerAccountId;
+            const credValue = `${headerSelectedMultiCred?.[0]?.data?.name} | Account: ${headerSelectedMultiCred?.[0]?.data?.providerAccountId}`;
             const option = generateOptionType(credValue, credValue, '', false, '', headerSelectedMultiCred?.[0]?.data);
             dispatch(setSelectedCredentials(option));
 
@@ -450,10 +442,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     useEffect(() => {
         if (headerSelectedMultiRegion?.length > 0) {
-            const regionValue =
-                headerSelectedMultiRegion?.[0]?.data?.regionCode +
-                ' | ' +
-                headerSelectedMultiRegion?.[0]?.data?.regionName;
+            const regionValue = `${headerSelectedMultiRegion?.[0]?.data?.regionCode} | ${headerSelectedMultiRegion?.[0]?.data?.regionName}`;
             const option = generateOptionType(
                 regionValue,
                 regionValue,
@@ -489,8 +478,8 @@ const HeaderComponent = ({ tab }: Tab) => {
             !discoverPgsqlHostLoading &&
             !fsxCredentialStatusLoading
         ) {
-            let currentCredId = headerSelectedCred?.data?.credentialsId;
-            let currentRegionId = headerSelectedRegion?.data?.regionCode;
+            const currentCredId = headerSelectedCred?.data?.credentialsId;
+            const currentRegionId = headerSelectedRegion?.data?.regionCode;
 
             const state = store.getState();
             const {
@@ -504,7 +493,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             let isMssqlInstanceDataLoading = false;
             if (mssqlInstancesDataLatest) {
                 Object.keys(mssqlInstancesDataLatest)?.map((key: any) => {
-                    let keyList = key.split('_');
+                    const keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
@@ -519,7 +508,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             let isPgsqlInstanceDataLoading = false;
             if (pgsqlInstancesDataLatest) {
                 Object.keys(pgsqlInstancesDataLatest)?.map((key: any) => {
-                    let keyList = key.split('_');
+                    const keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
@@ -534,7 +523,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             let isOracleInstanceDataLoading = false;
             if (oracleInstancesDataLatest) {
                 Object.keys(oracleInstancesDataLatest)?.map((key: any) => {
-                    let keyList = key.split('_');
+                    const keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
@@ -549,7 +538,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             let perfMssqlInstancesDataLoading = false;
             if (perfMssqlInstancesDataLatest) {
                 Object.keys(perfMssqlInstancesDataLatest)?.map((key: any) => {
-                    let keyList = key.split('_');
+                    const keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
@@ -564,7 +553,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             let potentialSavingsHostDataLoading = false;
             if (potentialSavingsHostDataLatest) {
                 Object.keys(potentialSavingsHostDataLatest)?.map((key: any) => {
-                    let keyList = key.split('_');
+                    const keyList = key.split('_');
                     if (
                         keyList?.length === 3 &&
                         keyList[1] === currentCredId &&
@@ -583,8 +572,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 !isPgsqlInstanceDataLoading &&
                 !isOracleInstanceDataLoading
             ) {
-                let newStatus = { ...multiDataStatusRef.current };
-                newStatus[currentCredId + '_' + currentRegionId] = true;
+                const newStatus = { ...multiDataStatusRef.current };
+                newStatus[`${currentCredId}_${currentRegionId}`] = true;
                 dispatch(setMultiDataStatus(newStatus));
             }
         }
@@ -612,10 +601,9 @@ const HeaderComponent = ({ tab }: Tab) => {
     // Function to check if all APIs are completed for a cred-region set
     const isApiCompletedForSet = (cred: string, region: string) => {
         if (multiDataStatusRef.current) {
-            return multiDataStatusRef.current[cred + '_' + region];
-        } else {
-            return false;
+            return multiDataStatusRef.current[`${cred}_${region}`];
         }
+        return false;
     };
 
     useEffect(() => {
@@ -653,15 +641,15 @@ const HeaderComponent = ({ tab }: Tab) => {
             if (headerSelectedMultiCred[0] !== undefined && headerSelectedMultiRegion[0] !== undefined) {
                 const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
                 setPendingQueriesCounter(total);
-                let queueLength = queue?.length;
-                let newQueue: any = [...queue];
-                let newQueueForLoop: any = [...newQueue];
-                let newMultiDataStatus: any = { ...multiDataStatusRef.current };
+                const queueLength = queue?.length;
+                const newQueue: any = [...queue];
+                const newQueueForLoop: any = [...newQueue];
+                const newMultiDataStatus: any = { ...multiDataStatusRef.current };
                 // using diff queue variable for loop as we update newQueue in the loop
                 newQueueForLoop?.forEach((item: any, index: number) => {
                     let isPresent = false;
-                    for (let cred of headerSelectedMultiCred) {
-                        for (let region of headerSelectedMultiRegion) {
+                    for (const cred of headerSelectedMultiCred) {
+                        for (const region of headerSelectedMultiRegion) {
                             if (
                                 item.cred?.data?.credentialsId === cred?.data?.credentialsId &&
                                 item.region?.data?.regionCode === region?.data?.regionCode
@@ -674,7 +662,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         // If any combo is removed and added back again than not calling apis again
                         // const key = `${newQueue[index]?.cred?.data?.credentialsId}_${newQueue[index]?.region?.data?.regionCode}`;
                         // delete newMultiDataStatus[key];
-                        let index = newQueue?.findIndex(
+                        const index = newQueue?.findIndex(
                             (perItem: any) =>
                                 item.cred?.data?.credentialsId === perItem.cred?.data?.credentialsId &&
                                 item.region?.data?.regionCode === perItem.region?.data?.regionCode
@@ -682,19 +670,18 @@ const HeaderComponent = ({ tab }: Tab) => {
                         newQueue.splice(index, 1);
                     }
                 });
-                for (let cred of headerSelectedMultiCred) {
-                    for (let region of headerSelectedMultiRegion) {
-                        let isAlreadyInQueue = newQueue?.filter((item: any) => {
-                            return (
+                for (const cred of headerSelectedMultiCred) {
+                    for (const region of headerSelectedMultiRegion) {
+                        const isAlreadyInQueue = newQueue?.filter(
+                            (item: any) =>
                                 item.cred?.data?.credentialsId === cred?.data?.credentialsId &&
                                 item.region?.data?.regionCode === region?.data?.regionCode
-                            );
-                        });
+                        );
                         if (isAlreadyInQueue?.length === 0) {
                             newQueue.push({ cred, region });
                             // If any combo is removed and added back again than not calling apis again
-                            if (!newMultiDataStatus?.[cred?.data?.credentialsId + '_' + region?.data?.regionCode]) {
-                                newMultiDataStatus[cred?.data?.credentialsId + '_' + region?.data?.regionCode] = false;
+                            if (!newMultiDataStatus?.[`${cred?.data?.credentialsId}_${region?.data?.regionCode}`]) {
+                                newMultiDataStatus[`${cred?.data?.credentialsId}_${region?.data?.regionCode}`] = false;
                             }
                         }
                     }
@@ -749,8 +736,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         setCurrentRegion(region?.value);
         dispatch(
             setSingleComboCredAndRegion({
-                cred: cred,
-                region: region
+                cred,
+                region
             })
         );
     };
@@ -877,255 +864,245 @@ const HeaderComponent = ({ tab }: Tab) => {
         }
     };
 
-    const refreshComponent = () => {
-        return (
-            <div className={styles.refresh}>
-                <Popover
-                    popoverClass={styles['copy-popover']}
-                    children={`Last update: ${refreshTime}`}
-                    trigger="hover"
-                    container={
-                        <div className={styles.refreshIcon} onClick={refreshPage}>
-                            <RefreshIcon />
-                        </div>
-                    }
-                />
-            </div>
-        );
-    };
+    const refreshComponent = () => (
+        <div className={styles.refresh}>
+            <Popover
+                popoverClass={styles['copy-popover']}
+                children={`Last update: ${refreshTime}`}
+                trigger="hover"
+                container={
+                    <div className={styles.refreshIcon} onClick={refreshPage}>
+                        <RefreshIcon />
+                    </div>
+                }
+            />
+        </div>
+    );
 
-    const refreshComponentSandbox = () => {
-        return (
-            <div className={styles.refresh}>
-                <Popover
-                    popoverClass={styles['copy-popover']}
-                    children={`Last update: ${refreshTimeSandbox}`}
-                    trigger="hover"
-                    container={
-                        <div className={styles.refreshIcon} onClick={refreshPage}>
-                            <RefreshIcon />
-                        </div>
-                    }
-                />
-            </div>
-        );
-    };
+    const refreshComponentSandbox = () => (
+        <div className={styles.refresh}>
+            <Popover
+                popoverClass={styles['copy-popover']}
+                children={`Last update: ${refreshTimeSandbox}`}
+                trigger="hover"
+                container={
+                    <div className={styles.refreshIcon} onClick={refreshPage}>
+                        <RefreshIcon />
+                    </div>
+                }
+            />
+        </div>
+    );
 
     const labelForMultiSelectCred = () => {
         if (headerSelectedMultiCred && headerSelectedMultiCred.length === 1) {
             const credValue = headerSelectedMultiCred[0]?.value;
             return credValue;
-        } else if (headerSelectedMultiCred && headerSelectedMultiCred?.length === credentialData?.length) {
-            return GENERAL.ALL_CRED_SELECTED;
-        } else if (headerSelectedMultiCred && headerSelectedMultiCred.length >= 1) {
-            return `${headerSelectedMultiCred.length} credentials selected`;
-        } else {
-            return GENERAL.NO_CRED_SELECTED;
         }
+        if (headerSelectedMultiCred && headerSelectedMultiCred?.length === credentialData?.length) {
+            return GENERAL.ALL_CRED_SELECTED;
+        }
+        if (headerSelectedMultiCred && headerSelectedMultiCred.length >= 1) {
+            return `${headerSelectedMultiCred.length} credentials selected`;
+        }
+        return GENERAL.NO_CRED_SELECTED;
     };
 
     const labelForMultiSelectRegion = () => {
         if (headerSelectedMultiRegion && headerSelectedMultiRegion.length === 1) {
             const regionValue = headerSelectedMultiRegion[0]?.value;
             return regionValue;
-        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion?.length === regionsData?.regions?.length) {
-            return GENERAL.ALL_REGIONS_SELECTED;
-        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion.length >= 1) {
-            return `${headerSelectedMultiRegion.length} regions selected`;
-        } else {
-            return GENERAL.NO_REGIONS_SELECTED;
         }
+        if (headerSelectedMultiRegion && headerSelectedMultiRegion?.length === regionsData?.regions?.length) {
+            return GENERAL.ALL_REGIONS_SELECTED;
+        }
+        if (headerSelectedMultiRegion && headerSelectedMultiRegion.length >= 1) {
+            return `${headerSelectedMultiRegion.length} regions selected`;
+        }
+        return GENERAL.NO_REGIONS_SELECTED;
     };
 
-    const selectMultipleComponents = () => {
-        return (
-            <div className={styles.content}>
-                <div className={styles.firstSelect}>
-                    <DsSelect
-                        isLoading={credentialLoading}
-                        title=""
-                        formatLabel={() => labelForMultiSelectCred()}
-                        selectedOptionIds={
-                            headerSelectedMultiCred && headerSelectedMultiCred.length > 0
-                                ? headerSelectedMultiCred.map((cred: any) => cred?.data?.credentialsId)
-                                : []
-                        }
-                        className={styles.multiSelect}
-                        //@ts-ignore
-                        options={generateAccountsForMultiSelect}
-                        selectionType="multi"
-                        isWithActions={true}
-                        variant="underline"
-                        onSelect={(option: any) => {
-                            dispatch(setHeaderSelectedMultiCred(option));
-                        }}
-                        placeholder="No credentials selected"
-                        isCleanable={false}
-                        isSelectAll={true}
-                        dropDown={{
-                            isCloseOnClickOutside: true
-                        }}
-                        searchMethod={{
-                            method: 'smart'
-                        }}
-                        isReadOnly={
-                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
-                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                        }
-                        isDisabled={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                        }
-                    />
-                </div>
-
-                <div className={styles.secondSelect}>
-                    <DsSelect
-                        isLoading={credentialLoading || regionsLoading}
-                        title=""
-                        className={styles.multiSelect}
-                        formatLabel={() => labelForMultiSelectRegion()}
-                        //@ts-ignore
-                        options={generateRegionsForMultiSelect}
-                        selectedOptionIds={
-                            headerSelectedMultiRegion && headerSelectedMultiRegion.length > 0
-                                ? headerSelectedMultiRegion.map((region: any) => region?.data?.regionCode)
-                                : []
-                        }
-                        searchMethod={{
-                            method: 'smart'
-                        }}
-                        selectionType="multi"
-                        isWithActions={true}
-                        placeholder="No regions selected"
-                        variant="underline"
-                        onSelect={(option: any) => {
-                            dispatch(setHeaderSelectedMultiRegion(option));
-                        }}
-                        isCleanable={false}
-                        isSelectAll={true}
-                        dropDown={{
-                            isCloseOnClickOutside: true
-                        }}
-                        isReadOnly={
-                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
-                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                        }
-                        isDisabled={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                        }
-                    />
-                </div>
+    const selectMultipleComponents = () => (
+        <div className={styles.content}>
+            <div className={styles.firstSelect}>
+                <DsSelect
+                    isLoading={credentialLoading}
+                    title=""
+                    formatLabel={() => labelForMultiSelectCred()}
+                    selectedOptionIds={
+                        headerSelectedMultiCred && headerSelectedMultiCred.length > 0
+                            ? headerSelectedMultiCred.map((cred: any) => cred?.data?.credentialsId)
+                            : []
+                    }
+                    className={styles.multiSelect}
+                    // @ts-ignore
+                    options={generateAccountsForMultiSelect}
+                    selectionType="multi"
+                    isWithActions
+                    variant="underline"
+                    onSelect={(option: any) => {
+                        dispatch(setHeaderSelectedMultiCred(option));
+                    }}
+                    placeholder="No credentials selected"
+                    isCleanable={false}
+                    isSelectAll
+                    dropDown={{
+                        isCloseOnClickOutside: true
+                    }}
+                    searchMethod={{
+                        method: 'smart'
+                    }}
+                    isReadOnly={
+                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                    }
+                    isDisabled={
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                    }
+                />
             </div>
-        );
-    };
 
-    const selectSandboxComponents = () => {
-        return (
-            <div className={styles.content}>
-                <div className={styles.firstSelect} title={headerSelectedCredSandbox?.label}>
-                    <SelectField
-                        isLoading={credentialLoading}
-                        isClearable={false}
-                        value={
-                            headerSelectedCredSandbox ? [headerSelectedCredSandbox] : [generateSandboxAWSAccounts[0]]
+            <div className={styles.secondSelect}>
+                <DsSelect
+                    isLoading={credentialLoading || regionsLoading}
+                    title=""
+                    className={styles.multiSelect}
+                    formatLabel={() => labelForMultiSelectRegion()}
+                    // @ts-ignore
+                    options={generateRegionsForMultiSelect}
+                    selectedOptionIds={
+                        headerSelectedMultiRegion && headerSelectedMultiRegion.length > 0
+                            ? headerSelectedMultiRegion.map((region: any) => region?.data?.regionCode)
+                            : []
+                    }
+                    searchMethod={{
+                        method: 'smart'
+                    }}
+                    selectionType="multi"
+                    isWithActions
+                    placeholder="No regions selected"
+                    variant="underline"
+                    onSelect={(option: any) => {
+                        dispatch(setHeaderSelectedMultiRegion(option));
+                    }}
+                    isCleanable={false}
+                    isSelectAll
+                    dropDown={{
+                        isCloseOnClickOutside: true
+                    }}
+                    isReadOnly={
+                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                    }
+                    isDisabled={
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                    }
+                />
+            </div>
+        </div>
+    );
+
+    const selectSandboxComponents = () => (
+        <div className={styles.content}>
+            <div className={styles.firstSelect} title={headerSelectedCredSandbox?.label}>
+                <SelectField
+                    isLoading={credentialLoading}
+                    isClearable={false}
+                    value={headerSelectedCredSandbox ? [headerSelectedCredSandbox] : [generateSandboxAWSAccounts[0]]}
+                    onChange={(selectedOptions: any): void => {
+                        if (localStorage.getItem('selectedSandboxCred')) {
+                            localStorage.removeItem('selectedSandboxCred');
                         }
-                        onChange={(selectedOptions: any): void => {
-                            if (localStorage.getItem('selectedSandboxCred')) {
-                                localStorage.removeItem('selectedSandboxCred');
+                        localStorage.setItem('selectedSandboxCred', JSON.stringify(selectedOptions));
+                        dispatch(updateRefreshBlocked(false));
+                        dispatch(setHeaderSelectedCredSandbox(selectedOptions));
+                    }}
+                    placeholder="Select a Credential"
+                    isSearchable={generateSandboxAWSAccounts.length > 5}
+                    options={generateSandboxAWSAccounts}
+                    className={
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                            ? styles.regionSelect
+                            : ''
+                    }
+                    isReadOnly={
+                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                    }
+                    isDisabled={
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                    }
+                />
+            </div>
+
+            <div className={styles.secondSelect}>
+                <SelectField
+                    isLoading={credentialLoading || regionsLoading}
+                    isClearable={false}
+                    value={
+                        headerSelectedRegionSandbox ? [headerSelectedRegionSandbox] : [generateSandboxRegionsData[0]]
+                    }
+                    onChange={(selectedOptions: any): void => {
+                        function updateRegion() {
+                            if (localStorage.getItem('selectedSandboxRegion')) {
+                                localStorage.removeItem('selectedSandboxRegion');
                             }
-                            localStorage.setItem('selectedSandboxCred', JSON.stringify(selectedOptions));
+                            localStorage.setItem('selectedSandboxRegion', JSON.stringify(selectedOptions));
                             dispatch(updateRefreshBlocked(false));
-                            dispatch(setHeaderSelectedCredSandbox(selectedOptions));
-                        }}
-                        placeholder="Select a Credential"
-                        isSearchable={generateSandboxAWSAccounts.length > 5}
-                        options={generateSandboxAWSAccounts}
-                        className={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                                ? styles.regionSelect
-                                : ''
+                            dispatch(setHeaderSelectedRegionSandbox(selectedOptions));
                         }
-                        isReadOnly={
-                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
-                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                        }
-                        isDisabled={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                        }
-                    />
-                </div>
-
-                <div className={styles.secondSelect}>
-                    <SelectField
-                        isLoading={credentialLoading || regionsLoading}
-                        isClearable={false}
-                        value={
-                            headerSelectedRegionSandbox
-                                ? [headerSelectedRegionSandbox]
-                                : [generateSandboxRegionsData[0]]
-                        }
-                        onChange={(selectedOptions: any): void => {
-                            function updateRegion() {
-                                if (localStorage.getItem('selectedSandboxRegion')) {
-                                    localStorage.removeItem('selectedSandboxRegion');
-                                }
-                                localStorage.setItem('selectedSandboxRegion', JSON.stringify(selectedOptions));
-                                dispatch(updateRefreshBlocked(false));
-                                dispatch(setHeaderSelectedRegionSandbox(selectedOptions));
-                            }
-                            if (isDemoMode) {
-                                createDemoResourcesApi({
-                                    credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
-                                    regionId: selectedOptions?.data?.regionCode
-                                }).then(() => {
-                                    updateRegion();
-                                });
-                            } else {
+                        if (isDemoMode) {
+                            createDemoResourcesApi({
+                                credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                                regionId: selectedOptions?.data?.regionCode
+                            }).then(() => {
                                 updateRegion();
-                            }
-                        }}
-                        placeholder="Select a Region"
-                        isSearchable={generateSandboxRegionsData.length > 5}
-                        options={generateSandboxRegionsData}
-                        className={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                                ? styles.regionSelect
-                                : ''
+                            });
+                        } else {
+                            updateRegion();
                         }
-                        isReadOnly={
-                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
-                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                        }
-                        isDisabled={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                        }
-                    />
-                </div>
+                    }}
+                    placeholder="Select a Region"
+                    isSearchable={generateSandboxRegionsData.length > 5}
+                    options={generateSandboxRegionsData}
+                    className={
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                            ? styles.regionSelect
+                            : ''
+                    }
+                    isReadOnly={
+                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                    }
+                    isDisabled={
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                    }
+                />
             </div>
-        );
-    };
+        </div>
+    );
 
     const checkConditionForHeaderComponent = () => {
         if (
@@ -1137,13 +1114,12 @@ const HeaderComponent = ({ tab }: Tab) => {
                     landingFromWizard))
         ) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     };
 
-    //Job monitoring select drop down
-    //Function to generate the options for Select Field for License
+    // Job monitoring select drop down
+    // Function to generate the options for Select Field for License
     const generateSelectFieldOptions = useMemo<optionType[]>((): optionType[] => {
         const arr = ['Last 24 hours', 'Last 7 days', 'Last 14 days', 'Last 30 days'];
         const options: optionType[] = [];
@@ -1397,76 +1373,74 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 <div className={styles.contentAreaTemp}>
                                     {selectMultipleComponents()}
                                     <div className={styles.content}>
-                                        <>
-                                            <DsButton
-                                                children="Deploy host"
-                                                variant="Default"
-                                                dropDown={{
-                                                    trigger: 'click',
-                                                    autoPosition: true,
-                                                    items: [
-                                                        {
-                                                            id: 'wlm-db-deploy-mssql-host',
-                                                            label: 'Microsoft SQL Server',
-                                                            onClick: () => {
-                                                                dispatch(setDatabaseHostEntryPoint('database'));
-                                                                dispatch(setSelectedDatabaseType(DBType.MSSQL));
-                                                                // navigate(WLF_TO_FORM_NAVIGATE);
-                                                                if (isWorkloadFactory) {
-                                                                    navigate(WLF_TO_FORM_NAVIGATE);
-                                                                    postBlueXPMessage({
-                                                                        type: BlueXPListeners.navigate,
-                                                                        payload: {
-                                                                            pathname: './mssql-deploy-wizard',
-                                                                            replace: true
-                                                                        }
-                                                                    });
-                                                                } else {
-                                                                    navigate('../../fsxdb/mssql-deploy-wizard');
-                                                                    postBlueXPMessage({
-                                                                        type: BlueXPListeners.navigate,
-                                                                        payload: {
-                                                                            pathname: '../../fsxdb/mssql-deploy-wizard',
-                                                                            replace: true
-                                                                        }
-                                                                    });
-                                                                }
-                                                            },
-                                                            className: 'mssql-deployment-button'
+                                        <DsButton
+                                            children="Deploy host"
+                                            variant="Default"
+                                            dropDown={{
+                                                trigger: 'click',
+                                                autoPosition: true,
+                                                items: [
+                                                    {
+                                                        id: 'wlm-db-deploy-mssql-host',
+                                                        label: 'Microsoft SQL Server',
+                                                        onClick: () => {
+                                                            dispatch(setDatabaseHostEntryPoint('database'));
+                                                            dispatch(setSelectedDatabaseType(DBType.MSSQL));
+                                                            // navigate(WLF_TO_FORM_NAVIGATE);
+                                                            if (isWorkloadFactory) {
+                                                                navigate(WLF_TO_FORM_NAVIGATE);
+                                                                postBlueXPMessage({
+                                                                    type: BlueXPListeners.navigate,
+                                                                    payload: {
+                                                                        pathname: './mssql-deploy-wizard',
+                                                                        replace: true
+                                                                    }
+                                                                });
+                                                            } else {
+                                                                navigate('../../fsxdb/mssql-deploy-wizard');
+                                                                postBlueXPMessage({
+                                                                    type: BlueXPListeners.navigate,
+                                                                    payload: {
+                                                                        pathname: '../../fsxdb/mssql-deploy-wizard',
+                                                                        replace: true
+                                                                    }
+                                                                });
+                                                            }
                                                         },
-                                                        {
-                                                            id: 'wlm-db-deploy-pgsql-host',
-                                                            label: 'PostgreSQL Server',
-                                                            onClick: () => {
-                                                                dispatch(setDatabaseHostEntryPoint('database'));
-                                                                dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
-                                                                if (isWorkloadFactory) {
-                                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
-                                                                    postBlueXPMessage({
-                                                                        type: BlueXPListeners.navigate,
-                                                                        payload: {
-                                                                            pathname: './postgreSQL-deploy-wizard',
-                                                                            replace: true
-                                                                        }
-                                                                    });
-                                                                } else {
-                                                                    navigate('../../fsxdb/postgreSQL-deploy-wizard');
-                                                                    postBlueXPMessage({
-                                                                        type: BlueXPListeners.navigate,
-                                                                        payload: {
-                                                                            pathname:
-                                                                                '../../fsxdb/postgreSQL-deploy-wizard',
-                                                                            replace: true
-                                                                        }
-                                                                    });
-                                                                }
-                                                            },
-                                                            className: 'pgsql-deployment-button'
-                                                        }
-                                                    ]
-                                                }}
-                                            />
-                                        </>
+                                                        className: 'mssql-deployment-button'
+                                                    },
+                                                    {
+                                                        id: 'wlm-db-deploy-pgsql-host',
+                                                        label: 'PostgreSQL Server',
+                                                        onClick: () => {
+                                                            dispatch(setDatabaseHostEntryPoint('database'));
+                                                            dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
+                                                            if (isWorkloadFactory) {
+                                                                navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                                postBlueXPMessage({
+                                                                    type: BlueXPListeners.navigate,
+                                                                    payload: {
+                                                                        pathname: './postgreSQL-deploy-wizard',
+                                                                        replace: true
+                                                                    }
+                                                                });
+                                                            } else {
+                                                                navigate('../../fsxdb/postgreSQL-deploy-wizard');
+                                                                postBlueXPMessage({
+                                                                    type: BlueXPListeners.navigate,
+                                                                    payload: {
+                                                                        pathname:
+                                                                            '../../fsxdb/postgreSQL-deploy-wizard',
+                                                                        replace: true
+                                                                    }
+                                                                });
+                                                            }
+                                                        },
+                                                        className: 'pgsql-deployment-button'
+                                                    }
+                                                ]
+                                            }}
+                                        />
 
                                         {refreshComponent()}
                                     </div>
@@ -1491,7 +1465,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
-                                    <div></div>
+                                    <div />
                                     <div className={styles.content}>
                                         <div className={styles.selectContainer}>
                                             <SelectField

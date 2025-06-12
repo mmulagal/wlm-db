@@ -1,7 +1,8 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useRef, useState } from 'react';
 import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
-import { useDispatch } from 'react-redux';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
@@ -39,7 +40,6 @@ import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
 import CloneManagementTable from './InnerTables/CloneManagementTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
-import { useEffect, useRef, useState } from 'react';
 import CloneTabs from './CloneTabs';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 
@@ -78,7 +78,7 @@ const OptimizeInnerPage = () => {
 
     useEffect(() => {
         if (selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT) {
-            let cloneViolationsList =
+            const cloneViolationsList =
                 selectedOptimizeConfig?.data?.cloneDetails
                     ?.filter((clone: any) =>
                         selectedOptimizeConfig?.data?.objectsInViolation?.includes(clone.cloneDatabaseName)
@@ -163,13 +163,13 @@ const OptimizeInnerPage = () => {
         if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
             return (
                 <Popover
-                    isAppendedToBody={true}
+                    isAppendedToBody
                     children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
                     trigger="hover"
                     delayHide={200}
-                    interactive={true}
+                    interactive
                     container={
-                        <DsButton variant="secondary" isDisabled={true} isThin>
+                        <DsButton variant="secondary" isDisabled isThin>
                             {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
@@ -178,17 +178,18 @@ const OptimizeInnerPage = () => {
         }
         if (selectedOptimizeConfig?.type === GENERAL.CRR) {
             return (
-                <DsButton isThin variant="secondary" isDisabled={true}>
+                <DsButton isThin variant="secondary" isDisabled>
                     {GENERAL.OPTIMIZE}
                 </DsButton>
             );
-        } else if (
+        }
+        if (
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&
             (rowData?.status === 'Over-provisioned' || rowData?.status === 'Shared drive')
         ) {
             return (
                 <Popover
-                    isAppendedToBody={true}
+                    isAppendedToBody
                     children={
                         rowData?.status === 'Over-provisioned' ? (
                             <DsTypography variant="Regular_14">{GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR}</DsTypography>
@@ -198,30 +199,32 @@ const OptimizeInnerPage = () => {
                     }
                     trigger="hover"
                     delayHide={200}
-                    interactive={true}
+                    interactive
                     container={
-                        <DsButton variant="secondary" isDisabled={true} isThin>
+                        <DsButton variant="secondary" isDisabled isThin>
                             {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />
             );
-        } else if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
+        }
+        if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
                 <Popover
-                    isAppendedToBody={true}
+                    isAppendedToBody
                     children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
                     trigger="hover"
                     delayHide={200}
-                    interactive={true}
+                    interactive
                     container={
-                        <DsButton variant="secondary" isDisabled={true} isThin>
+                        <DsButton variant="secondary" isDisabled isThin>
                             {GENERAL.OPTIMIZE}
                         </DsButton>
                     }
                 />
             );
-        } else if (
+        }
+        if (
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
@@ -250,41 +253,36 @@ const OptimizeInnerPage = () => {
                     {GENERAL.OPTIMIZE}
                 </DsButton>
             );
-        } else {
-            return (
-                <Popover
-                    isAppendedToBody={true}
-                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
-                    trigger="hover"
-                    delayHide={200}
-                    interactive={true}
-                    container={
-                        <DsButton variant="secondary" isDisabled={true} isThin>
-                            {GENERAL.OPTIMIZE}
-                        </DsButton>
-                    }
-                />
-            );
         }
+        return (
+            <Popover
+                isAppendedToBody
+                children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                trigger="hover"
+                delayHide={200}
+                interactive
+                container={
+                    <DsButton variant="secondary" isDisabled isThin>
+                        {GENERAL.OPTIMIZE}
+                    </DsButton>
+                }
+            />
+        );
     };
 
-    const lastColDetails = (name: string, data?: any, width: any = '302px') => {
-        return {
-            id: '4',
-            Header: '',
-            accessor: '',
-            isSticky: true,
-            width: width,
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.buttonContainer}>
-                        <div />
-                        {buttonComponent(rowData)}
-                    </div>
-                );
-            }
-        };
-    };
+    const lastColDetails = (name: string, data?: any, width: any = '302px') => ({
+        id: '4',
+        Header: '',
+        accessor: '',
+        isSticky: true,
+        width,
+        renderCell: (cellData: any, rowData: any) => (
+            <div className={styles.buttonContainer}>
+                <div />
+                {buttonComponent(rowData)}
+            </div>
+        )
+    });
 
     // This is the function that will be called when the optimize button is clicked from main cards
     const callOptimizeApi = (type: any, operation: string, singleRowData: any) => {
@@ -375,7 +373,7 @@ const OptimizeInnerPage = () => {
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
             apiCall = optimizeResiliency;
             const state = store.getState();
-            const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
+            const { selectedSnapshot } = state.getWellOptimize;
             if (operation === 'bulk') {
                 payload = {
                     configurationName: ['snapshot-policy'],
@@ -387,7 +385,7 @@ const OptimizeInnerPage = () => {
                             },
                             volumes: selectedRowsForOptimizeInnerPage.map(({ volumeName, ontapVolumeUuid }: any) => ({
                                 ontapVolumeName: volumeName,
-                                ontapVolumeUuid: ontapVolumeUuid
+                                ontapVolumeUuid
                             }))
                         }
                     ]
@@ -437,7 +435,7 @@ const OptimizeInnerPage = () => {
                 ...inProgressOptimizationData,
                 [type]: [
                     ...(inProgressOptimizationData[type] || []),
-                    selectedResourceId + '_' + selectedDatabaseInstance
+                    `${selectedResourceId}_${selectedDatabaseInstance}`
                 ]
             })
         );
@@ -476,7 +474,7 @@ const OptimizeInnerPage = () => {
             regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
-            payload: payload
+            payload
         }).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>

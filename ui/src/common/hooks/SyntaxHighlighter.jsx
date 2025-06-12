@@ -7,6 +7,7 @@ import yaml from 'react-syntax-highlighter/dist/esm//languages/prism/yaml';
 import bash from 'react-syntax-highlighter/dist/esm//languages/prism/bash';
 import hcl from 'react-syntax-highlighter/dist/esm//languages/prism/hcl';
 import { isObject } from 'lodash';
+
 SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('javascript', js);
 SyntaxHighlighter.registerLanguage('jsx', jsx);

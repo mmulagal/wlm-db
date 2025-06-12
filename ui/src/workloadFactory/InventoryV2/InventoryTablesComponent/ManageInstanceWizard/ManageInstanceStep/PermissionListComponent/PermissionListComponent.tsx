@@ -1,5 +1,6 @@
 import { DsTypography } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import { AccordionItem, ManageInstanceAccordion } from '../ManageInstanceAccordion/ManageInstanceAccordion';
 import { ReactComponent as Review } from '../../../../../../assets/Review.svg';
 import { ReactComponent as Fix } from '../../../../../../assets/Fix.svg';
@@ -12,7 +13,6 @@ import { ReactComponent as DatabaseDisabled } from '../../../../../../assets/Dat
 import { ReactComponent as SandboxImageDisabled } from '../../../../../../assets/Sandbox-disabled.svg';
 
 import styles from './PermissionListComponent.module.scss';
-import { useState } from 'react';
 import { PermissionContent } from './PermissionContent/PermissionContent';
 import { ACTION_TYPE, MANAGE_STATES } from '../../../../../../utils/consts';
 import { useAppSelector } from '../../../../../../store/storeHooks';

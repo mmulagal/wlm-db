@@ -576,9 +576,9 @@
 
 @media screen and (min-width: 1920px) {
     .headerComponent {
-        [class*='dashboardSection']{
-            [class*='spaceAreaTemp']{
-                [class*='contentArea']{
+        [class*='dashboardSection'] {
+            [class*='spaceAreaTemp'] {
+                [class*='contentArea'] {
                     width: 82.5% !important;
                     max-width: unset !important;
                 }

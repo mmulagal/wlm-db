@@ -1,7 +1,7 @@
 import { AccordionCard, AccordionCardContent, DsTypography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import styles from './DefineTag.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
 import { setSelectedTag } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { GENERAL } from '../../../../../utils/appConstants';
@@ -10,9 +10,7 @@ const DefineTag = () => {
     const dispatch = useDispatch();
     const { selectedTag } = useAppSelector(state => state.createSandbox);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const setHeader = () => {
-        return <DsTypography variant="Regular_14">{selectedTag}</DsTypography>;
-    };
+    const setHeader = () => <DsTypography variant="Regular_14">{selectedTag}</DsTypography>;
     const tagNames = ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'];
 
     const handleClick = (tag: string) => {
@@ -25,13 +23,11 @@ const DefineTag = () => {
                 return `${styles.tag}  ${styles.darkTheme}`;
             }
             return `${styles.tag} ${styles.selectedTag}`;
-        } else {
-            if (tag === selectedTag) {
-                return `${styles.tag} ${styles.selectedTag}`;
-            } else {
-                return styles.tag;
-            }
         }
+        if (tag === selectedTag) {
+            return `${styles.tag} ${styles.selectedTag}`;
+        }
+        return styles.tag;
     };
     return (
         <div className={styles.defineTag}>

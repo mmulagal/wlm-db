@@ -5,13 +5,11 @@ type textType = {
     text: string;
 };
 
-const LoadingCodeBox = ({ text }: textType) => {
-    return (
-        <Typography variant="Regular_14" className={styles.loadingCodeBox}>
-            <FlashingDotsLoader />
-            <div>{text}</div>
-        </Typography>
-    );
-};
+const LoadingCodeBox = ({ text }: textType) => (
+    <Typography variant="Regular_14" className={styles.loadingCodeBox}>
+        <FlashingDotsLoader />
+        <div>{text}</div>
+    </Typography>
+);
 
 export default LoadingCodeBox;

@@ -1,13 +1,13 @@
 import { DsTextField, Popover, TextField } from '@netapp/design-system';
-import styles from './ManualTCOInputComponent.module.scss';
 import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
+import styles from './ManualTCOInputComponent.module.scss';
 import {
     setSecondaryVolumeTypeOperation,
     setVolumeTypeOperation
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useState } from 'react';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 
 type ManualInputs = {
@@ -33,7 +33,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
             ? manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount
             : manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount;
     const [volumeSearch, setVolumeSearch] = useSearchDebounce(300);
-    //Storage amount debounce logic
+    // Storage amount debounce logic
 
     const [storageAmountSearch, setStorageAmountSearch] = useSearchDebounce(300);
 
@@ -54,7 +54,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
 
     const [throughputSearch, setThroughputSearch] = useSearchDebounce(300);
 
-    //use effect for volume details
+    // use effect for volume details
     useEffect(() => {
         setVolumeSearch(volumeValue === null ? defaultVolumeVal : volumeValue);
     }, [volumeValue]);
@@ -63,7 +63,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         if (from === 'primary') {
             dispatch(
                 setVolumeTypeOperation({
-                    type: type,
+                    type,
                     mode: 'manualTCONumberOfVolumes',
                     value: volumeSearch === null ? manualTCOVolumeTypes?.[type]?.manualTCONumberOfVolumes : volumeSearch
                 })
@@ -71,7 +71,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         } else {
             dispatch(
                 setSecondaryVolumeTypeOperation({
-                    type: type,
+                    type,
                     mode: 'manualTCONumberOfVolumes',
                     value:
                         volumeSearch === null ? manualTCOVolumeTypes2?.[type]?.manualTCONumberOfVolumes : volumeSearch
@@ -80,7 +80,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         }
     }, [volumeSearch]);
 
-    //use effect for volume details
+    // use effect for volume details
     useEffect(() => {
         setStorageAmountSearch(storageAmountValue === null ? defaultStorageAmountValue : storageAmountValue);
     }, [storageAmountValue]);
@@ -89,7 +89,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         if (from === 'primary') {
             dispatch(
                 setVolumeTypeOperation({
-                    type: type,
+                    type,
                     mode: 'manualTCOStorageAmount',
                     value:
                         storageAmountSearch === null
@@ -100,7 +100,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         } else {
             dispatch(
                 setSecondaryVolumeTypeOperation({
-                    type: type,
+                    type,
                     mode: 'manualTCOStorageAmount',
                     value:
                         storageAmountSearch === null
@@ -111,7 +111,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         }
     }, [storageAmountSearch]);
 
-    //iops debounce details
+    // iops debounce details
     useEffect(() => {
         setIOPSSearch(iopsValue === null ? defaultIOPSValue : iopsValue);
     }, [iopsValue]);
@@ -120,7 +120,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         if (from === 'primary') {
             dispatch(
                 setVolumeTypeOperation({
-                    type: type,
+                    type,
                     mode: 'manualTCOProvisionedIOPS',
                     value: iopsSearch === null ? manualTCOVolumeTypes?.[type]?.manualTCOProvisionedIOPS : iopsSearch
                 })
@@ -128,7 +128,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         } else {
             dispatch(
                 setSecondaryVolumeTypeOperation({
-                    type: type,
+                    type,
                     mode: 'manualTCOProvisionedIOPS',
                     value: iopsSearch === null ? manualTCOVolumeTypes2?.[type]?.manualTCOProvisionedIOPS : iopsSearch
                 })
@@ -136,7 +136,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         }
     }, [iopsSearch]);
 
-    //throughput debounce details
+    // throughput debounce details
     useEffect(() => {
         setThroughputSearch(throughputValue === null ? defaultThroughputValue : throughputValue);
     }, [throughputValue]);
@@ -145,7 +145,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         if (from === 'primary') {
             dispatch(
                 setVolumeTypeOperation({
-                    type: type,
+                    type,
                     mode: 'manualTCOThroughput',
                     value:
                         throughputSearch === null ? manualTCOVolumeTypes?.[type]?.manualTCOThroughput : throughputSearch
@@ -154,7 +154,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         } else {
             dispatch(
                 setSecondaryVolumeTypeOperation({
-                    type: type,
+                    type,
                     mode: 'manualTCOThroughput',
                     value:
                         throughputSearch === null
@@ -253,8 +253,6 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 return 'Maximum value is 1000000000';
             }
         }
-
-        return;
     };
 
     const handleStorageCapacityLimit = () => {
@@ -307,7 +305,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         <div className={styles.mainSection}>
             <div className={styles.row}>
                 <TextField
-                    label={'Number of volumes'}
+                    label="Number of volumes"
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const numVal = e.target.value.replace(/[^0-9.]/g, '');
                         setVolumeValue(numVal);
@@ -318,7 +316,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 />
 
                 <TextField
-                    label={'Storage amount per volume (GiB)'}
+                    label="Storage amount per volume (GiB)"
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const numVal = e.target.value.replace(/[^0-9.]/g, '');
                         setStorageAmountValue(numVal);
@@ -342,7 +340,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                     />
                 ) : (
                     <TextField
-                        label={'Provisioned IOPS per volume'}
+                        label="Provisioned IOPS per volume"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setIOPSValue(numVal);
@@ -362,7 +360,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                     />
                 ) : (
                     <TextField
-                        label={'Throughput (MB/s)'}
+                        label="Throughput (MB/s)"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setThroughputValue(numVal);

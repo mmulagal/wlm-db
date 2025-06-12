@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import styles from './../typography.module.scss';
+import styles from '../typography.module.scss';
 
 type TypographyColors =
     | 'text-title'
@@ -31,13 +31,11 @@ export const Card = ({
     Component?: any;
     style?: any;
     flex?: boolean;
-}) => {
-    return (
-        <Component className={classNames(styles.baseCard, className, { [styles.flex]: flex })} style={style} {...rest}>
-            {children}
-        </Component>
-    );
-};
+}) => (
+    <Component className={classNames(styles.baseCard, className, { [styles.flex]: flex })} style={style} {...rest}>
+        {children}
+    </Component>
+);
 
 export const Content = ({
     className,
@@ -49,13 +47,11 @@ export const Content = ({
     style?: any;
     children: any;
     white?: boolean;
-}) => {
-    return (
-        <section className={classNames(styles.content, className, { [styles['white']]: white })} style={style}>
-            {children}
-        </section>
-    );
-};
+}) => (
+    <section className={classNames(styles.content, className, { [styles.white]: white })} style={style}>
+        {children}
+    </section>
+);
 
 export const Heading = ({
     children,
@@ -95,7 +91,7 @@ export const Heading = ({
             [styles.i]: italic,
             [styles.c]: center,
             [styles.ellipsis]: ellipsis,
-            //@ts-ignore
+            // @ts-ignore
             [styles[color]]: color
         },
         className
@@ -108,28 +104,24 @@ export const Heading = ({
     );
 };
 
-export const Page = ({ className, style, children }: { className?: string; style?: any; children: any }) => {
-    return (
-        <div className={classNames(styles.page, className)} style={style}>
-            {children}
-        </div>
-    );
-};
+export const Page = ({ className, style, children }: { className?: string; style?: any; children: any }) => (
+    <div className={classNames(styles.page, className)} style={style}>
+        {children}
+    </div>
+);
 
-export const TabHeader = ({ logo, Icon, label, children }: any) => {
-    return (
-        <header className={styles.base}>
-            <div className={styles['service']}>
-                {/* {logo && <SVG src={logo}/>}
+export const TabHeader = ({ logo, Icon, label, children }: any) => (
+    <header className={styles.base}>
+        <div className={styles.service}>
+            {/* {logo && <SVG src={logo}/>}
             {Icon && <Icon/>} */}
-                <Heading level={20} style={{ color: 'var(--text-primary' }}>
-                    {label}
-                </Heading>
-            </div>
-            {children}
-        </header>
-    );
-};
+            <Heading level={20} style={{ color: 'var(--text-primary' }}>
+                {label}
+            </Heading>
+        </div>
+        {children}
+    </header>
+);
 
 export const Text = ({
     children,
@@ -162,7 +154,7 @@ export const Text = ({
             [styles.i]: italic,
             [styles.c]: center,
             [styles.ellipsis]: ellipsis,
-            //@ts-ignore
+            // @ts-ignore
             [styles[color]]: color,
             [styles['no-wrap']]: nowrap
         },
@@ -204,7 +196,7 @@ export const Span = ({
             [styles.b]: bold,
             [styles.i]: italic,
             [styles.ellipsis]: ellipsis,
-            //@ts-ignore
+            // @ts-ignore
             [styles[color]]: color,
             [styles['no-wrap']]: nowrap
         },
@@ -234,15 +226,13 @@ export const Notice = ({
     bold?: boolean;
     style?: any;
     className?: string;
-}) => {
-    return (
-        <div className={className} style={style}>
-            <Span bold={bold} color={color} level={level} className={styles.notice}>
-                {noticeLabel}:
-            </Span>
-            <Span bold={bold} level={level}>
-                {children}
-            </Span>
-        </div>
-    );
-};
+}) => (
+    <div className={className} style={style}>
+        <Span bold={bold} color={color} level={level} className={styles.notice}>
+            {noticeLabel}:
+        </Span>
+        <Span bold={bold} level={level}>
+            {children}
+        </Span>
+    </div>
+);

@@ -36,14 +36,12 @@ const CreateNewUserCodeBox = () => {
     const setDisplayedDataInCodeBox = () => {
         const payload = createUserDbPayload(createNewUser);
         return (
-            <>
-                <CodeBoxColor
-                    credID={createNewUser?.cdbCredId || CRED_PLACEHOLDERS.CRED_ID}
-                    region={createNewUser?.cdbRegionId || CRED_PLACEHOLDERS.REGION}
-                    actualData={payload}
-                    endpoint={CREATE_DB_ENDPOINT(resourceId)}
-                />
-            </>
+            <CodeBoxColor
+                credID={createNewUser?.cdbCredId || CRED_PLACEHOLDERS.CRED_ID}
+                region={createNewUser?.cdbRegionId || CRED_PLACEHOLDERS.REGION}
+                actualData={payload}
+                endpoint={CREATE_DB_ENDPOINT(resourceId)}
+            />
         );
     };
 
@@ -64,9 +62,8 @@ const CreateNewUserCodeBox = () => {
                 isWorkloadFactory
             );
             return restApiPayload;
-        } else {
-            return '';
         }
+        return '';
     };
 
     return (

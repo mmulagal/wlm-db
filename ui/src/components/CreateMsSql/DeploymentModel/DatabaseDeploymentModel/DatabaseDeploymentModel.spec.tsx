@@ -1,22 +1,20 @@
 import { render } from '@testing-library/react';
-import DatabaseDeploymentModel from './DatabaseDeploymentModel';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { Middleware, Dispatch, AnyAction } from '@reduxjs/toolkit';
+import DatabaseDeploymentModel from './DatabaseDeploymentModel';
 
 const middlewares: Middleware<{}, any, Dispatch<AnyAction>>[] | undefined = [];
-//@ts-ignore
+// @ts-ignore
 const mockStore = configureMockStore(middlewares);
 
-jest.mock('@json2csv/plainjs', () => {
-    return {
-        Parser: jest.fn()
-    };
-});
+jest.mock('@json2csv/plainjs', () => ({
+    Parser: jest.fn()
+}));
 
 describe('Database Deployment Model accordion test', () => {
     const wrapper = () => {
-        const store = mockStore({ mssqlForm: {dbDeploymentModel: {label: 'Failover cluster instance (FCI)'}} });
+        const store = mockStore({ mssqlForm: { dbDeploymentModel: { label: 'Failover cluster instance (FCI)' } } });
 
         return render(
             <>

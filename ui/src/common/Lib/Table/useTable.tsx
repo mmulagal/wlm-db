@@ -1,9 +1,6 @@
 import React, { useCallback, useMemo, useReducer } from 'react';
-import { SELECTION_TYPE, SelectionCell } from './Selection';
-import { ManageColumns } from './ManageColumns';
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import { ColumnProps, SelectionStateType } from './Table';
 import _orderBy from 'lodash/orderBy';
 import _filter from 'lodash/filter';
 import _forEach from 'lodash/forEach';
@@ -20,9 +17,12 @@ import _isUndefined from 'lodash/isUndefined';
 import _pickBy from 'lodash/pickBy';
 import _size from 'lodash/size';
 import _values from 'lodash/values';
+import { Checkbox } from '@netapp/design-system';
 import { getStickyClass, HashTable } from '../../../utils/utilityFunctions';
 import useRunOnceWhenTruthy from '../../hooks/useRunOnceWhenTruthy';
-import { Checkbox } from '@netapp/design-system';
+import { ColumnProps, SelectionStateType } from './Table';
+import { ManageColumns } from './ManageColumns';
+import { SELECTION_TYPE, SelectionCell } from './Selection';
 
 const noRightPaddingClass = css({
     '&&&&': {
@@ -33,11 +33,10 @@ const noRightPaddingClass = css({
 
 const noFilterState = { columns: {}, count: 0, textFilter: '' };
 
-const sort = (sortState: SortStateType, columnsMap: HashTable<ColumnProps>, rows: rowDataType[]) => {
-    return sortState?.column && sortState?.sortOrder
+const sort = (sortState: SortStateType, columnsMap: HashTable<ColumnProps>, rows: rowDataType[]) =>
+    sortState?.column && sortState?.sortOrder
         ? _orderBy(rows, [columnsMap[sortState.column].accessor], [sortState.sortOrder])
         : rows;
-};
 
 const filterFunc = (
     filterState: FilterStateType,
@@ -53,9 +52,9 @@ const filterFunc = (
 
         if (textFilter) {
             _forEach(columns, column => {
-                const accessor = column.accessor;
+                const { accessor } = column;
 
-                const accessorForTextFilter = column.accessorForTextFilter;
+                const { accessorForTextFilter } = column;
 
                 // Get value from `customAccessor` if available, otherwise use `accessor`
                 const value = accessorForTextFilter ? _get(row, accessorForTextFilter) : _get(row, accessor);
@@ -63,7 +62,8 @@ const filterFunc = (
                 if (_isString(value) && value.toLowerCase().includes(lowerCaseTextFilter)) {
                     isTextFilterMatch = true;
                     return false;
-                } else if (_isArray(value) && value.join(', ').toLowerCase().includes(lowerCaseTextFilter)) {
+                }
+                if (_isArray(value) && value.join(', ').toLowerCase().includes(lowerCaseTextFilter)) {
                     isTextFilterMatch = true;
                     return false;
                 }
@@ -83,7 +83,7 @@ const filterFunc = (
 
         _forEach(filterState.columns, (filter, key) => {
             if (_isObject(filter) && filter!.activeCount > 0) {
-                const accessor = columnsMap[key].accessor;
+                const { accessor } = columnsMap[key];
                 const customAccessor = columnsMap[key]?.customAccessor; // Use custom accessor if present
                 const rowAccessor = _get(row, customAccessor || accessor);
 
@@ -97,19 +97,16 @@ const filterFunc = (
                         }) || false;
                     isMultiFilterMatch = isMatch;
                     return isMatch;
-                } else if (_isArray(rowAccessor)) {
-                    const existsOne = _find(rowAccessor, value => {
-                        return filter.values[value];
-                    });
+                }
+                if (_isArray(rowAccessor)) {
+                    const existsOne = _find(rowAccessor, value => filter.values[value]);
                     if (!existsOne) {
                         isMultiFilterMatch = false;
                         return false;
                     }
-                } else {
-                    if (!filter.values[rowAccessor]) {
-                        isMultiFilterMatch = false;
-                        return false;
-                    }
+                } else if (!filter.values[rowAccessor]) {
+                    isMultiFilterMatch = false;
+                    return false;
                 }
             }
         });
@@ -239,7 +236,7 @@ function reducer(state: ReducerStateType, action: ActionType): ReducerStateType 
 
             _forEach(columns, (columnsState: ColumnStateType) => {
                 if (columnsState.activeCount && columnsState.activeCount > 0) {
-                    count = count + 1;
+                    count += 1;
                 }
             });
 
@@ -258,15 +255,15 @@ function reducer(state: ReducerStateType, action: ActionType): ReducerStateType 
         }
         case ACTIONS.TOGGLE_ROW_SELECTION: {
             const { id, value } = payload;
-            let count = state!.selectionState!.count;
+            let { count } = state!.selectionState!;
             let updatedValue = value;
             let oldSelectedRows = state!.selectionState!.rows;
             if (state.selectionType === SELECTION_TYPE.MULTIPLE) {
                 const currentValue = state!.selectionState!.rows[id] || false;
                 if (currentValue && !value) {
-                    count = count - 1;
+                    count -= 1;
                 } else if (!currentValue && value) {
-                    count = count + 1;
+                    count += 1;
                 }
             }
             if (state.selectionType === SELECTION_TYPE.SINGULAR) {
@@ -436,9 +433,9 @@ export interface UseTableProps {
     columnsState?: HashTable<ColumnStateType>;
     /** If we didnt finish loading the rows it should be true */
     isLazyLoading?: boolean;
-    /** when selection type selected, Props for the select all checkbox **/
+    /** when selection type selected, Props for the select all checkbox * */
     selectAllProps?: Partial<any>;
-    /** When isManagedColumns is true, there are props for the newly created column  **/
+    /** When isManagedColumns is true, there are props for the newly created column  * */
     manageColumnsProps?: Partial<ColumnProps>;
 }
 
@@ -468,7 +465,7 @@ export const useTable = ({
         const columnsMap: HashTable<ColumnProps> = {};
 
         const pColumns: ColumnProps[] = columns?.map((column, index) => {
-            let pColumn = {
+            const pColumn = {
                 ...column,
                 id: _isUndefined(column.id) ? index.toString() : column.id
             };
@@ -506,21 +503,22 @@ export const useTable = ({
         [dispatch]
     );
 
-    const processedRows = useMemo(() => {
-        return _map(data, (row, index) => {
-            const id = _isUndefined(row.id) ? index.toString() : row.id;
-            return {
-                ...row,
-                id
-            };
-        });
-    }, [data]);
+    const processedRows = useMemo(
+        () =>
+            _map(data, (row, index) => {
+                const id = _isUndefined(row.id) ? index.toString() : row.id;
+                return {
+                    ...row,
+                    id
+                };
+            }),
+        [data]
+    );
 
-    const shownColumns = useMemo(() => {
-        return pColumns.filter(column => {
-            return !table.columnsState[column.id]?.isHidden;
-        });
-    }, [pColumns, table.columnsState]);
+    const shownColumns = useMemo(
+        () => pColumns.filter(column => !table.columnsState[column.id]?.isHidden),
+        [pColumns, table.columnsState]
+    );
 
     const toggleSort = useCallback(
         ({ id }: { id: string }) => {
@@ -578,24 +576,24 @@ export const useTable = ({
     const filteredRows: rowDataType[] = useMemo(() => {
         if ((table.filterState?.count > 0 || table.filterState?.textFilter) && !isExternalFilter) {
             return filterFunc(table.filterState, processedRows, columns, columnsMap, additionalSearchKeys);
-        } else {
-            return processedRows;
         }
+        return processedRows;
     }, [table.filterState, processedRows, isExternalFilter, columns, columnsMap, additionalSearchKeys]);
 
-    const columnsWithFilterOptions = useMemo(() => {
-        return _map(shownColumns, (col: ColumnProps) => ({
-            ...col,
-            filterOptions: col.filterOptions === 'auto' ? getFilterOptions(filteredRows, col) : col.filterOptions
-        }));
-    }, [filteredRows, shownColumns]) as any as ColumnProps[];
+    const columnsWithFilterOptions = useMemo(
+        () =>
+            _map(shownColumns, (col: ColumnProps) => ({
+                ...col,
+                filterOptions: col.filterOptions === 'auto' ? getFilterOptions(filteredRows, col) : col.filterOptions
+            })),
+        [filteredRows, shownColumns]
+    ) as any as ColumnProps[];
 
     const organizedRows = useMemo(() => {
         if (!isExternalSort) {
             return sort(table.sortState, columnsMap, filteredRows);
-        } else {
-            return filteredRows;
         }
+        return filteredRows;
     }, [isExternalSort, filteredRows, table.sortState, columnsMap]) as rowDataType[];
 
     const selectRows = useCallback(
@@ -604,7 +602,7 @@ export const useTable = ({
                 type: ACTIONS.TOGGLE_SELECT_ALL,
                 payload: {
                     value,
-                    rows: rows
+                    rows
                 }
             });
         },
@@ -614,9 +612,8 @@ export const useTable = ({
     const pageChunks = useMemo(() => {
         if (pageSize) {
             return _chunk(organizedRows, pageSize);
-        } else {
-            return null;
         }
+        return null;
     }, [organizedRows, pageSize]);
 
     const pagination = useMemo(() => {
@@ -639,9 +636,8 @@ export const useTable = ({
                 pageCount,
                 gotoPage
             };
-        } else {
-            return null;
         }
+        return null;
     }, [pageChunks, table.pageState, dispatch]);
 
     const processedColumns = useMemo(
@@ -675,7 +671,7 @@ export const useTable = ({
                                           isChecked={isAllSelected}
                                           isDisabled={isAllRowsDisabled}
                                           isPartial={table!.selectionState!.count > 0 && !isAllSelected}
-                                          variant={'tableHeader'}
+                                          variant="tableHeader"
                                           menuOptions={[
                                               {
                                                   label: 'Select this page',
@@ -702,24 +698,23 @@ export const useTable = ({
                                           {...selectAllProps}
                                       />
                                   );
-                              } else {
-                                  return (
-                                      <Checkbox
-                                          variant={'tableCheckbox'}
-                                          isDisabled={isAllPageRowsDisabled}
-                                          isPartial={
-                                              table!.selectionState!.count > 0 &&
-                                              !isAllSelected &&
-                                              organizedRows?.length > 0
-                                          }
-                                          isChecked={isAllSelected}
-                                          onChange={() => {
-                                              selectRows(organizedRows, !isAllSelected);
-                                          }}
-                                          {...selectAllProps}
-                                      />
-                                  );
                               }
+                              return (
+                                  <Checkbox
+                                      variant="tableCheckbox"
+                                      isDisabled={isAllPageRowsDisabled}
+                                      isPartial={
+                                          table!.selectionState!.count > 0 &&
+                                          !isAllSelected &&
+                                          organizedRows?.length > 0
+                                      }
+                                      isChecked={isAllSelected}
+                                      onChange={() => {
+                                          selectRows(organizedRows, !isAllSelected);
+                                      }}
+                                      {...selectAllProps}
+                                  />
+                              );
                           }
                       },
                       accessor: '',
@@ -766,43 +761,40 @@ export const useTable = ({
         [dispatch]
     );
 
-    const columnsWithManageColumns = useMemo(() => {
-        return isManagedColumns
-            ? [
-                  ...columnsWithSelection,
-                  {
-                      Header: () => (
-                          <ManageColumns
-                              allColumns={pColumns}
-                              columnsState={table.columnsState}
-                              updateColumnState={updateColumnState}
-                          />
-                      ),
-                      accessor: '',
-                      isSticky: true,
-                      width: '62px',
-                      ...manageColumnsProps
-                  }
-              ]
-            : columnsWithSelection;
-    }, [
-        table.columnsState,
-        updateColumnState,
-        columnsWithSelection,
-        isManagedColumns,
-        pColumns,
-        manageColumnsProps
-    ]) as ColumnProps[];
+    const columnsWithManageColumns = useMemo(
+        () =>
+            isManagedColumns
+                ? [
+                      ...columnsWithSelection,
+                      {
+                          Header: () => (
+                              <ManageColumns
+                                  allColumns={pColumns}
+                                  columnsState={table.columnsState}
+                                  updateColumnState={updateColumnState}
+                              />
+                          ),
+                          accessor: '',
+                          isSticky: true,
+                          width: '62px',
+                          ...manageColumnsProps
+                      }
+                  ]
+                : columnsWithSelection,
+        [table.columnsState, updateColumnState, columnsWithSelection, isManagedColumns, pColumns, manageColumnsProps]
+    ) as ColumnProps[];
 
-    const columnsWithStickyClasses = useMemo(() => {
-        return columnsWithManageColumns.map((column, index) => ({
-            ...column,
-            className: classNames(
-                column.className,
-                isHorizontalScroll ? getStickyClass(columnsWithManageColumns, index) : null
-            )
-        }));
-    }, [columnsWithManageColumns, isHorizontalScroll]);
+    const columnsWithStickyClasses = useMemo(
+        () =>
+            columnsWithManageColumns.map((column, index) => ({
+                ...column,
+                className: classNames(
+                    column.className,
+                    isHorizontalScroll ? getStickyClass(columnsWithManageColumns, index) : null
+                )
+            })),
+        [columnsWithManageColumns, isHorizontalScroll]
+    );
 
     useRunOnceWhenTruthy(() => {
         defaultSelectedRows?.forEach(rowId => {

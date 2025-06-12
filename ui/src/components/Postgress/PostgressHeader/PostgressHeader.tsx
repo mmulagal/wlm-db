@@ -1,6 +1,9 @@
 import { Button, Header, Popover, useDialog, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
-import { useAppSelector } from '../../../store/storeHooks';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { uniq } from 'lodash';
+import { useAppSelector } from '../../../store/storeHooks';
 import styles from './PostgressHeader.module.scss';
 
 import { FROM_DIALOG, MAX_SAVED_CONFIG, WIZARD_TYPE } from '../../../utils/consts';
@@ -13,12 +16,9 @@ import {
     resetChecksAfterLoad,
     resetRefetchApiCheck
 } from '../../CreateMsSql/Configuration/LoadConfiguration';
-import { useDispatch } from 'react-redux';
 import { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation } from '../../../utils/apiService';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import LoadConfig from '../../CreateMsSql/LoadConfig/LoadConfig';
-import { useEffect, useState } from 'react';
-import { uniq } from 'lodash';
 
 const PostgressHeader = () => {
     const { setDialog, closeDialog } = useDialog();
@@ -48,15 +48,13 @@ const PostgressHeader = () => {
             } else {
                 navigate('../../fsxdb');
             }
+        } else if (isWorkloadFactory) {
+            navigateToCanvas('/');
         } else {
-            if (isWorkloadFactory) {
-                navigateToCanvas('/');
-            } else {
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: { pathname: '../../../../../fsxhome', replace: true }
-                });
-            }
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: { pathname: '../../../../../fsxhome', replace: true }
+            });
         }
     };
 
@@ -130,15 +128,13 @@ const PostgressHeader = () => {
                             } else {
                                 navigate('../../fsxdb');
                             }
+                        } else if (isWorkloadFactory) {
+                            navigateToCanvas('/');
                         } else {
-                            if (isWorkloadFactory) {
-                                navigateToCanvas('/');
-                            } else {
-                                postBlueXPMessage({
-                                    type: BlueXPListeners.navigate,
-                                    payload: { pathname: '../../../../../fsxhome', replace: true }
-                                });
-                            }
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: '../../../../../fsxhome', replace: true }
+                            });
                         }
                     }
                 }}
@@ -148,7 +144,7 @@ const PostgressHeader = () => {
     };
     return (
         <Header
-            title={'Create new PostgreSQL Server'}
+            title="Create new PostgreSQL Server"
             closeButtonProps={{
                 onClick: () => {
                     configData && configData.length < MAX_SAVED_CONFIG
@@ -167,25 +163,25 @@ const PostgressHeader = () => {
 
                 {!isConfig && (
                     <Popover
-                        popoverClass={styles['popover']}
+                        popoverClass={styles.popover}
                         children={SELECT_CONFIG.NO_SAVED_CONFIG_PGSQL}
                         trigger="hover"
                         container={
-                            <Button Component="button" variant="text" isDisabled={true}>
+                            <Button Component="button" variant="text" isDisabled>
                                 {SELECT_CONFIG.LOAD_CONFIG}
                             </Button>
                         }
                     />
                 )}
 
-                <div className={styles.separator}></div>
+                <div className={styles.separator} />
                 {configData?.length >= MAX_SAVED_CONFIG && (
                     <Popover
-                        popoverClass={styles['popover']}
+                        popoverClass={styles.popover}
                         children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
                         trigger="hover"
                         container={
-                            <Button Component="button" variant="text" isDisabled={true}>
+                            <Button Component="button" variant="text" isDisabled>
                                 {SELECT_CONFIG.SAVE_CONFIG}
                             </Button>
                         }

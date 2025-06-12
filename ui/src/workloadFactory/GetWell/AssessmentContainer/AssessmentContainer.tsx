@@ -31,11 +31,9 @@ const AssessmentContainer = ({ onClick, isLoading }: any) => {
                                             <DsTypography variant="Semibold_14">{gwTimestamp}</DsTypography>
                                         </>
                                     ) : (
-                                        <>
-                                            <DsTypography variant="Regular_14">
-                                                {GENERAL.NO_ANALYSIS_PERFORMED}
-                                            </DsTypography>
-                                        </>
+                                        <DsTypography variant="Regular_14">
+                                            {GENERAL.NO_ANALYSIS_PERFORMED}
+                                        </DsTypography>
                                     )}
                                 </>
                             )}
@@ -43,7 +41,7 @@ const AssessmentContainer = ({ onClick, isLoading }: any) => {
                     </div>
                     {gwAdhocError && (
                         <Popover
-                            popoverClass={CommonStyles['popover']}
+                            popoverClass={CommonStyles.popover}
                             children={
                                 <DsTypography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
                                     {gwAdhocError}

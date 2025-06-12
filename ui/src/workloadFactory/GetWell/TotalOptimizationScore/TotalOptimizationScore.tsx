@@ -50,10 +50,7 @@ const TotalOptimizationScore = () => {
                     <div className={styles.smallTileSection}>
                         <div className={styles.smallTile}>
                             <div className={styles.bottomRow}>
-                                <DsTypography
-                                    variant="Regular_14"
-                                    isDisabled={!loading && !isAssessmentAvailable ? true : false}
-                                >
+                                <DsTypography variant="Regular_14" isDisabled={!!(!loading && !isAssessmentAvailable)}>
                                     Well-architected configurations
                                 </DsTypography>
                             </div>
@@ -67,7 +64,7 @@ const TotalOptimizationScore = () => {
                                         {optimizationBreakDown?.total?.optimized}
                                     </DsTypography>
                                 ) : (
-                                    <DsTypography variant="Semibold_14" isDisabled={true}>
+                                    <DsTypography variant="Semibold_14" isDisabled>
                                         {GENERAL.NOT_AVAILABLE}
                                     </DsTypography>
                                 ))}
@@ -77,10 +74,7 @@ const TotalOptimizationScore = () => {
 
                         <div className={styles.smallTile}>
                             <div className={styles.bottomRow}>
-                                <DsTypography
-                                    variant="Regular_14"
-                                    isDisabled={!loading && !isAssessmentAvailable ? true : false}
-                                >
+                                <DsTypography variant="Regular_14" isDisabled={!!(!loading && !isAssessmentAvailable)}>
                                     Critical issues
                                 </DsTypography>
                             </div>
@@ -94,7 +88,7 @@ const TotalOptimizationScore = () => {
                                         {optimizationBreakDown?.total?.critical}
                                     </DsTypography>
                                 ) : (
-                                    <DsTypography variant="Semibold_14" isDisabled={true}>
+                                    <DsTypography variant="Semibold_14" isDisabled>
                                         {GENERAL.NOT_AVAILABLE}
                                     </DsTypography>
                                 ))}
@@ -104,10 +98,7 @@ const TotalOptimizationScore = () => {
 
                         <div className={styles.smallTile}>
                             <div className={styles.bottomRow}>
-                                <DsTypography
-                                    variant="Regular_14"
-                                    isDisabled={!loading && !isAssessmentAvailable ? true : false}
-                                >
+                                <DsTypography variant="Regular_14" isDisabled={!!(!loading && !isAssessmentAvailable)}>
                                     Warnings
                                 </DsTypography>
                             </div>
@@ -121,7 +112,7 @@ const TotalOptimizationScore = () => {
                                         {optimizationBreakDown?.total?.warning}
                                     </DsTypography>
                                 ) : (
-                                    <DsTypography variant="Semibold_14" isDisabled={true}>
+                                    <DsTypography variant="Semibold_14" isDisabled>
                                         {GENERAL.NOT_AVAILABLE}
                                     </DsTypography>
                                 ))}
@@ -133,7 +124,7 @@ const TotalOptimizationScore = () => {
                             <DsTypography
                                 style={{ width: '140px' }}
                                 variant="Semibold_14"
-                                isDisabled={!loading && !isAssessmentAvailable ? true : false}
+                                isDisabled={!!(!loading && !isAssessmentAvailable)}
                             >
                                 Total
                             </DsTypography>
@@ -146,7 +137,7 @@ const TotalOptimizationScore = () => {
                                         {optimizationBreakDown?.total?.total}
                                     </DsTypography>
                                 ) : (
-                                    <DsTypography variant="Semibold_14" isDisabled={true}>
+                                    <DsTypography variant="Semibold_14" isDisabled>
                                         {GENERAL.NOT_AVAILABLE}
                                     </DsTypography>
                                 ))}

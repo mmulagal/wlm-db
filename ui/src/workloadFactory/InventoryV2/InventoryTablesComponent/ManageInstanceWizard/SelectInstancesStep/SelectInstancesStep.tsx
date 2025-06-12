@@ -1,10 +1,10 @@
 import { useWizard } from '@netapp/design-system/dist/components/Wizard';
 import { useTranslation } from 'react-i18next';
+import { DsTypography } from '@netapp/design-system';
 import styles from './SelectInstancesStep.module.scss';
 
 import ManageWizardFooter from '../ManageWizardFooter';
 
-import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as MultipleInstances } from '../../../../../assets/Multiple instances credentials 3.svg';
 import SelectInstances from '../DetectInstanceStep/DetectContent/SelectInstances';
 import { UseWizardReturn } from '../../../../../utils/types/registerTypes';

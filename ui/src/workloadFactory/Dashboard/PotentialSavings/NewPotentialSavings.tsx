@@ -1,6 +1,7 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
-import styles from './PotentialSavings.module.scss';
 import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
+import styles from './PotentialSavings.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatNumberWithCustomComma, handleURL } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -10,7 +11,6 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import { ReactComponent as PotentialSavingsImage } from '../../../assets/potential_savings.svg';
 import { ReactComponent as PotentialSavingsDarkModeImage } from '../../../assets/potential_savings_darkMode.svg';
 import { ReactComponent as PotentialSavingsSwitch } from '../../../assets/no-savings.svg';
-import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
 
@@ -40,7 +40,7 @@ const NewPotentialSavings = () => {
         if (unManagedHostFormatedList) {
             let ebsCount = 0;
             let fsxwCount = 0;
-            let uniqueResourceList: Array<String> = [];
+            const uniqueResourceList: Array<string> = [];
             unManagedHostFormatedList?.map((perRow: any) => {
                 if (
                     !headerSelectedMultiCredIdsList?.includes(perRow?.credentialId) ||
@@ -67,9 +67,8 @@ const NewPotentialSavings = () => {
         setNoSavings(potentialSavingsValues?.noSavings);
     }, [isDiscoverInProgress, isManagedHostListLoading, potentialSavingsValues, multiDataLoading]);
 
-    const hasPotentialValues = () => {
-        return potentialSavingsValues?.fsxnCost || potentialSavingsValues?.fsxwCost || potentialSavingsValues?.ebsCost;
-    };
+    const hasPotentialValues = () =>
+        potentialSavingsValues?.fsxnCost || potentialSavingsValues?.fsxwCost || potentialSavingsValues?.ebsCost;
 
     const checkForPotentialSavings = (val1: number | any, val2: number | any) => {
         if (val1 !== 0 && val2 !== 0) {
@@ -85,13 +84,15 @@ const NewPotentialSavings = () => {
             !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForFsxwHost, potentialSavingsValues?.fsxwCost)
         ) {
             return '155px';
-        } else if (
+        }
+        if (
             hasPotentialValues() &&
             checkForPotentialSavings(potentialSavingsValues?.fsxnCostForEbsHost, potentialSavingsValues?.ebsCost) &&
             !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForFsxwHost, potentialSavingsValues?.fsxwCost)
         ) {
             return '137px';
-        } else if (
+        }
+        if (
             hasPotentialValues() &&
             !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForEbsHost, potentialSavingsValues?.ebsCost) &&
             checkForPotentialSavings(potentialSavingsValues?.fsxnCostForFsxwHost, potentialSavingsValues?.fsxwCost)
@@ -113,7 +114,7 @@ const NewPotentialSavings = () => {
                     {loading && <DsFlashingDotsLoader />}
                     <DsButton
                         variant="secondary"
-                        isThin={true}
+                        isThin
                         data-testid="wlm-db-potential-savings"
                         onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}
                         isDisabled={loading}
@@ -133,7 +134,7 @@ const NewPotentialSavings = () => {
                                     <div className={styles.subContent}>
                                         <div className={styles.loaderText}>
                                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                                {'--'}
+                                                --
                                             </DsTypography>
                                             {loading && <DsFlashingDotsLoader />}
                                         </div>
@@ -146,7 +147,7 @@ const NewPotentialSavings = () => {
                                     <div className={styles.subContent}>
                                         <div className={styles.loaderText}>
                                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                                {'--'}
+                                                --
                                             </DsTypography>
                                             {loading && <DsFlashingDotsLoader />}
                                         </div>
@@ -158,7 +159,7 @@ const NewPotentialSavings = () => {
                                     <div className={styles.subContent}>
                                         <div className={styles.loaderText}>
                                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                                {'--'}
+                                                --
                                             </DsTypography>
                                             {loading && <DsFlashingDotsLoader />}
                                         </div>
@@ -273,7 +274,7 @@ const NewPotentialSavings = () => {
                                                 potentialSavingsValues?.ebsCost || 0
                                             ]}
                                             yTickFormatter={yValue =>
-                                                '$' + formatNumberWithCustomComma(Number(yValue), true)
+                                                `$${formatNumberWithCustomComma(Number(yValue), true)}`
                                             }
                                             height={259}
                                             colors={['chart-9', 'chart-3']}
@@ -285,15 +286,15 @@ const NewPotentialSavings = () => {
                                             // chart draws top to bottom, so the order of the data is reversed
                                             data={[[1], [1]]}
                                             yTickFormatter={yValue =>
-                                                '$' + formatNumberWithCustomComma(Number(yValue), true)
+                                                `$${formatNumberWithCustomComma(Number(yValue), true)}`
                                             }
                                             height={120}
                                             colors={['chart-2', 'chart-3', 'chart-2']}
                                             categories={['FSx for ONTAP', '', '']}
-                                            loadingWithNoData={true}
+                                            loadingWithNoData
                                             loading={loading}
                                             marginTop={setMarginTop()}
-                                            labelChange={true}
+                                            labelChange
                                             labelChangeText="EBS"
                                         />
                                     )}
@@ -321,7 +322,7 @@ const NewPotentialSavings = () => {
                                                 potentialSavingsValues?.fsxwCost || 0
                                             ]}
                                             yTickFormatter={yValue =>
-                                                '$' + formatNumberWithCustomComma(Number(yValue), true)
+                                                `$${formatNumberWithCustomComma(Number(yValue), true)}`
                                             }
                                             height={259}
                                             colors={['chart-9', 'chart-2']}
@@ -333,15 +334,15 @@ const NewPotentialSavings = () => {
                                             // chart draws top to bottom, so the order of the data is reversed
                                             data={[[1], [1]]}
                                             yTickFormatter={yValue =>
-                                                '$' + formatNumberWithCustomComma(Number(yValue), true)
+                                                `$${formatNumberWithCustomComma(Number(yValue), true)}`
                                             }
                                             height={120}
                                             colors={['chart-2', 'chart-3', 'chart-2']}
                                             categories={['FSx for ONTAP', '', '']}
-                                            loadingWithNoData={true}
+                                            loadingWithNoData
                                             loading={loading}
                                             marginTop={setMarginTop()}
-                                            labelChange={true}
+                                            labelChange
                                             labelChangeText="FSx for Windows"
                                         />
                                     )}

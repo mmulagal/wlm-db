@@ -1,7 +1,8 @@
 import { DsTypography, SelectField, TextField } from '@netapp/design-system';
-import styles from './ManualTCOFSXFields.module.scss';
 import { useEffect, useMemo, useState } from 'react';
 import { optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+import styles from './ManualTCOFSXFields.module.scss';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import {
     setSelectedManualDeploymentType,
@@ -11,7 +12,6 @@ import {
     setSelectedManualFSXIOPS,
     setSelectedManualFSXThroughput
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import { TCO_MANUAL_DEPLOYMENT_TYPE } from '../../../../utils/consts';
@@ -32,7 +32,7 @@ const ManualTCOFSXFields = () => {
 
     const [storageCapacity, setStorageCapacity] = useState<any>(manualStorageCapacity);
 
-    //Use effect for machine description
+    // Use effect for machine description
     useEffect(() => {
         setTextSearch(storageCapacity);
     }, [storageCapacity]);
@@ -41,13 +41,13 @@ const ManualTCOFSXFields = () => {
         dispatch(setSelectedManualStorageCapacity(textSearch));
     }, [textSearch]);
 
-    //IOPS Debounce code
+    // IOPS Debounce code
 
     const [iopsSearch, setIOPSSearch] = useSearchDebounce(300);
 
     const [iopsValue, setIOPSValue] = useState<any>(selectedManualFSXIOPS);
 
-    //Use effect for machine description
+    // Use effect for machine description
     useEffect(() => {
         setIOPSSearch(iopsValue);
     }, [iopsValue]);
@@ -56,13 +56,13 @@ const ManualTCOFSXFields = () => {
         dispatch(setSelectedManualFSXIOPS(iopsSearch));
     }, [iopsSearch]);
 
-    //Throughput Debounce code
+    // Throughput Debounce code
 
     const [throughputSearch, setThroughputSearch] = useSearchDebounce(300);
 
     const [throughputValue, setThroughputValue] = useState<any>(selectedManualFSXThroughput);
 
-    //Use effect for machine description
+    // Use effect for machine description
     useEffect(() => {
         setThroughputSearch(throughputValue);
     }, [throughputValue]);
@@ -71,7 +71,7 @@ const ManualTCOFSXFields = () => {
         dispatch(setSelectedManualFSXThroughput(throughputSearch));
     }, [throughputSearch]);
 
-    //to generate deployment type
+    // to generate deployment type
     const generateDeploymentTypeList = useMemo<optionType[]>((): optionType[] => {
         const deploymentModel = [TCO_MANUAL_DEPLOYMENT_TYPE.SINGLE, TCO_MANUAL_DEPLOYMENT_TYPE.MULTI];
 
@@ -97,7 +97,7 @@ const ManualTCOFSXFields = () => {
         }
     }, [generateDeploymentTypeList]);
 
-    //to generate Storage type
+    // to generate Storage type
     const generateStorageTypeList = useMemo<optionType[]>((): optionType[] => {
         const deploymentModel = ['SSD'];
 
@@ -115,7 +115,7 @@ const ManualTCOFSXFields = () => {
         }
     }, [generateStorageTypeList]);
 
-    //to generate Storage unit
+    // to generate Storage unit
     const generateStorageCapacityUnitList = useMemo<optionType[]>((): optionType[] => {
         const deploymentModel = ['TiB', 'GiB'];
 
@@ -160,13 +160,9 @@ const ManualTCOFSXFields = () => {
             <div className={styles.fieldContainer}>
                 <div className={styles.rowContainer}>
                     <SelectField
-                        label={'Deployment type'}
+                        label="Deployment type"
                         isClearable={false}
-                        value={
-                            selectedManualDeploymentType
-                                ? selectedManualDeploymentType
-                                : [generateDeploymentTypeList[0]]
-                        }
+                        value={selectedManualDeploymentType || [generateDeploymentTypeList[0]]}
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedManualDeploymentType(selectedOptions));
                         }}
@@ -176,10 +172,10 @@ const ManualTCOFSXFields = () => {
                     />
 
                     <SelectField
-                        label={'Storage type'}
+                        label="Storage type"
                         isDisabled
                         isClearable={false}
-                        value={selectedManualStorageType ? selectedManualStorageType : [generateStorageTypeList[0]]}
+                        value={selectedManualStorageType || [generateStorageTypeList[0]]}
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedManualStorageType(selectedOptions));
                         }}
@@ -193,7 +189,7 @@ const ManualTCOFSXFields = () => {
                 <div className={styles.rowContainer}>
                     <div className={styles.storageCapacityField}>
                         <TextField
-                            label={'Total storage capacity'}
+                            label="Total storage capacity"
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 const numVal = e.target.value.replace(/[^0-9.]/g, '');
                                 setStorageCapacity(numVal);
@@ -203,13 +199,9 @@ const ManualTCOFSXFields = () => {
                             error={handleStorageCapacityError()}
                         />
                         <SelectField
-                            label={'hide'}
+                            label="hide"
                             isClearable={false}
-                            value={
-                                selectedManualStorageCapacityUnit
-                                    ? selectedManualStorageCapacityUnit
-                                    : [generateStorageCapacityUnitList[0]]
-                            }
+                            value={selectedManualStorageCapacityUnit || [generateStorageCapacityUnitList[0]]}
                             onChange={(selectedOptions: any): void => {
                                 dispatch(setSelectedManualStorageCapacityUnit(selectedOptions));
                             }}
@@ -220,7 +212,7 @@ const ManualTCOFSXFields = () => {
                     </div>
 
                     <TextField
-                        label={'Provisioned SSD IOPS'}
+                        label="Provisioned SSD IOPS"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setIOPSValue(numVal);
@@ -233,7 +225,7 @@ const ManualTCOFSXFields = () => {
 
                 <div className={styles.rowContainer}>
                     <TextField
-                        label={'Throughput (MB/s)'}
+                        label="Throughput (MB/s)"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setThroughputValue(numVal);

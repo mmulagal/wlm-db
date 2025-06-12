@@ -3,6 +3,9 @@ import { TableProps } from '@netapp/design-system/dist/components/Table';
 import { get, sortBy, compact, uniqBy, map } from 'lodash';
 import { css } from '@emotion/css';
 import numeral from 'numeral';
+import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
+import moment from 'moment';
+import classNames from 'classnames';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
@@ -44,12 +47,9 @@ import {
     setSelectedRowsForDismiss,
     setSelectedRowsForOptimize
 } from '../store/workloadFactory/databaseHomeSlice';
-import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
-import moment from 'moment';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedRowsForManage } from '../store/workloadFactory/inventoryV2Slice';
 import { PgsqlInstancesDiscovered } from './types/inventoryV2Types';
-import classNames from 'classnames';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -69,12 +69,12 @@ export const generateOptionType = (
     data?: Object
 ) => {
     const option: OptionsWithData = {
-        value: value,
-        label: label,
-        label2: label2,
-        isDisabled: isDisabled,
-        disabledTitle: disabledTitle,
-        data: data
+        value,
+        label,
+        label2,
+        isDisabled,
+        disabledTitle,
+        data
     };
     return option;
 };
@@ -88,12 +88,12 @@ export const generateMultipleOptionType = (
     data?: Object
 ) => {
     const option: any = {
-        value: value,
-        label: label,
-        id: id,
-        isDisabled: isDisabled,
-        disabledTitle: disabledTitle,
-        data: data
+        value,
+        label,
+        id,
+        isDisabled,
+        disabledTitle,
+        data
     };
     return option;
 };
@@ -108,11 +108,9 @@ export function getSelectedFromSelectionState<T extends { id: string }>(
 
     const rows: T[] = [];
 
-    for (let item in selectedRows) {
+    for (const item in selectedRows) {
         if (selectedRows[item]) {
-            const entry = data.find(entry => {
-                return entry.id === item;
-            });
+            const entry = data.find(entry => entry.id === item);
 
             if (entry) {
                 rows.push(entry);
@@ -132,14 +130,14 @@ export const getTruncatedItems = (items: any) => {
     // Dynamically calculate the width
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
-    //@ts-ignore
+    // @ts-ignore
     context.font = '14px'; // Adjust font-size and family as per your table
 
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        //@ts-ignore
-        const itemWidth = context.measureText(item + ', ').width;
-        //@ts-ignore
+        // @ts-ignore
+        const itemWidth = context.measureText(`${item}, `).width;
+        // @ts-ignore
         if (totalWidth + itemWidth <= 180 || maxItemsToShow.length === 0) {
             maxItemsToShow.push(item);
             totalWidth += itemWidth;
@@ -150,13 +148,13 @@ export const getTruncatedItems = (items: any) => {
     }
 
     return {
-        maxItemsToShow: maxItemsToShow,
-        remaining: remaining
+        maxItemsToShow,
+        remaining
     };
 };
 
-export const getFilterOptions = (data: any[], propName: string, renderLabel?: (val: any) => any) => {
-    return !data
+export const getFilterOptions = (data: any[], propName: string, renderLabel?: (val: any) => any) =>
+    !data
         ? []
         : sortBy(
               uniqBy(
@@ -170,11 +168,9 @@ export const getFilterOptions = (data: any[], propName: string, renderLabel?: (v
               ),
               'value'
           );
-};
 
-export const formatSize = (value: number, passedformat?: string) => {
-    return numeral(getByteVal(value, passedformat)).format('0.[00] ib');
-};
+export const formatSize = (value: number, passedformat?: string) =>
+    numeral(getByteVal(value, passedformat)).format('0.[00] ib');
 
 export const categorizeStorageSize = (value: string): string => {
     // Convert value string to bytes for comparison
@@ -182,30 +178,32 @@ export const categorizeStorageSize = (value: string): string => {
 
     if (sizeInBytes >= 0 && sizeInBytes < 100 * 1024 ** 2) {
         return '0 - 100 MiB';
-    } else if (sizeInBytes >= 100 * 1024 ** 2 && sizeInBytes < 1024 ** 3) {
-        return '100 MiB - 1 GiB';
-    } else if (sizeInBytes >= 1024 ** 3 && sizeInBytes < 10 * 1024 ** 3) {
-        return '1 GiB - 10 GiB';
-    } else if (sizeInBytes >= 10 * 1024 ** 3 && sizeInBytes < 5 * 1024 ** 4) {
-        return '10 GiB - 5 TiB';
-    } else {
-        return '5 TiB+';
     }
+    if (sizeInBytes >= 100 * 1024 ** 2 && sizeInBytes < 1024 ** 3) {
+        return '100 MiB - 1 GiB';
+    }
+    if (sizeInBytes >= 1024 ** 3 && sizeInBytes < 10 * 1024 ** 3) {
+        return '1 GiB - 10 GiB';
+    }
+    if (sizeInBytes >= 10 * 1024 ** 3 && sizeInBytes < 5 * 1024 ** 4) {
+        return '10 GiB - 5 TiB';
+    }
+    return '5 TiB+';
 };
 
 export const cloneAgeRange = (value: any) => {
     if (value >= 60 && value < 99) {
         return '60 - 99 days';
-    } else if (value >= 100 && value <= 200) {
+    }
+    if (value >= 100 && value <= 200) {
         return '100 - 200 days';
-    } else if (value >= 201) {
+    }
+    if (value >= 201) {
         return '200+ days';
     }
 };
 
-export const backupStartTime = (selectedAWSBackup: any) => {
-    return `${selectedAWSBackup?.hour}:${selectedAWSBackup?.minute}`;
-};
+export const backupStartTime = (selectedAWSBackup: any) => `${selectedAWSBackup?.hour}:${selectedAWSBackup?.minute}`;
 
 // Helper function to convert "GiB" into bytes
 const convertToBytes = (sizeStr: string): number => {
@@ -245,7 +243,7 @@ export const getByteVal = (value: number, passedformat?: string) => {
 };
 
 export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
-    let newData: KmsKeys[] = [];
+    const newData: KmsKeys[] = [];
     data?.keys
         ?.filter((key: KmsKeys) => key?.state === ENABLED_STATE || key?.state === PENDING_DELETION)
         .map((val: KmsKeys) => {
@@ -268,7 +266,7 @@ export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
 };
 
 export const formatVpcSubnetsData = (data: { subnets: Subnets[] }) => {
-    let azObj: AvailabilityZonesObj = {};
+    const azObj: AvailabilityZonesObj = {};
     data?.subnets?.map((val: Subnets) => {
         const azName = val?.availabilityZone;
         if (azName && azObj.hasOwnProperty(azName)) {
@@ -298,9 +296,8 @@ export const dbPassVal = (password: string) => {
 
         if (password.length >= 8 && metCategories.length >= 3 && !password.includes(userName)) {
             return '';
-        } else {
-            return GENERAL.PASSWORD_ERROR_CHECK;
         }
+        return GENERAL.PASSWORD_ERROR_CHECK;
     }
 };
 
@@ -335,9 +332,8 @@ export const fsxPassVal = (password: string) => {
             !password.includes('admin')
         ) {
             return '';
-        } else {
-            return GENERAL.PASSWORD_ERROR_CHECK;
         }
+        return GENERAL.PASSWORD_ERROR_CHECK;
     }
 };
 
@@ -350,7 +346,7 @@ export const encodeAll = (text: string) => {
             .replace(/-/g, '%2D')
             .replace(/\(/g, '%2C');
         const encodedComponent = encodeURIComponent(internalEncoding);
-        return encodedComponent.replace(/%/g, '---'); //replacing the precent to prevent the default encoding on the way back which ruined the url
+        return encodedComponent.replace(/%/g, '---'); // replacing the precent to prevent the default encoding on the way back which ruined the url
     }
     return text;
 };
@@ -364,9 +360,8 @@ export const requiredFieldError = (inputString: string) => {
     const subStr = 'must have required property';
     if (match && match.length >= 2 && inputString.includes(subStr)) {
         return match[1];
-    } else {
-        return null;
     }
+    return null;
 };
 
 export const errorMessagesToBlock = (errorMsg: string) => {
@@ -411,24 +406,21 @@ export const formatDateWithTime = (date: string | number) => {
     return moment(new Date(parseInt(dateStr))).format('LL HH:mm');
 };
 
-export const getTimeDifferenceInDays = (timeStamp1: number, timeStamp2: number) => {
-    return Math.floor((timeStamp1 - timeStamp2) / 1000 / 60 / 60 / 24);
-};
+export const getTimeDifferenceInDays = (timeStamp1: number, timeStamp2: number) =>
+    Math.floor((timeStamp1 - timeStamp2) / 1000 / 60 / 60 / 24);
 
 export const isNotNumberOrNA = (value: string | number) => {
     if (!value) {
         return false;
-    } else {
-        return isNaN(parseFloat(String(value))) && value !== GENERAL.NOT_AVAILABLE;
     }
+    return isNaN(parseFloat(String(value))) && value !== GENERAL.NOT_AVAILABLE;
 };
 
 export const formatSizeOrString = (value: number) => {
     if (!isNaN(parseFloat(value.toString()))) {
         return formatSize(value);
-    } else {
-        return value;
     }
+    return value;
 };
 
 export const regionsSort = (regions: Array<Regions>) => {
@@ -522,27 +514,20 @@ export const formatSizeSplit = (value: number | string) => {
     return { value: actualValue, format };
 };
 
-export const displayFormattedValue = (value: number, msg: string) => {
-    return `${formatSize(value)} ${msg}`;
-};
+export const displayFormattedValue = (value: number, msg: string) => `${formatSize(value)} ${msg}`;
 
-export const generateRandomDBName = () => {
-    return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
-};
+export const generateRandomDBName = () =>
+    SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
 
-export const generateRandomPGSQLName = () => {
-    return POSTGRE_USERNAME;
-};
+export const generateRandomPGSQLName = () => POSTGRE_USERNAME;
 
-export const generatePGSQLOperatingSystem = () => {
-    return {
-        value: 'Amazon Linux 2023 AMI',
-        label: 'Amazon Linux 2023 AMI',
-        label2: 'Amazon Linux 2023 AMI',
-        isDisabled: false,
-        disabledTitle: ''
-    };
-};
+export const generatePGSQLOperatingSystem = () => ({
+    value: 'Amazon Linux 2023 AMI',
+    label: 'Amazon Linux 2023 AMI',
+    label2: 'Amazon Linux 2023 AMI',
+    isDisabled: false,
+    disabledTitle: ''
+});
 
 export function roundOffNumber(number: any) {
     let roundOffNumber;
@@ -567,7 +552,7 @@ export function formatNumberWithCustomComma(number: any, roundOffRequired: boole
     }
 
     // Convert the number to a string and remove any existing commas
-    let numStr = roundOffNumber.toString().replace(/,/g, '');
+    const numStr = roundOffNumber.toString().replace(/,/g, '');
 
     let formattedNumber;
 
@@ -601,20 +586,17 @@ export const formatFractionalNumberForCost = (
     }
     if (value && typeof value === 'number' && !Number.isInteger(value)) {
         const numberForFormat = value.toFixed(precision);
-        let formattedNumber = formatNumberWithCustomComma(numberForFormat, roundOffRequired);
+        const formattedNumber = formatNumberWithCustomComma(numberForFormat, roundOffRequired);
 
         return formattedNumber;
     }
     return value;
 };
 
-export const isAwsBackupEnabled = (val: any) => {
-    return (
-        val?.protection?.isAwsBackupEnabled?.fsxw ||
-        val?.protection?.isAwsBackupEnabled?.fsxn ||
-        val?.protection?.isAwsBackupEnabled?.ebs
-    );
-};
+export const isAwsBackupEnabled = (val: any) =>
+    val?.protection?.isAwsBackupEnabled?.fsxw ||
+    val?.protection?.isAwsBackupEnabled?.fsxn ||
+    val?.protection?.isAwsBackupEnabled?.ebs;
 
 export const getDiscoveredHostDeployment = (host: any) => {
     // This will get deployment type in case of unmanaged hosts
@@ -666,7 +648,7 @@ export const formatHostData = (val: any) => {
     }
 
     // instance names list
-    let instanceNames: string[] = [];
+    const instanceNames: string[] = [];
     val?.topology?.ec2Details?.map((row: any) => {
         instanceNames.push(row?.name);
     });
@@ -716,13 +698,13 @@ export const formatHostData = (val: any) => {
         storageSavingsText =
             val?.storage?.[fsxType]?.spaceSavings &&
             val?.storage?.[fsxType]?.used &&
-            formatFractionalNumber(storagePercent, 2) +
-                '% (' +
-                formatSizeOnePrecision(val.storage?.[fsxType]?.spaceSavings) +
-                ')';
+            `${formatFractionalNumber(storagePercent, 2)}% (${formatSizeOnePrecision(
+                val.storage?.[fsxType]?.spaceSavings
+            )})`;
     }
 
-    let totalSize = (val?.storage?.fsxn?.size || 0) + (val?.storage?.fsxw?.size || 0) + (val?.storage?.ebs?.size || 0);
+    const totalSize =
+        (val?.storage?.fsxn?.size || 0) + (val?.storage?.fsxw?.size || 0) + (val?.storage?.ebs?.size || 0);
 
     let clusterEc2Instances;
     if (val?.clusterNodeDetails && val?.clusterNodeDetails?.length === 2) {
@@ -738,7 +720,7 @@ export const formatHostData = (val: any) => {
         databaseServerName: val?.sqlServerInstances?.[0]?.sqlServerName
             ? val.sqlServerInstances?.[0].sqlServerName.toLowerCase()
             : '',
-        protectionText: protectionText,
+        protectionText,
         // Total cost to enable search in table
         totalCost: (
             (val?.estimatedUsageCost?.compute || 0) +
@@ -751,14 +733,14 @@ export const formatHostData = (val: any) => {
         // performance table text to search in table
         performanceText: val?.performance && val.performance?.assessment,
         // Storage saving table text to search in table
-        storageSavingsText: storageSavingsText,
+        storageSavingsText,
         sizeformat: val?.storage ? formatSizeTwoPrecision(totalSize) : '',
         instanceNames: instanceNames.join(',') || val?.ec2InstanceName,
         vpcNames: val?.topology?.vpcName || val?.vpc?.name,
-        azType: azType,
-        serverInstallationMode: serverInstallationMode,
-        fileSystemType: fileSystemType,
-        clusterEc2Instances: clusterEc2Instances
+        azType,
+        serverInstallationMode,
+        fileSystemType,
+        clusterEc2Instances
     };
     return val;
 };
@@ -774,7 +756,7 @@ export const jobStatusPercent = (data: JobsSummaryRes) => {
     const totalJobs = failed + inProgress + completed + warning;
     const newData = {
         ...data,
-        totalJobs: totalJobs,
+        totalJobs,
         completedPercent: completed ? (completed / totalJobs) * 100 : 0,
         failedPercent: failed ? (failed / totalJobs) * 100 : 0,
         inProgressPercent: inProgress ? (inProgress / totalJobs) * 100 : 0,
@@ -829,14 +811,14 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
     const totalHost = protectedDb + unprotectedDb;
 
     return {
-        protectedDb: protectedDb,
-        unprotectedDb: unprotectedDb,
+        protectedDb,
+        unprotectedDb,
         protectedPercent: (protectedDb / totalHost) * 100 || 0,
         unprotectedPercent: (unprotectedDb / totalHost) * 100 || 0,
-        awsBackupDb: awsBackupDb,
-        fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
-        sqlServerBackupDb: sqlServerBackupDb,
-        crrEnabled: crrEnabled,
+        awsBackupDb,
+        fsxOntapSnapshotsDb,
+        sqlServerBackupDb,
+        crrEnabled,
         crrEnabledPercent: (crrEnabled / totalHost) * 100 || 0
     };
 };
@@ -847,11 +829,11 @@ export const getAggrStorageSavings = (
 ) => {
     let totalConsume = 0;
     let storageSavings = 0;
-    let storageList: (string | undefined)[] = [];
+    const storageList: (string | undefined)[] = [];
 
     data?.map((val: any) => {
-        let storageType = val?.topology?.fileSystemType || '';
-        let fsxVal = val?.topology?.fileSystemId || '';
+        const storageType = val?.topology?.fileSystemType || '';
+        const fsxVal = val?.topology?.fileSystemId || '';
         let fsxType = '';
         if (storageType.includes(GENERAL.FSX_FOR_ONTAP)) {
             fsxType = 'fsxn';
@@ -888,53 +870,49 @@ export const getAggrStorageSavings = (
     };
 };
 
-export const wrapContext = (question?: string) => {
-    return `\n\nHuman: ${question} \n\nAssistant:`;
-};
+export const wrapContext = (question?: string) => `\n\nHuman: ${question} \n\nAssistant:`;
 
-export const getWlmdbPayload = (params: any) => {
-    return {
-        region: params.region || '',
-        networkConfiguration: {
-            vpcCidr: params.vpcCidr || '',
-            availabilityZone1: params.availabilityZone1 || ''
-        },
-        ec2Configuration: {
-            workloadInstanceType: params.workloadInstanceType || '',
-            keyPairName: params.keyPairName || ''
-        },
-        adConfiguration: {
-            adScenarioType: params.adScenarioType || '',
-            domainUsername: params.domainUsername || '',
-            domainPassword: params.domainPassword ? '********' : '',
-            domainDnsname: params.domainDnsname || '',
-            dnsIpaddress: params.dnsIpaddress || ''
-        },
-        sqlConfiguration: {
-            sqlDeploymentMode: params.sqlDeploymentMode || '',
-            sqlAmiId: params.sqlAmiId || '',
-            serviceAccountName: params.serviceAccountName || '',
-            serviceAccountPassword: params.serviceAccountPassword ? '********' : '',
-            sqlFciName: params.sqlFciName || ''
-        },
-        fsxConfiguration: {
-            fsxDeploymentMode: params.fsxDeploymentMode || '',
-            fsxUsername: params.fsxUsername || '',
-            fsxPassword: params.fsxPassword ? '********' : '',
-            databaseSize: params.databaseSize || '',
-            fsxVolThroughput: params.fsxVolThroughput || '',
-            fsxIOPS: params.fsxIOPS || '',
-            ontapSgGroupId: params.ontapSgGroupId || ''
-        }
-    };
-};
+export const getWlmdbPayload = (params: any) => ({
+    region: params.region || '',
+    networkConfiguration: {
+        vpcCidr: params.vpcCidr || '',
+        availabilityZone1: params.availabilityZone1 || ''
+    },
+    ec2Configuration: {
+        workloadInstanceType: params.workloadInstanceType || '',
+        keyPairName: params.keyPairName || ''
+    },
+    adConfiguration: {
+        adScenarioType: params.adScenarioType || '',
+        domainUsername: params.domainUsername || '',
+        domainPassword: params.domainPassword ? '********' : '',
+        domainDnsname: params.domainDnsname || '',
+        dnsIpaddress: params.dnsIpaddress || ''
+    },
+    sqlConfiguration: {
+        sqlDeploymentMode: params.sqlDeploymentMode || '',
+        sqlAmiId: params.sqlAmiId || '',
+        serviceAccountName: params.serviceAccountName || '',
+        serviceAccountPassword: params.serviceAccountPassword ? '********' : '',
+        sqlFciName: params.sqlFciName || ''
+    },
+    fsxConfiguration: {
+        fsxDeploymentMode: params.fsxDeploymentMode || '',
+        fsxUsername: params.fsxUsername || '',
+        fsxPassword: params.fsxPassword ? '********' : '',
+        databaseSize: params.databaseSize || '',
+        fsxVolThroughput: params.fsxVolThroughput || '',
+        fsxIOPS: params.fsxIOPS || '',
+        ontapSgGroupId: params.ontapSgGroupId || ''
+    }
+});
 
 /*
 This function is used to set recommended values for recommended templates load.
 Type dev is for Dev/Test template and type prod is for Prod template
 */
 export const setRecommendedValues = (initialFormData: any, type: string) => {
-    let result = { ...initialFormData };
+    const result = { ...initialFormData };
     if (type === RECOMMENDED_TEMPLATES.DEV_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type
@@ -959,12 +937,12 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             label: GENERAL.SINGLE_INSTANCE,
             value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
         };
-        //Data drive Size
+        // Data drive Size
         result.storageCapacity = {
             capacity: '120',
             unit: 'GiB'
         };
-        //Throughput value
+        // Throughput value
         result.throughput = '128';
     } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
@@ -990,12 +968,12 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             label: GENERAL.FAILOVER_CLUSTER,
             value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
         };
-        //Data drive Size
+        // Data drive Size
         result.storageCapacity = {
             capacity: '500',
             unit: 'GiB'
         };
-        //Throughput value
+        // Throughput value
         result.throughput = '128';
     }
 
@@ -1010,7 +988,7 @@ export const handleDownloadYAML = (data: any, name = 'data') => {
     // Create a link element and trigger a click to download the YAML file.
     const a = document.createElement('a');
     a.href = url;
-    a.download = name + '.yaml';
+    a.download = `${name}.yaml`;
     a.click();
 
     // Clean up by revoking the object URL.
@@ -1047,7 +1025,7 @@ export const validateChatbotField = (fieldName: string, value: any) => {
             const numValue = parseInt(val);
             return !isNaN(numValue) && numValue >= 120 && numValue <= 13320
                 ? ''
-                : `Supported capacity should be between 120 GiB to 13320 GiB`;
+                : 'Supported capacity should be between 120 GiB to 13320 GiB';
         case 'sqlServerName':
             return val &&
                 (val.length > 15 || !/^[a-zA-Z0-9]/.test(val.charAt(0) || '') || !/^[a-zA-Z0-9/-]+$/.test(val))
@@ -1080,16 +1058,15 @@ export const databaseTableSort = (data: DatabaseHostItem[] | null) => {
     return newDataList;
 };
 
-export const delay = (ms: number) => {
-    return new Promise(resolve => {
+export const delay = (ms: number) =>
+    new Promise(resolve => {
         setTimeout(() => {
             resolve('');
         }, ms);
     });
-};
 
 export const getChatbotParamsFromPayload = (payload: any) => {
-    let params: any = {};
+    const params: any = {};
     if (payload?.awsAccount?.selectedCredential?.data?.credentialsId) {
         params.credentialsId = payload.awsAccount.selectedCredential.data.credentialsId;
     }
@@ -1196,9 +1173,9 @@ export const openCredentialTab = () => {
 };
 
 function getLastXDays(val: number) {
-    let dates = [];
+    const dates = [];
     for (let i = 0; i < val; i++) {
-        let date = new Date();
+        const date = new Date();
 
         date.setDate(date.getDate() - i);
         dates.push(date);
@@ -1210,13 +1187,13 @@ export const checkBoxHandle = (tableData: any, rowsData: any, dispatch: any) => 
     if (!rowsData || rowsData.length === 0) return;
 
     rowsData.forEach((row: any) => {
-        //@ts-ignore
+        // @ts-ignore
         tableData.rows[row.id] = false;
     });
 
-    //@ts-ignore
+    // @ts-ignore
     tableData.count = 0;
-    //@ts-ignore
+    // @ts-ignore
     tableData.allSelected = false;
     dispatch(setSelectedRowsForOptimize([]));
 };
@@ -1225,13 +1202,13 @@ export const checkBoxHandleManage = (tableData: any, rowsData: any, dispatch: an
     if (!rowsData || rowsData.length === 0) return;
 
     rowsData.forEach((row: any) => {
-        //@ts-ignore
+        // @ts-ignore
         tableData.rows[row.id] = false;
     });
 
-    //@ts-ignore
+    // @ts-ignore
     tableData.count = 0;
-    //@ts-ignore
+    // @ts-ignore
     tableData.allSelected = false;
     dispatch(setSelectedRowsForManage([]));
 };
@@ -1240,13 +1217,13 @@ export const checkBoxHandleDismiss = (tableData: any, rowsData: any, dispatch: a
     if (!rowsData || rowsData.length === 0) return;
 
     rowsData.forEach((row: any) => {
-        //@ts-ignore
+        // @ts-ignore
         tableData.rows[row.id] = false;
     });
 
-    //@ts-ignore
+    // @ts-ignore
     tableData.count = 0;
-    //@ts-ignore
+    // @ts-ignore
     tableData.allSelected = false;
     dispatch(setSelectedRowsForDismiss([]));
 };
@@ -1258,9 +1235,9 @@ export const lastSevenDays = getLastXDays(7).reverse();
 export const last14Days = getLastXDays(14).reverse();
 
 function get30Days() {
-    let dates = [];
+    const dates = [];
     for (let i = 0; i < 30; i++) {
-        let date = new Date();
+        const date = new Date();
         date.setDate(date.getDate() - i);
         dates.push(date);
     }
@@ -1309,18 +1286,18 @@ export const jobMonitoringTypeMapping = (val: string) => {
 };
 
 export const downloadCsv = (data: any) => {
-    const csv = 'data:text/csv;charset=utf-8,' + data;
-    const excel = encodeURI(csv); //Links to CSV
+    const csv = `data:text/csv;charset=utf-8,${data}`;
+    const excel = encodeURI(csv); // Links to CSV
 
     const link = document.createElement('a');
-    link.setAttribute('href', excel); //Links to CSV File
+    link.setAttribute('href', excel); // Links to CSV File
     const dateStr = Date.now().toString();
     link.setAttribute('download', JOBS_REPORT + moment(new Date(parseInt(dateStr))).format('DD_MM_YYYY'));
     link.click();
 };
 
 export const addBlankCell = (level: number, result: any) => {
-    for (var i: number = 0; i < level; i++) {
+    for (let i: number = 0; i < level; i++) {
         result += ',';
     }
     return result;
@@ -1329,36 +1306,34 @@ export const addBlankCell = (level: number, result: any) => {
 export const createJobMonitorCSV = (array: any, keys: any, headers: any, result: string, level: number) => {
     result = addBlankCell(level, result);
     result += headers;
-    result += '\n'; //New Row
+    result += '\n'; // New Row
 
     array.map((item: any) => {
-        //Goes Through Each Array Object
+        // Goes Through Each Array Object
         result = addBlankCell(level, result);
         keys.map((key: string) => {
-            //Goes Through Each Object value
+            // Goes Through Each Object value
             if (key && key !== '') {
                 let value = item[key] ? String(item[key]) : '';
                 if (value && value.includes(',')) {
-                    value = '"' + value + '"';
+                    value = `"${value}"`;
                 }
                 if (key === 'startTime' || key === 'endTime') {
-                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : GENERAL.NOT_AVAILABLE + ',';
+                    result += value ? `${formatDateWithTime(value).replace(',', '')},` : `${GENERAL.NOT_AVAILABLE},`;
                 } else if (key === 'name' && value) {
-                    result += value.split(';href')[0] + ',';
+                    result += `${value.split(';href')[0]},`;
                 } else if (key === 'status' && value) {
-                    result += jobMonitoringStatusMapping(value) + ',';
+                    result += `${jobMonitoringStatusMapping(value)},`;
                 } else if (key === 'type' && value) {
-                    result += jobMonitoringTypeMapping(value) + ',';
+                    result += `${jobMonitoringTypeMapping(value)},`;
+                } else if (value) {
+                    result += `${value},`;
                 } else {
-                    if (value) {
-                        result += value + ',';
-                    } else {
-                        result += ' ,';
-                    }
+                    result += ' ,';
                 }
             }
         });
-        result += '\n'; //Creates New Row
+        result += '\n'; // Creates New Row
         if (item?.subJobs) {
             result = createJobMonitorCSV(
                 item?.subJobs,
@@ -1370,16 +1345,14 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
         }
     });
     if (level === 1) {
-        result += '\n'; //New Row
+        result += '\n'; // New Row
     }
     return result;
 };
 
-export const cfDownloadName = (name: string) => {
-    return CREATE_DATABASE_YAML + '_' + name + '_' + Date.now();
-};
+export const cfDownloadName = (name: string) => `${CREATE_DATABASE_YAML}_${name}_${Date.now()}`;
 
-export const getShiftedHoursList = (baseList: Array<String | number>) => {
+export const getShiftedHoursList = (baseList: Array<string | number>) => {
     let hr = moment().hour();
     // if time is 2 PM than it will be used as 14 but when time is 2:30 than it will be in 18
     const min = moment().minute();
@@ -1491,10 +1464,10 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     const dayGrouping = groupByTime(days, data, baseList, daysList);
 
     daysList.map(day => {
-        groupedData['time'].push(day);
-        groupedData['completed'].push(day in dayGrouping ? dayGrouping[day]?.completed : 0);
-        groupedData['failed'].push(day in dayGrouping ? dayGrouping[day]?.failed : 0);
-        groupedData['warning'].push(day in dayGrouping ? dayGrouping[day]?.warning : 0);
+        groupedData.time.push(day);
+        groupedData.completed.push(day in dayGrouping ? dayGrouping[day]?.completed : 0);
+        groupedData.failed.push(day in dayGrouping ? dayGrouping[day]?.failed : 0);
+        groupedData.warning.push(day in dayGrouping ? dayGrouping[day]?.warning : 0);
     });
 
     return groupedData;
@@ -1647,22 +1620,20 @@ export const removeOldApisError = (data: any) => {
                 !headerSelectedMultiRegionIdsList.includes(data?.originalArgs?.region))
         ) {
             return true;
-        } else {
-            return false;
         }
-    } else if (data?.endpointName === 'discoverHosts') {
+        return false;
+    }
+    if (data?.endpointName === 'discoverHosts') {
         if (
             data?.originalArgs &&
             (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialsId) ||
                 !headerSelectedMultiRegionIdsList.includes(data?.originalArgs?.regionId))
         ) {
             return true;
-        } else {
-            return false;
         }
-    } else {
         return false;
     }
+    return false;
 };
 
 // This function will create post payload for register credential API (registerResourceCredentials)
@@ -1676,7 +1647,7 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         detectOntapPassword,
         authenticationType
     } = state?.inventoryV2;
-    let credList = [];
+    const credList = [];
     let checkManageReadiness = false;
     // Add SQL Server credentials when SQL Server Authentication is selected as authentication type
     if (
@@ -1718,15 +1689,14 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
 
     // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
     if (rowData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
-        let addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
-        return { credentials: credList, clusterNodesIpAddress: addresses, checkManageReadiness: checkManageReadiness };
-    } else {
-        return { credentials: credList, checkManageReadiness: checkManageReadiness };
+        const addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
+        return { credentials: credList, clusterNodesIpAddress: addresses, checkManageReadiness };
     }
+    return { credentials: credList, checkManageReadiness };
 };
 
-export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => {
-    return data.map((item: any) => {
+export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) =>
+    data.map((item: any) => {
         const perRowInstanceData = mssqlInstancesData[item?.ec2InstanceId];
         if (!perRowInstanceData?.error && !perRowInstanceData?.loading && perRowInstanceData?.data) {
             return formatHostData({
@@ -1746,23 +1716,22 @@ export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => 
                 clusterNodeDetails: perRowInstanceData?.data?.clusterNodeDetails,
                 loading: false
             });
-        } else if (perRowInstanceData?.loading) {
+        }
+        if (perRowInstanceData?.loading) {
             return {
                 ...item,
                 id: item?.ec2InstanceId,
                 name: item?.ec2InstanceId,
                 loading: true
             };
-        } else {
-            return {
-                ...item,
-                id: item?.ec2InstanceId,
-                name: item?.ec2InstanceId,
-                loading: false
-            };
         }
+        return {
+            ...item,
+            id: item?.ec2InstanceId,
+            name: item?.ec2InstanceId,
+            loading: false
+        };
     });
-};
 
 //  This function is to add new row in existing database host managed list
 export const addNewManagedHostData = (existingList: any, newItem: any) => {
@@ -1776,12 +1745,11 @@ export const addNewManagedHostData = (existingList: any, newItem: any) => {
     });
     if (!newItemFound) {
         return [...[formatHostData(newItem), ...existingList]];
-    } else {
-        return newList;
     }
+    return newList;
 };
 
-//Function to check if array includes an object or not
+// Function to check if array includes an object or not
 export const checkValueSavedForRegion = (options: any, value: any) => {
     let containsValue = false;
     for (let i = 0; i < options.length; i++) {
@@ -1802,7 +1770,7 @@ export interface HashTable<T> {
     [key: string]: T;
 }
 
-//Function to check if array includes an object or not
+// Function to check if array includes an object or not
 export const checkValueSavedForCred = (options: any, value: any) => {
     let containsValue = false;
     for (let i = 0; i < options.length; i++) {
@@ -1825,9 +1793,8 @@ export const checkValueSavedForCred = (options: any, value: any) => {
 export const isFsxnNew = (val: any) => {
     if (val && (val === FORM_OPTIONS.FSXN_NEW || val === GENERAL.CREATE_NEW_FSXN || val === 'Create new FSxN')) {
         return true;
-    } else {
-        return false;
     }
+    return false;
 };
 
 export const isFsxnExisting = (val: any) => {
@@ -1838,9 +1805,8 @@ export const isFsxnExisting = (val: any) => {
             val === 'Select an existing FSxN ')
     ) {
         return true;
-    } else {
-        return false;
     }
+    return false;
 };
 
 export const downloadObjectAsJson = (obj: any, filename: any) => {
@@ -1861,14 +1827,12 @@ export const downloadObjectAsJson = (obj: any, filename: any) => {
 export const isSmbProtocol = (protocolList: Array<string> | undefined) => {
     if (protocolList && protocolList.length === 1 && protocolList[0] === FSXN_STORAGE_PROTOCOLS.SMB) {
         return true;
-    } else {
-        return false;
     }
+    return false;
 };
 
-export const isClusteredWithSelectedInstance = (val: any) => {
-    return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
-};
+export const isClusteredWithSelectedInstance = (val: any) =>
+    'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
 
 export const setRoutePath = (path: string, search?: string) => {
     switch (path) {
@@ -1957,16 +1921,13 @@ export const apiDOCURL = () => {
             window.location.ancestorOrigins[0].includes('staging')
         ) {
             return 'https://staging.console.workloads.netapp.com/api-doc';
-        } else {
-            return 'https://console.workloads.netapp.com/api-doc';
         }
-    } else {
-        if (document.referrer.includes('staging')) {
-            return 'https://staging.console.workloads.netapp.com/api-doc';
-        } else {
-            return 'https://console.workloads.netapp.com/api-doc';
-        }
+        return 'https://console.workloads.netapp.com/api-doc';
     }
+    if (document.referrer.includes('staging')) {
+        return 'https://staging.console.workloads.netapp.com/api-doc';
+    }
+    return 'https://console.workloads.netapp.com/api-doc';
 };
 
 export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolean) => {
@@ -2123,7 +2084,8 @@ export const _Classes = (...classes: classNames.ArgumentArray): string => {
 export const updateSizeInGib = (data: any): any => {
     if (Array.isArray(data)) {
         return data.map(item => updateSizeInGib(item));
-    } else if (typeof data === 'object' && data !== null) {
+    }
+    if (typeof data === 'object' && data !== null) {
         const updatedData: any = {};
         for (const key in data) {
             if (key === 'size') {
@@ -2153,15 +2115,14 @@ export const compareDataAndCalculateDifference = (arrays: any) => {
         const percentage = (difference / firstSum) * 100;
         return {
             result: true,
-            difference: difference,
+            difference,
             percentage: `${percentage.toFixed(2)}%`
         };
-    } else {
-        return {
-            result: false,
-            message: 'First sum is not greater than second sum.'
-        };
     }
+    return {
+        result: false,
+        message: 'First sum is not greater than second sum.'
+    };
 };
 
 export const formatString = (s: string) => {
@@ -2210,7 +2171,7 @@ export const setExploreSavingsSubTab = (tabValue: string, dispatch: Dispatch): v
 };
 
 export const makeCredMapping = (data: any) => {
-    let credMapping: HashTable<string> = {};
+    const credMapping: HashTable<string> = {};
     data?.map((cred: any) => {
         if (cred?.credentialsId) {
             credMapping[cred.credentialsId] = cred;
@@ -2220,7 +2181,7 @@ export const makeCredMapping = (data: any) => {
 };
 
 export const makeRegionMapping = (data: any) => {
-    let regionMapping: HashTable<string> = {};
+    const regionMapping: HashTable<string> = {};
     data?.map((region: any) => {
         if (region?.regionCode) {
             regionMapping[region.regionCode] = region;
@@ -2233,14 +2194,8 @@ const roundedFormatter = Intl.NumberFormat(undefined, { maximumFractionDigits: 0
 const twoDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const fourDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 });
 
-export const rounded = (value: number) => {
-    return roundedFormatter.format(value);
-};
+export const rounded = (value: number) => roundedFormatter.format(value);
 
-export const twoFractionDigits = (value: number) => {
-    return twoDecimalFormatter.format(value);
-};
+export const twoFractionDigits = (value: number) => twoDecimalFormatter.format(value);
 
-export const fourFractionDigits = (value: number) => {
-    return fourDecimalFormatter.format(value);
-};
+export const fourFractionDigits = (value: number) => fourDecimalFormatter.format(value);

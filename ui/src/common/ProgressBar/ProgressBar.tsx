@@ -17,7 +17,7 @@ const ProgressBar = ({ value, color, max = 100, className = '' }: Progress) => {
         >
             <div
                 className={styles['Suc-filled-value']}
-                style={{ width: (value / max) * 100 + '%', backgroundColor: color }}
+                style={{ width: `${(value / max) * 100}%`, backgroundColor: color }}
             />
         </div>
     );

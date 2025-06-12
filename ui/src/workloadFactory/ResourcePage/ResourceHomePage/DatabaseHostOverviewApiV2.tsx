@@ -1,7 +1,7 @@
-import { useAppSelector } from '../../../store/storeHooks';
-import { useLazyGetDatabaseListV2Query, useLazyGetResourceDetailsV2Query } from '../../../utils/apiService';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../store/storeHooks';
+import { useLazyGetDatabaseListV2Query, useLazyGetResourceDetailsV2Query } from '../../../utils/apiService';
 import {
     resetWorkloadFactoryResourceData,
     setDatabaseList,
@@ -33,7 +33,7 @@ const DatabaseHostOverviewApiV2 = () => {
     const [databaseListApi] = useLazyGetDatabaseListV2Query();
 
     useEffect(() => {
-        if (!visitedTabs['Overview']) {
+        if (!visitedTabs.Overview) {
             viewResourceAction();
         }
     }, [visitedTabs]);
@@ -48,13 +48,13 @@ const DatabaseHostOverviewApiV2 = () => {
     const runResourceDetailsApi = async () => {
         try {
             const result: any = await resourceDetailsApi({
-                credentialId: selectedResourceCredId || credIdFromJM, //|| condition is for when coming from JM
-                region: selectedResourceRegionId || regionFromJM, //|| condition is for when coming from JM
-                id: selectedResourceId || getWellResourceId, //|| condition is for when coming from JM
-                sqlInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance //|| condition is for when coming from JM
+                credentialId: selectedResourceCredId || credIdFromJM, // || condition is for when coming from JM
+                region: selectedResourceRegionId || regionFromJM, // || condition is for when coming from JM
+                id: selectedResourceId || getWellResourceId, // || condition is for when coming from JM
+                sqlInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance // || condition is for when coming from JM
             });
             if (result && !result?.error) {
-                let resourceData = {
+                const resourceData = {
                     ...result?.data,
                     topology: {
                         ...result?.data?.databaseInstanceTopology,
@@ -74,10 +74,10 @@ const DatabaseHostOverviewApiV2 = () => {
     const runDatabaseDetailsApi = async () => {
         try {
             const result: any = await databaseListApi({
-                credentialId: selectedResourceCredId || credIdFromJM, //|| condition is for when coming from JM
-                region: selectedResourceRegionId || regionFromJM, //|| condition is for when coming from JM
-                id: selectedResourceId || getWellResourceId, //|| condition is for when coming from JM
-                sqlInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance, //|| condition is for when coming from JM
+                credentialId: selectedResourceCredId || credIdFromJM, // || condition is for when coming from JM
+                region: selectedResourceRegionId || regionFromJM, // || condition is for when coming from JM
+                id: selectedResourceId || getWellResourceId, // || condition is for when coming from JM
+                sqlInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance, // || condition is for when coming from JM
                 fields: true
             });
             if (result && !result?.error) {
@@ -98,8 +98,6 @@ const DatabaseHostOverviewApiV2 = () => {
         runResourceDetailsApi();
         runDatabaseDetailsApi();
     };
-
-    return;
 };
 
 export default DatabaseHostOverviewApiV2;

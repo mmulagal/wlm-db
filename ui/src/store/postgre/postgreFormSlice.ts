@@ -35,7 +35,7 @@ const postgreFormSlice = createSlice({
         setPostgreDBCredentialsPassword(state, action: PayloadAction<any>) {
             state.dbCredentials.password = action.payload;
         },
-        //Update full form
+        // Update full form
         setPostgreForm(state, action: PayloadAction<any>) {
             return { ...state, ...action.payload };
         }

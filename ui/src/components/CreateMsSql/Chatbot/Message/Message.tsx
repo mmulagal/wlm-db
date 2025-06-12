@@ -1,14 +1,14 @@
+import { useEffect, useState } from 'react';
+import { Button, Typography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import SelectComponent from './SelectComponent/SelectComponent';
 import { ReactComponent as ChatBotIcon } from '../../../../assets/chatbot-icon.svg';
 import { ReactComponent as UserIcon } from '../../../../assets/user-icon.svg';
 import Confirmation from './ConfirmationComponent/Confirmation';
-import { useEffect, useState } from 'react';
-import { Button, Typography } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
 import TagsComponent from './TagsComponent/TagsComponent';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useDispatch } from 'react-redux';
 import { setExpectingResponse } from '../../../../store/chatbot/chatbotSlice';
 import CardComponent from './CardComponent/CardComponent';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -55,7 +55,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
     const dispatch = useDispatch();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
-    //@ts-ignore
+    // @ts-ignore
     const item = fieldObj;
 
     useEffect(() => {
@@ -247,69 +247,65 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                     {isUserInputRequired ? (
                         msgObj.active ? (
                             <div className={styles['msg-group-container']}>
-                                <>
-                                    {msgObj.active && item.allowedValues && item.type !== 'card' ? (
-                                        <div className={styles['select-container']}>
-                                            <SelectComponent
-                                                options={
-                                                    item.key === 'region'
-                                                        ? item.allowedValues.map((item: any) => {
-                                                              return {
-                                                                  ...item,
-                                                                  label: `${item.value} | ${item.label}`
-                                                              };
-                                                          })
-                                                        : item.allowedValues
-                                                }
-                                                onChange={(key: string, val: string | number, label: string) => {
-                                                    setParamObj({
-                                                        ...paramObj,
-                                                        [key]: { label: label, value: val }
-                                                    });
-                                                }}
-                                                heading={item.message}
-                                                selectKey={item.key}
-                                                paramObj={paramObj}
-                                                allowCreate={item.allowCreate}
-                                                activeField={activeField}
-                                                handleSelectButtonClicked={handleSelectButtonClicked}
-                                                link={item.link}
-                                                label={item.label}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <Typography
-                                            variant="Regular_14"
-                                            className={`${styles['message-text']} ${
-                                                msgObj.sender === 'bot' && isDarkTheme
-                                                    ? styles['user-text']
-                                                    : msgObj.sender === 'bot' && !isDarkTheme
-                                                    ? styles['bot-text']
-                                                    : styles['user-text']
-                                            }`}
-                                        >
-                                            {`${fieldObj.message}`}
-                                            <ValidationCriteria />
-                                        </Typography>
-                                    )}
-                                    {msgObj.active && item.type === 'tags' && (
-                                        <TagsComponent
-                                            onChange={(key: string, val: string) => {
+                                {msgObj.active && item.allowedValues && item.type !== 'card' ? (
+                                    <div className={styles['select-container']}>
+                                        <SelectComponent
+                                            options={
+                                                item.key === 'region'
+                                                    ? item.allowedValues.map((item: any) => ({
+                                                          ...item,
+                                                          label: `${item.value} | ${item.label}`
+                                                      }))
+                                                    : item.allowedValues
+                                            }
+                                            onChange={(key: string, val: string | number, label: string) => {
                                                 setParamObj({
                                                     ...paramObj,
-                                                    [key]: { label: val, value: val }
+                                                    [key]: { label, value: val }
                                                 });
                                             }}
-                                        />
-                                    )}
-                                    {msgObj.active && item.type === 'card' && (
-                                        <CardComponent
-                                            cardList={item.allowedValues}
-                                            handleSelectButtonClicked={handleSelectButtonClicked}
+                                            heading={item.message}
                                             selectKey={item.key}
+                                            paramObj={paramObj}
+                                            allowCreate={item.allowCreate}
+                                            activeField={activeField}
+                                            handleSelectButtonClicked={handleSelectButtonClicked}
+                                            link={item.link}
+                                            label={item.label}
                                         />
-                                    )}
-                                </>
+                                    </div>
+                                ) : (
+                                    <Typography
+                                        variant="Regular_14"
+                                        className={`${styles['message-text']} ${
+                                            msgObj.sender === 'bot' && isDarkTheme
+                                                ? styles['user-text']
+                                                : msgObj.sender === 'bot' && !isDarkTheme
+                                                ? styles['bot-text']
+                                                : styles['user-text']
+                                        }`}
+                                    >
+                                        {`${fieldObj.message}`}
+                                        <ValidationCriteria />
+                                    </Typography>
+                                )}
+                                {msgObj.active && item.type === 'tags' && (
+                                    <TagsComponent
+                                        onChange={(key: string, val: string) => {
+                                            setParamObj({
+                                                ...paramObj,
+                                                [key]: { label: val, value: val }
+                                            });
+                                        }}
+                                    />
+                                )}
+                                {msgObj.active && item.type === 'card' && (
+                                    <CardComponent
+                                        cardList={item.allowedValues}
+                                        handleSelectButtonClicked={handleSelectButtonClicked}
+                                        selectKey={item.key}
+                                    />
+                                )}
                             </div>
                         ) : (
                             <Typography

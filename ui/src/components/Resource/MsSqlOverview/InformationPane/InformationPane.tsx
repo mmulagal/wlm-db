@@ -59,33 +59,31 @@ const InformationPane = ({ mssqlSummary }: InformationPaneProps) => {
                 <Typography variant="Semibold_14">Microsoft SQL Server | ONTAP</Typography>
             </div>
             <div className={styles.informationContainer}>
-                {filteredInfoData.map((item: InformationDataType) => {
-                    return (
-                        <div className={styles.infoItemContainer}>
-                            <Typography
-                                className={styles.infoItemLabel}
-                                variant="Semibold_14"
-                            >{`${item.label}: `}</Typography>
-                            <Typography className={styles.infoItemValue} variant="Regular_14">
-                                {item.value}
-                            </Typography>
-                            {item.showCopy && (
-                                <div className={styles.copyContainer}>
-                                    <Popover
-                                        popoverClass={styles['copy-popover']}
-                                        children={'Copied to clipboard'}
-                                        container={
-                                            <CopyToClipboardCommon
-                                                value={item.value || ''}
-                                                iconProvided={<CopyIcon fill={'#c8c8c8'}></CopyIcon>}
-                                            />
-                                        }
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+                {filteredInfoData.map((item: InformationDataType) => (
+                    <div className={styles.infoItemContainer}>
+                        <Typography
+                            className={styles.infoItemLabel}
+                            variant="Semibold_14"
+                        >{`${item.label}: `}</Typography>
+                        <Typography className={styles.infoItemValue} variant="Regular_14">
+                            {item.value}
+                        </Typography>
+                        {item.showCopy && (
+                            <div className={styles.copyContainer}>
+                                <Popover
+                                    popoverClass={styles['copy-popover']}
+                                    children="Copied to clipboard"
+                                    container={
+                                        <CopyToClipboardCommon
+                                            value={item.value || ''}
+                                            iconProvided={<CopyIcon fill="#c8c8c8" />}
+                                        />
+                                    }
+                                />
+                            </div>
+                        )}
+                    </div>
+                ))}
             </div>
         </div>
     );

@@ -18,7 +18,7 @@ export const setMaskedPassword = (data: MssqlRequestBody) => {
 };
 
 export const addEscapeInCli = (data: TemplateRes) => {
-     if (!data || typeof data.cliCommand !== 'string') {
+    if (!data || typeof data.cliCommand !== 'string') {
         return data;
     }
 
@@ -35,31 +35,28 @@ export const maskAwsCli = (data: string | undefined) => {
         return data;
     }
     let updatedStr = data;
-    let domainAdminRegex = /DomainAdminPassword\\",ParameterValue=\\"(.*?)\\" ParameterKey=/;
+    const domainAdminRegex = /DomainAdminPassword\\",ParameterValue=\\"(.*?)\\" ParameterKey=/;
     updatedStr = updatedStr.replace(domainAdminRegex, (match, p1) => {
         if (p1 && p1 !== '') {
             return 'DomainAdminPassword\\",ParameterValue=\\"****\\" ParameterKey=';
-        } else {
-            return 'DomainAdminPassword\\",ParameterValue=\\"\\" ParameterKey=';
         }
+        return 'DomainAdminPassword\\",ParameterValue=\\"\\" ParameterKey=';
     });
 
-    let fsxAdminRegex = /FSxAdminPassword\\",ParameterValue=\\"(.*?)\\" ParameterKey=/;
+    const fsxAdminRegex = /FSxAdminPassword\\",ParameterValue=\\"(.*?)\\" ParameterKey=/;
     updatedStr = updatedStr.replace(fsxAdminRegex, (match, p1) => {
         if (p1 && p1 !== '') {
             return 'FSxAdminPassword\\",ParameterValue=\\"****\\" ParameterKey=';
-        } else {
-            return 'FSxAdminPassword\\",ParameterValue=\\"\\" ParameterKey=';
         }
+        return 'FSxAdminPassword\\",ParameterValue=\\"\\" ParameterKey=';
     });
 
-    let sqlServiceAccRegex = /SQLServiceAccountPassword\\",ParameterValue=\\"(.*?)\\" ParameterKey=/;
+    const sqlServiceAccRegex = /SQLServiceAccountPassword\\",ParameterValue=\\"(.*?)\\" ParameterKey=/;
     updatedStr = updatedStr.replace(sqlServiceAccRegex, (match, p1) => {
         if (p1 && p1 !== '') {
             return 'SQLServiceAccountPassword\\",ParameterValue=\\"****\\" ParameterKey=';
-        } else {
-            return 'SQLServiceAccountPassword\\",ParameterValue=\\"\\" ParameterKey=';
         }
+        return 'SQLServiceAccountPassword\\",ParameterValue=\\"\\" ParameterKey=';
     });
 
     return updatedStr;

@@ -1,8 +1,9 @@
 import { DsTypography, TextField } from '@netapp/design-system';
-import styles from './ManualTCOFields.module.scss';
 import { useEffect, useMemo, useState } from 'react';
-import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+import styles from './ManualTCOFields.module.scss';
+import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
     setMonthlyChangeRate,
@@ -14,7 +15,6 @@ import {
     setSelectedRegionFromManualTCO,
     setSelectedSnapshotFrequency
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
@@ -36,9 +36,9 @@ const ManualTCOFields = () => {
 
     const [textSearch, setTextSearch] = useSearchDebounce(500);
 
-    const [machineDesc, setMachineDesc] = useState(monthlyBYOLCost ? monthlyBYOLCost : '');
+    const [machineDesc, setMachineDesc] = useState(monthlyBYOLCost || '');
 
-    //Use effect for machine description
+    // Use effect for machine description
     useEffect(() => {
         setTextSearch(machineDesc);
     }, [machineDesc]);
@@ -47,20 +47,20 @@ const ManualTCOFields = () => {
         dispatch(setSelectedMonthlyBYOLCost(textSearch));
     }, [textSearch]);
 
-    //Setting monthly data rate change for FsxW
+    // Setting monthly data rate change for FsxW
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
             dispatch(setMonthlyChangeRate(3));
         }
     }, [savingsCalculatorFrom]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        //@ts-ignore
+        // @ts-ignore
         const sortedRegionsData = regionsSort(getManualRegionsList?.manualRegionsData?.regions || []);
         sortedRegionsData?.map((val, idx: number) => {
-            const regionValue = val.regionCode + ' | ' + val.regionName;
+            const regionValue = `${val.regionCode} | ${val.regionName}`;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
@@ -69,7 +69,7 @@ const ManualTCOFields = () => {
 
     useEffect(() => {
         if (!selectedManualRegion) {
-            //@ts-ignore
+            // @ts-ignore
             const simplifiedRegions = generateRegionList.map(item => item?.data?.regionCode);
 
             const foundRegion = simplifiedRegions.indexOf(headerSelectedRegion?.data?.regionCode);
@@ -82,7 +82,7 @@ const ManualTCOFields = () => {
         }
     }, [generateRegionList]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateSQLEditionList = useMemo<optionType[]>((): optionType[] => {
         const deploymentModel = [
             'SQL server Standard',
@@ -103,7 +103,7 @@ const ManualTCOFields = () => {
         if (!selectedManualServerEdition) dispatch(setSelectedManualServerEdition(generateSQLEditionList[0]));
     }, [generateSQLEditionList]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateDeploymentModelList = useMemo<optionType[]>((): optionType[] => {
         const deploymentModel =
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
@@ -123,7 +123,7 @@ const ManualTCOFields = () => {
             dispatch(setSelectedDeploymentModelForManualTCO(generateDeploymentModelList[0]));
     }, [generateDeploymentModelList]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateSnapshotFrequency = useMemo<optionType[]>((): optionType[] => {
         const frequency = SNAPSHOT_FREQUENCY;
         const options: optionType[] = [];
@@ -178,13 +178,9 @@ const ManualTCOFields = () => {
 
                 <div className={styles.secondRow}>
                     <SelectField
-                        label={'Deployment model'}
+                        label="Deployment model"
                         isClearable={false}
-                        defaultValue={
-                            selectedManualDeploymentModel
-                                ? selectedManualDeploymentModel
-                                : [generateDeploymentModelList[0]]
-                        }
+                        defaultValue={selectedManualDeploymentModel || [generateDeploymentModelList[0]]}
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedDeploymentModelForManualTCO(selectedOptions));
                         }}
@@ -194,11 +190,9 @@ const ManualTCOFields = () => {
                     />
 
                     <SelectField
-                        label={'SQL server edition'}
+                        label="SQL server edition"
                         isClearable={false}
-                        defaultValue={
-                            selectedManualServerEdition ? selectedManualServerEdition : [generateSQLEditionList[0]]
-                        }
+                        defaultValue={selectedManualServerEdition || [generateSQLEditionList[0]]}
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedManualServerEdition(selectedOptions));
                         }}
@@ -215,7 +209,7 @@ const ManualTCOFields = () => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             dispatch(setMonthlyChangeRate(numVal));
                         }}
-                        value={monthlyChangeRate ? monthlyChangeRate : ''}
+                        value={monthlyChangeRate || ''}
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                         error={errorForChangeRate()}
@@ -223,9 +217,7 @@ const ManualTCOFields = () => {
                     <SelectField
                         label={GENERAL.ES_SNAPSHOT_FREQUENCY}
                         isClearable={false}
-                        defaultValue={
-                            selectedSnapshotFrequency ? selectedSnapshotFrequency : [generateSnapshotFrequency[2]]
-                        }
+                        defaultValue={selectedSnapshotFrequency || [generateSnapshotFrequency[2]]}
                         onChange={(selectedOptions: any): void => {
                             dispatch(setSelectedSnapshotFrequency(selectedOptions));
                         }}
@@ -253,7 +245,7 @@ const ManualTCOFields = () => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setMachineDesc(numVal);
                         }}
-                        isOptional={true}
+                        isOptional
                         value={machineDesc}
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />

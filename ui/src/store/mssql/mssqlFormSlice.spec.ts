@@ -1,3 +1,4 @@
+import { createStore } from '@reduxjs/toolkit';
 import mssqlFormSlice, {
     setCloudWatch,
     setDBCredentialsName,
@@ -42,7 +43,6 @@ import mssqlFormSlice, {
     setTags,
     setThroughputValue
 } from './mssqlFormSlice';
-import { createStore } from '@reduxjs/toolkit';
 
 describe('mssqlFormSlice', () => {
     let store: any;

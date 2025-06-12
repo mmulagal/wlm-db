@@ -1,6 +1,6 @@
 import React from 'react';
-import styles from './StorageSavingResource.module.scss';
 import { DsTypography, FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
+import styles from './StorageSavingResource.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber, formatSize } from '../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
@@ -17,7 +17,7 @@ const StorageSavingResource = ({ hostData, hostsLoading }: StorageSavingsProps) 
     const handleProgressBar = () => {
         if (
             hostData?.storageSavingsPercent !== 0 &&
-            //@ts-ignore
+            // @ts-ignore
             hostData?.storageSavingsPercent <= 1
         ) {
             return (
@@ -28,13 +28,13 @@ const StorageSavingResource = ({ hostData, hostsLoading }: StorageSavingsProps) 
                             width: `${100}%`,
                             backgroundColor: 'var(--chart-9)'
                         }}
-                    ></div>
+                    />
                 </div>
             );
         }
         if (
             hostData?.storageSavingsPercent !== 0 &&
-            //@ts-ignore
+            // @ts-ignore
             hostData?.storageSavingsPercent >= 1
         ) {
             return (
@@ -45,15 +45,15 @@ const StorageSavingResource = ({ hostData, hostsLoading }: StorageSavingsProps) 
                             width: `${hostData?.storageSavingsPercent}%`,
                             backgroundColor: 'var(--chart-4)'
                         }}
-                    ></div>
-                    <div className={styles.separator}></div>
+                    />
+                    <div className={styles.separator} />
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
                             width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
                             backgroundColor: 'var(--chart-9)'
                         }}
-                    ></div>
+                    />
                 </div>
             );
         }
@@ -67,7 +67,7 @@ const StorageSavingResource = ({ hostData, hostsLoading }: StorageSavingsProps) 
                             width: `${100}%`,
                             backgroundColor: 'var(--chart-disabled)'
                         }}
-                    ></div>
+                    />
                 </div>
             );
         }
@@ -116,7 +116,7 @@ const StorageSavingResource = ({ hostData, hostsLoading }: StorageSavingsProps) 
                             {!hostsLoading && <>{formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%</>}
                         </DsTypography>
 
-                        <DsTypography variant="Regular_14" className={''}>
+                        <DsTypography variant="Regular_14" className="">
                             {GENERAL.SANDBOX_STORAGE_SAVINGS}
                         </DsTypography>
                     </div>
