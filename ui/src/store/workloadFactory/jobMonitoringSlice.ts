@@ -63,9 +63,7 @@ const jobMonitoringSlice = createSlice({
         setSubJobsDataLoading: (state, action: PayloadAction<any>) => {
             state.subJobsDataLoading = action.payload;
         },
-        addInitialJMData: (state, action: PayloadAction<any>) => {
-            return { ...state, ...action.payload };
-        }
+        addInitialJMData: (state, action: PayloadAction<any>) => ({ ...state, ...action.payload })
     }
 });
 

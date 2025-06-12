@@ -121,6 +121,7 @@ export function createJsonTranslator<T extends object>(
         let { attemptRepair } = typeChat;
         // eslint-disable-next-line no-constant-condition
         while (true) {
+            // eslint-disable-next-line no-await-in-loop
             const response = await model.complete(request);
             if (!response.success) {
                 return response;

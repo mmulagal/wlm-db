@@ -8,9 +8,10 @@ import {
     TextField,
     Typography
 } from '@netapp/design-system';
+import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../../utils/appConstants';
-import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import {
     fsxPassVal,
     generateOptionType,
@@ -19,7 +20,6 @@ import {
     sortListOfDict
 } from '../../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
-import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setExistingFsxnName,
@@ -64,7 +64,7 @@ const FSxNSystem = ({ wizardType }: any) => {
         if (isDemoMode) {
             return '';
         }
-        let selectedFsx = fsxnData?.filesystems?.filter((perRow: any) => perRow?.fileSystemId === fsxId);
+        const selectedFsx = fsxnData?.filesystems?.filter((perRow: any) => perRow?.fileSystemId === fsxId);
         let val: any = {};
         if (selectedFsx && selectedFsx.length === 1) {
             val = selectedFsx[0];
@@ -82,30 +82,30 @@ const FSxNSystem = ({ wizardType }: any) => {
             let svmCheck = false;
             let expectedSvmCount = 0;
             if (throughputCapacity === 128 || throughputCapacity === 256) {
-                //Added this check for PGSQL HA
+                // Added this check for PGSQL HA
                 if (wizardType === WIZARD_TYPE.PGSQL && deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
-                    svmCheck = svmCount < 5 ? true : false;
+                    svmCheck = svmCount < 5;
                     expectedSvmCount = 5;
                 } else {
-                    svmCheck = svmCount < 6 ? true : false;
+                    svmCheck = svmCount < 6;
                     expectedSvmCount = 6;
                 }
             } else if (throughputCapacity === 512 || throughputCapacity === 1024) {
-                //Added this check for PGSQL HA
+                // Added this check for PGSQL HA
                 if (wizardType === WIZARD_TYPE.PGSQL && deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
-                    svmCheck = svmCount < 13 ? true : false;
+                    svmCheck = svmCount < 13;
                     expectedSvmCount = 13;
                 } else {
-                    svmCheck = svmCount < 14 ? true : false;
+                    svmCheck = svmCount < 14;
                     expectedSvmCount = 14;
                 }
             } else if (throughputCapacity === 2048 || throughputCapacity === 4096) {
-                //Added this check for PGSQL HA
+                // Added this check for PGSQL HA
                 if (wizardType === WIZARD_TYPE.PGSQL && deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
-                    svmCheck = svmCount < 23 ? true : false;
+                    svmCheck = svmCount < 23;
                     expectedSvmCount = 23;
                 } else {
-                    svmCheck = svmCount < 24 ? true : false;
+                    svmCheck = svmCount < 24;
                     expectedSvmCount = 24;
                 }
             } else {
@@ -127,36 +127,35 @@ const FSxNSystem = ({ wizardType }: any) => {
                     fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val))
                 ) {
                     return '';
-                } else {
-                    return GENERAL.FSXN_SECONDARY_SUBNET_ERROR;
                 }
-            } else if (
+                return GENERAL.FSXN_SECONDARY_SUBNET_ERROR;
+            }
+            if (
                 deploymentMode?.label === GENERAL.SINGLE_INSTANCE &&
                 fsxType &&
                 (fsxType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 || fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1)
             ) {
                 if (fsxSubnets.some((val: string) => node1SubnetsList.includes(val))) {
                     return '';
-                } else {
-                    return GENERAL.FSXN_PRIMARY_SUBNET_ERROR;
                 }
-            } else if (fsxType && fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_2) {
-                return GENERAL.MULTI_FSXN_DEPLOYMENT_MODE_ERROR;
-            } else if (fsxType && fsxType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_2) {
-                return GENERAL.SINGLE_FSXN_DEPLOYMENT_MODE_ERROR;
-            } else {
-                return GENERAL.FSXN_DEPLOYMENT_MODE_ERROR;
+                return GENERAL.FSXN_PRIMARY_SUBNET_ERROR;
             }
-        } else {
-            return GENERAL.FSXN_NOT_AVAILABLE;
+            if (fsxType && fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_2) {
+                return GENERAL.MULTI_FSXN_DEPLOYMENT_MODE_ERROR;
+            }
+            if (fsxType && fsxType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_2) {
+                return GENERAL.SINGLE_FSXN_DEPLOYMENT_MODE_ERROR;
+            }
+            return GENERAL.FSXN_DEPLOYMENT_MODE_ERROR;
         }
+        return GENERAL.FSXN_NOT_AVAILABLE;
     };
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
-            const value = (val?.name ? val.name + ' | ' : '') + val?.fileSystemId;
+            const value = (val?.name ? `${val.name} | ` : '') + val?.fileSystemId;
             const data = {
                 fileSystemId: val?.fileSystemId,
                 fileSystemName: val?.name,
@@ -191,17 +190,17 @@ const FSxNSystem = ({ wizardType }: any) => {
         }
     };
 
-    //FSX Name check to highlight the field
+    // FSX Name check to highlight the field
     useEffect(() => {
         if (!isFsxNotFilled && isCreateHit) {
             setTimeout(() => {
-                //@ts-ignore
+                // @ts-ignore
                 fsxNameRef?.current?.focus();
             }, 10);
         }
     }, [isFsxNotFilled, isCreateHit]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (
@@ -209,9 +208,11 @@ const FSxNSystem = ({ wizardType }: any) => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
-        } else if (!selectedVPCData) {
+        }
+        if (!selectedVPCData) {
             return <ActionRequired disabled />;
-        } else if (
+        }
+        if (
             (deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && (!selectedZone1 || !selectedZone2)) ||
             (deploymentMode?.label === GENERAL.SINGLE_INSTANCE && !selectedZone1)
         ) {
@@ -222,25 +223,24 @@ const FSxNSystem = ({ wizardType }: any) => {
             );
         }
 
-        //Checking for the create new option
+        // Checking for the create new option
         if (isFsxnNew(selectedFsxnType)) {
             if (!selectedFsxnNewUserName || !selectedFsxnPassword) {
-                return <ActionRequired error={!isFsxNotFilled ? true : false} />;
-            } else if (fsxPassVal(password)) {
-                return <AccordionError />;
-            } else {
-                return <Typography variant="Regular_14">{GENERAL.CREATE_NEW_FSXN_SYSTEM}</Typography>;
+                return <ActionRequired error={!isFsxNotFilled} />;
             }
-        } else {
-            //Checking for the existing option
-            if (!selectedExistingFsxnName?.label || !selectedFsxnExistingUserName || !selectedFsxnPassword) {
-                return <ActionRequired />;
-            } else if (fsxPassVal(password)) {
+            if (fsxPassVal(password)) {
                 return <AccordionError />;
-            } else {
-                return <Typography variant="Regular_14">{selectedExistingFsxnName.label}</Typography>;
             }
+            return <Typography variant="Regular_14">{GENERAL.CREATE_NEW_FSXN_SYSTEM}</Typography>;
         }
+        // Checking for the existing option
+        if (!selectedExistingFsxnName?.label || !selectedFsxnExistingUserName || !selectedFsxnPassword) {
+            return <ActionRequired />;
+        }
+        if (fsxPassVal(password)) {
+            return <AccordionError />;
+        }
+        return <Typography variant="Regular_14">{selectedExistingFsxnName.label}</Typography>;
     };
 
     const disableCheck = (() => {
@@ -252,9 +252,8 @@ const FSxNSystem = ({ wizardType }: any) => {
                 !selectedZone1 ||
                 !selectedZone2
             );
-        } else {
-            return !credentialData || (credentialData && !credentialData.length) || !selectedVPCData || !selectedZone1;
         }
+        return !credentialData || (credentialData && !credentialData.length) || !selectedVPCData || !selectedZone1;
     })();
 
     return (
@@ -364,7 +363,7 @@ const FSxNSystem = ({ wizardType }: any) => {
                                         style={{
                                             width: '16px',
                                             height: '16px',
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             '--icon-primary-color': 'var(--error'
                                         }}
                                     />

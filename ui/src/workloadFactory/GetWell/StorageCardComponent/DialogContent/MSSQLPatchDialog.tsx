@@ -1,5 +1,4 @@
-import { DsTypography } from '@netapp/design-system';
-import { Table, useTable } from '@netapp/design-system';
+import { DsTypography, Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useMemo } from 'react';
 import styles from './DialogContent.module.scss';
@@ -59,9 +58,9 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
 
         isSorting: false,
@@ -87,7 +86,7 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                 </DsTypography>
                 <div className={styles.table}>
                     <Table
-                        //@ts-ignore
+                        // @ts-ignore
                         tableProps={tableProps}
                         variant="innerTable"
                     />

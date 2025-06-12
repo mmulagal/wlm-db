@@ -1,3 +1,7 @@
+import { useDispatch } from 'react-redux';
+import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { useEffect } from 'react';
+import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
 import styles from './WellArchitectDashboard.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
@@ -9,7 +13,6 @@ import {
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../utils/consts';
-import { useDispatch } from 'react-redux';
 import {
     setDefaultFilterOptions,
     setOptimizeFilterTags,
@@ -21,15 +24,12 @@ import {
     setGwRefreshPage,
     setTabVisited
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import WellArchitectTabs from './WellArchitectTabs/WellArchitectTabs';
 import GetWell from '../GetWell';
 import DatabaseListTable from '../../ResourcePage/DatabaseListTable/DatabaseListTable';
 
-import { useEffect } from 'react';
 import ResourceMSSQLOverview from './ResourceMSSQLOverview/ResourceMSSQLOverview';
 import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
-import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
 
 import { setRefreshTime } from '../../../store/workloadFactory/headersSlice';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
@@ -84,13 +84,14 @@ const WellArchitectDashboard = () => {
     } = useAppSelector(state => state.workloadFactoryResource);
 
     // Reset visited tabs when leaving the dashboard
-    useEffect(() => {
-        return () => {
+    useEffect(
+        () => () => {
             dispatch(resetVisitedTabs());
             dispatch(setAggregatedSandboxInstanceList([]));
             dispatch(setAllSandboxInstanceList([]));
-        };
-    }, [dispatch]);
+        },
+        [dispatch]
+    );
 
     // Mark the current tab as visited when the component mounts
     useEffect(() => {
@@ -127,23 +128,23 @@ const WellArchitectDashboard = () => {
             selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES
         ) {
             return refreshTime;
-        } else if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
-            return gwRefreshTimestamp;
-        } else {
-            return refreshSandboxInstanceTime;
         }
+        if (selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
+            return gwRefreshTimestamp;
+        }
+        return refreshSandboxInstanceTime;
     };
 
     const createPayload = () => {
         const state = store.getState();
         const { fsxAdminPasswords } = state.workloadFactoryResource;
         const { password } = fsxAdminPasswords;
-        let credList = [];
+        const credList = [];
         credList.push({
             resourceId: fsxId || resourceDetails?.topology?.fileSystemId || resetDetails?.fsxId,
             resourceType: DETECT_HOST_VAR.FSX,
             username: 'fsxadmin',
-            password: password
+            password
         });
 
         return { credentials: credList };
@@ -153,13 +154,13 @@ const WellArchitectDashboard = () => {
         const state = store.getState();
         const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
         const { password } = sqlServerPasswords;
-        let credList = [];
+        const credList = [];
         credList.push({
-            //@ts-ignore
+            // @ts-ignore
             resourceId: databaseInstanceName || resourceDetails?.databaseInstanceName,
             resourceType: DETECT_HOST_VAR.MSSQL,
             username: sqlServerUserName,
-            password: password
+            password
         });
 
         return { credentials: credList };
@@ -179,7 +180,7 @@ const WellArchitectDashboard = () => {
                 credentialId: selectedResourceCredId,
                 regionId: selectedResourceRegionId,
                 instanceId:
-                    //@ts-ignore
+                    // @ts-ignore
                     ec2InstanceId || resourceDetails?.nodeTopology?.ec2Details[0]?.id || resetDetails?.ec2InstanceId,
                 payload: value === RESET_PASSWORD_TYPE.FSXADMIN ? createPayload() : createSqlPayload()
             });
@@ -221,7 +222,7 @@ const WellArchitectDashboard = () => {
             dispatch(
                 addNotification({
                     type: NOTIFICATION_TYPES.ERROR,
-                    message: error || `Failed to update fsxadmin password. `
+                    message: error || 'Failed to update fsxadmin password. '
                 })
             );
         } finally {

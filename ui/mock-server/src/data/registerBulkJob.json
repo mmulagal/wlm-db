@@ -1,0 +1,75 @@
+{
+    "id": "418128fa-5293-4b1f-a98d-0bc73fad1c42",
+    "accountId": "account-3JuDht6X",
+    "name": "Register SQL Server instances for account account-3JuDht6X",
+    "status": "COMPLETED",
+    "resourceName": "account-3JuDht6X",
+    "type": "REGISTER_RESOURCE",
+    "startTime": 1749105856000,
+    "credentialsId": "",
+    "region": {
+        "code": "",
+        "name": ""
+    },
+    "description": "Register SQL Server instances for account account-3JuDht6X",
+    "endTime": 1749105858000,
+    "subJobs": [
+        {
+            "region": {
+                "code": "ap-southeast-1",
+                "name": "US East (N. Virginia)"
+            },
+            "id": "74382880-d9d9-4826-89a6-ad6ca565631d",
+            "accountId": "account-3JuDht6X",
+            "name": "Register instance(s) PreProd-BusinessIntelligence in i-7h2b6f4e8d1g5i3j",
+            "status": "COMPLETED",
+            "resourceName": "i-09adb571ab7dd6c17",
+            "type": "REGISTER_RESOURCE",
+            "startTime": 1749105856000,
+            "credentialsId": "3ad8702c-a2fd-48d2-be50-1ba6ce83acd5",
+            "description": "Register instance(s) PreProd-BusinessIntelligence in i-7h2b6f4e8d1g5i3j",
+            "parentJobId": "418128fa-5293-4b1f-a98d-0bc73fad1c42",
+            "endTime": 1749105858000,
+            "subJobs": [
+                {
+                    "id": "75a1779f-f960-4f83-a4db-831163d345d1",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "3ad8702c-a2fd-48d2-be50-1ba6ce83acd5",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "ap-southeast-1"
+                    },
+                    "type": "REGISTER_RESOURCE",
+                    "status": "COMPLETED",
+                    "resourceName": "account-3JuDht6X",
+                    "name": "Register instance PreProd-BusinessIntelligence",
+                    "description": "Register instance PreProd-BusinessIntelligence",
+                    "startTime": 1749105858000,
+                    "endTime": 1749105858000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "74382880-d9d9-4826-89a6-ad6ca565631d",
+                    "metadata": {}
+                }
+            ],
+            "metadata": {
+                "ec2InstanceId": "i-09adb571ab7dd6c17",
+                "databaseInstanceNames": ["SIGMA", "SIGMA23"],
+                "modulesToInstall": [],
+                "instanceManagementStatus": [
+                    {
+                        "databaseInstanceName": "SIGMA",
+                        "databaseInstanceGuid": "f4b7c5d3-e1f6-4g2a-9b6j",
+                        "status": "COMPLETED"
+                    },
+                    {
+                        "databaseInstanceName": "SIGMA23",
+                        "databaseInstanceGuid": "f4b7c5d3-e1f6-4g2a-9b6j",
+                        "status": "COMPLETED"
+                    }
+                ],
+                "resourceId": "7765392c43d3212d"
+            }
+        }
+    ],
+    "metadata": {}
+}

@@ -711,9 +711,12 @@ async function invokeSSMForDatabaseDeployment(
             databaseInstanceId
         );
 
-        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(credentialsId, region, [
-            fileSystemId as string
-        ]);
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            [fileSystemId as string],
+            { useCache: true }
+        );
 
         const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === fsxSvmId) || [];
         const sqlVMName = svmList[0]?.Name;

@@ -1,8 +1,8 @@
 import { DsTypography, Popover } from '@netapp/design-system';
-import { ReactComponent as CopyIcon } from '../../../../../../../../assets/ic_copy.svg';
-import styles from './WellArchitectPolicyDialog.module.scss';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as CopyIcon } from '../../../../../../../../assets/ic_copy.svg';
+import styles from './WellArchitectPolicyDialog.module.scss';
 import CopyToClipboardCommon from '../../../../../../../../common/CopyToClipboard/copyToClipboard';
 
 const WellArchitectPolicyDialog = ({ data, label }: any) => {
@@ -93,19 +93,19 @@ const WellArchitectPolicyDialog = ({ data, label }: any) => {
             <div className={styles['dialog-content']}>
                 <div className={styles['dialog-body']}>
                     <div className={styles['code-box']}>
-                        <div className={styles['code']}>
+                        <div className={styles.code}>
                             <pre>
                                 <DsTypography variant="Regular_14">{permissionData}</DsTypography>
                             </pre>
                         </div>
-                        <div className={styles['copy']}>
+                        <div className={styles.copy}>
                             <Popover
                                 popoverClass={styles['copy-popover']}
-                                children={'Copied to clipboard'}
+                                children={t('databases.general.copied-to-clipboard')}
                                 container={
                                     <CopyToClipboardCommon
                                         value={permissionData}
-                                        iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
+                                        iconProvided={<CopyIcon fill="#A7A7A7" />}
                                     />
                                 }
                             />

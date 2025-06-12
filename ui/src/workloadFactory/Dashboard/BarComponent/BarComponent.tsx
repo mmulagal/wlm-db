@@ -38,15 +38,13 @@ const BarComponent = ({
     const handleProgressBar = () => {
         if (percentage === 100) {
             return (
-                <>
-                    <div
-                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                        style={{
-                            width: `${100}%`,
-                            backgroundColor: color
-                        }}
-                    ></div>
-                </>
+                <div
+                    className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                    style={{
+                        width: `${100}%`,
+                        backgroundColor: color
+                    }}
+                />
             );
         }
         if (optimizePercentage !== 0 && percentage !== 0) {
@@ -58,37 +56,35 @@ const BarComponent = ({
                             width: `${percentage}%`,
                             backgroundColor: color
                         }}
-                    ></div>
-                    <div className={styles.separator}></div>
+                    />
+                    <div className={styles.separator} />
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
                             width: `${optimizePercentage}%`,
                             backgroundColor: 'var(--chart-6)'
                         }}
-                    ></div>
+                    />
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
                             width: `${100 - (optimizePercentage + percentage)}%`,
                             backgroundColor: 'var(--border)'
                         }}
-                    ></div>
+                    />
                 </>
             );
         }
 
         if (percentage === 0 && optimizePercentage === 0) {
             return (
-                <>
-                    <div
-                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                        style={{
-                            width: `${100}%`,
-                            backgroundColor: 'var(--border)'
-                        }}
-                    ></div>
-                </>
+                <div
+                    className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                    style={{
+                        width: `${100}%`,
+                        backgroundColor: 'var(--border)'
+                    }}
+                />
             );
         }
 
@@ -101,7 +97,7 @@ const BarComponent = ({
                             width: `${percentage}%`,
                             backgroundColor: color
                         }}
-                    ></div>
+                    />
 
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
@@ -109,7 +105,7 @@ const BarComponent = ({
                             width: `${100 - percentage}%`,
                             backgroundColor: 'var(--border)'
                         }}
-                    ></div>
+                    />
                 </>
             );
         }
@@ -123,7 +119,7 @@ const BarComponent = ({
                             width: `${optimizePercentage}%`,
                             backgroundColor: 'var(--chart-6)'
                         }}
-                    ></div>
+                    />
 
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
@@ -131,14 +127,14 @@ const BarComponent = ({
                             width: `${100 - optimizePercentage}%`,
                             backgroundColor: 'var(--border)'
                         }}
-                    ></div>
+                    />
                 </>
             );
         }
     };
     return (
         <div className={styles.barComponent}>
-            <div className={styles.rightSection} style={{ width: width }}>
+            <div className={styles.rightSection} style={{ width }}>
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
                         <DsTypography variant="Semibold_14">{headingText}</DsTypography>
@@ -148,7 +144,7 @@ const BarComponent = ({
                     <div className={styles.optimizeText}>
                         {!textMessage && (
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                {percentage + '%'}
+                                {`${percentage}%`}
                             </DsTypography>
                         )}
 

@@ -1,6 +1,11 @@
 import { Type } from '@sinclair/typebox';
 import { RouteTags } from '../../utils/consts';
-import { EmailRequestBody, EmailRequestParams, EmailResponse } from '../types/notification.types';
+import {
+    EmailRequestBody,
+    EmailRequestParams,
+    EmailResponse,
+    NotificationRequestBody
+} from '../types/notification.types';
 
 const emailSchema = {
     tags: [RouteTags.NOTIFICATION],
@@ -17,4 +22,16 @@ const emailSchema = {
     }
 };
 
-export { emailSchema };
+const notificationSchema = {
+    tags: [RouteTags.NOTIFICATION],
+    hide: true,
+    summary: 'Send WF Notification',
+    description: 'Sends WF Notification with required information',
+    params: EmailRequestParams,
+    body: NotificationRequestBody,
+    response: {
+        200: EmailResponse
+    }
+};
+
+export { emailSchema, notificationSchema };

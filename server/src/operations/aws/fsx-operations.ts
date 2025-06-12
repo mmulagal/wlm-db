@@ -21,7 +21,6 @@ import {
     listResourceTags,
     createTag,
     describeFSx,
-    describeVolumes,
     updateFsxVolumeSize,
     updateFileSystem
 } from '../../lib/aws/fsx';
@@ -79,8 +78,8 @@ async function getFSXDetails(credentialsId: string, region: string, fileSystems:
                 };
                 const [{ StorageVirtualMachines: fsxSVMs }, { Volumes: fsxVolumes }, networkInterfacesList] =
                     await Promise.all([
-                        describeFSxStorageVirtualMachines(credentialsId, region, fileSystemIds),
-                        describeFSxVolumes(credentialsId, region, fileSystemIds),
+                        describeFSxStorageVirtualMachines(credentialsId, region, fileSystemIds, { useCache: true }),
+                        describeFSxVolumes(credentialsId, region, fileSystemIds, undefined, { useCache: true }),
                         getNetworkInterfacesList(credentialsId, region, enetInterfaces)
                     ]);
 
@@ -189,7 +188,7 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
         return { filesystems: allFSxFilesystems };
     }
 
-    allFSxFilesystems = await describeFSxFileSystems(credentialsId, region);
+    allFSxFilesystems = await describeFSxFileSystems(credentialsId, region, { useCache: true });
     // 1. We are supporting only Amazon FSx for NetApp ONTAP filesystems, which
     //    are always of storageType == SSD and fileSystemType == ONTAP.
     // 2. The returned FileSystemIds need to be always defined and unique, so
@@ -303,7 +302,9 @@ async function getFsxnVolIdsFromOntapVolIds(
         accountId
     });
 
-    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, [fsxId], accountId);
+    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, [fsxId], accountId, {
+        useCache: true
+    });
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
@@ -368,7 +369,9 @@ async function isFsxnAwsBackupEnabled(
                                 }
                             ]
                         };
-                        const { Backups } = await describeFSxBackups(credentialsId, region, input, accountId);
+                        const { Backups } = await describeFSxBackups(credentialsId, region, input, accountId, {
+                            useCache: true
+                        });
                         backups.push(...Backups!);
                     })
                 )
@@ -429,7 +432,7 @@ async function isFsxwAwsBackupEnabled(credentialsId: string, region: string, fil
         ]
     };
 
-    const backups = await describeFSxBackups(credentialsId, region, input);
+    const backups = await describeFSxBackups(credentialsId, region, input, undefined, { useCache: true });
 
     return backups.Backups?.length !== 0;
 }
@@ -626,9 +629,15 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
     }
 
     try {
-        const { FileSystems: fileSystems } = await describeFSx(credentialsId, region!, {
-            FileSystemIds: [fsxId]
-        });
+        const { FileSystems: fileSystems } = await describeFSx(
+            credentialsId,
+            region,
+            {
+                FileSystemIds: [fsxId]
+            },
+            undefined,
+            { useCache: true }
+        );
 
         const fsxStorage: FsxStorage = {
             storage: fileSystems![0].StorageCapacity!
@@ -649,7 +658,7 @@ async function getFsxStorageDetails(credentialsId: string, region: string, fileS
     logger.info('Getting FSx storage details', { credentialsId, region, fileSystemId });
     const [fsxSSDCapacity, { Volumes: fsxVolumes }] = await Promise.all([
         getFsxStorageCapacity(credentialsId, region, fileSystemId),
-        describeFSxVolumes(credentialsId, region, [fileSystemId])
+        describeFSxVolumes(credentialsId, region, [fileSystemId], undefined, { useCache: true })
     ]);
 
     const { storage } = fsxSSDCapacity ?? {};
@@ -748,11 +757,13 @@ async function getFsxVolumeDetails(credentialsId: string, region: string, fsxId:
     logger.info('Get FSx volume details', { credentialsId, region, fsxId, fsxVolumeIds });
 
     const params = {
-        FileSystemId: fsxId,
-        VolumeIds: fsxVolumeIds
+        fileSystemIds: [fsxId],
+        volumeIds: fsxVolumeIds
     };
 
-    const { Volumes: fsxVolumes } = await describeVolumes(credentialsId, region, params);
+    const { Volumes: fsxVolumes } = await describeFSxVolumes(credentialsId, region, { ...params }, undefined, {
+        useCache: true
+    });
     if (!fsxVolumes) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get FSx volume details');
     }
@@ -784,6 +795,7 @@ async function updateVolumeSizeAndWaitForUpdate(
     let retries = 0;
     while (retries < maxRetries) {
         try {
+            // eslint-disable-next-line no-await-in-loop
             const [volumeDetails] = await getFsxVolumeDetails(credentialsId, region, fsxId, [fsxVolumeId]);
             currentVolumeSizeBytes = volumeDetails?.OntapConfiguration?.SizeInBytes;
             logger.info(`Current size of volume ${fsxVolumeId}: ${currentVolumeSizeBytes} bytes`);
@@ -795,10 +807,12 @@ async function updateVolumeSizeAndWaitForUpdate(
 
             retries += 1;
             logger.info(`Waiting for ${intervalSeconds} before checking again...`);
+            // eslint-disable-next-line no-await-in-loop
             await sleep(ms(intervalSeconds));
         } catch (error) {
             logger.error('Error while polling volume size:', error);
             retries += 1;
+            // eslint-disable-next-line no-await-in-loop
             await sleep(ms(intervalSeconds));
         }
     }
@@ -811,9 +825,12 @@ async function updateVolumeSizeAndWaitForUpdate(
 async function getIscsiTargetAddresses(credentialsId: string, region: string, fsxId: string, svmId: string) {
     // Fetch iSCSCI target addresses
     logger.info('Fetching iSCSI target addresses', { credentialsId, region, fsxId, svmId });
-    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(credentialsId, region, [
-        fsxId as string
-    ]);
+    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region,
+        [fsxId as string],
+        { useCache: true }
+    );
     const {
         Endpoints: { Iscsi: { IpAddresses: iscsiTargetAddresses = [] as string[] } = { IpAddresses: [] } } = {
             Iscsi: { IpAddresses: [] }
@@ -853,9 +870,12 @@ async function validateSvmCountCapacity(
     logger.info('Validating SVM count capacity', { credentialsId, region, fsxFileSystemId, deploymentType });
 
     if (fsxFileSystemId) {
-        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(credentialsId, region, [
-            fsxFileSystemId
-        ]);
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            [fsxFileSystemId],
+            { useCache: true }
+        );
         const svmCount = fsxSVMs?.length || 0;
         if (deploymentType === HA && svmCount > 4) {
             throw createError(

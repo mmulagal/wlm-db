@@ -1,21 +1,21 @@
 import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useRef, useState } from 'react';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
+import { useNavigate } from 'react-router-dom';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { setSelectedFilterValue, setTableManageColumnState } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
-import { useEffect, useRef, useState } from 'react';
 import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
 import { isAwsBackupEnabledText } from '../../InventoryUtilsV2';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
-import { useNavigate } from 'react-router-dom';
 
 const DatabasesTable = () => {
     const { selectedInventoryTab, selectedFilterValue, databaseTableRows, tableManageColumnState } = useAppSelector(
@@ -87,7 +87,8 @@ const DatabasesTable = () => {
                     }
                 }
             };
-        } else if (
+        }
+        if (
             selectedInventoryTab === 'Databases' &&
             selectedFilterValue?.flag === true &&
             selectedFilterValue?.filterType === 'multi'
@@ -132,25 +133,22 @@ const DatabasesTable = () => {
                     }
                 }
             };
-        } else {
-            return undefined;
         }
+        return undefined;
     };
 
-    const protectionTooltipText = (data: any) => {
-        return (
-            <div className={styles.protectionTooltip}>
-                <DsTypography variant="Semibold_13" className={styles.textHeight}>
-                    {GENERAL.PROTECTED_BY}:
+    const protectionTooltipText = (data: any) => (
+        <div className={styles.protectionTooltip}>
+            <DsTypography variant="Semibold_13" className={styles.textHeight}>
+                {GENERAL.PROTECTED_BY}:
+            </DsTypography>
+            {data.map((val: any, index: number) => (
+                <DsTypography key={index} variant="Regular_13" className={styles.textHeight}>
+                    {val}
                 </DsTypography>
-                {data.map((val: any, index: number) => (
-                    <DsTypography key={index} variant="Regular_13" className={styles.textHeight}>
-                        {val}
-                    </DsTypography>
-                ))}
-            </div>
-        );
-    };
+            ))}
+        </div>
+    );
 
     const DatabasesColDefs: ColumnProps[] = [
         {
@@ -167,13 +165,13 @@ const DatabasesTable = () => {
                         <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
                         <div className={styles.firstColText}>
                             {rowData?.status === 'ONLINE' && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
                             )}
                             {rowData?.status === 'OFFLINE' && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
                             )}
                             {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
+                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
                             )}
                             <DsTypography variant="Regular_13">
                                 {rowData?.status === 'ONLINE'
@@ -195,9 +193,7 @@ const DatabasesTable = () => {
             id: '2',
             width: '200px',
             filterOptions: getFilterOptions(databaseTableRows, 'hostName'),
-            renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'Engine type',
@@ -205,9 +201,7 @@ const DatabasesTable = () => {
             id: '3',
             width: '200px',
             filterOptions: getFilterOptions(databaseTableRows, 'hostType'),
-            renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'Instance name',
@@ -215,9 +209,7 @@ const DatabasesTable = () => {
             id: '4',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'Protection status',
@@ -227,8 +219,8 @@ const DatabasesTable = () => {
             filterOptions: getFilterOptions(databaseTableRows, 'isProtected'),
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
-                let protectedByList = [];
-                let awsBackup = isAwsBackupEnabledText(rowData, '');
+                const protectedByList = [];
+                const awsBackup = isAwsBackupEnabledText(rowData, '');
                 if (
                     protectionData?.isFsxOntapSnapshotsEnabled &&
                     String(protectionData?.isFsxOntapSnapshotsEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
@@ -253,7 +245,7 @@ const DatabasesTable = () => {
                                     {cellData === GENERAL.PROTECTED && (
                                         <ProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--green-60)'
                                             }}
                                         />
@@ -261,7 +253,7 @@ const DatabasesTable = () => {
                                     {cellData === GENERAL.NOT_PROTECTED && (
                                         <NotProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--grey-45)'
                                             }}
                                         />
@@ -286,9 +278,7 @@ const DatabasesTable = () => {
             id: '6',
             width: '200px',
             filterOptions: getFilterOptions(databaseTableRows, 'type'),
-            renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'Database size',
@@ -303,9 +293,7 @@ const DatabasesTable = () => {
                 { label: '10 GiB - 5 TiB', value: '10 GiB - 5 TiB' },
                 { label: '5 TiB+', value: '5 TiB+' }
             ],
-            renderCell: (cellData: any, rowData: any) => {
-                return formatSize(rowData?.size);
-            }
+            renderCell: (cellData: any, rowData: any) => formatSize(rowData?.size)
         },
         {
             Header: 'AWS credentials',
@@ -314,9 +302,7 @@ const DatabasesTable = () => {
             width: '184px',
             isSortable: true,
             filterOptions: getFilterOptions(databaseTableRows, 'credentialName'),
-            renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'AWS account',
@@ -325,9 +311,7 @@ const DatabasesTable = () => {
             width: '184px',
             filterOptions: getFilterOptions(databaseTableRows, 'accountId'),
             isSortable: true,
-            renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'Region',
@@ -336,9 +320,7 @@ const DatabasesTable = () => {
             width: '184px',
             isSortable: true,
             filterOptions: getFilterOptions(databaseTableRows, 'regionName'),
-            renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         }
     ];
     const tableProps = useTable({
@@ -350,7 +332,7 @@ const DatabasesTable = () => {
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
-        //@ts-ignore
+        // @ts-ignore
         initialFilterState: getInitialFilter(),
         initialColumnState: tableManageColumnState.databaseTable,
         manageColumnsProps: {
@@ -421,28 +403,26 @@ const DatabasesTable = () => {
         dispatch(setTableManageColumnState({ ...tableManageColumnState, databaseTable: tableProps.columnsState }));
     }, [tableProps.columnsState]);
     return (
-        <>
-            <div className={styles.inventoryTable}>
-                <div
-                    //  @ts-ignore
-                    className={styles.table}
-                >
-                    <TableTopBar
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        pluralTitle="Databases"
-                        singularTitle="Database"
-                        exportToCsvOptions={{ fileName: `DatabaseTable-${new Date(Date.now()).toLocaleString()}.csv` }}
-                        subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
-                    />
-                    <Table
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        isDoubleRow={true}
-                    />
-                </div>
+        <div className={styles.inventoryTable}>
+            <div
+                //  @ts-ignore
+                className={styles.table}
+            >
+                <TableTopBar
+                    // @ts-ignore
+                    tableProps={tableProps}
+                    pluralTitle="Databases"
+                    singularTitle="Database"
+                    exportToCsvOptions={{ fileName: `DatabaseTable-${new Date(Date.now()).toLocaleString()}.csv` }}
+                    subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
+                />
+                <Table
+                    // @ts-ignore
+                    tableProps={tableProps}
+                    isDoubleRow
+                />
             </div>
-        </>
+        </div>
     );
 };
 

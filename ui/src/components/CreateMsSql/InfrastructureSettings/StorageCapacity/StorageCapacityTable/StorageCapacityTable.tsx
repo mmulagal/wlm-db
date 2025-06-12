@@ -1,8 +1,8 @@
 import { FlashingDotsLoader, Table, TooltipInfo, Typography, useTable } from '@netapp/design-system';
-import styles from './StorageCapacityTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { useAppSelector } from '../../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
+import styles from './StorageCapacityTable.module.scss';
+import { useAppSelector } from '../../../../../store/storeHooks';
 import { formatFractionalNumber, isFsxnNew } from '../../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { WIZARD_TYPE } from '../../../../../utils/consts';
@@ -21,27 +21,21 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
     const sizeDataCalc = (sizeData: any) => {
         if (isFsxnNew(fsxNType)) {
             return sizeData?.total;
-        } else {
-            if (wizardType === WIZARD_TYPE.MSSQL) {
-                return (sizeData?.data || 0) + (sizeData?.log || 0) + (sizeData?.tempdb || 0) + (sizeData?.quorum || 0);
-            } else {
-                if (mssqlFormData?.dbDeploymentModel?.value === 'standalone') {
-                    return (sizeData?.data || 0) + (sizeData?.log || 0);
-                } else {
-                    return (
-                        (sizeData?.data || 0) +
-                        (sizeData?.log || 0) +
-                        (sizeData?.dataReplica || 0) +
-                        (sizeData?.logReplica || 0)
-                    );
-                }
-            }
         }
+        if (wizardType === WIZARD_TYPE.MSSQL) {
+            return (sizeData?.data || 0) + (sizeData?.log || 0) + (sizeData?.tempdb || 0) + (sizeData?.quorum || 0);
+        }
+        if (mssqlFormData?.dbDeploymentModel?.value === 'standalone') {
+            return (sizeData?.data || 0) + (sizeData?.log || 0);
+        }
+        return (
+            (sizeData?.data || 0) + (sizeData?.log || 0) + (sizeData?.dataReplica || 0) + (sizeData?.logReplica || 0)
+        );
     };
 
     useEffect(() => {
         const sizeData = getEstimatedCostData?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size;
-        let newList = [];
+        const newList = [];
         newList.push({
             id: 1,
             type: GENERAL.DATA_VOLUME,
@@ -67,7 +61,7 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
                     id: 4,
                     type: GENERAL.QUORUM_VOLUME,
                     size: sizeData?.quorum,
-                    calculation: `Disk Witness for Windows cluster in FCI deployments`
+                    calculation: 'Disk Witness for Windows cluster in FCI deployments'
                 });
             }
         }
@@ -77,14 +71,14 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
                 id: 5,
                 type: GENERAL.DATA_REPLICA_VOLUME,
                 size: sizeData?.dataReplica,
-                calculation: `Replica data volume size`
+                calculation: 'Replica data volume size'
             });
 
             newList.push({
                 id: 6,
                 type: GENERAL.LOG_REPLICA_VOLUME,
                 size: sizeData?.logReplica,
-                calculation: `Replica log volume size`
+                calculation: 'Replica log volume size'
             });
         }
 
@@ -94,7 +88,7 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
                 id: 7,
                 type: GENERAL.BUFFER_SIZE,
                 size: sizeData?.buffer,
-                calculation: `35% headroom over total capacity`
+                calculation: '35% headroom over total capacity'
             });
         }
         newList.push({
@@ -102,7 +96,7 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
             type: GENERAL.TOTAL_VOLUME,
             // For existing FSX removing buffer size
             size: sizeDataCalc(sizeData),
-            calculation: `Total FSx for ONTAP file system SSD capacity`
+            calculation: 'Total FSx for ONTAP file system SSD capacity'
         });
         setSizeData(newList);
     }, [getEstimatedCostData, mssqlFormData]);
@@ -124,9 +118,8 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
                             </TooltipInfo>
                         </div>
                     );
-                } else {
-                    return cellData;
                 }
+                return cellData;
             }
         },
         {
@@ -139,9 +132,8 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
                     return cellData
                         ? `${formatFractionalNumber((cellData || 0) / 1024, 2)} TiB`
                         : GENERAL.NOT_AVAILABLE;
-                } else {
-                    return cellData ? `${formatFractionalNumber(cellData || 0, 2)} GiB` : GENERAL.NOT_AVAILABLE;
                 }
+                return cellData ? `${formatFractionalNumber(cellData || 0, 2)} GiB` : GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -172,7 +164,7 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
             )}
             {!getEstimatedCostLoading && (
                 <Table
-                    //@ts-ignore
+                    // @ts-ignore
                     tableProps={tableProps}
                     variant="innerTable"
                 />

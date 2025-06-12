@@ -26,7 +26,7 @@ export const useOnPremData = () => {
 
         try {
             const apiResult = await getOnPremSavings({}); // Unwrap the API result for cleaner error handling
-            let result: any = [];
+            const result: any = [];
             apiResult?.data?.items?.map((perRow: any) => {
                 let perInstallationMode: string = '';
                 if (perRow?.deploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
@@ -36,9 +36,9 @@ export const useOnPremData = () => {
                 } else if (perRow?.deploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
                     perInstallationMode = GENERAL.STANDALONE;
                 }
-                const perRowInstance = perRow?.sqlServerInstances?.filter((perInstance: any) => {
-                    return !perInstance?.errorMessage;
-                });
+                const perRowInstance = perRow?.sqlServerInstances?.filter(
+                    (perInstance: any) => !perInstance?.errorMessage
+                );
                 const rowData = {
                     ...perRow,
                     sqlServerInstances: perRowInstance,
@@ -48,7 +48,7 @@ export const useOnPremData = () => {
                     instanceNameList:
                         perRowInstance?.map((detail: { sqlInstanceName: string }) => detail?.sqlInstanceName) || [],
                     nameForSorting: perRow?.resourceName?.toLowerCase(),
-                    uniqueId: 'id' + Math.random().toString(16).slice(2)
+                    uniqueId: `id${Math.random().toString(16).slice(2)}`
                 };
                 result.push(rowData);
             });

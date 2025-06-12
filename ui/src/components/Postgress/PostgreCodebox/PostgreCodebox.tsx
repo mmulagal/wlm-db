@@ -1,13 +1,15 @@
 import { Button, DsTooltipInfo, DsTypography, Popover, Typography, useDialog } from '@netapp/design-system';
+import { useEffect, useMemo, useState } from 'react';
+import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+import { isEqual } from 'lodash';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import styles from './PostgreCodebox.module.scss';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 
-import { useEffect, useMemo, useState } from 'react';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
-import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import {
     cfDownloadName,
     generateOptionType,
@@ -36,11 +38,9 @@ import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
 import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
 import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
-import { useDispatch } from 'react-redux';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
-import { isEqual } from 'lodash';
 import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
 import HighlightText from '../../../common/HighlightText/HighlightText';
 import TerraformColor from '../../CreateMsSql/Terraform/TerraformColor';
@@ -67,7 +67,7 @@ const PostgreCodebox = () => {
     const dispatch = useDispatch();
     const { setDialog } = useDialog();
 
-    //Function to generate the options for Select Field for License
+    // Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
         const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, CODE_VIEWER.TERRAFORM];
         const options: optionType[] = [];
@@ -112,11 +112,14 @@ const PostgreCodebox = () => {
     const setCssId = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return UI_IDS.WIZARD_CODEBOX_CF;
-        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+        }
+        if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return UI_IDS.WIZARD_CODEBOX_AWS_CLI;
-        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+        }
+        if (dropDownValue === CODE_VIEWER.REST_API) {
             return UI_IDS.WIZARD_CODEBOX_REST_API;
-        } else if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+        }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM) {
             return UI_IDS.WIZARD_CODEBOX_TF;
         }
     };
@@ -153,7 +156,7 @@ const PostgreCodebox = () => {
             postgreForm: setMaskedPassword(pgsqlFormData)
         };
         const resBody = createPgsqlPayload(changeObjectForm);
-        //@ts-ignore
+        // @ts-ignore
         setRightPanelMaskedResponse(resBody);
     };
 
@@ -228,7 +231,8 @@ const PostgreCodebox = () => {
     const copyResponseData = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return rightPanelTemplateResponse?.template;
-        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+        }
+        if (dropDownValue === CODE_VIEWER.REST_API) {
             const baseUrl = getBaseUrl();
             const credDetails = getCredDetails(mssqlFormData);
             const rightPanelResponse = createPgsqlPayload({ mssqlForm: mssqlFormData, postgreForm: pgsqlFormData });
@@ -241,7 +245,8 @@ const PostgreCodebox = () => {
                 isWorkloadFactory
             );
             return restApiPayload;
-        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+        }
+        if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return rightPanelTemplateResponse?.cliCommand;
         }
     };
@@ -251,9 +256,9 @@ const PostgreCodebox = () => {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
             ) : rightPanelTemplateResponse?.template ? (
-                <ThemeProvider theme={'dark'} isRoot={false}>
+                <ThemeProvider theme="dark" isRoot={false}>
                     {/* @ts-ignore */}
-                    <SyntaxHighlighter wrapLongLines={true} language="yaml">
+                    <SyntaxHighlighter wrapLongLines language="yaml">
                         {rightPanelTemplateResponse?.template}
                     </SyntaxHighlighter>
                 </ThemeProvider>
@@ -270,12 +275,10 @@ const PostgreCodebox = () => {
                     className={`${styles.colorAutomation} ${styles.awsCli} ${styles.newClass}`}
                 >
                     {rightPanelTemplateResponse?.cliCommand ? (
-                        <>
-                            <HighlightText
-                                text={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
-                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
-                            />
-                        </>
+                        <HighlightText
+                            text={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
+                            searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                        />
                     ) : (
                         <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
                     )}
@@ -289,15 +292,13 @@ const PostgreCodebox = () => {
             return false ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
-                <>
-                    <CodeBoxColor
-                        credID={credDetails.credId}
-                        region={credDetails.region}
-                        actualData={rightPanelMaskedResponse}
-                        endpoint={DEPLOY_ENDPOINT}
-                        dbType="pgsql"
-                    />
-                </>
+                <CodeBoxColor
+                    credID={credDetails.credId}
+                    region={credDetails.region}
+                    actualData={rightPanelMaskedResponse}
+                    endpoint={DEPLOY_ENDPOINT}
+                    dbType="pgsql"
+                />
             );
         }
         if (dropDownValue === CODE_VIEWER.TERRAFORM) {

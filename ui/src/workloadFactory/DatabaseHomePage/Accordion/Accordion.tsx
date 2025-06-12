@@ -1,16 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { useDialog } from '@netapp/design-system';
+import { useDialog, Typography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { Typography } from '@netapp/design-system';
 import styles from './Accordion.module.scss';
 import { useDeleteConfigMutation, useLazyGetConfigDataQuery, useUpdateConfigMutation } from '../../../utils/apiService';
-import { useDispatch } from 'react-redux';
 import { setIsLoading, setIsRecommendedInstance, setIsSaveConfigLoading } from '../../../store/mssql/msSqlActionSlice';
 import {
     LoadConfiguration,
     LoadRecommendedConfig
 } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
-import { useNavigate } from 'react-router-dom';
 import { FROM_DIALOG, RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { setRecommendedValues } from '../../../utils/utilityFunctions';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
@@ -31,7 +30,7 @@ type AccordionContent = {
     isExpanded?: boolean;
     expand?: any;
     viewCode?: any;
-    recommended?: boolean; //recommended templates check
+    recommended?: boolean; // recommended templates check
 };
 
 const Accordion = ({
@@ -85,7 +84,7 @@ const Accordion = ({
 
     const handleDelete = () => {
         deleteConfigApi({ configId: id }).then((data: any) => {
-            if(!data?.error){
+            if (!data?.error) {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -106,8 +105,8 @@ const Accordion = ({
             name: updateConfigName
         };
         setIsSaveConfigLoading(true);
-        renameConfigApi({ configId: id, payload: payload }).then((data: any) => {
-            if(!data?.error) {
+        renameConfigApi({ configId: id, payload }).then((data: any) => {
+            if (!data?.error) {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -154,7 +153,7 @@ const Accordion = ({
                 closeCallback={() => {
                     closeDialog();
                 }}
-                dialogFrom={''}
+                dialogFrom=""
             />
         );
     };
@@ -163,7 +162,11 @@ const Accordion = ({
         setDialog(
             <DialogComponent
                 header={GENERAL.RENAME_CONFIG}
-                content={<SaveConfig description={`${GENERAL.RENAME_CONFIG_CONTENT[0]} "${heading}" ${GENERAL.RENAME_CONFIG_CONTENT[1]}`}/>}
+                content={
+                    <SaveConfig
+                        description={`${GENERAL.RENAME_CONFIG_CONTENT[0]} "${heading}" ${GENERAL.RENAME_CONFIG_CONTENT[1]}`}
+                    />
+                }
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={handleRename}
@@ -231,7 +234,7 @@ const Accordion = ({
                                     }}
                                     CustomMenu={undefined}
                                     disabledText={undefined}
-                                    isBlackLayout={true}
+                                    isBlackLayout
                                 />
                             </div>
                             {/* <div className={styles['panel-collapse']}>
@@ -239,7 +242,7 @@ const Accordion = ({
                             </div> */}
                         </div>
                     </div>
-                    {/* Creation date will be shown only for saved config but not for recommended templates*/}
+                    {/* Creation date will be shown only for saved config but not for recommended templates */}
                     {!recommended && (
                         <Typography
                             variant="Regular_13"

@@ -217,7 +217,7 @@ async function getAllResourceUtilisationDetails(
     logger.info('Fetching resources utilization from primary', credentialsId, region, activeNodeInstanceId);
     const updatedInstanceNames = isDemoFlow ? [DEFAULT_INSTANCE_NAME] : instanceNames;
     const commands = [RESOURCE_UTILIZATION(updatedInstanceNames, isSqlAuthEnabled)];
-    const resurceUtilizationData = await callSsmExecution(
+    const resourceUtilizationData = await callSsmExecution(
         credentialsId,
         region,
         commands,
@@ -228,7 +228,7 @@ async function getAllResourceUtilisationDetails(
         undefined,
         true
     );
-    const parsedResourceUtilizationData = resurceUtilizationData ? sqlResponseParsing(resurceUtilizationData) : {};
+    const parsedResourceUtilizationData = resourceUtilizationData ? sqlResponseParsing(resourceUtilizationData) : {};
 
     const instancesResponse: { [key: string]: any } = {};
 
@@ -757,7 +757,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
 
     const commands = [INSTANCE_DETAILS];
     try {
-        for (const nodeId of nodeIds) {
+        for await (const nodeId of nodeIds) {
             const response = await callSsmExecution(
                 credentialsId,
                 region,
@@ -776,24 +776,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 instancesDetails.forEach(obj => {
                     (obj as any).isDefault = !obj.instanceName.includes('$');
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
-                    obj.sqlAuthEnabled = !isEmpty(sql)
-                        ? Boolean(
-                              sql?.find(
-                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
-                                      sqlinstancename &&
-                                      sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase()
-                              )
-                          )
-                        : !isEmpty(domain)
-                        ? Boolean(
-                              domain?.find(
-                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
-                                      sqlinstancename &&
-                                      (sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase() ||
-                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME)
-                              )
-                          )
-                        : false;
+                    obj.sqlAuthEnabled = getSqlAuthEnabledStatus(obj.instanceName, sql, domain);
                 });
                 let isDefaultInstance = true;
                 let selectedInstance = instancesDetails.find(
@@ -826,25 +809,27 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
 async function getAllInstanceDetails(credentialsId: string, region: string, nodeIds: string[], accountId?: string) {
     logger.info('Fetch all MSSQL instance details', { credentialsId, region, nodeIds });
     const commands = [INSTANCE_DETAILS];
-    let instances = [];
+    let instances: any = [];
 
     try {
-        for (const nodeId of nodeIds) {
-            const response = await callSsmExecution(
-                credentialsId,
-                region,
-                commands,
-                nodeId,
-                'Get MSSQL instance details',
-                accountId
-            );
-            if (response) {
-                let parsedResponse = sqlResponseParsing(response);
-                parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
-                instances.push(...parsedResponse);
-            }
-        }
-        instances = instances.filter(res => res?.instanceState !== SQL_SERVICE_STATE.STOPPED);
+        await Promise.all(
+            nodeIds.map(async nodeId => {
+                const response = await callSsmExecution(
+                    credentialsId,
+                    region,
+                    commands,
+                    nodeId,
+                    'Get MSSQL instance details',
+                    accountId
+                );
+                if (response) {
+                    let parsedResponse = sqlResponseParsing(response);
+                    parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+                    instances.push(...parsedResponse);
+                }
+            })
+        );
+        instances = instances.filter((res: any) => res?.instanceState !== SQL_SERVICE_STATE.STOPPED);
 
         return instances;
     } catch (error) {
@@ -1288,7 +1273,7 @@ async function getMssqlInstanceGuid(
     try {
         let sqlInstanceGuid;
 
-        for (const nodeId of nodeIds) {
+        for await (const nodeId of nodeIds) {
             const ssmComment = 'Fetching MSSQL instance GUID';
             response = await callSsmExecution(credentialsId, region, commands, nodeId, ssmComment, accountId);
             if (response) {
@@ -1334,7 +1319,7 @@ async function getActiveSqlNodeAndInstanceDetails(
     });
     try {
         const inActiveNodes: { nodeId: string; connStatus: string }[] = [];
-        for (const nodeId of nodeIds) {
+        for await (const nodeId of nodeIds) {
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId, accountId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId], accountId);
@@ -1342,26 +1327,7 @@ async function getActiveSqlNodeAndInstanceDetails(
 
                 instanceDetails?.forEach((obj: { instanceName: string; sqlAuthEnabled: boolean }) => {
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
-                    obj.sqlAuthEnabled = isDemoFlow
-                        ? false
-                        : !isEmpty(sql)
-                        ? Boolean(
-                              sql?.find(
-                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
-                                      sqlinstancename &&
-                                      sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase()
-                              )
-                          )
-                        : !isEmpty(domain)
-                        ? Boolean(
-                              domain?.find(
-                                  ({ sqlinstancename }: { sqlinstancename: string }) =>
-                                      sqlinstancename &&
-                                      (sqlinstancename?.toUpperCase() === obj?.instanceName?.toUpperCase() ||
-                                          sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME)
-                              )
-                          )
-                        : false;
+                    obj.sqlAuthEnabled = getSqlAuthEnabledStatus(obj.instanceName, sql, domain);
                 });
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
@@ -1423,11 +1389,16 @@ async function getActiveNodeAndInstanceDetails(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
     const { nodeId: activeNodeInstanceId } = activeNodeResponse;
-    const standbyNodeInstanceId = node2InstanceId
-        ? node1InstanceId === activeNodeInstanceId
-            ? node2InstanceId
-            : node1InstanceId
-        : undefined;
+    let standbyNodeInstanceId;
+    if (node2InstanceId) {
+        if (node1InstanceId === activeNodeInstanceId) {
+            standbyNodeInstanceId = node2InstanceId;
+        } else {
+            standbyNodeInstanceId = node1InstanceId;
+        }
+    } else {
+        standbyNodeInstanceId = undefined;
+    }
     activeNodeResponse.standbyNodeInstanceId = standbyNodeInstanceId;
 
     return activeNodeResponse;
@@ -1550,6 +1521,35 @@ async function getSqlServerVersionAndEdition(
             `Failed to get SQL Server version and edition details. ${error?.message}`
         );
     }
+}
+
+function getSqlAuthEnabledStatus(instanceName: string, sql: any[], domain: any[]) {
+    logger.debug('Check if SQL authentication is enabled');
+
+    let sqlAuthEnabled = false;
+    if (isDemoFlow) {
+        sqlAuthEnabled = true;
+    } else if (!isEmpty(sql)) {
+        sqlAuthEnabled = Boolean(
+            sql?.find(
+                ({ sqlinstancename }: { sqlinstancename: string }) =>
+                    sqlinstancename && sqlinstancename?.toUpperCase() === instanceName?.toUpperCase()
+            )
+        );
+    } else if (!isEmpty(domain)) {
+        sqlAuthEnabled = Boolean(
+            domain?.find(
+                ({ sqlinstancename }: { sqlinstancename: string }) =>
+                    sqlinstancename &&
+                    (sqlinstancename?.toUpperCase() === instanceName?.toUpperCase() ||
+                        sqlinstancename?.toUpperCase() === DEFAULT_INSTANCE_NAME)
+            )
+        );
+    } else {
+        sqlAuthEnabled = false;
+    }
+
+    return sqlAuthEnabled;
 }
 
 export {

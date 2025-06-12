@@ -1,14 +1,15 @@
-import { useWizard, WizardContextProvider } from '@netapp/design-system/dist/components/Wizard';
+import { useWizard, WizardContextProvider, WizardState } from '@netapp/design-system/dist/components/Wizard';
 import { BlueXPListeners, postBlueXPMessage, StepLayout, WizardContent, WizardHeader } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
-import { useNavigate } from 'react-router-dom';
 import ManageOnlyWizard from './ManageOnlyWizard';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo } from 'react';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
-import { useDispatch } from 'react-redux';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const MANAGE_STEPS = [
@@ -23,6 +24,7 @@ const stepPaths = {
 };
 
 const Wizard = () => {
+    const { t } = useTranslation();
     const { stepsMap, currentStep }: any = useWizard();
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -32,7 +34,7 @@ const Wizard = () => {
         <StepLayout>
             <WizardHeader
                 className={styles['manage-instance-wizard']}
-                title={'Register instance'}
+                title={t('databases.register-flow.register-instance')}
                 onExit={() => {
                     setTimeout(() => {
                         dispatch(setLandingFromWizard(true));
@@ -62,9 +64,8 @@ const Wizard = () => {
 };
 
 const ManageInstanceWizard = () => {
-    const initialState: any = {};
+    const initialState: Partial<WizardState> = {};
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
-    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
     const isAlreadyDetected = useMemo(() => {
         if (manageSingleInstanceData && manageSingleInstanceData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
             return true;
@@ -74,17 +75,13 @@ const ManageInstanceWizard = () => {
 
     return (
         <>
-            {wizardOperationType !== 'bulk' && isAlreadyDetected && (
-                <>
-                    <ManageOnlyWizard />
-                </>
-            )}
-            {(wizardOperationType === 'bulk' || !isAlreadyDetected) && (
+            {isAlreadyDetected && <ManageOnlyWizard />}
+            {!isAlreadyDetected && (
                 <WizardContextProvider
                     stepsMap={stepsMap}
                     stepPaths={stepPaths}
-                    initialStep={'detect-instance'}
-                    initialPath={'regular'}
+                    initialStep="detect-instance"
+                    initialPath="regular"
                     initialState={initialState}
                 >
                     <Wizard />

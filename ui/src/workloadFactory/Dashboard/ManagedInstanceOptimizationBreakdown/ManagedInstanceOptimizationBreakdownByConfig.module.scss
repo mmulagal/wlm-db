@@ -95,14 +95,12 @@
 
 @media screen and (min-width: 1920px) {
     .managedBreakdown {
-        width: 34.11%; 
-        
-    
+        width: 34.11%;
+
         .mainSection {
-            
             width: 97.56%;
 
-            .tile{
+            .tile {
                 width: 94.67%;
 
                 [class*='barComponent'] {
@@ -112,8 +110,6 @@
                     }
                 }
             }
-
-            
         }
     }
 }

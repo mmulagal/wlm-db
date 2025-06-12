@@ -14,24 +14,24 @@ const GetWellChart = ({ startColor, endColor }: colorCodes) => {
     const chartRef = useRef(null);
 
     useEffect(() => {
-        //@ts-ignore
+        // @ts-ignore
         const ctx = chartRef?.current?.getContext('2d');
 
-        var gradientStroke = ctx.createLinearGradient(0, 50, 0, 400);
+        const gradientStroke = ctx.createLinearGradient(0, 50, 0, 400);
         gradientStroke.addColorStop(0, '#0BAFFC');
         gradientStroke.addColorStop(1, endColor);
 
-        var gradientFill = ctx.createLinearGradient(0, 0, 0, 150);
+        const gradientFill = ctx.createLinearGradient(0, 0, 0, 150);
         gradientFill.addColorStop(0, '#0BAFFC');
         gradientFill.addColorStop(1, endColor);
 
         // Create a gradient fill
-        var gradientBG = ctx.createLinearGradient(0, 0, 0, 70);
+        const gradientBG = ctx.createLinearGradient(0, 0, 0, 70);
         gradientBG.addColorStop(0, 'rgba(11, 175, 252, 0.5)'); // Color at top
         gradientBG.addColorStop(1, 'rgba(11, 175, 252, 0.04)'); // Transparent at bottom
 
-        //@ts-ignore
-        var mayBarChart = new Chart(ctx, {
+        // @ts-ignore
+        const mayBarChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
@@ -103,7 +103,7 @@ const GetWellChart = ({ startColor, endColor }: colorCodes) => {
 
     return (
         <div className={styles.getWellChart}>
-            <canvas ref={chartRef} width={271} height={80}></canvas>
+            <canvas ref={chartRef} width={271} height={80} />
         </div>
     );
 };

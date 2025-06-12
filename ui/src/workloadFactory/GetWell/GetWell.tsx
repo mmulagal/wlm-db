@@ -8,6 +8,8 @@ import {
     TooltipInfo,
     Button
 } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useState, useEffect, useMemo } from 'react';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
 import StorageCardComponent from './StorageCardComponent/StorageCardComponent';
@@ -21,7 +23,6 @@ import { ReactComponent as Error } from '../../assets/error-icon.svg';
 import { ReactComponent as Union } from '../../assets/Union.svg';
 import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
-import { useDispatch } from 'react-redux';
 import { clearNotifications } from '../../store/notificationSlice';
 
 import {
@@ -49,15 +50,14 @@ import {
     setSelectedHeaderTab
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
-import { useState, useEffect, useMemo } from 'react';
 import GetWellApi from './GetWellApi';
 import {
     setGwAdhocError,
     setGwRefreshPage,
     setIsInnerPageOptimize
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-//@ts-ignore
-//import domToPdf from 'dom-to-pdf';
+// @ts-ignore
+// import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
@@ -94,7 +94,7 @@ const GetWell = () => {
     const [showChartArea, setShowChartArea] = useState(true);
     const [triggerAssessmentInProgress, setTriggerAssessmentInProgress] = useState(false);
     const { setDialog, closeDialog } = useDialog();
-    //@ts-ignore
+    // @ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const [triggerAssessmentApi] = useTriggerInstanceAssessmentMutation();
@@ -159,7 +159,7 @@ const GetWell = () => {
                         notificationType: NOTIFICATION_TYPES.INFO,
                         message: (
                             <div>
-                                {`Assessment process initiated. Track progress in `}
+                                {'Assessment process initiated. Track progress in '}
                                 <Button
                                     Component="button"
                                     variant="text"
@@ -236,12 +236,12 @@ const GetWell = () => {
         setOptimizePrintState(true);
         setTimeout(() => {
             const elem = document.getElementById('export-optimize-pdf') as HTMLElement;
-            var options = {
+            const options = {
                 filename: `Optimization_Report_MSSQLSERVER_${generateDate()}.pdf`,
                 compression: 'MEDIUM'
             };
 
-            //@ts-ignore
+            // @ts-ignore
             downloadPdf(elem, options, (pdf: any) => {
                 setOptimizePrintState(false);
                 dispatch(
@@ -350,7 +350,7 @@ const GetWell = () => {
         setDialog(
             <DialogComponent
                 header={GENERAL.LEARN_HOW_DIALOG.ASSESSMENT_TITLE}
-                content={<LearnHowDialog type={'assessment'} />}
+                content={<LearnHowDialog type="assessment" />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => closeDialog()}
             />
@@ -376,7 +376,7 @@ const GetWell = () => {
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             {optimizePrintState && (
                 <>
-                    <div className={commonStyles.loaderOverlay}></div>
+                    <div className={commonStyles.loaderOverlay} />
                     <div className={commonStyles.spinnerPlacement}>
                         <Spinner isLarge />
                     </div>
@@ -611,7 +611,7 @@ const GetWell = () => {
                                                                 }
                                                             ]}
                                                             selectionType="multi"
-                                                            isWithActions={true}
+                                                            isWithActions
                                                             onSelect={(option: any) =>
                                                                 handleSelect(option, 'all-catagories')
                                                             }
@@ -644,7 +644,7 @@ const GetWell = () => {
                                                             isCleanable={false}
                                                             options={generateSubCategoryOptions}
                                                             selectionType="multi"
-                                                            isWithActions={true}
+                                                            isWithActions
                                                             onSelect={(option: any) =>
                                                                 handleSelect(option, 'sub-catagories')
                                                             }
@@ -657,21 +657,21 @@ const GetWell = () => {
                                                         <DsSelect
                                                             title=""
                                                             selectedOptionIds={
-                                                                defaultFilterOptions['status']
-                                                                    ? defaultFilterOptions['status']
+                                                                defaultFilterOptions.status
+                                                                    ? defaultFilterOptions.status
                                                                     : []
                                                             }
                                                             isExpanded={isAccordionOpen ? undefined : false}
                                                             isCleanable={false}
                                                             formatLabel={() =>
                                                                 `Status: ${
-                                                                    !defaultFilterOptions['status']?.length ||
-                                                                    defaultFilterOptions['status'].length === 2
+                                                                    !defaultFilterOptions.status?.length ||
+                                                                    defaultFilterOptions.status.length === 2
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
-                                                                    defaultFilterOptions['status']?.length > 0
-                                                                        ? defaultFilterOptions['status']?.length
+                                                                    defaultFilterOptions.status?.length > 0
+                                                                        ? defaultFilterOptions.status?.length
                                                                         : 2
                                                                 })`
                                                             }
@@ -689,29 +689,23 @@ const GetWell = () => {
                                                                 }
                                                             ]}
                                                             selectionType="multi"
-                                                            isWithActions={true}
+                                                            isWithActions
                                                             onSelect={(option: any) => handleSelect(option, 'status')}
                                                             variant="underline"
                                                             formatOptionLabel={(option: any) => {
                                                                 if (option?.label === 'Optimized') {
                                                                     return <div>{option?.label}</div>;
-                                                                } else {
-                                                                    return (
-                                                                        <div
-                                                                            className={styles['not-optimized-tooltip']}
-                                                                        >
-                                                                            <div>{option?.label}</div>
-                                                                            <TooltipInfo
-                                                                                trigger="hover"
-                                                                                isAppendedToBody
-                                                                            >
-                                                                                {' '}
-                                                                                Not optimized includes over-provisioned
-                                                                                and under-provisioned instances.
-                                                                            </TooltipInfo>
-                                                                        </div>
-                                                                    );
                                                                 }
+                                                                return (
+                                                                    <div className={styles['not-optimized-tooltip']}>
+                                                                        <div>{option?.label}</div>
+                                                                        <TooltipInfo trigger="hover" isAppendedToBody>
+                                                                            {' '}
+                                                                            Not optimized includes over-provisioned and
+                                                                            under-provisioned instances.
+                                                                        </TooltipInfo>
+                                                                    </div>
+                                                                );
                                                             }}
                                                         />
                                                     </div>
@@ -719,21 +713,21 @@ const GetWell = () => {
                                                         <DsSelect
                                                             title=""
                                                             selectedOptionIds={
-                                                                defaultFilterOptions['severity']
-                                                                    ? defaultFilterOptions['severity']
+                                                                defaultFilterOptions.severity
+                                                                    ? defaultFilterOptions.severity
                                                                     : []
                                                             }
                                                             isExpanded={isAccordionOpen ? undefined : false}
                                                             isCleanable={false}
                                                             formatLabel={() =>
                                                                 `Severity: ${
-                                                                    !defaultFilterOptions['severity']?.length ||
-                                                                    defaultFilterOptions['severity'].length === 2
+                                                                    !defaultFilterOptions.severity?.length ||
+                                                                    defaultFilterOptions.severity.length === 2
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
-                                                                    defaultFilterOptions['severity']?.length > 0
-                                                                        ? defaultFilterOptions['severity']?.length
+                                                                    defaultFilterOptions.severity?.length > 0
+                                                                        ? defaultFilterOptions.severity?.length
                                                                         : 2
                                                                 })`
                                                             }
@@ -751,7 +745,7 @@ const GetWell = () => {
                                                                 }
                                                             ]}
                                                             selectionType="multi"
-                                                            isWithActions={true}
+                                                            isWithActions
                                                             onSelect={(option: any) => handleSelect(option, 'severity')}
                                                             variant="underline"
                                                         />
@@ -760,21 +754,21 @@ const GetWell = () => {
                                                         <DsSelect
                                                             title=""
                                                             selectedOptionIds={
-                                                                defaultFilterOptions['tags']
-                                                                    ? defaultFilterOptions['tags']
+                                                                defaultFilterOptions.tags
+                                                                    ? defaultFilterOptions.tags
                                                                     : []
                                                             }
                                                             isExpanded={isAccordionOpen ? undefined : false}
                                                             isCleanable={false}
                                                             formatLabel={() =>
                                                                 `Tags: ${
-                                                                    !defaultFilterOptions['tags']?.length ||
-                                                                    defaultFilterOptions['tags'].length === 6
+                                                                    !defaultFilterOptions.tags?.length ||
+                                                                    defaultFilterOptions.tags.length === 6
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
-                                                                    defaultFilterOptions['tags']?.length > 0
-                                                                        ? defaultFilterOptions['tags']?.length
+                                                                    defaultFilterOptions.tags?.length > 0
+                                                                        ? defaultFilterOptions.tags?.length
                                                                         : 6
                                                                 })`
                                                             }
@@ -812,7 +806,7 @@ const GetWell = () => {
                                                                 }
                                                             ]}
                                                             selectionType="multi"
-                                                            isWithActions={true}
+                                                            isWithActions
                                                             onSelect={(option: any) => handleSelect(option, 'tags')}
                                                             variant="underline"
                                                         />
@@ -821,21 +815,21 @@ const GetWell = () => {
                                                         <DsSelect
                                                             title=""
                                                             selectedOptionIds={
-                                                                defaultFilterOptions['configState']
-                                                                    ? defaultFilterOptions['configState']
+                                                                defaultFilterOptions.configState
+                                                                    ? defaultFilterOptions.configState
                                                                     : []
                                                             }
                                                             isExpanded={isAccordionOpen ? undefined : false}
                                                             isCleanable={false}
                                                             formatLabel={() =>
                                                                 `Analysis state: ${
-                                                                    !defaultFilterOptions['configState']?.length ||
-                                                                    defaultFilterOptions['configState'].length === 3
+                                                                    !defaultFilterOptions.configState?.length ||
+                                                                    defaultFilterOptions.configState.length === 3
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
-                                                                    defaultFilterOptions['configState']?.length > 0
-                                                                        ? defaultFilterOptions['configState']?.length
+                                                                    defaultFilterOptions.configState?.length > 0
+                                                                        ? defaultFilterOptions.configState?.length
                                                                         : 3
                                                                 })`
                                                             }
@@ -858,7 +852,7 @@ const GetWell = () => {
                                                                 }
                                                             ]}
                                                             selectionType="multi"
-                                                            isWithActions={true}
+                                                            isWithActions
                                                             onSelect={(option: any) =>
                                                                 handleSelect(option, 'configState')
                                                             }
@@ -869,21 +863,21 @@ const GetWell = () => {
                                                         <DsSelect
                                                             title=""
                                                             selectedOptionIds={
-                                                                defaultFilterOptions['resourceType']
-                                                                    ? defaultFilterOptions['resourceType']
+                                                                defaultFilterOptions.resourceType
+                                                                    ? defaultFilterOptions.resourceType
                                                                     : []
                                                             }
                                                             isExpanded={isAccordionOpen ? undefined : false}
                                                             isCleanable={false}
                                                             formatLabel={() =>
                                                                 `Resource type: ${
-                                                                    !defaultFilterOptions['resourceType']?.length ||
-                                                                    defaultFilterOptions['resourceType'].length === 9
+                                                                    !defaultFilterOptions.resourceType?.length ||
+                                                                    defaultFilterOptions.resourceType.length === 9
                                                                         ? 'All'
                                                                         : ''
                                                                 }(${
-                                                                    defaultFilterOptions['resourceType']?.length > 0
-                                                                        ? defaultFilterOptions['resourceType']?.length
+                                                                    defaultFilterOptions.resourceType?.length > 0
+                                                                        ? defaultFilterOptions.resourceType?.length
                                                                         : 9
                                                                 })`
                                                             }
@@ -936,7 +930,7 @@ const GetWell = () => {
                                                                 }
                                                             ]}
                                                             selectionType="multi"
-                                                            isWithActions={true}
+                                                            isWithActions
                                                             onSelect={(option: any) =>
                                                                 handleSelect(option, 'resourceType')
                                                             }
@@ -1061,10 +1055,10 @@ const GetWell = () => {
                                                         }}
                                                         variant="Semibold_14"
                                                     >
-                                                        {!defaultFilterOptions['status']?.length ||
-                                                        defaultFilterOptions['status']?.length === 2
+                                                        {!defaultFilterOptions.status?.length ||
+                                                        defaultFilterOptions.status?.length === 2
                                                             ? 'All(2)'
-                                                            : `${defaultFilterOptions['status']?.length}/2`}
+                                                            : `${defaultFilterOptions.status?.length}/2`}
                                                     </DsTypography>
                                                 </div>
 
@@ -1089,10 +1083,10 @@ const GetWell = () => {
                                                         }}
                                                         variant="Semibold_14"
                                                     >
-                                                        {!defaultFilterOptions['severity']?.length ||
-                                                        defaultFilterOptions['severity']?.length === 2
+                                                        {!defaultFilterOptions.severity?.length ||
+                                                        defaultFilterOptions.severity?.length === 2
                                                             ? 'All(2)'
-                                                            : `${defaultFilterOptions['severity']?.length}/2`}
+                                                            : `${defaultFilterOptions.severity?.length}/2`}
                                                     </DsTypography>
                                                 </div>
 
@@ -1117,10 +1111,10 @@ const GetWell = () => {
                                                         }}
                                                         variant="Semibold_14"
                                                     >
-                                                        {!defaultFilterOptions['tags']?.length ||
-                                                        defaultFilterOptions['tags']?.length === 6
+                                                        {!defaultFilterOptions.tags?.length ||
+                                                        defaultFilterOptions.tags?.length === 6
                                                             ? 'All(6)'
-                                                            : `${defaultFilterOptions['tags']?.length}/6`}
+                                                            : `${defaultFilterOptions.tags?.length}/6`}
                                                     </DsTypography>
                                                 </div>
 
@@ -1145,10 +1139,10 @@ const GetWell = () => {
                                                         }}
                                                         variant="Semibold_14"
                                                     >
-                                                        {!defaultFilterOptions['configState']?.length ||
-                                                        defaultFilterOptions['configState']?.length === 3
+                                                        {!defaultFilterOptions.configState?.length ||
+                                                        defaultFilterOptions.configState?.length === 3
                                                             ? 'All(3)'
-                                                            : `${defaultFilterOptions['configState']?.length}/3`}
+                                                            : `${defaultFilterOptions.configState?.length}/3`}
                                                     </DsTypography>
                                                 </div>
 
@@ -1173,10 +1167,10 @@ const GetWell = () => {
                                                         }}
                                                         variant="Semibold_14"
                                                     >
-                                                        {!defaultFilterOptions['resourceType']?.length ||
-                                                        defaultFilterOptions['resourceType']?.length === 9
+                                                        {!defaultFilterOptions.resourceType?.length ||
+                                                        defaultFilterOptions.resourceType?.length === 9
                                                             ? 'All(9)'
-                                                            : `${defaultFilterOptions['resourceType']?.length}/9`}
+                                                            : `${defaultFilterOptions.resourceType?.length}/9`}
                                                     </DsTypography>
                                                 </div>
                                             </div>
@@ -1223,13 +1217,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.storage_tier?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -1293,13 +1285,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.file_system_headroom?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -1366,13 +1356,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.transaction_log_drive_size?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -1440,13 +1428,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.tempdb_drive_size?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -1527,13 +1513,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.user_data_files?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -1588,13 +1572,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.transaction_log_files?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -1666,13 +1648,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.tempdb_files?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -1752,13 +1732,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.ontap_configuration?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -1823,13 +1801,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.os_configuration?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -1920,13 +1896,13 @@ const GetWell = () => {
                                                             <div className={styles.missingPermissionText}>
                                                                 <Error />
                                                                 <DsTypography
-                                                                    variant={'Semibold_14'}
+                                                                    variant="Semibold_14"
                                                                     style={{ marginLeft: '8px' }}
                                                                 >
                                                                     Error:
                                                                 </DsTypography>
                                                                 &nbsp;
-                                                                <DsTypography variant={'Regular_14'}>
+                                                                <DsTypography variant="Regular_14">
                                                                     Compute rightsizing details are unavailable due to
                                                                     missing permissions.
                                                                 </DsTypography>
@@ -1945,13 +1921,11 @@ const GetWell = () => {
                                                         ) : (
                                                             <div className={styles.tagPlacement}>
                                                                 {filteredCardData?.compute_rightsizing?.tags?.map(
-                                                                    (perTag: string, index: number) => {
-                                                                        return (
-                                                                            <div key={index}>
-                                                                                <Tag text={perTag} />
-                                                                            </div>
-                                                                        );
-                                                                    }
+                                                                    (perTag: string, index: number) => (
+                                                                        <div key={index}>
+                                                                            <Tag text={perTag} />
+                                                                        </div>
+                                                                    )
                                                                 )}
                                                             </div>
                                                         )
@@ -2007,13 +1981,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.host_os_patch?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -2074,13 +2046,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.rss_config?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -2167,13 +2137,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.sql_licenses?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -2236,13 +2204,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.microsoft_sql_patch?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -2303,13 +2269,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.maxdop?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -2390,13 +2354,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.scheduled_local_snapshot?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -2462,13 +2424,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.crr?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -2530,13 +2490,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.scheduled_FSx_for_ONTAP_backups?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }
@@ -2622,13 +2580,11 @@ const GetWell = () => {
                                                     title={
                                                         <div className={styles.tagPlacement}>
                                                             {filteredCardData?.clone_management?.tags?.map(
-                                                                (perTag: string, index: number) => {
-                                                                    return (
-                                                                        <div key={index}>
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                (perTag: string, index: number) => (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                )
                                                             )}
                                                         </div>
                                                     }

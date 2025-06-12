@@ -37,6 +37,7 @@ $credobject = (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value
 $username = $credobject.fsx.username
 $password = $credobject.fsx.password
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
+$isprivatesubnet = $False
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
 try {
     $FSxNHTTP_Request = [System.Net.WebRequest]::Create("https://$MgmtDNS")
@@ -50,6 +51,8 @@ catch {
     if ($MgmtDNS -is [array]) {
         $MgmtDNS = $MgmtDNS[0]
     }
+    $isprivatesubnet = $True
+    $restcert = ''
 }
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing).Content
@@ -75,7 +78,7 @@ $nodeiqn = (Get-InitiatorPort).NodeAddress
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 
 # Get FSx certificate
-$isprivatesubnet = $False
+
 $connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
 if ($connection -eq $False) {
     $isprivatesubnet = $True

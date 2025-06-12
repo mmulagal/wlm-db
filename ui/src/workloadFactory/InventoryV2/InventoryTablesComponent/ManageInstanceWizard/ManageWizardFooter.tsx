@@ -1,6 +1,9 @@
 import { DsButton, useWizard, WizardFooter } from '@netapp/design-system';
-import styles from './ManageInstanceWizard.module.scss';
+import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import styles from './ManageInstanceWizard.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
@@ -12,15 +15,19 @@ import {
 } from '../../../../utils/apiService';
 import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import { GENERAL } from '../../../../utils/appConstants';
 import {
     setInventoryTableData,
     setManageSingleInstanceReadiness,
     setSelectedMultiDetectInstances
 } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { MANAGE_STATES } from '../../../../utils/consts';
-import { handleSingleInstanceManage } from './ManageInstanceUtils';
-import { useNavigate } from 'react-router-dom';
+
+import { getBulkDetectChecks, handleMultiInstanceManage, handleSingleInstanceManage } from './ManageInstanceUtils';
+import { ACTION_TYPE } from '../../../../utils/consts';
+import {
+    BulkDetectedInstance,
+    RegisterResourceCredResult,
+    UseWizardReturn
+} from '../../../../utils/types/registerTypes';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -29,18 +36,25 @@ type PlanningWizardFooterProps = {
 };
 
 const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
-    const { nextButtonProps, validation, style } = props; //onClick must be taken out otherwise will override footer onClick when spread to button
+    const { nextButtonProps, validation, style } = props; // onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
 
-    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: any = useWizard();
+    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: UseWizardReturn =
+        useWizard();
 
-    const { ontapUserNameFromWizard, ontapPasswordFromWizard, mssqlUserNameFromWizard, mssqlPasswordFromWizard } =
-        state;
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
-    const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
+    const { wizardOperationType, selectedMultiDetectInstances, bulkDetectedInstanceList } = useAppSelector(
+        state => state.inventoryV2
+    );
+
+    const bulkInstanceData = useMemo(
+        () => getBulkDetectChecks(selectedMultiDetectInstances),
+        [selectedMultiDetectInstances]
+    );
 
     const dispatch = useDispatch();
 
@@ -57,11 +71,11 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const handleMultiRegisterResourceCred = async () => {
         dispatch(setIsDetectHostLoading(true));
         dispatch(setManageSingleInstanceReadiness(null));
-        let payload: Array<any> = [];
-        selectedMultiDetectInstances?.forEach((instance: any) => {
+        const payload: Array<any> = [];
+        selectedMultiDetectInstances?.forEach((instance: BulkDetectedInstance) => {
             const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
-            let cred = createDetectHostPayload(sqlServerInstance, instance?.data?.fsxId, instance?.data);
-            let perPayload = {
+            const cred = createDetectHostPayload(sqlServerInstance, instance?.data?.fsxId, instance?.data);
+            const perPayload = {
                 ...cred,
                 credentialsId: instance?.data?.credentialId,
                 region: instance?.data?.regionId,
@@ -90,14 +104,13 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         });
                     } else {
                         // store fsx cred in register obj if payload has fsx register
-                        let filterRow: any = newSelectedMultiDetectInstances.filter((instance: any) => {
-                            return (
+                        const filterRow: any = newSelectedMultiDetectInstances.filter(
+                            (instance: any) =>
                                 instance?.data?.credentialId === res?.credentialsId &&
                                 instance?.data?.regionId === res?.region &&
                                 instance?.data?.ec2InstanceId === res?.ec2InstanceId
-                            );
-                        });
-                        let isFsxRegister = saveFsxInCredRegisteredObj(filterRow?.[0]?.data?.fsxId, dispatch);
+                        );
+                        const isFsxRegister = saveFsxInCredRegisteredObj(filterRow?.[0]?.data?.fsxId, dispatch);
                         const updatedInventoryTableData = updateInstanceStatus(
                             'detect',
                             filterRow?.[0]?.data,
@@ -126,7 +139,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                        message: t('databases.register-flow.manage-detect-fail-message')
                     })
                 );
             }
@@ -134,7 +147,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                    message: t('databases.register-flow.manage-detect-fail-message')
                 })
             );
         } finally {
@@ -148,7 +161,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         const sqlServerInstance =
             manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
         try {
-            const result: any = await registerResourceCred({
+            const result: RegisterResourceCredResult = await registerResourceCred({
                 credentialId: manageSingleInstanceData?.credentialId,
                 regionId: manageSingleInstanceData?.regionId,
                 instanceId: manageSingleInstanceData?.ec2InstanceId,
@@ -160,18 +173,18 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             });
             if (result && !result?.error) {
                 if (result?.data?.sqlServerError || result?.data?.fsxnError) {
-                    let error = [];
+                    const error = [];
                     error.push(result?.data?.sqlServerError || '');
                     error.push(result?.data?.fsxnError || '');
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: error.join(' ') || GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                            message: error.join(' ') || t('databases.register-flow.manage-detect-fail-message')
                         })
                     );
                 } else {
                     // store fsx cred in register obj if payload has fsx register
-                    let isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
+                    const isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
                     const updatedInventoryTableData = updateInstanceStatus(
                         'detect',
                         manageSingleInstanceData,
@@ -187,7 +200,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message || GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                        message: result?.error?.data?.message || t('databases.register-flow.manage-detect-fail-message')
                     })
                 );
             }
@@ -195,7 +208,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: GENERAL.MANAGE_DETECT_FAIL_MESSAGE
+                    message: t('databases.register-flow.manage-detect-fail-message')
                 })
             );
         } finally {
@@ -204,18 +217,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     const goForward = () => {
-        if (wizardOperationType === 'bulk') {
-            if (selectedMultiDetectInstances.length > 0) {
-                handleMultiRegisterResourceCred();
-            } else {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: GENERAL.BULK_INSTANCE_SELECT_TEXT
-                    })
-                );
-            }
-        } else {
+        if (wizardOperationType === ACTION_TYPE.SINGLE) {
             setState({ hitNext: true });
             const fieldsCorrect = detectFieldsValidation(manageSingleInstanceData);
             if (fieldsCorrect) {
@@ -224,9 +226,41 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
     };
 
+    const bulkGoForward = (currentStepIndex: number) => {
+        if (currentStepIndex === 0) {
+            if (selectedMultiDetectInstances.length > 0) {
+                goToNextStep();
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: t('databases.register-flow.bulk-instance-select-text')
+                    })
+                );
+            }
+        } else if (currentStepIndex === 1) {
+            const isAuth = selectedMultiDetectInstances.every((instance: any) => instance?.authorized);
+            if (isAuth) {
+                goToNextStep();
+            } else {
+                setState({ hitNext: true });
+                const fieldsCorrect = detectFieldsValidation(bulkInstanceData);
+                if (fieldsCorrect) {
+                    handleMultiRegisterResourceCred();
+                }
+            }
+        }
+    };
+
     const handleManage = () => {
-        if (wizardOperationType === 'bulk') {
-            // ToDo
+        if (wizardOperationType === ACTION_TYPE.BULK) {
+            handleMultiInstanceManage(
+                bulkDetectedInstanceList,
+                dispatch,
+                manageBulkV2InstanceApi,
+                getJobDetailApi,
+                navigate
+            );
         } else {
             handleSingleInstanceManage(
                 manageSingleInstanceChecks,
@@ -239,41 +273,84 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     return (
-        <WizardFooter className={styles['pw-footer']} style={style}>
-            {currentStepIndex !== 0 && (
-                <DsButton
-                    data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
-                    isThin={true}
-                    onClick={goBack}
-                    variant={'secondary'}
-                >
-                    Previous
-                </DsButton>
+        <>
+            {wizardOperationType !== ACTION_TYPE.BULK && (
+                <WizardFooter className={styles['pw-footer']} style={style}>
+                    {currentStepIndex !== 0 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
+                            isThin
+                            onClick={goBack}
+                            variant="secondary"
+                        >
+                            {t('databases.register-flow.previous')}
+                        </DsButton>
+                    )}
+                    {currentStepIndex < 1 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
+                            isThin
+                            onClick={goForward}
+                            variant="primary"
+                            isLoading={detectHostLoading}
+                            {...rest}
+                        >
+                            {t('databases.register-flow.next')}
+                        </DsButton>
+                    )}
+                    {currentStepIndex === 1 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
+                            isThin
+                            onClick={handleManage}
+                            variant="primary"
+                            {...rest}
+                        >
+                            {t('databases.register-flow.register')}
+                        </DsButton>
+                    )}
+                </WizardFooter>
             )}
-            {currentStepIndex < 1 && (
-                <DsButton
-                    data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
-                    isThin={true}
-                    onClick={goForward}
-                    variant={'primary'}
-                    isLoading={detectHostLoading}
-                    {...rest}
-                >
-                    Next
-                </DsButton>
+
+            {/* This is only for Bulk operation */}
+            {wizardOperationType === ACTION_TYPE.BULK && (
+                <WizardFooter className={styles['pw-footer']} style={style}>
+                    {currentStepIndex !== 0 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
+                            isThin
+                            onClick={goBack}
+                            variant="secondary"
+                        >
+                            {t('databases.register-flow.previous')}
+                        </DsButton>
+                    )}
+                    {currentStepIndex < 2 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
+                            isThin
+                            onClick={() => bulkGoForward(currentStepIndex)}
+                            isLoading={detectHostLoading && currentStepIndex === 1}
+                            variant="primary"
+                            {...rest}
+                        >
+                            {t('databases.register-flow.next')}
+                        </DsButton>
+                    )}
+                    {currentStepIndex === 2 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
+                            isThin
+                            onClick={handleManage}
+                            variant="primary"
+                            {...rest}
+                        >
+                            {t('databases.register-flow.register')}
+                        </DsButton>
+                    )}
+                </WizardFooter>
             )}
-            {currentStepIndex === 1 && (
-                <DsButton
-                    data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
-                    isThin={true}
-                    onClick={handleManage}
-                    variant={'primary'}
-                    {...rest}
-                >
-                    Register
-                </DsButton>
-            )}
-        </WizardFooter>
+        </>
     );
 };
 

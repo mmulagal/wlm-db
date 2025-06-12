@@ -1,12 +1,11 @@
-import styles from './PermissionContent.module.scss';
-import { ReactComponent as Copy } from '../../../../../../../assets/code snippets copy.svg';
 import { DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import React from 'react';
+import { ReactComponent as Copy } from '../../../../../../../assets/code snippets copy.svg';
+import styles from './PermissionContent.module.scss';
 import CopyToClipboardCommon from '../../../../../../../common/CopyToClipboard/copyToClipboard';
 import DialogComponent from '../../../../../../../common/Dialog/DialogComponent';
 import PolicyDialog from './PolicyDialog/PolicyDialog';
-import { GENERAL } from '../../../../../../../utils/appConstants';
 import WellArchitectPolicyDialog from './WellArchitectPolicyDialog/WellArchitectPolicyDialog';
 
 type PermissionBlock = {
@@ -40,7 +39,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
             <DialogComponent
                 header={type}
                 content={<PolicyDialog data={data} label={label} />}
-                primaryButton={GENERAL.CLOSE}
+                primaryButton={t('databases.general.close')}
                 callback={() => {}}
             />
         );
@@ -50,7 +49,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
             <DialogComponent
                 header={type}
                 content={<WellArchitectPolicyDialog data={policies} label={label} />}
-                primaryButton={GENERAL.CLOSE}
+                primaryButton={t('databases.general.close')}
                 callback={() => {}}
             />
         );
@@ -81,7 +80,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                                                 <React.Fragment key={i}>
                                                     <span className={styles['value-inline']}>{val}</span>
                                                     {i < inlineValues.length - 1 && (
-                                                        <span className={styles['separator']}>|</span>
+                                                        <span className={styles.separator}>|</span>
                                                     )}
                                                 </React.Fragment>
                                             ))}
@@ -106,7 +105,7 @@ export const PermissionContent: React.FC<AccordionContentProps> = ({ title, bloc
                     {block.showCopy && (
                         <Popover
                             popoverClass={styles['copy-popover']}
-                            children={'Copied to clipboard'}
+                            children={t('databases.general.copied-to-clipboard')}
                             container={<CopyToClipboardCommon value={block.values} iconProvided={<Copy />} />}
                         />
                     )}

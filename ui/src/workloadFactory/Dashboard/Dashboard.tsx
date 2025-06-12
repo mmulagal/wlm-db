@@ -24,9 +24,10 @@ const Dashboard = () => {
     const savingsDataLoading = useAppSelector(state => state.inventoryV2.dashSandboxSavings.loading);
     const { multiDataLoading } = useAppSelector(state => state.headers);
 
-    const hostStorageSavingsData = useMemo(() => {
-        return getTotalManagedAggrStorageSavings(mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData);
-    }, [mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData]);
+    const hostStorageSavingsData = useMemo(
+        () => getTotalManagedAggrStorageSavings(mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData),
+        [mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData]
+    );
 
     return (
         <div className={styles.dashboard}>

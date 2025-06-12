@@ -1,11 +1,11 @@
 import { Table, useTable, TableTopBar, DsTypography, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useMemo } from 'react';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { useDispatch } from 'react-redux';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
@@ -31,9 +31,7 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             filterOptions: 'auto',
             isSticky: true,
             width: '219px',
-            renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
 
         {
@@ -42,21 +40,19 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             id: '3',
             width: '174px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <div className={styles.rssCell}>
-                        <Popover
-                            popoverClass={''}
-                            children={rowData?.tcpOffloadState}
-                            trigger="hover"
-                            container={<TooltipIcon />}
-                        />
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            {cellData || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                    </div>
-                );
-            }
+            renderCell: (cellData: string, rowData: any) => (
+                <div className={styles.rssCell}>
+                    <Popover
+                        popoverClass=""
+                        children={rowData?.tcpOffloadState}
+                        trigger="hover"
+                        container={<TooltipIcon />}
+                    />
+                    <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            )
         },
         {
             Header: 'Receive queues',
@@ -64,21 +60,19 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             id: '4',
             width: '174px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <div className={styles.rssCell}>
-                        <Popover
-                            popoverClass={''}
-                            children={rowData?.numberOfReceiveQueues}
-                            trigger="hover"
-                            container={<TooltipIcon />}
-                        />
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            {cellData || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                    </div>
-                );
-            }
+            renderCell: (cellData: string, rowData: any) => (
+                <div className={styles.rssCell}>
+                    <Popover
+                        popoverClass=""
+                        children={rowData?.numberOfReceiveQueues}
+                        trigger="hover"
+                        container={<TooltipIcon />}
+                    />
+                    <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            )
         },
         {
             Header: 'RSS profile',
@@ -86,21 +80,19 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             id: '5',
             width: '150px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <div className={styles.rssCell}>
-                        <Popover
-                            popoverClass={''}
-                            children={rowData?.rssProfile}
-                            trigger="hover"
-                            container={<TooltipIcon />}
-                        />
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            {cellData || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                    </div>
-                );
-            }
+            renderCell: (cellData: string, rowData: any) => (
+                <div className={styles.rssCell}>
+                    <Popover
+                        popoverClass=""
+                        children={rowData?.rssProfile}
+                        trigger="hover"
+                        container={<TooltipIcon />}
+                    />
+                    <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            )
         },
         {
             Header: 'RSS status',
@@ -108,21 +100,19 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             id: '6',
             width: '150px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <div className={styles.rssCell}>
-                        <Popover
-                            popoverClass={''}
-                            children={rowData?.rssEnabled}
-                            trigger="hover"
-                            container={<TooltipIcon />}
-                        />
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            {cellData || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                    </div>
-                );
-            }
+            renderCell: (cellData: string, rowData: any) => (
+                <div className={styles.rssCell}>
+                    <Popover
+                        popoverClass=""
+                        children={rowData?.rssEnabled}
+                        trigger="hover"
+                        container={<TooltipIcon />}
+                    />
+                    <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            )
         },
         {
             Header: 'Base processor',
@@ -130,27 +120,25 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             id: '7',
             width: 'auto',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <div className={styles.rssCell}>
-                        <Popover
-                            popoverClass={''}
-                            children={rowData?.baseProcessorNumber}
-                            trigger="hover"
-                            container={<TooltipIcon />}
-                        />
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            {cellData || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                    </div>
-                );
-            }
+            renderCell: (cellData: string, rowData: any) => (
+                <div className={styles.rssCell}>
+                    <Popover
+                        popoverClass=""
+                        children={rowData?.baseProcessorNumber}
+                        trigger="hover"
+                        container={<TooltipIcon />}
+                    />
+                    <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            )
         },
         lastColDetails(type, {}, '222px')
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -174,18 +162,18 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted network adapters`}
-                singularTitle={'Impacted network adapter'}
+                pluralTitle="Impacted network adapters"
+                singularTitle="Impacted network adapter"
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

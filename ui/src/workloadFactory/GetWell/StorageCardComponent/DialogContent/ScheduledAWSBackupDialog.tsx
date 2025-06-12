@@ -1,19 +1,19 @@
 import React, { useMemo } from 'react';
-import styles from './DialogContent.module.scss';
 import { Button, DsTypography, TextField } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import styles from './DialogContent.module.scss';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { setSelectedAWSBackup } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 
 const ScheduledAWSBackupDialog = ({ type }: any) => {
     const dispatch = useDispatch();
     const { selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateHour = useMemo<optionType[]>((): optionType[] => {
         const arr = Array.from({ length: 24 }, (_, i) => (i < 10 ? `0${i}` : `${i}`));
         const options: optionType[] = [];
@@ -25,7 +25,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
         return options;
     }, []);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateMinutes = useMemo<optionType[]>((): optionType[] => {
         const arr = Array.from({ length: 60 }, (_, i) => (i < 10 ? `0${i}` : `${i}`));
         const options: optionType[] = [];
@@ -96,7 +96,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                     <div className={styles.row} style={{ display: 'flex', alignItems: 'center' }}>
                         <div>
                             <SelectField
-                                label={'Hour'}
+                                label="Hour"
                                 isClearable={false}
                                 defaultValue={
                                     selectedAWSBackup?.hour
@@ -128,7 +128,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                         <span>:</span>
                         <div>
                             <SelectField
-                                label={'Minute'}
+                                label="Minute"
                                 isClearable={false}
                                 defaultValue={
                                     selectedAWSBackup?.minute

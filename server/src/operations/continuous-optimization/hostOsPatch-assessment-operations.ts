@@ -193,7 +193,7 @@ async function managedHostOsPatchAssessment(
 async function checkIfPatchBaselineInProgress(credentialsId: string, region: string, instanceIds: string[]) {
     logger.info('Checking if patch baseline is in progress', { credentialsId, region, instanceIds });
 
-    for (const instanceId of instanceIds) {
+    for await (const instanceId of instanceIds) {
         const listPatchBaselineCommandParams = {
             InstanceId: instanceId,
             MaxResults: 50,

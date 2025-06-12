@@ -12,6 +12,7 @@ import isBase64 from 'is-base64';
 import { inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
 import randomize from 'randomatic';
+import { StringValue } from 'ms';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { RegionDetailsType } from '../routes/types/generic.types';
 
@@ -832,7 +833,7 @@ const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 
 };
 
 function getRedisDetails() {
-    logger.info('in getRedisDetails');
+    logger.debug('in getRedisDetails');
     const url = SECRETS.REDIS_PASSWORD ? `${REDIS_SCHEMA}://${SECRETS.REDIS_PASSWORD}@${REDIS_URL}` : REDIS_URL;
     return { url };
 }
@@ -982,7 +983,7 @@ function isPgsql(resourceType: string) {
     return resourceType === DatabaseTypes.PG_SQL;
 }
 
-const isRateLimited = (cacheType: string, cacheKey: string, LIMIT: number, ttl?: string): boolean => {
+const isRateLimited = (cacheType: string, cacheKey: string, LIMIT: number, ttl?: StringValue): boolean => {
     const cacheNum = readFromCacheByKey(cacheType, cacheKey);
     if (!cacheNum) {
         writeToCache(cacheType, cacheKey, 1, ttl);

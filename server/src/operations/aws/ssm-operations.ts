@@ -1,5 +1,5 @@
 import config from 'config';
-import ms from 'ms';
+import ms, { StringValue } from 'ms';
 import createError from 'http-errors';
 import throat from 'throat';
 import {
@@ -33,7 +33,7 @@ import {
 } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
-import { SSMParamterObject, MultipleCommandSsmResponse } from '../../utils/common-types';
+import { SSMParamterObject, MultipleCommandSsmResponse, AWSSDKCacheParams } from '../../utils/common-types';
 import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
@@ -46,7 +46,7 @@ async function pollCommandStatusForAllInstances(
     region: string,
     commandId: string,
     instanceIds: string[],
-    pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
+    pollInterval: number = ms(config.get<StringValue>('ssm.poll-interval')),
     throttleSize: number = 5,
     accountId?: string
 ) {
@@ -94,7 +94,7 @@ async function pollCommandStatus(
     credentialsId: string,
     region: string,
     pollParams: GetCommandInvocationCommandInput,
-    pollInterval: number = ms(config.get<string>('ssm.poll-interval')),
+    pollInterval: number = ms(config.get<StringValue>('ssm.poll-interval')),
     accountId?: string
 ): Promise<GetCommandInvocationCommandOutput> {
     logger.debug('Polling SSM command execution', { pollParams, pollInterval });
@@ -358,7 +358,10 @@ async function getGenericFSxOntapRegionsList(): Promise<{ regions: FSxAvailableR
     }
 }
 
-async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
+async function getFSxOntapRegionsList(
+    credentialsId: string,
+    cacheParams?: AWSSDKCacheParams
+): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
@@ -379,7 +382,7 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
         try {
             [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
                 getParametersByPath(),
-                describeRegions(input, credentialsId)
+                describeRegions(input, credentialsId, cacheParams)
             ]);
         } catch (error: any) {
             if (error?.message?.includes('with an explicit deny in a service control policy')) {
@@ -431,7 +434,7 @@ async function pollSSMConnectionStatus(
     region: string,
     instanceId: string,
     retryCount: number = 1,
-    pollInterval: number = ms(config.get<string>('ssm.connection-poll-interval'))
+    pollInterval: number = ms(config.get<StringValue>('ssm.connection-poll-interval'))
 ) {
     logger.info('Polling SSM connection status', {
         accountId,

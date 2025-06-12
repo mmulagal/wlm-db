@@ -11,7 +11,7 @@ export const WIZARD_TYPE = {
     MSSQL: 'mssql'
 };
 
-//Environments names should be aligned with .env files
+// Environments names should be aligned with .env files
 export const PRODUCTION = 'PRODUCTION';
 export const STAGING = 'STAGING';
 export const LOCAL = 'LOCAL';
@@ -63,15 +63,15 @@ export const TIMELINE_PROD_LINK = 'https://cloudmanager.netapp.com/timeline';
 export const WLMDB_POLICIES_STAGE_LINK = 'https://staging.console.workloads.netapp.com';
 export const WLMDB_POLICIES_PROD_LINK = 'https://console.workloads.netapp.com';
 
-//Retry API on gateway timeout
+// Retry API on gateway timeout
 export const API_MAX_RETRIES = 3;
 export const MIN_RETRY_DELAY = 5000;
 
-//License URL
+// License URL
 export const LICENSE_URL =
     'https://docs.aws.amazon.com/launchwizard/latest/userguide/launch-wizard-getting-started.html#launch-wizard-amis';
 
-//AWS resize URL
+// AWS resize URL
 export const AWS_RESIZE_URL = 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html';
 
 // Regions code list in a fixed order
@@ -242,15 +242,14 @@ export const CURL_REQ_TEMPLATE = (
         --header 'Content-Type: application/json' \\
         --data-raw '${payload}'
         `;
-    } else {
-        return `
+    }
+    return `
         curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --header 'x-netapp-referer: BlueXP' \\
         --data-raw '${payload}'
         `;
-    }
 };
 
 export const PGSQL_CURL_REQ_TEMPLATE = (
@@ -268,15 +267,14 @@ export const PGSQL_CURL_REQ_TEMPLATE = (
         --header 'Content-Type: application/json' \\
         --data-raw '${payload}'
         `;
-    } else {
-        return `
+    }
+    return `
         curl --location --request POST '${baseUrl}/pgsql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --header 'x-netapp-referer: BlueXP' \\
         --data-raw '${payload}'
         `;
-    }
 };
 
 export const CRED_PLACEHOLDERS = {
@@ -420,15 +418,14 @@ export const CREATE_DB_CURL_REQ_TEMPLATE = (
         --header 'Content-Type: application/json' \\
         --data-raw '${payload}'
         `;
-    } else {
-        return `
+    }
+    return `
         curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --header 'x-netapp-referer: BlueXP' \\
         --data-raw '${payload}'
         `;
-    }
 };
 
 export const CREATE_SANDBOX_CURL_REQ_TEMPLATE = (
@@ -446,15 +443,14 @@ export const CREATE_SANDBOX_CURL_REQ_TEMPLATE = (
         --header 'Content-Type: application/json' \\
         --data-raw '${payload}'
         `;
-    } else {
-        return `
+    }
+    return `
         curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/sandboxes' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --header 'x-netapp-referer: BlueXP' \\
         --data-raw '${payload}'
         `;
-    }
 };
 export const UPDATE_SANDBOX_CURL_REQ_TEMPLATE = (
     baseUrl: string,
@@ -488,6 +484,7 @@ export const DETECT_HOST_VAR = {
     MOVE_TO_UNMANAGE: 'move_to_unmanage',
     FSX: 'FSX',
     MSSQL: 'MSSQL',
+    WINDOWS: 'WINDOWS_USER',
     RUNNING: 'Running',
     DISABLE: 'disable',
     SHOW: 'show',
@@ -795,6 +792,7 @@ export const GETWELL_CONFIG: any = {
     'space-reservation-enabled': 'Space reservation',
     'space-allocation-allocated': 'Space allocation',
     'mpio-iscsi-count': 'Multipath I/O Sessions',
+    'mpio-timeout': 'Multipath I/O Timeout',
     'mpio-enabled': 'Multipath I/O Status',
     'mpio-load-balance-policy': 'Multipath I/O Policy',
     'ntfs-allocation-size': 'NTFS allocation unit size',
@@ -891,6 +889,7 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         'space-allocation-allocated': 'luns',
         'mpio-enabled': 'os',
         'mpio-iscsi-count': 'os',
+        'mpio-timeout': 'os',
         'ntfs-allocation-unit-size': 'os',
         'mpio-load-balance-policy': 'os',
         'thin-provision': 'volumes',
@@ -938,4 +937,10 @@ export const ACTION_CTA = {
 export const RESPONSE_STATUS = {
     SUCCESS: 'SUCCESS',
     FAILED: 'FAILED'
+};
+
+// Add any type of action in the below object
+export const ACTION_TYPE = {
+    BULK: 'bulk',
+    SINGLE: 'single'
 };

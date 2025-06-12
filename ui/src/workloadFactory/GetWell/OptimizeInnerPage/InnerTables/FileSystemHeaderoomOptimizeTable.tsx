@@ -1,12 +1,12 @@
 import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './InnerTable.module.scss';
 import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnComponent';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useMemo } from 'react';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
@@ -31,12 +31,14 @@ const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkActio
         }
     ];
 
-    const tableData = useMemo(() => {
-        return data.map((row: any) => ({
-            ...row,
-            cellProps: { ...row.cellProps, isDisabled: true }
-        }));
-    }, [data]);
+    const tableData = useMemo(
+        () =>
+            data.map((row: any) => ({
+                ...row,
+                cellProps: { ...row.cellProps, isDisabled: true }
+            })),
+        [data]
+    );
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -47,9 +49,7 @@ const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkActio
             filterOptions: 'auto',
             isSticky: true,
             width: '366px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
-            }
+            renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
 
         {
@@ -58,9 +58,7 @@ const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkActio
             id: '3',
             width: '366px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'File system headroom percentage',
@@ -68,15 +66,13 @@ const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkActio
             id: '4',
             width: '302px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
         lastColDetails(type, {}, '230px')
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -100,18 +96,18 @@ const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkActio
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted volumes`}
-                singularTitle={'Impacted volume'}
+                pluralTitle="Impacted volumes"
+                singularTitle="Impacted volume"
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

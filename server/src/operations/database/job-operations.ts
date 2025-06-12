@@ -448,6 +448,7 @@ async function updateParentJobStatus(
     }
 
     while (parentJob.status === JOBSTATUS.IN_PROGRESS) {
+        // eslint-disable-next-line no-await-in-loop
         const allSubJobs = await listJobs(accountId, '', '', parentId);
 
         let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
@@ -458,7 +459,7 @@ async function updateParentJobStatus(
             } else if (allSubJobs.every(job => job.status === JOBSTATUS.FAILED)) {
                 jobStatus = JOBSTATUS.FAILED;
             } else if (allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)) {
-                jobStatus = JOBSTATUS.COMPLETED;
+                jobStatus = errorMsg ? JOBSTATUS.WARNING : JOBSTATUS.COMPLETED;
             } else if (
                 isSandboxJob &&
                 allSubJobs.some(
@@ -473,23 +474,30 @@ async function updateParentJobStatus(
             } else {
                 jobStatus = JOBSTATUS.IN_PROGRESS;
             }
+        } else {
+            jobStatus = errorMsg ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED;
+        }
+
+        let errorField = {};
+        if (errorMsg) {
+            errorField = { error: errorMsg };
+        } else if (jobStatus === JOBSTATUS.FAILED) {
+            errorField = { error: GERERIC_JOB_ERROR_MESSAGE };
         }
 
         const modifiedJobData = {
             status: jobStatus,
             endTime: Date.now(),
-            ...(errorMsg
-                ? { error: errorMsg }
-                : jobStatus === JOBSTATUS.FAILED
-                ? { error: GERERIC_JOB_ERROR_MESSAGE }
-                : {})
+            ...errorField
         };
 
         if (jobStatus !== JOBSTATUS.IN_PROGRESS) {
+            // eslint-disable-next-line no-await-in-loop
             await updateJobDetails(accountId, parentId, modifiedJobData);
             return jobStatus;
         }
 
+        // eslint-disable-next-line no-await-in-loop
         await sleep(30000);
     }
 }

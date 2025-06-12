@@ -1,5 +1,8 @@
-import styles from './DialogContent.module.scss';
 import { Button, DsTypography, SelectField } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { optionType } from '@netapp/design-system/dist/components/Select';
+import { useMemo } from 'react';
+import styles from './DialogContent.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
@@ -8,9 +11,6 @@ import {
     setRecommendedInstanceInBulk,
     setSelectedRecommendedInstance
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { useDispatch } from 'react-redux';
-import { optionType } from '@netapp/design-system/dist/components/Select';
-import { useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -45,10 +45,10 @@ const DialogContent = ({
     );
 
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
-        let options: optionType[] = [];
+        const options: optionType[] = [];
         recommendationOptions?.map((option: any) => {
-            let label2 = option?.savingsOpportunity?.savingsOpportunityPercentage
-                ? 'Savings opportunity: ' + option?.savingsOpportunity?.savingsOpportunityPercentage + '%'
+            const label2 = option?.savingsOpportunity?.savingsOpportunityPercentage
+                ? `Savings opportunity: ${option?.savingsOpportunity?.savingsOpportunityPercentage}%`
                 : '';
             options.push(generateOptionType(option?.instanceType, option?.instanceType, label2, false, ''));
         });
@@ -59,10 +59,10 @@ const DialogContent = ({
     }, [recommendationOptions]);
 
     const generateRecommendedInstanceTypesForHost = (instance: any) => {
-        let options: optionType[] = [];
+        const options: optionType[] = [];
         instance?.recommendationOptions?.map((option: any) => {
-            let label2 = option?.savingsOpportunity?.savingsOpportunityPercentage
-                ? 'Savings opportunity: ' + option?.savingsOpportunity?.savingsOpportunityPercentage + '%'
+            const label2 = option?.savingsOpportunity?.savingsOpportunityPercentage
+                ? `Savings opportunity: ${option?.savingsOpportunity?.savingsOpportunityPercentage}%`
                 : '';
             options.push(generateOptionType(option?.instanceType, option?.instanceType, label2, false, ''));
         });
@@ -107,68 +107,65 @@ const DialogContent = ({
         }
     };
 
-    const driveSizeMissingPermissions = (missingPermissions: Array<string>) => {
-        return (
-            <div className={styles['storage-tier-block']}>
-                <div className={styles['first-section']}>
-                    <DsTypography variant="Semibold_14">Action summary</DsTypography>
-                    <DsTypography variant="Regular_14">
-                        Workload Factory recommends increasing the FSx for ONTAP volume size. However, the required
-                        modify permissions are currently missing.
-                    </DsTypography>
-                </div>
+    const driveSizeMissingPermissions = (missingPermissions: Array<string>) => (
+        <div className={styles['storage-tier-block']}>
+            <div className={styles['first-section']}>
+                <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                <DsTypography variant="Regular_14">
+                    Workload Factory recommends increasing the FSx for ONTAP volume size. However, the required modify
+                    permissions are currently missing.
+                </DsTypography>
+            </div>
 
-                <div className={styles['first-section']}>
-                    <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                        Action required
-                    </DsTypography>
-                    <DsTypography variant="Regular_14" style={{ width: '712px' }}>
-                        Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with this
-                        action.
-                    </DsTypography>
-                    <div className={styles.content}>
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
-                            </div>
-                            <DsTypography variant="Regular_14">
-                                Sign in to the AWS Management Console and open the IAM service.
-                            </DsTypography>
+            <div className={styles['first-section']}>
+                <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                    Action required
+                </DsTypography>
+                <DsTypography variant="Regular_14" style={{ width: '712px' }}>
+                    Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with this action.
+                </DsTypography>
+                <div className={styles.content}>
+                    <div className={styles.row}>
+                        <div>
+                            <Bullet />
                         </div>
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
-                            </div>
-                            <DsTypography variant="Regular_14">
-                                Edit the policy for role and add AWS FSx for ONTAP modify permissions.
-                            </DsTypography>
+                        <DsTypography variant="Regular_14">
+                            Sign in to the AWS Management Console and open the IAM service.
+                        </DsTypography>
+                    </div>
+                    <div className={styles.row}>
+                        <div>
+                            <Bullet />
                         </div>
-                        <div className={styles['dialog-body']}>
-                            <div className={styles['code-box']}>
-                                <div className={styles['code']}>
-                                    <DsTypography variant="Regular_14">
-                                        {missingPermissions.map((permission: string) => (
-                                            <DsTypography variant="Regular_14">{permission}</DsTypography>
-                                        ))}
-                                    </DsTypography>
-                                    <div className={styles['copy']}>
-                                        <CopyToClipboardCommon
-                                            value={missingPermissions}
-                                            iconProvided={
-                                                <div className={styles.menuItem}>
-                                                    <CopyIcon />
-                                                </div>
-                                            }
-                                        />
-                                    </div>
+                        <DsTypography variant="Regular_14">
+                            Edit the policy for role and add AWS FSx for ONTAP modify permissions.
+                        </DsTypography>
+                    </div>
+                    <div className={styles['dialog-body']}>
+                        <div className={styles['code-box']}>
+                            <div className={styles.code}>
+                                <DsTypography variant="Regular_14">
+                                    {missingPermissions.map((permission: string) => (
+                                        <DsTypography variant="Regular_14">{permission}</DsTypography>
+                                    ))}
+                                </DsTypography>
+                                <div className={styles.copy}>
+                                    <CopyToClipboardCommon
+                                        value={missingPermissions}
+                                        iconProvided={
+                                            <div className={styles.menuItem}>
+                                                <CopyIcon />
+                                            </div>
+                                        }
+                                    />
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        );
-    };
+        </div>
+    );
 
     const setContent = () => {
         switch (type) {
@@ -391,13 +388,13 @@ const DialogContent = ({
                                 </div>
                                 <div className={styles['dialog-body']}>
                                     <div className={styles['code-box']}>
-                                        <div className={styles['code']}>
+                                        <div className={styles.code}>
                                             <DsTypography variant="Regular_14">
                                                 {missingPermissions.map((permission: string) => (
                                                     <DsTypography variant="Regular_14">{permission}</DsTypography>
                                                 ))}
                                             </DsTypography>
-                                            <div className={styles['copy']}>
+                                            <div className={styles.copy}>
                                                 <CopyToClipboardCommon
                                                     value={missingPermissions}
                                                     iconProvided={
@@ -641,7 +638,7 @@ const DialogContent = ({
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
-                                    <div className={styles['code']}>
+                                    <div className={styles.code}>
                                         <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
                                     </div>
                                 </div>
@@ -703,7 +700,7 @@ const DialogContent = ({
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
-                                    <div className={styles['code']}>
+                                    <div className={styles.code}>
                                         <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
                                     </div>
                                 </div>
@@ -735,6 +732,7 @@ const DialogContent = ({
 
             case 'Multipath I/O Status':
             case 'Multipath I/O Policy':
+            case 'Multipath I/O Timeout':
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -765,7 +763,7 @@ const DialogContent = ({
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
-                                    <div className={styles['code']}>
+                                    <div className={styles.code}>
                                         <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
                                     </div>
                                 </div>
@@ -796,10 +794,10 @@ const DialogContent = ({
                 );
 
             case 'Microsoft SQL Server patch':
-                return <MSSQLPatchDialog type={'mssqlPatch'} missingPatchList={missingPatchList} />;
+                return <MSSQLPatchDialog type="mssqlPatch" missingPatchList={missingPatchList} />;
 
             case 'Operating system patch':
-                return <MSSQLPatchDialog type={'osPatch'} missingPatchList={missingPatchList} />;
+                return <MSSQLPatchDialog type="osPatch" missingPatchList={missingPatchList} />;
 
             case 'Multipath I/O Sessions':
                 return (
@@ -832,7 +830,7 @@ const DialogContent = ({
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
-                                    <div className={styles['code']}>
+                                    <div className={styles.code}>
                                         <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
                                     </div>
                                 </div>
@@ -861,7 +859,6 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
-
             case 'NTFS allocation unit size':
                 return (
                     <div className={styles['storage-tier-block']}>

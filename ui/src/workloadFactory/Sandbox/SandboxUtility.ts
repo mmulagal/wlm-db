@@ -27,43 +27,41 @@ export const generateCreateSandboxPayload = (state: any): CreateSandboxPayloadEn
 const formatAge = (val: any) => {
     if (Number(val) >= 0 && Number(val) <= 30) {
         return '0-30 days';
-    } else if (Number(val) >= 31 && Number(val) <= 60) {
-        return '31-60 days';
-    } else {
-        return '61+ days';
     }
+    if (Number(val) >= 31 && Number(val) <= 60) {
+        return '31-60 days';
+    }
+    return '61+ days';
 };
 
 export const formatSandboxListData = (data: SandboxListEntities) => {
     const retData = data
         .filter(item => !item?.error)
-        .map(item => {
-            return {
-                id: `${item?.databaseHostId}_${item?.databaseInstanceName}_${item?.sandboxName}`,
-                name: item?.sandboxName,
-                databaseHostId: item?.databaseHostId,
-                hostName: item?.databaseHostName,
-                instanceId: item?.databaseInstanceId,
-                instanceName: `${item?.databaseHostName}\\${item?.databaseInstanceName}`,
-                source: item?.sourceDatabaseName,
-                sourceInstanceName: `${item?.sourceDatabaseHostName}\\${item?.sourceDatabaseInstanceName}`,
-                sourceHost: item?.sourceDatabaseHostName,
-                actualUpdated: item?.updatedAt || '',
-                updatedAt: formatDateWithTime(item?.updatedAt || ''),
-                age: `${getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt))} days`,
-                ageByRange: `${formatAge(getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt)))}`,
-                tag: item?.tag,
-                status: 'active',
-                baseSnapshot: item?.baseSnapshot,
-                createdAt: item?.createdAt,
-                ageForSorting: -1 * parseInt(item?.createdAt)
-            };
-        });
+        .map(item => ({
+            id: `${item?.databaseHostId}_${item?.databaseInstanceName}_${item?.sandboxName}`,
+            name: item?.sandboxName,
+            databaseHostId: item?.databaseHostId,
+            hostName: item?.databaseHostName,
+            instanceId: item?.databaseInstanceId,
+            instanceName: `${item?.databaseHostName}\\${item?.databaseInstanceName}`,
+            source: item?.sourceDatabaseName,
+            sourceInstanceName: `${item?.sourceDatabaseHostName}\\${item?.sourceDatabaseInstanceName}`,
+            sourceHost: item?.sourceDatabaseHostName,
+            actualUpdated: item?.updatedAt || '',
+            updatedAt: formatDateWithTime(item?.updatedAt || ''),
+            age: `${getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt))} days`,
+            ageByRange: `${formatAge(getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt)))}`,
+            tag: item?.tag,
+            status: 'active',
+            baseSnapshot: item?.baseSnapshot,
+            createdAt: item?.createdAt,
+            ageForSorting: -1 * parseInt(item?.createdAt)
+        }));
     return retData;
 };
 
 export const getUniqueSourceDatabasesCount = (sandBoxList: SandboxListEntities) => {
-    let uniqueSourceDatabases = new Set();
+    const uniqueSourceDatabases = new Set();
     sandBoxList.map(item => {
         uniqueSourceDatabases.add(
             `${item?.sourceDatabaseHostName}_${item?.sourceDatabaseInstanceName}_${item?.sourceDatabaseName}`
@@ -73,7 +71,7 @@ export const getUniqueSourceDatabasesCount = (sandBoxList: SandboxListEntities) 
 };
 
 export const getSandboxDistributionByAge = (sandBoxList: SandboxListEntities) => {
-    let distribution = {
+    const distribution = {
         '0-30': 0,
         '31-60': 0,
         '61+': 0
@@ -92,17 +90,17 @@ export const getSandboxDistributionByAge = (sandBoxList: SandboxListEntities) =>
 };
 
 export const getSandboxDistributionByAgeValue = (sandBoxList: SandboxListEntities) => {
-    let distribution = getSandboxDistributionByAge(sandBoxList);
-    let distributionUiValue = {
-        '0-30': distribution['0-30'] + ' ' + (distribution['0-30'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES),
-        '31-60': distribution['31-60'] + ' ' + (distribution['31-60'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES),
-        '61+': distribution['61+'] + ' ' + (distribution['61+'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES)
+    const distribution = getSandboxDistributionByAge(sandBoxList);
+    const distributionUiValue = {
+        '0-30': `${distribution['0-30']} ${distribution['0-30'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES}`,
+        '31-60': `${distribution['31-60']} ${distribution['31-60'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES}`,
+        '61+': `${distribution['61+']} ${distribution['61+'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES}`
     };
     return distributionUiValue;
 };
 
 export const getSandboxDistributionByTag = (sandBoxList: SandboxListEntities) => {
-    let distribution: any = {
+    const distribution: any = {
         Development: 0,
         Training: 0,
         QA: 0,
@@ -141,7 +139,8 @@ export const getDefaultDriveLetters = (
             logDrive: logPathDrive === '\\' ? databaseLogPath?.[0]?.split('\\')?.[2] : logPathDrive
         };
     }
-    let defaultDataDriveLetter: any, defaultLogDriveLetter: any;
+    let defaultDataDriveLetter: any;
+    let defaultLogDriveLetter: any;
     if (
         selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT &&
         source?.selectedDatabaseHost?.value === target?.selectedDatabaseHost?.value &&
@@ -215,9 +214,7 @@ export const getDefaultDriveLetters = (
 
 export const getAggregatedSplitEstimate = (volumes: any) => {
     const aggregatedSplitEstimate = volumes
-        ? volumes.reduce((aggEstimate: number, vol: any) => {
-              return aggEstimate + (vol?.splitEstimate || 0);
-          }, 0)
+        ? volumes.reduce((aggEstimate: number, vol: any) => aggEstimate + (vol?.splitEstimate || 0), 0)
         : 0;
     return formatSize(aggregatedSplitEstimate);
 };

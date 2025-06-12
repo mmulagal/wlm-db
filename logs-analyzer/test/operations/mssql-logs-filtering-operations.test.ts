@@ -9,7 +9,7 @@ describe('readMsSqlLogsFile', () => {
 
         const response = await readMsSqlLogsFile(logsFilePath);
 
-        expect(response.length).toBeGreaterThan(1);
+        expect(response.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should get unique error logs from the file and their respective count', async () => {

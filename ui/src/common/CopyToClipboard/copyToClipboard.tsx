@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
-import styles from './copyToClipboard.module.scss';
 import { ReactComponent as CopyIcon } from '@netapp/icons/ic_copy.svg';
 import { DsTooltipInfo, DsTypography } from '@netapp/design-system';
+import styles from './copyToClipboard.module.scss';
 
 interface CopyToClipboardProps {
     tooltipTitle?: string;
@@ -50,7 +50,7 @@ const CopyToClipboardCommon = ({
         <div className={styles.copyToClipboardContainer}>
             <textarea
                 className={styles.contentForCopy}
-                //@ts-ignore
+                // @ts-ignore
                 ref={contentForCopyRef}
                 readOnly
                 value={value}
@@ -63,13 +63,13 @@ const CopyToClipboardCommon = ({
                 status={visible ? 'opened' : 'closed'}
                 icon={
                     <div onClick={() => handleCopy()}>
-                        {iconProvided ? iconProvided : <CopyIcon className={styles.copyToClipboard} />}
+                        {iconProvided || <CopyIcon className={styles.copyToClipboard} />}
                     </div>
                 }
             >
                 <DsTypography
                     style={{ display: tooltipMessage ? 'block' : 'none' }}
-                    className={styles['tooltipDescription']}
+                    className={styles.tooltipDescription}
                     variant="Regular_14"
                 >
                     {tooltipTitle}

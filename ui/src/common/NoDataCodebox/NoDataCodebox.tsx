@@ -6,13 +6,11 @@ type textType = {
     text: string;
 };
 
-const NoDataCodeBox = ({ text }: textType) => {
-    return (
-        <Typography variant="Regular_14" className={styles.nodataCodeBox}>
-            <NoDataIcon />
-            <div>{text}</div>
-        </Typography>
-    );
-};
+const NoDataCodeBox = ({ text }: textType) => (
+    <Typography variant="Regular_14" className={styles.nodataCodeBox}>
+        <NoDataIcon />
+        <div>{text}</div>
+    </Typography>
+);
 
 export default NoDataCodeBox;

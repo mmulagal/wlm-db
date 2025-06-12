@@ -62,19 +62,31 @@ import { PaginationConfiguration } from '@aws-sdk/types';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
+import { addCacheMiddleware } from '../../utils/aws-sdk-middlewares';
+import { AWSSDKCacheParams } from '../../utils/common-types';
 
 const logger = getLogger();
 
-async function getEC2Client(region: string, credentialsId?: string, accountId?: string) {
+async function getEC2Client(
+    region: string,
+    credentialsId?: string,
+    accountId?: string,
+    cacheParams: AWSSDKCacheParams = {}
+): Promise<EC2Client> {
     logger.debug('Getting EC2 client:', region, credentialsId);
+
+    let client: EC2Client;
     if (!credentialsId) {
-        return new EC2Client({ region });
+        client = new EC2Client({ region });
+    } else {
+        const {
+            credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
+        } = await getCredentialsDetails(credentialsId, accountId);
+        const credentials = { accessKeyId, secretAccessKey, sessionToken };
+        client = new EC2Client({ credentials, region });
     }
-    const {
-        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialsDetails(credentialsId, accountId);
-    const credentials = { accessKeyId, secretAccessKey, sessionToken };
-    return new EC2Client({ credentials, region });
+
+    return addCacheMiddleware(client, { ...cacheParams, credentialsId });
 }
 
 async function describeVpc(credentialsId: string, region: string, params: DescribeVpcsRequest) {
@@ -88,10 +100,15 @@ async function describeVpc(credentialsId: string, region: string, params: Descri
     return resp;
 }
 
-async function paginatedDescribeVpcs(credentialsId: string, region: string, params: DescribeVpcsRequest) {
+async function paginatedDescribeVpcs(
+    credentialsId: string,
+    region: string,
+    params: DescribeVpcsRequest,
+    cacheParams?: AWSSDKCacheParams
+) {
     logger.info('Describe VPC', { region, params });
 
-    const ec2 = await getEC2Client(region, credentialsId);
+    const ec2 = await getEC2Client(region, credentialsId, undefined, cacheParams);
 
     const vpcList = [];
     for await (const { Vpcs } of paginateDescribeVpcs({ client: ec2 }, params)) {
@@ -114,10 +131,15 @@ async function describeSubnets(credentialsId: string, region: string, params: De
     return resp;
 }
 
-async function paginatedDescribeSubnets(credentialsId: string, region: string, params: DescribeVpcsRequest) {
+async function paginatedDescribeSubnets(
+    credentialsId: string,
+    region: string,
+    params: DescribeVpcsRequest,
+    cacheParams?: AWSSDKCacheParams
+) {
     logger.info('Describe VPC', { region, params });
 
-    const ec2 = await getEC2Client(region, credentialsId);
+    const ec2 = await getEC2Client(region, credentialsId, undefined, cacheParams);
 
     const subnetList = [];
     for await (const { Subnets } of paginateDescribeSubnets({ client: ec2 }, params)) {
@@ -143,11 +165,12 @@ async function describeSecurityGroups(credentialsId: string, region: string, par
 async function getAmis(
     credentialsId: string,
     region: string,
-    params: DescribeImagesCommandInput
+    params: DescribeImagesCommandInput,
+    cacheParams?: AWSSDKCacheParams
 ): Promise<DescribeImagesCommandOutput> {
     logger.info('Get AMIs', { credentialsId, region, params });
 
-    const ec2 = await getEC2Client(region, credentialsId);
+    const ec2 = await getEC2Client(region, credentialsId, undefined, cacheParams);
 
     const resp = await ec2.send(new DescribeImagesCommand(params));
     logger.debug('DescribeImagesCommand response:', resp);
@@ -158,11 +181,12 @@ async function getAmis(
 async function describeInstance(
     credentialsId: string,
     region: string,
-    params: DescribeInstancesCommandInput
+    params: DescribeInstancesCommandInput,
+    cacheParams?: AWSSDKCacheParams
 ): Promise<DescribeInstancesCommandOutput> {
     logger.info('Describe EC2 instance', { credentialsId, region, params });
 
-    const client = await getEC2Client(region, credentialsId);
+    const client = await getEC2Client(region, credentialsId, undefined, cacheParams);
     const response = await client.send(new DescribeInstancesCommand(params));
     logger.debug('Describe instance response:', response);
 
@@ -171,11 +195,12 @@ async function describeInstance(
 
 async function describeRegions(
     input: DescribeRegionsCommandInput,
-    credentialsId?: string
+    credentialsId?: string,
+    cacheParams?: AWSSDKCacheParams
 ): Promise<DescribeRegionsCommandOutput> {
     logger.info('Describe AWS regions:', { credentialsId, input });
 
-    const client = await getEC2Client(DEFAULT_AWS_REGION, credentialsId);
+    const client = await getEC2Client(DEFAULT_AWS_REGION, credentialsId, undefined, cacheParams);
     const response = await client.send(new DescribeRegionsCommand(input));
     logger.debug('Describe AWS regions response:', response);
 
@@ -358,10 +383,15 @@ async function describeInstanceTypeOfferings(
     return response;
 }
 
-async function describeVolumes(credentialsId: string, region: string, params: DescribeVolumesCommandInput) {
+async function describeVolumes(
+    credentialsId: string,
+    region: string,
+    params: DescribeVolumesCommandInput,
+    cacheParams?: AWSSDKCacheParams
+) {
     logger.info('Describe volumes', { region, params });
 
-    const ec2 = await getEC2Client(region, credentialsId);
+    const ec2 = await getEC2Client(region, credentialsId, undefined, cacheParams);
 
     const resp = await ec2.send(new DescribeVolumesCommand(params));
     logger.debug('descibeVolumes response:', resp);
@@ -369,10 +399,15 @@ async function describeVolumes(credentialsId: string, region: string, params: De
     return resp;
 }
 
-async function describeSnapshots(credentialsId: string, region: string, params: DescribeSnapshotsCommandInput) {
+async function describeSnapshots(
+    credentialsId: string,
+    region: string,
+    params: DescribeSnapshotsCommandInput,
+    cacheParams?: AWSSDKCacheParams
+) {
     logger.info('Describe snapshots', { region, params });
 
-    const ec2 = await getEC2Client(region, credentialsId);
+    const ec2 = await getEC2Client(region, credentialsId, undefined, cacheParams);
 
     const resp = await ec2.send(new DescribeSnapshotsCommand(params));
     logger.debug('descibeSnapshots response:', resp);
@@ -399,11 +434,12 @@ async function paginateDescribeEbsVolumes(
     credentialsId: string,
     region: string,
     params: DescribeVolumesCommandInput,
-    accountId?: string
+    accountId?: string,
+    cacheParams?: AWSSDKCacheParams
 ): Promise<Volume[]> {
     logger.info('Paginate describe EBS volumes', { region, credentialsId, params, accountId });
 
-    const ec2 = await getEC2Client(region, credentialsId, accountId);
+    const ec2 = await getEC2Client(region, credentialsId, accountId, cacheParams);
 
     const volumeList = [];
     for await (const { Volumes } of paginateDescribeVolumes({ client: ec2 }, params)) {
@@ -497,11 +533,12 @@ async function describeInstancesWithPagination(
     region: string,
     params: DescribeInstancesCommandInput,
     pageSize = 10,
-    nextToken?: string
+    nextToken?: string,
+    cacheParams?: AWSSDKCacheParams
 ) {
     logger.info('Paginate describe instances', { region, params });
 
-    const ec2 = await getEC2Client(region, credentialsId);
+    const ec2 = await getEC2Client(region, credentialsId, undefined, cacheParams);
     const paginatorConfig: PaginationConfiguration = {
         client: ec2,
         pageSize,

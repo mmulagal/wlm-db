@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 
 export const downloadTerraformZip = (deploymentModel?: string, from = 'mssql') => {
     // Create a new instance of JSZip
-    var zip = new JSZip();
+    const zip = new JSZip();
 
     // Add files to the ZIP
     zip.file(
@@ -1386,9 +1386,9 @@ variable "sql_node_initialization_s3_url" {
     zip.folder('modules');
 
     // Generate the ZIP file
-    zip.generateAsync({ type: 'blob' }).then(function (content) {
+    zip.generateAsync({ type: 'blob' }).then(content => {
         // Create an anchor element
-        var link = document.createElement('a');
+        const link = document.createElement('a');
         link.href = URL.createObjectURL(content);
 
         if (from === 'pgsql') {

@@ -1,8 +1,8 @@
 import { Button } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { handleCreateUserDb } from './createUserDBPayload';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { useCreateUserDBMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
@@ -10,6 +10,7 @@ import {
     FORM_TO_WLF_NAVIGATE_BLUEXP,
     FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
     FORM_TO_WLF_NAVIGATE_INVENTORY,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     WLF_TABS
 } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
@@ -46,7 +47,7 @@ const CreateNewUserFooter = () => {
                     credentialId: cdbCredId,
                     region: cdbRegionId,
                     id: resourceId,
-                    payload: payload
+                    payload
                 });
                 dispatch(setIsLoading(false));
                 if (result && !result?.error) {
@@ -64,9 +65,9 @@ const CreateNewUserFooter = () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                     dispatch(updateRefreshBlocked(true));
                                     if (isWorkloadFactoryStatus) {
-                                        navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
+                                        navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
                                     } else {
-                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
+                                        navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
                                     }
 
                                     dispatch(clearNotifications());
@@ -94,7 +95,7 @@ const CreateNewUserFooter = () => {
                     }
                     dispatch(updateRefreshBlocked(true));
                     if (isWorkloadFactoryStatus) {
-                        navigate('../databases');
+                        navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
                     } else {
                         navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
                     }
@@ -108,7 +109,7 @@ const CreateNewUserFooter = () => {
 
     return (
         <>
-            <Button isThin onClick={handleCreate} id={'db-create-button'}>
+            <Button isThin onClick={handleCreate} id="db-create-button">
                 {GENERAL.CREATE}
             </Button>
             <Button isThin variant="secondary" onClick={closeHandler}>

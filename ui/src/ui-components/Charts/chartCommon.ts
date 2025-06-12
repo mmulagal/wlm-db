@@ -42,8 +42,8 @@ export const fullColors = fullColorsToken.map(token => `var(--${token})`);
 
 export const hexToRgb = (hex: any) =>
     hex
-        //@ts-ignore
-        .replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => '#' + r + r + g + g + b + b)
+        // @ts-ignore
+        .replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => `#${r}${r}${g}${g}${b}${b}`)
         .substring(1)
         .match(/.{2}/g)
         .map((x: any) => parseInt(x, 16));

@@ -61,12 +61,17 @@ interface MsSqlErrorLog {
     error: string;
 }
 
-interface ErrorLogWithScript {
+interface ErrorLog {
     error: string;
     cause: string;
     count: number;
     severity: string | number;
-    sql: { query: string }[];
+}
+interface ErrorLogWithScript extends ErrorLog {
+    sql?: { query: string }[];
 }
 
-export { MessageObj, ToolUse, ErrorLg, ToolSpec, MsSqlErrorLog, ErrorLogWithScript };
+interface ErrorLogWithAdditionalInfo extends ErrorLog {
+    additionalInfo?: string;
+}
+export { MessageObj, ToolUse, ErrorLg, ToolSpec, MsSqlErrorLog, ErrorLogWithScript, ErrorLogWithAdditionalInfo };

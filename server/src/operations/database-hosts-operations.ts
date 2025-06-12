@@ -589,9 +589,14 @@ async function getEc2ResourceInfo(
 ): Promise<EstimationEc2Type> {
     logger.info('Getting EC2 resource info:', { credentialsId, region, activeNodeInstanceId });
 
-    const ec2Info: DescribeInstancesCommandOutput = await describeInstance(credentialsId, region!, {
-        InstanceIds: [activeNodeInstanceId]
-    });
+    const ec2Info: DescribeInstancesCommandOutput = await describeInstance(
+        credentialsId,
+        region!,
+        {
+            InstanceIds: [activeNodeInstanceId]
+        },
+        { useCache: true }
+    );
     const { Reservations: [{ Instances: [instance] = [] } = {}] = [] } = ec2Info;
     let getRootVolumePromise = Promise.resolve({});
     if (instance.RootDeviceType === DeviceType.ebs) {
@@ -601,12 +606,19 @@ async function getEc2ResourceInfo(
         if (rootEbsVolume) {
             const rootVolumeId = rootEbsVolume.Ebs?.VolumeId;
             if (rootVolumeId) {
-                getRootVolumePromise = describeVolumes(credentialsId, region, { VolumeIds: [rootVolumeId] });
+                getRootVolumePromise = describeVolumes(
+                    credentialsId,
+                    region,
+                    { VolumeIds: [rootVolumeId] },
+                    {
+                        useCache: true
+                    }
+                );
             }
         }
     }
     const [amiInfo, volumes] = await Promise.all([
-        getAmis(credentialsId, region, { ImageIds: [instance.ImageId!] }),
+        getAmis(credentialsId, region, { ImageIds: [instance.ImageId!] }, { useCache: true }),
         getRootVolumePromise
     ]);
     logger.debug('Estimation info for AMI:', amiInfo);
@@ -648,7 +660,9 @@ async function getFsxResourceInfo(
 ): Promise<EstimationFSxType> {
     logger.info('Getting FSx resource info:', { credentialsId, region, filesystemIds });
 
-    const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: filesystemIds });
+    const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: filesystemIds }, undefined, {
+        useCache: true
+    });
 
     const filesystems = fsxInfo?.FileSystems || [];
     const response = filesystems.map(
@@ -706,7 +720,7 @@ async function getEbsResourceInfo(
             volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
         }
     } else {
-        volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
+        volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds }, { useCache: true });
     }
 
     if (!volumes?.Volumes || volumes.Volumes.length === 0) {
@@ -784,7 +798,12 @@ async function getNodeTopology(
         if (!isEmpty(activeNodeInstanceId)) {
             // fetch instance details only if there is atleast one active node
             try {
-                ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
+                ec2InstanceDetails = await describeInstance(
+                    credentialsId,
+                    region,
+                    { InstanceIds: instanceIds },
+                    { useCache: true }
+                );
                 const node1 = ec2InstanceDetails.Reservations?.[0]?.Instances?.[0];
                 const node2 = ec2InstanceDetails.Reservations?.[1]?.Instances?.[0];
                 if (node1) {
@@ -1599,9 +1618,12 @@ async function getInstanceOntapDetails(
     region: string
 ): Promise<Record<string, { fsxId: string; svmUuid: string | undefined }>> {
     const [fsxId] = instance?.fsxn_ids?.split(',') || [];
-    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(credentialsId, region, [
-        fsxId
-    ]);
+    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region,
+        [fsxId],
+        { useCache: true }
+    );
     const instanceLevelSvm = svms.find(
         svm => svm?.StorageVirtualMachineId === (instance.fsx_svm_id as Record<string, string>)[fsxId]
     );
@@ -2216,7 +2238,9 @@ async function getAllClusterNodeDetails(
     );
     const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails);
     const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
-    const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNetworkIps);
+    const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNetworkIps, {
+        useCache: true
+    });
     return compact(
         clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => ({ ec2InstanceId, ec2InstanceName }))
     );

@@ -1,13 +1,13 @@
 import { DsTypography, Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
+import { useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './ManagedHostDialog.module.scss';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
-import { useEffect, useRef, useState } from 'react';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { setManageHostSelectedRows } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../../../utils/appConstants';
 import { uniqueHostRow } from '../../InventoryUtilsV2';
@@ -22,7 +22,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
 
     useEffect(() => {
         const dbInstances = dialogData?.sqlServerInstances;
-        let output = dbInstances.map((obj: any) => {
+        const output = dbInstances.map((obj: any) => {
             const isInstanceInProgress = inProgressInstances.has(
                 uniqueHostRow(
                     `${dialogData?.ec2InstanceId}_${obj?.databaseInstanceName}`,
@@ -68,9 +68,8 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                     statusColText: isInstanceInProgress ? INVENTORY_STATUS.IN_PROGRESS : obj.statusColText,
                     storageType: dialogData?.storageType
                 };
-            } else {
-                return { ...obj, cellProps: { isDisabled: false }, storageType: dialogData?.storageType };
             }
+            return { ...obj, cellProps: { isDisabled: false }, storageType: dialogData?.storageType };
         });
         let defaultSelection = dbInstances.map((item: any) => {
             const isInstanceInProgress = inProgressInstances.has(
@@ -81,9 +80,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             }
         });
 
-        defaultSelection = defaultSelection.filter(function (element: any) {
-            return element !== undefined;
-        });
+        defaultSelection = defaultSelection.filter((element: any) => element !== undefined);
         defaultRef.current = defaultSelection;
 
         setData(output);
@@ -96,9 +93,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             id: '1',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: string, rowData: any) => {
-                return <DsTypography variant="Regular_14">{cellData}</DsTypography>;
-            }
+            renderCell: (cellData: string, rowData: any) => <DsTypography variant="Regular_14">{cellData}</DsTypography>
         },
         {
             Header: 'Status',
@@ -108,10 +103,10 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
+                    return <DotComponent color="var(--toggle-off-bg)" value={INVENTORY_STATUS.UNMANAGED} />;
                 }
                 if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
+                    return <DotComponent color="var(--toggle-off-bg)" value={INVENTORY_STATUS.UNDETECTED} />;
                 }
                 if (rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS) {
                     return (
@@ -122,7 +117,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                     );
                 }
                 if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
-                    return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
+                    return <DotComponent color="var(--success)" value={INVENTORY_STATUS.MANAGED} />;
                 }
             }
         },
@@ -132,9 +127,9 @@ const ManagedHostDialog = ({ dialogData }: any) => {
             id: '3',
             width: '180px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return <DsTypography variant="Regular_14">{cellData || GENERAL.NOT_AVAILABLE}</DsTypography>;
-            }
+            renderCell: (cellData: string, rowData: any) => (
+                <DsTypography variant="Regular_14">{cellData || GENERAL.NOT_AVAILABLE}</DsTypography>
+            )
         },
         {
             Header: '',
@@ -145,9 +140,9 @@ const ManagedHostDialog = ({ dialogData }: any) => {
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
 
         isSorting: false,
@@ -155,12 +150,12 @@ const ManagedHostDialog = ({ dialogData }: any) => {
         columns: managedHostDialogColDefs,
         rows: data,
         pageSize: 10,
-        //@ts-ignore
+        // @ts-ignore
         defaultSelectedRows: defaultRef.current
     });
 
     useEffect(() => {
-        let selectedRows: any = [];
+        const selectedRows: any = [];
         const selectionStateRows: any = tableProps.selectionState?.rows;
         Object.keys(selectionStateRows).map(key => {
             if (selectionStateRows[key]) {
@@ -180,7 +175,7 @@ const ManagedHostDialog = ({ dialogData }: any) => {
                 singularTitle={''}
             /> */}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
                 variant="innerTable"
             />

@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, Typography } from '@netapp/design-system';
-import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+import { GENERAL } from '../../../../utils/appConstants';
 import styles from './InstanceType.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setInstanceType } from '../../../../store/mssql/mssqlFormSlice';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
@@ -15,7 +15,7 @@ import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 const InstanceType = () => {
     const dispatch = useDispatch();
 
-    //Getting the Data from state
+    // Getting the Data from state
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(state => state.mssql.getInstanceTypeList);
     const selectedInstanceType = useAppSelector(state => state.mssqlForm.instanceType);
     const selectedLicense = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
@@ -25,7 +25,7 @@ const InstanceType = () => {
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
     const isRecommendedInstance = useAppSelector(state => state.msSqlAction.isRecommendedInstance);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
         let options: optionType[] = [];
         let default_instance_item = null;
@@ -34,13 +34,13 @@ const InstanceType = () => {
             const value = val?.instanceType || '';
             let label2 = '';
             if (val?.vCpus) {
-                label2 += val?.vCpus + 'vCPU, ';
+                label2 += `${val?.vCpus}vCPU, `;
             }
             if (val?.ramInMib) {
-                label2 += formatSize(val?.ramInMib, 'mib') + ' RAM, ';
+                label2 += `${formatSize(val?.ramInMib, 'mib')} RAM, `;
             }
             if (val?.iopsInMbps) {
-                label2 += val?.iopsInMbps + 'Mbps';
+                label2 += `${val?.iopsInMbps}Mbps`;
             }
             const option = generateOptionType(value, value, label2, false, '', val);
             if (value === DEAFULT_INSTANCE_VALUE) {
@@ -71,7 +71,7 @@ const InstanceType = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateInstances]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (

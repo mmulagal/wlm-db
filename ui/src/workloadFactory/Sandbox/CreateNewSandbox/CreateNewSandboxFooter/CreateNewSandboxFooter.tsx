@@ -1,7 +1,7 @@
 import { Button } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
-import { GENERAL } from '../../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
+import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { handleCreateNewSandbox } from './CreateNewSandboxPayload';
 import styles from './CreateNewSandboxFooter.module.scss';
@@ -45,7 +45,7 @@ const CreateNewSandboxFooter = () => {
                 const result: any = await createNewSandbox({
                     credentialId: state.createSandbox?.selectedSandboxCredId,
                     region: state.createSandbox?.selectedSandboxRegionId,
-                    payload: payload
+                    payload
                 });
                 dispatch(setIsLoading(false));
                 if (result && !result?.error) {
@@ -98,14 +98,12 @@ const CreateNewSandboxFooter = () => {
     };
     return (
         <>
-            <>
-                <Button isThin onClick={handleCreate} id={'db-create-button'}>
-                    {GENERAL.CREATE}
-                </Button>
-                <Button isThin variant="secondary" onClick={closeHandler}>
-                    {GENERAL.CLOSE}
-                </Button>
-            </>
+            <Button isThin onClick={handleCreate} id="db-create-button">
+                {GENERAL.CREATE}
+            </Button>
+            <Button isThin variant="secondary" onClick={closeHandler}>
+                {GENERAL.CLOSE}
+            </Button>
         </>
     );
 };

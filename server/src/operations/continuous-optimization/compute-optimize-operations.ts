@@ -180,27 +180,29 @@ async function handleComputeRemediation(
 
                     try {
                         // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
-                        for (const nodeId of nonPrimaryNodeInstanceIds) {
-                            const { ec2InstanceType: oldInstanceType = '' } =
-                                clusterNodeDetails.find(node => node.ec2InstanceId === nodeId) || {};
-                            const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
-                                accountId,
-                                credentialsId,
-                                region,
-                                nodeId,
-                                instanceType,
-                                fsxId,
-                                svmId,
-                                changeInstanceTypeJobId,
-                                formattedInstanceName
-                            );
-                            modifiedInstancesNodeDetails.push({
-                                ec2InstanceId,
-                                oldDnsAddresses,
-                                oldInstanceType,
-                                isPrimaryNode: false
-                            });
-                        }
+                        await Promise.all(
+                            nonPrimaryNodeInstanceIds.map(async nodeId => {
+                                const { ec2InstanceType: oldInstanceType = '' } =
+                                    clusterNodeDetails.find(node => node.ec2InstanceId === nodeId) || {};
+                                const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    nodeId,
+                                    instanceType,
+                                    fsxId,
+                                    svmId,
+                                    changeInstanceTypeJobId,
+                                    formattedInstanceName
+                                );
+                                modifiedInstancesNodeDetails.push({
+                                    ec2InstanceId,
+                                    oldDnsAddresses,
+                                    oldInstanceType,
+                                    isPrimaryNode: false
+                                });
+                            })
+                        );
                         logger.info('Instance type updated for all secondary nodes in the cluster');
 
                         await updateJobDetails(accountId, changeInstanceTypeJobId, {
@@ -981,7 +983,7 @@ async function transferClusterOwnershipToStandbyNode(
         clusterNodes = clusterNodes.filter((nodeName: string) => nodeName !== currentNode);
         // pick one of the nodes in the cluster to transfer primary node ownership
         let targetNodeName;
-        for (const nodeName of clusterNodes) {
+        for await (const nodeName of clusterNodes) {
             const resp = await callSsmExecution(
                 credentialsId,
                 region,
@@ -1113,20 +1115,22 @@ async function handleRollbackInstanceTypeChange(
     );
 
     try {
-        for (const { ec2InstanceId, oldDnsAddresses, oldInstanceType } of modifiedInstancesNodeDetails) {
-            await updateNodeInstanceType(
-                accountId,
-                credentialsId,
-                region,
-                ec2InstanceId,
-                oldInstanceType,
-                storageDetails.fsxId,
-                storageDetails.svmId,
-                rollBackInstanceTypeJobId,
-                formattedInstanceName,
-                oldDnsAddresses
-            );
-        }
+        await Promise.all(
+            modifiedInstancesNodeDetails.map(({ ec2InstanceId, oldDnsAddresses, oldInstanceType }) =>
+                updateNodeInstanceType(
+                    accountId,
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    oldInstanceType,
+                    storageDetails.fsxId,
+                    storageDetails.svmId,
+                    rollBackInstanceTypeJobId,
+                    formattedInstanceName,
+                    oldDnsAddresses
+                )
+            )
+        );
         await updateJobDetails(accountId, rollBackInstanceTypeJobId, {
             status: JOBSTATUS.COMPLETED,
             endTime: Date.now()

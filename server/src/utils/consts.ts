@@ -1752,6 +1752,8 @@ const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-ag
 const OTHER_CLONE = 'other';
 const POSTPONE_AGE: number = config.has('postpone-age-in-days') ? config.get('postpone-age-in-days') : 30; // Fall Back to 30 days as default if not set in config
 
+const WF_NOTIFICATION_RESOURCE_TYPE = 'DB';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -2106,5 +2108,6 @@ export {
     CLONE_ACTION,
     OTHER_CLONE,
     ORACLE_INSTANCE_STATE,
-    POSTPONE_AGE
+    POSTPONE_AGE,
+    WF_NOTIFICATION_RESOURCE_TYPE
 };

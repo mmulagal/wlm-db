@@ -1,8 +1,8 @@
 import { AccordionCard, AccordionCardContent, ToggleSelector, Typography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './CloudWatch.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
 import { setCloudWatch } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
@@ -18,10 +18,8 @@ const CloudWatch = ({ wizardType }: CloudWatchProps) => {
     const toggle = useAppSelector(state => state.mssqlForm.cloudWatch);
     const databaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
     const { isDemoMode } = useAppSelector(state => state.auth);
-    //Set the Header text here
-    const setHeader = () => {
-        return <Typography variant="Regular_14">{toggle ? 'Enabled' : 'Disabled'}</Typography>;
-    };
+    // Set the Header text here
+    const setHeader = () => <Typography variant="Regular_14">{toggle ? 'Enabled' : 'Disabled'}</Typography>;
 
     const handleChange = () => {
         dispatch(setCloudWatch(!toggle));

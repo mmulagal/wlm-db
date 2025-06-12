@@ -1,5 +1,6 @@
 import { InferenceConfigType } from '../../routes/types/logs-analyzer.types';
 import getLogger from '../../utils/logger';
+import { LOG_LEVEL } from '../../utils/logs-analyzer/logs-analyzer-consts';
 
 const logger = getLogger();
 
@@ -7,37 +8,7 @@ function getWindowsBedrockAvailabilityCheckScript(region: string, modelId: strin
     return `
 
 # Bedrock Availability Check Script
-$psGallery = Get-PSRepository -Name 'PSGallery' -ErrorAction SilentlyContinue
-if (-not $psGallery) {
-    try {
-        Register-PSRepository -Default -ErrorAction Stop
-        Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted -ErrorAction Stop
-    } catch {}
-} else {
-    Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted -ErrorAction SilentlyContinue
-}
-
-# Ensure NuGet provider is available
-if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
-    try {
-        Install-PackageProvider -Name NuGet -Force -Scope AllUsers -ErrorAction Stop
-    } catch {}
-}
-
-
 $moduleFound = Get-Module -ListAvailable -Name AWS.Tools.BedrockRuntime
-if (-not $moduleFound) {
-    try {
-        Install-Module -Name AWS.Tools.BedrockRuntime -Force -Scope AllUsers -ErrorAction Stop
-    } catch {
-        if ($_.Exception.Message -like '*may override the existing commands*') {
-            try {
-                Install-Module -Name AWS.Tools.BedrockRuntime -Force -Scope AllUsers -AllowClobber -ErrorAction Stop
-            } catch {}
-        }
-    }
-    $moduleFound = Get-Module -ListAvailable -Name AWS.Tools.BedrockRuntime
-}
 
 if (-not $moduleFound) {
     $result = @{
@@ -46,39 +17,34 @@ if (-not $moduleFound) {
         error = "AWS.Tools.BedrockRuntime not found."
     }
     $result | ConvertTo-Json -Depth 5
-    exit 1
-}
-
-if ($moduleFound) {
+} elseif ($moduleFound) {
     try {
         Import-Module AWS.Tools.BedrockRuntime -ErrorAction Stop
-    } catch {}
-}
 
-$region = "${region}"
-$modelId = "${modelId}"
+        $region = "${region}"
+        $modelId = "${modelId}"
 
-try {
-    $contentBlock = New-Object Amazon.BedrockRuntime.Model.ContentBlock
-    $contentBlock.Text = "Hello"
-    $message = New-Object Amazon.BedrockRuntime.Model.Message
-    $message.Role = "user"
-    $message.Content = $contentBlock
-    $response = Invoke-BDRRConverse -ModelId $modelId -Messages $message -Region $region
-    $result = @{
-        success = $true
-        response = $response | ConvertTo-Json -Depth 10
-        error = $null
+        $contentBlock = New-Object Amazon.BedrockRuntime.Model.ContentBlock
+        $contentBlock.Text = "Hello"
+        $message = New-Object Amazon.BedrockRuntime.Model.Message
+        $message.Role = "user"
+        $message.Content = $contentBlock
+        $response = Invoke-BDRRConverse -ModelId $modelId -Messages $message -Region $region
+        $result = @{
+            success = $true
+            response = $response | ConvertTo-Json -Depth 10
+            error = $null
+        }
+    } catch {
+        $result = @{
+                success = $false
+                response = $null
+                error = $_.Exception.Message
+            }
     }
-} catch {
-    $result = @{
-        success = $false
-        response = $null
-        error = $_.Exception.Message
-    }
+    $result | ConvertTo-Json -Depth 5
+    exit 0
 }
-$result | ConvertTo-Json -Depth 5
-exit 0
 `;
 }
 
@@ -119,6 +85,8 @@ function getWindowsPrepareScript(scriptParams: {
     s3SignedUrl: string;
     packageName: string;
     logsPath: string;
+    sqlAuthEnabled?: boolean;
+    databaseInstanceName?: string;
     version: string;
     instanceId: string;
     region: string;
@@ -131,6 +99,8 @@ function getWindowsPrepareScript(scriptParams: {
         s3SignedUrl,
         packageName,
         logsPath,
+        sqlAuthEnabled,
+        databaseInstanceName,
         version,
         instanceId,
         region,
@@ -150,7 +120,9 @@ function getWindowsPrepareScript(scriptParams: {
     try {
         $s3SignedUrl = "${s3SignedUrl}";
         $packageName = "${packageName}";
-        $logsPath = "${logsPath}";
+        $logsPath = "${encodeURIComponent(logsPath)}";
+        $sqlAuthEnabled = $${sqlAuthEnabled};
+        $databaseInstanceName = "${databaseInstanceName}";
         $version = "${version}";
         $instanceId = "${instanceId}";
         $region = "${region}";
@@ -160,6 +132,7 @@ function getWindowsPrepareScript(scriptParams: {
         $temperature = ${temperature};
         $maxTokens = ${maxTokens};
         $topP = ${topP};
+        $logLevel = '${LOG_LEVEL}';
 
         function Invoke-RetryCommand {
             param ([scriptblock]$Command, [int]$Retries = 5)
@@ -182,21 +155,37 @@ function getWindowsPrepareScript(scriptParams: {
         if (-not (Test-Path $filePath)) {
             Invoke-RetryCommand {
                 Invoke-WebRequest -Uri $s3SignedUrl -OutFile $filePath
+            }           
+            try {
+                icacls $filePath /grant Everyone:F > $null 2>&1
+            } catch {
+                throw "Failed to set permissions: $($_.Exception.Message)"
             }
+            
             Get-ChildItem -Path . -Filter "$packageName-*.exe" | Where-Object { $_.Name -ne "$packageName-$version.exe" } | Remove-Item -Force
         }
 
-        try {
-            icacls $filePath /grant Everyone:F
-        } catch {
-            throw "Failed to set permissions: $($_.Exception.Message)"
-        }
 
         try {
             if (-Not (Test-Path $filePath)) {
                 throw "The specified file does not exist."
             }
-            Start-Process -FilePath $filePath -ArgumentList "--logs-path $logsPath --log-level info --region $region --model-id $modelId --model-region $modelRegion --job-id $jobId --instance-id $instanceId --temperature $temperature --maxTokens $maxTokens --topP $topP" -NoNewWindow -Wait
+
+            $argumentList = @(
+                '--logs-path', $logsPath,
+                '--sql-auth-enabled', $sqlAuthEnabled,
+                '--database-instance-name', $databaseInstanceName,
+                '--log-level', $logLevel,
+                '--region', $region,
+                '--model-id', $modelId,
+                '--model-region', $modelRegion,
+                '--job-id', $jobId,
+                '--instance-id', $instanceId,
+                '--temperature', $temperature,
+                '--max-tokens', $maxTokens,
+                '--top-p', $topP
+            )
+            Start-Process -FilePath $filePath -ArgumentList $argumentList -NoNewWindow -Wait  > $null 2>&1
         } catch {
             throw "Failed to run Logs Analyzer: $($_.Exception.Message)"
         }
@@ -250,18 +239,19 @@ function getLinuxPrepareScript(scriptParams: {
     # Logs Analysis Linux Prepare Script
     #!/bin/bash
 
-s3SignedUrl="${s3SignedUrl}"
-packageName="${packageName}"
-logsPath="${logsPath}"
-version="${version}"
-instanceId="${instanceId}"
-region="${region}"
-jobId="${jobId}"
-    $modelId = "${inferenceProfileArn}";
-    $modelRegion = "${region}";
-    $temperature = ${temperature};
-    $maxTokens = ${maxTokens};
-    $topP = ${topP};
+    s3SignedUrl="${s3SignedUrl}"
+    packageName="${packageName}"
+    logsPath="${logsPath}"
+    version="${version}"
+    instanceId="${instanceId}"
+    region="${region}"
+    jobId="${jobId}"
+    modelId = "${inferenceProfileArn}";
+    modelRegion = "${region}";
+    temperature = ${temperature};
+    maxTokens = ${maxTokens};
+    topP = ${topP};
+    logLevel='${LOG_LEVEL}';
 
 retry_command() {
     local retries=5
@@ -288,7 +278,7 @@ if [ ! -f "$filePath" ]; then
     exit 1
 fi
 
-"$filePath" --logs-path "$logsPath" --log-level info --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
+"$filePath" --logs-path "$logsPath" --log-level "$logLevel" --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
 
 if [ $? -ne 0 ]; then
     exit 1

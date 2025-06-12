@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { BlueXPListeners, Button, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../store/notificationSlice';
 import {
     setInProgressInstances,
@@ -7,20 +8,70 @@ import {
     setSelectedHeaderTab
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../../../utils/appConstants';
-import { JOB_MONITORING_STATUS, MANAGE_POLLING_INTERVAL, MANAGE_STATES, WLF_TABS } from '../../../../utils/consts';
-import { BlueXPListeners, Button, DsTypography, postBlueXPMessage } from '@netapp/design-system';
-import store from '../../../../store/store';
+import {
+    FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
+    FORM_TO_WLF_NAVIGATE_INVENTORY,
+    JOB_MONITORING_STATUS,
+    MANAGE_POLLING_INTERVAL,
+    MANAGE_STATES,
+    WLF_TABS
+} from '../../../../utils/consts';
+import store, { AppDispatch } from '../../../../store/store';
 import { uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
+import {
+    BulkDetectedInstance,
+    JobResponse,
+    ManageApiPayload,
+    ManageApiPayloadItem,
+    ManageStates,
+    SubJob
+} from '../../../../utils/types/registerTypes';
 
+// Checks if the manage readiness data allows for management actions based on missing permissions and modules
+export const isAllowManage = (manageReadinessData: ManageReadinessInterface) => {
+    const state = store.getState();
+    const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
+
+    let anyListEmpty = false;
+    const readinessKeys = Object.keys(manageReadinessData);
+    for (const key of readinessKeys) {
+        if (key === 'missingSqlCmd') continue; // Skip the missingSqlCmd key
+        const missingSqlPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
+        const missingModules = manageReadinessData[key]?.missingModules || [];
+        const otherMissingModules = missingModules.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
+        if (missingSqlPermissions.length == 0 && missingModules.length == 0) {
+            anyListEmpty = true;
+        } else if (missingSqlPermissions.length == 0 || missingModules.length > 0) {
+            let notMissingPowershellCheck = false;
+            if (
+                (missingModules.includes(MANAGE_STATES.POWERSHELL7) && installMissingPowershell) ||
+                !missingModules.includes(MANAGE_STATES.POWERSHELL7)
+            ) {
+                notMissingPowershellCheck = true;
+            }
+            let notMissingModulesCheck = false;
+            if (otherMissingModules.length == 0 || (otherMissingModules.length > 0 && installMissingAWS)) {
+                notMissingModulesCheck = true;
+            }
+
+            if (notMissingPowershellCheck && notMissingModulesCheck) {
+                anyListEmpty = true;
+            }
+        }
+    }
+    return anyListEmpty;
+};
+
+// Handles manage action for a single instance, including permission checks and API call
 export const handleSingleInstanceManage = (
-    manageSingleInstanceChecks: any,
-    dispatch: any,
+    manageSingleInstanceChecks: ManageStates,
+    dispatch: AppDispatch,
     manageBulkV2InstanceApi: any,
     getJobDetailApi: any,
-    navigate: any
+    navigate: ReturnType<typeof useNavigate>
 ) => {
-    let allowManage = isAllowManage(manageSingleInstanceChecks?.manageReadinessData);
+    const allowManage = isAllowManage(manageSingleInstanceChecks?.manageReadinessData || {});
     if (
         manageSingleInstanceChecks?.assessment === GENERAL.NOT_AVAILABLE &&
         manageSingleInstanceChecks?.remediation === GENERAL.NOT_AVAILABLE &&
@@ -61,12 +112,51 @@ export const handleSingleInstanceManage = (
     }
 };
 
-export const callManageSingleInstanceApi = async (
-    manageSingleInstanceChecks: any,
-    dispatch: any,
+// Handles manage action for multiple instances, checks readiness and triggers bulk API call
+export const handleMultiInstanceManage = (
+    bulkDetectedInstanceList: BulkDetectedInstance[],
+    dispatch: AppDispatch,
     manageBulkV2InstanceApi: any,
     getJobDetailApi: any,
-    navigate: any
+    navigate: ReturnType<typeof useNavigate>
+) => {
+    // Check if any instance is fully ready
+    const anyInstanceReady =
+        Array.isArray(bulkDetectedInstanceList) &&
+        bulkDetectedInstanceList.some(
+            (instance: any) => instance?.data?.manageReadiness && isAllowManage(instance.data.manageReadiness || {})
+        );
+
+    if (anyInstanceReady) {
+        callManageMultiInstanceApi(
+            bulkDetectedInstanceList,
+            dispatch,
+            manageBulkV2InstanceApi,
+            getJobDetailApi,
+            navigate
+        );
+    } else {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: (
+                    <>
+                        <span style={{ fontWeight: '500' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[0]}</span>
+                        <span style={{ fontWeight: '400' }}>{GENERAL.MANAGE_MIN_PERMISSION_REQUIRED[1]}</span>
+                    </>
+                )
+            })
+        );
+    }
+};
+
+// Calls the manage API for a single instance, handles installation of missing modules, and manages job status
+export const callManageSingleInstanceApi = async (
+    manageSingleInstanceChecks: ManageStates,
+    dispatch: AppDispatch,
+    manageBulkV2InstanceApi: any,
+    getJobDetailApi: any,
+    navigate: ReturnType<typeof useNavigate>
 ) => {
     const state = store.getState();
     const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
@@ -77,7 +167,7 @@ export const callManageSingleInstanceApi = async (
     if (manageSingleInstanceChecks?.installMissingPowershell && installMissingPowershell) {
         installModules = [...installModules, MANAGE_STATES.POWERSHELL7];
     }
-    let payload = {
+    const payload = {
         items: [
             {
                 ec2InstanceId: manageSingleInstanceChecks?.ec2InstanceId,
@@ -92,8 +182,10 @@ export const callManageSingleInstanceApi = async (
         payload
     }).then((result: any) => {
         if (result.data.jobId) {
+            // Update the in-progress instances state
             const updatedState = store.getState();
             const { inProgressInstances } = updatedState.inventoryV2;
+            const isWorkloadFactoryStatus = updatedState.auth?.isWorkloadFactory;
             const inProgressId = uniqueHostRow(
                 `${manageSingleInstanceChecks?.ec2InstanceId}_${manageSingleInstanceChecks?.databaseInstanceName}`,
                 manageSingleInstanceChecks?.credentialsId,
@@ -103,32 +195,35 @@ export const callManageSingleInstanceApi = async (
             const manageInstanceMsg = (
                 <DsTypography variant="Regular_14">
                     {`${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${manageSingleInstanceChecks?.databaseInstanceName} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`}
-                    {
-                        <>
-                            <Button
-                                Component="button"
-                                variant="text"
-                                onClick={() => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                    dispatch(clearNotifications());
-                                }}
-                            >
-                                {' Track progress.'}
-                            </Button>
-                        </>
-                    }
+                    <>
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {' Track progress.'}
+                        </Button>
+                    </>
                 </DsTypography>
             );
             setTimeout(() => {
                 dispatch(setLandingFromWizard(true));
-                navigate('../databases/inventory');
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: {
-                        pathname: './inventory',
-                        replace: true
-                    }
-                });
+                if (isWorkloadFactoryStatus) {
+                    navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: FORM_TO_WLF_NAVIGATE_INVENTORY,
+                            replace: true
+                        }
+                    });
+                } else {
+                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
+                }
+
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
@@ -148,12 +243,141 @@ export const callManageSingleInstanceApi = async (
     });
 };
 
+// Calls the manage API for multiple instances, groups them by unique identifiers, and manages job status
+export const callManageMultiInstanceApi = async (
+    bulkDetectedInstanceList: BulkDetectedInstance[],
+    dispatch: AppDispatch,
+    manageBulkV2InstanceApi: any,
+    getJobDetailApi: any,
+    navigate: ReturnType<typeof useNavigate>
+) => {
+    const state = store.getState();
+    const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
+
+    // Build payload for each instance, grouping by ec2InstanceId, region, credentialsId
+    const instanceMap = new Map<string, ManageApiPayloadItem>();
+    bulkDetectedInstanceList
+        ?.filter((instance: BulkDetectedInstance) => isAllowManage(instance?.data?.manageReadiness || {}))
+        .forEach((instance: BulkDetectedInstance) => {
+            let installModules: Array<string> = [];
+            if (instance?.manageStates?.installMissingAWS && installMissingAWS) {
+                installModules = [...installModules, ...(instance?.manageStates?.installMissingAWSList || [])];
+            }
+            if (instance?.manageStates?.installMissingPowershell && installMissingPowershell) {
+                installModules = [...installModules, MANAGE_STATES.POWERSHELL7];
+            }
+
+            const ec2InstanceId: string = instance?.ec2InstanceId || instance?.data?.ec2InstanceId || '';
+            const region: string = instance?.region || instance?.data?.regionId || '';
+            const credentialsId: string = instance?.credentialsId || instance?.data?.credentialId || '';
+            const databaseInstanceName: string =
+                instance?.databaseInstanceName || instance?.data?.databaseInstanceName || '';
+
+            const key = `${ec2InstanceId}__${region}__${credentialsId}`;
+
+            if (instanceMap.has(key)) {
+                const existing = instanceMap.get(key) as ManageApiPayloadItem;
+                // Append databaseInstanceName if not already present
+                if (!existing.databaseInstanceNames.includes(databaseInstanceName)) {
+                    existing.databaseInstanceNames.push(databaseInstanceName);
+                }
+                // Append modulesToInstall, avoiding duplicates
+                existing.modulesToInstall = Array.from(new Set([...existing.modulesToInstall, ...installModules]));
+            } else {
+                instanceMap.set(key, {
+                    ec2InstanceId,
+                    region,
+                    credentialsId,
+                    databaseInstanceNames: [databaseInstanceName],
+                    modulesToInstall: installModules
+                });
+            }
+        });
+
+    const items: ManageApiPayloadItem[] = Array.from(instanceMap.values());
+    const payload: ManageApiPayload = { items };
+
+    // Call the manage API with the constructed payload
+    manageBulkV2InstanceApi({
+        payload
+    }).then((result: any) => {
+        if (result.data.jobId) {
+            const updatedState = store.getState();
+            const { inProgressInstances } = updatedState.inventoryV2;
+            const isWorkloadFactoryStatus = updatedState.auth?.isWorkloadFactory;
+            // Use payload.items to create inProgressIDList, covering all databaseInstanceNames
+            const inProgressIDList = payload.items.flatMap((item: any) =>
+                (item.databaseInstanceNames || [])?.map((dbInstanceName: string) =>
+                    uniqueHostRow(`${item.ec2InstanceId}_${dbInstanceName}`, item.credentialsId, item.region)
+                )
+            );
+
+            dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIDList])));
+
+            const manageInstanceMsg = (
+                <DsTypography variant="Regular_14">
+                    {`${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`}
+                    <>
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {' Track progress.'}
+                        </Button>
+                    </>
+                </DsTypography>
+            );
+            setTimeout(() => {
+                dispatch(setLandingFromWizard(true));
+                if (isWorkloadFactoryStatus) {
+                    navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: FORM_TO_WLF_NAVIGATE_INVENTORY,
+                            replace: true
+                        }
+                    });
+                } else {
+                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
+                }
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.INFO,
+                        message: manageInstanceMsg
+                    })
+                );
+                // Call manageBulkJobStatus to handle the job monitoring
+                manageBulkJobStatus(
+                    result.data.jobId,
+                    getJobDetailApi,
+                    inProgressIDList,
+                    bulkDetectedInstanceList,
+                    dispatch
+                );
+            }, 100);
+        } else {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: 'Register instances failed'
+                })
+            );
+        }
+    });
+};
+
+// Manages the job status for a single instance, updating the inventory table data and in-progress instances
 export const manageJobStatus = (
     jobId: string,
     getJobDetailApi: any,
-    manageSingleInstanceChecks: any,
+    manageSingleInstanceChecks: ManageStates,
     inProgressId: string,
-    dispatch: any
+    dispatch: AppDispatch
 ) => {
     const jobInterval = setInterval(() => {
         getJobDetailApi({
@@ -161,9 +385,9 @@ export const manageJobStatus = (
         }).then((jobRes: any) => {
             const status = jobRes?.data?.status;
             if (status === JOB_MONITORING_STATUS.COMPLETED || status === JOB_MONITORING_STATUS.WARNING) {
+                // Update the inventory table data with the new instance status
                 const updatedState = store.getState();
                 const { manageSingleInstanceData } = updatedState.inventoryV2;
-                // ToDo: parametes will update once manage Jobs data will be available
                 const instanceObj = jobRes?.data?.subJobs?.[0]?.metadata?.instanceManagementStatus;
                 const resourceId = jobRes?.data?.subJobs?.[0]?.metadata?.resourceId;
                 const updatedInventoryTableData = updateInstanceStatus(
@@ -179,6 +403,7 @@ export const manageJobStatus = (
                 dispatch(setInProgressInstances(updatedInstances));
                 clearInterval(jobInterval);
             } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                // If the job failed, remove the in-progress instance from the state
                 const updatedState = store.getState();
                 const { inProgressInstances } = updatedState.inventoryV2;
                 const updatedInstances = new Set(Array.from(inProgressInstances).filter(id => id !== inProgressId));
@@ -189,6 +414,120 @@ export const manageJobStatus = (
     }, MANAGE_POLLING_INTERVAL);
 };
 
+// Updates the inventory data for completed instances, checking for completed subJobs and updating the in-progress instances
+export const updateInventoryDataforCompletedInstance = (
+    jobRes: JobResponse,
+    bulkDetectedInstanceList: BulkDetectedInstance,
+    dispatch: AppDispatch
+) => {
+    const updatedState = store.getState();
+    const { inProgressInstances } = updatedState.inventoryV2;
+
+    // Loop through first-level subJobs
+    const subJobs: SubJob[] = jobRes?.data?.subJobs || [];
+    subJobs.forEach((subJob: SubJob) => {
+        // Only process if subJob is COMPLETED and WARNING
+        if (subJob.status === JOB_MONITORING_STATUS.COMPLETED || subJob.status === JOB_MONITORING_STATUS.WARNING) {
+            const { metadata } = subJob;
+            const resourceId = subJob.resourceName || subJob.metadata?.resourceId;
+            const credentialsId = subJob.credentialsId || subJob.metadata?.credentialsId;
+            const regionCode = subJob.region?.code || subJob.metadata?.region;
+            // Find the matching row in bulkDetectedInstanceList
+            const matchedRow = bulkDetectedInstanceList.find((row: any) => {
+                const rowCredId = row?.credentialsId || row?.data?.credentialId;
+                const rowRegion = row?.region || row?.data?.regionId;
+                const rowInstanceId = row?.ec2InstanceId || row?.data?.ec2InstanceId;
+                return rowCredId === credentialsId && rowRegion === regionCode && rowInstanceId === resourceId;
+            });
+            // Get only databaseInstanceNames that are COMPLETED under instanceManagementStatus
+            const completedDbNames = (metadata?.instanceManagementStatus || [])
+                .filter((item: any) => item.status === JOB_MONITORING_STATUS.COMPLETED)
+                .map((item: any) => item.databaseInstanceName);
+
+            // Check if the unique row is present in inProgressInstances before updating
+            if (matchedRow) {
+                (completedDbNames || []).forEach((dbInstanceName: string) => {
+                    const uniqueId = uniqueHostRow(
+                        `${resourceId}_${dbInstanceName}`,
+                        credentialsId || '',
+                        regionCode || ''
+                    );
+                    if (inProgressInstances.has(uniqueId)) {
+                        // Call updateInstanceStatus for this row
+                        const updatedInventoryTableData = updateInstanceStatus(
+                            'manage',
+                            matchedRow?.data,
+                            [dbInstanceName],
+                            metadata?.instanceManagementStatus || [],
+                            resourceId
+                        );
+                        dispatch(setInventoryTableData(updatedInventoryTableData));
+                    }
+                });
+            }
+        }
+    });
+
+    // Inside your manageBulkJobStatus function, after getting subJobs:
+    const inProgressIDListFromSubJobs = subJobs.flatMap((subJob: any) => {
+        const metadata = subJob.metadata || {};
+        const { ec2InstanceId } = metadata;
+        const credentialsId = subJob.credentialsId || metadata.credentialsId;
+        const region = subJob.region?.code || metadata.region;
+        // Only include COMPLETED databaseInstanceNames
+        const completedDbNames = (metadata.instanceManagementStatus || [])
+            .filter((item: any) => item.status === JOB_MONITORING_STATUS.COMPLETED)
+            .map((item: any) => item.databaseInstanceName);
+
+        return completedDbNames.map((dbInstanceName: string) =>
+            uniqueHostRow(`${ec2InstanceId}_${dbInstanceName}`, credentialsId, region)
+        );
+    });
+
+    // Remove in-progress IDs as before
+    if (inProgressIDListFromSubJobs) {
+        const updatedInstances = new Set(
+            Array.from(inProgressInstances).filter((id: any) => !inProgressIDListFromSubJobs.includes(id))
+        );
+        dispatch(setInProgressInstances(updatedInstances));
+    }
+};
+
+// Manages the job status for bulk operations, checking job status at intervals and updating inventory data accordingly
+export const manageBulkJobStatus = (
+    jobId: string,
+    getJobDetailApi: any,
+    inProgressIDList: Array<string>,
+    bulkDetectedInstanceList: BulkDetectedInstance[],
+    dispatch: AppDispatch
+) => {
+    const jobInterval = setInterval(() => {
+        getJobDetailApi({
+            id: jobId
+        }).then((jobRes: any) => {
+            const status = jobRes?.data?.status;
+            if (status === JOB_MONITORING_STATUS.COMPLETED || status === JOB_MONITORING_STATUS.WARNING) {
+                // Update the inventory table data with the new instance status
+                updateInventoryDataforCompletedInstance(jobRes, bulkDetectedInstanceList, dispatch);
+                clearInterval(jobInterval);
+            } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                // If the job failed, remove the in-progress instances from the state
+                const updatedState = store.getState();
+                const { inProgressInstances } = updatedState.inventoryV2;
+                const updatedInstances = new Set(
+                    Array.from(inProgressInstances).filter((id: any) => !inProgressIDList.includes(id))
+                );
+                dispatch(setInProgressInstances(updatedInstances));
+                clearInterval(jobInterval);
+            } else if (status === JOB_MONITORING_STATUS.IN_PROGRESS) {
+                // If the job is still in progress, update the inventory data for completed instances
+                updateInventoryDataforCompletedInstance(jobRes, bulkDetectedInstanceList, dispatch);
+            }
+        });
+    }, MANAGE_POLLING_INTERVAL);
+};
+
+// Checks if the manage readiness data has missing PowerShell 7 modules
 export const hasMissingPowershell7 = (manageReadinessData: any) => {
     if (!manageReadinessData) return false;
     const readinessKeys = Object.keys(manageReadinessData);
@@ -201,11 +540,12 @@ export const hasMissingPowershell7 = (manageReadinessData: any) => {
     return false;
 };
 
-export const missingModules = (manageReadinessData: any) => {
+// Filters and returns a list of unique missing modules from the manage readiness data, excluding PowerShell 7
+export const missingModules = (manageReadinessData: ManageReadinessInterface) => {
     if (!manageReadinessData) return [];
 
     const readinessKeys = Object.keys(manageReadinessData);
-    let filteredModulesSet: Set<string> = new Set();
+    const filteredModulesSet: Set<string> = new Set();
 
     readinessKeys.forEach(key => {
         const missingModules = manageReadinessData[key]?.missingModules || [];
@@ -219,7 +559,8 @@ export const missingModules = (manageReadinessData: any) => {
     return filteredModules;
 };
 
-export const getPermissionState = (type: string, manageReadinessData: any) => {
+// Returns the permission state based on the type and manage readiness data
+export const getPermissionState = (type: string, manageReadinessData: ManageReadinessInterface) => {
     const readinessData = manageReadinessData?.[type];
 
     if (!readinessData) return GENERAL.NOT_AVAILABLE;
@@ -241,6 +582,7 @@ export const getPermissionState = (type: string, manageReadinessData: any) => {
     return MANAGE_STATES.READY;
 };
 
+// Checks the overall manage state based on individual states of assessment, remediation, dbcreation, and sandbox
 export const checkOverallManageState = (
     assessment: string,
     remediation: string,
@@ -260,40 +602,7 @@ export const checkOverallManageState = (
     return overallState;
 };
 
-export const isAllowManage = (manageReadinessData: any) => {
-    const state = store.getState();
-    const { installMissingAWS, installMissingPowershell } = state.inventoryV2.manageInstanceInstallAction;
-
-    let anyListEmpty = false;
-    const readinessKeys = Object.keys(manageReadinessData);
-    for (const key of readinessKeys) {
-        if (key === 'missingSqlCmd') continue; // Skip the missingSqlCmd key
-        const missingSqlPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
-        const missingModules = manageReadinessData[key]?.missingModules || [];
-        const otherMissingModules = missingModules.filter((module: string) => module !== MANAGE_STATES.POWERSHELL7);
-        if (missingSqlPermissions.length == 0 && missingModules.length == 0) {
-            anyListEmpty = true;
-        } else if (missingSqlPermissions.length == 0 || missingModules.length > 0) {
-            let notMissingPowershellCheck = false;
-            if (
-                (missingModules.includes(MANAGE_STATES.POWERSHELL7) && installMissingPowershell) ||
-                !missingModules.includes(MANAGE_STATES.POWERSHELL7)
-            ) {
-                notMissingPowershellCheck = true;
-            }
-            let notMissingModulesCheck = false;
-            if (otherMissingModules.length == 0 || (otherMissingModules.length > 0 && installMissingAWS)) {
-                notMissingModulesCheck = true;
-            }
-
-            if (notMissingPowershellCheck && notMissingModulesCheck) {
-                anyListEmpty = true;
-            }
-        }
-    }
-    return anyListEmpty;
-};
-
+// Merges two manage readiness data objects, combining missing SQL permissions and modules
 export const mergeReadinessData = (
     manageReadinessData: ManageReadinessInterface,
     partnerManageReadinessData: ManageReadinessInterface
@@ -322,4 +631,31 @@ export const mergeReadinessData = (
     });
 
     return mergedData;
+};
+
+// Gets the bulk detect checks for multiple instances, returning a summary of authentication and FSx registration status
+export const getBulkDetectChecks = (selectedMultiDetectInstances: any) => {
+    const result = {
+        sqlServerAuthentication: true,
+        windowsAuthentication: true,
+        windowsDomainUserAuthentication: true,
+        fsxId: false,
+        isFsxRegistered: true
+    };
+    if (selectedMultiDetectInstances?.length) {
+        selectedMultiDetectInstances?.forEach((item: any) => {
+            if (!item?.data?.sqlServerAuthentication && !item?.data?.windowsAuthentication) {
+                result.sqlServerAuthentication = false;
+                result.windowsAuthentication = false;
+            }
+            if (!item?.data?.windowsDomainUserAuthentication) {
+                result.windowsDomainUserAuthentication = false;
+            }
+            if (item?.data?.fsxId && !item?.data?.isFsxRegistered) {
+                result.fsxId = true;
+                result.isFsxRegistered = false;
+            }
+        });
+    }
+    return result;
 };

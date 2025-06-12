@@ -1,9 +1,10 @@
 import { Button, DsTooltipInfo, DsTypography, SelectField, TextField, useDialog } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
-import styles from './SavingsSelection.module.scss';
 import { useEffect, useMemo, useState } from 'react';
-import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
+import styles from './SavingsSelection.module.scss';
+import { generateOptionType } from '../../../../utils/utilityFunctions';
 import {
     setMonthlyChangeRate,
     setNumberOfClonedCopies,
@@ -12,7 +13,6 @@ import {
     setSelectedMonthlyBYOLCost,
     setSelectedSnapshotFrequency
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
-import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
@@ -62,7 +62,7 @@ const SavingsSelection = ({ printState }: any) => {
     const [clonedText, setClonedText] = useSearchDebounce(1000);
     const [changeRateText, setChangeRateText] = useSearchDebounce(1000);
     const [textSearch, setTextSearch] = useSearchDebounce(500);
-    const [byolValue, setByolValue] = useState(monthlyBYOLCost ? monthlyBYOLCost : '');
+    const [byolValue, setByolValue] = useState(monthlyBYOLCost || '');
 
     const { setDialog, closeDialog } = useDialog();
 
@@ -70,7 +70,7 @@ const SavingsSelection = ({ printState }: any) => {
         setIsByolField(checkIfByolFieldRequired(selectedHostDetails, isByolField, savingsCalculatorFrom));
     }, [selectedHostDetails]);
 
-    //Use effect for machine description
+    // Use effect for machine description
     useEffect(() => {
         setTextSearch(byolValue);
     }, [byolValue]);
@@ -111,7 +111,7 @@ const SavingsSelection = ({ printState }: any) => {
         }
     }, [changeRateText]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateSnapshotFrequency = useMemo<optionType[]>((): optionType[] => {
         const frequency = SNAPSHOT_FREQUENCY;
         const options: optionType[] = [];
@@ -139,7 +139,7 @@ const SavingsSelection = ({ printState }: any) => {
         }
     }, [generateSnapshotFrequency]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateCloneRefresh = useMemo<optionType[]>((): optionType[] => {
         const frequency = ['Daily', 'Weekly', 'Monthly'];
         const options: optionType[] = [];
@@ -159,7 +159,7 @@ const SavingsSelection = ({ printState }: any) => {
     }, []);
 
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
-        let options: optionType[] = [];
+        const options: optionType[] = [];
         instanceTypeData.options.map((option: any) => {
             options.push(
                 generateOptionType(
@@ -218,7 +218,7 @@ const SavingsSelection = ({ printState }: any) => {
         setDialog(
             <DialogComponent
                 header={GENERAL.LEARN_HOW_DIALOG.TITLE}
-                content={<LearnHowDialog type={'tco'} />}
+                content={<LearnHowDialog type="tco" />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => closeDialog()}
             />
@@ -299,7 +299,7 @@ const SavingsSelection = ({ printState }: any) => {
                                     setMonthlyChangeRateNo(numVal);
                                 }}
                                 isDisabled={loading}
-                                value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
+                                value={monthlyChangeRateNo || ''}
                                 className={`${styles.widthSetOnPrem} savings-calculator-input-fields`}
                                 info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                                 error={errorForChangeRate()}
@@ -384,7 +384,7 @@ const SavingsSelection = ({ printState }: any) => {
                                 label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}
                                 isClearable={false}
                                 isDisabled={loading}
-                                defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
+                                defaultValue={selectedCloneRefresh || [generateCloneRefresh[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedCloneRefresh(selectedOptions));
                                 }}
@@ -412,7 +412,7 @@ const SavingsSelection = ({ printState }: any) => {
                                     setMonthlyChangeRateNo(numVal);
                                 }}
                                 isDisabled={loading}
-                                value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
+                                value={monthlyChangeRateNo || ''}
                                 className={`${styles.widthSet} savings-calculator-input-fields`}
                                 info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                                 error={errorForChangeRate()}
@@ -435,7 +435,7 @@ const SavingsSelection = ({ printState }: any) => {
                                     const numVal = e.target.value.replace(/[^0-9.]/g, '');
                                     setByolValue(numVal);
                                 }}
-                                isOptional={true}
+                                isOptional
                                 value={byolValue}
                                 className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                             />

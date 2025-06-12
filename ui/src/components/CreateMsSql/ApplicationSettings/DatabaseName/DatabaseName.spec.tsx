@@ -1,12 +1,12 @@
 import { render } from '@testing-library/react';
 import React, { useState as useStateMock } from 'react';
-import DatabaseName from './DatabaseName';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { Middleware, Dispatch, AnyAction } from '@reduxjs/toolkit';
+import DatabaseName from './DatabaseName';
 
 const middlewares: Middleware<{}, any, Dispatch<AnyAction>>[] | undefined = [];
-//@ts-ignore
+// @ts-ignore
 const mockStore = configureMockStore(middlewares);
 
 jest.mock('react', () => ({
@@ -15,11 +15,9 @@ jest.mock('react', () => ({
 }));
 const setState = jest.fn();
 
-jest.mock('@json2csv/plainjs', () => {
-    return {
-        Parser: jest.fn()
-    };
-});
+jest.mock('@json2csv/plainjs', () => ({
+    Parser: jest.fn()
+}));
 
 describe('Database name accordion test', () => {
     beforeEach(() => {
@@ -51,7 +49,9 @@ describe('Database name accordion test', () => {
         (useStateMock as any).mockImplementationOnce(() => ['sqldatabase_123344455', setState]);
         const { container } = wrapper();
         expect(DatabaseName).toBeDefined();
-        expect(container).toHaveTextContent('Database Server nameerror-icon.svgOne or more fields has an erroric_card_arrow_expand.svg');
+        expect(container).toHaveTextContent(
+            'Database Server nameerror-icon.svgOne or more fields has an erroric_card_arrow_expand.svg'
+        );
         expect(container).toHaveTextContent('One or more fields has an error');
     });
 });

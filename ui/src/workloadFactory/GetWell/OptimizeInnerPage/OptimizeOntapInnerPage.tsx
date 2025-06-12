@@ -1,7 +1,8 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useRef, useState } from 'react';
 import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
-import { useDispatch } from 'react-redux';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { WLF_TABS } from '../../../utils/consts';
@@ -31,7 +32,6 @@ import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 import OntapTable from './InnerTables/OntapTable';
 import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
 import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
-import { useEffect, useRef, useState } from 'react';
 import OntapTableWithData from './InnerTables/OntapTableWithData';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 
@@ -103,58 +103,53 @@ const OptimizeOntapInnerPage = () => {
         if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
                 <Popover
-                    isAppendedToBody={true}
+                    isAppendedToBody
                     children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
                     trigger="hover"
                     delayHide={200}
-                    interactive={true}
+                    interactive
                     container={
-                        <DsButton variant="secondary" isDisabled={true} isThin>
+                        <DsButton variant="secondary" isDisabled isThin>
                             Fix
                         </DsButton>
                     }
                 />
             );
-        } else {
-            return (
-                <DsButton
-                    isThin
-                    variant="secondary"
-                    isDisabled={false}
-                    onClick={() => {
-                        handleOntapDialog(
-                            setDialog,
-                            callOptimizeApi,
-                            closeDialog,
-                            selectedOptimizeConfig?.data,
-                            'single',
-                            rowData
-                        );
-                    }}
-                >
-                    Fix
-                </DsButton>
-            );
         }
+        return (
+            <DsButton
+                isThin
+                variant="secondary"
+                isDisabled={false}
+                onClick={() => {
+                    handleOntapDialog(
+                        setDialog,
+                        callOptimizeApi,
+                        closeDialog,
+                        selectedOptimizeConfig?.data,
+                        'single',
+                        rowData
+                    );
+                }}
+            >
+                Fix
+            </DsButton>
+        );
     };
 
-    const lastColDetails = (name: string, data?: any, width: any = '302px') => {
-        return {
-            id: '4',
-            Header: '',
-            accessor: '',
-            isSticky: true,
-            width: width,
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.buttonContainer}>
-                        <div />
-                        {buttonComponent(rowData)}
-                    </div>
-                );
-            }
-        };
-    };
+    const lastColDetails = (name: string, data?: any, width: any = '302px') => ({
+        id: '4',
+        Header: '',
+        accessor: '',
+        isSticky: true,
+        width,
+        renderCell: (cellData: any, rowData: any) => (
+            <div className={styles.buttonContainer}>
+                <div />
+                {buttonComponent(rowData)}
+            </div>
+        )
+    });
 
     // This is the function that will be called when the optimize button is clicked from main cards
     // This is the function that will be called when the user clicks on the optimize button from sub menus
@@ -217,7 +212,7 @@ const OptimizeOntapInnerPage = () => {
                 ...inProgressOptimizationData,
                 [statusType]: [
                     ...(inProgressOptimizationData[statusType] || []),
-                    selectedResourceId + '_' + selectedDatabaseInstance
+                    `${selectedResourceId}_${selectedDatabaseInstance}`
                 ]
             })
         );
@@ -256,7 +251,7 @@ const OptimizeOntapInnerPage = () => {
             regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
             databaseHostId: selectedResourceId || selectedOptimizeConfig?.hostId,
             instanceId: selectedDatabaseInstance || selectedOptimizeConfig?.instanceId,
-            payload: payload
+            payload
         }).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
@@ -368,9 +363,8 @@ const OptimizeOntapInnerPage = () => {
             selectedOptimizeConfig?.type !== 'NTFS allocation unit size'
         ) {
             return `ONTAP / ${selectedOptimizeConfig?.type}`;
-        } else {
-            return `Operating system |  ${selectedOptimizeConfig?.type}`;
         }
+        return `Operating system |  ${selectedOptimizeConfig?.type}`;
     };
     return (
         <div className={styles['optimize-inner-page']}>

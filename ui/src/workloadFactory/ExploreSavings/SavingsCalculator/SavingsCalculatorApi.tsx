@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isEqual } from 'lodash';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetMssqlInstanceDataV2Mutation,
@@ -42,7 +43,6 @@ import {
 } from '../../../utils/consts';
 import { addInstanceIdToGetPerf, uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { checkIfEbsProtected } from './savingsUtil';
-import { isEqual } from 'lodash';
 
 interface ONPREM_PAYLOAD {
     regionCode?: string;
@@ -122,7 +122,7 @@ const SavingsCalculatorApi = () => {
                 selectedRow[0]?.clusterNodeDetails &&
                 selectedRow[0]?.clusterNodeDetails?.length === 2
             ) {
-                let partnerInstanceRow = selectedRow[0]?.clusterNodeDetails?.filter(
+                const partnerInstanceRow = selectedRow[0]?.clusterNodeDetails?.filter(
                     (perRow: any) => perRow?.ec2InstanceId !== selectedInstanceId
                 );
                 if (
@@ -157,7 +157,7 @@ const SavingsCalculatorApi = () => {
         }
 
         if (onPremStorageAndComputeInfo) {
-            let computeInfo: any = [];
+            const computeInfo: any = [];
             Object.keys(onPremStorageAndComputeInfo).forEach(key => {
                 const value = onPremStorageAndComputeInfo[key];
                 computeInfo.push({
@@ -190,7 +190,7 @@ const SavingsCalculatorApi = () => {
             dispatch(setDisableState(false));
             const result: any = await getStorageSavingsOnPremDataApi({
                 databaseHostId: selectedOnPremHostId,
-                payload: payload
+                payload
             });
             if (result && !result?.error) {
                 // Store full API response
@@ -250,7 +250,7 @@ const SavingsCalculatorApi = () => {
                 credentialId: selectedExCredId,
                 regionId: selectedExRegionId,
                 instanceId: selectedInstanceId,
-                payload: payload,
+                payload,
                 type:
                     savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                     savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
@@ -293,7 +293,7 @@ const SavingsCalculatorApi = () => {
                 credentialId: selectedExCredId,
                 regionId: selectedExRegionId,
                 instanceId: selectedInstanceId,
-                payload: payload,
+                payload,
                 type:
                     savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                     savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
@@ -401,7 +401,7 @@ const SavingsCalculatorApi = () => {
     const getMssqlData = async () => {
         const state = store.getState();
         const mssqlInstancesDataV2 = state.inventoryV2.mssqlInstancesData;
-        let mssqlInstancesDataLoad: any = {};
+        const mssqlInstancesDataLoad: any = {};
         mssqlInstancesDataLoad[uniqueHostRow(selectedInstanceId, selectedExCredId, selectedExRegionId)] = {
             loading: true,
             data: null,
@@ -420,7 +420,7 @@ const SavingsCalculatorApi = () => {
             });
 
             if (result && !result?.error) {
-                let mssqlInstancesDataRes: any = {};
+                const mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
                     if (mssqlInstancesDataV2[host?.id]) {
                         mssqlInstancesDataRes[host?.id] = {
@@ -433,7 +433,7 @@ const SavingsCalculatorApi = () => {
                 });
                 dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataRes }));
             } else {
-                let mssqlInstancesDataErr: any = {};
+                const mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[uniqueHostRow(selectedInstanceId, selectedExCredId, selectedExRegionId)] = {
                     loading: false,
                     data: null,
@@ -443,11 +443,11 @@ const SavingsCalculatorApi = () => {
                 dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
             }
         } catch (error) {
-            let mssqlInstancesDataErr: any = {};
+            const mssqlInstancesDataErr: any = {};
             mssqlInstancesDataErr[uniqueHostRow(selectedInstanceId, selectedExCredId, selectedExRegionId)] = {
                 loading: false,
                 data: null,
-                error: error,
+                error,
                 isManagedHost: false
             };
             dispatch(setMssqlInstancesDataV2({ ...mssqlInstancesDataV2, ...mssqlInstancesDataErr }));
@@ -487,7 +487,7 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         // This is to call OnPrem Savings calculator API when user changes the values in the Savings calculator page
-        let newPayload = createOnPremPayload();
+        const newPayload = createOnPremPayload();
         const comparedPayloadValues =
             isEqual(newPayload, requestedPayload) &&
             selectedOnPremRegion?.data?.regionCode === requestedRegion?.data?.regionCode;

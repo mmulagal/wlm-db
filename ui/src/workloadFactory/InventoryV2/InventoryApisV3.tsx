@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import pLimit from 'p-limit';
+import isEqual from 'lodash/isEqual';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAllMssqlHostAssessmentData,
@@ -278,7 +279,7 @@ const InventoryApisV3 = () => {
             try {
                 const result: any = await getFsxCredentialStatusListApi({
                     credentialsId: credId,
-                    regionId: regionId,
+                    regionId,
                     fsxIds: fsxIdsList.join(',')
                 });
                 if (
@@ -288,7 +289,7 @@ const InventoryApisV3 = () => {
                     dispatch(setFsxCredentialStatusLoading(false));
                     if (result && !result?.error) {
                         if (result?.data?.fileSystems) {
-                            let fsxCredStatusObj: any = {};
+                            const fsxCredStatusObj: any = {};
                             result?.data?.fileSystems?.map((item: any) => {
                                 fsxCredStatusObj[item.id] = item.isRegistered;
                             });
@@ -349,7 +350,7 @@ const InventoryApisV3 = () => {
             try {
                 const result: any = await getManagedHostListAPI({
                     credentialId: credId,
-                    regionId: regionId,
+                    regionId,
                     nextToken: managedHostCursor
                 });
                 if (
@@ -385,20 +386,20 @@ const InventoryApisV3 = () => {
     };
 
     const callManagedHostAllAPis = (managedList: any) => {
-        let discoveredRows: any = [];
-        let discoveredOracleRows: any = [];
-        let discoveredPgsqlRows: any = [];
+        const discoveredRows: any = [];
+        const discoveredOracleRows: any = [];
+        const discoveredPgsqlRows: any = [];
         getDiscoveryHostsList(discoveredRows, null, credId, regionId);
         getDiscoveryOracleHostsList(discoveredOracleRows, null, credId, regionId);
         getDiscoveryPgsqlHostsList(discoveredPgsqlRows, null, credId, regionId);
         if (managedList?.length > 0) {
-            let fullHostData: any = {};
-            let fullPgsqlHostData: any = {};
-            let topologyHostData: any = {};
-            let pgsqlTopologyHostData: any = {};
-            let assessmentData: any = [];
-            let sandboxListData: any = [];
-            let sandboxSavingsData: any = [];
+            const fullHostData: any = {};
+            const fullPgsqlHostData: any = {};
+            const topologyHostData: any = {};
+            const pgsqlTopologyHostData: any = {};
+            const assessmentData: any = [];
+            const sandboxListData: any = [];
+            const sandboxSavingsData: any = [];
             getDatabaseHostsList(topologyHostData, null, credId, regionId);
             getPgSqlDatabaseHostsList(pgsqlTopologyHostData, null, credId, regionId);
             getDatabaseHostsFullData(fullHostData, null, credId, regionId);
@@ -432,8 +433,8 @@ const InventoryApisV3 = () => {
             try {
                 const result: any = await getDatabaseHostsListApi({
                     credentialId: credId,
-                    regionId: regionId,
-                    nextToken: nextToken
+                    regionId,
+                    nextToken
                 });
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -479,8 +480,8 @@ const InventoryApisV3 = () => {
             try {
                 const result: any = await getPgSqlDatabaseHostsListApi({
                     credentialId: credId,
-                    regionId: regionId,
-                    nextToken: nextToken
+                    regionId,
+                    nextToken
                 });
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -531,9 +532,9 @@ const InventoryApisV3 = () => {
             try {
                 const result: any = await getDatabaseHostsFullDataApi({
                     credentialId: credId,
-                    regionId: regionId,
-                    nextToken: nextToken,
-                    isDemoMode: isDemoMode
+                    regionId,
+                    nextToken,
+                    isDemoMode
                 });
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -584,9 +585,9 @@ const InventoryApisV3 = () => {
             try {
                 const result: any = await getPgSqlDatabaseHostsFullDataApi({
                     credentialId: credId,
-                    regionId: regionId,
-                    nextToken: nextToken,
-                    isDemoMode: isDemoMode
+                    regionId,
+                    nextToken,
+                    isDemoMode
                 });
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -636,9 +637,9 @@ const InventoryApisV3 = () => {
         ) {
             try {
                 const result: any = await getDiscoveryHostsListApi({
-                    regionId: regionId,
+                    regionId,
                     credentialsId: credId,
-                    nextToken: nextToken
+                    nextToken
                 });
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -654,7 +655,7 @@ const InventoryApisV3 = () => {
                                         ...perRow,
                                         hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE,
                                         credentialId: credId,
-                                        regionId: regionId
+                                        regionId
                                     }
                                 ];
                                 // discoveredList.push(perRow);
@@ -703,9 +704,9 @@ const InventoryApisV3 = () => {
         ) {
             try {
                 const result: any = await getDiscoveryOracleHostsListApi({
-                    regionId: regionId,
+                    regionId,
                     credentialsId: credId,
-                    nextToken: nextToken
+                    nextToken
                 });
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -721,7 +722,7 @@ const InventoryApisV3 = () => {
                                         ...perRow,
                                         hostType: GENERAL.ORACLE_TYPE,
                                         credentialId: credId,
-                                        regionId: regionId
+                                        regionId
                                     }
                                 ];
                             }
@@ -763,9 +764,9 @@ const InventoryApisV3 = () => {
         ) {
             try {
                 const result: any = await getDiscoveryPgsqlHostsListApi({
-                    regionId: regionId,
+                    regionId,
                     credentialsId: credId,
-                    nextToken: nextToken
+                    nextToken
                 });
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -781,7 +782,7 @@ const InventoryApisV3 = () => {
                                         ...perRow,
                                         hostType: GENERAL.POSTGRESQL_TYPE,
                                         credentialId: credId,
-                                        regionId: regionId
+                                        regionId
                                     }
                                 ];
                             }
@@ -817,19 +818,19 @@ const InventoryApisV3 = () => {
         fields: Array<string>,
         nextToken: string | null = ''
     ) => {
-        let [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
+        const [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
         try {
             const result: any = await getMssqlInstanceDataApi({
                 credentialId: instanceCredId,
                 regionId: instanceRegionId,
                 instances: instanceId,
                 fields: fields.join(','),
-                nextToken: nextToken
+                nextToken
             });
             if (result && !result?.error) {
-                let mssqlInstancesDataRes: any = {};
+                const mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    let partnerInstanceId = getPartnerInstanceId(host, host?.id);
+                    const partnerInstanceId = getPartnerInstanceId(host, host?.id);
                     if (
                         partnerInstanceId &&
                         !runningInstanceListRef.current.includes(
@@ -895,24 +896,24 @@ const InventoryApisV3 = () => {
                 }
                 dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataRes }));
             } else {
-                let mssqlInstancesDataErr: any = {};
+                const mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
-                    isManagedHost: isManagedHost,
+                    isManagedHost,
                     loading: false,
                     data: null,
                     error: result?.error?.data?.message,
-                    fields: fields
+                    fields
                 };
                 dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
             }
         } catch (error) {
-            let mssqlInstancesDataErr: any = {};
+            const mssqlInstancesDataErr: any = {};
             mssqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
-                isManagedHost: isManagedHost,
+                isManagedHost,
                 loading: false,
                 data: null,
-                error: error,
-                fields: fields
+                error,
+                fields
             };
             dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
         }
@@ -925,17 +926,17 @@ const InventoryApisV3 = () => {
         fields: Array<string>,
         nextToken: string | null = ''
     ) => {
-        let [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
+        const [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
         try {
             const result: any = await getPgsqlInstanceDataApi({
                 credentialId: instanceCredId,
                 regionId: instanceRegionId,
                 instances: instanceId,
                 fields: fields.join(','),
-                nextToken: nextToken
+                nextToken
             });
             if (result && !result?.error) {
-                let pgsqlInstancesDataRes: any = {};
+                const pgsqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
                     if (pgsqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
                         pgsqlInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
@@ -966,24 +967,24 @@ const InventoryApisV3 = () => {
                 }
                 dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataRes }));
             } else {
-                let pgsqlInstancesDataErr: any = {};
+                const pgsqlInstancesDataErr: any = {};
                 pgsqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
-                    isManagedHost: isManagedHost,
+                    isManagedHost,
                     loading: false,
                     data: null,
                     error: result?.error?.data?.message,
-                    fields: fields
+                    fields
                 };
                 dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataErr }));
             }
         } catch (error) {
-            let pgsqlInstancesDataErr: any = {};
+            const pgsqlInstancesDataErr: any = {};
             pgsqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
-                isManagedHost: isManagedHost,
+                isManagedHost,
                 loading: false,
                 data: null,
-                error: error,
-                fields: fields
+                error,
+                fields
             };
             dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataErr }));
         }
@@ -996,17 +997,17 @@ const InventoryApisV3 = () => {
         fields: Array<string>,
         nextToken: string | null = ''
     ) => {
-        let [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
+        const [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
         try {
             const result: any = await getOracleInstanceDataApi({
                 credentialId: instanceCredId,
                 regionId: instanceRegionId,
                 instances: instanceId,
                 fields: fields.join(','),
-                nextToken: nextToken
+                nextToken
             });
             if (result && !result?.error) {
-                let oracleInstancesDataRes: Record<string, OracleInstanceData> = {};
+                const oracleInstancesDataRes: Record<string, OracleInstanceData> = {};
                 result?.data?.items?.forEach((host: any) => {
                     if (oracleInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
                         oracleInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
@@ -1038,24 +1039,24 @@ const InventoryApisV3 = () => {
                 }
                 dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataRes }));
             } else {
-                let oracleInstancesDataErr: any = {};
+                const oracleInstancesDataErr: any = {};
                 oracleInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
-                    isManagedHost: isManagedHost,
+                    isManagedHost,
                     loading: false,
                     data: null,
                     error: result?.error?.data?.message,
-                    fields: fields
+                    fields
                 };
                 dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataErr }));
             }
         } catch (error) {
-            let oracleInstancesDataErr: any = {};
+            const oracleInstancesDataErr: any = {};
             oracleInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
-                isManagedHost: isManagedHost,
+                isManagedHost,
                 loading: false,
                 data: null,
-                error: error,
-                fields: fields
+                error,
+                fields
             };
             dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataErr }));
         }
@@ -1153,17 +1154,17 @@ const InventoryApisV3 = () => {
         fields: Array<string>,
         nextToken: string | null = ''
     ) => {
-        let [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
+        const [instanceId, instanceCredId, instanceRegionId] = instanceIdComb.split('_');
         try {
             const result: any = await getMssqlInstanceDataApi({
                 credentialId: instanceCredId,
                 regionId: instanceRegionId,
                 instances: instanceId,
                 fields: fields.join(','),
-                nextToken: nextToken
+                nextToken
             });
             if (result && !result?.error) {
-                let mssqlInstancesDataRes: any = {};
+                const mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
                     if (perfMssqlInstancesDataRef.current[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)]) {
                         mssqlInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
@@ -1196,24 +1197,24 @@ const InventoryApisV3 = () => {
                 }
                 dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataRes }));
             } else {
-                let mssqlInstancesDataErr: any = {};
+                const mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
-                    isManagedHost: isManagedHost,
+                    isManagedHost,
                     loading: false,
                     data: null,
                     error: result?.error?.data?.message,
-                    fields: fields
+                    fields
                 };
                 dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
             }
         } catch (error) {
-            let mssqlInstancesDataErr: any = {};
+            const mssqlInstancesDataErr: any = {};
             mssqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
-                isManagedHost: isManagedHost,
+                isManagedHost,
                 loading: false,
                 data: null,
-                error: error,
-                fields: fields
+                error,
+                fields
             };
             dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
         }
@@ -1232,8 +1233,8 @@ const InventoryApisV3 = () => {
             try {
                 const result: any = await getAllMssqlHostAssessmentAPI({
                     credentialId: credId,
-                    regionId: regionId,
-                    nextToken: nextToken
+                    regionId,
+                    nextToken
                 });
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -1246,7 +1247,7 @@ const InventoryApisV3 = () => {
                                 ? result.data.assessmentsPerAccount.map((assessment: any) => ({
                                       ...assessment,
                                       credentialId: credId,
-                                      regionId: regionId
+                                      regionId
                                   }))
                                 : [])
                         ];
@@ -1288,7 +1289,7 @@ const InventoryApisV3 = () => {
                 const result: any = await getSandboxListApi({
                     credentialId: credId,
                     region: regionId,
-                    nextToken: nextToken
+                    nextToken
                 });
                 if (
                     headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -1301,7 +1302,7 @@ const InventoryApisV3 = () => {
                                 ? result.data.items.map((sandbox: any) => ({
                                       ...sandbox,
                                       credentialId: credId,
-                                      regionId: regionId
+                                      regionId
                                   }))
                                 : [])
                         ];
@@ -1365,10 +1366,10 @@ const InventoryApisV3 = () => {
                     headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     if (result && !result?.error) {
-                        let perSandboxAPI = {
+                        const perSandboxAPI = {
                             ...result?.data,
                             credentialId: credId,
-                            regionId: regionId
+                            regionId
                         };
                         sandboxSavingsData = [...sandboxSavingsData, perSandboxAPI];
                         dispatch(
@@ -1467,7 +1468,7 @@ const InventoryApisV3 = () => {
                 cloneRefreshFrequency: 'Daily' // cloneRefreshFrequency default to Daily for dashboard potential EBS
             };
         }
-        let instanceData: any = {};
+        const instanceData: any = {};
         try {
             const result: any = await getStorageSavingsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
@@ -1632,7 +1633,7 @@ const InventoryApisV3 = () => {
         setFullHostData({});
         setFullPgsqlHostData({});
         // reset for discovery
-        //Instances API reset
+        // Instances API reset
         // Running instanceList reset
         setRunningInstanceList([]);
         // chart counts
@@ -1657,7 +1658,7 @@ const InventoryApisV3 = () => {
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
     useEffect(() => {
         if (!refreshBlocked && !isRefreshed) {
-            let managedList: string[] = [];
+            const managedList: string[] = [];
             if (credId && regionId) {
                 resetPerComboValues();
                 // resetFullData(); // For now will reset all data on change of cred and region.
@@ -1685,7 +1686,7 @@ const InventoryApisV3 = () => {
     // This will combine fullHostData (getDatabaseHostsFullData) and topologyHostData (getDatabaseHostsList) data and store in single object.
     useEffect(() => {
         const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
+        const { resetManagedData } = state.inventoryV2;
         if (!resetManagedData) {
             let databaseHostDataObj: any = {};
             Object.keys(topologyHostData).map((key: string) => {
@@ -1702,7 +1703,7 @@ const InventoryApisV3 = () => {
                         ...{ [key]: { ...perObj, hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE } }
                     };
                 } else {
-                    const perObj = { ...topologyHostData[key], loading: fullHostDataLoading ? true : false };
+                    const perObj = { ...topologyHostData[key], loading: !!fullHostDataLoading };
                     databaseHostDataObj = {
                         ...databaseHostDataObj,
                         ...{ [key]: { ...perObj, hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE } }
@@ -1718,7 +1719,7 @@ const InventoryApisV3 = () => {
     // This will combine fullHostData (getDatabaseHostsFullData) and topologyHostData (getDatabaseHostsList) data and store in single object for pgsql.
     useEffect(() => {
         const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
+        const { resetManagedData } = state.inventoryV2;
         if (!resetManagedData) {
             let databaseHostDataObj: any = {};
             Object.keys(pgsqlTopologyHostData).map((key: string) => {
@@ -1735,7 +1736,7 @@ const InventoryApisV3 = () => {
                         ...{ [key]: { ...perObj, hostType: GENERAL.POSTGRESQL_TYPE } }
                     };
                 } else {
-                    const perObj = { ...pgsqlTopologyHostData[key], loading: pgsqlFullHostDataLoading ? true : false };
+                    const perObj = { ...pgsqlTopologyHostData[key], loading: !!pgsqlFullHostDataLoading };
                     databaseHostDataObj = {
                         ...databaseHostDataObj,
                         ...{ [key]: { ...perObj, hostType: GENERAL.POSTGRESQL_TYPE } }
@@ -1751,9 +1752,9 @@ const InventoryApisV3 = () => {
     // This data is coming from discover API
     useEffect(() => {
         const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
+        const { resetManagedData } = state.inventoryV2;
         if (!resetManagedData && !managedHostListLoading && discoveredHostData && discoveredHostData.length) {
-            let newDiscoveredHostData: any = [];
+            const newDiscoveredHostData: any = [];
             discoveredHostData.map((host: any) => {
                 if (host?.sqlServerInstances) {
                     let perHostNodesList: any = [];
@@ -1767,8 +1768,8 @@ const InventoryApisV3 = () => {
                 newDiscoveredHostData.push(host);
             });
 
-            let removeRows: any[] = [];
-            let clusterDiscoveredHost: any = {};
+            const removeRows: any[] = [];
+            const clusterDiscoveredHost: any = {};
             // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
             getPrimaryClusterNode(
                 newDiscoveredHostData,
@@ -1785,10 +1786,10 @@ const InventoryApisV3 = () => {
             );
 
             const state = store.getState();
-            const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
+            const { removeSecNodeDiscoveredList } = state.inventoryV2;
             dispatch(setRemoveSecNodeDiscoveredList([...removeSecNodeDiscoveredList, ...removeRows]));
 
-            let unmanagedHostList = getUnmanagedHostInstances(
+            const unmanagedHostList = getUnmanagedHostInstances(
                 formattedDiscoveredInventoryTableData,
                 runningInstanceListRef.current
             );
@@ -1798,7 +1799,7 @@ const InventoryApisV3 = () => {
             }
 
             // To Avoid overriding
-            let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
+            const updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
             if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
                 const mergedData = {
                     ...mssqlInstancesDataRef.current,
@@ -1815,7 +1816,7 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
+        const { resetManagedData } = state.inventoryV2;
         if (
             !resetManagedData &&
             !managedHostListLoading &&
@@ -1827,9 +1828,9 @@ const InventoryApisV3 = () => {
             const formattedDiscoveredOracleInventoryTableData =
                 formatDiscoveredOracleInventoryData(discoveredOracleHostData);
             // To Avoid overriding
-            let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredOracleInventoryTableData };
+            const updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredOracleInventoryTableData };
 
-            let unmanagedOracleHostList = getUnmanagedOracleHostInstances(
+            const unmanagedOracleHostList = getUnmanagedOracleHostInstances(
                 formattedDiscoveredOracleInventoryTableData,
                 runningOracleInstanceListRef.current
             );
@@ -1853,11 +1854,11 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
+        const { resetManagedData } = state.inventoryV2;
         if (!resetManagedData && !managedHostListLoading && discoveredPgsqlHostData && discoveredPgsqlHostData.length) {
-            let removeRows: any[] = [];
-            let clusterDiscoveredHost: any = {};
-            let newDiscoveredPgsqlHostData: any = [];
+            const removeRows: any[] = [];
+            const clusterDiscoveredHost: any = {};
+            const newDiscoveredPgsqlHostData: any = [];
             getPrimaryPgsqlNode(
                 newDiscoveredPgsqlHostData,
                 discoveredPgsqlHostData,
@@ -1874,10 +1875,10 @@ const InventoryApisV3 = () => {
             );
 
             const state = store.getState();
-            const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
+            const { removeSecNodeDiscoveredList } = state.inventoryV2;
             dispatch(setRemoveSecNodeDiscoveredList([...removeSecNodeDiscoveredList, ...removeRows]));
 
-            let unmanagedPgsqlHostList = getUnmanagedPgsqlHostInstances(
+            const unmanagedPgsqlHostList = getUnmanagedPgsqlHostInstances(
                 formattedDiscoveredInventoryTableData,
                 runningPgsqlInstanceListRef.current
             );
@@ -1885,7 +1886,7 @@ const InventoryApisV3 = () => {
                 callPgsqlResourceApi(unmanagedPgsqlHostList, false, INSTANCE_API_FIELDS.UNMANAGED_PGSQL_DEFAULT);
             }
             // To Avoid overriding
-            let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
+            const updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
             if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
                 const mergedData = {
                     ...mssqlInstancesDataRef.current,
@@ -1903,11 +1904,11 @@ const InventoryApisV3 = () => {
     // This data is coming from database-hosts API
     useEffect(() => {
         const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
+        const { resetManagedData } = state.inventoryV2;
         if (!resetManagedData && databaseHostsData) {
             const formattedInventoryTableData = formatInventoryTableData(databaseHostsData);
 
-            let unmanagedInstanceList = getMhUnmanagedInstances(
+            const unmanagedInstanceList = getMhUnmanagedInstances(
                 formattedInventoryTableData,
                 runningInstanceListRef.current
             );
@@ -1917,7 +1918,7 @@ const InventoryApisV3 = () => {
             }
 
             // To Avoid overriding
-            let updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
+            const updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
             // dispatch(setInventoryTableData(updatedResult));
 
             if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
@@ -1926,7 +1927,7 @@ const InventoryApisV3 = () => {
                     ...pgsqlInstancesDataRef.current,
                     ...oracleInstancesDataRef.current
                 };
-                //@ts-ignore
+                // @ts-ignore
                 const updatedInventoryData = updateInstancesApiResponse(mergedData, updatedResult);
                 dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
             } else {
@@ -1938,12 +1939,12 @@ const InventoryApisV3 = () => {
     // This data is coming from database-hosts pgsql API
     useEffect(() => {
         const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
+        const { resetManagedData } = state.inventoryV2;
         if (!resetManagedData && pgsqlDatabaseHostsData) {
             const formattedInventoryTableData = formatInventoryTableData(pgsqlDatabaseHostsData);
 
             // To Avoid overriding
-            let updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
+            const updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
             if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
                 const mergedDataArray = {
                     ...mssqlInstancesDataRef.current,
@@ -1960,32 +1961,49 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
+        const { resetManagedData } = state.inventoryV2;
         if (
             !resetManagedData &&
-            (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) &&
-            inventoryTableDataRef.current
+            (mssqlInstancesData || pgsqlInstancesData || oracleInstancesData) &&
+            inventoryTableData
         ) {
             const mergedData = {
-                ...mssqlInstancesDataRef.current,
-                ...pgsqlInstancesDataRef.current,
-                ...oracleInstancesDataRef.current
+                ...mssqlInstancesData,
+                ...pgsqlInstancesData,
+                ...oracleInstancesData
             };
-            const updatedInventoryData = updateInstancesApiResponse(mergedData, inventoryTableDataRef.current);
-            dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
+            const updatedInventoryData = updateInstancesApiResponse(mergedData, inventoryTableData);
+            const newInventoryTableData = { ...inventoryTableData, ...updatedInventoryData };
+
+            // Use lodash.isequal for deep comparison
+            if (!isEqual(newInventoryTableData, inventoryTableData)) {
+                dispatch(setInventoryTableData(newInventoryTableData));
+            }
         }
-    }, [mssqlInstancesData, pgsqlInstancesData, oracleInstancesData, perfMssqlInstancesData]);
+    }, [mssqlInstancesData, pgsqlInstancesData, oracleInstancesData, inventoryTableData]);
 
     useEffect(() => {
         const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
+        const { resetManagedData } = state.inventoryV2;
         if (!resetManagedData && inventoryTableDataRef.current) {
             const inventoryDataCount = getInventoryDataCount(inventoryTableDataRef.current);
-            dispatch(setInventoryChartData(inventoryDataCount));
+            const currentChartData = state.inventoryV2.inventoryChartData;
+            if (!isEqual(inventoryDataCount, currentChartData)) {
+                dispatch(setInventoryChartData(inventoryDataCount));
+            }
+
             const exploreSavingsRows = getExploreSavingsRows(inventoryTableDataRef.current);
-            dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
-            // call ES APIs for dashboard potential savings
-            if (exploreSavingsRows && exploreSavingsRows.length > 0) {
+            const currentExploreSavings = state.exploreSavings.unmanagedExploreSavingsHost;
+            if (!isEqual(exploreSavingsRows, currentExploreSavings)) {
+                dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
+            }
+
+            // Only call if exploreSavingsRows is not empty and has changed
+            if (
+                exploreSavingsRows &&
+                exploreSavingsRows.length > 0 &&
+                !isEqual(exploreSavingsRows, currentExploreSavings)
+            ) {
                 callPotentialSavings(exploreSavingsRows, credId, regionId);
             }
         }

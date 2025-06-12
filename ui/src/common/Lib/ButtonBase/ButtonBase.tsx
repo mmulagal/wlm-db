@@ -1,7 +1,7 @@
 import React, { ButtonHTMLAttributes, DetailedHTMLProps, ReactNode } from 'react';
 
-import styles from './ButtonBase.module.scss';
 import classNames from 'classnames';
+import styles from './ButtonBase.module.scss';
 
 export interface ButtonBaseProps extends DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement> {
     /** Button content  */
@@ -12,15 +12,8 @@ export interface ButtonBaseProps extends DetailedHTMLProps<ButtonHTMLAttributes<
     isDisabled?: boolean;
 }
 /** button base used for any clickable element which doesnt look like a button  */
-export const ButtonBase = ({ children, className, isDisabled, ...rest }: ButtonBaseProps) => {
-    return (
-        <button
-            className={classNames(styles[`button-base`], className)}
-            type={'button'}
-            disabled={isDisabled}
-            {...rest}
-        >
-            {children}
-        </button>
-    );
-};
+export const ButtonBase = ({ children, className, isDisabled, ...rest }: ButtonBaseProps) => (
+    <button className={classNames(styles['button-base'], className)} type="button" disabled={isDisabled} {...rest}>
+        {children}
+    </button>
+);

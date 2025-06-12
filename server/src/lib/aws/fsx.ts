@@ -19,16 +19,22 @@ import {
     DescribeBackupsCommandInput,
     UpdateVolumeCommand,
     UpdateFileSystemCommand,
-    DescribeVolumesCommand,
     UpdateFileSystemCommandInput
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
+import { addCacheMiddleware } from '../../utils/aws-sdk-middlewares';
+import { AWSSDKCacheParams } from '../../utils/common-types';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-async function getFSxClient(credentialsId: string, region: string, accountId?: string) {
+async function getFSxClient(
+    credentialsId: string,
+    region: string,
+    accountId?: string,
+    cacheParams: AWSSDKCacheParams = {}
+) {
     logger.debug('Getting FSx client:', { credentialsId, region });
 
     const {
@@ -36,13 +42,13 @@ async function getFSxClient(credentialsId: string, region: string, accountId?: s
     } = await getCredentialsDetails(credentialsId, accountId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
-    return new FSxClient({ credentials, region });
+    return addCacheMiddleware(new FSxClient({ credentials, region }), { ...cacheParams, credentialsId });
 }
 
-async function describeFSxFileSystems(credentialsId: string, region: string) {
+async function describeFSxFileSystems(credentialsId: string, region: string, cacheParams?: AWSSDKCacheParams) {
     logger.info('Describe FSx filesystems:', { credentialsId, region });
 
-    const client = await getFSxClient(credentialsId, region);
+    const client = await getFSxClient(credentialsId, region, undefined, cacheParams);
 
     const paginator = paginateDescribeFileSystems({ client }, {});
 
@@ -62,39 +68,56 @@ async function describeFSx(
     credentialsId: string,
     region: string,
     input: DescribeFileSystemsCommandInput,
-    accountId?: string
+    accountId?: string,
+    cacheParams?: AWSSDKCacheParams
 ): Promise<DescribeFileSystemsCommandOutput> {
     logger.info('Describe a FSx filesystem:', { credentialsId, region, input, accountId });
 
-    const client = await getFSxClient(credentialsId, region, accountId);
+    const client = await getFSxClient(credentialsId, region, accountId, cacheParams);
     const response = await client.send(new DescribeFileSystemsCommand(input));
     logger.debug('Describe a FSx file system response:', response);
 
     return response;
 }
 
-async function describeFSxVolumes(credentialsId: string, region: string, fsxFsId: string[], accountId?: string) {
-    logger.info('Describe FSx volumes:', { credentialsId, region, fsxFsId, accountId });
-    const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: fsxFsId }] };
+async function describeFSxVolumes(
+    credentialsId: string,
+    region: string,
+    params: { fileSystemIds: string[]; volumeIds?: string[] } | string[],
+    accountId?: string,
+    cacheParams?: AWSSDKCacheParams
+) {
+    logger.info('Describe FSx volumes:', { credentialsId, region, params, accountId });
 
-    const client = await getFSxClient(credentialsId, region, accountId);
+    const { fileSystemIds, volumeIds } = Array.isArray(params) ? { fileSystemIds: params } : params;
+    const input: DescribeVolumesCommandInput = {
+        Filters: [{ Name: 'file-system-id', Values: fileSystemIds }],
+        ...(volumeIds && { VolumeIds: volumeIds })
+    };
+
+    const client = await getFSxClient(credentialsId, region, accountId, cacheParams);
     const volumes = [];
     for await (const { Volumes = [] } of paginateDescribeVolumes({ client }, input)) {
         volumes.push(...Volumes);
     }
-    logger.debug('Decribe FSx volumes response:', volumes);
+    logger.debug('Describe FSx volumes response:', volumes);
 
     return { Volumes: volumes };
 }
 
-async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId?: string[]) {
+async function describeFSxStorageVirtualMachines(
+    credentialsId: string,
+    region: string,
+    fsxFsId?: string[],
+    cacheParams?: AWSSDKCacheParams
+) {
     logger.info('Describe FSx storage virtual machines:', { credentialsId, region, fsxFsId });
 
     let input: DescribeStorageVirtualMachinesCommandInput = {};
     if (typeof fsxFsId !== 'undefined') {
         input = { Filters: [{ Name: 'file-system-id', Values: fsxFsId }] };
     }
-    const client = await getFSxClient(credentialsId, region);
+    const client = await getFSxClient(credentialsId, region, undefined, cacheParams);
     const paginator = paginateDescribeStorageVirtualMachines({ client }, input);
     const svms = [];
     for await (const page of paginator) {
@@ -103,7 +126,7 @@ async function describeFSxStorageVirtualMachines(credentialsId: string, region: 
         }
     }
 
-    logger.info('Decribe FSx storage virtual machines  response:', svms);
+    logger.info('Describe FSx storage virtual machines response:', svms);
 
     return { StorageVirtualMachines: svms };
 }
@@ -112,11 +135,12 @@ async function describeFSxBackups(
     credentialsId: string,
     region: string,
     params: DescribeBackupsCommandInput,
-    accountId?: string
+    accountId?: string,
+    cacheParams?: AWSSDKCacheParams
 ): Promise<DescribeBackupsCommandOutput> {
     logger.info('Describe FSx backups:', { credentialsId, region, params, accountId });
 
-    const client = await getFSxClient(credentialsId, region, accountId);
+    const client = await getFSxClient(credentialsId, region, accountId, cacheParams);
 
     const response = await client.send(new DescribeBackupsCommand(params));
 
@@ -221,16 +245,6 @@ async function updateFileSystem(
     return response;
 }
 
-async function describeVolumes(credentialsId: string, region: string, params: DescribeVolumesCommandInput) {
-    logger.info('Describe FSx volumes:', { credentialsId, region, params });
-
-    const client = await getFSxClient(credentialsId, region);
-    const response = await client.send(new DescribeVolumesCommand(params));
-
-    logger.debug('Decribe FSx volumes response:', response);
-
-    return response;
-}
 export {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -241,6 +255,5 @@ export {
     createTag,
     updateFsxVolumeSize,
     updateFsxCapacity,
-    updateFileSystem,
-    describeVolumes
+    updateFileSystem
 };

@@ -1,14 +1,14 @@
 import { DsTypography, TextField } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useMemo, useState } from 'react';
+import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './ManualEC2.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useDispatch } from 'react-redux';
 import {
     setSelectedMachineDescription,
     setSelectedManualInstanceType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useMemo, useState } from 'react';
-import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
@@ -16,7 +16,7 @@ import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 const ManualEC2 = () => {
     const dispatch = useDispatch();
     const { manualMonthlyDescription, selectedManualInstanceType } = useAppSelector(state => state.exploreSavings);
-    //Getting the Data from state
+    // Getting the Data from state
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(
         state => state.exploreSavings.getManualInstanceTypeList
     );
@@ -25,7 +25,7 @@ const ManualEC2 = () => {
 
     const [machineDesc, setMachineDesc] = useState('');
 
-    //Use effect for machine description
+    // Use effect for machine description
     useEffect(() => {
         setTextSearch(machineDesc);
     }, [machineDesc]);
@@ -34,7 +34,7 @@ const ManualEC2 = () => {
         dispatch(setSelectedMachineDescription(textSearch));
     }, [textSearch]);
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
         let options: optionType[] = [];
         let default_instance_item = null;
@@ -43,13 +43,13 @@ const ManualEC2 = () => {
             const value = val?.instanceType || '';
             let label2 = '';
             if (val?.vCpus) {
-                label2 += val?.vCpus + 'vCPU, ';
+                label2 += `${val?.vCpus}vCPU, `;
             }
             if (val?.ramInMib) {
-                label2 += formatSize(val?.ramInMib, 'mib') + ' RAM, ';
+                label2 += `${formatSize(val?.ramInMib, 'mib')} RAM, `;
             }
             if (val?.iopsInMbps) {
-                label2 += val?.iopsInMbps + 'Mbps';
+                label2 += `${val?.iopsInMbps}Mbps`;
             }
             const option = generateOptionType(value, value, label2, false, '', val);
 
@@ -69,7 +69,7 @@ const ManualEC2 = () => {
     }, [instanceTypeData]);
 
     useEffect(() => {
-        let isPresent = instanceTypeData?.instanceTypes?.filter(
+        const isPresent = instanceTypeData?.instanceTypes?.filter(
             (val: any) => val?.instanceType === selectedManualInstanceType?.value
         );
         if (!selectedManualInstanceType || !isPresent?.length) {
@@ -82,7 +82,7 @@ const ManualEC2 = () => {
 
             <div className={styles.firstRow}>
                 <TextField
-                    label={'Machine description'}
+                    label="Machine description"
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setMachineDesc(e.target.value);
                     }}
@@ -92,7 +92,7 @@ const ManualEC2 = () => {
                 />
 
                 <SelectField
-                    label={'Instance type'}
+                    label="Instance type"
                     isClearable={false}
                     variant="two-lines"
                     value={selectedManualInstanceType}
@@ -100,7 +100,7 @@ const ManualEC2 = () => {
                         dispatch(setSelectedManualInstanceType(selectedOptions));
                     }}
                     isLoading={instanceTypeLoading}
-                    isSearchable={true}
+                    isSearchable
                     options={generateInstances}
                     className={`${styles.setWidth} savings-calculator-input-fields`}
                 />

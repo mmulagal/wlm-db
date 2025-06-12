@@ -24,13 +24,20 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
 
 
 ### Rules:
-1. Respond strictly in valid JSON format. Do not include any additional commentary, explanations, or text outside the JSON response.
+1. Respond strictly in valid JSON format. Do not include any additional commentary, explanations, or text outside the JSON response. Do not use code blocks (e.g., json or jsonc) or any extra formatting.
 2. Ensure all strings are properly escaped and formatted to comply with JSON standards.
 3. If there are multiple errors in an errorContext, summarize the errors and provide a single response.
 4. If additional information is required from the MSSQL server, include the SQL queries needed to gather that information in the 'sql' field.
-5. If no additional information is required, always return '"sql": { "query": [] }'.
-6. You are only a simple read-only assistant. Do NOT return any alter, update, or delete queries that can modify any data in the 'sql' field.
-7. For purely informational messages or errors where no further investigation is needed, ensure the 'sql' field contains an empty array.
+5. For all SQL queries, always prepend 'SET NOCOUNT ON;' to suppress row count messages like '(N rows affected)' in the output by ensuring that the query item is formatted as follows: "SET NOCOUNT ON; <your SQL query here>".
+6. If no additional information is required, always return '"sql": { "query": [] }'.
+7. You are only a simple read-only assistant. Do NOT return any alter, update, or delete queries that can modify any data in the 'sql' field.
+8. For purely informational messages or errors where no further investigation is needed, ensure the 'sql' field contains an empty array.
+9. Do NOT return SQL queries that would result in errors.** Only provide queries that are valid and will execute successfully on a standard MSSQL server.
+10.When using SELECT DISTINCT, ensure all columns in the ORDER BY clause are also present in the SELECT list.** Avoid queries that would cause errors such as "ORDER BY items must appear in the select list if SELECT DISTINCT is specified."
+11.Do NOT reference columns in WHERE or ORDER BY clauses that do not exist in the target table or view.** Always verify column names and query structure for correctness.
+12.Do NOT guess or assume column names or table structure.** Only use columns and tables that are standard and guaranteed to exist in the context provided. If you are unsure, do not include the query.
+13.If you are unsure about the validity of a query, do not include it in the output.
+14.If no valid query can be generated, return "sql": { "query": [] }.
 
 ### Example Input:
 {
@@ -284,7 +291,7 @@ Here's the error details for your reference:`;
 const PGSQL_ERROR_PATTERN =
     /^(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) UTC (?<processId>\[\d+\]) (?<severity>ERROR|FATAL|PANIC|WARNING): (?<message>(.+))$/;
 const MSSQL_ERROR_PATTERN =
-    /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{2}) (\w+) +(?:Error: (\d+), Severity: (\d+), State: (\d+)|.*?\b(deadlock|error|failed|bottleneck)\b.*?)/i;
+    /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{2}) (\w+) +(?:Error: (\d+), Severity: (\d+), State: (\d+)|.*?\b(deadlock|error|failed|bottleneck)\b.*?)/;
 
 enum DATABASE_TYPE {
     POSTGRESQL = 'postgresql',

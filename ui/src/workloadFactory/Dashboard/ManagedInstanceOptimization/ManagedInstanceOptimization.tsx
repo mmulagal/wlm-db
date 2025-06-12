@@ -1,4 +1,6 @@
 import { DsFlashingDotsLoader, DsTypography, FlashingDotsLoader, TooltipInfo } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
 import styles from './ManagedInstanceOptimization.module.scss';
 import HostDistributionChart from '../HostDistribution/HostDistributionChart/HostDistributionChart';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
@@ -7,9 +9,7 @@ import { ReactComponent as WellArchitect } from '../../../assets/well-architect.
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import useResize from '../../../common/hooks/useResize';
 import { GENERAL } from '../../../utils/appConstants';
-import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useMemo } from 'react';
 import { getManagedInstanceOptimizationSummary } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
 const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) => {
@@ -20,35 +20,39 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
         state => state.headers
     );
 
-    const instanceOptimizationSummary = useMemo(() => {
-        return getManagedInstanceOptimizationSummary(allmssqlHostAssessmentData);
-    }, [allmssqlHostAssessmentData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
+    const instanceOptimizationSummary = useMemo(
+        () => getManagedInstanceOptimizationSummary(allmssqlHostAssessmentData),
+        [allmssqlHostAssessmentData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]
+    );
 
-    const loading = useMemo(() => {
-        return allmssqlHostAssessmentLoading || multiDataLoading;
-    }, [allmssqlHostAssessmentLoading, multiDataLoading]);
+    const loading = useMemo(
+        () => allmssqlHostAssessmentLoading || multiDataLoading,
+        [allmssqlHostAssessmentLoading, multiDataLoading]
+    );
 
     const ChartComponent = useMemo(() => {
         const setColor = (value: any) => {
             if (value <= 25) {
                 return '#FE5502';
-            } else if (value > 25 && value <= 50) {
-                return '#F7941D';
-            } else if (value > 50 && value <= 75) {
-                return '#FDC300';
-            } else if (value > 75 && value < 100) {
-                return '#68C6B3';
-            } else {
-                return '#E0E0E0';
             }
+            if (value > 25 && value <= 50) {
+                return '#F7941D';
+            }
+            if (value > 50 && value <= 75) {
+                return '#FDC300';
+            }
+            if (value > 75 && value < 100) {
+                return '#68C6B3';
+            }
+            return '#E0E0E0';
         };
         return () => (
             <HostDistributionChart
                 color1={setColor(instanceOptimizationSummary?.optimizedPercent)}
-                color2={'#E0E0E0'}
+                color2="#E0E0E0"
                 data1={instanceOptimizationSummary?.optimizedPercent}
                 data2={100 - instanceOptimizationSummary?.optimizedPercent}
-                centerText={'Optimization score'}
+                centerText="Optimization score"
                 centerValue={`${instanceOptimizationSummary?.optimizedPercent || 0}%`}
                 loading={loading}
             />
@@ -100,7 +104,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <SquareComponent
                                     value={String(instanceOptimizationSummary?.optimizedInstances)}
                                     color="var(--chart-4)"
-                                    text={'Well-architected instances'}
+                                    text="Well-architected instances"
                                     isLoading={false}
                                     loadingInFirstRow={loading}
                                 />
@@ -109,7 +113,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <SquareComponent
                                     value={String(instanceOptimizationSummary?.notOptimizedInstances)}
                                     color="var(--chart-disabled)"
-                                    text={'Not-optimized instances '}
+                                    text="Not-optimized instances "
                                     isLoading={false}
                                     loadingInFirstRow={loading}
                                 />
@@ -124,7 +128,8 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                                 <div className={styles.headSectionSmall}>
                                     <div className={styles.manageInstanceTooltipSection}>
                                         <DsTypography variant="Semibold_16" style={{ whiteSpace: 'nowrap' }}>
-                                            Total registered instances &nbsp;{instanceOptimizationSummary?.totalInstances}
+                                            Total registered instances &nbsp;
+                                            {instanceOptimizationSummary?.totalInstances}
                                         </DsTypography>
                                         {instanceOptimizationSummary?.hasDismissedOrPostponed && (
                                             <TooltipInfo>{GENERAL.MANAGED_INSTANCE_DISMISS_INFO}</TooltipInfo>

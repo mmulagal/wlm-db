@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { ReactComponent as SendButton } from '../../../../assets/send-button.svg';
 import Message from '../Message/Message';
 
@@ -6,7 +7,6 @@ import styles from './Chatbox.module.scss';
 import ChatBotResponseLoader from '../ChatBotResponseLoader/ChatBotResponseLoader';
 import WelcomePage from '../WelcomePage/WelcomePage';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { setMessages, setSuggestionBubbles } from '../../../../store/chatbot/chatbotSlice';
 import Bubbles from '../Bubbles/Bubbles';
 import {
@@ -98,17 +98,15 @@ const ChatBox = ({
                             { sender: 'bot', msg: validationError }
                         ])
                     );
+                } else if (isResponse) {
+                    handleSelectButtonClicked({
+                        [expectingResponse.fieldName]: {
+                            label: valueToShow,
+                            value: userInput.trim().replace(/^"(.+(?="$))"$/, '$1')
+                        }
+                    });
                 } else {
-                    if (isResponse) {
-                        handleSelectButtonClicked({
-                            [expectingResponse.fieldName]: {
-                                label: valueToShow,
-                                value: userInput.trim().replace(/^"(.+(?="$))"$/, '$1')
-                            }
-                        });
-                    } else {
-                        sendMsg(userInput);
-                    }
+                    sendMsg(userInput);
                 }
             } else {
                 sendMsg(userInput);
@@ -159,8 +157,8 @@ const ChatBox = ({
                             dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                         }
                         if (value === 'start') {
-                            let defaultParams = getChatbotParamsFromPayload(mssqlFormData);
-                            let defaultObj: any = {};
+                            const defaultParams = getChatbotParamsFromPayload(mssqlFormData);
+                            const defaultObj: any = {};
                             Object.keys(defaultParams).map((key: string) => {
                                 defaultObj[key] = null;
                             });
@@ -184,9 +182,10 @@ const ChatBox = ({
                             );
                             dispatch(
                                 setSuggestionBubbles({
-                                    list: CHATBOT_WELCOME_CARDS.map(item => {
-                                        return { label: item.label, value: item.value || item.label };
-                                    }),
+                                    list: CHATBOT_WELCOME_CARDS.map(item => ({
+                                        label: item.label,
+                                        value: item.value || item.label
+                                    })),
                                     onBubbleClick: (label?: string, value?: string) => {
                                         sendMsg(label);
                                         dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
@@ -231,7 +230,7 @@ const ChatBox = ({
                     ) : (
                         ''
                     )}
-                    <div style={{ float: 'left', clear: 'both' }} ref={messagesEnd}></div>
+                    <div style={{ float: 'left', clear: 'both' }} ref={messagesEnd} />
                 </div>
             </div>
 
@@ -252,7 +251,7 @@ const ChatBox = ({
                         ref={inputRef}
                         autoFocus
                         type={expectingResponse.type === 'none' ? 'text' : expectingResponse.type}
-                    ></input>
+                    />
                     <div onClick={() => handleSendMsg()}>
                         <SendButton />
                     </div>

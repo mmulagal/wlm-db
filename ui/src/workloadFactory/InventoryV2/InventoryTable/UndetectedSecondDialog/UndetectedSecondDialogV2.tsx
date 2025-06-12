@@ -1,6 +1,6 @@
 import { DsRadioButton, Typography } from '@netapp/design-system';
-import styles from './UndetectedSecondDialogV2.module.scss';
 import { useDispatch } from 'react-redux';
+import styles from './UndetectedSecondDialogV2.module.scss';
 import { setRadioValueDetect } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';

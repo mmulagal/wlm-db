@@ -6,10 +6,12 @@ import {
     TextField,
     TooltipInfo
 } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import {
     setNewDBFileName,
     setNewUserLogFileName,
@@ -20,8 +22,6 @@ import {
     setIsDataVirtualMountPoint,
     setIsLogVirtualMountPoint
 } from '../../../../../store/workloadFactory/createNewDBSlice';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import {
     generateOptionType,
     isClusteredWithSelectedInstance,
@@ -69,13 +69,13 @@ const FileNames = () => {
         if (isDbCreateHit) {
             if (!dbCreateDataNameAdded) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     dataNameRef?.current?.focus();
                 }, 100);
             }
             if (!dbCreateLogNameAdded) {
                 setTimeout(() => {
-                    //@ts-ignore
+                    // @ts-ignore
                     logNameRef?.current?.focus();
                 }, 90);
             }
@@ -134,13 +134,14 @@ const FileNames = () => {
     const disableDriveMsg = (val: any) => {
         if (!val?.isNetappDrive) {
             return GENERAL.NON_NETAPP_DRIVE;
-        } else if (isClusteredWithSelectedInstance(val)) {
+        }
+        if (isClusteredWithSelectedInstance(val)) {
             return GENERAL.NON_CLUSTERED_DRIVE;
         }
         return '';
     };
 
-    //Function to generate the options for data drive Select Field
+    // Function to generate the options for data drive Select Field
     const generateDataDriveLetters = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         driveInfoList?.existingDriveInfo?.map((val: any, idx: number) => {
@@ -159,7 +160,7 @@ const FileNames = () => {
                 val,
                 val,
                 DRIVE_LETTER_TYPE.NEW,
-                driveLetterLogFile?.value === val ? true : false,
+                driveLetterLogFile?.value === val,
                 driveLetterLogFile?.value === val ? GENERAL.SAME_NEW_DRIVE_ERROR : ''
             );
             options.push(option);
@@ -167,7 +168,7 @@ const FileNames = () => {
         return sortListOfDict(options, 'isDisabled');
     }, [driveInfoList, driveLetterLogFile]);
 
-    //Function to generate the options for log file Select Field
+    // Function to generate the options for log file Select Field
     const generateLogDriveLetters = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         driveInfoList?.existingDriveInfo?.map((val: any, idx: number) => {
@@ -186,7 +187,7 @@ const FileNames = () => {
                 val,
                 val,
                 DRIVE_LETTER_TYPE.NEW,
-                driveLetter?.value === val ? true : false,
+                driveLetter?.value === val,
                 driveLetter?.value === val ? GENERAL.SAME_NEW_DRIVE_ERROR : ''
             );
             options.push(option);
@@ -244,12 +245,13 @@ const FileNames = () => {
         dispatch(setIsExistingLogDrive(driveLetterLogFile?.label2 === DRIVE_LETTER_TYPE.EXISTING));
     }, [driveLetter, driveLetterLogFile]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         // For quick create it will just show file name. For advanced it will show path also.
         if (isValidDataName() && isValidLogName()) {
             return <AccordionError />;
-        } else if (
+        }
+        if (
             newUserDBFileName &&
             newUserLogFileName &&
             (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE ? driveLetter && driveLetterLogFile : true)
@@ -281,7 +283,7 @@ const FileNames = () => {
                 </DsTypography>
             );
         }
-        return <ActionRequired error={!dbCreateDataNameAdded || !dbCreateLogNameAdded ? true : false} />;
+        return <ActionRequired error={!!(!dbCreateDataNameAdded || !dbCreateLogNameAdded)} />;
     };
 
     function isValidDataName() {
@@ -339,7 +341,7 @@ const FileNames = () => {
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setDriveLetter(selectedOptions));
                                         }}
-                                        value={driveLetter ? driveLetter : null}
+                                        value={driveLetter || null}
                                         isSearchable={generateDataDriveLetters.length > 5}
                                         options={generateDataDriveLetters}
                                         variant="two-lines"
@@ -420,7 +422,7 @@ const FileNames = () => {
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setDriveLetterForLogFile(selectedOptions));
                                         }}
-                                        value={driveLetterLogFile ? driveLetterLogFile : null}
+                                        value={driveLetterLogFile || null}
                                         isSearchable={generateLogDriveLetters.length > 5}
                                         options={generateLogDriveLetters}
                                         variant="two-lines"

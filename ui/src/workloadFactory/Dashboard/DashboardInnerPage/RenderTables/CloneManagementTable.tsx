@@ -1,12 +1,12 @@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
@@ -36,8 +36,8 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
     const { credentialData } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const tableData = useMemo(() => {
-        let cloneAssessmentData: any = [];
-        let uniqueResourceList: Array<string> = [];
+        const cloneAssessmentData: any = [];
+        const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
@@ -69,7 +69,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                             performanceTier: cloneObj?.current,
                             totalObjectsAssessed: cloneObj?.totalObjectsAssessed,
                             totalObjectsInViolation: cloneObj?.totalObjectsInViolation,
-                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
+                            id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[cloneObj?.status],
                             data: instanceData,
@@ -108,9 +108,8 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                 ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
                 selectedRowsForOptimize
             );
-        } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
         }
+        return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT);
     }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
 
     const TableColDefs: ColumnProps[] = [
@@ -122,9 +121,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             filterOptions: 'auto',
             isSticky: true,
             width: '310px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
-            }
+            renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
         {
             Header: 'Host name',
@@ -139,9 +136,8 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
             id: '3',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
-            }
+            renderCell: (cellData: string, rowData: any) =>
+                `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
         },
         {
             id: '4',
@@ -168,7 +164,7 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -197,18 +193,18 @@ const CloneManagementTable = ({ lastColDetails, handleBulkAction }: StorageTierT
     return (
         <div className={styles.renderTable}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Not-optimized instances`}
-                singularTitle={'Not-optimized instance'}
+                pluralTitle="Not-optimized instances"
+                singularTitle="Not-optimized instance"
             />
             {selectedRowsForOptimize.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

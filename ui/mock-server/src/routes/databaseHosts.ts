@@ -10,6 +10,7 @@ import TerraformSetup from '../data/terraformSetup.json';
 import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
 import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
 import optimizeBulkJobs from '../data/optimizeBulkJobs.json';
+import registerBulkJobs from '../data/registerBulkJob.json';
 import DiscoverEC2 from '../data/discoverEc2V2.json';
 import DiscoverOracle from '../data/discoverOracle.json';
 import DiscoverPgsql from '../data/discoverPgsql.json';
@@ -92,6 +93,7 @@ router.get(`${BASE_URL}/v1/jobs/:jobId`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobMonitoringSubTask);
         // generateResponse(res, 200, optimizeBulkJobs);
+        // generateResponse(res, 200, registerBulkJobs);
     }, 7000);
 });
 

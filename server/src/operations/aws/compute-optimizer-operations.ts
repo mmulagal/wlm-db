@@ -81,18 +81,28 @@ async function identifyComputeOptimizerRecommendationOptions(
         instanceRecommendationOptions
     });
 
-    const recommendationOptionsWithPrices = [];
-    for (const recommendationOption of instanceRecommendationOptions) {
-        const { instanceType = '' } = recommendationOption;
-        const { [instanceType]: pricingDetails } = await getSqlInstancePricingDetails(region, instanceType, 'windows'); // Assuming this function returns pricing details for a specific instance type
-        if (pricingDetails?.NA?.pricePerUnit) {
-            recommendationOptionsWithPrices.push({
-                recommendationOption,
-                price: pricingDetails.NA.pricePerUnit,
-                pricingDetails
-            });
-        }
-    }
+    const recommendationOptionsWithPrices: {
+        recommendationOption: InstanceRecommendationOption;
+        price: number;
+        pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } };
+    }[] = [];
+    await Promise.all(
+        instanceRecommendationOptions.map(async recommendationOption => {
+            const { instanceType = '' } = recommendationOption;
+            const { [instanceType]: pricingDetails } = await getSqlInstancePricingDetails(
+                region,
+                instanceType,
+                'windows'
+            ); // Assuming this function returns pricing details for a specific instance type
+            if (pricingDetails?.NA?.pricePerUnit) {
+                recommendationOptionsWithPrices.push({
+                    recommendationOption,
+                    price: pricingDetails.NA.pricePerUnit,
+                    pricingDetails
+                });
+            }
+        })
+    );
     recommendationOptionsWithPrices.sort((a, b) => a.price - b.price);
 
     return recommendationOptionsWithPrices;

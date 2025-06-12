@@ -5,19 +5,20 @@ import {
     StepLayout,
     WizardContent,
     WizardFooter,
-    WizardHeader,
     postBlueXPMessage
 } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { Content } from './ManageInstanceStep/ManageInstanceStep';
 import styles from './ManageInstanceWizard.module.scss';
-import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { handleSingleInstanceManage } from './ManageInstanceUtils';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { useLazyGetSubTaskListQuery, useManageBulkV2MssqlInstanceMutation } from '../../../../utils/apiService';
 
 const ManageOnlyWizard = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [manageBulkV2InstanceApi] = useManageBulkV2MssqlInstanceMutation();
@@ -38,7 +39,7 @@ const ManageOnlyWizard = () => {
         <StepLayout>
             <Header
                 className={styles['manage-instance-wizard']}
-                title={'Register instance'}
+                title={t('databases.register-flow.register-instance')}
                 closeButtonProps={{
                     onClick: () => {
                         setTimeout(() => {
@@ -83,10 +84,10 @@ const ManageOnlyWizard = () => {
                             }, 100);
                         }}
                     >
-                        Previous
+                        {t('databases.register-flow.previous')}
                     </Button>
                     <Button isThin onClick={handleManage} id="wizard-manage-btn">
-                        Register
+                        {t('databases.register-flow.register')}
                     </Button>
                 </>
             </WizardFooter>

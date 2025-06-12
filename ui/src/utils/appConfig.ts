@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { postBlueXPMessage, BlueXPListeners, useBlueXP } from '@netapp/design-system';
-import { useAppDispatch } from '../store/storeHooks';
 import queryString from 'query-string';
+import { useAppDispatch } from '../store/storeHooks';
 import {
     updateAccountId,
     updateAuthSuccess,
@@ -48,16 +48,13 @@ const useInitialize = () => {
                     window.location.ancestorOrigins[0].includes(WORKLOADS)
                 ) {
                     return true;
-                } else {
-                    return false;
                 }
-            } else {
-                if (document.referrer.includes(WORKLOADS)) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return false;
             }
+            if (document.referrer.includes(WORKLOADS)) {
+                return true;
+            }
+            return false;
         };
         const isWorkloadFactory = checkForPlatform();
 
@@ -96,7 +93,7 @@ const useInitialize = () => {
             const { accessToken, accountId, isDemoMode, features, userMetadata } = initialData;
             dispatch(updateUserMetaData(userMetadata));
             dispatch(updateFeatures(features));
-            dispatch(updateAuthSuccess({ accessToken: accessToken }));
+            dispatch(updateAuthSuccess({ accessToken }));
             dispatch(updateAccountId(accountId));
             dispatch(updateIsLoading(false));
             dispatch(updateIsDemoMode(isDemoMode));
@@ -114,16 +111,16 @@ const useInitialize = () => {
                 navigate(`${initialData?.pathname}`, { replace: true });
             }
         },
-        onConnectorChange: function (connectorId: string): void {},
-        onWorkspaceChange: function (workspaceId: string): void {
+        onConnectorChange(connectorId: string): void {},
+        onWorkspaceChange(workspaceId: string): void {
             dispatch(updateWorkspaceId(workspaceId));
         },
-        onTokenUpdate: function (accessToken: string, userMetadata: any): void {
-            dispatch(updateAuthSuccess({ accessToken: accessToken }));
+        onTokenUpdate(accessToken: string, userMetadata: any): void {
+            dispatch(updateAuthSuccess({ accessToken }));
         },
-        onNssAdded: function (): void {},
-        onNssAddingFailed: function (): void {},
-        onLocationChange: function (pathname: string, hash: string, search: string): void {
+        onNssAdded(): void {},
+        onNssAddingFailed(): void {},
+        onLocationChange(pathname: string, hash: string, search: string): void {
             dispatch(updatePathname(pathname));
         }
     });

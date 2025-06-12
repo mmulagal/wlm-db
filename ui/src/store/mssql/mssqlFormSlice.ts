@@ -105,25 +105,25 @@ const mssqlFormSlice = createSlice({
         setSelectedOperatingSystem(state, action: PayloadAction<any>) {
             state.operatingSystem = action.payload;
         },
-        //Security Group
+        // Security Group
         setSelectedSecurityGroup(state, action: PayloadAction<any>) {
             state.securityGroup.selectedSecurityType = action.payload;
         },
         setSelectedExistingSecurityGroup(state, action: PayloadAction<any>) {
             state.securityGroup.selectedExistingSecurityGroup = action.payload;
         },
-        //DB version
+        // DB version
         setDBVersion(state, action: PayloadAction<any>) {
             state.dbVersion = action.payload;
         },
-        //Region and VPC
+        // Region and VPC
         setSelectedRegionData(state, action: PayloadAction<any>) {
             state.regionAndVpc.selectedRegion = action.payload;
         },
         setSelectedVPC(state, action: PayloadAction<any>) {
             state.regionAndVpc.selectedVPC = action.payload;
         },
-        //availabilityZones
+        // availabilityZones
         setSelectedAzNode1(state, action: PayloadAction<any>) {
             state.availabilityZones.selectedAzNode1 = action.payload;
         },
@@ -136,7 +136,7 @@ const mssqlFormSlice = createSlice({
         setSelectedSubnetNode2(state, action: PayloadAction<any>) {
             state.availabilityZones.selectedSubnetNode2 = action.payload;
         },
-        //dbDeploymentModel
+        // dbDeploymentModel
         setSelectedDBDeploymentModel(state, action: PayloadAction<any>) {
             state.dbDeploymentModel = action.payload;
         },
@@ -157,7 +157,7 @@ const mssqlFormSlice = createSlice({
         setSqlServerCollation(state, action: PayloadAction<any>) {
             state.sqlServerCollation = action.payload;
         },
-        //DB Name
+        // DB Name
         setDBName(state, action: PayloadAction<any>) {
             state.dbName = action.payload;
         },
@@ -172,7 +172,7 @@ const mssqlFormSlice = createSlice({
         setSelectedKeyPair(state, action: PayloadAction<any>) {
             state.keyPair.selectedKeyPair = action.payload;
         },
-        //AD
+        // AD
         setSelectedADScenarioType(state, action: PayloadAction<any>) {
             state.activeDirectory.scenarioType = action.payload;
         },
@@ -188,11 +188,11 @@ const mssqlFormSlice = createSlice({
         setSelectedADPassword(state, action: PayloadAction<any>) {
             state.activeDirectory.password = action.payload;
         },
-        //Instance Type
+        // Instance Type
         setInstanceType(state, action: PayloadAction<any>) {
             state.instanceType = action.payload;
         },
-        //FSXN
+        // FSXN
         setFsxNType(state, action: PayloadAction<any>) {
             state.fsxN.fsxNType = action.payload;
         },
@@ -208,36 +208,36 @@ const mssqlFormSlice = createSlice({
         setExistingFsxnName(state, action: PayloadAction<any>) {
             state.fsxN.fsxNExistingName = action.payload;
         },
-        //Storage Capacity
+        // Storage Capacity
         setStorageCapacity(state, action: PayloadAction<any>) {
             state.storageCapacity.capacity = action.payload;
         },
         setStorageUnit(state, action: PayloadAction<any>) {
             state.storageCapacity.unit = action.payload;
         },
-        //Provisioned IOPS
+        // Provisioned IOPS
         setProvisionedType(state, action: PayloadAction<any>) {
             state.provisionedIOPS.provisionedType = action.payload;
         },
         setProvisionedIOPSValue(state, action: PayloadAction<any>) {
             state.provisionedIOPS.IOPSValue = action.payload;
         },
-        //Throughput
+        // Throughput
         setThroughputValue(state, action: PayloadAction<any>) {
             state.throughput = action.payload;
         },
-        //SNS
+        // SNS
         setSNSState(state, action: PayloadAction<any>) {
             state.simpleNotification.snsState = action.payload;
         },
         setSNSARN(state, action: PayloadAction<any>) {
             state.simpleNotification.snsARN = action.payload;
         },
-        //Cloud watch
+        // Cloud watch
         setCloudWatch(state, action: PayloadAction<any>) {
             state.cloudWatch = action.payload;
         },
-        //Encryption
+        // Encryption
         setEncryptionType(state, action: PayloadAction<any>) {
             state.encryption.encryptionType = action.payload;
         },
@@ -250,19 +250,19 @@ const mssqlFormSlice = createSlice({
         setTags(state, action: PayloadAction<any>) {
             state.tags = action.payload;
         },
-        //Save Config
+        // Save Config
         setSaveConfigName(state, action: PayloadAction<any>) {
             state.saveConfigName = action.payload.trim();
         },
-        //Select config
+        // Select config
         setSelectConfig(state, action: PayloadAction<any>) {
             state.selectConfig = action.payload;
         },
-        //load config update
+        // load config update
         setLoadConfig(state, action: PayloadAction<any>) {
             state.loadConfig = action.payload;
         },
-        //Update full form
+        // Update full form
         setMssqlForm(state, action: PayloadAction<any>) {
             return { ...state, ...action.payload };
         }

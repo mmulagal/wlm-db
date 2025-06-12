@@ -1,9 +1,9 @@
 import { DsTypography, Popover } from '@netapp/design-system';
-import styles from './ExploreSavingsTab.module.scss';
 import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
+import styles from './ExploreSavingsTab.module.scss';
 import { setSelectedExploreSavingsTab } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { WLF_TABS } from '../../../utils/consts';
-import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { handleExploreSavingsURL } from '../../../utils/utilityFunctions';

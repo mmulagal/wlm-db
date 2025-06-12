@@ -29,14 +29,14 @@ const DBDistributionSection = () => {
                                     height: `${100 - (parseInt(cpu?.percentUsed) || 0)}%`,
                                     backgroundColor: 'var(--chart-disabled)'
                                 }}
-                            ></div>
+                            />
                             <div
                                 className={`${styles.progress} ${styles.rightCurveBar}`}
                                 style={{
                                     height: `${parseInt(cpu?.percentUsed) || 0}%`,
                                     backgroundColor: 'var(--chart-1)'
                                 }}
-                            ></div>
+                            />
                         </div>
                         {/* Ends here */}
 
@@ -53,14 +53,14 @@ const DBDistributionSection = () => {
                                     height: `${100 - (parseInt(memory?.percentUsed) || 0)}%`,
                                     backgroundColor: 'var(--chart-disabled)'
                                 }}
-                            ></div>
+                            />
                             <div
                                 className={`${styles.progress} ${styles.rightCurveBar}`}
                                 style={{
                                     height: `${parseInt(memory?.percentUsed) || 0}%`,
                                     backgroundColor: 'var(--chart-2)'
                                 }}
-                            ></div>
+                            />
                         </div>
                         {/* Ends here */}
 
@@ -77,14 +77,14 @@ const DBDistributionSection = () => {
                                     height: `${100 - (parseInt(disk?.percentUsed) || 0)}%`,
                                     backgroundColor: 'var(--chart-disabled)'
                                 }}
-                            ></div>
+                            />
                             <div
                                 className={`${styles.progress} ${styles.rightCurveBar}`}
                                 style={{
                                     height: `${parseInt(disk?.percentUsed) || 0}%`,
                                     backgroundColor: 'var(--chart-3)'
                                 }}
-                            ></div>
+                            />
                         </div>
                         {/* Ends here */}
 

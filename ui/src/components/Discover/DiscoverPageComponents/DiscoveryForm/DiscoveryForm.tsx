@@ -19,7 +19,7 @@ const DiscoveryForm = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     console.log(e.target.value);
                 }}
-                error={''}
+                error=""
                 className={styles.fieldContainer}
             />
             <SelectField
@@ -37,12 +37,12 @@ const DiscoveryForm = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     console.log(e.target.value);
                 }}
-                error={''}
+                error=""
                 className={styles.fieldContainer}
             />
             <PasswordField
                 label={GENERAL.PASSWORD}
-                error={''}
+                error=""
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     console.log(e);
                 }}

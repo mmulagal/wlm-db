@@ -1,8 +1,8 @@
 import { Header } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import styles from './CreateNewSandboxHeader.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useDispatch } from 'react-redux';
 import { updateRefreshBlocked } from '../../../../store/authSlice';
 import { FORM_TO_WLF_NAVIGATE_BLUEXP_SANDBOXES, FORM_TO_WLF_NAVIGATE_SANDBOXES } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -34,7 +34,7 @@ function CreateNewSandboxHeader() {
                 }}
                 title={<div className={styles.leftSideStyle}>{GENERAL.CREATE_NEW_SANDBOX}</div>}
                 style={{ width: '100vw' }}
-            ></Header>
+            />
         </div>
     );
 }

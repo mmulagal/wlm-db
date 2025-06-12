@@ -11,10 +11,10 @@ import { NOTIFICATION_TYPES, addNotification } from '../../../store/notification
 import { GENERAL } from '../../../utils/appConstants';
 
 export const createUserDbPayload = (newUserDb: any) => {
-    let payload: any = {
+    const payload: any = {
         databaseName: newUserDb?.newUserDBName,
         dataFileConfig: {
-            fileName: newUserDb?.newUserDBFileName ? newUserDb.newUserDBFileName + '.mdf' : '',
+            fileName: newUserDb?.newUserDBFileName ? `${newUserDb.newUserDBFileName}.mdf` : '',
             volumeSize:
                 newUserDb?.newUserDataSizeUnit?.label === 'TiB'
                     ? newUserDb?.newUserDataSize * 1024
@@ -24,7 +24,7 @@ export const createUserDbPayload = (newUserDb: any) => {
             isVirtualMount: newUserDb?.isDataVirtualMountPoint
         },
         logFileConfig: {
-            fileName: newUserDb?.newUserLogFileName ? newUserDb.newUserLogFileName + '.ldf' : '',
+            fileName: newUserDb?.newUserLogFileName ? `${newUserDb.newUserLogFileName}.ldf` : '',
             volumeSize:
                 newUserDb?.newUserLogFileSizeUnit?.label === 'TiB'
                     ? newUserDb?.newUserLogFileSize * 1024
@@ -85,31 +85,31 @@ export const handleCreateUserDb = (state: any, dispatch: any) => {
         };
         const collation = state?.createNewUser?.selectedCollation?.label;
 
-        //Check for Create DB username value
+        // Check for Create DB username value
         if (dbNameStateValue) {
             dispatch(setDbCreateNameAdded(false));
         } else {
             dispatch(setDbCreateNameAdded(true));
         }
-        //Check for Create DB data file name value
+        // Check for Create DB data file name value
         if (dbDataNameStateValue) {
             dispatch(setDbCreateDataNameAdded(false));
         } else {
             dispatch(setDbCreateDataNameAdded(true));
         }
-        //Check for Create DB log file name value
+        // Check for Create DB log file name value
         if (dbLogNameStateValue) {
             dispatch(setDbCreateLogNameAdded(false));
         } else {
             dispatch(setDbCreateLogNameAdded(true));
         }
-        //Check for Create DB data size value
+        // Check for Create DB data size value
         if (dbDataSizeState) {
             dispatch(setDbCreateDataSizeValid(false));
         } else {
             dispatch(setDbCreateDataSizeValid(true));
         }
-        //Check for Create DB log size value
+        // Check for Create DB log size value
         if (dbLogSizeState) {
             dispatch(setDbCreateLogSizeValid(false));
         } else {

@@ -19,13 +19,13 @@ import { SECRETS } from '../../../src/utils/consts';
 SECRETS.AUTH_CLIENT_ID = `${faker.string.uuid()}`;
 
 function generateBearerToken() {
-    const secretKey = faker.random.alphaNumeric(32);
+    const secretKey = faker.string.alphanumeric(32);
     const payload = {
-        userId: faker.random.alphaNumeric(32),
-        username: faker.internet.userName(),
-        sub: faker.internet.userName()
+        userId: faker.string.alphanumeric(32),
+        username: faker.internet.username(),
+        sub: faker.internet.username()
     };
-    const options = {
+    const options: jwt.SignOptions = {
         expiresIn: '1h'
     };
     const token = jwt.sign(payload, secretKey, options);

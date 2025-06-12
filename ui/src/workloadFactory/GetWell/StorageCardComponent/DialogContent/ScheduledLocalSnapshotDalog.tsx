@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import styles from './DialogContent.module.scss';
 import { Button, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import styles from './DialogContent.module.scss';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useLazyGetSnapshotPoliciesQuery } from '../../../../utils/apiService';
-import { useDispatch } from 'react-redux';
 import { setSelectedSnapshot, setSelectedSnapshotPolicy } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { formatCronSchedule } from './cronUtils';
 
@@ -97,7 +97,7 @@ const ScheduledLocalSnapshotDalog = ({ type, data }: any) => {
                     </div>
                     <div className={styles.selectField}>
                         <SelectField
-                            label={'Snapshot policy name'}
+                            label="Snapshot policy name"
                             isClearable={false}
                             value={selectedSnapshot ? [selectedSnapshot] : [generateSnapshotPolicies[0]]}
                             onChange={(selectedOptions: any): void => {

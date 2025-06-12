@@ -1,5 +1,6 @@
 import { AccordionController, Typography } from '@netapp/design-system';
 
+import { useEffect, useState } from 'react';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import AvailabilityZone from '../AwsSettings/AvailabilityZone/AvailabilityZone';
 import AwsAccount from '../AwsSettings/AwsAccount/AwsAccount';
@@ -27,7 +28,6 @@ import EstimatedCost from '../Cost/EstimatedCost';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import PreviewDefault from '../Cost/PreviewDefault/PreviewDefault';
 
-import { useEffect, useState } from 'react';
 import { setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 import ResourceRollBack from '../InfrastructureSettings/ResourceRollBack/ResourceRollBack';
 import SqlServerCollation from '../ApplicationSettings/Collation/SqlServerCollation';

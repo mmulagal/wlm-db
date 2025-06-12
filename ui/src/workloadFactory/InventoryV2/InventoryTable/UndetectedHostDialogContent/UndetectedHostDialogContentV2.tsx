@@ -1,7 +1,7 @@
 import { PasswordField, TextField, Typography } from '@netapp/design-system';
-import styles from './UndetectedHostDialogContentV2.module.scss';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import styles from './UndetectedHostDialogContentV2.module.scss';
 import {
     setDetectManagePassword,
     setDetectManageUserName,
@@ -39,7 +39,7 @@ const UndetectedHostDialogContentV2 = ({ rowData }: DialogProps) => {
         dispatch(setIsDetectHostError(''));
     }, [detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword]);
 
-    //Use effect for ontap username
+    // Use effect for ontap username
     useEffect(() => {
         setTextSearch(ontapUserName);
     }, [ontapUserName]);
@@ -48,7 +48,7 @@ const UndetectedHostDialogContentV2 = ({ rowData }: DialogProps) => {
         dispatch(setDetectONTAPUserName(textSearch));
     }, [textSearch]);
 
-    //Use effect for detect username
+    // Use effect for detect username
     useEffect(() => {
         setDetectUserNameSearch(detectUserName);
     }, [detectUserName]);
@@ -57,7 +57,7 @@ const UndetectedHostDialogContentV2 = ({ rowData }: DialogProps) => {
         dispatch(setDetectManageUserName(detectUserNameSearch));
     }, [detectUserNameSearch]);
 
-    //Use effect for ontap password
+    // Use effect for ontap password
     useEffect(() => {
         setOntapPasswordSearch(ontapPassword);
     }, [ontapPassword]);
@@ -66,7 +66,7 @@ const UndetectedHostDialogContentV2 = ({ rowData }: DialogProps) => {
         dispatch(setDetectONTAPPassword(ontapPasswordSearch));
     }, [ontapPasswordSearch]);
 
-    //useEffect for detect password
+    // useEffect for detect password
     useEffect(() => {
         setDetectPasswordSearch(detectPassword);
     }, [detectPassword]);

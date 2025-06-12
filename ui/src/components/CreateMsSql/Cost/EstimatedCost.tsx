@@ -7,6 +7,8 @@ import {
     Typography,
     useAccordionContext
 } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
+import { isEqual } from 'lodash';
 import { ReactComponent as ActionRequiredIcon } from '../../../assets/action-required.svg';
 import styles from './EstimatedCost.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -18,9 +20,7 @@ import { DBType, FORM_OPTIONS, FSX_DEPLOYMENT_MODE, WIZARD_TYPE } from '../../..
 import SizePopover from './SizePopover/SizePopover';
 import { formatNumberWithCustomComma, isFsxnNew, updateSizeInGib } from '../../../utils/utilityFunctions';
 import { setEstimatedCostData, setEstimatedCostLoading } from '../../../store/mssql/mssqlSlice';
-import { useDispatch } from 'react-redux';
 import { setPricingPayload } from '../../../store/mssql/msSqlActionSlice';
-import { isEqual } from 'lodash';
 
 type Res = {
     data: {
@@ -66,7 +66,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
 
     const [getEstimationCost] = useGetEstimationCostMutation();
 
-    //To get the Cost value based on the below parameters
+    // To get the Cost value based on the below parameters
     const selectedCredId = useAppSelector(state => state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId);
     const regionValue = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
     const instanceTypeName = useAppSelector(state => state.mssqlForm.instanceType?.value);
@@ -92,12 +92,10 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
         if (value.length === 2) {
             if (value[1] === 'GBps') {
                 return value[0] * 1024;
-            } else {
-                return Number(value[0]);
             }
-        } else {
-            return throughputValue;
+            return Number(value[0]);
         }
+        return throughputValue;
     };
 
     const computeObj = (updatedStr: string, wizardType?: any) => {
@@ -223,7 +221,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                 setIsLoading(true);
                 dispatch(setEstimatedCostLoading(true));
                 dispatch(setPricingPayload(payload));
-                getEstimationCost({ payload: payload })
+                getEstimationCost({ payload })
                     .then((data: any) => {
                         setTimeout(() => {
                             setIsLoading(false);
@@ -232,7 +230,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                                 setIsDisabled(true);
                                 dispatch(setEstimatedCostData(null));
                             } else {
-                                let formattedData = updateSizeInGib(data);
+                                const formattedData = updateSizeInGib(data);
                                 setData(formattedData);
                                 setIsDisabled(false);
                                 dispatch(setEstimatedCostData(formattedData));
@@ -266,14 +264,16 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
         selectedCustomAMI
     ]);
 
-    useEffect(() => {
-        // Clear the pricing payload on unmount
-        return () => {
-            dispatch(setPricingPayload(null));
-        };
-    }, []);
+    useEffect(
+        () =>
+            // Clear the pricing payload on unmount
+            () => {
+                dispatch(setPricingPayload(null));
+            },
+        []
+    );
 
-    //To open accordion if default account is present
+    // To open accordion if default account is present
     // useEffect(() => {
     //     if (fetchResult) {
     //         accordionContext({
@@ -298,37 +298,38 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                     {GENERAL.ESTIMATED_COST_HEADER}
                 </Typography>
             );
-        } else if (!selectedZone1 || (deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && !selectedZone2)) {
+        }
+        if (!selectedZone1 || (deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && !selectedZone2)) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_AZ}
                 </Typography>
             );
-        } else if (isLoading) {
+        }
+        if (isLoading) {
             return <LoadingComponent />;
-        } else if (isDisabled) {
+        }
+        if (isDisabled) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.COST_ERROR}
                 </Typography>
             );
-        } else {
-            return (
-                <Typography variant="Regular_14">
-                    {isFsxnNew(selectedFsxnType)
-                        ? `$${formatNumberWithCustomComma(Number(data?.data?.total).toFixed(2))}` || ''
-                        : `$${formatNumberWithCustomComma(Number(data?.data?.compute).toFixed(2))}` || ''}
-                </Typography>
-            );
         }
+        return (
+            <Typography variant="Regular_14">
+                {isFsxnNew(selectedFsxnType)
+                    ? `$${formatNumberWithCustomComma(Number(data?.data?.total).toFixed(2))}` || ''
+                    : `$${formatNumberWithCustomComma(Number(data?.data?.compute).toFixed(2))}` || ''}
+            </Typography>
+        );
     };
 
     const costDisableCheck = () => {
         if (deploymentModel?.label === GENERAL.SINGLE_INSTANCE) {
             return isDisabled || !regionValue || !selectedZone1;
-        } else {
-            return isDisabled || !regionValue || !selectedZone1 || !selectedZone2;
         }
+        return isDisabled || !regionValue || !selectedZone1 || !selectedZone2;
     };
 
     const calculateTotalForExistingFsx = (data: Res | undefined) => {
@@ -389,7 +390,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                                             <LoadingComponent />
                                         </div>
                                     ) : (
-                                        //@ts-ignore
+                                        // @ts-ignore
                                         `$${formatNumberWithCustomComma(Number(data?.data?.compute).toFixed(2))}` || ''
                                     )}
                                 </Typography>
@@ -406,9 +407,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
                                             {GENERAL.SIZE}:
-                                            {' ' +
-                                                data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total +
-                                                ' GiB'}
+                                            {` ${data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total} GiB`}
                                         </Typography>
                                         {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total && (
                                             <TooltipInfo className={styles.tooltipClass}>
@@ -436,7 +435,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                                                 <LoadingComponent />
                                             </div>
                                         ) : (
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             `$${formatNumberWithCustomComma(
                                                 Number(
                                                     data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.capacityCost
@@ -455,7 +454,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                                                 <LoadingComponent />
                                             </div>
                                         ) : (
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             `$${formatNumberWithCustomComma(
                                                 Number(
                                                     data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.operationalCost
@@ -478,13 +477,13 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                                     </Typography>
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
-                                            {GENERAL.SIZE}:{' ' + totalEbsSize(data) + ' GiB'}
+                                            {GENERAL.SIZE}:{` ${totalEbsSize(data)} GiB`}
                                         </Typography>
                                     </div>
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
                                             {GENERAL.VOLUME_TYPE}:
-                                            {' ' + data?.data?.ebsStorage?.ebsBreakdownByVolumeType?.[0]?.volumeType}
+                                            {` ${data?.data?.ebsStorage?.ebsBreakdownByVolumeType?.[0]?.volumeType}`}
                                         </Typography>
                                     </div>
                                 </div>
@@ -495,7 +494,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                                                 <LoadingComponent />
                                             </div>
                                         ) : (
-                                            //@ts-ignore
+                                            // @ts-ignore
                                             `$${formatNumberWithCustomComma(
                                                 Number(data?.data?.ebsStorage?.ebsStorageCost).toFixed(2)
                                             )}` || ''
@@ -555,7 +554,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                                     <div className={styles.loadingPlacement}>
                                         <LoadingComponent />
                                     </div>
-                                ) : //@ts-ignore
+                                ) : // @ts-ignore
                                 isFsxnNew(selectedFsxnType) ? (
                                     `$${formatNumberWithCustomComma(Number(data?.data?.total).toFixed(2))}` || ''
                                 ) : (

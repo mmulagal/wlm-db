@@ -7,11 +7,11 @@ import {
     Typography,
     Popover
 } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './Encryption.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import EncryptionTable from './EncryptionTable/EncryptionTable/EncryptionTable';
-import { useDispatch } from 'react-redux';
 import { setEncryptionARN, setEncryptionRow, setEncryptionType } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { selectFsxKmsKey } from '../../MSSqlServer/MSSqlUtils';
@@ -51,12 +51,12 @@ const Encryption = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (isDisable) {
             return (
                 <Popover
-                    popoverClass={styles['popover']}
+                    popoverClass={styles.popover}
                     children={GENERAL.KMS_DISABLE_TEXT}
                     trigger="hover"
                     container={
@@ -66,13 +66,11 @@ const Encryption = () => {
                     }
                 />
             );
-        } else {
-            if (accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT) {
-                return <Typography variant="Regular_14">{anotherAccArn}</Typography>;
-            } else {
-                return <Typography variant="Regular_14">{selectedRow && selectedRow[0]?.name}</Typography>;
-            }
         }
+        if (accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT) {
+            return <Typography variant="Regular_14">{anotherAccArn}</Typography>;
+        }
+        return <Typography variant="Regular_14">{selectedRow && selectedRow[0]?.name}</Typography>;
     };
     return (
         <div className={styles.encryption}>

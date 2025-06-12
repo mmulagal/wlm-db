@@ -11,21 +11,18 @@ const styles = {
 /**
  * Template function does nothing, but webstorm uses it to properly syntax highlight css
  */
-const css = (strings: any, ...values: any) => {
-    return strings
-        .map(function (e: any, i: any) {
-            return [e, values[i]];
-        })
+const css = (strings: any, ...values: any) =>
+    strings
+        .map((e: any, i: any) => [e, values[i]])
         .flat()
         .join(' ');
-};
 
 const ThemeProvider = React.memo(
     ({ children, theme, isRoot, className }: { className?: string; children: any; theme: string; isRoot: boolean }) => {
         const wrapperRef = useRef<HTMLDivElement>(null);
 
         useEffect(() => {
-            //@ts-ignore
+            // @ts-ignore
             const style = styles[theme];
             if (!style) {
                 return;
@@ -52,10 +49,9 @@ const ThemeProvider = React.memo(
                 return () => {
                     document.head.removeChild(styleTag);
                 };
-            } else {
-                if (wrapperRef.current) {
-                    wrapperRef.current.setAttribute('style', generatedString); // Set the generated styles directly
-                }
+            }
+            if (wrapperRef.current) {
+                wrapperRef.current.setAttribute('style', generatedString); // Set the generated styles directly
             }
         }, [theme, isRoot]);
 

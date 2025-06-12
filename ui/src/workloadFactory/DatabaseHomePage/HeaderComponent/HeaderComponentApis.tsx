@@ -92,8 +92,6 @@ const HeaderComponentApi = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [regionsData, regionsError, regionsLoading]);
-
-    return;
 };
 
 export default HeaderComponentApi;

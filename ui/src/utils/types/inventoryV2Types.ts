@@ -59,6 +59,10 @@ export interface InventorySliceData {
     detectManagePassword: string;
     detectOntapUsername: string;
     detectOntapPassword: string;
+    detectWindowsAuthentication: {
+        username: string;
+        password: string;
+    };
     detectedInstanceId: string;
     inventoryExpandedRowHostData: any;
     resetManagedData: boolean;
@@ -92,6 +96,7 @@ export interface InventorySliceData {
     manageSingleInstanceReadiness: any;
     manageSingleInstanceChecks: any;
     manageSingleInstanceData: any;
+    bulkDetectedInstanceList: any;
 }
 
 export interface InventoryTableData {
@@ -153,7 +158,7 @@ export interface InventoryTableInstanceDatInterface {
     };
     storage?: {
         fsxn?: {
-            protocol?: Array<String>;
+            protocol?: Array<string>;
             size?: number;
             used?: number;
             spaceSavings?: number;
@@ -185,7 +190,7 @@ export interface InventoryTableInstanceDatInterface {
 
 export interface StorageInterface {
     fsxn?: {
-        protocol?: Array<String>;
+        protocol?: Array<string>;
         size?: number;
         used?: number;
         spaceSavings?: number;
@@ -309,7 +314,7 @@ export interface ManagedHostsRowInterface {
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
-    ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
+    ssmStatus?: string; // Connected,NotConnected,Connecting,Disconnected, N\A
     loading?: boolean;
     databaseInstanceDetails?: Array<{
         databaseInstanceId?: string;
@@ -388,7 +393,7 @@ export interface InstancesHostsRowInterface {
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
-    ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
+    ssmStatus?: string; // Connected,NotConnected,Connecting,Disconnected, N\A
     loading?: boolean;
     databaseInstanceDetails?: Array<DatabaseInstanceDetailsInterface>;
     clusterNodeDetails?: Array<{
@@ -523,6 +528,7 @@ export interface SQLServerInstancesDiscovered {
     sqlServerProductYear?: string;
     isDefaultInstance?: boolean;
     windowsAuthentication?: boolean;
+    windowsDomainUserAuthentication?: boolean;
     sqlServerEdition?: string;
     sqlServerEngineEdition?: number;
     sqlServerName?: string;

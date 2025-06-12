@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from 'react';
-import styles from './FilterPanel.module.scss';
 import { ReactComponent as FilterIcon } from '@netapp/icons/ic_filter.svg';
-import { ColumnProps } from './Table';
 import classNames from 'classnames';
+import { Button, Checkbox, Popover } from '@netapp/design-system';
+import styles from './FilterPanel.module.scss';
+import { ColumnProps } from './Table';
 import { ButtonBase } from '../ButtonBase/ButtonBase';
 import useClickOutside from '../../hooks/useClickOutside';
-import { Button, Checkbox, Popover } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
 
 export interface FilterPanelProps {
@@ -30,24 +30,22 @@ export const FilterPanel = ({
                 {filterOptions &&
                     Array.isArray(filterOptions) &&
                     filterOptions.length > 0 &&
-                    filterOptions.map(({ value, label, isDisabled = false, className }) => {
-                        return (
-                            <Checkbox
-                                key={value as string}
-                                isDisabled={isDisabled}
-                                isChecked={internalState[String(value)] || false}
-                                className={classNames(styles['checkbox-container'], className)}
-                                onChange={() =>
-                                    setInternalState({
-                                        ...internalState,
-                                        [String(value)]: !internalState[String(value)]
-                                    })
-                                }
-                            >
-                                {label === '' ? GENERAL.NOT_AVAILABLE : label}
-                            </Checkbox>
-                        );
-                    })}
+                    filterOptions.map(({ value, label, isDisabled = false, className }) => (
+                        <Checkbox
+                            key={value as string}
+                            isDisabled={isDisabled}
+                            isChecked={internalState[String(value)] || false}
+                            className={classNames(styles['checkbox-container'], className)}
+                            onChange={() =>
+                                setInternalState({
+                                    ...internalState,
+                                    [String(value)]: !internalState[String(value)]
+                                })
+                            }
+                        >
+                            {label === '' ? GENERAL.NOT_AVAILABLE : label}
+                        </Checkbox>
+                    ))}
             </div>
             <div className={styles['buttons-row']}>
                 <ButtonBase
@@ -78,12 +76,12 @@ export const FilterButton = ({ column, isDisabled = false }: { column: ColumnPro
     return (
         <Popover
             visible={isOpen}
-            isAppendedToBody={true}
+            isAppendedToBody
             popoverClass={styles['filter-panel-wrapper']}
-            placement={'bottom-end'}
+            placement="bottom-end"
             container={
                 <Button
-                    variant={'icon'}
+                    variant="icon"
                     className={styles['filter-button']}
                     isDisabled={isDisabled}
                     onClick={() => setIsOpen(prev => !prev)}
@@ -92,7 +90,7 @@ export const FilterButton = ({ column, isDisabled = false }: { column: ColumnPro
                 </Button>
             }
             containerClass={classNames(styles['filter-trigger-button'], {
-                [styles['opened']]: isOpen
+                [styles.opened]: isOpen
             })}
         >
             <FilterPanel column={column} setIsOpen={setIsOpen} />

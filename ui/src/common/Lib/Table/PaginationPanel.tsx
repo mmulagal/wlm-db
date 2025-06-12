@@ -1,11 +1,11 @@
 import React from 'react';
 import { ReactComponent as ArrowIcon } from '@netapp/icons/ic_link_arrow_expand.svg';
+import classNames from 'classnames';
+import { Typography } from '@netapp/design-system';
 import styles from './PaginationPanel.module.scss';
 import { ButtonBase } from '../ButtonBase/ButtonBase';
-import classNames from 'classnames';
 
 import { PaginationStateType } from './Table';
-import { Typography } from '@netapp/design-system';
 
 export interface PaginationPanelProps {
     pagination: PaginationStateType;
@@ -29,7 +29,7 @@ export const PaginationPanel = ({
 
     return (
         <div className={styles['pagination-panel']}>
-            <Typography variant={'Semibold_14'} className={styles['pagination-title']}>{`${
+            <Typography variant="Semibold_14" className={styles['pagination-title']}>{`${
                 first === last
                     ? first
                     : `${first?.toLocaleString('en', { useGrouping: true })} - ${last?.toLocaleString('en', {
@@ -39,18 +39,18 @@ export const PaginationPanel = ({
             <ButtonBase
                 onClick={handlePrev}
                 disabled={isFirstPage}
-                className={classNames(styles['pagination-button'], styles['prev'])}
+                className={classNames(styles['pagination-button'], styles.prev)}
             >
                 <ArrowIcon />
             </ButtonBase>
-            <Typography variant={'Semibold_14'} className={styles['current-page']}>
+            <Typography variant="Semibold_14" className={styles['current-page']}>
                 {(pageIndex + 1)?.toLocaleString('en', { useGrouping: true })}
             </Typography>
             <ButtonBase
-                type={'button'}
+                type="button"
                 onClick={handleNext}
                 disabled={isLastPage}
-                className={classNames(styles['pagination-button'], styles['next'])}
+                className={classNames(styles['pagination-button'], styles.next)}
             >
                 <ArrowIcon />
             </ButtonBase>

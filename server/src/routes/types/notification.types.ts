@@ -23,4 +23,23 @@ const EmailRequestBody = Type.Object({
 
 type EmailResponseType = Static<typeof EmailResponse>;
 
-export { EmailRequestParams, EmailResponse, EmailResponseType, EmailRequestBody };
+const NotificationRequestBody = Type.Object({
+    notificationData: Type.Object({
+        content: Type.String({ minLength: 10 }),
+        subject: Type.String({ minLength: 10 }),
+        resourceName: Type.String({ minLength: 5 }),
+        resourceId: Type.String({ minLength: 5 }),
+        notificationType: Type.String({ minLength: 2 }),
+        resourceType: Type.Optional(Type.String()),
+        workload: Type.Optional(Type.String()),
+        priority: Type.Optional(Type.String()),
+        actionRequired: Type.Optional(Type.Boolean()),
+        persist: Type.Optional(Type.Boolean()),
+        ttl: Type.Optional(Type.Number()),
+        action: Type.Optional(Type.String()),
+        userId: Type.Optional(Type.String()),
+        service: Type.Optional(Type.String())
+    })
+});
+
+export { EmailRequestParams, EmailResponse, EmailResponseType, EmailRequestBody, NotificationRequestBody };

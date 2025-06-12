@@ -42,7 +42,7 @@ vi.mock('../../src/lib/aws/secrets-manager', () => ({
     createSecret: vi.fn().mockImplementation(async () => secretManagerResponse)
 }));
 
-const awsAccountId = `${faker.datatype.number({ min: 100000000 })}`;
+const awsAccountId = `${faker.number.int({ min: 100000000 })}`;
 const fsxId = `fs-${faker.string.numeric(8)}`;
 const fsxArn = `arn:aws:fsx:${DEFAULT_AWS_REGION}:${awsAccountId}:file-system/${fsxId}`;
 

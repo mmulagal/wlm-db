@@ -1,11 +1,11 @@
 import { AccordionCard, AccordionCardContent, ToggleSelector, Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { useMemo, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './SimpleNotificationService.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useMemo, useEffect } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { setSNSARN, setSNSState } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
@@ -14,7 +14,7 @@ import { DBType } from '../../../../utils/consts';
 const SimpleNotificationService = () => {
     const dispatch = useDispatch();
 
-    //Getting the Data from state
+    // Getting the Data from state
     const { snsData, snsLoading } = useAppSelector(state => state.mssql.getSnsList);
     const selectedState = useAppSelector(state => state.mssqlForm.simpleNotification.snsState);
     const selectedARNValue = useAppSelector(state => state.mssqlForm.simpleNotification.snsARN);
@@ -22,21 +22,20 @@ const SimpleNotificationService = () => {
     const databaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         if (!selectedState) {
             return <Typography variant="Regular_14">Disabled</Typography>;
-        } else {
-            return (
-                <div className={CommonStyles.setHeaderStyle}>
-                    <div>Enabled</div>
-                    <div className={CommonStyles.separator} />
-                    <div className={styles.headingValue} title={selectedARNValue?.label}>
-                        {selectedARNValue?.label}
-                    </div>
-                </div>
-            );
         }
+        return (
+            <div className={CommonStyles.setHeaderStyle}>
+                <div>Enabled</div>
+                <div className={CommonStyles.separator} />
+                <div className={styles.headingValue} title={selectedARNValue?.label}>
+                    {selectedARNValue?.label}
+                </div>
+            </div>
+        );
     };
 
     const handleChange = () => {
@@ -44,7 +43,7 @@ const SimpleNotificationService = () => {
         dispatch(setIsWizardTouched(true));
     };
 
-    //Function to generate the options for Select Field
+    // Function to generate the options for Select Field
     const generateArn = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         snsData?.topics?.map((val, idx: number) => {
@@ -55,7 +54,7 @@ const SimpleNotificationService = () => {
         return options;
     }, [snsData]);
 
-    //Update selected SNS Topic in form data store
+    // Update selected SNS Topic in form data store
     useEffect(() => {
         if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSNSARN(null));
@@ -76,7 +75,7 @@ const SimpleNotificationService = () => {
                             {GENERAL.SNS}
                         </ToggleSelector>
                         <Typography variant="Regular_14" className={styles.subText}>
-                            {databaseType === DBType.MSSQL ?  GENERAL.SNS_TEXT : GENERAL.SNS_TEXT_PGSQL}
+                            {databaseType === DBType.MSSQL ? GENERAL.SNS_TEXT : GENERAL.SNS_TEXT_PGSQL}
                         </Typography>
 
                         <div className={styles.selectField}>
@@ -91,7 +90,7 @@ const SimpleNotificationService = () => {
                                 isSearchable={generateArn.length > 5}
                                 options={generateArn}
                                 isDisabled={!selectedState}
-                                value={selectedARNValue ? selectedARNValue : undefined}
+                                value={selectedARNValue || undefined}
                             />
                         </div>
                     </Typography>

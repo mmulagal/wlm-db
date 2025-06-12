@@ -1,8 +1,8 @@
+import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import useResize from '../../../common/hooks/useResize';
 import { ReactComponent as Savings } from '../../../assets/Savings.svg';
 import styles from './SandboxStorageSaving.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { formatSize } from '../../../utils/utilityFunctions';
@@ -27,7 +27,7 @@ const SandboxStorageSaving = () => {
                             width: `${100}%`,
                             backgroundColor: 'var(--chart-disabled)'
                         }}
-                    ></div>
+                    />
                 </div>
             );
         }
@@ -42,8 +42,8 @@ const SandboxStorageSaving = () => {
                             width: `${100 - savingsPercentage}%`,
                             backgroundColor: 'var(--chart-9)'
                         }}
-                    ></div>
-                    <div className={styles.separator}></div>
+                    />
+                    <div className={styles.separator} />
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar} ${
                             savingsPercentage === 100 ? styles.leftCurveBar : ''
@@ -52,10 +52,11 @@ const SandboxStorageSaving = () => {
                             width: `${savingsPercentage}%`,
                             backgroundColor: 'var(--chart-4)'
                         }}
-                    ></div>
+                    />
                 </div>
             );
-        } else if (isNA) {
+        }
+        if (isNA) {
             return (
                 <div className={styles.progressBar}>
                     <div
@@ -64,7 +65,7 @@ const SandboxStorageSaving = () => {
                             width: `${100}%`,
                             backgroundColor: 'var(--chart-disabled)'
                         }}
-                    ></div>
+                    />
                 </div>
             );
         }
@@ -100,7 +101,7 @@ const SandboxStorageSaving = () => {
                                 </DsTypography>
                             )}
                             <DsTypography variant="Regular_14" className={isNA ? CommonStyles.notAvailable : ''}>
-                                {'Sandboxes storage savings'}
+                                Sandboxes storage savings
                             </DsTypography>
                         </div>
                     </div>
