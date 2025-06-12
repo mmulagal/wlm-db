@@ -1273,7 +1273,7 @@ const InstancesTable = () => {
         if (isWorkloadFactory) {
             navigate('../register-bulk-wizard');
         } else {
-            navigate('../fsxdb/manage-bulk-wizard');
+            navigate('../fsxdb/register-bulk-wizard');
         }
     };
 
