@@ -60,8 +60,8 @@
             "register-instance-failed": "Register instance failed",
             "select-instance-page-content1": "Selecting multiple instances requires shared credentials.",
             "select-instance-page-content2": "Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials, or a group of instances that are already authenticated.",
-            "manage-instance-page-content1": "This prerequisite check validates that your SQL Server instance meets the required prerequisites and if prepared for management in Workload Factory.",
-            "manage-instance-page-content2": "To complete instance registration, complete all required prerequisites.",
+            "manage-instance-page-content1": "This prerequisite check validates that your SQL Server instance meets the required prerequisites and is prepared for management in Workload Factory.",
+            "manage-instance-page-content2": "To complete instance registration, ensure that all prerequisites for at least one capability are fully met.",
             "prerequisites-list": "Prerequisites list",
             "dbwl-read-only-permissions": "Databases workload - Read-only permissions",
             "dbwl-ec2-instance-profile-permissions": "Databases workload - EC2 instance profile permissions",
@@ -88,12 +88,15 @@
             "detect-windows-password": "Windows password",
             "authenticated-page-content1": "All the selected instances are authenticated",
             "authenticated-page-content2": "Continue to the next step",
-            "multiinstance-header-dialog-heading": "Instances status (authentication status and readiness status)",
+            "multiinstance-header-dialog-heading": "Instance authentication and preparation status",
             "selected-instances": "Selected instances",
             "successfully-authenticated": "Successfully authenticated",
             "ready-for-management": "Ready for management",
             "view-details": "View details",
             "manage-detect-info-message": "The authentication process is in progress and may take up to 1 minute to complete."
+        },
+        "well-architected": {
+            "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis."
         }
     }
 }

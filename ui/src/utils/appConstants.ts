@@ -1185,7 +1185,6 @@ export const GENERAL = {
     HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
     NOT_OPTIMIZED_SHARED_DRIVES:
         'Drive size optimization isn’t possible because data is on the same shared drive. You’ll need to change the storage layout before resizing the drive.',
-    ASSESSMENT_IN_PROGRESS: 'Well-architected analysis has not been run yet.',
     ASSESSMENT_FOR_MANAGE: 'Well-architected analysis is only supported for registered instances.',
     FSXN_OPTIMIZE_SUPPORTED:
         'Well-architected analysis is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',
