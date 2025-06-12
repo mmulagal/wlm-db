@@ -90,9 +90,11 @@ import {
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
 import { OracleInstanceData } from '../../utils/types/inventoryV2Types';
 
-// Shared limiter and processing set to ensure only 10 concurrent API calls globally for getStorageSavings Api
+// Limit the number of concurrent API calls to avoid overloading the backend or hitting rate limits.
+// storageSavingsApiLimit: Used specifically for storage savings API calls, allowing up to 10 concurrent requests.
+// generalApiLimit: Used for general API calls (e.g., instance/resource data), allowing up to 5 concurrent requests.
 const storageSavingsApiLimit = pLimit(10);
-const limit = pLimit(5);
+const generalApiLimit = pLimit(5);
 
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
@@ -1084,9 +1086,11 @@ const InventoryApisV3 = () => {
             });
             dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
             setRunningInstanceList([...runningInstanceListRef.current, ...noRunningList]);
+            // generalApiLimit is used to limit the number of concurrent API calls. As of now Limited to 5 concurrent calls.
+            // This is used to avoid throttling error from API.
             Promise.all(
                 noRunningList.map((ec2InstanceIdComb: any) =>
-                    limit(() => getMssqlData(ec2InstanceIdComb, isManagedHost, fields))
+                    generalApiLimit(() => getMssqlData(ec2InstanceIdComb, isManagedHost, fields))
                 )
             );
         }
@@ -1112,9 +1116,11 @@ const InventoryApisV3 = () => {
             });
             dispatch(setPgsqlInstancesData({ ...pgsqlInstancesDataRef.current, ...pgsqlInstancesDataLoad }));
             setRunningPgsqlInstanceList([...runningPgsqlInstanceListRef.current, ...noRunningList]);
+            // generalApiLimit is used to limit the number of concurrent API calls. As of now Limited to 5 concurrent calls.
+            // This is used to avoid throttling error from API.
             Promise.all(
                 noRunningList.map((ec2InstanceIdComb: any) =>
-                    limit(() => getPgsqlData(ec2InstanceIdComb, isManagedHost, fields))
+                    generalApiLimit(() => getPgsqlData(ec2InstanceIdComb, isManagedHost, fields))
                 )
             );
         }
@@ -1139,9 +1145,11 @@ const InventoryApisV3 = () => {
             });
             dispatch(setOracleInstancesData({ ...oracleInstancesDataRef.current, ...oracleInstancesDataLoad }));
             setRunningOracleInstanceList([...runningOracleInstanceListRef.current, ...noRunningList]);
+            // generalApiLimit is used to limit the number of concurrent API calls. As of now Limited to 5 concurrent calls.
+            // This is used to avoid throttling error from API.
             Promise.all(
                 noRunningList.map((ec2InstanceIdComb: any) =>
-                    limit(() => getOracleData(ec2InstanceIdComb, isManagedHost, fields))
+                    generalApiLimit(() => getOracleData(ec2InstanceIdComb, isManagedHost, fields))
                 )
             );
         }
@@ -1398,7 +1406,6 @@ const InventoryApisV3 = () => {
         }
     };
 
-    // edit this also
     // This is to call instance API to get perf and protection data
     const callUnmanagedPerfInstanceApi = (
         instancesListComb: Array<string>,
@@ -1426,9 +1433,11 @@ const InventoryApisV3 = () => {
             });
             dispatch(setPerfMssqlInstancesData({ ...perfMssqlInstancesDataRef.current, ...mssqlInstancesDataLoad }));
             setRunningPerfInstanceList([...runningPerfInstanceListRef.current, ...noRunningList]);
+            // generalApiLimit is used to limit the number of concurrent API calls. As of now Limited to 5 concurrent calls.
+            // This is used to avoid throttling error from API.
             Promise.all(
                 noRunningList.map((ec2InstanceIdComb: any) =>
-                    limit(() => getUnmanagedPerfMssqlData(ec2InstanceIdComb, isManagedHost, fields))
+                    generalApiLimit(() => getUnmanagedPerfMssqlData(ec2InstanceIdComb, isManagedHost, fields))
                 )
             );
         }
@@ -1488,9 +1497,6 @@ const InventoryApisV3 = () => {
                         loading: false,
                         storageType: savingsCalculatorType
                     };
-                    console.log('get storage savings data response', result?.data);
-                    console.log({ ...potentialSavingsHostDataRef.current });
-                    console.log('instance data', instanceData);
                     // Potential savings data is stored in inventoryV2 slice and
                     // it will be used in DatabaseHomeApis to format data for dashboard potential card UI.
                     dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
@@ -1547,7 +1553,8 @@ const InventoryApisV3 = () => {
                     };
                     dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
 
-                    // Use p-limit for concurrency control
+                    // storageSavingsApiLimit is used to limit the number of API calls to storage savings API. Limited to 10 For now.
+                    // This is to avoid hitting the API limit for storage savings API.
                     if (storageType === GENERAL.EBS) {
                         if (isEbsProtected) {
                             promises.push(
