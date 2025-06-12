@@ -1270,7 +1270,11 @@ const InstancesTable = () => {
     const handleManageBulk = () => {
         dispatch(setSelectedMultiDetectInstances([]));
         dispatch(setWizardOperationType('bulk'));
-        navigate('../register-bulk-wizard');
+        if (isWorkloadFactory) {
+            navigate('../register-bulk-wizard');
+        } else {
+            navigate('../fsxdb/manage-bulk-wizard');
+        }
     };
 
     return (
