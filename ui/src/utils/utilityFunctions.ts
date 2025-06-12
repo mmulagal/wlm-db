@@ -157,17 +157,17 @@ export const getFilterOptions = (data: any[], propName: string, renderLabel?: (v
     !data
         ? []
         : sortBy(
-            uniqBy(
-                compact(
-                    map(data, row => {
-                        const value = get(row, propName, null);
-                        return { value, label: renderLabel ? renderLabel(value) : value };
-                    })
-                ),
-                'label'
-            ),
-            'value'
-        );
+              uniqBy(
+                  compact(
+                      map(data, row => {
+                          const value = get(row, propName, null);
+                          return { value, label: renderLabel ? renderLabel(value) : value };
+                      })
+                  ),
+                  'label'
+              ),
+              'value'
+          );
 
 export const formatSize = (value: number, passedformat?: string) =>
     numeral(getByteVal(value, passedformat)).format('0.[00] ib');
@@ -624,8 +624,8 @@ export const getAzType = (deploymentType: string | undefined) => {
     return singleAzPattern.test(deploymentType)
         ? GENERAL.SINGLE_AZ
         : multiAzPattern.test(deploymentType)
-            ? GENERAL.MULTI_AZ
-            : deploymentType;
+        ? GENERAL.MULTI_AZ
+        : deploymentType;
 };
 
 export const getPgsqlAzType = (perRow: PgsqlInstancesDiscovered) => {
@@ -1484,7 +1484,7 @@ export const collapseAllRows = (updateRowState: any, rowState: any) => {
 };
 
 export const expandTableRow = (
-    updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new(): any },
+    updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
     rowData: { id: any },
     currentRowState: { isExpanded: any },
     rowState: any
@@ -1599,12 +1599,12 @@ export const getStickyClass = (columns: any, columnIndex: number) => {
     const isLast = isLastSticky(columns, columnIndex);
     const stickyStyling = isStickyLeft
         ? {
-            left: getLeft(columns, columnIndex),
-            ...(isLast && { boxShadow: '4px 0 4px 0 var(--Grey200)' })
-        }
+              left: getLeft(columns, columnIndex),
+              ...(isLast && { boxShadow: '4px 0 4px 0 var(--Grey200)' })
+          }
         : {
-            right: getLeft(columns.slice().reverse(), columns.length - columnIndex - 1)
-        };
+              right: getLeft(columns.slice().reverse(), columns.length - columnIndex - 1)
+          };
     return css({
         '&': stickyStyling
     });
@@ -1647,7 +1647,7 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         detectOntapPassword,
         authenticationType
     } = state?.inventoryV2;
-    let credList = [];
+    const credList = [];
     let checkManageReadiness = false;
     // Add SQL Server credentials when SQL Server Authentication is selected as authentication type
     if (

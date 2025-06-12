@@ -223,7 +223,7 @@ export const callManageSingleInstanceApi = async (
                 } else {
                     navigate(FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY);
                 }
-                
+
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
