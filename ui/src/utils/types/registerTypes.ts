@@ -124,7 +124,7 @@ export interface RegisterDetail {
     fsxnError: string;
     requiredModuleError: string;
     manageReadiness: ManageReadinessData; // Adjust type if you have a specific structure
-};
+}
 
 export interface RegisterResourceCredBulkResultItem {
     ec2InstanceId: string;
@@ -132,4 +132,4 @@ export interface RegisterResourceCredBulkResultItem {
     region: string;
     error: string;
     registerDetails: RegisterDetail[];
-};
+}

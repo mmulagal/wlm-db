@@ -78,7 +78,12 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         dispatch(setIsDetectHostLoading(true));
         dispatch(setManageSingleInstanceReadiness(null));
 
-        dispatch(addNotification({ message: t('databases.register-flow.manage-detect-info-message'), notificationType: NOTIFICATION_TYPES.INFO }));
+        dispatch(
+            addNotification({
+                message: t('databases.register-flow.manage-detect-info-message'),
+                notificationType: NOTIFICATION_TYPES.INFO
+            })
+        );
 
         // Create payload for all selected instances
         const fullPayload = createDetectHostPayloadBulk(selectedMultiDetectInstances);

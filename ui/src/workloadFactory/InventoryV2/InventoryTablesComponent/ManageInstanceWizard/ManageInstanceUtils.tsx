@@ -128,7 +128,10 @@ export const handleMultiInstanceManage = (
     const anyInstanceReady =
         Array.isArray(bulkDetectedInstanceList) &&
         bulkDetectedInstanceList.some(
-            (instance: any) => instance.authorized && instance?.data?.manageReadiness && isAllowManage(instance.data.manageReadiness || {})
+            (instance: any) =>
+                instance.authorized &&
+                instance?.data?.manageReadiness &&
+                isAllowManage(instance.data.manageReadiness || {})
         );
 
     if (anyInstanceReady) {
@@ -261,7 +264,10 @@ export const callManageMultiInstanceApi = async (
     // Build payload for each instance, grouping by ec2InstanceId, region, credentialsId
     const instanceMap = new Map<string, ManageApiPayloadItem>();
     bulkDetectedInstanceList
-        ?.filter((instance: BulkDetectedInstance) => instance.authorized && isAllowManage(instance?.data?.manageReadiness || {}))
+        ?.filter(
+            (instance: BulkDetectedInstance) =>
+                instance.authorized && isAllowManage(instance?.data?.manageReadiness || {})
+        )
         .forEach((instance: BulkDetectedInstance) => {
             let installModules: Array<string> = [];
             if (instance?.manageStates?.installMissingAWS && installMissingAWS) {
@@ -779,7 +785,11 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
     return payload;
 };
 
-export const updateDetectBulkResponse = (newSelectedMultiDetectInstances: BulkDetectedInstance[], result: {data: RegisterResourceCredBulkResultItem[]}, dispatch: AppDispatch) => {
+export const updateDetectBulkResponse = (
+    newSelectedMultiDetectInstances: BulkDetectedInstance[],
+    result: { data: RegisterResourceCredBulkResultItem[] },
+    dispatch: AppDispatch
+) => {
     newSelectedMultiDetectInstances = newSelectedMultiDetectInstances?.map((instance: any) => {
         const isSqlAuthRequired =
             !instance?.data?.sqlServerAuthentication &&
@@ -808,7 +818,8 @@ export const updateDetectBulkResponse = (newSelectedMultiDetectInstances: BulkDe
         if (isFsxRegisterRequired) {
             const fsxDetail = res.registerDetails?.find((d: any) => d.resourceId === instance?.data?.fsxId);
             fsxSuccess =
-                (fsxDetail && !(fsxDetail.sqlServerError || fsxDetail.fsxnError || fsxDetail.requiredModuleError)) ?? false;
+                (fsxDetail && !(fsxDetail.sqlServerError || fsxDetail.fsxnError || fsxDetail.requiredModuleError)) ??
+                false;
         }
 
         let authorized = false;

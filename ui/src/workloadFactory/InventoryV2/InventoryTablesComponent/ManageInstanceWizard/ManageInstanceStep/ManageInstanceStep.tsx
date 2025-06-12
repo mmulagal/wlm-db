@@ -306,7 +306,7 @@ export const Content = () => {
                     ? t('databases.general.authenticated')
                     : t('databases.general.unauthenticated'),
                 hostName: item?.data?.name,
-                readinessStatus: item?.authorized? manageStates?.overallState : MANAGE_STATES.NOT_READY,
+                readinessStatus: item?.authorized ? manageStates?.overallState : MANAGE_STATES.NOT_READY,
                 readyCount: manageStates?.readyCount,
                 totalCount: 4,
                 perRowState: manageStates?.perRowState || [],
