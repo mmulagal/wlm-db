@@ -12,6 +12,7 @@ import {
     LOGS_ANALYZER_MODEL_IDS,
     LOGS_ANALYZER_PACKAGE_NAME,
     LOGS_ANALYZER_PACKAGE_VERSION,
+    LOGS_COUNT_TO_CONSIDER,
     MODEL_AVAILABILITY_STATUS
 } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { listDatabaseInstances } from '../../lib/database/db';
@@ -185,12 +186,14 @@ async function handleLogsAnalysis(
     region: string,
     managedInstance: DatabaseInstancesIncludingResource,
     jobId: string,
+    logsCountToConsider: number = LOGS_COUNT_TO_CONSIDER,
+    logsAnalyzerFromTimestamp: number = 1,
     inferenceConfig?: InferenceConfigType,
     logsAnalyzerS3SignedUrl?: string
 ) {
     logger.info(
         `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`,
-        { logsAnalyzerS3SignedUrl, inferenceConfig }
+        { logsAnalyzerS3SignedUrl, inferenceConfig, logsCountToConsider, logsAnalyzerFromTimestamp, jobId }
     );
     let jobStatus;
     let jobError;
@@ -253,6 +256,8 @@ async function handleLogsAnalysis(
                       version: LOGS_ANALYZER_PACKAGE_VERSION,
                       instanceId: activeNodeInstanceId,
                       region,
+                      logsCountToConsider,
+                      logsAnalyzerFromTimestamp,
                       inferenceProfileArn,
                       jobId,
                       inferenceConfig
@@ -335,9 +340,22 @@ async function triggerLogsAnalysis(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
+    logsCountToConsider?: number,
+    logsAnalyzerFromTimestamp?: number,
     inferenceConfig?: InferenceConfigType,
     logsAnalyzerS3SignedUrl?: string
 ) {
+    logger.info('Triggering logs analysis:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        logsCountToConsider,
+        logsAnalyzerFromTimestamp,
+        inferenceConfig,
+        logsAnalyzerS3SignedUrl
+    });
     const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
         region,
@@ -357,7 +375,7 @@ async function triggerLogsAnalysis(
     } = managedInstance;
 
     let jobsStatus: string = JOBSTATUS.IN_PROGRESS;
-    let jobId: string = 'test';
+    let jobId: string;
     try {
         const savedInstanceName = `${resourceName}\\${instanceName}`;
         const jobName = `Logs analysis for ${savedInstanceName}`;
@@ -377,6 +395,8 @@ async function triggerLogsAnalysis(
             region,
             managedInstance,
             jobId,
+            logsCountToConsider,
+            logsAnalyzerFromTimestamp,
             inferenceConfig,
             logsAnalyzerS3SignedUrl
         );

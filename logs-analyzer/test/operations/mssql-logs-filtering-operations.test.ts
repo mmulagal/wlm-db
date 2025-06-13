@@ -17,7 +17,7 @@ describe('readMsSqlLogsFile', () => {
 
         const logs = await readMsSqlLogsFile(logsFilePath);
 
-        const response = await getUniqueErrorAndRespectiveCount(logs);
+        const response = await getUniqueErrorAndRespectiveCount(logs, 100);
 
         expect(response.uniqueErrorLogs).toBeDefined();
     });

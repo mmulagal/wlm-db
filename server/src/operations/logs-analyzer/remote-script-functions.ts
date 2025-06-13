@@ -90,6 +90,8 @@ function getWindowsPrepareScript(scriptParams: {
     version: string;
     instanceId: string;
     region: string;
+    logsCountToConsider: number;
+    logsAnalyzerFromTimestamp: number;
     inferenceProfileArn: string;
     jobId?: string;
     inferenceConfig?: InferenceConfigType;
@@ -110,7 +112,9 @@ function getWindowsPrepareScript(scriptParams: {
             temperature: 0.5,
             maxTokens: 1000,
             topP: 0.9
-        }
+        },
+        logsAnalyzerFromTimestamp,
+        logsCountToConsider
     } = scriptParams;
 
     const { temperature, maxTokens, topP } = inferenceConfig;
@@ -132,7 +136,9 @@ function getWindowsPrepareScript(scriptParams: {
         $temperature = ${temperature};
         $maxTokens = ${maxTokens};
         $topP = ${topP};
-        $logLevel = '${LOG_LEVEL}';
+        $logLevel = "${LOG_LEVEL}";
+        $logsCountToConsider = ${logsCountToConsider}
+        $timestamp = ${logsAnalyzerFromTimestamp}
 
         function Invoke-RetryCommand {
             param ([scriptblock]$Command, [int]$Retries = 5)
@@ -151,6 +157,11 @@ function getWindowsPrepareScript(scriptParams: {
             }
         }
 
+        $downloadDir = "C:/netapp-logs-analyzer"
+        if (-not (Test-Path $downloadDir)) {
+            New-Item -ItemType Directory -Path $downloadDir | Out-Null
+        }
+        Set-Location -Path $downloadDir
         $filePath = ".\\$packageName-$version.exe"
         if (-not (Test-Path $filePath)) {
             Invoke-RetryCommand {
@@ -183,7 +194,9 @@ function getWindowsPrepareScript(scriptParams: {
                 '--instance-id', $instanceId,
                 '--temperature', $temperature,
                 '--max-tokens', $maxTokens,
-                '--top-p', $topP
+                '--top-p', $topP,
+                '--logs-count-to-consider', $logsCountToConsider,
+                '--timestamp', $timestamp
             )
             Start-Process -FilePath $filePath -ArgumentList $argumentList -NoNewWindow -Wait  > $null 2>&1
         } catch {
