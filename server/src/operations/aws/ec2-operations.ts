@@ -868,9 +868,12 @@ async function getInstanceDetailsByPrivateIp(
         },
         cacheParams
     );
+
     const instanceDetails: NodeDetails[] = [];
-    Reservations?.forEach(({ Instances }) => {
-        const [instance] = Instances || [];
+    const ec2InstanceList = compact(
+        Array.isArray(Reservations) ? Reservations.flatMap(reservation => reservation.Instances) : []
+    );
+    ec2InstanceList.forEach(instance => {
         if (instance) {
             const { InstanceId, PrivateIpAddress, InstanceType, Tags, UsageOperation } = instance;
             if (InstanceId && PrivateIpAddress && InstanceType) {

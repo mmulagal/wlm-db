@@ -737,7 +737,7 @@ async function getSqlInstanceLicenseRecommendations(
         partnerNodeDetails
     });
 
-    let { ec2InstanceId: instanceId, sqlServerInstances, ec2InstanceType, ec2UsageOperation } = ec2HostDetails;
+    const { ec2InstanceId: instanceId, sqlServerInstances, ec2InstanceType, ec2UsageOperation } = ec2HostDetails;
     if (monthlySqlByolCostPerHost && ec2UsageOperation && WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation)) {
         throw createError(
             HttpErrorCodes.BAD_REQUEST,
@@ -746,12 +746,13 @@ async function getSqlInstanceLicenseRecommendations(
     }
 
     // considering EC2 instances with all SQL server instances with EBS volumes ONLY, as we are calculating EBS savings; if there is any other storage then NOT considering such an instance; not even a combination of EBS and FSX too
-    partnerNodeDetails?.forEach(partnerNode => {
-        const { sqlServerInstances: partnerSqlServerInstances } = partnerNode;
-        if (partnerSqlServerInstances && partnerSqlServerInstances?.length > 0) {
-            sqlServerInstances = sqlServerInstances?.concat(partnerSqlServerInstances);
-        }
-    });
+    // Fix - DBS-6071 - can be removed once fix is verified
+    // partnerNodeDetails?.forEach(partnerNode => {
+    //     const { sqlServerInstances: partnerSqlServerInstances } = partnerNode;
+    //     if (partnerSqlServerInstances && partnerSqlServerInstances?.length > 0) {
+    //         sqlServerInstances = sqlServerInstances?.concat(partnerSqlServerInstances);
+    //     }
+    // });
 
     if (!isFsxwCalcs) {
         sqlServerInstances?.forEach(server => {
@@ -806,6 +807,7 @@ async function getSqlInstanceLicenseRecommendations(
 
                 const clusterNodeDetails: NodeDetails[] =
                     (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
+
                 nodeInstances = clusterNodeDetails.map(node => ({
                     ec2InstanceId: node.ec2InstanceId,
                     ec2InstanceType: node.ec2InstanceType,
@@ -814,6 +816,7 @@ async function getSqlInstanceLicenseRecommendations(
                 }));
 
                 nodeInstanceTypes = clusterNodeDetails.map(node => node.ec2InstanceType);
+
                 if (nodeInstances[0].ec2InstanceType !== nodeInstances[1].ec2InstanceType) {
                     const smallerInstanceType = await determineSmallerInstance(
                         region,

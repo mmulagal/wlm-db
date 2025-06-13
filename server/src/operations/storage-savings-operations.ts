@@ -59,6 +59,7 @@ async function getAoagPartnerNodesDetails(
     logger.info('Getting AOAG partner node details', { accountId, credentialsId, region, nodeInstanceId, nodeIps });
 
     const aoagClusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
+
     const partnerNodeInstanceIds = aoagClusterNodeDetails
         .filter(node => node.ec2InstanceId !== nodeInstanceId)
         .map(node => node.ec2InstanceId);
