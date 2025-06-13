@@ -665,7 +665,7 @@
                     "status": "not-optimized",
                     "recommended": "60",
                     "severity": "warning",
-                    "recommendation": "Ensure the Multipath I/O Timeout setting on the host is configured to 60 seconds to maintain connectivity and stability during FSxN failovers. Properly configured Multipath I/O Timeout settings prevent disconnections from the disk, which can occur during FSX failovers. Insufficient timeout settings can lead to temporary disconnections, application errors, and potential data loss.",
+                    "recommendation": "Configure the Microsoft Multipath I/O (MPIO) timeout setting on the host to 60 seconds to ensure connectivity and stability during FSx for ONTAP failovers. The 60-second setting prevents disk disconnections, application errors, and potential data loss caused by insufficient timeout settings.",
                     "tags": ["Reliability"],
                     "violationDetails": [],
                     "totalObjectsAssessed": 1,
