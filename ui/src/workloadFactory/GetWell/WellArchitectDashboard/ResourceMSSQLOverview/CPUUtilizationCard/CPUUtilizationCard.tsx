@@ -1,13 +1,14 @@
 import { DsTypography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import styles from './CPUUtilizationCard.module.scss';
 import LineGraph from '../../LineGraph/LineGraph';
 import { twoFractionDigits } from '../../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
 
 const CPUUtilizationCard = () => {
     const { resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const [dataPoints, setDataPoints] = useState<any[]>([]);
 
@@ -38,6 +39,7 @@ const CPUUtilizationCard = () => {
                         return `${date.getDate()}/${date.getMonth() + 1}`;
                     })}
                     yTickFormatter={twoFractionDigits}
+                    color={!isDarkTheme ? '#A815F3' : '#DE9EFF'}
                 />
             </div>
         </div>

@@ -1,12 +1,13 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import LineGraph from '../../LineGraph/LineGraph';
 import styles from './ThroughputCard.module.scss';
 import SeparatorComponent from '../../../../../common/SeparatorComponent/SeparatorComponent';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
 
 const ThroughputCard = () => {
     const { resourceDetails, resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const [datasets, setDatasets] = useState<number[][]>([[], []]);
     const [readDataPoints, setReadDataPoints] = useState<{ statisticsDate: string; average: number }[]>([]);
@@ -71,7 +72,7 @@ const ThroughputCard = () => {
                         return `${date.getDate()}/${date.getMonth() + 1}`;
                     })}
                     legend={['Read', 'Write']}
-                    color={['#012CAD', '#0BAFFC']}
+                    color={isDarkTheme ? ['#71B9E0', '#4066DA'] : ['#012CAD', '#0BAFFC']}
                 />
             </div>
         </div>

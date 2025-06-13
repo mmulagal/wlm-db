@@ -21,6 +21,7 @@ import {
     YTickFormatter,
     XYData
 } from '../../../../ui-components/Charts/chartCommon';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler);
 
@@ -40,6 +41,8 @@ const LineGraph = React.memo(
         height?: number;
         yTickFormatter?: YTickFormatter;
     }) => {
+        // const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+        const isDarkTheme = true;
         const [chartContext, setChartContext] = useState<any>(null);
         const { tokens } = useCurrentTheme();
 
@@ -112,7 +115,7 @@ const LineGraph = React.memo(
                         ticks: {
                             padding: 0,
                             backdropPadding: 0,
-                            color: '#404040',
+                            color: isDarkTheme ? '#ffffff' : '#404040',
                             font: {
                                 size: 13,
                                 lineHeight: '20px',
@@ -131,7 +134,7 @@ const LineGraph = React.memo(
                         ticks: {
                             padding: 16,
                             backdropPadding: 0,
-                            color: '#404040',
+                            color: isDarkTheme ? '#ffffff' : '#404040',
                             callback: yTickFormatter,
                             font: {
                                 size: 13,
