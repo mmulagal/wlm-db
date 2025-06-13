@@ -5,11 +5,22 @@ import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg'
 import styles from './ResourceHeader.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { GENERAL } from '../../../../../utils/appConstants';
+import { INVENTORY_STATUS } from '../../../../../utils/consts';
 
 const ResourceHeader = () => {
     const { resourceLoading, resourceDetails, selectedHostname, selectedDatabaseInstanceName } = useAppSelector(
         state => state.workloadFactoryResource
     );
+
+    const mapResourceDetailsStatus = (status: string) => {
+        if (status === INVENTORY_STATUS.CASE_SENSITIVE_UP) {
+            return INVENTORY_STATUS.ONLINE;
+        }
+        if (status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) {
+            return INVENTORY_STATUS.OFFLINE;
+        }
+        return status;
+    };
 
     return (
         <div className={styles.cardHeader}>
@@ -48,7 +59,7 @@ const ResourceHeader = () => {
                                     {resourceDetails.status === 'Up' ? <Success /> : <Failure />}
                                 </span>
                                 <span className={styles.valueSection} title={resourceDetails.status}>
-                                    {resourceDetails.status}
+                                    {mapResourceDetailsStatus(resourceDetails.status)}
                                 </span>
                             </>
                         )}

@@ -11,8 +11,6 @@ import StorageSavingResource from '../../../ResourcePage/StorageSavingResource/S
 import { useAppSelector } from '../../../../store/storeHooks';
 import { getAggrStorageSavings } from '../../../../utils/utilityFunctions';
 import DatabaseHostOverviewApiV2 from '../../../ResourcePage/ResourceHomePage/DatabaseHostOverviewApiV2';
-import DBDistributionSection from '../../../ResourcePage/DBDistributionSection/DBDistributionSection';
-import StoragePerformance from '../../../ResourcePage/StoragePerformance/StoragePerformance';
 
 const ResourceMSSQLOverview = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
