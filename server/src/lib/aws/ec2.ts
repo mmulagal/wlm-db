@@ -62,7 +62,7 @@ import { PaginationConfiguration } from '@aws-sdk/types';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
-import { addCacheMiddleware } from '../../utils/aws-sdk-middlewares';
+import addCacheMiddleware from '../../utils/aws-sdk-middlewares';
 import { AWSSDKCacheParams } from '../../utils/common-types';
 
 const logger = getLogger();

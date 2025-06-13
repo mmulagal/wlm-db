@@ -19,14 +19,14 @@ const cacheMiddlewareConfig = {
     priority: 'high' as const
 };
 
-function cacheMiddleware(ttl: number, credentialsId = '') {
-    logger.debug(`Cache middleware initialized with TTL: ${ttl}ms and credentialsId: ${credentialsId}`);
+function cacheMiddleware(ttl: number, region: string, credentialsId = '') {
+    logger.debug('Cache middleware initialized with', { ttl, region, credentialsId });
     return (next: any, context: any) => async (args: DeserializeHandlerArguments<any>) => {
-        const { commandName } = context || {};
+        const { commandName, clientName } = context || {};
         const { input } = args || {};
         const redisClient = getRedisConnection();
 
-        const cacheKey = generateHash(stringify({ input, commandName, credentialsId }));
+        const cacheKey = generateHash(stringify({ input, region, clientName, commandName, credentialsId }));
         if (cacheKey && isRedisConnected(redisClient)) {
             const cachedResponse = await redisClient.get(cacheKey);
             if (cachedResponse) {
@@ -35,14 +35,13 @@ function cacheMiddleware(ttl: number, credentialsId = '') {
             }
         }
 
-        // If not cached, proceed with the request
         const response = await next(args);
         const { output: { $metadata: sdkMetadata, ...rest } = {} } = response || {};
 
-        // Cache the response
         if (sdkMetadata && rest && isRedisConnected(redisClient)) {
             try {
-                await redisClient.set(cacheKey, stringify(response), 'EX', ttl);
+                // 'EX' for setting expiration in seconds, 'PX' for milliseconds
+                await redisClient.set(cacheKey, stringify(response), 'PX', ttl);
             } catch (error) {
                 logger.warn('Error setting cache:', error);
             }
@@ -52,14 +51,15 @@ function cacheMiddleware(ttl: number, credentialsId = '') {
     };
 }
 
-function addCacheMiddleware(client: any, { useCache, ttl, credentialsId }: AWSSDKCacheParams) {
+async function addCacheMiddleware(client: any, { useCache, ttl, credentialsId }: AWSSDKCacheParams) {
     if (useCache) {
+        const region = await client.config.region();
         client.middlewareStack.add(
-            cacheMiddleware(ttl ?? ms(config.get<StringValue>('aws-sdk.cache.ttl')), credentialsId),
+            cacheMiddleware(ttl ?? ms(config.get<StringValue>('aws-sdk.cache.ttl')), region, credentialsId),
             cacheMiddlewareConfig
         );
     }
     return client;
 }
 
-export { addCacheMiddleware };
+export default addCacheMiddleware;
