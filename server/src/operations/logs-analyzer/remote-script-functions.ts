@@ -165,7 +165,7 @@ function getWindowsPrepareScript(scriptParams: {
         $filePath = ".\\$packageName-$version.exe"
         if (-not (Test-Path $filePath)) {
             Invoke-RetryCommand {
-                Invoke-WebRequest -Uri $s3SignedUrl -OutFile $filePath
+                Invoke-WebRequest -Uri $s3SignedUrl -OutFile $filePath -ErrorAction Stop -TimeoutSec 10
             }           
             try {
                 icacls $filePath /grant Everyone:F > $null 2>&1

@@ -68,7 +68,7 @@ interface ErrorLog {
     error: string;
     cause: string;
     count: number;
-    severity: string | number;
+    severity?: string | number;
     firstOccurrence?: number;
     lastOccurrence?: number;
     errorCode?: string;

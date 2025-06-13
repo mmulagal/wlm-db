@@ -32,7 +32,7 @@ const GetLogsAnalyzerSchema = {
                     error: Type.String(),
                     cause: Type.String(),
                     count: Type.Number(),
-                    severity: Type.String(),
+                    severity: Type.Optional(Type.String()),
                     remediation: Type.Array(Type.String())
                 })
             )
