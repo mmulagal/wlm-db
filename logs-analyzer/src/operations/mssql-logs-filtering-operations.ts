@@ -49,10 +49,11 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
                     const logTimestamp = new Date(errorLogTimestamp).getTime();
                     if (logTimestamp >= timestampLastLogProcessed && !errorSet.has(line)) {
                         const { timestamp, spid, errorCode, severity, state } = match.groups;
+                        const contextLimit = i + contextLines;
                         const start = Math.max(0, i - contextLines);
-                        const end = Math.min(lines.length, i + contextLines);
+                        const end = Math.min(lines.length, contextLimit);
 
-                        if (i + contextLines > lines.length) {
+                        if (contextLimit > lines.length) {
                             // if the error is towards the end of the file, we need to store it in pendingEntries so that we can process with the next chunk
                             pendingEntries.push(line);
                         } else {
