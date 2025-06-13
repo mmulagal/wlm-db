@@ -14,24 +14,10 @@ import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg'
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../../store/storeHooks';
-import {
-    useManageBulkMssqlInstanceMutation,
-    usePrepareHostMutation,
-    useRegisterResourceCredentialsMutation,
-    useUnmanageMssqlInstanceMutation
-} from '../../../../utils/apiService';
-import {
-    detectFieldsValidation,
-    handleManageInstances,
-    handleManageInstancesBulk,
-    manageActionCol,
-    saveFsxInCredRegisteredObj,
-    uniqueHostRow,
-    updateInstanceStatus
-} from '../../InventoryUtilsV2';
+import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
+import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
 import {
     checkBoxHandleManage,
-    createDetectHostPayload,
     getFilterOptions,
     getSelectedFromSelectionState,
     isSmbProtocol
@@ -39,7 +25,6 @@ import {
 import {
     ACTION_CTA,
     DETECT_HOST_VAR,
-    FROM_DIALOG,
     INVENTORY_STATUS,
     WELL_ARCHITECTED_TABS,
     WLF_TABS
@@ -48,22 +33,15 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
     setBreadCrumbSelectedFrom,
-    setDetectManagePassword,
-    setDetectManageUserName,
-    setDetectONTAPPassword,
-    setDetectONTAPUserName,
-    setDetectedInstanceId,
     setInProgressInstances,
     setInventoryTableData,
     setManageSingleInstanceData,
-    setRadioValueDetect,
     setSelectedFilterValue,
     setSelectedHeaderTab,
     setSelectedInventoryTab,
     setSelectedMultiDetectInstances,
     setSelectedRowsForManage,
     setTableManageColumnState,
-    setValuesForForm,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
@@ -79,9 +57,6 @@ import {
     setLandingFrom,
     setSelectedWellArchitectTab
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
-import UndetectedSecondDialogV2 from '../../InventoryTable/UndetectedSecondDialog/UndetectedSecondDialogV2';
-import UndetectedHostDialogContentV2 from '../../InventoryTable/UndetectedHostDialogContent/UndetectedHostDialogContentV2';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
@@ -120,9 +95,6 @@ const InstancesTable = () => {
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
-    const [manageBulkInstanceApi] = useManageBulkMssqlInstanceMutation();
-    const [prepareHostApi] = usePrepareHostMutation();
-
     const [loading, setLoading] = useState(false);
 
     const menuOpenedRowDetail: any = useRef(null);
@@ -132,7 +104,6 @@ const InstancesTable = () => {
     const dispatch = useDispatch();
 
     const [unmanageApi] = useUnmanageMssqlInstanceMutation();
-    const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     useEffect(() => {
         setLoading(
@@ -214,7 +185,8 @@ const InstancesTable = () => {
                 secondaryButton="Close"
                 callback={() => {
                     const updatedState = store.getState();
-                    const { inProgressInstances, inventoryTableData }: any = updatedState.inventoryV2;
+                    const { inProgressInstances: inProgressInstancesL, inventoryTableData }: any =
+                        updatedState.inventoryV2;
                     const targettedHost =
                         inventoryTableData[
                             uniqueHostRow(rowData.resourceId, rowData?.credentialId, rowData?.regionId)
@@ -230,16 +202,16 @@ const InstancesTable = () => {
                         rowData?.credentialId,
                         rowData?.regionId
                     );
-                    dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
+                    dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstancesL), inProgressId])));
                     unmanageApi({
                         credentialsId: targettedHost?.credentialId,
                         regionId: targettedHost?.regionId,
                         resourceId: targettedHost?.resourceId,
                         dbInstanceId: targettedDbInstance?.databaseInstanceId
                     }).then((res: any) => {
-                        const updatedState = store.getState();
-                        const { inProgressInstances } = updatedState?.inventoryV2;
-                        const updatedInProgressInstances = new Set([...inProgressInstances]);
+                        const updatedStateA = store.getState();
+                        const inProgressInstancesA = updatedStateA?.inventoryV2.inProgressInstances;
+                        const updatedInProgressInstances = new Set([...inProgressInstancesA]);
                         updatedInProgressInstances.delete(inProgressId);
                         dispatch(setInProgressInstances(updatedInProgressInstances));
                         if (res?.data?.items) {
@@ -316,146 +288,6 @@ const InstancesTable = () => {
         );
     };
 
-    const resetDialogValues = () => {
-        // reset all detect host dialog fields if dialog is closed.
-        dispatch(setIsDetectHostError(''));
-        dispatch(setDetectManageUserName(''));
-        dispatch(setDetectManagePassword(''));
-        dispatch(setDetectONTAPUserName(''));
-        dispatch(setDetectONTAPPassword(''));
-    };
-
-    // This function is used to check if user wants to manage the detected host vis workload factory
-    const handleMoveToManage = async (rowData: any, fsxId: any, isFsxRegister?: boolean) => {
-        const state = store.getState();
-        const { detectHostRadio } = state.inventoryV2;
-        if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
-            handleManageInstances(
-                rowData?.hostRow,
-                [rowData?.databaseInstanceName],
-                dispatch,
-                styles,
-                manageBulkInstanceApi,
-                prepareHostApi,
-                true
-            );
-            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
-            dispatch(
-                setDetectedInstanceId(uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId))
-            );
-        } else {
-            const updatedInventoryTableData = updateInstanceStatus('detect', rowData, rowData);
-            dispatch(setInventoryTableData(updatedInventoryTableData));
-            const detectedSuccessMsg = (
-                <div className={styles.notification}>
-                    {GENERAL.INSTANCE_SUCCESS_DETECTED[0]}
-                    <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
-                    {GENERAL.INSTANCE_SUCCESS_DETECTED[1]}
-                </div>
-            );
-            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: detectedSuccessMsg }));
-            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
-            dispatch(
-                setDetectedInstanceId(uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId))
-            );
-        }
-    };
-
-    // This function is to register credentials on detect host
-    const handleRegisterResourceCred = async (rowData: any, fsxId: string) => {
-        if (!detectFieldsValidation(rowData)) {
-            dispatch(setValuesForForm(true));
-        } else {
-            dispatch(setValuesForForm(false));
-            dispatch(setIsDetectHostLoading(true));
-            const sqlServerInstance = rowData?.sqlServerInstance || rowData?.databaseInstanceName || '';
-            try {
-                const result: any = await registerResourceCred({
-                    credentialId: rowData?.credentialId,
-                    regionId: rowData?.regionId,
-                    instanceId: rowData?.ec2InstanceId,
-                    payload: createDetectHostPayload(sqlServerInstance, fsxId, rowData)
-                });
-                if (result && !result?.error) {
-                    if (result?.data?.sqlServerError || result?.data?.fsxnError) {
-                        const error = [];
-                        error.push(result?.data?.sqlServerError || '');
-                        error.push(result?.data?.fsxnError || '');
-                        dispatch(setIsDetectHostError(error.join(' ')));
-                    } else {
-                        // store fsx cred in register obj if payload has fsx register
-                        const isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
-
-                        if ((rowData?.storage && rowData?.storage?.length > 0) || rowData?.storage?.fsxn) {
-                            setTimeout(() => {
-                                setDialog(
-                                    <DialogComponent
-                                        header={
-                                            <div className={styles.headerDialog}>
-                                                <DsTypography variant="Regular_20">
-                                                    {GENERAL.DETECT_INSTANCE}
-                                                </DsTypography>
-                                                <DsTypography variant="Semibold_14">
-                                                    {GENERAL.DETECT_HOST_STEPS[1]}
-                                                </DsTypography>
-                                            </div>
-                                        }
-                                        content={<UndetectedSecondDialogV2 data={rowData} apiResult={result?.data} />}
-                                        primaryButton={GENERAL.DONE}
-                                        callback={() => handleMoveToManage(rowData, fsxId, isFsxRegister)}
-                                    />
-                                );
-                            }, 0);
-                            resetDialogValues();
-                        } else {
-                            dispatch(setIsDetectHostError(GENERAL.DETECT_FAILED_WITH_NO_STORAGE));
-                        }
-                    }
-                } else {
-                    dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
-                }
-            } catch (error) {
-                dispatch(setIsDetectHostError(error || GENERAL.FAILED_TO_DETECT_HOST));
-            } finally {
-                dispatch(setIsDetectHostLoading(false));
-            }
-        }
-    };
-
-    // To open detect host dialog
-    const handleDetectDialog = (rowData: any) => {
-        dispatch(setIsDetectHostError(''));
-
-        setDialog(
-            <DialogComponent
-                header={
-                    <div className={styles.headerDialog}>
-                        <DsTypography variant="Regular_20">{GENERAL.DETECT_INSTANCE}</DsTypography>
-                        <DsTypography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[0]}</DsTypography>
-                    </div>
-                }
-                content={<UndetectedHostDialogContentV2 rowData={rowData} />}
-                primaryButton={GENERAL.DETECT}
-                secondaryButton={GENERAL.CLOSE}
-                callback={() => handleRegisterResourceCred(rowData, rowData?.fsxId)}
-                closeCallback={() => {
-                    closeDialog();
-                    resetDialogValues();
-                }}
-                dialogFrom={FROM_DIALOG.DETECT_HOST}
-            />
-        );
-    };
-
-    const redirectToAction = (rowData: any) => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-        dispatch(setFSXId({ fsxId: rowData?.fsxId, ec2InstanceId: rowData?.ec2InstanceId }));
-
-        optimizeAction(rowData);
-    };
-
     const disableManageCheck = (rowData: any) => {
         let errorMessage = '';
         let isDisabled = false;
@@ -483,9 +315,6 @@ const InstancesTable = () => {
         } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
             isDisabled = true;
             errorMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
-        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
-            isDisabled = true;
-            errorMessage = GENERAL.PGSQL_CTA_NA;
         }
         return { isDisabled, errorMessage };
     };
@@ -562,15 +391,23 @@ const InstancesTable = () => {
                                 <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
                             )}
                             <DsTypography variant="Regular_13">
-                                {rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                    ? INVENTORY_STATUS.ONLINE
-                                    : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                      rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                    ? INVENTORY_STATUS.OFFLINE
-                                    : rowData?.status}
+                                {(() => {
+                                    if (
+                                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
+                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                    ) {
+                                        return INVENTORY_STATUS.ONLINE;
+                                    }
+                                    if (
+                                        rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                    ) {
+                                        return INVENTORY_STATUS.OFFLINE;
+                                    }
+                                    return rowData?.status;
+                                })()}
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && 'Unknown'}
+                                {!rowData?.status && !rowData?.loading && INVENTORY_STATUS.UNKNOWN}
                             </DsTypography>
                         </div>
                     </div>
@@ -583,7 +420,7 @@ const InstancesTable = () => {
             id: '2',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'name'),
-            renderCell: (cellData: string, rowData: any) => (
+            renderCell: (cellData: string) => (
                 <DsTypography
                     title={cellData || GENERAL.NOT_AVAILABLE}
                     variant="Regular_13"
@@ -599,7 +436,7 @@ const InstancesTable = () => {
             id: '3',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'hostType'),
-            renderCell: (cellData: string, rowData: any) => (
+            renderCell: (cellData: string) => (
                 <DsTypography variant="Regular_13" className={styles.colText}>
                     {cellData || GENERAL.NOT_AVAILABLE}
                 </DsTypography>
@@ -611,7 +448,7 @@ const InstancesTable = () => {
             id: '4',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
-            renderCell: (cellData: string, rowData: any) => (
+            renderCell: (cellData: string) => (
                 <DsTypography variant="Regular_13" className={styles.colText}>
                     {cellData || GENERAL.NOT_AVAILABLE}
                 </DsTypography>
@@ -624,7 +461,7 @@ const InstancesTable = () => {
             isSortable: false,
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
-            renderCell: (cellData: string, rowData: any) => {
+            renderCell: (cellData: string) => {
                 if (cellData === INVENTORY_STATUS.NOT_REGISTERED) {
                     return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
                 }
@@ -639,6 +476,7 @@ const InstancesTable = () => {
                 if (cellData === INVENTORY_STATUS.REGISTERED) {
                     return <DotComponent color="var(--success)" value={t('databases.general.registered')} />;
                 }
+                return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
             }
         },
         {
@@ -721,28 +559,29 @@ const InstancesTable = () => {
                     return false;
                 };
 
+                if (disableMenu()) {
+                    return (
+                        <div className={styles.naContainer}>
+                            <Popover
+                                popoverClass=""
+                                trigger="hover"
+                                isAppendedToBody
+                                placement="auto"
+                                container={<TooltipIcon />}
+                            >
+                                <DsTypography variant="Regular_14">{disableMsg}</DsTypography>
+                            </Popover>
+                            <DsTypography variant="Regular_14">Not analyzed</DsTypography>
+                        </div>
+                    );
+                }
+                if (rowData?.optimizationStatusLoading) {
+                    return <DsFlashingDotsLoader />;
+                }
                 return (
-                    <>
-                        {disableMenu() ? (
-                            <div className={styles.naContainer}>
-                                <Popover
-                                    popoverClass=""
-                                    children={<DsTypography variant="Regular_14">{disableMsg}</DsTypography>}
-                                    trigger="hover"
-                                    isAppendedToBody
-                                    placement="auto"
-                                    container={<TooltipIcon />}
-                                />
-                                <DsTypography variant="Regular_14">Not analyzed</DsTypography>
-                            </div>
-                        ) : rowData?.optimizationStatusLoading ? (
-                            <DsFlashingDotsLoader />
-                        ) : (
-                            <div className={styles.statusCol}>
-                                <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                            </div>
-                        )}
-                    </>
+                    <div className={styles.statusCol}>
+                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                    </div>
                 );
             }
         },
@@ -753,9 +592,9 @@ const InstancesTable = () => {
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'protectionText'),
             renderCell: (cellData: string, rowData: any) => {
-                let loading = rowData?.loading || rowData?.subLoading;
+                let loadingPS = rowData?.loading || rowData?.subLoading;
                 if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-                    loading = true;
+                    loadingPS = true;
                 }
                 return (
                     <>
@@ -782,8 +621,8 @@ const InstancesTable = () => {
                                 </div>
                             </div>
                         )}
-                        {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && (
+                        {!cellData && loadingPS && <DsFlashingDotsLoader />}
+                        {!cellData && !loadingPS && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {GENERAL.NOT_AVAILABLE}
                             </DsTypography>
@@ -799,9 +638,9 @@ const InstancesTable = () => {
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'performance.assessment'),
             renderCell: (cellData: string, rowData: any) => {
-                let loading = rowData?.loading || rowData?.subLoading;
+                let loadingPA = rowData?.loading || rowData?.subLoading;
                 if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-                    loading = true;
+                    loadingPA = true;
                 }
                 return (
                     <>
@@ -810,8 +649,8 @@ const InstancesTable = () => {
                                 {cellData}
                             </DsTypography>
                         )}
-                        {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && (
+                        {!cellData && loadingPA && <DsFlashingDotsLoader />}
+                        {!cellData && !loadingPA && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {GENERAL.NOT_AVAILABLE}
                             </DsTypography>
@@ -827,7 +666,7 @@ const InstancesTable = () => {
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'credentialName'),
             width: '213px',
-            renderCell: (cellData: any, rowData: any) => (
+            renderCell: (cellData: any) => (
                 <DsTypography variant="Regular_13" className={styles.colText}>
                     {cellData || GENERAL.NOT_AVAILABLE}
                 </DsTypography>
@@ -840,7 +679,7 @@ const InstancesTable = () => {
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'accountId'),
             width: '213px',
-            renderCell: (cellData: any, rowData: any) => (
+            renderCell: (cellData: any) => (
                 <DsTypography variant="Regular_13" className={styles.colText}>
                     {cellData || GENERAL.NOT_AVAILABLE}
                 </DsTypography>
@@ -853,7 +692,7 @@ const InstancesTable = () => {
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'regionName'),
             width: '213px',
-            renderCell: (cellData: any, rowData: any) => (
+            renderCell: (cellData: any) => (
                 <DsTypography variant="Regular_13" className={styles.colText}>
                     {cellData || GENERAL.NOT_AVAILABLE}
                 </DsTypography>
@@ -955,21 +794,8 @@ const InstancesTable = () => {
                     disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
                     disableOption = true;
                 }
-                if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                    menu.push({
-                        id: 'detect',
-                        displayName: 'Authenticate',
-                        disabled: disableOption,
-                        infoText: disableMessage
-                    });
-                } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
-                    menu.push({
-                        id: 'manage',
-                        displayName: 'Register',
-                        disabled: disableOption,
-                        infoText: disableMessage
-                    });
-                } else {
+
+                if (rowData.statusColText === INVENTORY_STATUS.MANAGED) {
                     if (localStorage.getItem('protection') === 'true') {
                         menu.push({
                             id: 'protect',
@@ -1152,20 +978,7 @@ const InstancesTable = () => {
                                             optimizeAction(rowData);
                                         }
 
-                                        if (menuId === 'manage') {
-                                            handleManageInstances(
-                                                rowData?.hostRow,
-                                                [rowData?.databaseInstanceName],
-                                                dispatch,
-                                                styles,
-                                                manageBulkInstanceApi,
-                                                prepareHostApi,
-                                                false
-                                            );
-                                        }
                                         if (menuId === 'viewInstance') {
-                                            // dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                            // dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
@@ -1226,9 +1039,6 @@ const InstancesTable = () => {
                                         if (menuId === 'unManage') {
                                             handleDialog(rowData);
                                         }
-                                        if (menuId === 'detect') {
-                                            handleDetectDialog(rowData);
-                                        }
                                     }
                                 }}
                                 CustomMenu={undefined}
@@ -1253,18 +1063,6 @@ const InstancesTable = () => {
     useEffect(() => {
         dispatch(setTableManageColumnState({ ...tableManageColumnState, instanceTable: tableProps.columnsState }));
     }, [tableProps.columnsState]);
-
-    const handleBulkOperation = () => {
-        checkBoxHandleManage(tableProps.selectionState, selectedRowsForManage, disptach);
-        handleManageInstancesBulk(
-            selectedRowsForManage,
-            dispatch,
-            styles,
-            manageBulkInstanceApi,
-            prepareHostApi,
-            false
-        );
-    };
 
     const handleManageBulk = () => {
         dispatch(setSelectedMultiDetectInstances([]));

@@ -2,7 +2,6 @@ import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import {
     Typography,
-    useDialog,
     Button,
     Popover,
     DsTypography,
@@ -14,34 +13,20 @@ import {
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useManageBulkMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
 import { GENERAL } from '../../../../utils/appConstants';
-import {
-    checkForAnyAOAG,
-    checkForAnySSD,
-    checkForMixedStorageType,
-    handleManageInstances,
-    renderCellData,
-    renderEstimatedCost,
-    renderInstanceListText,
-    renderVpcText
-} from '../../InventoryUtilsV2';
-import store from '../../../../store/store';
+import { renderCellData, renderEstimatedCost, renderInstanceListText, renderVpcText } from '../../InventoryUtilsV2';
 import {
     setSelectedFilterValue,
     setSelectedInventoryTab,
     setTableManageColumnState
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
-    INVENTORY_ACTIONS,
     INVENTORY_STATUS,
     SSM_TROUBLESHOOTING_LINK,
     WLF_TO_FORM_NAVIGATE,
     WLF_TO_PROTECT_NAVIGATE
 } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
-import ManagedHostDialog from '../../InventoryTable/ManagedHostDialog/ManagedHostDialog';
-import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { Table } from '../../../../common/Lib/Table/Table';
@@ -54,10 +39,8 @@ const HostTable = () => {
     const navigate = useNavigate();
     const hostTableRows = useAppSelector(state => state.inventoryV2.hostTableRows);
 
-    const { setDialog, closeDialog } = useDialog();
-
     const [resetPage, setResetPage] = useState(false);
-    const [pageSize, setPageSize] = useState(50);
+    const [pageSize] = useState(50);
 
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
@@ -71,9 +54,6 @@ const HostTable = () => {
     const { multiDataLoading } = useAppSelector(state => state.headers);
 
     const [loading, setLoading] = useState(false);
-
-    const [manageBulkInstanceApi] = useManageBulkMssqlInstanceMutation();
-    const [prepareHostApi] = usePrepareHostMutation();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -99,199 +79,6 @@ const HostTable = () => {
         pgsqlFullHostDataLoading,
         multiDataLoading
     ]);
-
-    const handleDialog = (rowData: any) => {
-        setDialog(
-            <DialogComponent
-                header={`Manage database host ${rowData?.name} instances`}
-                content={<ManagedHostDialog dialogData={rowData} />}
-                primaryButton={INVENTORY_ACTIONS.MANAGE}
-                secondaryButton="Close"
-                callback={() => {
-                    const updatedState = store.getState();
-                    const manageHostSelectedRows = updatedState?.inventoryV2?.manageHostSelectedRows;
-                    const selectedInstanceNames = manageHostSelectedRows.map((row: any) => row?.databaseInstanceName);
-                    handleManageInstances(
-                        rowData,
-                        selectedInstanceNames,
-                        dispatch,
-                        styles,
-                        manageBulkInstanceApi,
-                        prepareHostApi
-                    );
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                customClass={styles.setWidth}
-                primaryButtonDisabled={false}
-                dialogFrom="managedHost"
-            />
-        );
-    };
-
-    const manageDisableMsg = (
-        rowData: any,
-        checkForAllManaged: boolean,
-        checkForAllUnDetectInstance: boolean,
-        checkForAllUnDetectOrManageInstance: boolean,
-        checkForAllUnManagedInstance: boolean,
-        checkForAllFsxnManagedInstance: boolean,
-        checkForAllStorageType: boolean
-    ) => {
-        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE || rowData?.hostType === GENERAL.ORACLE_TYPE) {
-            return GENERAL.PGSQL_CTA_NA;
-        }
-        // Condition if installation mode is AOAG than disable manage
-        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
-            return GENERAL.AOAG_MANAGE_DISABLE;
-        }
-        // Condition for if all managed then showing disable managed button with tooltip
-        if (rowData?.action && checkForAllManaged) {
-            return GENERAL.ALL_MANAGED_TEXT;
-        }
-        // Check for all un-detect instances and storage type is N/A
-        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
-            return GENERAL.ALL_UNDETECT_TEXT;
-        }
-
-        // Check for all un-detect or managedinstances and storage type is N/A
-        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
-            return GENERAL.NO_UNMANAGED_TO_MANAGE;
-        }
-
-        // Check for all Explore Savings undetected rows
-        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
-            return GENERAL.ALL_ES_UNDETECTED_ROWS;
-        }
-
-        // Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
-        if (
-            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-            !checkForAllUnDetectInstance &&
-            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-            checkForAnyAOAG(rowData)
-        ) {
-            return GENERAL.ALL_ES_FSXW_AOAG_ROWS;
-        }
-        if (
-            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-            !checkForAnySSD(rowData)
-        ) {
-            return GENERAL.NON_SSD_FSXW_MSG;
-        }
-
-        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForMixedStorageType(rowData)) {
-            return GENERAL.MIXED_STORAGE_ES_MSG;
-        }
-
-        // Condition if storage type is not known and it is still loading for manage case
-        if (
-            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
-            !checkForAllManaged &&
-            checkForAllFsxnManagedInstance &&
-            rowData?.loading &&
-            !checkForAllStorageType
-        ) {
-            return GENERAL.INVENTORY_LOADING_DISABLED;
-        }
-        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && !checkForAllManaged && checkForAllFsxnManagedInstance) {
-            // Condition if all fsxn are managed and remaining storage type is unmanaged
-            return GENERAL.ALL_FSXN_MANAGED_TEXT;
-        }
-
-        // Normal use case to show dialog or move to explore savings
-        if (
-            rowData?.action &&
-            !checkForAllManaged &&
-            !rowData?.actionDisable &&
-            rowData.ssmState !== INVENTORY_STATUS.OFFLINE &&
-            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS
-        ) {
-            return GENERAL.MANAGED_SUPPORT_FOR_EBS_FSXW;
-        }
-
-        if (
-            rowData?.action &&
-            !checkForAllManaged &&
-            !rowData?.actionDisable &&
-            rowData.ssmState !== INVENTORY_STATUS.OFFLINE &&
-            rowData?.action !== INVENTORY_ACTIONS.EXPLORE_SAVINGS
-        ) {
-            return '';
-        }
-
-        // if (
-        //     rowData?.action &&
-        //     !checkForAllManaged &&
-        //     rowData?.actionDisable &&
-        //     rowData.ssmState !== INVENTORY_STATUS.OFFLINE
-        // ) {
-        //     return (
-        //         <div
-        //             className={styles.detectManageDisable}
-        //             id="inventory-table-option"
-        //             title={rowData?.detectOptionDisableMsg}
-        //         >
-        //             <Typography variant="Regular_14" className={styles.textStyle}>
-        //                 {rowData?.action}
-        //             </Typography>
-        //         </div>
-        //     );
-        // }
-    };
-
-    const findManageOption = (rowData: any) => {
-        let disableOption = false;
-        let disableMessage: any = '';
-        if (
-            rowData?.status === INVENTORY_STATUS.STOPPED ||
-            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
-            rowData?.status === INVENTORY_STATUS.OFFLINE
-        ) {
-            disableOption = true;
-            disableMessage = GENERAL.HOST_DOWN;
-        } else {
-            const checkForAllManaged = rowData?.sqlServerInstances?.every(
-                (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
-            );
-            const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
-                (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
-            );
-            const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
-                (item: any) =>
-                    item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
-                    item?.statusColText === INVENTORY_STATUS.MANAGED
-            );
-            const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
-                (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
-            );
-            const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every(
-                (item: any) =>
-                    (item?.statusColText === INVENTORY_STATUS.MANAGED &&
-                        item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
-                    (item?.statusColText !== INVENTORY_STATUS.MANAGED && item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
-            );
-            const checkForAllStorageType = rowData?.sqlServerInstances?.every(
-                (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
-            );
-
-            disableMessage = manageDisableMsg(
-                rowData,
-                checkForAllManaged,
-                checkForAllUnDetectInstance,
-                checkForAllUnDetectOrManageInstance,
-                checkForAllUnManagedInstance,
-                checkForAllFsxnManagedInstance,
-                checkForAllStorageType
-            );
-            if (disableMessage) {
-                disableOption = true;
-            }
-        }
-        return { disableOption, disableMessage };
-    };
 
     const findDatabaseOption = (rowData: any) => {
         let disableOptionDatabase = false;
@@ -344,15 +131,27 @@ const HostTable = () => {
                                 <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
                             )}
                             <DsTypography variant="Regular_13">
-                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                    ? INVENTORY_STATUS.ONLINE
-                                    : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                      rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                    ? INVENTORY_STATUS.OFFLINE
-                                    : rowData?.status}
-                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && 'Unknown'}
+                                {(() => {
+                                    if (
+                                        rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                    ) {
+                                        return INVENTORY_STATUS.ONLINE;
+                                    }
+                                    if (
+                                        rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                    ) {
+                                        return INVENTORY_STATUS.OFFLINE;
+                                    }
+                                    if (rowData?.status) {
+                                        return rowData?.status;
+                                    }
+                                    if (rowData?.loading) {
+                                        return <DsFlashingDotsLoader />;
+                                    }
+                                    return INVENTORY_STATUS.UNKNOWN;
+                                })()}
                             </DsTypography>
                         </div>
                     </div>
@@ -516,7 +315,6 @@ const HostTable = () => {
         initialColumnState: tableManageColumnState.hostTable,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
-                // const { disableOption, disableMessage } = findManageOption(rowData);
                 const { disableOptionDatabase, disableMessageDatabase } = findDatabaseOption(rowData);
                 const menu = [
                     {
@@ -547,10 +345,6 @@ const HostTable = () => {
                                 } else if (toggleType === 'selectedOption') {
                                     menuOpenedRowDetail.current = null;
                                     setOpenedRow(null);
-
-                                    if (menuId === 'manage') {
-                                        handleDialog(rowData);
-                                    }
                                     if (menuId === 'viewInstances') {
                                         dispatch(setSelectedInventoryTab('Instances'));
                                         dispatch(
