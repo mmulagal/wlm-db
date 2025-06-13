@@ -16,12 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
-import {
-    checkBoxHandleManage,
-    getFilterOptions,
-    getSelectedFromSelectionState,
-    isSmbProtocol
-} from '../../../../utils/utilityFunctions';
+import { getFilterOptions, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
     DETECT_HOST_VAR,
@@ -40,7 +35,6 @@ import {
     setSelectedHeaderTab,
     setSelectedInventoryTab,
     setSelectedMultiDetectInstances,
-    setSelectedRowsForManage,
     setTableManageColumnState,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -77,14 +71,10 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
-    const disptach = useDispatch();
 
-    const { instanceTableRows, inProgressInstances, tableManageColumnState } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const { instanceTableRows, tableManageColumnState } = useAppSelector(state => state.inventoryV2);
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
-    const { selectedRowsForManage } = useAppSelector(state => state.inventoryV2);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
@@ -351,7 +341,7 @@ const InstancesTable = () => {
                     }
                 };
             }),
-        [instanceTableRows, selectedRowsForManage]
+        [instanceTableRows]
     );
 
     const managedHostSubTableColDefs: ColumnProps[] = [
@@ -770,8 +760,6 @@ const InstancesTable = () => {
         columns: managedHostSubTableColDefs,
         rows: updatedTableData,
         pageSize: 50,
-        // selectionType: 'multiple',
-        // defaultSelectedRows: [],
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
@@ -1052,15 +1040,6 @@ const InstancesTable = () => {
     });
 
     useEffect(() => {
-        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
-        disptach(setSelectedRowsForManage(rowsData));
-
-        if (rowsData.length > 0 && inProgressInstances?.length) {
-            checkBoxHandleManage(tableProps.selectionState, rowsData, disptach);
-        }
-    }, [tableProps.selectionState, inProgressInstances]);
-
-    useEffect(() => {
         dispatch(setTableManageColumnState({ ...tableManageColumnState, instanceTable: tableProps.columnsState }));
     }, [tableProps.columnsState]);
 
@@ -1095,9 +1074,6 @@ const InstancesTable = () => {
                         </div>
                     }
                 />
-                {/* {selectedRowsForManage.length > 0 && (
-                        <BulkActionContainer action={'Manage'} onClick={handleBulkOperation} />
-                    )} */}
                 <Table
                     // @ts-ignore
                     tableProps={tableProps}

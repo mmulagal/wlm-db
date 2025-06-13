@@ -159,11 +159,6 @@ export interface DatabaseHostsEntities {
     selectedRowsForDismiss: Array<string> | any;
     selectedRowsForOptimizeInnerPage: Array<string> | any;
     selectedTab: string;
-    getJobsSummary: {
-        jobsSummaryData: JobsSummaryRes | null;
-        jobsSummaryLoading: false;
-        jobsSummaryError: null;
-    };
     aggregatedHostsCount: AggregatedHostsCountRes | null;
     aggregatedPgSqlHostsCount: AggregatedHostsCountRes | null;
     aggregatedProtectionDbCount: AggregatedProtectionDbCountRes | null;

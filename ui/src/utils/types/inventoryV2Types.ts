@@ -13,7 +13,6 @@ export interface InventorySliceData {
     tableManageColumnState: any;
     selectedFilterValue: {} | any;
     selectedInventoryTab: string;
-    optimizeInnerPageValues: {} | any;
     selectedOptimizeConfig: any;
     breadCrumbSelectedFrom: string;
     defaultFilterOptions: {} | any;
@@ -52,9 +51,6 @@ export interface InventorySliceData {
     oracleInstancesData: Record<string, OracleInstanceData> | null;
     perfMssqlInstancesData: any;
     inProgressInstances: any;
-    manageHostSelectedRows: any;
-    valuesNotFilled: boolean;
-    detectHostRadio: string;
     detectManageUserName: string;
     detectManagePassword: string;
     detectOntapUsername: string;
@@ -63,8 +59,6 @@ export interface InventorySliceData {
         username: string;
         password: string;
     };
-    detectedInstanceId: string;
-    inventoryExpandedRowHostData: any;
     resetManagedData: boolean;
     removeSecNodeDiscoveredList: Array<string>;
     unManagedPerfInstanceIdsList: Array<string>;
@@ -72,13 +66,11 @@ export interface InventorySliceData {
     selectedHeaderTab: string;
     isRefreshed: boolean;
     managedAssessmentHostIdsList: Array<string>;
-    managedAssessmentHostData: any;
     allmssqlHostAssessmentData: any;
     allmssqlHostAssessmentLoading: boolean;
     potentialSavingsHostData: {
         [key: string]: any;
     };
-    selectedRowsForManage: Array<any>;
     hostTableRows: Array<any>;
     instanceTableRows: Array<any>;
     databaseTableRows: Array<any>;

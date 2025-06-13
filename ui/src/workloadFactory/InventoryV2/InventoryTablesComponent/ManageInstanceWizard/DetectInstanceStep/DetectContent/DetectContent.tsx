@@ -14,7 +14,6 @@ import {
     setDetectWindowsAuthentication
 } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
-import { setIsDetectHostError } from '../../../../../../store/mssql/msSqlActionSlice';
 import { getBulkDetectChecks } from '../../ManageInstanceUtils';
 import { UseWizardReturn } from '../../../../../../utils/types/registerTypes';
 
@@ -67,16 +66,6 @@ const DetectContent = () => {
     const [windowsAuthenticationPassword, setWindowsAuthenticationPassword] = useState(
         windowsAuthenticationPasswordFromWizard || ''
     );
-
-    useEffect(() => {
-        dispatch(setIsDetectHostError(''));
-    }, [
-        detectManageUserName,
-        detectManagePassword,
-        detectOntapUsername,
-        detectOntapPassword,
-        detectWindowsAuthentication
-    ]);
 
     useEffect(() => {
         if (authenticationTypeSelected === undefined) {

@@ -117,7 +117,6 @@ const InventoryApisV3 = () => {
     const mssqlInstancesData = useAppSelector(state => state.inventoryV2.mssqlInstancesData);
     const pgsqlInstancesData = useAppSelector(state => state.inventoryV2.pgsqlInstancesData);
     const oracleInstancesData = useAppSelector(state => state.inventoryV2.oracleInstancesData);
-    const detectedInstanceId = useAppSelector(state => state.inventoryV2.detectedInstanceId);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
     const [runningPgsqlInstanceList, setRunningPgsqlInstanceList] = useState<Array<string>>([]);
@@ -129,7 +128,6 @@ const InventoryApisV3 = () => {
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const allmssqlHostAssessmentDataS = useAppSelector(state => state.inventoryV2.allmssqlHostAssessmentData);
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
-    const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
     const { multiMssqlDatabaseHostsData, multiPgSqlDatabaseHostsData } = useAppSelector(state => state.inventoryV2);
     const dashSandboxSavingsData = useAppSelector(state => state.inventoryV2.dashSandboxSavings.data);
@@ -196,7 +194,6 @@ const InventoryApisV3 = () => {
     const pgsqlInstancesDataRef: any = useRef(null);
     const oracleInstancesDataRef: any = useRef(null);
     const perfMssqlInstancesDataRef: any = useRef(null);
-    const managedAssessmentHostDataRef: any = useRef(null);
     const runningInstanceListRef: any = useRef(null);
     const runningPgsqlInstanceListRef: any = useRef(null);
     const runningOracleInstanceListRef: any = useRef(null);
@@ -251,10 +248,6 @@ const InventoryApisV3 = () => {
     useEffect(() => {
         perfMssqlInstancesDataRef.current = perfMssqlInstancesData;
     }, [perfMssqlInstancesData]);
-
-    useEffect(() => {
-        managedAssessmentHostDataRef.current = managedAssessmentHostData;
-    }, [managedAssessmentHostData]);
 
     useEffect(() => {
         potentialSavingsHostDataRef.current = potentialSavingsHostData;
@@ -1605,14 +1598,6 @@ const InventoryApisV3 = () => {
 
         await Promise.all(promises);
     };
-
-    useEffect(() => {
-        // if fsx register is false and only db cred is added than call instance API
-        if (detectedInstanceId) {
-            callInstanceApi([detectedInstanceId], false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
-            callUnmanagedPerfInstanceApi([detectedInstanceId], false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
-        }
-    }, [detectedInstanceId]);
 
     useEffect(() => {
         // if partner instance ID
