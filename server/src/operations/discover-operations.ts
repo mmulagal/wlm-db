@@ -2676,7 +2676,7 @@ async function discoverOracleResources(
     const filters = [
         {
             Name: 'platform-details',
-            Values: ['Red Hat Enterprise Linux*']
+            Values: ['Red Hat Enterprise Linux*', 'SUSE Linux*']
         },
         { Name: 'instance-state-name', Values: ['running'] }
     ];
