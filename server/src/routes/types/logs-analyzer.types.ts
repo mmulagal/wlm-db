@@ -10,8 +10,10 @@ const InferenceConfig = Type.Object({
 });
 const LogsAnalyzerBody = Type.Optional(
     Type.Object({
-        inferenceConfig: InferenceConfig,
-        logsAnalyzerS3SignedUrl: Type.Optional(Type.String())
+        inferenceConfig: Type.Optional(InferenceConfig),
+        logsAnalyzerS3SignedUrl: Type.Optional(Type.String()),
+        logsCountToConsider: Type.Optional(Type.Number()),
+        logsAnalyzerFromTimestamp: Type.Optional(Type.Number())
     })
 );
 
@@ -23,7 +25,10 @@ const RemediationRecommendationObject = Type.Object({
     cause: Type.String(),
     count: Type.Number(),
     severity: Type.String(),
-    remediation: Type.Array(Type.String())
+    remediation: Type.Array(Type.String()),
+    firstOccurrence: Type.Optional(Type.Number()),
+    lastOccurrence: Type.Optional(Type.Number()),
+    errorCode: Type.Optional(Type.String())
 });
 type LogsAnalyzerBody = Static<typeof LogsAnalyzerBody>;
 

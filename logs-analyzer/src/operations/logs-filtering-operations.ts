@@ -25,7 +25,7 @@ export default async function collectLogs(
     const filesToProcess = filteredFiles.length > 0 ? filteredFiles : files;
 
     if (databaseType === DATABASE_TYPE.MSSQL) {
-        let logs: MsSqlErrorLog[] = [];
+        const logs: MsSqlErrorLog[] = [];
         await Promise.all(
             filesToProcess.map(async file => {
                 const filePath = join(logsFolderPath, file);
@@ -36,20 +36,14 @@ export default async function collectLogs(
                     if (!isEmpty(content)) {
                         logs.push(...content);
                     }
-
-                    if (logs.length >= logsCount) {
-                        logger.debug(`Collected ${logs.length} logs, stopping further processing.`);
-                        logs = logs.slice(0, logsCount); // Limit to logsCount
-                        logger.debug(`Final logs count: ${logs.length}`);
-                    }
                 }
             })
         );
 
-        return getUniqueErrorAndRespectiveCount(logs);
+        return getUniqueErrorAndRespectiveCount(logs, logsCount);
     }
     if (databaseType === DATABASE_TYPE.POSTGRESQL) {
-        let logs: PostgresLog[] = [];
+        const logs: PostgresLog[] = [];
         await Promise.all(
             filesToProcess.map(async file => {
                 const filePath = join(logsFolderPath, file);
@@ -58,17 +52,11 @@ export default async function collectLogs(
                     if (!isEmpty(content)) {
                         logs.push(...content);
                     }
-
-                    if (logs.length >= logsCount) {
-                        logger.debug(`Collected ${logs.length} logs, stopping further processing.`);
-                        logs = logs.slice(0, logsCount); // Limit to logsCount
-                        logger.debug(`Final logs count: ${logs.length}`);
-                    }
                 }
             })
         );
 
-        return getUniquePostgresErrors(logs);
+        return getUniquePostgresErrors(logs, logsCount);
     }
     throw new Error(`Unsupported database type: ${databaseType}`);
 }

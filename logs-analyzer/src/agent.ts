@@ -20,7 +20,7 @@ import {
     REMIDIATION_RECOMMENDATION_PROMPT
 } from './utils/const';
 import streamMessages from './aws/bedrock';
-import collectLogs from '../operations/logs-filtering-operations';
+import collectLogs from './operations/logs-filtering-operations';
 import TOOLS from './utils/tools';
 import { getPowershellScript, getBashScript, runPowerShellScript, deleteOlderFilesInDirectory } from './utils/utils';
 import logger from './utils/logging';
@@ -28,9 +28,10 @@ import {
     ErrorLg,
     ToolUse,
     ToolSpec,
-    ErrorLogWithScript,
     MessageObj,
-    ErrorLogWithAdditionalInfo
+    ErrorLogWithAdditionalInfo,
+    AgentArgs,
+    ErrorLogWithScriptAndDetails
 } from './utils/interfaces';
 
 const LIMIT_3 = pLimit(3); // Limit concurrency to 3
@@ -46,7 +47,11 @@ program
     .requiredOption('-i, --instance-id <id>', 'EC2 instance ID')
     .requiredOption('-r, --region <region>', 'AWS region')
     .option('-g, --log-level <level>', 'Log level', 'info')
-    .option('-t, --timestamp <ms>', 'Timestamp of the last log statement in milliseconds', `${Date.now() - 1000 * 60 * 60 * 24 * 120}`)
+    .option(
+        '-t, --timestamp <ms>',
+        'Timestamp of the last log statement in milliseconds',
+        `${Date.now() - 1000 * 60 * 60 * 24 * 120}`
+    )
     .option('-c, --logs-count-to-consider <count>', 'Number of logs to consider for analysis', '1000')
     .option('-e, --temperature <temp>', 'Temperature for the model', '0.5')
     .option('-p, --top-p <topP>', 'Top P for the model', '0.9')
@@ -61,31 +66,30 @@ logger.info('Command line arguments:', argv);
 
 const {
     logsPath,
-    'sqlAuthEnabled': SQL_AUTH_ENABLED,
-    'databaseInstanceName': DATABASE_INSTANCE_NAME,
-    'jobId': JOB_ID,
-    'instanceId': INSTANCE_ID,
-    'logLevel': LOG_LEVEL,
+    sqlAuthEnabled: SQL_AUTH_ENABLED,
+    databaseInstanceName: DATABASE_INSTANCE_NAME,
+    jobId: JOB_ID,
+    instanceId: INSTANCE_ID,
+    logLevel: LOG_LEVEL,
     region: REGION,
-    'modelId': MODEL_ID,
-    'modelRegion': MODEL_REGION,
+    modelId: MODEL_ID,
+    modelRegion: MODEL_REGION,
     timestamp: TIMESTAMP_LAST_LOG_PROCESSED,
-    'logsCountToConsider': LOGS_COUNT,
-    'topP': TOP_P,
+    logsCountToConsider: LOGS_COUNT,
+    topP: TOP_P,
     temperature: TEMP,
-    'maxTokens': MAX_TOKENS
-} = argv as any;
+    maxTokens: MAX_TOKENS
+} = argv as AgentArgs;
 
 const LOGS_FOLDER = decodeURIComponent(logsPath);
 if (!existsSync(LOGS_FOLDER)) {
     logger.error(`Logs folder does not exist: ${LOGS_FOLDER}`);
     throw new Error(`Logs folder does not exist: ${LOGS_FOLDER}`);
 }
-
 const INFERENCE_CONFIG = {
-    temperature: parseFloat(TEMP),
-    top_p: parseFloat(TOP_P),
-    max_tokens_to_sample: parseInt(MAX_TOKENS, 10)
+    temperature: Number(TEMP),
+    top_p: Number(TOP_P),
+    max_tokens_to_sample: Number(MAX_TOKENS)
 };
 
 logger.level = LOG_LEVEL;
@@ -102,6 +106,9 @@ const remediationRecommendation: {
     count: number;
     severity: string | number;
     remediation: string;
+    firstOccurrence?: string;
+    lastOccurrence?: string;
+    errorCode?: string;
 }[] = [];
 
 initiateLogsAnalysis(
@@ -169,8 +176,8 @@ async function initiateLogsAnalysis(inputText: string) {
         logger.info('Step 5: Writing to CloudWatch Logs.');
         await writeToCloudWatchLogGroup(JSON.stringify(response));
     } catch (err) {
-        writeFileSync(statusFilePath, 'Failed', 'utf-8');
-        handleError(err);
+        writeFileSync(statusFilePath, `Failed: ${err}`, 'utf-8');
+        logger.error('A client error occurred:', err);
     } finally {
         logger.info(
             `Log analysis completed for ${LOGS_FOLDER}. Output files are saved in ${outputDir} of the database node. Log analysis results are available in Cloud watch logs at ${CW_OUTPUT_PATH}`
@@ -196,7 +203,15 @@ async function handleToolUse(
 
                         switch (tool?.name) {
                             case 'analyze_db_logs': {
-                                await analyzeDatabaseApplicationLogs(tool, client, LOGS_FOLDER, SQL_AUTH_ENABLED, DATABASE_INSTANCE_NAME, messages, INFERENCE_CONFIG);
+                                await analyzeDatabaseApplicationLogs(
+                                    tool,
+                                    client,
+                                    LOGS_FOLDER,
+                                    SQL_AUTH_ENABLED,
+                                    DATABASE_INSTANCE_NAME,
+                                    messages,
+                                    INFERENCE_CONFIG
+                                );
                                 stopReason = 'end_turn'; // Stop further tool use
                                 logger.info('Log analysis completed. Stopping further tool use.');
 
@@ -226,8 +241,7 @@ async function analyzeErrorLogs(
 ) {
     logger.info('Analyzing error logs.', { databaseType });
 
-    const errorLogsWithCause: MessageObj[] = [];
-    const errorLogsWithScripts = [];
+    const errorLogsWithScripts: ErrorLogWithScriptAndDetails[] = [];
 
     const prompt =
         databaseType === DATABASE_TYPE.MSSQL ? MSSQL_ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
@@ -235,6 +249,7 @@ async function analyzeErrorLogs(
     await Promise.all(
         errorLogs.map(logChunk =>
             pLimit(5)(async () => {
+                const { firstOccurrence, lastOccurrence, errorCode } = logChunk;
                 const response = await streamMessages(
                     client,
                     MODEL_ID,
@@ -249,25 +264,29 @@ async function analyzeErrorLogs(
                 );
 
                 const { message } = response;
-                errorLogsWithCause.push(message);
+                if (message.role === ConversationRole.ASSISTANT) {
+                    const { content: [{ text }] = [] } = message;
+                    if (text) {
+                        const data = parseSuggestedScriptsWithTimestamp([text], {
+                            firstOccurrence,
+                            lastOccurrence,
+                            errorCode
+                        });
+                        errorLogsWithScripts.push(...data);
+                    }
+                }
             })
         )
     );
 
-    const assistantMessages = compact(
-        errorLogsWithCause
-            .filter((message: MessageObj) => message.role === 'assistant')
-            .flatMap(message => message.content?.[0]?.text ?? [])
-    );
-
-    const scripts = parseSuggestedScripts(assistantMessages);
-    errorLogsWithScripts.push(...scripts);
-
     return { errorLogsWithScripts, databaseType };
 }
 
-function parseSuggestedScripts(assistantMessages: string[]): ErrorLogWithScript[] {
-    logger.info('Parsing suggested scripts from assistant messages.');
+function parseSuggestedScriptsWithTimestamp(
+    assistantMessages: string[],
+    additionalDetails: object
+): ErrorLogWithScriptAndDetails[] {
+    logger.debug('Parsing suggested scripts from assistant messages.', { additionalDetails });
 
     return compact(
         assistantMessages
@@ -294,7 +313,7 @@ function parseSuggestedScripts(assistantMessages: string[]): ErrorLogWithScript[
                         sql: { query }
                     } = JSON.parse(message);
                     const filteredQueries = query.filter((queryEntry: string) => queryEntry !== 'NA');
-                    return { error, cause, count, severity, sql: filteredQueries };
+                    return { error, cause, count, severity, sql: filteredQueries, ...additionalDetails };
                 } catch (error) {
                     logger.error('Failed to parse JSON:', { message, error });
                     return undefined;
@@ -318,22 +337,31 @@ async function runBashScript(scriptContent: string): Promise<string> {
     }
 }
 
-async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWithScripts: ErrorLogWithScript[], databaseInstanceName?: string, sqlAuthEnabled?: boolean) {
+async function checkAndExecuteAdditionalScript(
+    databaseType: string,
+    errorLogsWithScripts: ErrorLogWithScriptAndDetails[],
+    databaseInstanceName?: string,
+    sqlAuthEnabled?: boolean
+) {
     logger.info('Checking and executing additional scripts.', { databaseType, databaseInstanceName, sqlAuthEnabled });
 
     const result: ErrorLogWithAdditionalInfo[] = [];
 
     const uniqueQueryMap = new Map();
-    errorLogsWithScripts.forEach((logWithScript: ErrorLogWithScript) => {
-        const { error, cause, count, severity, sql = [] } = logWithScript;
+    errorLogsWithScripts.forEach((logWithScript: ErrorLogWithScriptAndDetails) => {
+        const { error, cause, count, severity, sql = [], firstOccurrence, lastOccurrence, errorCode } = logWithScript;
         const queryKey = createHash('sha256')
             .update(sql.map((queryEntry: { query: string }) => queryEntry?.query).join('|'))
             .digest('hex');
 
         if (!uniqueQueryMap.has(queryKey)) {
-            uniqueQueryMap.set(queryKey, [{ error, cause, count, severity, sql }]);
+            uniqueQueryMap.set(queryKey, [
+                { error, cause, count, severity, sql, firstOccurrence, lastOccurrence, errorCode }
+            ]);
         } else {
-            uniqueQueryMap.get(queryKey).push({ error, count, severity, cause });
+            uniqueQueryMap
+                .get(queryKey)
+                .push({ error, count, severity, cause, firstOccurrence, lastOccurrence, errorCode });
         }
     });
 
@@ -347,23 +375,45 @@ async function checkAndExecuteAdditionalScript(databaseType: string, errorLogsWi
                             ? await runPowerShellScript(getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled))
                             : await runBashScript(getBashScript(sql));
                     const errorAndCauseWithAdditionalInfo = value.map(
-                        ({ error, cause, count, severity }: ErrorLogWithScript) => ({
+                        ({
                             error,
                             cause,
                             count,
                             severity,
-                            additionalInfo: response
+                            firstOccurrence,
+                            lastOccurrence,
+                            errorCode
+                        }: ErrorLogWithScriptAndDetails) => ({
+                            error,
+                            cause,
+                            count,
+                            severity,
+                            additionalInfo: response,
+                            firstOccurrence,
+                            lastOccurrence,
+                            errorCode
                         })
                     );
                     result.push(...errorAndCauseWithAdditionalInfo);
                 } else {
                     const errorAndCauseWithAdditionalInfo = value.map(
-                        ({ error, cause, count, severity }: ErrorLogWithScript) => ({
+                        ({
                             error,
                             cause,
                             count,
                             severity,
-                            additionalInfo: 'No additional script executed.'
+                            firstOccurrence,
+                            lastOccurrence,
+                            errorCode
+                        }: ErrorLogWithScriptAndDetails) => ({
+                            error,
+                            cause,
+                            count,
+                            severity,
+                            additionalInfo: 'No additional script executed.',
+                            firstOccurrence,
+                            lastOccurrence,
+                            errorCode
                         })
                     );
                     result.push(...errorAndCauseWithAdditionalInfo);
@@ -391,13 +441,17 @@ async function recommendRemediation(
     await Promise.all(
         result.map(errorWithInfo =>
             LIMIT_3(async () => {
+                const { firstOccurrence, lastOccurrence, errorCode, error, cause, additionalInfo, severity, count } = errorWithInfo;
+                const minimalErrorObject = {
+                    error, cause, additionalInfo
+                } // Minimal error object to send to the model to save tokens
                 const response = await streamMessages(
                     client,
                     MODEL_ID,
                     [
                         {
                             role: ConversationRole.USER,
-                            content: [{ text: prompt + JSON.stringify(errorWithInfo) }]
+                            content: [{ text: prompt + JSON.stringify(minimalErrorObject) }]
                         }
                     ],
                     undefined,
@@ -407,8 +461,17 @@ async function recommendRemediation(
                 const { message } = response;
                 const { content: [{ text }] = [] } = message;
                 if (text) {
-                    const { error, cause, count, severity, remediation } = JSON.parse(text);
-                    remediationRecommendation.push({ error, cause, count, severity, remediation });
+                    const { remediation } = JSON.parse(text);
+                    remediationRecommendation.push({
+                        error,
+                        cause,
+                        count,
+                        severity,
+                        remediation,
+                        firstOccurrence,
+                        lastOccurrence,
+                        errorCode
+                    });
                 } else {
                     logger.error('No text found in the response.');
                 }
@@ -490,7 +553,12 @@ async function analyzeDatabaseApplicationLogs(
     const { errorLogsWithScripts } = await analyzeErrorLogs(dbType, client, errorLogs, inferenceConfig);
 
     if (!isEmpty(errorLogsWithScripts)) {
-        const { result } = await checkAndExecuteAdditionalScript(dbType, errorLogsWithScripts, databaseInstanceName, sqlAuthEnabled);
+        const { result } = await checkAndExecuteAdditionalScript(
+            dbType,
+            errorLogsWithScripts,
+            databaseInstanceName,
+            sqlAuthEnabled
+        );
         await recommendRemediation(dbType || DATABASE_TYPE.MSSQL, client, result, inferenceConfig);
     }
 
@@ -551,8 +619,4 @@ async function writeToCloudWatchLogGroup(message: string) {
         logger.error('Error writing to CloudWatch Logs:', error);
         throw error;
     }
-}
-
-function handleError(err: any) {
-    logger.error('A client error occurred:', err);
 }

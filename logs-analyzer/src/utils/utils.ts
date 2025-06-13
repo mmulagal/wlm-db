@@ -1,4 +1,5 @@
 import { execa } from 'execa';
+import crypto from 'crypto';
 import { readdirSync, statSync, unlinkSync } from 'node:fs';
 import ms from 'ms';
 import zlib from 'zlib';
@@ -243,7 +244,7 @@ function getPowershellScript(sql: string[], databaseInstanceName: string, sqlAut
         
         $jsonOutput = $results | ConvertTo-Json -Compress
         echo "$jsonOutput"
-`
+`;
 }
 
 function getBashScript(sql: string[]) {
@@ -253,7 +254,7 @@ function getBashScript(sql: string[]) {
 
         # Define the list of queries
         queries=(
-            ${sql.map(sqlQuery =>  `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')}
+            ${sql.map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')}
         )
 
         # Initialize an array to store the results
@@ -374,11 +375,19 @@ function deleteOlderFilesInDirectory(directory: string, days: number = 3) {
         logger.error(`Error deleting older files in directory ${directory}:`, error);
     }
 }
+
+function generateHash(value: string) {
+    const hash = crypto.createHash('shake256', { outputLength: 8 });
+    hash.update(value);
+    return hash.digest('hex');
+}
+
 export {
     getPowershellScript,
     getBashScript,
     runPowerShellScript,
     runBashScript,
     deflateString,
-    deleteOlderFilesInDirectory
+    deleteOlderFilesInDirectory,
+    generateHash
 };

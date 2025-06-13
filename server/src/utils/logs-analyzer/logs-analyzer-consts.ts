@@ -4,6 +4,7 @@ const LOGS_ANALYZER_BUNDLE_PATH = `${WLMDB}/scripts/logs-analyzer/agent-win.exe`
 const LOGS_ANALYZER_PACKAGE_NAME = 'LogsAnalyzerAgent';
 const LOGS_ANALYZER_PACKAGE_VERSION = '1.0.0';
 const LOG_LEVEL = 'info';
+const LOGS_COUNT_TO_CONSIDER = 100;
 
 const LOGS_ANALYZER_MODEL_IDS = [
     'anthropic.claude-3-7-sonnet-20250219-v1:0',
@@ -21,5 +22,6 @@ export {
     LOGS_ANALYZER_PACKAGE_NAME,
     LOGS_ANALYZER_PACKAGE_VERSION,
     LOG_LEVEL,
+    LOGS_COUNT_TO_CONSIDER,
     LOGS_ANALYZER_MODEL_IDS
 };

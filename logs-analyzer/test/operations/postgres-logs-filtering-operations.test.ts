@@ -36,7 +36,7 @@ describe('readPostgresLogsFile', () => {
 
         const logs = await readPostgresLogsFile(logsFilePath, Date.now() - ms('1d'));
 
-        const response = await getUniquePostgresErrors(logs);
+        const response = await getUniquePostgresErrors(logs, 100);
 
         expect(response.uniqueErrorLogs).toBeDefined();
     });
