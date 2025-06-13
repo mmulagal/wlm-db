@@ -102,24 +102,18 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
 
 async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLogsCountToConsider: number) {
     logger.debug('Starting to group logs by error code', { uniqueLogsCountToConsider });
-    let groupedLogs = groupBy(logs, 'errorCode');
-
-    Object.entries(groupedLogs).forEach(([key, value]) => {
-        // If the errorCode is empty, we can still consider the logs for grouping
-        value.forEach(log => {
-            if (key === 'undefined' || (isEmpty(key) && value.length > 0)) {
-                // if the key is undefined, groupby sets the key to 'undefined' string
-                const match = MSSQL_ERROR_PATTERN.exec(log.error);
-                if (match?.groups) {
-                    const { message } = match.groups;
-                    const dummyErrorCode = generateHash(message); // Some logs may not have an error code, so we generate a dummy error code based on the message for better grouping
-                    log.errorCode = `${dummyErrorCode}-dummy`; // Append '-dummy' to differentiate from real error codes
-                }
+    logs.forEach(log => {
+        if (!log.errorCode || isEmpty(log.errorCode)) {
+            const match = MSSQL_ERROR_PATTERN.exec(log.error);
+            if (match?.groups) {
+                const { message } = match.groups;
+                const dummyErrorCode = generateHash(message);
+                log.errorCode = `${dummyErrorCode}-dummy`;
             }
-        });
+        }
     });
 
-    groupedLogs = groupBy(logs, 'errorCode');
+    const groupedLogs = groupBy(logs, 'errorCode');
 
     const uniqueErrorLogs = Object.keys(groupedLogs)
         .slice(0, uniqueLogsCountToConsider)
@@ -134,8 +128,8 @@ async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLog
                     : undefined,
                 lastOccurrence:
                     Array.isArray(groupedLogs[key]) &&
-                    groupedLogs[key].length > 0 &&
-                    groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
+                        groupedLogs[key].length > 0 &&
+                        groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
                         ? new Date(groupedLogs[key][groupedLogs[key].length - 1].timestamp).getTime()
                         : undefined,
                 severity,
