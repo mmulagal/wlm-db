@@ -147,12 +147,7 @@ export interface WorkloadFactoryResourceDetails {
     };
 
     resourceUtilization: {
-        cpu: {
-            percentUsed: string;
-            used: string;
-            total: string;
-            remaining: string;
-        };
+        cpu: ResourceTrendMetric[];
         disk: {
             percentUsed: string;
             used: string;

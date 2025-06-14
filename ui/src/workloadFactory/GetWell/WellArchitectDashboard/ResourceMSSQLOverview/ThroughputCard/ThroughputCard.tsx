@@ -13,8 +13,12 @@ const ThroughputCard = () => {
     const [readDataPoints, setReadDataPoints] = useState<{ statisticsDate: string; average: number }[]>([]);
 
     useEffect(() => {
-        const readThroughput = resourceDetails?.resourceTrend?.readThroughput || [];
-        const writeThroughput = resourceDetails?.resourceTrend?.writeThroughput || [];
+        const readThroughput = Array.isArray(resourceDetails?.performance?.rwMetrics?.throughput?.read)
+            ? resourceDetails.performance.rwMetrics.throughput.read
+            : [];
+        const writeThroughput = Array.isArray(resourceDetails?.performance?.rwMetrics?.throughput?.write)
+            ? resourceDetails.performance.rwMetrics.throughput.write
+            : [];
 
         setDatasets([readThroughput.map(item => item.value), writeThroughput.map(item => item.value)]);
 

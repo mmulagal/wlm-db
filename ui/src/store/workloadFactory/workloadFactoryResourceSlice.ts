@@ -119,12 +119,7 @@ const initialState: WorkloadFactoryResourceEntities = {
         },
 
         resourceUtilization: {
-            cpu: {
-                percentUsed: '',
-                used: '',
-                total: '',
-                remaining: ''
-            },
+            cpu: [],
             disk: {
                 percentUsed: '',
                 used: '',

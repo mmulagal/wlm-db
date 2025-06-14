@@ -13,16 +13,25 @@ const IOPSCard = () => {
     const [readDataPoints, setReadDataPoints] = useState<{ statisticsDate: string; average: number }[]>([]);
 
     useEffect(() => {
-        const readIOPS = resourceDetails?.resourceTrend?.readIops || [];
-        const writeIOPS = resourceDetails?.resourceTrend?.writeIops || [];
+        const readIOPS = Array.isArray(resourceDetails?.performance?.rwMetrics?.iops?.read)
+            ? resourceDetails.performance.rwMetrics.iops.read
+            : [];
+        const writeIOPS = Array.isArray(resourceDetails?.performance?.rwMetrics?.iops?.write)
+            ? resourceDetails.performance.rwMetrics.iops.write
+            : [];
 
-        setDatasets([readIOPS.map(item => item.value), writeIOPS.map(item => item.value)]);
+        setDatasets([
+            Array.isArray(readIOPS) ? readIOPS.map(item => item.value) : [],
+            Array.isArray(writeIOPS) ? writeIOPS.map(item => item.value) : []
+        ]);
 
         setReadDataPoints(
-            readIOPS.map(item => ({
-                statisticsDate: item.timestamp,
-                average: item.value
-            }))
+            Array.isArray(readIOPS)
+                ? readIOPS.map(item => ({
+                      statisticsDate: item.timestamp,
+                      average: item.value
+                  }))
+                : []
         );
     }, [resourceDetails]);
 

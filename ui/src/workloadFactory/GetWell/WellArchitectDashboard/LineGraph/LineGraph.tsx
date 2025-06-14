@@ -41,8 +41,8 @@ const LineGraph = React.memo(
         height?: number;
         yTickFormatter?: YTickFormatter;
     }) => {
-        // const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-        const isDarkTheme = true;
+        const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
         const [chartContext, setChartContext] = useState<any>(null);
         const { tokens } = useCurrentTheme();
 

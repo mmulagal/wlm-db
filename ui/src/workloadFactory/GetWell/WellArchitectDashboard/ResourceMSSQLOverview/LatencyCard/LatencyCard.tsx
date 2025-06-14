@@ -13,10 +13,17 @@ const LatencyCard = () => {
     const [readDataPoints, setReadDataPoints] = useState<{ statisticsDate: string; average: number }[]>([]);
 
     useEffect(() => {
-        const readLatency = resourceDetails?.resourceTrend?.readLatency || [];
-        const writeLatency = resourceDetails?.resourceTrend?.writeLatency || [];
+        const readLatency = Array.isArray(resourceDetails?.performance?.rwMetrics?.latency?.read)
+            ? resourceDetails.performance.rwMetrics.latency.read
+            : [];
+        const writeLatency = Array.isArray(resourceDetails?.performance?.rwMetrics?.latency?.write)
+            ? resourceDetails.performance.rwMetrics.latency.write
+            : [];
 
-        setDatasets([readLatency.map(item => item.value), writeLatency.map(item => item.value)]);
+        setDatasets([
+            Array.isArray(readLatency) ? readLatency.map(item => item.value) : [],
+            Array.isArray(writeLatency) ? writeLatency.map(item => item.value) : []
+        ]);
 
         setReadDataPoints(
             readLatency.map(item => ({

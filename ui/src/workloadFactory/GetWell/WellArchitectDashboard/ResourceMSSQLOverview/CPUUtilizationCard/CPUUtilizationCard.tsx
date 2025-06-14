@@ -13,7 +13,7 @@ const CPUUtilizationCard = () => {
     const [dataPoints, setDataPoints] = useState<any[]>([]);
 
     useEffect(() => {
-        setDataPoints(resourceDetails?.resourceTrend?.cpuUsed || []);
+        setDataPoints(resourceDetails?.resourceUtilization?.cpu || []);
     }, [resourceDetails]);
 
     return (
