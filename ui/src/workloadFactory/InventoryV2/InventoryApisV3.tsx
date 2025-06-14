@@ -1607,6 +1607,7 @@ const InventoryApisV3 = () => {
     }, [partnerInstanceList]);
 
     useEffect(() => {
+        // this updates the perfMssqlInstancesData with instance api
         // if partner instance ID
         if (unManagedPerfInstanceIdsList?.length) {
             callUnmanagedPerfInstanceApi(unManagedPerfInstanceIdsList, false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
@@ -1968,11 +1969,12 @@ const InventoryApisV3 = () => {
             const newInventoryTableData = { ...inventoryTableData, ...updatedInventoryData };
 
             // Use lodash.isequal for deep comparison
+            // under the hood this inventory table data will get sync with perfMssqlInstancesData to have protection and performance data
             if (!isEqual(newInventoryTableData, inventoryTableData)) {
                 dispatch(setInventoryTableData(newInventoryTableData));
             }
         }
-    }, [mssqlInstancesData, pgsqlInstancesData, oracleInstancesData, inventoryTableData]);
+    }, [mssqlInstancesData, pgsqlInstancesData, oracleInstancesData, inventoryTableData, perfMssqlInstancesData]);
 
     useEffect(() => {
         const state = store.getState();
