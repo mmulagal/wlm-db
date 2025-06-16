@@ -270,7 +270,8 @@ const DiscoverCredentialsRequestBody = Type.Object({
         Type.Array(
             Type.String({
                 description:
-                    'Private IP addresses of nodes in a clustered deployment that would help us find out the EC2 instance IDs'
+                    'Private IP addresses of nodes in a clustered deployment that would help us find out the EC2 instance IDs',
+                format: 'ipv4'
             })
         )
     ),
