@@ -353,8 +353,7 @@ async function getProtectionStatus(
                 isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup[instName]),
                 isCRREnabled: isDemoFlow ? true : checkAllTrue(crrBackup[instName]),
                 isAppConsistentBackupEnabled:
-                    isDemoFlow ||
-                    Object.values(protectionResponse?.isAppConsistentBackupEnabled[instName] ?? {}).some(Boolean)
+                    isDemoFlow || checkAllTrue(protectionResponse?.isAppConsistentBackupEnabled[instName] ?? {})
             };
             return acc;
         }, {} as Record<string, any>);
@@ -1873,7 +1872,8 @@ async function getDatabaseDetails(
                                           ),
                                 isCRREnabled: isDemoFlow ? true : checkKey(crrBackup[instName], database.databaseName),
                                 isAppConsistentBackupEnabled:
-                                    isDemoFlow || isAppConsistentBackupEnabled[instName]?.[database.databaseName]
+                                    isDemoFlow ||
+                                    checkKey(isAppConsistentBackupEnabled[instName], database.databaseName)
                             }
                         })
                     })
