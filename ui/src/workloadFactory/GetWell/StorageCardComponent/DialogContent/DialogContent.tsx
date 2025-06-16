@@ -104,6 +104,8 @@ const DialogContent = ({
                 return 'Multipath I/O Policy = Round Robin';
             case 'Multipath I/O Sessions':
                 return 'Multipath I/O Sessions = 5';
+            case 'Multipath I/O Timeout':
+                return 'Multipath I/O Timeout = 60 seconds';
         }
     };
 
@@ -732,7 +734,7 @@ const DialogContent = ({
 
             case 'Multipath I/O Status':
             case 'Multipath I/O Policy':
-            case 'Multipath I/O Timeout':
+            // case 'Multipath I/O Timeout':
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -787,6 +789,64 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">{GENERAL.OS_NOTE_POINT_TWO}</DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'Multipath I/O Timeout':
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory recommends optimizing Microsoft Multipath I/O (MPIO) 
+                                performance by adjusting the MPIO timeout setting to the best practice 
+                                value of 60 seconds. Configure the MPIO timeout setting on the host to 
+                                60 seconds to ensure connectivity and stability during FSx for ONTAP failovers.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                What will happen
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Regular_14">
+                                        The MPIO timeout setting will be set to 60 seconds to prevent disconnections 
+                                        during FSx for ONTAP failovers, ensuring system stability and preventing potential data loss.
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Well-architected configuration
+                            </DsTypography>
+                            <div className={styles['dialog-body']}>
+                                <div className={styles['code-box']}>
+                                    <div className={styles['code']}>
+                                        <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                {GENERAL.NOTE}
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        No disruption to your services is expected during this process.
+                                    </DsTypography>
                                 </div>
                             </div>
                         </div>
