@@ -4,7 +4,7 @@ import { isEmpty } from 'lodash-es';
 import { DATABASE_TYPE, JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
-import { AuditStatus, DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
+import { AuditStatus, HttpErrorCodes } from '../../utils/consts';
 
 import { getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
 import {
@@ -226,11 +226,7 @@ async function handleLogsAnalysis(
         }
         const s3SignedUrl =
             logsAnalyzerS3SignedUrl ||
-            (await getPreSignedUrl(
-                DEFAULT_AWS_REGION,
-                getArtifactsRegionBucketName(DEFAULT_AWS_REGION),
-                LOGS_ANALYZER_BUNDLE_PATH
-            ));
+            (await getPreSignedUrl(region, getArtifactsRegionBucketName(region), LOGS_ANALYZER_BUNDLE_PATH));
 
         const logsPathQuery =
             'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH';

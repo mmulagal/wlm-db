@@ -104,10 +104,10 @@ const remediationRecommendation: {
     error: string;
     cause: string;
     count: number;
-    severity: string | number;
     remediation: string;
-    firstOccurrence?: string;
-    lastOccurrence?: string;
+    severity?: string | number;
+    firstOccurrence?: number;
+    lastOccurrence?: number;
     errorCode?: string;
 }[] = [];
 
@@ -177,7 +177,9 @@ async function initiateLogsAnalysis(inputText: string) {
         await writeToCloudWatchLogGroup(JSON.stringify(response));
     } catch (err) {
         writeFileSync(statusFilePath, `Failed: ${err}`, 'utf-8');
-        logger.error('A client error occurred:', err);
+        const errorMessage = `Failed running logs analysis. A client error occurred: ${err}`;
+        logger.error(errorMessage);
+        throw new Error(errorMessage);
     } finally {
         logger.info(
             `Log analysis completed for ${LOGS_FOLDER}. Output files are saved in ${outputDir} of the database node. Log analysis results are available in Cloud watch logs at ${CW_OUTPUT_PATH}`
@@ -249,7 +251,7 @@ async function analyzeErrorLogs(
     await Promise.all(
         errorLogs.map(logChunk =>
             pLimit(5)(async () => {
-                const { firstOccurrence, lastOccurrence, errorCode } = logChunk;
+                const { firstOccurrence, lastOccurrence, errorCode, severity } = logChunk;
                 const response = await streamMessages(
                     client,
                     MODEL_ID,
@@ -270,7 +272,8 @@ async function analyzeErrorLogs(
                         const data = parseSuggestedScriptsWithTimestamp([text], {
                             firstOccurrence,
                             lastOccurrence,
-                            errorCode
+                            errorCode,
+                            severity
                         });
                         errorLogsWithScripts.push(...data);
                     }
@@ -309,11 +312,10 @@ function parseSuggestedScriptsWithTimestamp(
                         error,
                         cause,
                         count,
-                        severity,
                         sql: { query }
                     } = JSON.parse(message);
                     const filteredQueries = query.filter((queryEntry: string) => queryEntry !== 'NA');
-                    return { error, cause, count, severity, sql: filteredQueries, ...additionalDetails };
+                    return { error, cause, count, sql: filteredQueries, ...additionalDetails };
                 } catch (error) {
                     logger.error('Failed to parse JSON:', { message, error });
                     return undefined;
