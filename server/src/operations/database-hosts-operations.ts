@@ -96,7 +96,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getEc2Hostname, isDemo } from '../utils/utils';
+import { getEc2Hostname, isDemo, sqlResponseParsing } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
@@ -108,6 +108,7 @@ import {
     getOracleDatabaseInstancesDetails,
     getOracleDatabaseInstancesSummary
 } from './workloads/oracle/oracle-operations';
+import { GET_SNAPSHOT_DETAILS, OntapRestRequestParams } from './workloads/mssql/continuous-optimization-scripts';
 
 const logger = getLogger();
 
@@ -350,7 +351,10 @@ async function getProtectionStatus(
                     ebs: Boolean(ebsBackup)
                 },
                 isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup[instName]),
-                isCRREnabled: isDemoFlow ? true : checkAllTrue(crrBackup[instName])
+                isCRREnabled: isDemoFlow ? true : checkAllTrue(crrBackup[instName]),
+                isAppConsistentBackupEnabled:
+                    isDemoFlow ||
+                    Object.values(protectionResponse?.isAppConsistentBackupEnabled[instName] ?? {}).some(Boolean)
             };
             return acc;
         }, {} as Record<string, any>);
@@ -362,6 +366,7 @@ async function getProtectionStatus(
                 protectedDatabases: Number.isNaN(Number(nativeBackupCount)) ? 0 : Number(nativeBackupCount),
                 isAwsBackupEnabled: commonResult[iName]?.isAwsBackupEnabled ?? { fsxn: 'N/A', fsxw: false, ebs: false },
                 isFsxOntapSnapshotsEnabled: commonResult[iName]?.isFsxOntapSnapshotsEnabled ?? 'N/A',
+                isAppConsistentBackupEnabled: commonResult[iName]?.isAppConsistentBackupEnabled ?? 'N/A',
                 isCRREnabled: commonResult[iName]?.isCRREnabled ?? 'N/A'
             };
         });
@@ -1519,6 +1524,7 @@ async function getProtectionDetails(
     awsBackup: Record<string, BackupType>;
     ontapBackup: Record<string, BackupType>;
     crrBackup: Record<string, BackupType>;
+    isAppConsistentBackupEnabled: Record<string, BackupType>;
 }> {
     logger.info('Getting Proteciton details', {
         credentialsId,
@@ -1568,31 +1574,41 @@ async function getProtectionDetails(
     const awsBackup: Record<string, BackupType> = {};
     const ontapBackup: Record<string, BackupType> = {};
     const crrBackup: Record<string, BackupType> = {};
+    const isAppConsistentBackupEnabled: Record<string, BackupType> = {};
 
     await Promise.all(
         Object.entries(instanceVolumeMapping).map(async ([instanceName]) => {
-            const [awsBackupInstance, ontapBackupInstance, crrBackupInstance] = await Promise.all([
-                isFsxnAwsBackupEnabled(
-                    credentialsId,
-                    region,
-                    fileSystemId,
-                    volumeUuids[instanceName],
-                    volumeDBMap[instanceName],
-                    activeNodeInstanceId
-                ),
-                getOntapVolumesSnapshotCount(
-                    credentialsId,
-                    region,
-                    fileSystemId,
-                    volumeRecords[instanceName],
-                    volumeDBMap[instanceName]
-                ),
-                fetchCrrBackupDetails(
-                    instanceDetails?.filter(instance => instance.database_instance_name === instanceName) || [],
-                    volumeRecords[instanceName],
-                    volumeDBMap[instanceName]
-                )
-            ]);
+            const [awsBackupInstance, ontapBackupInstance, crrBackupInstance, databaseAppConsistentBackupMap] =
+                await Promise.all([
+                    isFsxnAwsBackupEnabled(
+                        credentialsId,
+                        region,
+                        fileSystemId,
+                        volumeUuids[instanceName],
+                        volumeDBMap[instanceName],
+                        activeNodeInstanceId
+                    ),
+                    getOntapVolumesSnapshotCount(
+                        credentialsId,
+                        region,
+                        fileSystemId,
+                        volumeRecords[instanceName],
+                        volumeDBMap[instanceName]
+                    ),
+                    fetchCrrBackupDetails(
+                        instanceDetails?.filter(instance => instance.database_instance_name === instanceName) || [],
+                        volumeRecords[instanceName],
+                        volumeDBMap[instanceName]
+                    ),
+                    isInstanceAppConsistentBackupEnabled(
+                        credentialsId,
+                        region,
+                        fileSystemId,
+                        volumeUuids[instanceName],
+                        volumeDBMap[instanceName],
+                        activeNodeInstanceId!
+                    )
+                ]);
 
             awsBackup[instanceName] = {
                 ...awsBackupInstance,
@@ -1606,10 +1622,49 @@ async function getProtectionDetails(
                 },
                 {}
             );
+            isAppConsistentBackupEnabled[instanceName] = { ...databaseAppConsistentBackupMap };
         })
     );
 
-    return { awsBackup, ontapBackup, crrBackup };
+    return { awsBackup, ontapBackup, crrBackup, isAppConsistentBackupEnabled };
+}
+
+async function isInstanceAppConsistentBackupEnabled(
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    volumesToCheck: string[],
+    volumeDBMap: Array<{ ontapVolumeuuid: string; databaseName: string }>,
+    activeNodeInstanceid: string
+) {
+    logger.info('Checking if app consistent backup details are available');
+    try {
+        const ontapApiQueryParams: OntapRestRequestParams = {
+            queryFilter: 'comment=creator=snapcenter&max_records=1',
+            queryFields: 'comment,snapmirror_label'
+        };
+        const command = [GET_SNAPSHOT_DETAILS(volumesToCheck, fsxId, region, ontapApiQueryParams)];
+        const ssmComment = 'Get snapshot copy details for volumes';
+        const rawResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceid, ssmComment);
+        const { response: ssmResponse, error: ssmError } = sqlResponseParsing(rawResponse);
+        if (!isEmpty(ssmError) || isEmpty(ssmResponse)) {
+            throw Error(
+                `Error executing SSM command to retrieve snapshot copy details for volumes: ${volumesToCheck}. Error: ${ssmError}`
+            );
+        }
+        const appConsistentBackupMap: Record<string, boolean> = {};
+
+        for (const db of volumeDBMap) {
+            const { databaseName, ontapVolumeuuid } = db;
+            const { comment } = ssmResponse[ontapVolumeuuid] ?? '';
+            appConsistentBackupMap[databaseName] = isDemoFlow || comment === 'creator=snapcenter';
+        }
+
+        return appConsistentBackupMap;
+    } catch (error) {
+        const errorMsg = `Error while fetching app consistent backup details: ${error}`;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    }
 }
 
 async function getInstanceOntapDetails(
@@ -1737,7 +1792,7 @@ async function getDatabaseDetails(
         const [
             { databases } = { databases: [] },
             backedupDatabases,
-            { awsBackup = [], ontapBackup = [], crrBackup = [] } = {}
+            { awsBackup = [], ontapBackup = [], crrBackup = [], isAppConsistentBackupEnabled = [] } = {}
         ] = await Promise.all(
             [
                 getDataBasesSummary(
@@ -1816,7 +1871,9 @@ async function getDatabaseDetails(
                                                           e.backedupDatabases === database.databaseName
                                                   )
                                           ),
-                                isCRREnabled: isDemoFlow ? true : checkKey(crrBackup[instName], database.databaseName)
+                                isCRREnabled: isDemoFlow ? true : checkKey(crrBackup[instName], database.databaseName),
+                                isAppConsistentBackupEnabled:
+                                    isDemoFlow || isAppConsistentBackupEnabled[instName]?.[database.databaseName]
                             }
                         })
                     })
@@ -2254,5 +2311,6 @@ export {
     getInstanceDetails,
     getAllClusterNodeDetails,
     getInstanceOntapDetails,
-    getEc2ResourceInfo
+    getEc2ResourceInfo,
+    isInstanceAppConsistentBackupEnabled
 };
