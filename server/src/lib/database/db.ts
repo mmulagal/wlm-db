@@ -749,6 +749,17 @@ async function updateTrackedEc2Record(
     });
 }
 
+async function deleteOlderDeployments(olderDate: number) {
+    logger.info('Deleting older deployments', { olderDate });
+    return prisma.client.deployment.deleteMany({
+        where: {
+            start_time: {
+                lt: new Date(olderDate)
+            }
+        }
+    });
+}
+
 export {
     listDeployments,
     createDeployment,
@@ -777,5 +788,6 @@ export {
     createTrackedEc2Records,
     listTrackedEc2,
     removeTrackedEc2Record,
-    updateTrackedEc2Record
+    updateTrackedEc2Record,
+    deleteOlderDeployments
 };

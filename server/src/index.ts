@@ -64,23 +64,13 @@ import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
 import chatbotRoutes from './routes/chatbot';
 import sandboxRoutes from './routes/sandbox';
-import {
-    purgeOlderJobs,
-    failLongRunningDeploymentJobs,
-    failLongRunningResourcePrepareJobs,
-    updateTcoInstanceRecommendationPreferences,
-    scheduledAssessment,
-    updateManagedInstanceRecommendationPreferences,
-    purgeAssessmentData
-} from './operations/cron-operations';
-import { isActiveInstance, isDemo } from './utils/utils';
+import { initiateCronOperations } from './operations/cron-operations';
+import { isActiveInstance } from './utils/utils';
 import { resetCache } from './utils/cache';
 import { REDIS_URL } from './utils/continous-optimization-consts';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
-
-const isDemoFlow = isDemo();
 
 logger.info(`Redis URL ${REDIS_URL}.`);
 
@@ -386,23 +376,9 @@ try {
 logger.info('Database initialized');
 // Initialize cron jobs
 
-logger.info('Initializing cron jobs');
-try {
-    if (isActiveInstance()) {
-        purgeOlderJobs();
-        purgeAssessmentData();
-        if (!isDemoFlow) {
-            failLongRunningDeploymentJobs();
-            failLongRunningResourcePrepareJobs();
-            updateTcoInstanceRecommendationPreferences();
-            updateManagedInstanceRecommendationPreferences();
-            scheduledAssessment();
-        }
-    }
-} catch (error) {
-    logger.error('Failed to initialize cron jobs', error);
+if (isActiveInstance()) {
+    initiateCronOperations();
 }
-logger.info('Cron jobs initialized');
 
 app.listen({ port, host }, err => {
     if (err) {

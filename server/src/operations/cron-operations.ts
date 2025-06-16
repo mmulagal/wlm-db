@@ -16,13 +16,19 @@ import {
 import getLogger from '../utils/logger';
 import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './database/job-operations';
 
-import { deleteResource, listTrackedEc2, removeTrackedEc2Record, updateTrackedEc2Record } from '../lib/database/db';
+import {
+    deleteOlderDeployments,
+    deleteResource,
+    listTrackedEc2,
+    removeTrackedEc2Record,
+    updateTrackedEc2Record
+} from '../lib/database/db';
 import { getHostAndSqlServerInfo } from './discover-operations';
 import {
     manageInstanceRecommendationPreReqs,
     manageInstanceRecommendationPreReqsForManagedInstances
 } from './aws/compute-optimizer-operations';
-import { getEc2Arn, getRedisConnection } from '../utils/utils';
+import { getEc2Arn, getRedisConnection, isDemo, sleep } from '../utils/utils';
 import { getAoagPartnerNodesDetails } from './storage-savings-operations';
 import {
     checkComputeOptimizerEnrollmentStatus,
@@ -36,6 +42,8 @@ import { purgeOlderAssessmentRecords } from './database/instance-config-operatio
 import { listAllManagedInstances } from './database/database-operations';
 
 const logger = getLogger();
+
+const isDemoFlow = isDemo();
 
 async function failLongRunningDeploymentJobs() {
     logger.info('Marking long running (> 4 hours) deployment jobs as failed');
@@ -324,6 +332,32 @@ async function purgeAssessmentData() {
     }, Number(ms(config.get('db.assessment.purge.interval'))));
 }
 
+function purgeOlderDeployments() {
+    logger.info('Purging older deployments');
+    const purgeAfter = ms(config.get('db.deployments.purge.older-than'));
+    deleteOlderDeployments(Date.now() - Number(purgeAfter));
+}
+
+async function initiateCronOperations() {
+    logger.info('Initializing cron jobs');
+    try {
+        await sleep(5 * 60 * 1000); // Wait for 5 minutes before starting the cron jobs to ensure all services are up and running
+        purgeOlderJobs();
+        purgeAssessmentData();
+        if (!isDemoFlow) {
+            failLongRunningDeploymentJobs();
+            failLongRunningResourcePrepareJobs();
+            updateTcoInstanceRecommendationPreferences();
+            updateManagedInstanceRecommendationPreferences();
+            scheduledAssessment();
+            purgeOlderDeployments();
+        }
+    } catch (error) {
+        logger.error('Failed to initialize cron jobs', error);
+    }
+    logger.info('Cron jobs initialized');
+}
+
 export {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
@@ -333,5 +367,7 @@ export {
     updateTcoInstRecPrefs,
     updateManagedInstRecPrefs,
     scheduledAssessment,
-    purgeAssessmentData
+    purgeAssessmentData,
+    purgeOlderDeployments,
+    initiateCronOperations
 };

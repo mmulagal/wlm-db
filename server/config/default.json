@@ -53,15 +53,7 @@
         "region": "us-east-1"
     },
     "ec2": {
-        "vcpu-filter": [
-            "2",
-            "4",
-            "8",
-            "16",
-            "32",
-            "64",
-            "72"
-        ]
+        "vcpu-filter": ["2", "4", "8", "16", "32", "64", "72"]
     },
     "ssm": {
         "poll-interval": "1s",
@@ -94,6 +86,11 @@
         "assessment": {
             "purge": {
                 "interval": "4h"
+            }
+        },
+        "deployments": {
+            "purge": {
+                "older-than": "7d"
             }
         }
     },
