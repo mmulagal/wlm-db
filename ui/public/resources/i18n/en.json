@@ -96,7 +96,9 @@
             "manage-detect-info-message": "The authentication process is in progress and may take up to 1 minute to complete."
         },
         "well-architect": {
-            "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis."
+            "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis.",
+            "mpio-timeout": "Configure the Microsoft Multipath I/O (MPIO) timeout to 60 seconds on the host to ensure stable connectivity and prevent data loss during FSx for ONTAP failovers."
+
         }
     }
 }
