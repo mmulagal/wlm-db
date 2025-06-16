@@ -147,6 +147,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         } else {
             mssqlInstanceData = {
                 serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
+                actualServerInstallationMode: selectedHostDetails?.serverInstallationMode,
                 serverEdition,
                 serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
                 instanceType,

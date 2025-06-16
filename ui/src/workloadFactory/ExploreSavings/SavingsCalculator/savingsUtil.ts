@@ -293,7 +293,7 @@ export const MSSQLServerInstance = (sqlData: any, storageType: string) => [
         value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
         text:
             sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                ? `The equivalent deployment mode of Failover Cluster Instances in ${storageType} is failover cluster instance in FSx for ONTAP`
+                ? `The equivalent deployment mode of ${sqlData?.actualServerInstallationMode} in ${storageType} is failover cluster instance in FSx for ONTAP`
                 : `Database deployment mode selected based on the current ${storageType} database deployment mode`
     },
     {

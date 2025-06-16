@@ -344,6 +344,15 @@ const InstancesTable = () => {
         [instanceTableRows]
     );
 
+    const isUnregisteredRows = useMemo(
+        () =>
+            instanceTableRows?.some((row: any) => {
+                const { colText, disableMsg } = manageActionCol(row);
+                return colText === ACTION_CTA.MANAGE_INSTANCES && disableMsg === '';
+            }),
+        [instanceTableRows]
+    );
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'Instance name',
@@ -1068,9 +1077,26 @@ const InstancesTable = () => {
                     subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     actionsRight={
                         <div className={styles.manageInstanceButton}>
-                            <DsButton isThin onClick={() => handleManageBulk()} isDisabled={loading}>
-                                Register multiple instances
-                            </DsButton>
+                            {!loading && !isUnregisteredRows ? (
+                                <Popover
+                                    isAppendedToBody
+                                    children={t('databases.register-flow.register-bulk-disable-tooltip')}
+                                    trigger="hover"
+                                    container={
+                                        <DsButton isThin isDisabled>
+                                            {t('databases.register-flow.register-multiple-instances')}
+                                        </DsButton>
+                                    }
+                                />
+                            ) : (
+                                <DsButton
+                                    isThin
+                                    onClick={() => handleManageBulk()}
+                                    isDisabled={loading || !isUnregisteredRows}
+                                >
+                                    {t('databases.register-flow.register-multiple-instances')}
+                                </DsButton>
+                            )}
                         </div>
                     }
                 />
