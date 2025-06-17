@@ -24,7 +24,13 @@
             "unauthenticated": "Unauthenticated",
             "enter-password": "Enter password",
             "coming-soon": "Coming soon",
-            "enter": "Enter"
+            "enter": "Enter",
+            "local-snapshots": "Local snapshots",
+            "remote-replications": "Remote replications",
+            "fsx-for-ontap-backup": "FSx for ONTAP backup",
+            "native-sql-server-backup": "Native SQL Server Backup",
+            "storage-consistent": "storage (crash) consistent",
+            "application-consistent": "app-consistent"
         },
         "register-flow": {
             "register-bulk-disable-tooltip": "Register multiple instances will be applicable for Microsoft SQL Server unregistered instances only.",

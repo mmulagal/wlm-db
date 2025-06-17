@@ -3,6 +3,7 @@ import {
     DsButton,
     DsFlashingDotsLoader,
     DsTypography,
+    DsTooltipInfo,
     Popover,
     postBlueXPMessage,
     useDialog
@@ -10,9 +11,6 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
-import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
@@ -68,6 +66,14 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
+import { ReactComponent as CameraIcon } from '../../../../assets/ic_camera.svg';
+import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { ReactComponent as BackupIcon } from '../../../../assets/ic_backup.svg';
+import { ReactComponent as ImmutableFilesIcon } from '../../../../assets/ic_immutable_files.svg';
+import { ReactComponent as ImmutableSnapshotIcon } from '../../../../assets/ic_immutable_snapshot.svg';
+import { ReactComponent as ArpAiIcon } from '../../../../assets/ic_arp_ai.svg';
+import { useTranslation } from 'react-i18next';
+import IconWithTooltip from '../../../../common/IconWithTooltip/IconWithTooltip';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -588,7 +594,7 @@ const InstancesTable = () => {
             Header: 'Protection status',
             accessor: 'protectionText',
             id: '7',
-            width: '200px',
+            width: '330px',
             filterOptions: getFilterOptions(updatedTableData, 'protectionText'),
             renderCell: (cellData: string, rowData: any) => {
                 let loadingPS = rowData?.loading || rowData?.subLoading;
@@ -600,23 +606,43 @@ const InstancesTable = () => {
                         {cellData && (
                             <div className={styles.colTextProtection}>
                                 <div className={styles.protection}>
-                                    {cellData === GENERAL.PROTECTED && (
-                                        <ProtectedIcon
-                                            style={{
-                                                // @ts-ignore
-                                                '--icon-primary-color': 'var(--green-60)'
-                                            }}
+                                    <div className={styles.protectionIcons}>
+                                        <IconWithTooltip
+                                            Icon={CameraIcon}
+                                            tooltipValue={rowData?.protection?.isFsxOntapSnapshotsEnabled}
+                                            tooltipLabel={t('databases.general.local-snapshots')}
                                         />
-                                    )}
-                                    {cellData === GENERAL.NOT_PROTECTED && (
-                                        <NotProtectedIcon
-                                            style={{
-                                                // @ts-ignore
-                                                '--icon-primary-color': 'var(--grey-45)'
-                                            }}
+                                        <IconWithTooltip
+                                            Icon={CopyIcon}
+                                            tooltipValue={rowData?.protection?.isCRREnabled}
+                                            tooltipLabel={t('databases.general.remote-replications')}
                                         />
-                                    )}
-                                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                        <IconWithTooltip
+                                            Icon={BackupIcon}
+                                            tooltipValue={rowData?.protection?.isAwsBackupEnabled?.fsxn}
+                                            tooltipLabel={t('databases.general.fsx-for-ontap-backup')}
+                                        />
+                                        <IconWithTooltip
+                                            Icon={ImmutableFilesIcon}
+                                            tooltipValue={rowData?.protection?.isSqlNativeEnabled}
+                                            tooltipLabel={t('databases.general.native-sql-server-backup')}
+                                        />
+                                        <IconWithTooltip
+                                            Icon={ImmutableSnapshotIcon}
+                                            tooltipValue={
+                                                rowData?.protection?.isSqlNativeEnabled ||
+                                                rowData?.protection?.isAwsBackupEnabled?.fsxn ||
+                                                rowData?.protection?.isCRREnabled ||
+                                                rowData?.protection?.isFsxOntapSnapshotsEnabled
+                                            }
+                                            tooltipLabel={t('databases.general.storage-consistent')}
+                                        />
+                                        <IconWithTooltip
+                                            Icon={ArpAiIcon}
+                                            tooltipValue={rowData?.protection?.isAppConsistentBackupEnabled}
+                                            tooltipLabel={t('databases.general.application-consistent')}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
