@@ -75,7 +75,8 @@ import {
     getCostAllocationTagFsxResource,
     isFsxwAwsBackupEnabled,
     getMappedOntapVolumes,
-    getStorageDataFromOntap
+    getStorageDataFromOntap,
+    isInstanceAppConsistentBackupEnabled
 } from './aws/fsx-operations';
 import {
     DatabaseInstance,
@@ -96,7 +97,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { getEc2Hostname, isDemo, sqlResponseParsing } from '../utils/utils';
+import { getEc2Hostname, isDemo } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
@@ -108,7 +109,6 @@ import {
     getOracleDatabaseInstancesDetails,
     getOracleDatabaseInstancesSummary
 } from './workloads/oracle/oracle-operations';
-import { GET_SNAPSHOT_DETAILS, OntapRestRequestParams } from './workloads/mssql/continuous-optimization-scripts';
 
 const logger = getLogger();
 
@@ -1626,44 +1626,6 @@ async function getProtectionDetails(
     );
 
     return { awsBackup, ontapBackup, crrBackup, isAppConsistentBackupEnabled };
-}
-
-async function isInstanceAppConsistentBackupEnabled(
-    credentialsId: string,
-    region: string,
-    fsxId: string,
-    volumesToCheck: string[],
-    volumeDBMap: Array<{ ontapVolumeuuid: string; databaseName: string }>,
-    activeNodeInstanceid: string
-) {
-    logger.info('Checking if app consistent backup details are available');
-    try {
-        const ontapApiQueryParams: OntapRestRequestParams = {
-            queryFilter: 'comment=creator=snapcenter&max_records=1',
-            queryFields: 'comment,snapmirror_label'
-        };
-        const command = [GET_SNAPSHOT_DETAILS(volumesToCheck, fsxId, region, ontapApiQueryParams)];
-        const ssmComment = 'Get snapshot copy details for volumes';
-        const rawResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceid, ssmComment);
-        const { response: ssmResponse, error: ssmError } = sqlResponseParsing(rawResponse);
-        if (!isEmpty(ssmError) || isEmpty(ssmResponse)) {
-            throw Error(
-                `Error executing SSM command to retrieve snapshot copy details for volumes: ${volumesToCheck}. Error: ${ssmError}`
-            );
-        }
-        const appConsistentBackupMap: Record<string, boolean> = {};
-
-        for (const db of volumeDBMap) {
-            const { databaseName, ontapVolumeuuid } = db;
-            const { comment } = ssmResponse[ontapVolumeuuid] ?? '';
-            appConsistentBackupMap[databaseName] = isDemoFlow || comment === 'creator=snapcenter';
-        }
-
-        return appConsistentBackupMap;
-    } catch (error) {
-        const errorMsg = `Error while fetching app consistent backup details: ${error}`;
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
-    }
 }
 
 async function getInstanceOntapDetails(

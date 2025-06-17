@@ -1,9 +1,5 @@
 import { faker } from '@faker-js/faker';
-import {
-    getAllClusterNodeDetails,
-    getDatabaseHostSummaryV2,
-    isInstanceAppConsistentBackupEnabled
-} from '../../src/operations/database-hosts-operations';
+import { getAllClusterNodeDetails, getDatabaseHostSummaryV2 } from '../../src/operations/database-hosts-operations';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/aws/fsx-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -15,7 +11,6 @@ import '../simulator/scopes/aws/cloud-watch-scope';
 import '../simulator/scopes/aws/pricing-scope';
 import { ACCOUNT_ID, SECRETS } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
-import { CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 
 SECRETS.AUTH_CLIENT_ID = `${faker.string.alphanumeric(20)}`;
 SECRETS.SIGNURL_ACCESS_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -88,30 +83,5 @@ describe('Database host operations', () => {
             '36E53042-04E8-40C9-AE69-26E56CB0D216'
         );
         expect(response.ec2InstanceId).toBeDefined();
-    });
-});
-
-describe('Protection', () => {
-    const volumeDBMap: Array<{ ontapVolumeuuid: string; databaseName: string }> = [
-        { ontapVolumeuuid: 'ad251a8f-da34-11ef-b315-11b9ce95d982', databaseName: 'salesdb' },
-        { ontapVolumeuuid: '74a8a789-c5dd-11ef-b315-11b9ce95d982', databaseName: 'inventory' },
-        { ontapVolumeuuid: '438cc269-edeb-11ef-994b-3b81e03bea3e', databaseName: 'analytics' }
-    ];
-    const volUuids = [
-        'ad251a8f-da34-11ef-b315-11b9ce95d982',
-        '74a8a789-c5dd-11ef-b315-11b9ce95d982',
-        '438cc269-edeb-11ef-994b-3b81e03bea3e'
-    ];
-    it('should test app consistent backup', async () => {
-        const res = await isInstanceAppConsistentBackupEnabled(
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            'fs-4242424242',
-            volUuids,
-            volumeDBMap,
-            'i-4242424242'
-        );
-        expect(res).toBeDefined();
-        expect(Object.values(res).every(Boolean)).toBe(true);
     });
 });
