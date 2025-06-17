@@ -777,9 +777,6 @@ const DialogContent = ({
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
-                                    <div>
-                                        <Bullet />
-                                    </div>
                                     <DsTypography variant="Regular_14">{GENERAL.OS_NOTE_POINT_ONE}</DsTypography>
                                 </div>
 
