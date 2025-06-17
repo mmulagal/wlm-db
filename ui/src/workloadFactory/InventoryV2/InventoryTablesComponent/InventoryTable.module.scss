@@ -336,3 +336,7 @@
         text-transform: none !important;
     }
 }
+
+[class*='Popover-module_base'] {
+    max-width: 300px !important;
+}

@@ -65,7 +65,7 @@ const DetectedInstanceTable = () => {
             width: '188px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className={styles.tooltipContainer}>
                     <Popover
                         popoverClass=""
                         children={<TooltipCard listObj={rowData?.perRowState} registerFlow />}
