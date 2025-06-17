@@ -1751,6 +1751,17 @@ const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
 const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-age-in-days') : 60; // Fall Back to 60 days as default if not set in config
 const OTHER_CLONE = 'other';
 const POSTPONE_AGE: number = config.has('postpone-age-in-days') ? config.get('postpone-age-in-days') : 30; // Fall Back to 30 days as default if not set in config
+const CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE = 'netapp/wlmdb/performance';
+const CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES = [
+    'cpuUsed',
+    'readThroughput',
+    'writeThroughput',
+    'readIops',
+    'writeIops',
+    'readLatency',
+    'writeLatency',
+    'serverIOLatency'
+];
 
 const WF_NOTIFICATION_RESOURCE_TYPE = 'DB';
 
@@ -2109,5 +2120,7 @@ export {
     OTHER_CLONE,
     ORACLE_INSTANCE_STATE,
     POSTPONE_AGE,
-    WF_NOTIFICATION_RESOURCE_TYPE
+    WF_NOTIFICATION_RESOURCE_TYPE,
+    CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE,
+    CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES
 };

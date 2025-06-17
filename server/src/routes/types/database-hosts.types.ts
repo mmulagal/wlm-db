@@ -133,9 +133,28 @@ const ProtectionPerStorageTypeResponse = Type.Object({
 });
 type ProtectionPerStorageTypeResponseType = Static<typeof ProtectionPerStorageTypeResponse>;
 
+const TrendGraphResponse = Type.Array(
+    Type.Optional(
+        Type.Object({
+            timestamp: Type.String({ description: 'Timestamp in ISO 8601 format' }),
+            value: Type.Number({ description: 'Performance metric value at the given timestamp' }),
+            unit: Type.String({ description: 'Unit of the performance metric, e.g., ms, IOPS, MB/s' })
+        })
+    )
+);
+
 const RWPerformanceResponse = Type.Object({
-    read: Type.Number({ description: 'Database server read performance for latency, IOPS or throughput' }),
-    write: Type.Number({ description: 'Database server write performance for latency, IOPS or throughput' })
+    read: Type.Union([
+        Type.Optional(Type.Number({ description: 'Database server read performance for latency, IOPS or throughput' })),
+        Type.Optional(TrendGraphResponse)
+    ]),
+    write: Type.Union([
+        Type.Optional(
+            Type.Number({ description: 'Database server write performance for latency, IOPS or throughput' })
+        ),
+        Type.Optional(TrendGraphResponse)
+    ])
+    // The union type is added as same schme is used for mssql, pgsql and oracle but pgsql and oracle does not support trend graph now,. Once they support trend graph, we can remove unused type
 });
 
 const LatencyResponse = Type.Composite([
@@ -236,7 +255,7 @@ const UtilizationResponse = Type.Object({
 type UtilizationResponseType = Static<typeof UtilizationResponse>;
 
 const ResourcesUtilizationResponse = Type.Object({
-    cpu: UtilizationResponse,
+    cpu: Type.Union([Type.Optional(TrendGraphResponse), Type.Optional(UtilizationResponse)]), // The union type is added as same schme is used for mssql, pgsql and oracle but pgsql and oracle does not support trend graph now,. Once they support trend graph, we can remove unused type
     memory: UtilizationResponse,
     disk: UtilizationResponse
 });

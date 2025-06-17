@@ -1,8 +1,11 @@
 import { Statistic, GetMetricStatisticsCommandInput } from '@aws-sdk/client-cloudwatch';
 import ms, { StringValue } from 'ms';
-import getMetricStatistics from '../../lib/aws/cloud-watch';
+import throat from 'throat';
+import { getMetricStatistics, getCloudWatchMetrics } from '../../lib/aws/cloud-watch';
 import getLogger from '../../utils/logger';
 import { describeFSx } from '../../lib/aws/fsx';
+import { getSqlInstanceMetricDataQueries, getUnitForMetric } from '../../utils/utils';
+import { DatabaseInstance } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -271,9 +274,62 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
     return { peakCpuUtilizationPercentage, averageNetworkBandwidthGbps };
 }
 
+async function getSqlInstanceUtilizationAndPerformance(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    databaseHostId: string,
+    databaseInstances: DatabaseInstance[]
+) {
+    logger.info('Get SQL instance utilization from CloudWatch metrics', {
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseInstancesLength: databaseInstances.length
+    });
+
+    const finalFormattedPerformanceMetricsData: Record<string, any> = {};
+
+    const instanceNames = databaseInstances.map(instance => instance.database_instance_name);
+    await Promise.all(
+        instanceNames.map(
+            throat(3, async instanceName => {
+                const params = getSqlInstanceMetricDataQueries(databaseHostId, instanceName);
+                const performanceMetricsData = await getCloudWatchMetrics(credentialsId, region, params, accountId);
+                const formattedPerformanceMetricsData: Record<string, any> = {};
+                (performanceMetricsData.MetricDataResults ?? [])
+                    .filter(result => Boolean(result.Label))
+                    .forEach(result => {
+                        const unit =
+                            result.Label === 'readIops' || result.Label === 'writeIops'
+                                ? 'IOPS'
+                                : getUnitForMetric(result.Label!);
+
+                        const timestamps = result.Timestamps ?? [];
+                        const values = result.Values?.map((v: number) => Number(v.toFixed(3))) ?? []; // rounding off the value to 3 decimal places
+
+                        const entries = timestamps
+                            .map((timestamp, idx) => ({
+                                timestamp,
+                                value: values[idx] ?? null,
+                                unit: unit ? String(unit) : undefined
+                            }))
+                            .reverse(); // Reverse to have the most recent data first for UI display
+
+                        formattedPerformanceMetricsData[result.Label!] = entries;
+                    });
+                finalFormattedPerformanceMetricsData[instanceName] = formattedPerformanceMetricsData;
+            })
+        )
+    );
+    return finalFormattedPerformanceMetricsData;
+}
+
 export {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch,
     getInstanceUtilization,
-    getEbsVolumeUtilization
+    getEbsVolumeUtilization,
+    getSqlInstanceUtilizationAndPerformance
 };
