@@ -45,7 +45,7 @@ const ThroughputCard = () => {
                             <>
                                 R:{' '}
                                 {datasets.length > 0 && datasets[0].length > 0
-                                    ? `${datasets[0][datasets[0].length - 1]} ms`
+                                    ? `${datasets[0][datasets[0].length - 1]} kb/s`
                                     : '--'}
                             </>
                         )}
@@ -60,7 +60,7 @@ const ThroughputCard = () => {
                             <>
                                 W:{' '}
                                 {datasets.length > 0 && datasets[1].length > 0
-                                    ? `${datasets[1][datasets[1].length - 1]} ms`
+                                    ? `${datasets[1][datasets[1].length - 1]} kb/s`
                                     : '--'}
                             </>
                         )}
