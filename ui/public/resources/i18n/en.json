@@ -96,14 +96,7 @@
             "manage-detect-info-message": "The authentication process is in progress and may take up to 1 minute to complete."
         },
         "well-architect": {
-            "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis.",
-            "mpio-timeout": "Multipath I/O timeout",
-            "mpio-timeout-view-recommend-text": "Configure the Microsoft Multipath I/O (MPIO) timeout setting on the host to 60 seconds to ensure connectivity and stability during FSx for ONTAP failovers. The 60-second setting prevents disk disconnections, application errors, and potential data loss caused by insufficient timeout settings.",
-            "mpio-timeout-content1": "Workload Factory recommends optimizing Microsoft Multipath I/O (MPIO) performance by adjusting the MPIO timeout setting to the best practice value of 60 seconds. Configure the MPIO timeout setting on the host to 60 seconds to ensure connectivity and stability during FSx for ONTAP failovers.",
-            "mpio-timeout-content2": "The MPIO timeout setting will be set to 60 seconds to prevent disconnections during FSx for ONTAP failovers, ensuring system stability and preventing potential data loss.",
-            "mpio-timeout-content3": "The MPIO timeout setting will be set to 60 seconds to prevent disconnections during FSx for ONTAP failovers, ensuring system stability and preventing potential data loss."
-    
-    
+            "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis."
         }
     }
 }
