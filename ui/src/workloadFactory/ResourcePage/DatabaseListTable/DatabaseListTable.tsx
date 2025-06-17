@@ -1,11 +1,8 @@
 import { Table, useTable, TableTopBar, Typography, TooltipInfo, Button } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { ReactComponent as CameraIcon } from '../../../assets/ic_camera.svg';
-import { ReactComponent as CopyIcon } from '../../../assets/ic_copy.svg';
-import { ReactComponent as BackupIcon } from '../../../assets/ic_backup.svg';
-import { ReactComponent as ImmutableFilesIcon } from '../../../assets/ic_immutable_files.svg';
-import { ReactComponent as ImmutableSnapshotIcon } from '../../../assets/ic_immutable_snapshot.svg';
-import { ReactComponent as ArpAiIcon } from '../../../assets/ic_arp_ai.svg';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -20,10 +17,7 @@ import {
     setCdbPageData
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../store/authSlice';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import IconWithTooltip from '../../../common/IconWithTooltip/IconWithTooltip';
-import { useTranslation } from 'react-i18next';
+import ProtectionIcons from '../../../common/ProtectionIcons/ProtectionIcons';
 
 const DatabaseListTable = () => {
     const { t } = useTranslation();
@@ -112,41 +106,7 @@ const DatabaseListTable = () => {
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
                                     <div className={styles.protectionIcons}>
-                                        <IconWithTooltip
-                                            Icon={CameraIcon}
-                                            tooltipValue={protectionData?.isFsxOntapSnapshotsEnabled}
-                                            tooltipLabel={t('databases.general.local-snapshots')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={CopyIcon}
-                                            tooltipValue={protectionData?.isCRREnabled}
-                                            tooltipLabel={t('databases.general.remote-replications')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={BackupIcon}
-                                            tooltipValue={protectionData?.isAwsBackupEnabled?.fsxn}
-                                            tooltipLabel={t('databases.general.fsx-for-ontap-backup')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={ImmutableFilesIcon}
-                                            tooltipValue={protectionData?.isSqlNativeEnabled}
-                                            tooltipLabel={t('databases.general.native-sql-server-backup')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={ImmutableSnapshotIcon}
-                                            tooltipValue={
-                                                protectionData?.isSqlNativeEnabled ||
-                                                protectionData?.isAwsBackupEnabled?.fsxn ||
-                                                protectionData?.isCRREnabled ||
-                                                protectionData?.isFsxOntapSnapshotsEnabled
-                                            }
-                                            tooltipLabel={t('databases.general.storage-consistent')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={ArpAiIcon}
-                                            tooltipValue={protectionData?.isAppConsistentBackupEnabled}
-                                            tooltipLabel={t('databases.general.application-consistent')}
-                                        />
+                                        <ProtectionIcons protectionData={protectionData} />
                                     </div>
                                 </div>
                             </div>

@@ -30,7 +30,9 @@
             "fsx-for-ontap-backup": "FSx for ONTAP backup",
             "native-sql-server-backup": "Native SQL Server Backup",
             "storage-consistent": "storage (crash) consistent",
-            "application-consistent": "app-consistent"
+            "application-consistent": "app-consistent",
+            "protected": "Protected",
+            "not_protected": "Not protected"
         },
         "register-flow": {
             "register-bulk-disable-tooltip": "Register multiple instances will be applicable for Microsoft SQL Server unregistered instances only.",

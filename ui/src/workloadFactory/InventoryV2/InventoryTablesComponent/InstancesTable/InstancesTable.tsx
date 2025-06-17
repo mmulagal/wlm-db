@@ -11,6 +11,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
@@ -66,14 +67,7 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
-import { ReactComponent as CameraIcon } from '../../../../assets/ic_camera.svg';
-import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
-import { ReactComponent as BackupIcon } from '../../../../assets/ic_backup.svg';
-import { ReactComponent as ImmutableFilesIcon } from '../../../../assets/ic_immutable_files.svg';
-import { ReactComponent as ImmutableSnapshotIcon } from '../../../../assets/ic_immutable_snapshot.svg';
-import { ReactComponent as ArpAiIcon } from '../../../../assets/ic_arp_ai.svg';
-import { useTranslation } from 'react-i18next';
-import IconWithTooltip from '../../../../common/IconWithTooltip/IconWithTooltip';
+import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -601,47 +595,14 @@ const InstancesTable = () => {
                 if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
                     loadingPS = true;
                 }
+
                 return (
                     <>
                         {cellData && (
                             <div className={styles.colTextProtection}>
                                 <div className={styles.protection}>
                                     <div className={styles.protectionIcons}>
-                                        <IconWithTooltip
-                                            Icon={CameraIcon}
-                                            tooltipValue={rowData?.protection?.isFsxOntapSnapshotsEnabled}
-                                            tooltipLabel={t('databases.general.local-snapshots')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={CopyIcon}
-                                            tooltipValue={rowData?.protection?.isCRREnabled}
-                                            tooltipLabel={t('databases.general.remote-replications')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={BackupIcon}
-                                            tooltipValue={rowData?.protection?.isAwsBackupEnabled?.fsxn}
-                                            tooltipLabel={t('databases.general.fsx-for-ontap-backup')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={ImmutableFilesIcon}
-                                            tooltipValue={rowData?.protection?.isSqlNativeEnabled}
-                                            tooltipLabel={t('databases.general.native-sql-server-backup')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={ImmutableSnapshotIcon}
-                                            tooltipValue={
-                                                rowData?.protection?.isSqlNativeEnabled ||
-                                                rowData?.protection?.isAwsBackupEnabled?.fsxn ||
-                                                rowData?.protection?.isCRREnabled ||
-                                                rowData?.protection?.isFsxOntapSnapshotsEnabled
-                                            }
-                                            tooltipLabel={t('databases.general.storage-consistent')}
-                                        />
-                                        <IconWithTooltip
-                                            Icon={ArpAiIcon}
-                                            tooltipValue={rowData?.protection?.isAppConsistentBackupEnabled}
-                                            tooltipLabel={t('databases.general.application-consistent')}
-                                        />
+                                        <ProtectionIcons protectionData={rowData?.protection} />
                                     </div>
                                 </div>
                             </div>
