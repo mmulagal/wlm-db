@@ -110,7 +110,6 @@ const SelectInstances = () => {
             }),
         [instanceTableRows, selectionType, selectedOptions]
     );
-    // ...existing code...
 
     const handleSelect = (selected: OptionType[]) => {
         setLastAppliedOptions(selected);
@@ -126,14 +125,14 @@ const SelectInstances = () => {
     return (
         <div className={styles.detectInstanceSelect}>
             <DsSelectFsx
-                title="Instances"
+                title={t('databases.register-flow.instances')}
                 isCleanable={false}
                 formatLabel={() =>
                     selectedMultiDetectInstances.length > 0
-                        ? `${selectedMultiDetectInstances.length} instances selected`
-                        : 'Select instances'
+                        ? `${selectedMultiDetectInstances.length} ${t('databases.register-flow.instances-selected')}`
+                        : t('databases.register-flow.select-instances')
                 }
-                placeholder="Select instances"
+                placeholder={t('databases.register-flow.select-instances')}
                 options={options}
                 value={selectedOptions}
                 onSelectionChange={(selectedOptions: any) => {

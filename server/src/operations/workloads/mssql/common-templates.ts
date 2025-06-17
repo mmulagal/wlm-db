@@ -275,12 +275,12 @@ const invokeCommandWithCredSSP = `
         if ($job.State -ne 'Completed') {
             # If the job is still running after the timeout, stop and remove it
             Stop-Job -Job $job | Out-Null
-            Remove-Job -Job $job | Out-Null
+            Remove-Job -Force -Job $job | Out-Null
             Throw "The Invoke-Command job did not complete successfully within the timeout period. This could be due to invalid credentials or other issues."
         }
 
         $sqlresult = Receive-Job -Job $job
-        Remove-Job -Job $job | Out-Null
+        Remove-Job -Force -Job $job | Out-Null
         return $sqlresult
     }
 `;

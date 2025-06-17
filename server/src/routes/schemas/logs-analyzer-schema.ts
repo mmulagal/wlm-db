@@ -1,6 +1,6 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { RouteTags } from '../../utils/consts';
-import { LogsAnalyzerBody, LogsAnalyzerParams } from '../types/logs-analyzer.types';
+import { LogsAnalyzerBody, LogsAnalyzerParams, RemediationRecommendationObject } from '../types/logs-analyzer.types';
 
 const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
@@ -27,15 +27,7 @@ const GetLogsAnalyzerSchema = {
     summary: 'Get logs analysis for a specific database instance in a remote database host machine',
     response: {
         200: Type.Object({
-            remediationRecommendation: Type.Array(
-                Type.Object({
-                    error: Type.String(),
-                    cause: Type.String(),
-                    count: Type.Number(),
-                    severity: Type.String(),
-                    remediation: Type.Array(Type.String())
-                })
-            )
+            remediationRecommendation: Type.Array(RemediationRecommendationObject)
         }),
         404: Type.Object({
             message: Type.String()

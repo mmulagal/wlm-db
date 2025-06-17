@@ -9,18 +9,6 @@ import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
 import * as SelectInstancesStep from './SelectInstancesStep/SelectInstancesStep';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
-const MANAGE_STEPS = [
-    { key: 'select-instances', label: 'Select instances', component: SelectInstancesStep },
-    { key: 'detect-instance', label: 'Authenticate', component: DetectInstanceStep },
-    { key: 'manage-instance', label: 'Prepare', component: ManageInstanceStep }
-];
-
-const stepsMap = Object.fromEntries(MANAGE_STEPS.map(({ key, component }) => [key, component]));
-
-const stepPaths = {
-    regular: MANAGE_STEPS.map(({ label, key }) => ({ label, key }))
-};
-
 const Wizard = () => {
     const { t } = useTranslation();
     const { stepsMap, currentStep }: any = useWizard();
@@ -55,6 +43,22 @@ const Wizard = () => {
 };
 
 const RegisterBulkWizard = () => {
+    const { t } = useTranslation();
+    const MANAGE_STEPS = [
+        {
+            key: 'select-instances',
+            label: t('databases.register-flow.select-instances'),
+            component: SelectInstancesStep
+        },
+        { key: 'detect-instance', label: t('databases.register-flow.authenticate'), component: DetectInstanceStep },
+        { key: 'manage-instance', label: t('databases.register-flow.prepare'), component: ManageInstanceStep }
+    ];
+
+    const stepsMap = Object.fromEntries(MANAGE_STEPS.map(({ key, component }) => [key, component]));
+
+    const stepPaths = {
+        regular: MANAGE_STEPS.map(({ label, key }) => ({ label, key }))
+    };
     const initialState: any = {};
 
     return (

@@ -12,17 +12,6 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 
-const MANAGE_STEPS = [
-    { key: 'detect-instance', label: 'Authenticate', component: DetectInstanceStep },
-    { key: 'manage-instance', label: 'Prepare', component: ManageInstanceStep }
-];
-
-const stepsMap = Object.fromEntries(MANAGE_STEPS.map(({ key, component }) => [key, component]));
-
-const stepPaths = {
-    regular: MANAGE_STEPS.map(({ label, key }) => ({ label, key }))
-};
-
 const Wizard = () => {
     const { t } = useTranslation();
     const { stepsMap, currentStep }: any = useWizard();
@@ -64,6 +53,17 @@ const Wizard = () => {
 };
 
 const ManageInstanceWizard = () => {
+    const { t } = useTranslation();
+    const MANAGE_STEPS = [
+        { key: 'detect-instance', label: t('databases.register-flow.authenticate'), component: DetectInstanceStep },
+        { key: 'manage-instance', label: t('databases.register-flow.prepare'), component: ManageInstanceStep }
+    ];
+
+    const stepsMap = Object.fromEntries(MANAGE_STEPS.map(({ key, component }) => [key, component]));
+
+    const stepPaths = {
+        regular: MANAGE_STEPS.map(({ label, key }) => ({ label, key }))
+    };
     const initialState: Partial<WizardState> = {};
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const isAlreadyDetected = useMemo(() => {

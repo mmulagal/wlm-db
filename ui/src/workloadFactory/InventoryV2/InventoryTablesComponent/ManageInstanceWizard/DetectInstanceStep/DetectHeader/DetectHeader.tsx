@@ -1,4 +1,5 @@
 import { DsTypography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as InstanceName } from '../../../../../../assets/instance-name.svg';
 
 import styles from './DetectHeader.module.scss';
@@ -8,6 +9,7 @@ import { GENERAL } from '../../../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../../../utils/consts';
 
 const DetectHeader = () => {
+    const { t } = useTranslation();
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
 
     return (
@@ -28,8 +30,12 @@ const DetectHeader = () => {
                         {manageSingleInstanceData?.databaseInstanceName || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
 
-                    <DsTypography variant="Regular_14" className={styles.label} title={GENERAL.INSTANCE_NAME}>
-                        {GENERAL.INSTANCE_NAME}
+                    <DsTypography
+                        variant="Regular_14"
+                        className={styles.label}
+                        title={t('databases.register-flow.instance-header.instance-name')}
+                    >
+                        {t('databases.register-flow.instance-header.instance-name')}
                     </DsTypography>
                 </div>
 
@@ -61,7 +67,9 @@ const DetectHeader = () => {
                         </>
                     </DsTypography>
 
-                    <DsTypography variant="Regular_14">Instance status</DsTypography>
+                    <DsTypography variant="Regular_14">
+                        {t('databases.register-flow.instance-header.instance-status')}
+                    </DsTypography>
                 </div>
 
                 {/* section 3 */}
@@ -77,9 +85,9 @@ const DetectHeader = () => {
                     <DsTypography
                         variant="Regular_14"
                         className={styles.label}
-                        title={GENERAL.RESOURCE_DEPLOYMENT_MODEL}
+                        title={t('databases.register-flow.instance-header.host-name')}
                     >
-                        Host name
+                        {t('databases.register-flow.instance-header.host-name')}
                     </DsTypography>
                 </div>
 
@@ -89,8 +97,12 @@ const DetectHeader = () => {
                         {manageSingleInstanceData?.hostType || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
 
-                    <DsTypography variant="Regular_14" className={styles.label} title={GENERAL.NO_OF_DBS}>
-                        Engine type
+                    <DsTypography
+                        variant="Regular_14"
+                        className={styles.label}
+                        title={t('databases.register-flow.instance-header.engine-type')}
+                    >
+                        {t('databases.register-flow.instance-header.engine-type')}
                     </DsTypography>
                 </div>
             </div>

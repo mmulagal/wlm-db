@@ -643,7 +643,7 @@ export const inventoryApi = createApi({
         }),
         registerResourceCredentialsBulk: builder.mutation({
             query: ({ payload }) => ({
-                url: 'v1/mssql/discover/resource-credentials',
+                url: 'v1/register-credentials',
                 method: 'POST',
                 body: payload
             })

@@ -157,7 +157,7 @@ router.post(
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/discover/resource-credentials`,
+    `${BASE_URL}/v1/register-credentials`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, 

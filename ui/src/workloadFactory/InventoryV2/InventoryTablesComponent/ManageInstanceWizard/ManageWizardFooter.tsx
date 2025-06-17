@@ -95,7 +95,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
         try {
             for (let i = 0; i < batches.length; i++) {
-                const batchPayload = batches[i];
+                const batchPayload = { items: batches[i] };
                 const result = await registerResourceCredBulk({ payload: batchPayload });
 
                 if (result && !result?.error) {

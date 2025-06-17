@@ -131,7 +131,7 @@ const DetectContent = () => {
                     dispatch(setAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
                     setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
                 }}
-                children={AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
+                children={t('databases.register-flow.sql-server-authentication')}
                 className=""
             />
             <RadioButton
@@ -144,7 +144,7 @@ const DetectContent = () => {
                         authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
                     });
                 }}
-                children={AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                children={t('databases.register-flow.windows-authentication')}
                 className=""
             />
         </div>
