@@ -734,7 +734,7 @@ const DialogContent = ({
 
             case 'Multipath I/O Status':
             case 'Multipath I/O Policy':
-            // case 'Multipath I/O Timeout':
+                // case 'Multipath I/O Timeout':
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -801,10 +801,10 @@ const DialogContent = ({
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends optimizing Microsoft Multipath I/O (MPIO) 
-                                performance by adjusting the MPIO timeout setting to the best practice 
-                                value of 60 seconds. Configure the MPIO timeout setting on the host to 
-                                60 seconds to ensure connectivity and stability during FSx for ONTAP failovers.
+                                Workload Factory recommends optimizing Microsoft Multipath I/O (MPIO) performance by
+                                adjusting the MPIO timeout setting to the best practice value of 60 seconds. Configure
+                                the MPIO timeout setting on the host to 60 seconds to ensure connectivity and stability
+                                during FSx for ONTAP failovers.
                             </DsTypography>
                         </div>
 
@@ -815,8 +815,9 @@ const DialogContent = ({
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        The MPIO timeout setting will be set to 60 seconds to prevent disconnections 
-                                        during FSx for ONTAP failovers, ensuring system stability and preventing potential data loss.
+                                        The MPIO timeout setting will be set to 60 seconds to prevent disconnections
+                                        during FSx for ONTAP failovers, ensuring system stability and preventing
+                                        potential data loss.
                                     </DsTypography>
                                 </div>
                             </div>
@@ -828,7 +829,7 @@ const DialogContent = ({
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
-                                    <div className={styles['code']}>
+                                    <div className={styles.code}>
                                         <DsTypography variant="Regular_14">{ontapConfigTextSet()}</DsTypography>
                                     </div>
                                 </div>
