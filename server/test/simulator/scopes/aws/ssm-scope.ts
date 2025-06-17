@@ -86,7 +86,8 @@ import {
     REMEDIATE_MPIO_ISCSI_SESSIONS,
     MPIO_ISCSI_SESSIONS,
     CHECK_IF_MPIO_INSTALLED,
-    ENABLE_MPIO_AND_CONFIGURE
+    ENABLE_MPIO_AND_CONFIGURE,
+    MPIO_TIMEOUT
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import {
     GET_RUNNING_SQL_SERVERS,
@@ -548,6 +549,10 @@ const enableMpioAndConfigure = {
     commands: [ENABLE_MPIO_AND_CONFIGURE]
 };
 
+const verifyMpioTimeout = {
+    commands: [MPIO_TIMEOUT]
+};
+
 const pgsqlInstanceInfo = {
     commands: [getPgsqlInstanceData]
 };
@@ -778,6 +783,8 @@ ssmMock
     .resolves(listSendCommandCommandResponse.validateMpioInstallationCommand)
     .on(SendCommandCommand, { Parameters: enableMpioAndConfigure })
     .resolves(listSendCommandCommandResponse.enableMpioAndConfigureCommand)
+    .on(SendCommandCommand, { Parameters: verifyMpioTimeout })
+    .resolves(listSendCommandCommandResponse.verifyMpioTimeoutSetting)
     .on(SendCommandCommand, params => {
         const getLunDetailsRegex = /#Get ACTIVE NODE DRIVE INFO/;
         return getLunDetailsRegex.test(params.Parameters.commands?.[0]);
@@ -1083,6 +1090,10 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-enableMpioAndConfigureCommand'
     })
     .resolves(getCommandInvocationResponse.enableMpioAndConfigureCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-verifyMpioTimeoutSetting'
+    })
+    .resolves(getCommandInvocationResponse.verifyMpioTimeoutSettingResponse)
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand'
     })
