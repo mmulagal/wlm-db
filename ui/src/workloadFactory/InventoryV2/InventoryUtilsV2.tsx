@@ -164,7 +164,7 @@ export const formatManagedRows = (
 export const getInstanceStatusForMixedCase = (managedHostRow: any) => {
     const state = store.getState();
     const discoveredHostData = state?.inventoryV2?.discoveredHosts?.discoveredHostData;
-    const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id;
+    const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id || managedHostRow?.ec2InstanceId;
     if (ec2Id && discoveredHostData) {
         const selectedEc2 = discoveredHostData?.filter((perHost: any) => perHost?.ec2InstanceId === ec2Id);
         if (selectedEc2 && selectedEc2?.length > 0) {
@@ -1199,6 +1199,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                     );
                     statusObj = {
                         ...detectOptionObj,
+                        discoverInstanceData: perRow,
                         name: perRow.sqlServerInstance,
                         status: INVENTORY_STATUS.UNDETECTED,
                         storageType: perRow?.storage,
@@ -1211,6 +1212,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                     };
                 } else {
                     statusObj = {
+                        discoverInstanceData: perRow,
                         name: perRow.sqlServerInstance,
                         status: INVENTORY_STATUS.UNMANAGED,
                         storageType: perRow?.storage,
@@ -2312,7 +2314,13 @@ export const updateSqlServerInstancesForUnmanaged = (
                     fileSystemDeploymentMode:
                         instRow?.fileSystemDeploymentMode ||
                         getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
-                    sqlServerDeploymentType: instRow?.sqlServerDeploymentType || perRow?.sqlServerDeploymentType
+                    sqlServerDeploymentType: instRow?.sqlServerDeploymentType || perRow?.sqlServerDeploymentType,
+                    isFsxRegistered: instRow?.isFsxRegistered || statusObj?.[0]?.isFsxRegistered,
+                    windowsAuthentication: instRow?.windowsAuthentication || statusObj?.[0]?.windowsAuthentication,
+                    sqlServerAuthentication:
+                        instRow?.sqlServerAuthentication || statusObj?.[0]?.sqlServerAuthentication,
+                    windowsDomainUserAuthentication:
+                        instRow?.windowsDomainUserAuthentication || statusObj?.[0]?.windowsDomainUserAuthentication
                 };
             }
             const perfData = getPerfUnmanagedData(
@@ -2328,6 +2336,48 @@ export const updateSqlServerInstancesForUnmanaged = (
                 performance: instRow?.performance || perfData?.performance
             };
         });
+    } else if (instanceRows && instanceRows?.length > 0) {
+        // To check if manage/unmanage/undetected mixed case
+        let nonManagedStatus: any = [];
+        if (isManagedHost) {
+            const isAllManaged = instanceRows?.every(perRow => perRow?.statusColText === INVENTORY_STATUS.MANAGED);
+            if (!isAllManaged) {
+                nonManagedStatus = getInstanceStatusForMixedCase(existingInstanceRow);
+                // to call data for mixed case. use in statusColText for unmanaged case
+            }
+            instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
+                if (instRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
+                    const statusObj = nonManagedStatus?.filter(
+                        (per: StatusObjInterface) =>
+                            per?.name?.toLowerCase() === instRow?.databaseInstanceName?.toLowerCase()
+                    );
+                    if (statusObj && statusObj?.length > 0) {
+                        return {
+                            ...statusObj?.[0]?.discoverInstanceData,
+                            ...instRow,
+                            sqlServerDeploymentType:
+                                instRow?.sqlServerDeploymentType ||
+                                statusObj?.[0]?.discoverInstanceData?.sqlServerDeploymentType,
+                            statusColText:
+                                isManagedHost && statusObj?.[0]?.status
+                                    ? statusObj?.[0]?.status
+                                    : instRow?.statusColText,
+                            fsxId: statusObj?.[0]?.fsxId || instRow?.fsxId,
+                            isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
+                            windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
+                            sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
+                            windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
+                        };
+                    }
+                    return {
+                        ...instRow
+                    };
+                }
+                return {
+                    ...instRow
+                };
+            });
+        }
     }
     return instanceRows;
 };
@@ -3289,7 +3339,8 @@ export const manageActionCol = (rowData?: any) => {
         disableMsg = rowData?.detectOptionDisableMsg;
     } else if (
         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
+        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP &&
+        !rowData?.fsxId
     ) {
         disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
     } else if (

@@ -293,7 +293,7 @@ const InstancesTable = () => {
         } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
             isDisabled = true;
             errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
-        } else if (rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP) {
+        } else if (rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP && !rowData?.fsxId) {
             isDisabled = true;
             errorMessage = GENERAL.FSXN_MANAGE_SUPPORTED;
         } else if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
@@ -886,7 +886,8 @@ const InstancesTable = () => {
                     }
                     if (
                         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
+                        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP &&
+                        !rowData?.fsxId
                     ) {
                         disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
                         width = '340px';
