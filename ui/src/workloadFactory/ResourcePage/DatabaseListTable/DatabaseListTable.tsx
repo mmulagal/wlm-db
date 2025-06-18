@@ -2,6 +2,8 @@ import { Table, useTable, TableTopBar, Typography, TooltipInfo, Button } from '@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -16,8 +18,6 @@ import {
     setCdbPageData
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../store/authSlice';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 
 const DatabaseListTable = () => {
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
@@ -51,8 +51,7 @@ const DatabaseListTable = () => {
             };
         });
 
-    const protectionTooltipText = (data: any) => {
-        return (
+    const protectionTooltipText = (data: any) => (
             <div className={styles.protectionTooltip}>
                 <Typography variant="Semibold_13" className={styles.textHeight}>
                     {GENERAL.PROTECTED_BY}:
@@ -64,7 +63,6 @@ const DatabaseListTable = () => {
                 ))}
             </div>
         );
-    };
 
     const notAvailable = () => (
         <Typography variant="Regular_13" className={styles.colText}>
@@ -113,8 +111,8 @@ const DatabaseListTable = () => {
             width: '15%',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
-                let protectedByList = [];
-                let awsBackup = isAwsBackupEnabledText(rowData, '');
+                const protectedByList = [];
+                const awsBackup = isAwsBackupEnabledText(rowData, '');
                 if (
                     protectionData?.isFsxOntapSnapshotsEnabled &&
                     String(protectionData?.isFsxOntapSnapshotsEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
@@ -145,7 +143,7 @@ const DatabaseListTable = () => {
                                     {cellData === GENERAL.PROTECTED && (
                                         <ProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--green-60)'
                                             }}
                                         />
@@ -153,7 +151,7 @@ const DatabaseListTable = () => {
                                     {cellData === GENERAL.NOT_PROTECTED && (
                                         <NotProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--grey-45)'
                                             }}
                                         />

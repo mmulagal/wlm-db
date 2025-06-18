@@ -2,6 +2,8 @@ import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -14,8 +16,6 @@ import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { isAwsBackupEnabledText } from '../../InventoryUtilsV2';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 
 const DatabasesTable = () => {
     const { selectedInventoryTab, selectedFilterValue, databaseTableRows, tableManageColumnState } = useAppSelector(
@@ -137,8 +137,7 @@ const DatabasesTable = () => {
         return undefined;
     };
 
-    const protectionTooltipText = (data: any) => {
-        return (
+    const protectionTooltipText = (data: any) => (
             <div className={styles.protectionTooltip}>
                 <DsTypography variant="Semibold_13" className={styles.textHeight}>
                     {GENERAL.PROTECTED_BY}:
@@ -150,7 +149,6 @@ const DatabasesTable = () => {
                 ))}
             </div>
         );
-    };
 
     const DatabasesColDefs: ColumnProps[] = [
         {
@@ -221,8 +219,8 @@ const DatabasesTable = () => {
             filterOptions: getFilterOptions(databaseTableRows, 'isProtected'),
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
-                let protectedByList = [];
-                let awsBackup = isAwsBackupEnabledText(rowData, '');
+                const protectedByList = [];
+                const awsBackup = isAwsBackupEnabledText(rowData, '');
                 if (
                     protectionData?.isFsxOntapSnapshotsEnabled &&
                     String(protectionData?.isFsxOntapSnapshotsEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
@@ -247,7 +245,7 @@ const DatabasesTable = () => {
                                     {cellData === GENERAL.PROTECTED && (
                                         <ProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--green-60)'
                                             }}
                                         />
@@ -255,7 +253,7 @@ const DatabasesTable = () => {
                                     {cellData === GENERAL.NOT_PROTECTED && (
                                         <NotProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--grey-45)'
                                             }}
                                         />

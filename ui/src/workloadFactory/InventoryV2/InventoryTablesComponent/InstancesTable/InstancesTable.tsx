@@ -11,6 +11,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
@@ -66,8 +68,6 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -603,7 +603,7 @@ const InstancesTable = () => {
                                     {cellData === GENERAL.PROTECTED && (
                                         <ProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--green-60)'
                                             }}
                                         />
@@ -611,7 +611,7 @@ const InstancesTable = () => {
                                     {cellData === GENERAL.NOT_PROTECTED && (
                                         <NotProtectedIcon
                                             style={{
-                                                //@ts-ignore
+                                                // @ts-ignore
                                                 '--icon-primary-color': 'var(--grey-45)'
                                             }}
                                         />
