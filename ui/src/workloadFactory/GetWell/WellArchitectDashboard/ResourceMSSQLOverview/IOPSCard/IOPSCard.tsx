@@ -43,33 +43,7 @@ const IOPSCard = () => {
                 </DsTypography>
 
                 <div className={styles.rightTopValue}>
-                    <DsTypography variant="Regular_20">
-                        {resourceLoading ? (
-                            <DsFlashingDotsLoader />
-                        ) : (
-                            <>
-                                R:{' '}
-                                {datasets.length > 0 && datasets[0].length > 0
-                                    ? `${datasets[0][datasets[0].length - 1]}`
-                                    : '--'}
-                            </>
-                        )}
-                    </DsTypography>
-
-                    <SeparatorComponent variant="vertical" height="20px" />
-
-                    <DsTypography variant="Regular_20">
-                        {resourceLoading ? (
-                            <DsFlashingDotsLoader />
-                        ) : (
-                            <>
-                                W:{' '}
-                                {datasets.length > 0 && datasets[1].length > 0
-                                    ? `${datasets[1][datasets[1].length - 1]}`
-                                    : '--'}
-                            </>
-                        )}
-                    </DsTypography>
+                    <DsTypography variant="Regular_20">{resourceLoading && <DsFlashingDotsLoader />}</DsTypography>
                 </div>
             </div>
 
