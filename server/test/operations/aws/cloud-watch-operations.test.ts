@@ -7,7 +7,8 @@ import '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
-    calculateFsxwStorageEfficiencyUsingCloudwatch
+    calculateFsxwStorageEfficiencyUsingCloudwatch,
+    getSqlInstanceUtilizationAndPerformance
 } from '../../../src/operations/aws/cloud-watch-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -30,5 +31,37 @@ describe('Cloud watch operations', () => {
             'fs-1234567890abcdef0'
         );
         expect(resp).toBeDefined();
+    });
+});
+
+describe('getSqlInstanceUtilizationAndPerformance', () => {
+    const accountId = '123456789012';
+    const region = 'us-west-2';
+    const credentialsId = 'cred-abc';
+    const databaseHostId = 'host-xyz';
+    const databaseInstances = [{ database_instance_name: 'db1' }, { database_instance_name: 'db2' }];
+
+    it('should return formatted performance metrics data for each instance', async () => {
+        const result = await getSqlInstanceUtilizationAndPerformance(
+            accountId,
+            region,
+            credentialsId,
+            databaseHostId,
+            databaseInstances as any
+        );
+        expect(result).toBeDefined();
+        expect(Object.keys(result)).toEqual(['db1', 'db2']);
+        for (const dbName of ['db1', 'db2']) {
+            expect(result[dbName]).toHaveProperty('cpuUsed');
+            expect(result[dbName]).toHaveProperty('readIops');
+            expect(result[dbName].cpuUsed[0]).toMatchObject({
+                value: 48,
+                unit: 'Percent'
+            });
+            expect(result[dbName].readIops[0]).toMatchObject({
+                value: 180,
+                unit: 'IOPS'
+            });
+        }
     });
 });

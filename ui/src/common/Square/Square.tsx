@@ -6,8 +6,6 @@ type SQ = {
     background: string;
 };
 
-const Square = ({ width, height, background }: SQ) => {
-    return <div style={{ width: width, height: height, background: background }} />;
-};
+const Square = ({ width, height, background }: SQ) => <div style={{ width, height, background }} />;
 
 export default Square;

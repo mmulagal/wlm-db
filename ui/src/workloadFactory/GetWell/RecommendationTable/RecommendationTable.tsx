@@ -1,7 +1,7 @@
-import { Button, DsButton, DsTypography, Popover, Table, useTable } from '@netapp/design-system';
-import { useDialog } from '@netapp/design-system';
-import styles from './RecommendationTable.module.scss';
+import { Button, DsButton, DsTypography, Popover, Table, useTable, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useDispatch } from 'react-redux';
+import styles from './RecommendationTable.module.scss';
 import { ReactComponent as NotActive } from '../../../assets/ic_not_active.svg';
 import { ReactComponent as Active } from '../../../assets/success.svg';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
@@ -18,7 +18,6 @@ import {
     useOptimizeStorageConfigMutation
 } from '../../../utils/apiService';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useDispatch } from 'react-redux';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
@@ -54,9 +53,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
-    const isDialogPrimaryBtnDisabled = (rowData: any) => {
-        return rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
-    };
+    const isDialogPrimaryBtnDisabled = (rowData: any) =>
+        rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
 
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any) => {
@@ -97,7 +95,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 ...inProgressOptimizationData,
                 [statusType]: [
                     ...(inProgressOptimizationData[statusType] || []),
-                    selectedResourceId + '_' + selectedDatabaseInstance
+                    `${selectedResourceId}_${selectedDatabaseInstance}`
                 ]
             })
         );
@@ -134,7 +132,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
             databaseHostId: selectedResourceId || hostId,
             instanceId: selectedDatabaseInstance || instanceId,
-            payload: payload
+            payload
         }).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
@@ -177,11 +175,15 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     };
 
     const innerPageCheck = (name: string) => {
-        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status' || from === WLF_TABS.DASHBOARD) {
+        if (
+            name === 'Multipath I/O Sessions' ||
+            name === 'Multipath I/O Status' ||
+            name === 'Multipath I/O Timeout' ||
+            from === WLF_TABS.DASHBOARD
+        ) {
             return false;
-        } else {
-            return true;
         }
+        return true;
     };
 
     const handleOntapDialog = (rowData: any) => {
@@ -197,7 +199,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={'innerPage'}
+                customClass="innerPage"
                 primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
                 primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
             />
@@ -206,12 +208,10 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
     const handleNavigateToOptimizePage = (rowData: any) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE));
-        dispatch(
-            setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId: hostId, instanceId: instanceId })
-        );
+        dispatch(setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId, instanceId }));
     };
 
-    //This is for inner page
+    // This is for inner page
     const handleDifferentNavigation = (rowData: any) => {
         if (selectedHeaderTab === WLF_TABS.OPTIMIZE && innerPageCheck(rowData?.name)) {
             handleNavigateToOptimizePage(rowData);
@@ -223,11 +223,11 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     const statusValue = (cellData: string) => {
         if (cellData === GETWELL_STATUS.OPTIMIZED) {
             return GETWELL_STATUS.OPTIMIZED;
-        } else if (cellData === GETWELL_STATUS.OPTIMIZING) {
-            return GETWELL_STATUS.OPTIMIZING;
-        } else {
-            return cellData || GENERAL.NOT_AVAILABLE;
         }
+        if (cellData === GETWELL_STATUS.OPTIMIZING) {
+            return GETWELL_STATUS.OPTIMIZING;
+        }
+        return cellData || GENERAL.NOT_AVAILABLE;
     };
 
     const ColDefs: ColumnProps[] = [
@@ -237,9 +237,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             accessor: 'name',
             width: from === WLF_TABS.INVENTORY ? '268px' : '250px',
             isSortable: true,
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             id: '2',
@@ -247,20 +245,18 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             accessor: 'status',
             width: '220px',
             isSortable: true,
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.statusCol}>
-                        <div>
-                            {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
-                            {cellData === GETWELL_STATUS.NOT_OPTIMIZED && <NotActive className={styles.statusIcon} />}
-                            {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
-                                <InProgress className={styles.statusIcon} />
-                            )}
-                        </div>
-                        <div>{statusValue(cellData)}</div>
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.statusCol}>
+                    <div>
+                        {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
+                        {cellData === GETWELL_STATUS.NOT_OPTIMIZED && <NotActive className={styles.statusIcon} />}
+                        {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
+                            <InProgress className={styles.statusIcon} />
+                        )}
                     </div>
-                );
-            }
+                    <div>{statusValue(cellData)}</div>
+                </div>
+            )
         },
         {
             id: '3',
@@ -268,9 +264,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             accessor: 'severity',
             width: from === WLF_TABS.INVENTORY ? '173px' : '200px',
             isSortable: true,
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             id: '4',
@@ -290,19 +284,19 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
                 return (
                     <>
-                        {rowData?.name !== 'Multipath I/O Sessions' && rowData?.name !== 'Multipath I/O Status' ? (
+                        {rowData?.name !== 'Multipath I/O Sessions' &&
+                        rowData?.name !== 'Multipath I/O Status' &&
+                        rowData?.name !== 'Multipath I/O Timeout' ? (
                             <div>
                                 <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                                    {(rowData?.totalObjectsInViolation || 0) +
-                                        ' out of ' +
-                                        (rowData?.totalObjectsAssessed || 0) +
-                                        ' ' +
-                                        type}
+                                    {`${rowData?.totalObjectsInViolation || 0} out of ${
+                                        rowData?.totalObjectsAssessed || 0
+                                    } ${type}`}
                                 </DsTypography>
                             </div>
                         ) : (
                             <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                                {'Storage multipath'}
+                                Storage multipath
                             </DsTypography>
                         )}
                     </>
@@ -315,78 +309,70 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             accessor: 'tags',
             width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
             isSortable: true,
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        <div className={styles.tooltipContainer}>
-                            {cellData?.length > 0 && (
-                                <div className={styles.tooltip}>
-                                    <Popover
-                                        popoverClass={''}
-                                        children={
-                                            <div className={styles.tags}>
-                                                {cellData?.map((perTag: string) => {
-                                                    return <Tag text={perTag} />;
-                                                })}
-                                            </div>
-                                        }
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        isAppendedToBody={false}
-                                        container={<TooltipIcon />}
-                                    />
-                                </div>
-                            )}
-                            {cellData?.length === 0 && (
-                                <div>
-                                    <DisabledTooltipIcon />
-                                </div>
-                            )}
-
-                            <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                                {'Tags (' + cellData.length + ')'}
-                            </DsTypography>
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.tooltipContainer}>
+                    {cellData?.length > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass=""
+                                children={
+                                    <div className={styles.tags}>
+                                        {cellData?.map((perTag: string) => (
+                                            <Tag text={perTag} />
+                                        ))}
+                                    </div>
+                                }
+                                trigger="hover"
+                                delayHide={200}
+                                interactive
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                            />
                         </div>
-                    </>
-                );
-            }
+                    )}
+                    {cellData?.length === 0 && (
+                        <div>
+                            <DisabledTooltipIcon />
+                        </div>
+                    )}
+
+                    <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                        {`Tags (${cellData.length})`}
+                    </DsTypography>
+                </div>
+            )
         },
         {
             id: '6',
             Header: '',
             accessor: 'recommendation',
             width: from === WLF_TABS.INVENTORY ? '202px' : '290px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        <div className={styles.recommendation}>
-                            <div className={styles.tooltipContainer}>
-                                {cellData?.length === 0 && (
-                                    <div>
-                                        <DisabledTooltipIcon />
-                                    </div>
-                                )}
-                                {cellData?.length > 0 && (
-                                    <div className={styles.tooltip}>
-                                        <Popover
-                                            popoverClass={''}
-                                            children={cellData && <RecommendationTooltip data={cellData} />}
-                                            trigger="hover"
-                                            delayHide={200}
-                                            container={<TooltipIcon />}
-                                            placement="bottom"
-                                        />
-                                    </div>
-                                )}
-                                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                                    {'View recommendation'}
-                                </DsTypography>
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.recommendation}>
+                    <div className={styles.tooltipContainer}>
+                        {cellData?.length === 0 && (
+                            <div>
+                                <DisabledTooltipIcon />
                             </div>
-                        </div>
-                    </>
-                );
-            }
+                        )}
+                        {cellData?.length > 0 && (
+                            <div className={styles.tooltip}>
+                                <Popover
+                                    popoverClass=""
+                                    children={cellData && <RecommendationTooltip data={cellData} />}
+                                    trigger="hover"
+                                    delayHide={200}
+                                    container={<TooltipIcon />}
+                                    placement="bottom"
+                                />
+                            </div>
+                        )}
+                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                            View recommendation
+                        </DsTypography>
+                    </div>
+                </div>
+            )
         },
         {
             id: '7',
@@ -394,55 +380,51 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             accessor: '',
             isSticky: true,
             width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        <div className={styles.recommendation}>
-                            {!optimizePrintState &&
-                                (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
-                                rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
-                                    <TooltipComponent
-                                        title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                                        placement="bottom"
-                                        width="120px"
-                                        height="30px"
-                                    >
-                                        <div>
-                                            <DsButton variant="secondary" isDisabled={true}>
-                                                {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
-                                            </DsButton>
-                                        </div>
-                                    </TooltipComponent>
-                                ) : optimizingInstanceData &&
-                                  rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
-                                  rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
-                                    <TooltipComponent
-                                        title={GENERAL.OPTIMIZATION_IN_PROGRESS}
-                                        placement="bottom"
-                                        width="310px"
-                                        height="50px"
-                                    >
-                                        <div>
-                                            <DsButton variant="secondary" isDisabled={true}>
-                                                View and fix
-                                            </DsButton>
-                                        </div>
-                                    </TooltipComponent>
-                                ) : (
-                                    <div id={`${rowData?.id}-optimize`}>
-                                        <DsButton
-                                            variant="secondary"
-                                            onClick={() => handleDifferentNavigation(rowData)}
-                                            isDisabled={rowData?.status === 'Not optimized' ? false : true}
-                                        >
-                                            View and fix
-                                        </DsButton>
-                                    </div>
-                                ))}
-                        </div>
-                    </>
-                );
-            }
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.recommendation}>
+                    {!optimizePrintState &&
+                        (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
+                        rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
+                            <TooltipComponent
+                                title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                                placement="bottom"
+                                width="120px"
+                                height="30px"
+                            >
+                                <div>
+                                    <DsButton variant="secondary" isDisabled>
+                                        {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
+                                    </DsButton>
+                                </div>
+                            </TooltipComponent>
+                        ) : optimizingInstanceData &&
+                          rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
+                          rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
+                            <TooltipComponent
+                                title={GENERAL.OPTIMIZATION_IN_PROGRESS}
+                                placement="bottom"
+                                width="310px"
+                                height="50px"
+                            >
+                                <div>
+                                    <DsButton variant="secondary" isDisabled>
+                                        View and fix
+                                    </DsButton>
+                                </div>
+                            </TooltipComponent>
+                        ) : (
+                            <div id={`${rowData?.id}-optimize`}>
+                                <DsButton
+                                    variant="secondary"
+                                    onClick={() => handleDifferentNavigation(rowData)}
+                                    isDisabled={rowData?.status !== 'Not optimized'}
+                                >
+                                    View and fix
+                                </DsButton>
+                            </div>
+                        ))}
+                </div>
+            )
         }
     ];
 
@@ -461,9 +443,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         <div className={from === WLF_TABS.INVENTORY ? styles.recommendationTable : styles.recommendationTableDashboard}>
             {/* <div className={styles.table}> */}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 // variant="innerTable"
             />
             {/* </div> */}

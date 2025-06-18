@@ -1,11 +1,11 @@
 import React from 'react';
+import { Button, DsTypography } from '@netapp/design-system';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import styles from './SandboxHeader.module.scss';
 import { ReactComponent as Illustration } from '../../../assets/Illustration.svg';
-import { Button, DsTypography } from '@netapp/design-system';
 import useResize from '../../../common/hooks/useResize';
-import { useNavigate } from 'react-router-dom';
 
-import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../utils/appConstants';
 import { setShowBanner } from '../../../store/workloadFactory/sandboxSlice';
 import { setSelectedSandboxHeaderValue } from '../../../store/workloadFactory/createSandboxSlice';

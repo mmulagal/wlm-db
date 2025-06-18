@@ -15,11 +15,11 @@ const SavingsHeader = () => {
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
         ) {
             return GENERAL.SAVINGS_HEADER;
-        } else if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
-            return GENERAL.SAVINGS_ONPREM_HEADER;
-        } else {
-            return GENERAL.SAVINGS_HEADER_FSX;
         }
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+            return GENERAL.SAVINGS_ONPREM_HEADER;
+        }
+        return GENERAL.SAVINGS_HEADER_FSX;
     };
 
     const setCSS = () => {
@@ -28,11 +28,11 @@ const SavingsHeader = () => {
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
         ) {
             return styles.savingsHeader;
-        } else if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
-            return `${styles.savingsHeader} ${styles.savingsHeaderOnPrem}`;
-        } else {
-            return `${styles.savingsHeader} ${styles.savingsHeaderFSX}`;
         }
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+            return `${styles.savingsHeader} ${styles.savingsHeaderOnPrem}`;
+        }
+        return `${styles.savingsHeader} ${styles.savingsHeaderFSX}`;
     };
     return (
         <div className={setCSS()}>

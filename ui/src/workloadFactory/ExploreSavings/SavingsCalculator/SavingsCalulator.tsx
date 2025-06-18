@@ -1,8 +1,9 @@
 import { useDispatch } from 'react-redux';
+import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
+import { useEffect, useRef, useState } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
-import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
 import SavingsHeader from './SavingsHeader/SavingsHeader';
@@ -15,7 +16,6 @@ import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import { ReactComponent as SuggestionDisable } from '../../../assets/SuggestionDisable.svg';
 import { ReactComponent as CalculateIcon } from '../../../assets/ic_calculateicon.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
-import { useEffect, useRef, useState } from 'react';
 
 import ExportPDF from './ExportPDF/ExportPDF';
 import downloadPdf from '../../../common/pdfGenerator';
@@ -110,22 +110,22 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
         ) {
             return SAVINGS_CALC_MODE.EBS;
-        } else if (
+        }
+        if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
         ) {
             return SAVINGS_CALC_MODE.FSXW;
-        } else {
-            return SAVINGS_CALC_MODE.ONPREM_MODE;
         }
+        return SAVINGS_CALC_MODE.ONPREM_MODE;
     };
 
     const sendEmail = async () => {
         setPrintState(true);
         setTimeout(async () => {
             const elem = document.getElementById('export-pdf') as HTMLElement;
-            var options = {
-                filename: `SavingsCalculator.pdf`,
+            const options = {
+                filename: 'SavingsCalculator.pdf',
                 compression: 'MEDIUM'
             };
             const report = await downloadPdfEmail(elem, options, true, () => {});
@@ -148,12 +148,12 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             })
                         );
                     } else {
-                        //@ts-ignore
+                        // @ts-ignore
                         if (resp?.error?.data?.message === 'Too many requests') {
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.ERROR,
-                                    //@ts-ignore
+                                    // @ts-ignore
                                     message: 'Calculation report was failed to be delivered.',
                                     additionalText:
                                         "You've reached the calculation result emails limit for the day. Try again tomorrow."
@@ -163,7 +163,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.ERROR,
-                                    //@ts-ignore
+                                    // @ts-ignore
                                     message: resp?.error?.data?.message
                                 })
                             );
@@ -189,11 +189,11 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         setPrintState(true);
         setTimeout(() => {
             const elem = document.getElementById('export-pdf') as HTMLElement;
-            var options = {
+            const options = {
                 filename: `SavingsCalculator-${Date.now()}.pdf`,
                 compression: 'MEDIUM'
             };
-            //@ts-ignore
+            // @ts-ignore
             downloadPdf(elem, options, (pdf: any) => {
                 setPrintState(false);
                 dispatch(
@@ -209,17 +209,15 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const setManualBreadcrumbTitle = () => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
             return 'Custom configuration for EBS';
-        } else {
-            return 'Custom configuration for FSx for Windows';
         }
+        return 'Custom configuration for FSx for Windows';
     };
 
     const setCSSForTextArea = () => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
             return `${styles.selectionArea} ${styles.selectionAreaOnPrem}`;
-        } else {
-            return styles.selectionArea;
         }
+        return styles.selectionArea;
     };
 
     const handleOpenCard = () => {
@@ -230,16 +228,13 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
             if (printState) {
                 return `${styles.firstContainer} ${styles.classForManualFsx} ${styles.classForPrint}`;
-            } else {
-                return `${styles.firstContainer} ${styles.classForManualFsx}`;
             }
-        } else {
-            if (printState) {
-                return `${styles.firstContainer} ${styles.classForPrint}`;
-            } else {
-                return `${styles.firstContainer} `;
-            }
+            return `${styles.firstContainer} ${styles.classForManualFsx}`;
         }
+        if (printState) {
+            return `${styles.firstContainer} ${styles.classForPrint}`;
+        }
+        return `${styles.firstContainer} `;
     };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
@@ -278,7 +273,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             />
                         </div>
                     ) : (
-                        <div style={{ marginBottom: '40px' }}></div>
+                        <div style={{ marginBottom: '40px' }} />
                     )}
 
                     <div
@@ -375,15 +370,13 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                         : `${styles.onPremiseContainer} `
                                 }
                             >
-                                <>
-                                    <SavingsHeader />
-                                    <OnPremRegion />
-                                    <SavingsSelectedHost />
-                                    <InstanceInformation />
-                                    <ComputeInformation printState={printState} />
-                                    <StoragePerformance printState={printState} />
-                                    <SavingsSelection printState={printState} />
-                                </>
+                                <SavingsHeader />
+                                <OnPremRegion />
+                                <SavingsSelectedHost />
+                                <InstanceInformation />
+                                <ComputeInformation printState={printState} />
+                                <StoragePerformance printState={printState} />
+                                <SavingsSelection printState={printState} />
                             </div>
                         )}
 

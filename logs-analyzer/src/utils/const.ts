@@ -7,14 +7,16 @@ This application uses AWS FSx for NetApp ONTAP as the underlying storage.
 You are given the following input:
 {
     "errorContext": "<error message along with 5 lines before and after the message>",
-    "errorCount": <number of occurrences>
+    "errorCount": <number of occurrences>,
+    "severity": <error severity>,
+    "errorMessage": "<error message>"
 }
 
 ### Output Format:
 Respond strictly in valid JSON format as a JSON object. Each object should have the following structure:
 
     {
-        "error": "<errorContext>",
+        "error": "<errorMessage>",
         "cause": "<cause of the error>",
         "count": <errorCount>,
         "sql": {
@@ -41,9 +43,10 @@ Respond strictly in valid JSON format as a JSON object. Each object should have 
 
 ### Example Input:
 {
-    "errorContext": "Error: 18456, Severity: 14, State: 1.",
+    "errorContext": "2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 1.\n2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 2.\n2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 3.\n2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 4.\n2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 5.",
     "errorCount": 50,
-    "severity": 14
+    "severity": 14,
+    "errorMessage":"2025-05-20 12:41:34.47 Logon       Error: 18456, Severity: 14, State: 1."
 }
 
 ### Example Output:
@@ -69,8 +72,6 @@ You are given the following input:
 {
     "error": "<error message>",
     "cause": "<cause of the error>",
-    "count": <number of occurrences>,
-    "severity": <error severity>,
     "additionalInfo": [
         {
             "Instance": "<SQL Server instance name>",
@@ -90,8 +91,6 @@ Respond strictly in valid JSON format as a single JSON object. The JSON object s
 {
     "error": "<error message>",
     "cause": "<cause of the error>",
-    "count": <number of occurrences>,
-    "severity": <error severity>,
     "remediation": [
         "<specific remediation recommendation 1>",
         "<specific remediation recommendation 2>",
@@ -109,8 +108,6 @@ Respond strictly in valid JSON format as a single JSON object. The JSON object s
 {
     "error": "Error: 18456, Severity: 14, State: 1.",
     "cause": "There is insufficient system memory in the 'default' resource pool to run the query. This indicates that the SQL Server is running out of memory, which can lead to performance issues and potentially cause the server to become unresponsive.",
-    "count": 50,
-    "severity": 14,
     "additionalInfo": [
         {
             "Instance": "$env:computername",
@@ -135,8 +132,6 @@ Respond strictly in valid JSON format as a single JSON object. The JSON object s
 {
     "error": "Error: 18456, Severity: 14, State: 1.",
     "cause": "There is insufficient system memory in the 'default' resource pool to run the query. This indicates that the SQL Server is running out of memory, which can lead to performance issues and potentially cause the server to become unresponsive.",
-    "count": 50,
-    "severity": 14,
     "remediation": [
         "MEMORYCLERK_SQLBUFFERPOOL is consuming 200MB of memory. Consider reducing buffer pool usage or increasing memory allocation.",
         "The system has 400MB of total memory, with only 100MB free. Consider adding more physical memory to the server.",
@@ -291,12 +286,14 @@ Here's the error details for your reference:`;
 const PGSQL_ERROR_PATTERN =
     /^(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) UTC (?<processId>\[\d+\]) (?<severity>ERROR|FATAL|PANIC|WARNING): (?<message>(.+))$/;
 const MSSQL_ERROR_PATTERN =
-    /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{2}) (\w+) +(?:Error: (\d+), Severity: (\d+), State: (\d+)|.*?\b(deadlock|error|failed|bottleneck)\b.*?)/;
+    /(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{2}) (?<spid>\w+) +(?:Error: (?<errorCode>\d+), Severity: (?<severity>\d+), State: (?<state>\d+)|.*?\b(?:(?<keyword>deadlock|error|failed|bottleneck))\b(?<message>.*))/;
 
 enum DATABASE_TYPE {
     POSTGRESQL = 'postgresql',
     MSSQL = 'mssql'
 }
+
+const MSSQL_SEVERITY_THRESHOLD = 14; // Severity threshold for MSSQL errors
 
 export {
     MSSQL_ERROR_LOGS_ANALYZER_PROMPT,
@@ -305,5 +302,6 @@ export {
     PGSQL_REMEDIATION_RECOMMENDATION_PROMPT,
     DATABASE_TYPE,
     PGSQL_ERROR_PATTERN,
-    MSSQL_ERROR_PATTERN
+    MSSQL_ERROR_PATTERN,
+    MSSQL_SEVERITY_THRESHOLD
 };

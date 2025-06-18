@@ -1,8 +1,8 @@
 import { TextField } from '@netapp/design-system';
-import styles from './StoragePerfInput.module.scss';
 import { useEffect, useState } from 'react';
-import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { useDispatch } from 'react-redux';
+import styles from './StoragePerfInput.module.scss';
+import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { setOnPremStorageAndComputeInfo } from '../../../../../store/workloadFactory/exploreSavingsSlice';
 
 const StoragePerfInput = ({ data, printState }: any) => {
@@ -20,7 +20,7 @@ const StoragePerfInput = ({ data, printState }: any) => {
 
     const [totalStorageAmountSearch, setTotalStorageAmountSearch] = useSearchDebounce(1000);
 
-    //use effect for no of cpu details
+    // use effect for no of cpu details
     useEffect(() => {
         setTotalStorageAmountSearch(totalStorageAmount);
     }, [totalStorageAmount]);
@@ -41,7 +41,7 @@ const StoragePerfInput = ({ data, printState }: any) => {
 
     const [iopsSearch, setIOPSSearch] = useSearchDebounce(1000);
 
-    //use effect for no of cpu details
+    // use effect for no of cpu details
     useEffect(() => {
         setIOPSSearch(iops);
     }, [iops]);
@@ -62,7 +62,7 @@ const StoragePerfInput = ({ data, printState }: any) => {
 
     const [throughputSearch, setThroughputSearch] = useSearchDebounce(1000);
 
-    //use effect for no of cpu details
+    // use effect for no of cpu details
     useEffect(() => {
         setThroughputSearch(throughput);
     }, [throughput]);
@@ -93,7 +93,7 @@ const StoragePerfInput = ({ data, printState }: any) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setTotalStorageAmount(numVal);
                         }}
-                        placeholder={''}
+                        placeholder=""
                         value={totalStorageAmount || ''}
                         className={styles.keyField}
                     />
@@ -111,7 +111,7 @@ const StoragePerfInput = ({ data, printState }: any) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setIOPS(numVal);
                         }}
-                        placeholder={''}
+                        placeholder=""
                         value={iops || ''}
                         className={styles.keyField}
                     />
@@ -129,7 +129,7 @@ const StoragePerfInput = ({ data, printState }: any) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setThroughput(numVal);
                         }}
-                        placeholder={''}
+                        placeholder=""
                         value={throughput || ''}
                         className={styles.keyField}
                     />

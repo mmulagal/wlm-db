@@ -1,10 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, DsTypography } from '@netapp/design-system';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './PostgreOperatingSystem.module.scss';
-
-import { useDispatch } from 'react-redux';
 
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -28,7 +27,7 @@ const PostgreOperatingSystem = () => {
     }, []);
 
     useEffect(() => {
-        //@ts-ignore
+        // @ts-ignore
         dispatch(setPostgreOperatingSystem(generateOSValues[0]));
     }, [generateOSValues]);
 
@@ -44,13 +43,13 @@ const PostgreOperatingSystem = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="25"
-                title={<div className={CommonStyles.title}>{'Operating system'}</div>}
+                title={<div className={CommonStyles.title}>Operating system</div>}
             >
                 <AccordionCardContent>
                     <DsTypography>
                         <div className={styles.collationField}>
                             <SelectField
-                                label={'Operating system: Amazon Linux'}
+                                label="Operating system: Amazon Linux"
                                 isClearable={false}
                                 placeholder={GENERAL.SELECT_COLLATION}
                                 defaultValue={postGreOS ? [postGreOS] : [generateOSValues[0]]}
@@ -59,7 +58,7 @@ const PostgreOperatingSystem = () => {
                                 }}
                                 isSearchable={generateOSValues.length > 5}
                                 options={generateOSValues}
-                                isDisabled={true}
+                                isDisabled
                             />
                         </div>
                     </DsTypography>

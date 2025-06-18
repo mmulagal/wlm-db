@@ -1,9 +1,9 @@
 import { TextField } from '@netapp/design-system';
-import styles from './ComputeInputComponent.module.scss';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { useDispatch } from 'react-redux';
+import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
+import styles from './ComputeInputComponent.module.scss';
 import {
     setOnPremNetworkPerformance,
     setOnPremStorageAndComputeInfo
@@ -28,7 +28,7 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
 
     const { onPremNetworkPerformance }: any = useAppSelector(state => state.exploreSavings);
 
-    //use effect for no of cpu details
+    // use effect for no of cpu details
     useEffect(() => {
         setNumberOfCpuSearch(numberOfCpu);
     }, [numberOfCpu]);
@@ -49,7 +49,7 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
 
     const [memorySearch, setMemorySearch] = useSearchDebounce(1000);
 
-    //use effect for no of cpu details
+    // use effect for no of cpu details
     useEffect(() => {
         setMemorySearch(memory);
     }, [memory]);
@@ -102,7 +102,7 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setNumberOfCpu(numVal);
                         }}
-                        placeholder={''}
+                        placeholder=""
                         value={numberOfCpu}
                         className={styles.keyField}
                     />
@@ -120,7 +120,7 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setMemory(numVal);
                         }}
-                        placeholder={''}
+                        placeholder=""
                         value={memory}
                         className={styles.keyField}
                     />

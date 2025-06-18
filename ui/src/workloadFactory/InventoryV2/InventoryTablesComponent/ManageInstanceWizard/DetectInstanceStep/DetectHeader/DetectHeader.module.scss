@@ -153,6 +153,12 @@
     }
 }
 
-[class*='Popover-module_base'] {
-    max-width: unset !important;
+.tooltipContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    [class*='Popover-module_base'] {
+        max-width: unset !important;
+    }
 }

@@ -1,7 +1,9 @@
 import { DsButton, useWizard, WizardFooter } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
-import styles from './ManageInstanceWizard.module.scss';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import styles from './ManageInstanceWizard.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
 import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
@@ -18,11 +20,14 @@ import {
     setManageSingleInstanceReadiness,
     setSelectedMultiDetectInstances
 } from '../../../../store/workloadFactory/inventoryV2Slice';
-
-import { getBulkDetectChecks, handleMultiInstanceManage, handleSingleInstanceManage } from './ManageInstanceUtils';
-import { useNavigate } from 'react-router-dom';
-import { ACTION_TYPE } from '../../../../utils/consts';
-import { useMemo } from 'react';
+import {
+    createDetectHostPayloadBulk,
+    getBulkDetectChecks,
+    handleMultiInstanceManage,
+    handleSingleInstanceManage,
+    updateDetectBulkResponse
+} from './ManageInstanceUtils';
+import { ACTION_TYPE, DETECT_PAYLOAD_SIZE } from '../../../../utils/consts';
 import {
     BulkDetectedInstance,
     RegisterResourceCredResult,
@@ -38,11 +43,10 @@ type PlanningWizardFooterProps = {
 const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { nextButtonProps, validation, style } = props; //onClick must be taken out otherwise will override footer onClick when spread to button
+    const { nextButtonProps, style } = props; // onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
 
-    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, state, setState }: UseWizardReturn =
-        useWizard();
+    const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, setState }: UseWizardReturn = useWizard();
 
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
@@ -51,9 +55,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         state => state.inventoryV2
     );
 
-    const bulkInstanceData = useMemo(() => {
-        return getBulkDetectChecks(selectedMultiDetectInstances);
-    }, [selectedMultiDetectInstances]);
+    const bulkInstanceData = useMemo(
+        () => getBulkDetectChecks(selectedMultiDetectInstances),
+        [selectedMultiDetectInstances]
+    );
 
     const dispatch = useDispatch();
 
@@ -70,70 +75,49 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const handleMultiRegisterResourceCred = async () => {
         dispatch(setIsDetectHostLoading(true));
         dispatch(setManageSingleInstanceReadiness(null));
-        let payload: Array<any> = [];
-        selectedMultiDetectInstances?.forEach((instance: BulkDetectedInstance) => {
-            const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
-            let cred = createDetectHostPayload(sqlServerInstance, instance?.data?.fsxId, instance?.data);
-            let perPayload = {
-                ...cred,
-                credentialsId: instance?.data?.credentialId,
-                region: instance?.data?.regionId,
-                ec2InstanceId: instance?.data?.ec2InstanceId
-            };
-            payload.push(perPayload);
-        });
+
+        dispatch(
+            addNotification({
+                message: t('databases.register-flow.manage-detect-info-message'),
+                notificationType: NOTIFICATION_TYPES.INFO
+            })
+        );
+
+        // Create payload for all selected instances
+        const fullPayload = createDetectHostPayloadBulk(selectedMultiDetectInstances);
+
+        // Helper to split array into batches of 10
+        const chunkArray = (arr: any[], size: number) =>
+            Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+
+        const batches = chunkArray(fullPayload, DETECT_PAYLOAD_SIZE);
+        let newSelectedMultiDetectInstances: BulkDetectedInstance[] = selectedMultiDetectInstances;
+
         try {
-            const result: any = await registerResourceCredBulk({ payload });
-            if (result && !result?.error) {
-                let newSelectedMultiDetectInstances = selectedMultiDetectInstances;
-                result?.data?.forEach((res: any) => {
-                    if (res?.sqlServerError || res?.fsxnError) {
-                        newSelectedMultiDetectInstances = newSelectedMultiDetectInstances.map((instance: any) => {
-                            if (
-                                instance?.data?.credentialId === res?.credentialsId &&
-                                instance?.data?.regionId === res?.region &&
-                                instance?.data?.ec2InstanceId === res?.ec2InstanceId
-                            ) {
-                                return {
-                                    ...instance,
-                                    authorized: false
-                                };
-                            }
-                            return instance;
-                        });
-                    } else {
-                        // store fsx cred in register obj if payload has fsx register
-                        let filterRow: any = newSelectedMultiDetectInstances.filter((instance: any) => {
-                            return (
-                                instance?.data?.credentialId === res?.credentialsId &&
-                                instance?.data?.regionId === res?.region &&
-                                instance?.data?.ec2InstanceId === res?.ec2InstanceId
-                            );
-                        });
-                        let isFsxRegister = saveFsxInCredRegisteredObj(filterRow?.[0]?.data?.fsxId, dispatch);
-                        const updatedInventoryTableData = updateInstanceStatus(
-                            'detect',
-                            filterRow?.[0]?.data,
-                            filterRow?.[0]?.data
-                        );
-                        dispatch(setInventoryTableData(updatedInventoryTableData));
-                        newSelectedMultiDetectInstances = newSelectedMultiDetectInstances.map((instance: any) => {
-                            if (
-                                instance?.data?.credentialId === res?.credentialsId &&
-                                instance?.data?.regionId === res?.region &&
-                                instance?.data?.ec2InstanceId === res?.ec2InstanceId
-                            ) {
-                                return {
-                                    ...instance,
-                                    authorized: true,
-                                    manageReadiness: res?.manageReadiness || null
-                                };
-                            }
-                            return instance;
-                        });
-                    }
-                });
-                dispatch(setSelectedMultiDetectInstances(newSelectedMultiDetectInstances));
+            for (let i = 0; i < batches.length; i++) {
+                const batchPayload = { items: batches[i] };
+                const result = await registerResourceCredBulk({ payload: batchPayload });
+
+                if (result && !result?.error) {
+                    // Process response for this batch
+                    newSelectedMultiDetectInstances = updateDetectBulkResponse(
+                        newSelectedMultiDetectInstances,
+                        result,
+                        dispatch
+                    );
+                    dispatch(setSelectedMultiDetectInstances([...newSelectedMultiDetectInstances]));
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.register-flow.manage-detect-fail-message')
+                        })
+                    );
+                    break; // Stop further batches on error
+                }
+            }
+            const anyAuthorized = newSelectedMultiDetectInstances.some(inst => inst?.authorized);
+            if (anyAuthorized) {
                 goToNextStep();
             } else {
                 dispatch(
@@ -173,7 +157,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             });
             if (result && !result?.error) {
                 if (result?.data?.sqlServerError || result?.data?.fsxnError) {
-                    let error = [];
+                    const error = [];
                     error.push(result?.data?.sqlServerError || '');
                     error.push(result?.data?.fsxnError || '');
                     dispatch(
@@ -184,7 +168,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     );
                 } else {
                     // store fsx cred in register obj if payload has fsx register
-                    let isFsxRegister = saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
+                    saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
                     const updatedInventoryTableData = updateInstanceStatus(
                         'detect',
                         manageSingleInstanceData,
@@ -200,7 +184,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message || t('databases.register-flow.manage-detect-fail-message')
+                        message: t('databases.register-flow.manage-detect-fail-message')
                     })
                 );
             }
@@ -226,8 +210,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
     };
 
-    const bulkGoForward = (currentStepIndex: number) => {
-        if (currentStepIndex === 0) {
+    const bulkGoForward = (currentStepIndexVal: number) => {
+        if (currentStepIndexVal === 0) {
             if (selectedMultiDetectInstances.length > 0) {
                 goToNextStep();
             } else {
@@ -238,7 +222,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     })
                 );
             }
-        } else if (currentStepIndex === 1) {
+        } else if (currentStepIndexVal === 1) {
             const isAuth = selectedMultiDetectInstances.every((instance: any) => instance?.authorized);
             if (isAuth) {
                 goToNextStep();
@@ -279,9 +263,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex !== 0 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={goBack}
-                            variant={'secondary'}
+                            variant="secondary"
                         >
                             {t('databases.register-flow.previous')}
                         </DsButton>
@@ -289,9 +273,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex < 1 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={goForward}
-                            variant={'primary'}
+                            variant="primary"
                             isLoading={detectHostLoading}
                             {...rest}
                         >
@@ -301,9 +285,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex === 1 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={handleManage}
-                            variant={'primary'}
+                            variant="primary"
                             {...rest}
                         >
                             {t('databases.register-flow.register')}
@@ -318,9 +302,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex !== 0 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={goBack}
-                            variant={'secondary'}
+                            variant="secondary"
                         >
                             {t('databases.register-flow.previous')}
                         </DsButton>
@@ -328,10 +312,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex < 2 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={() => bulkGoForward(currentStepIndex)}
                             isLoading={detectHostLoading && currentStepIndex === 1}
-                            variant={'primary'}
+                            variant="primary"
                             {...rest}
                         >
                             {t('databases.register-flow.next')}
@@ -340,9 +324,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     {currentStepIndex === 2 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
-                            isThin={true}
+                            isThin
                             onClick={handleManage}
-                            variant={'primary'}
+                            variant="primary"
                             {...rest}
                         >
                             {t('databases.register-flow.register')}

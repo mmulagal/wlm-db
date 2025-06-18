@@ -62,17 +62,118 @@
         "assessment": "Excellent ( <=1 ms )",
         "rwMetrics": {
             "latency": {
-                "read": 20,
-                "write": 25,
-                "serverIo": 25
+                "read": [
+                    {
+                        "timestamp": "2025-06-02T04:28:00.000Z",
+                        "value": 18
+                    },
+                    {
+                        "timestamp": "2025-06-03T09:28:00.000Z",
+                        "value": 18
+                    },
+                    {
+                        "timestamp": "2025-06-04T08:28:00.000Z",
+                        "value": 18
+                    },
+                    {
+                        "timestamp": "2025-06-05T07:28:00.000Z",
+                        "value": 18
+                    }
+                ],
+                "write": [
+                    {
+                        "timestamp": "2025-06-02T04:28:00.000Z",
+                        "value": 6
+                    },
+                    {
+                        "timestamp": "2025-06-03T09:28:00.000Z",
+                        "value": 6
+                    },
+                    {
+                        "timestamp": "2025-06-04T08:28:00.000Z",
+                        "value": 10
+                    },
+                    {
+                        "timestamp": "2025-06-05T07:28:00.000Z",
+                        "value": 8
+                    }
+                ]
             },
             "iops": {
-                "read": 10000,
-                "write": 12000
+                "read": [
+                    {
+                        "timestamp": "2025-06-02T04:28:00.000Z",
+                        "value": 3
+                    },
+                    {
+                        "timestamp": "2025-06-03T09:28:00.000Z",
+                        "value": 1
+                    },
+                    {
+                        "timestamp": "2025-06-04T08:28:00.000Z",
+                        "value": 2.74833333333333
+                    },
+                    {
+                        "timestamp": "2025-06-05T07:28:00.000Z",
+                        "value": 2.74833333333333
+                    }
+                ],
+                "write": [
+                    {
+                        "timestamp": "2025-06-02T04:28:00.000Z",
+                        "value": 4.63685185185185
+                    },
+                    {
+                        "timestamp": "2025-06-03T09:28:00.000Z",
+                        "value": 4.63601851851852
+                    },
+                    {
+                        "timestamp": "2025-06-04T08:28:00.000Z",
+                        "value": 2
+                    },
+                    {
+                        "timestamp": "2025-06-05T07:28:00.000Z",
+                        "value": 7
+                    }
+                ]
             },
             "throughput": {
-                "read": 300,
-                "write": 100
+                "read": [
+                    {
+                        "timestamp": "2025-06-02T04:28:00.000Z",
+                        "value": 2
+                    },
+                    {
+                        "timestamp": "2025-06-03T09:28:00.000Z",
+                        "value": 2
+                    },
+                    {
+                        "timestamp": "2025-06-04T08:28:00.000Z",
+                        "value": 16
+                    },
+                    {
+                        "timestamp": "2025-06-05T07:28:00.000Z",
+                        "value": 16
+                    }
+                ],
+                "write": [
+                    {
+                        "timestamp": "2025-06-02T04:28:00.000Z",
+                        "value": 19
+                    },
+                    {
+                        "timestamp": "2025-06-03T09:28:00.000Z",
+                        "value": 21
+                    },
+                    {
+                        "timestamp": "2025-06-04T08:28:00.000Z",
+                        "value": 3
+                    },
+                    {
+                        "timestamp": "2025-06-05T07:28:00.000Z",
+                        "value": 6
+                    }
+                ]
             }
         }
     },
@@ -86,12 +187,24 @@
         }
     },
     "resourceUtilization": {
-        "cpu": {
-            "percentUsed": "25",
-            "used": "8589934592",
-            "total": "9895604649984",
-            "remaining": "8589934592"
-        },
+        "cpu": [
+            {
+                "timestamp": "2025-06-02T04:28:00.000Z",
+                "value": 0
+            },
+            {
+                "timestamp": "2025-06-03T09:28:00.000Z",
+                "value": 39
+            },
+            {
+                "timestamp": "2025-06-04T08:28:00.000Z",
+                "value": 20
+            },
+            {
+                "timestamp": "2025-06-05T07:28:00.000Z",
+                "value": 11
+            }
+        ],
         "memory": {
             "percentUsed": "50",
             "used": "8589934592",
@@ -106,5 +219,6 @@
             "error": ""
         }
     },
+
     "sqlServerDeploymentType": "FCI"
 }

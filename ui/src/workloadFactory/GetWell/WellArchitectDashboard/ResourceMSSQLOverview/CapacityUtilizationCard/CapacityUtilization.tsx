@@ -1,7 +1,7 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import _ from 'lodash';
 import DoughnutChartComponent from '../../Doughnut/DoughnutChartComponent';
 import styles from './CapacityUtilization.module.scss';
-import _ from 'lodash';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { GENERAL } from '../../../../../utils/appConstants';
 
@@ -13,7 +13,7 @@ const CapacityUtilization = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
 
     function bytesToTB(bytes: number) {
-        const TB = bytes / Math.pow(1024, 4);
+        const TB = bytes / 1024 ** 4;
         return TB;
     }
     return (
@@ -46,7 +46,7 @@ const CapacityUtilization = () => {
                             ]}
                             colors={[color1, color2]}
                             includeTotalRing
-                            totalRingColor={'chart-10'}
+                            totalRingColor="chart-10"
                         />
                     )}
 
@@ -55,7 +55,7 @@ const CapacityUtilization = () => {
                             <div className={styles['center-text']}>
                                 <DsFlashingDotsLoader />
                             </div>
-                            <div className={styles.emptyCircle}></div>
+                            <div className={styles.emptyCircle} />
                         </div>
                     )}
                 </div>
@@ -68,17 +68,15 @@ const CapacityUtilization = () => {
                         <div className={styles.squareSetup}>
                             <div className={styles.square} style={{ backgroundColor: color1 }} />
                             <DsTypography variant="Regular_14" className={styles.days}>
-                                {'Used'}
+                                Used
                             </DsTypography>
                         </div>
 
                         <div className={styles.count}>
                             {!resourceLoading && (
-                                <>
-                                    <DsTypography variant="Semibold_14">
-                                        {bytesToTB(resourceDetails?.storage?.fsxn?.used ?? 0).toFixed(2)} TiB
-                                    </DsTypography>
-                                </>
+                                <DsTypography variant="Semibold_14">
+                                    {bytesToTB(resourceDetails?.storage?.fsxn?.used ?? 0).toFixed(2)} TiB
+                                </DsTypography>
                             )}
 
                             {resourceLoading && <DsFlashingDotsLoader />}
@@ -89,21 +87,19 @@ const CapacityUtilization = () => {
                         <div className={styles.squareSetup}>
                             <div className={styles.square} style={{ backgroundColor: color2 }} />
                             <DsTypography variant="Regular_14" className={styles.days}>
-                                {'Available'}
+                                Available
                             </DsTypography>
                         </div>
 
                         <div className={styles.count}>
                             {!resourceLoading && (
-                                <>
-                                    <DsTypography variant="Semibold_14">
-                                        {bytesToTB(
-                                            (resourceDetails?.storage?.fsxn?.size ?? 0) -
-                                                (resourceDetails?.storage?.fsxn?.used ?? 0)
-                                        ).toFixed(2)}{' '}
-                                        TiB
-                                    </DsTypography>
-                                </>
+                                <DsTypography variant="Semibold_14">
+                                    {bytesToTB(
+                                        (resourceDetails?.storage?.fsxn?.size ?? 0) -
+                                            (resourceDetails?.storage?.fsxn?.used ?? 0)
+                                    ).toFixed(2)}{' '}
+                                    TiB
+                                </DsTypography>
                             )}
 
                             {resourceLoading && <DsFlashingDotsLoader />}
@@ -114,17 +110,15 @@ const CapacityUtilization = () => {
                         <div className={styles.squareSetup}>
                             <div className={styles.square} style={{ backgroundColor: color3 }} />
                             <DsTypography variant="Regular_14" className={styles.days}>
-                                {'Size (allocated)'}
+                                Size (allocated)
                             </DsTypography>
                         </div>
 
                         <div className={styles.count}>
                             {!resourceLoading && (
-                                <>
-                                    <DsTypography variant="Semibold_14">
-                                        {bytesToTB(resourceDetails?.storage?.fsxn?.size ?? 0).toFixed(2)} TiB
-                                    </DsTypography>
-                                </>
+                                <DsTypography variant="Semibold_14">
+                                    {bytesToTB(resourceDetails?.storage?.fsxn?.size ?? 0).toFixed(2)} TiB
+                                </DsTypography>
                             )}
 
                             {resourceLoading && <DsFlashingDotsLoader />}

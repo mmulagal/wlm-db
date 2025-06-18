@@ -11,7 +11,7 @@ type codeBoxTypes = {
     dbType?: string;
 };
 
-const CodeBoxColor = ({ credID, region, actualData, endpoint, dbType='mssql' }: codeBoxTypes) => {
+const CodeBoxColor = ({ credID, region, actualData, endpoint, dbType = 'mssql' }: codeBoxTypes) => {
     const baseUrl = getBaseUrl();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
@@ -41,8 +41,8 @@ const CodeBoxColor = ({ credID, region, actualData, endpoint, dbType='mssql' }: 
             </div>
         );
     };
-    const renderProperties = (obj: any) => {
-        return obj
+    const renderProperties = (obj: any) =>
+        obj
             ? Object.entries(obj).map(([key, value]) => {
                   if (Array.isArray(value)) {
                       return (
@@ -52,54 +52,53 @@ const CodeBoxColor = ({ credID, region, actualData, endpoint, dbType='mssql' }: 
                                   if (typeof item === 'object') {
                                       return (
                                           <div className={styles.marginFIfteen} key={key}>
-                                              <div className={styles.marginFIfteen}>{`{`}</div>
+                                              <div className={styles.marginFIfteen}>{'{'}</div>
                                               <div className={styles.marginThirty}>
-                                                  {`"key":  `}
+                                                  {'"key":  '}
                                                   <span className={styles.green40Color}>{`"${item.key}",`}</span>
                                               </div>
                                               {/* @ts-ignore */}
                                               <div className={styles.marginThirty}>
-                                                  {`"value": `}
+                                                  {'"value": '}
                                                   <span className={styles.green40Color}>{`"${item.value}"`}</span>
                                               </div>
-                                              <div className={styles.marginFIfteen}>{`}`}</div>
+                                              <div className={styles.marginFIfteen}>{'}'}</div>
                                           </div>
                                       );
                                   }
                                   return <div className={styles.singleArrayItem}>{`${item},`}</div>;
                               })}
-                              <div className={styles.marginFIfteen}>{`]`}</div>
+                              <div className={styles.marginFIfteen}>]</div>
                           </div>
                       );
-                  } else if (typeof value === 'object') {
+                  }
+                  if (typeof value === 'object') {
                       return (
                           <div key={key}>
                               <div className={styles.blue50Color}>{`"${key}": {`} </div>
                               <div>{renderProperties(value)}</div>
-                              <div>{`},`}</div>
+                              <div>{'},'}</div>
                           </div>
                       );
-                  } else {
-                      return (
-                          value !== undefined && (
-                              <div className={styles.startFlex} key={key}>
-                                  <div className={styles.blue50Color}>{`"${key}": `}</div>&nbsp;
-                                  {/* @ts-ignore */}
-                                  {!value && typeof value !== 'boolean' ? (
-                                      <div className={styles.red20Color}>
-                                          {`"${value || ''}"`}
-                                          <span className={styles.commaColor}>,</span>
-                                      </div>
-                                  ) : (
-                                      valueCheckColor(value)
-                                  )}
-                              </div>
-                          )
-                      );
                   }
+                  return (
+                      value !== undefined && (
+                          <div className={styles.startFlex} key={key}>
+                              <div className={styles.blue50Color}>{`"${key}": `}</div>&nbsp;
+                              {/* @ts-ignore */}
+                              {!value && typeof value !== 'boolean' ? (
+                                  <div className={styles.red20Color}>
+                                      {`"${value || ''}"`}
+                                      <span className={styles.commaColor}>,</span>
+                                  </div>
+                              ) : (
+                                  valueCheckColor(value)
+                              )}
+                          </div>
+                      )
+                  );
               })
             : null;
-    };
 
     return (
         actualData && (
@@ -107,7 +106,7 @@ const CodeBoxColor = ({ credID, region, actualData, endpoint, dbType='mssql' }: 
                 <div style={{ width: 'max-content' }}>
                     {`curl --location --request POST ${baseUrl}/${dbType}/credentials/`}
                     <span className={credID === '<CredentialId>' ? `${styles.highlightWord}` : ''}>{`${credID}`}</span>
-                    <span>{`/regions/`}</span>
+                    <span>/regions/</span>
                     <span className={region === '<Region>' ? `${styles.highlightWord}` : ''}>{`${region}`}</span>
                     <span>{endpoint}' \\</span>
                 </div>
@@ -116,11 +115,11 @@ const CodeBoxColor = ({ credID, region, actualData, endpoint, dbType='mssql' }: 
                     <span className={styles.highlightWord}>{CRED_PLACEHOLDERS.TOKEN}</span>
                     <span> \</span>
                 </div>
-                <div>{`--header 'Content-Type: application/json' \\`}</div>
-                {!isWorkloadFactory && <div>{`--header 'x-netapp-referer: BlueXP' \\`}</div>}
-                <div>{`--data-raw '{`}</div>
+                <div>{"--header 'Content-Type: application/json' \\"}</div>
+                {!isWorkloadFactory && <div>{"--header 'x-netapp-referer: BlueXP' \\"}</div>}
+                <div>{"--data-raw '{"}</div>
                 <div className={styles.marginFIfteen}>{renderProperties(actualData)}</div>
-                <div className={styles.marginFIfteen}>{`}'`}</div>
+                <div className={styles.marginFIfteen}>{"}'"}</div>
             </div>
         )
     );

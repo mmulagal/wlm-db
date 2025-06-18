@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
-import { AUTHENTICATION_TYPE, DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
+import { AUTHENTICATION_TYPE, WLF_TABS } from '../../utils/consts';
 import {
     initialDatabaseTableColState,
     initialHostsTableColState,
@@ -43,15 +43,14 @@ const initialInventoryV2State: InventorySliceData = {
     oracleInstancesData: null,
     perfMssqlInstancesData: null,
     inProgressInstances: new Set(),
-    manageHostSelectedRows: [],
-    valuesNotFilled: false, // Detect host dialog fields check
-    detectHostRadio: DETECT_HOST_VAR.MOVE_TO_MANAGE,
     detectManageUserName: '',
     detectManagePassword: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
-    detectedInstanceId: '',
-    inventoryExpandedRowHostData: null,
+    detectWindowsAuthentication: {
+        username: '',
+        password: ''
+    },
     resetManagedData: false,
     removeSecNodeDiscoveredList: [],
     unManagedPerfInstanceIdsList: [],
@@ -61,7 +60,6 @@ const initialInventoryV2State: InventorySliceData = {
     optimizeFilterTags: [],
     defaultFilterOptions: {},
     managedAssessmentHostIdsList: [],
-    managedAssessmentHostData: null,
     allmssqlHostAssessmentData: [],
     allmssqlHostAssessmentLoading: false,
     potentialSavingsHostData: {},
@@ -70,13 +68,11 @@ const initialInventoryV2State: InventorySliceData = {
         type: '',
         data: {}
     },
-    optimizeInnerPageValues: {},
     selectedFilterValue: {
         flag: false,
         value: '',
         filterType: ''
     },
-    selectedRowsForManage: [],
     tableManageColumnState: {
         instanceTable: initialInstanceTableColState,
         hostTable: initialHostsTableColState,
@@ -144,9 +140,6 @@ const inventoryV2Slice = createSlice({
         setSelectedInventoryTab: (state, action: PayloadAction<any>) => {
             state.selectedInventoryTab = action.payload;
         },
-        setOptimizeInnerPageValues: (state, action: PayloadAction<any>) => {
-            state.optimizeInnerPageValues = action.payload;
-        },
         setBreadCrumbSelectedFrom: (state, action: PayloadAction<any>) => {
             state.breadCrumbSelectedFrom = action.payload;
         },
@@ -155,12 +148,6 @@ const inventoryV2Slice = createSlice({
         },
         setOptimizeFilterTags: (state, action: PayloadAction<any>) => {
             state.optimizeFilterTags = action.payload;
-        },
-        setInventoryExpandedRowHostData: (state, action: PayloadAction<any>) => {
-            state.inventoryExpandedRowHostData = action.payload;
-        },
-        setValuesForForm: (state, action: PayloadAction<any>) => {
-            state.valuesNotFilled = action.payload;
         },
         setInventoryTableData: (state, action: PayloadAction<any>) => {
             state.inventoryTableData = action.payload;
@@ -234,12 +221,6 @@ const inventoryV2Slice = createSlice({
         setInProgressInstances: (state, action: PayloadAction<any>) => {
             state.inProgressInstances = action.payload;
         },
-        setManageHostSelectedRows: (state, action: PayloadAction<any>) => {
-            state.manageHostSelectedRows = action.payload;
-        },
-        setRadioValueDetect: (state, action: PayloadAction<any>) => {
-            state.detectHostRadio = action.payload;
-        },
         setDetectManageUserName: (state, action: PayloadAction<any>) => {
             state.detectManageUserName = action.payload;
         },
@@ -252,8 +233,14 @@ const inventoryV2Slice = createSlice({
         setDetectONTAPPassword: (state, action: PayloadAction<any>) => {
             state.detectOntapPassword = action.payload;
         },
-        setDetectedInstanceId: (state, action: PayloadAction<any>) => {
-            state.detectedInstanceId = action.payload;
+        setDetectWindowsAuthentication: (
+            state,
+            action: PayloadAction<Partial<typeof state.detectWindowsAuthentication>>
+        ) => {
+            state.detectWindowsAuthentication = {
+                ...state.detectWindowsAuthentication,
+                ...action.payload
+            };
         },
         setResetManagedData: (state, action: PayloadAction<any>) => {
             state.resetManagedData = action.payload;
@@ -276,9 +263,6 @@ const inventoryV2Slice = createSlice({
         setManagedAssessmentHostIdsList: (state, action: PayloadAction<any>) => {
             state.managedAssessmentHostIdsList = action.payload;
         },
-        setManagedAssessmentHostData: (state, action: PayloadAction<any>) => {
-            state.managedAssessmentHostData = action.payload;
-        },
         addAllMssqlHostAssessmentData: (state, action: PayloadAction<any>) => {
             state.allmssqlHostAssessmentData = action.payload;
         },
@@ -290,9 +274,6 @@ const inventoryV2Slice = createSlice({
         },
         setSelectedOptimizeConfig: (state, action: PayloadAction<any>) => {
             state.selectedOptimizeConfig = action.payload;
-        },
-        setSelectedRowsForManage: (state, action: PayloadAction<any>) => {
-            state.selectedRowsForManage = action.payload;
         },
         setHostTableRows: (state, action: PayloadAction<any>) => {
             state.hostTableRows = action.payload;
@@ -362,7 +343,6 @@ const inventoryV2Slice = createSlice({
             state.inventoryChartData = null;
             state.removeSecNodeDiscoveredList = [];
             state.managedAssessmentHostIdsList = [];
-            state.managedAssessmentHostData = {};
         },
         resetRefreshData: (state, action: PayloadAction<any>) => {
             state.inventoryTableData = null;
@@ -409,12 +389,9 @@ export const {
     setAuthenticationType,
     setSelectedFilterValue,
     setSelectedInventoryTab,
-    setOptimizeInnerPageValues,
     setSelectedOptimizeConfig,
     setDefaultFilterOptions,
     setOptimizeFilterTags,
-    setValuesForForm,
-    setInventoryExpandedRowHostData,
     setInventoryTableData,
     setInventoryChartData,
     setIsManagedHostListLoading,
@@ -435,15 +412,13 @@ export const {
     setMssqlInstancesData,
     setPgsqlInstancesData,
     setOracleInstancesData,
+    setDetectWindowsAuthentication,
     setPerfMssqlInstancesData,
     setInProgressInstances,
-    setManageHostSelectedRows,
-    setRadioValueDetect,
     setDetectManageUserName,
     setDetectManagePassword,
     setDetectONTAPUserName,
     setDetectONTAPPassword,
-    setDetectedInstanceId,
     setResetManagedData,
     setRemoveSecNodeDiscoveredList,
     setUnManagedPerfInstanceIdsList,
@@ -452,12 +427,10 @@ export const {
     setIsRefreshed,
     setBreadCrumbSelectedFrom,
     setManagedAssessmentHostIdsList,
-    setManagedAssessmentHostData,
     addAllMssqlHostAssessmentData,
     setAllMssqlHostAssessmentLoading,
     setPotentialSavingsHostData,
     resetPerComboData,
-    setSelectedRowsForManage,
     setTableManageColumnState,
     setHostTableRows,
     setInstanceTableRows,

@@ -1,7 +1,8 @@
 import { DsTypography, PasswordField, Popover, RadioButton, TextField, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
-import styles from './DetectContent.module.scss';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import styles from './DetectContent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { ACTION_TYPE, AUTHENTICATION_TYPE } from '../../../../../../utils/consts';
 import {
@@ -9,11 +10,10 @@ import {
     setDetectManagePassword,
     setDetectManageUserName,
     setDetectONTAPPassword,
-    setDetectONTAPUserName
+    setDetectONTAPUserName,
+    setDetectWindowsAuthentication
 } from '../../../../../../store/workloadFactory/inventoryV2Slice';
-import { useEffect, useMemo, useState } from 'react';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
-import { setIsDetectHostError } from '../../../../../../store/mssql/msSqlActionSlice';
 import { getBulkDetectChecks } from '../../ManageInstanceUtils';
 import { UseWizardReturn } from '../../../../../../utils/types/registerTypes';
 
@@ -27,6 +27,8 @@ const DetectContent = () => {
         ontapPasswordFromWizard,
         mssqlUserNameFromWizard,
         mssqlPasswordFromWizard,
+        windowsAuthenticationUsernameFromWizard,
+        windowsAuthenticationPasswordFromWizard,
         authenticationTypeSelected,
         hitNext
     } = state;
@@ -37,13 +39,15 @@ const DetectContent = () => {
         selectedMultiDetectInstances,
         detectManageUserName,
         detectManagePassword,
+        detectWindowsAuthentication,
         detectOntapUsername,
         detectOntapPassword
     } = useAppSelector(state => state.inventoryV2);
 
-    const bulkInstanceData = useMemo(() => {
-        return getBulkDetectChecks(selectedMultiDetectInstances);
-    }, [selectedMultiDetectInstances]);
+    const bulkInstanceData = useMemo(
+        () => getBulkDetectChecks(selectedMultiDetectInstances),
+        [selectedMultiDetectInstances]
+    );
 
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
@@ -52,22 +56,28 @@ const DetectContent = () => {
     const [detectUserNameSearch, setDetectUserNameSearch] = useSearchDebounce(100);
     const [detectPasswordSearch, setDetectPasswordSearch] = useSearchDebounce(100);
 
-    const [ontapUserName, setOntapUserName] = useState(ontapUserNameFromWizard ? ontapUserNameFromWizard : '');
-    const [ontapPassword, setOntapPassword] = useState(ontapPasswordFromWizard ? ontapPasswordFromWizard : '');
-    const [detectUserName, setDetectUserName] = useState(mssqlUserNameFromWizard ? mssqlUserNameFromWizard : '');
-    const [detectPassword, setDetectPassword] = useState(mssqlPasswordFromWizard ? mssqlPasswordFromWizard : '');
-
-    useEffect(() => {
-        dispatch(setIsDetectHostError(''));
-    }, [detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword]);
+    const [ontapUserName, setOntapUserName] = useState(ontapUserNameFromWizard || '');
+    const [ontapPassword, setOntapPassword] = useState(ontapPasswordFromWizard || '');
+    const [detectUserName, setDetectUserName] = useState(mssqlUserNameFromWizard || '');
+    const [detectPassword, setDetectPassword] = useState(mssqlPasswordFromWizard || '');
+    const [windowsAuthenticationUsername, setWindowsAuthenticationUsername] = useState(
+        windowsAuthenticationUsernameFromWizard || ''
+    );
+    const [windowsAuthenticationPassword, setWindowsAuthenticationPassword] = useState(
+        windowsAuthenticationPasswordFromWizard || ''
+    );
 
     useEffect(() => {
         if (authenticationTypeSelected === undefined) {
             setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
+            // When the windows authentication was selected in previous dialog, we need to set the state accordingly
+            if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+                setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION });
+            }
         }
     }, []);
 
-    //Use effect for ontap username
+    // Use effect for ontap username
     useEffect(() => {
         setTextSearch(ontapUserName);
     }, [ontapUserName]);
@@ -76,7 +86,7 @@ const DetectContent = () => {
         dispatch(setDetectONTAPUserName(textSearch));
     }, [textSearch]);
 
-    //Use effect for detect username
+    // Use effect for detect username
     useEffect(() => {
         setDetectUserNameSearch(detectUserName);
     }, [detectUserName]);
@@ -85,7 +95,7 @@ const DetectContent = () => {
         dispatch(setDetectManageUserName(detectUserNameSearch));
     }, [detectUserNameSearch]);
 
-    //Use effect for ontap password
+    // Use effect for ontap password
     useEffect(() => {
         setOntapPasswordSearch(ontapPassword);
     }, [ontapPassword]);
@@ -94,7 +104,7 @@ const DetectContent = () => {
         dispatch(setDetectONTAPPassword(ontapPasswordSearch));
     }, [ontapPasswordSearch]);
 
-    //useEffect for detect password
+    // useEffect for detect password
     useEffect(() => {
         setDetectPasswordSearch(detectPassword);
     }, [detectPassword]);
@@ -103,135 +113,171 @@ const DetectContent = () => {
         dispatch(setDetectManagePassword(detectPasswordSearch));
     }, [detectPasswordSearch]);
 
-    const authModeRadio = () => {
-        return (
-            <>
-                <div className={styles['radio-container']}>
-                    <DsTypography variant="Semibold_14">
-                        {t('databases.register-flow.select-authentication-mode')}
-                    </DsTypography>
-                    <RadioButton
-                        id="select-sql-authentication"
-                        isChecked={authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
-                        onChange={() => {
-                            dispatch(setAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
-                            setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
-                        }}
-                        children={AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
-                        className=""
-                    />
-                    <Popover
-                        children={t('databases.general.coming-soon')}
-                        trigger="hover"
-                        container={
-                            <RadioButton
-                                id="select-windows-authentication"
-                                isDisabled={true} // Currently windows auth is not supported
-                                title="Windows authentication is not supported yet"
-                                isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
-                                onChange={() => {
-                                    dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
-                                    setState({
-                                        authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
-                                    });
-                                }}
-                                children={AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
-                                className=""
-                            />
-                        }
-                    />
-                </div>
-            </>
-        );
-    };
+    useEffect(() => {
+        dispatch(setDetectWindowsAuthentication({ username: windowsAuthenticationUsername }));
+    }, [windowsAuthenticationUsername]);
 
-    const mssqlInputFields = () => {
-        return (
-            <>
-                <div className={styles.firstSection}>
-                    <DsTypography variant="Semibold_14">
-                        {t('databases.register-flow.detect-mssql-heading')}
-                    </DsTypography>
-                    <div className={styles.textFieldContainer}>
-                        <TextField
-                            label={t('databases.register-flow.detect-mssql-username')}
-                            value={detectUserName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                setDetectUserName(e.target.value);
-                                setState({ mssqlUserNameFromWizard: e.target.value });
-                            }}
-                            className={styles.textFieldStyle}
-                            error={!detectManageUserName && hitNext ? t('databases.general.action-required') : ''}
-                            placeholder={
-                                t('databases.general.enter') + ' ' + t('databases.register-flow.detect-mssql-username')
-                            }
-                        />
+    useEffect(() => {
+        dispatch(setDetectWindowsAuthentication({ password: windowsAuthenticationPassword }));
+    }, [windowsAuthenticationPassword]);
 
-                        <PasswordField
-                            label={t('databases.register-flow.detect-mssql-password')}
-                            value={detectPassword}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                setDetectPassword(e.target.value);
-                                setState({ mssqlPasswordFromWizard: e.target.value });
-                            }}
-                            className={styles.textFieldStyle}
-                            error={!detectManagePassword && hitNext ? t('databases.general.action-required') : ''}
-                            placeholder={t('databases.general.enter-password')}
-                        />
-                    </div>
-                </div>
-            </>
-        );
-    };
+    const authModeRadio = () => (
+        <div className={styles['radio-container']}>
+            <DsTypography variant="Semibold_14">{t('databases.register-flow.select-authentication-mode')}</DsTypography>
+            <RadioButton
+                id="select-sql-authentication"
+                isChecked={authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION}
+                onChange={() => {
+                    dispatch(setAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
+                    setState({ authenticationTypeSelected: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION });
+                }}
+                children={t('databases.register-flow.sql-server-authentication')}
+                className=""
+            />
+            <RadioButton
+                id="select-windows-authentication"
+                title="Windows authentication is not supported yet"
+                isChecked={authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION}
+                onChange={() => {
+                    dispatch(setAuthenticationType(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION));
+                    setState({
+                        authenticationTypeSelected: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+                    });
+                }}
+                children={t('databases.register-flow.windows-authentication')}
+                className=""
+            />
+        </div>
+    );
 
-    const fsxInputFields = () => {
-        return (
-            <>
-                <div className={styles.secondSection}>
-                    <DsTypography variant="Semibold_14">{t('databases.register-flow.detect-fsx-heading')}</DsTypography>
-                    <div className={styles.textFieldContainer}>
-                        <TextField
-                            label={t('databases.register-flow.detect-fsx-username')}
-                            value={ontapUserName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                setOntapUserName(e.target.value);
-                                setState({ ontapUserNameFromWizard: e.target.value });
-                            }}
-                            className={styles.textFieldStyle}
-                            error={!detectOntapUsername && hitNext ? t('databases.general.action-required') : ''}
-                            placeholder={
-                                t('databases.general.enter') + ' ' + t('databases.register-flow.detect-fsx-username')
-                            }
-                        />
+    const mssqlInputFields = () => (
+        <div className={styles.firstSection}>
+            <DsTypography variant="Semibold_14">{t('databases.register-flow.detect-mssql-heading')}</DsTypography>
+            <div className={styles.textFieldContainer}>
+                <TextField
+                    label={t('databases.register-flow.detect-mssql-username')}
+                    value={detectUserName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setDetectUserName(e.target.value);
+                        setState({ mssqlUserNameFromWizard: e.target.value });
+                    }}
+                    className={styles.textFieldStyle}
+                    error={!detectManageUserName && hitNext ? t('databases.general.action-required') : ''}
+                    placeholder={`${t('databases.general.enter')} ${t(
+                        'databases.register-flow.detect-mssql-username'
+                    )}`}
+                />
 
-                        <PasswordField
-                            label={t('databases.register-flow.detect-fsx-password')}
-                            value={ontapPassword}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                setOntapPassword(e.target.value);
-                                setState({ ontapPasswordFromWizard: e.target.value });
-                            }}
-                            className={styles.textFieldStyle}
-                            error={!detectOntapPassword && hitNext ? t('databases.general.action-required') : ''}
-                            placeholder={t('databases.general.enter-password')}
-                        />
-                    </div>
-                </div>
-            </>
-        );
-    };
+                <PasswordField
+                    label={t('databases.register-flow.detect-mssql-password')}
+                    value={detectPassword}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setDetectPassword(e.target.value);
+                        setState({ mssqlPasswordFromWizard: e.target.value });
+                    }}
+                    className={styles.textFieldStyle}
+                    error={!detectManagePassword && hitNext ? t('databases.general.action-required') : ''}
+                    placeholder={t('databases.general.enter-password')}
+                />
+            </div>
+        </div>
+    );
+
+    const windowsAuthInputFields = () => (
+        <div className={styles.firstSection}>
+            <DsTypography variant="Semibold_14"> {t('databases.register-flow.detect-windows-heading')}</DsTypography>
+            <div className={styles.textFieldContainer}>
+                <TextField
+                    label={t('databases.register-flow.detect-windows-username')}
+                    value={windowsAuthenticationUsername}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setWindowsAuthenticationUsername(e.target.value);
+                        setState({ windowsAuthenticationUsernameFromWizard: e.target.value });
+                    }}
+                    className={styles.textFieldStyle}
+                    error={
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                        !detectWindowsAuthentication?.username &&
+                        hitNext
+                            ? t('databases.general.action-required')
+                            : ''
+                    }
+                    placeholder={`Enter ${t('databases.register-flow.detect-windows-username')}`}
+                />
+
+                <PasswordField
+                    label={t('databases.register-flow.detect-windows-password')}
+                    value={windowsAuthenticationPassword}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setWindowsAuthenticationPassword(e.target.value);
+                        setState({ windowsAuthenticationPasswordFromWizard: e.target.value });
+                    }}
+                    className={styles.textFieldStyle}
+                    error={
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                        !detectWindowsAuthentication?.password &&
+                        hitNext
+                            ? t('databases.general.action-required')
+                            : ''
+                    }
+                    placeholder={t('databases.general.enter-password')}
+                />
+            </div>
+        </div>
+    );
+
+    const fsxInputFields = () => (
+        <div className={styles.secondSection}>
+            <DsTypography variant="Semibold_14">{t('databases.register-flow.detect-fsx-heading')}</DsTypography>
+            <div className={styles.textFieldContainer}>
+                <TextField
+                    label={t('databases.register-flow.detect-fsx-username')}
+                    value={ontapUserName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setOntapUserName(e.target.value);
+                        setState({ ontapUserNameFromWizard: e.target.value });
+                    }}
+                    className={styles.textFieldStyle}
+                    error={!detectOntapUsername && hitNext ? t('databases.general.action-required') : ''}
+                    placeholder={`${t('databases.general.enter')} ${t('databases.register-flow.detect-fsx-username')}`}
+                />
+
+                <PasswordField
+                    label={t('databases.register-flow.detect-fsx-password')}
+                    value={ontapPassword}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setOntapPassword(e.target.value);
+                        setState({ ontapPasswordFromWizard: e.target.value });
+                    }}
+                    className={styles.textFieldStyle}
+                    error={!detectOntapPassword && hitNext ? t('databases.general.action-required') : ''}
+                    placeholder={t('databases.general.enter-password')}
+                />
+            </div>
+        </div>
+    );
 
     return (
         <div className={styles.detectContent}>
             {wizardOperationType === ACTION_TYPE.SINGLE && (
                 <>
+                    {/* When Action Type is Single and all the 3 types of authentication are false, we show the authentication mode radio buttons and based on authentication type selected, we show the respective input fields */}
                     {!manageSingleInstanceData?.sqlServerAuthentication &&
                         !manageSingleInstanceData?.windowsAuthentication &&
+                        !manageSingleInstanceData?.windowsDomainUserAuthentication &&
                         authModeRadio()}
 
                     {!manageSingleInstanceData?.sqlServerAuthentication &&
                         !manageSingleInstanceData?.windowsAuthentication &&
+                        !manageSingleInstanceData?.windowsDomainUserAuthentication &&
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION &&
                         mssqlInputFields()}
+
+                    {!manageSingleInstanceData?.sqlServerAuthentication &&
+                        !manageSingleInstanceData?.windowsAuthentication &&
+                        !manageSingleInstanceData?.windowsDomainUserAuthentication &&
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                        windowsAuthInputFields()}
 
                     {manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered && fsxInputFields()}
                 </>
@@ -239,13 +285,23 @@ const DetectContent = () => {
 
             {wizardOperationType === ACTION_TYPE.BULK && (
                 <>
+                    {/* When Action Type is Bulk and all the 3 types of authentication are false, we show the authentication mode radio buttons and based on authentication type selected, we show the respective input fields */}
                     {!bulkInstanceData?.sqlServerAuthentication &&
                         !bulkInstanceData?.windowsAuthentication &&
+                        !bulkInstanceData?.windowsDomainUserAuthentication &&
                         authModeRadio()}
 
                     {!bulkInstanceData?.sqlServerAuthentication &&
                         !bulkInstanceData?.windowsAuthentication &&
+                        !bulkInstanceData?.windowsDomainUserAuthentication &&
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION &&
                         mssqlInputFields()}
+
+                    {!bulkInstanceData?.windowsAuthentication &&
+                        !bulkInstanceData?.sqlServerAuthentication &&
+                        !bulkInstanceData?.windowsDomainUserAuthentication &&
+                        authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                        windowsAuthInputFields()}
 
                     {bulkInstanceData?.fsxId && !bulkInstanceData?.isFsxRegistered && fsxInputFields()}
                 </>

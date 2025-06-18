@@ -9,12 +9,12 @@ import React, {
     useState
 } from 'react';
 import classNames from 'classnames';
-import styles from './AccordionCard.module.scss';
 import { UnmountClosed } from 'react-collapse';
 import { v4 as uuidv4 } from 'uuid';
 import _isArray from 'lodash/isArray';
 
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import styles from './AccordionCard.module.scss';
 import { HashTable } from '../../utils/utilityFunctions';
 import { TransitionChevron } from '../TransitionChevron/TransitionChevron';
 
@@ -28,9 +28,7 @@ export type AccordionContextProps = {
     closeAll: () => void;
 } | null;
 
-export const useAccordionContext = () => {
-    return useContext(AccordionContext);
-};
+export const useAccordionContext = () => useContext(AccordionContext);
 
 export interface AccordionControllerProps {
     /** Are the accordion card have a separation between each other? */
@@ -46,25 +44,23 @@ export const AccordionController = React.memo(({ children, isGrouped, id }: Acco
     const idRef = useRef(id || uuidv4());
 
     const toggleOpenChild = useCallback(
-        (childId: string) => {
-            return setOpenChildren(prev => {
+        (childId: string) =>
+            setOpenChildren(prev => {
                 if (prev?.[childId]) {
                     return {
                         ...prev,
                         [childId]: false
                     };
-                } else {
-                    return {
-                        [childId]: true
-                    };
                 }
-            });
-        },
+                return {
+                    [childId]: true
+                };
+            }),
         [setOpenChildren]
     );
 
-    const controller = useMemo(() => {
-        return {
+    const controller = useMemo(
+        () => ({
             openChildren,
             toggleOpenChild,
             setOpenChildren,
@@ -72,8 +68,9 @@ export const AccordionController = React.memo(({ children, isGrouped, id }: Acco
             closeAll: () => {
                 setOpenChildren(null);
             }
-        };
-    }, [openChildren, toggleOpenChild, idRef, setOpenChildren]);
+        }),
+        [openChildren, toggleOpenChild, idRef, setOpenChildren]
+    );
 
     return (
         <AccordionContext.Provider value={controller}>
@@ -135,17 +132,15 @@ export interface AccordionCardContentProps {
     children?: ReactNode;
 }
 
-export const AccordionCardContent = React.memo(({ children, className, style }: AccordionCardContentProps) => {
-    return (
-        <div className={classNames(styles['accordion-card-content'], className)} style={style}>
-            {children}
-        </div>
-    );
-});
+export const AccordionCardContent = React.memo(({ children, className, style }: AccordionCardContentProps) => (
+    <div className={classNames(styles['accordion-card-content'], className)} style={style}>
+        {children}
+    </div>
+));
 
 export interface AccordionValueProps {
     value?: string | string[];
-    //@ts-ignore
+    // @ts-ignore
     ValueContent?: ({ isDisabled }: { isDisabled: boolean }) => JSX.Element;
     isDisabled?: boolean;
     isHideMultiValueTooltip?: boolean;
@@ -157,30 +152,28 @@ const AccordionValue = React.memo(
             const values = value.filter(value => !!value);
             return (
                 <div className={styles['multi-value']}>
-                    {values.map((value, index) => {
-                        return (
-                            <DsTypography
-                                Component={'span'}
-                                variant={'Regular_14'}
-                                color={isDisabled ? 'var(--text-disabled)' : undefined}
-                                key={index}
-                            >
-                                {value}
-                            </DsTypography>
-                        );
-                    })}
+                    {values.map((value, index) => (
+                        <DsTypography
+                            Component="span"
+                            variant="Regular_14"
+                            color={isDisabled ? 'var(--text-disabled)' : undefined}
+                            key={index}
+                        >
+                            {value}
+                        </DsTypography>
+                    ))}
                     {/* {isHideMultiValueTooltip && <TooltipInfo>{values.join(', ')}</TooltipInfo>} */}
                 </div>
             );
-        } else if (ValueContent) {
-            return <ValueContent isDisabled={isDisabled || false} />;
-        } else {
-            return (
-                <DsTypography variant={'Regular_14'} color={isDisabled ? 'var(--text-disabled)' : undefined}>
-                    {value}
-                </DsTypography>
-            );
         }
+        if (ValueContent) {
+            return <ValueContent isDisabled={isDisabled || false} />;
+        }
+        return (
+            <DsTypography variant="Regular_14" color={isDisabled ? 'var(--text-disabled)' : undefined}>
+                {value}
+            </DsTypography>
+        );
     }
 );
 
@@ -189,14 +182,14 @@ export interface AccordionCardProps {
     title?: ReactNode;
     /** summarized of the accordion selected values,the text that will be presented when closed */
     value?: string | string[];
-    /** if needed, a component that will render the value of the accordion*/
-    //@ts-ignore
+    /** if needed, a component that will render the value of the accordion */
+    // @ts-ignore
     ValueContent?: ({ isDisabled }: { isDisabled: boolean }) => JSX.Element;
-    /** Is the accordion loading?*/
+    /** Is the accordion loading? */
     isLoading?: boolean;
-    /** Nodes that will be rendered left of the chevron*/
+    /** Nodes that will be rendered left of the chevron */
     LeftWidget?: FunctionComponent;
-    /** Nodes that will be rendered left of the chevron*/
+    /** Nodes that will be rendered left of the chevron */
     RightWidget?: FunctionComponent;
     /** Accordion content, will be shown when expanded */
     children?: ReactNode;
@@ -210,15 +203,15 @@ export interface AccordionCardProps {
     headerStyle?: React.CSSProperties;
     /** affects value/title appearance and prevents selection but does not prevent expand */
     isDisabled?: boolean;
-    /** Is the expanding button disabled*/
+    /** Is the expanding button disabled */
     isExpandDisabled?: boolean;
-    /** Is the accordion selected*/
+    /** Is the accordion selected */
     isSelected?: boolean;
-    /** A callback that will be called when selecting a card*/
+    /** A callback that will be called when selecting a card */
     onSelect?: (id: string, e: React.FormEvent<HTMLInputElement>) => void;
-    /** The id of the card is not shown, used for identification purposes and for opening programmaticly*/
+    /** The id of the card is not shown, used for identification purposes and for opening programmaticly */
     id?: string;
-    /** If value is array, should the value tooltip be hidden?*/
+    /** If value is array, should the value tooltip be hidden? */
     isHideMultiValueTooltip?: boolean;
 }
 
@@ -260,9 +253,9 @@ export const AccordionCard = React.memo(
             <div className={classNames(styles.base, className)} style={style}>
                 <div
                     className={classNames(styles.header, headerClassName, `ah-${context?.id}`, {
-                        [styles['hoverable']]: !isOpen && !isDisabled,
-                        [styles['disabled']]: isDisabled,
-                        [styles['clickable']]: !isDisabled
+                        [styles.hoverable]: !isOpen && !isDisabled,
+                        [styles.disabled]: isDisabled,
+                        [styles.clickable]: !isDisabled
                     })}
                     style={headerStyle}
                     onClick={() => !isDisabled && toggleOpenChild && toggleOpenChild(id.current)}
@@ -278,7 +271,7 @@ export const AccordionCard = React.memo(
                                 isDisabled={isDisabled}
                             />
                         )} */}
-                        <DsTypography variant={'Semibold_14'} color={isDisabled ? 'var(--text-disabled)' : undefined}>
+                        <DsTypography variant="Semibold_14" color={isDisabled ? 'var(--text-disabled)' : undefined}>
                             {title}
                         </DsTypography>
                     </div>
@@ -301,14 +294,14 @@ export const AccordionCard = React.memo(
                     {RightWidget ? <RightWidget /> : <div />}
                     {hasInnerContent && (
                         <TransitionChevron
-                            className={styles['accordionChevron']}
+                            className={styles.accordionChevron}
                             isDisabled={isExpandDisabled}
                             isExpanded={isOpen || false}
                         />
                     )}
                     {!hasInnerContent && <div />}
                 </div>
-                <UnmountClosed isOpened={isOpen || false} theme={{ collapse: styles['animation'] }}>
+                <UnmountClosed isOpened={isOpen || false} theme={{ collapse: styles.animation }}>
                     {children}
                 </UnmountClosed>
             </div>

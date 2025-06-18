@@ -1,8 +1,8 @@
 import { DsTypography, TooltipInfo } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './OptimizeCard.module.scss';
 import Tag from '../../../../common/Tag/Tag';
-import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { WLF_TABS } from '../../../../utils/consts';
@@ -236,7 +236,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
             </div>
 
             <div className={styles.recommendation} style={{ height: recommendationHeight }}>
-                <RecommendationText data={setCardData?.data} from={'dashboard'} cardName={setCardData?.cardName} />
+                <RecommendationText data={setCardData?.data} from="dashboard" cardName={setCardData?.cardName} />
             </div>
         </div>
     );

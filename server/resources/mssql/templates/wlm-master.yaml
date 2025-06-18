@@ -418,6 +418,7 @@ Resources:
                   - cloudwatch:List*
                   - cloudwatch:Get*
                   - cloudwatch:Describe*
+                  - cloudwatch:PutMetricData
                 Resource: '*'
               - Sid: CloudLogDeploymentCreateStatement
                 Effect: Allow

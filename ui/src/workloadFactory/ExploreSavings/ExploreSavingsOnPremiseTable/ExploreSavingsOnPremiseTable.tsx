@@ -9,12 +9,13 @@ import {
     TooltipInfo
 } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useDispatch } from 'react-redux';
+import { useEffect, useRef, useState } from 'react';
+import { compressSync } from 'fflate';
 import styles from './ExploreSavingsOnPremiseTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
-import { useEffect, useRef, useState } from 'react';
 import { formatDateWithTime, getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/SQLServerDataCollector.ps1?raw';
@@ -26,7 +27,6 @@ import {
     useLazyGetSubTaskListQuery
 } from '../../../utils/apiService';
 
-import { compressSync } from 'fflate';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
@@ -53,14 +53,12 @@ const ExploreSavingsOnPremiseTable = () => {
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
-    const menuItems = (row: any) => {
-        return [
-            {
-                id: 'delete',
-                displayName: 'Delete'
-            }
-        ];
-    };
+    const menuItems = (row: any) => [
+        {
+            id: 'delete',
+            displayName: 'Delete'
+        }
+    ];
 
     useEffect(() => {
         if (onPremiseData) {
@@ -114,7 +112,7 @@ const ExploreSavingsOnPremiseTable = () => {
             return;
         }
 
-        setTableData([]); //This code needs to be removed
+        setTableData([]); // This code needs to be removed
         setIsUploadLoading(true);
 
         if (selectedFile) {
@@ -215,7 +213,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: 'Error parsing JSON: ' + error
+                            message: `Error parsing JSON: ${error}`
                         })
                     );
                     event.target.value = ''; // Clear the file input
@@ -235,7 +233,7 @@ const ExploreSavingsOnPremiseTable = () => {
         }
     };
 
-    //Delete function
+    // Delete function
     const handleDelete = (rowData: any) => {
         deleteOnPremTco({ resourceId: rowData.resourceId })
             .then((res: any) => {
@@ -267,71 +265,65 @@ const ExploreSavingsOnPremiseTable = () => {
             });
     };
 
-    const lastColDetails = () => {
-        return {
-            id: '9',
-            Header: '',
-            accessor: '',
-            isSticky: true,
-            width: windowSize.width >= 1920 ? '14.001%' : '225px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.lasColContainer}>
-                        <div
-                            className={styles.detectManage}
-                            onClick={() => {
-                                onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory);
-                            }}
-                            id="explore-savings-table-button"
-                        >
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                {GENERAL.ES_SAVINGS}
-                            </Typography>
-                        </div>
+    const lastColDetails = () => ({
+        id: '9',
+        Header: '',
+        accessor: '',
+        isSticky: true,
+        width: windowSize.width >= 1920 ? '14.001%' : '225px',
+        renderCell: (cellData: any, rowData: any) => (
+            <div className={styles.lasColContainer}>
+                <div
+                    className={styles.detectManage}
+                    onClick={() => {
+                        onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory);
+                    }}
+                    id="explore-savings-table-button"
+                >
+                    <Typography variant="Regular_14" className={styles.textStyle}>
+                        {GENERAL.ES_SAVINGS}
+                    </Typography>
+                </div>
 
-                        <div className={styles.deleteMenu}>
-                            {!isDemoMode && (
-                                <MenuPopover
-                                    isMenuOpen={
-                                        menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id
+                <div className={styles.deleteMenu}>
+                    {!isDemoMode && (
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={menuItems(rowData)}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    switch (menuId) {
+                                        case 'delete':
+                                            handleDelete(rowData);
+                                            break;
                                     }
-                                    menuItems={menuItems(rowData)}
-                                    toggleMenu={(toggleType: string, menuId: string) => {
-                                        if (toggleType === 'close') {
-                                            menuOpenedRowDetail.current = null;
-                                            setOpenedRow(null);
-                                        } else if (toggleType === 'open') {
-                                            menuOpenedRowDetail.current = null;
-                                            setOpenedRow(rowData.id);
-                                            menuOpenedRowDetail.current = rowData.id;
-                                        } else if (toggleType === 'selectedOption') {
-                                            menuOpenedRowDetail.current = null;
-                                            setOpenedRow(null);
+                                }
+                            }}
+                            isDisabled={rowData?.menuDisable}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    )}
 
-                                            switch (menuId) {
-                                                case 'delete':
-                                                    handleDelete(rowData);
-                                                    break;
-                                            }
-                                        }
-                                    }}
-                                    isDisabled={rowData?.menuDisable}
-                                    CustomMenu={undefined}
-                                    disabledText={undefined}
-                                />
-                            )}
-
-                            {isDemoMode && (
-                                <div className={styles.menuPointerDisabled}>
-                                    <span className={styles.menuPointer}>...</span>
-                                </div>
-                            )}
+                    {isDemoMode && (
+                        <div className={styles.menuPointerDisabled}>
+                            <span className={styles.menuPointer}>...</span>
                         </div>
-                    </div>
-                );
-            }
-        };
-    };
+                    )}
+                </div>
+            </div>
+        )
+    });
 
     const ExploreSavingsColDefs: ColumnProps[] = [
         {
@@ -356,9 +348,7 @@ const ExploreSavingsOnPremiseTable = () => {
             id: '2',
             width: windowSize.width >= 1920 ? '15.24%' : '245px',
             filterOptions: getFilterOptions(tableData, 'deploymentModel'),
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
 
         {
@@ -382,22 +372,20 @@ const ExploreSavingsOnPremiseTable = () => {
                                     {truncatedItems?.maxItemsToShow.join(', ')}
                                 </Typography>
                                 {truncatedItems?.remaining.length > 0 && (
-                                    <>
-                                        <Popover
-                                            popoverClass={styles['popover']}
-                                            children={truncatedItems?.remaining.map((item: any) => (
-                                                <Typography variant="Regular_14">{item}</Typography>
-                                            ))}
-                                            trigger="hover"
-                                            interactive={true}
-                                            delayHide={200}
-                                            container={
-                                                <Typography variant="Regular_14" className={styles.colorText}>
-                                                    {`+ ${truncatedItems?.remaining.length}`}
-                                                </Typography>
-                                            }
-                                        />
-                                    </>
+                                    <Popover
+                                        popoverClass={styles.popover}
+                                        children={truncatedItems?.remaining.map((item: any) => (
+                                            <Typography variant="Regular_14">{item}</Typography>
+                                        ))}
+                                        trigger="hover"
+                                        interactive
+                                        delayHide={200}
+                                        container={
+                                            <Typography variant="Regular_14" className={styles.colorText}>
+                                                {`+ ${truncatedItems?.remaining.length}`}
+                                            </Typography>
+                                        }
+                                    />
                                 )}
                             </div>
                         ) : (
@@ -430,22 +418,20 @@ const ExploreSavingsOnPremiseTable = () => {
                                     {truncatedItems?.maxItemsToShow.join(', ')}
                                 </Typography>
                                 {truncatedItems?.remaining.length > 0 && (
-                                    <>
-                                        <Popover
-                                            popoverClass={styles['popover']}
-                                            children={truncatedItems?.remaining.map((item: any) => (
-                                                <Typography variant="Regular_14">{item}</Typography>
-                                            ))}
-                                            trigger="hover"
-                                            interactive={true}
-                                            delayHide={200}
-                                            container={
-                                                <Typography variant="Regular_14" className={styles.colorText}>
-                                                    {`+ ${truncatedItems?.remaining.length}`}
-                                                </Typography>
-                                            }
-                                        />
-                                    </>
+                                    <Popover
+                                        popoverClass={styles.popover}
+                                        children={truncatedItems?.remaining.map((item: any) => (
+                                            <Typography variant="Regular_14">{item}</Typography>
+                                        ))}
+                                        trigger="hover"
+                                        interactive
+                                        delayHide={200}
+                                        container={
+                                            <Typography variant="Regular_14" className={styles.colorText}>
+                                                {`+ ${truncatedItems?.remaining.length}`}
+                                            </Typography>
+                                        }
+                                    />
                                 )}
                             </div>
                         ) : (
@@ -461,42 +447,40 @@ const ExploreSavingsOnPremiseTable = () => {
             accessor: 'creationTime',
             id: '6',
             width: windowSize.width >= 1920 ? '12.44%' : '200px',
-            renderCell: (cellData: string) => {
-                return <div>{cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE}</div>;
-            }
+            renderCell: (cellData: string) => (
+                <div>{cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE}</div>
+            )
         },
 
         lastColDetails()
     ];
 
-    const lazyLoadComponent = () => {
-        return (
-            <>
-                {isUploadLoading && (
-                    <div className={styles.lazyLoadContainer}>
-                        <DsSpinner />
-                        <div className={styles.textArea}>
-                            <DsTypography variant="Semibold_16">Uploading script</DsTypography>
-                            <DsTypography variant="Regular_14">This process can take several minutes</DsTypography>
-                        </div>
+    const lazyLoadComponent = () => (
+        <>
+            {isUploadLoading && (
+                <div className={styles.lazyLoadContainer}>
+                    <DsSpinner />
+                    <div className={styles.textArea}>
+                        <DsTypography variant="Semibold_16">Uploading script</DsTypography>
+                        <DsTypography variant="Regular_14">This process can take several minutes</DsTypography>
                     </div>
-                )}
-                {!isUploadLoading && (
-                    <div className={styles.lazyLoadContainer}>
-                        <DsSpinner />
-                        <div className={styles.textArea}>
-                            <DsTypography variant="Regular_14">Loading</DsTypography>
-                        </div>
+                </div>
+            )}
+            {!isUploadLoading && (
+                <div className={styles.lazyLoadContainer}>
+                    <DsSpinner />
+                    <div className={styles.textArea}>
+                        <DsTypography variant="Regular_14">Loading</DsTypography>
                     </div>
-                )}
-            </>
-        );
-    };
+                </div>
+            )}
+        </>
+    );
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -538,10 +522,10 @@ const ExploreSavingsOnPremiseTable = () => {
     return (
         <div className={styles['on-premise-table']}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Microsoft SQL Server hosts on-premises`}
-                singularTitle={`Microsoft SQL Server host on-premises`}
+                pluralTitle="Microsoft SQL Server hosts on-premises"
+                singularTitle="Microsoft SQL Server host on-premises"
                 subTitle="Includes results from uploaded scripts."
                 actionsRight={
                     <div className={styles.actions}>
@@ -551,7 +535,7 @@ const ExploreSavingsOnPremiseTable = () => {
                             <DsTypography onClick={handleDownload} variant="Semibold_14" className={styles.text}>
                                 Download assessment script
                             </DsTypography>
-                            <TooltipInfo placement="bottom" isAppendedToBody={true}>
+                            <TooltipInfo placement="bottom" isAppendedToBody>
                                 {GENERAL.ONPREM_TOOLTIP}
                             </TooltipInfo>
                         </div>
@@ -560,9 +544,9 @@ const ExploreSavingsOnPremiseTable = () => {
             />
             <Table
                 {...tableComponentProps}
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
             />
         </div>
     );

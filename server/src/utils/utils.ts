@@ -13,6 +13,8 @@ import { inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
 import randomize from 'randomatic';
 import { StringValue } from 'ms';
+import IORedis from 'ioredis';
+import { StandardUnit } from '@aws-sdk/client-cloudwatch';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { RegionDetailsType } from '../routes/types/generic.types';
 
@@ -43,7 +45,9 @@ import {
     AWS_REGIONS,
     RESOURCESTYPE,
     HA,
-    FCI
+    FCI,
+    CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES,
+    CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -838,6 +842,38 @@ function getRedisDetails() {
     return { url };
 }
 
+let redisConnection: IORedis | null = null;
+
+function getRedisConnection() {
+    if (redisConnection) {
+        logger.debug('Reusing existing Redis connection');
+        return redisConnection;
+    }
+
+    const redisDetails = getRedisDetails();
+
+    redisConnection = new IORedis(redisDetails.url, {
+        maxRetriesPerRequest: null,
+        retryStrategy: times => {
+            if (times > 2) {
+                logger.error('Max retries reached for Redis connection');
+                return null;
+            } // return null to stop retrying
+            return Math.min(times * 100, 2000); // Exponential backoff with a max delay of 2 seconds
+        }
+    });
+
+    redisConnection.on('error', error => {
+        logger.error('Redis connection error:', error);
+    });
+
+    redisConnection.on('ready', () => {
+        logger.info('Connected to Redis server and status is ready');
+    });
+
+    return redisConnection;
+}
+
 function getTimeDifferenceInMinutes(startTime: number, endTime: number = Date.now()) {
     // Calculate the time difference in minutes
     logger.debug('Calculate time difference in minutes', { startTime, endTime });
@@ -1067,6 +1103,82 @@ function escapeBackslash(str: string) {
     return str && !str.includes('\\') ? str.replace(/\\/g, '\\\\') : str;
 }
 
+function getUnitForMetric(metricName: string): StandardUnit | undefined {
+    switch (metricName) {
+        case 'readThroughput':
+        case 'writeThroughput':
+            return StandardUnit.Kilobytes_Second;
+        case 'cpuUsed':
+            return StandardUnit.Percent;
+        case 'readLatency':
+        case 'writeLatency':
+        case 'serverIOLatency':
+            return StandardUnit.Milliseconds;
+        default:
+            return undefined;
+    }
+}
+
+function assessMssqlServerPerformance(serverIOlatencyTrend: Array<{ value: number }>) {
+    const serverIoLatency =
+        Array.isArray(serverIOlatencyTrend) && serverIOlatencyTrend.length > 0
+            ? serverIOlatencyTrend[serverIOlatencyTrend.length - 1].value || 0
+            : 0;
+    let assessment = 'N/A';
+    if (serverIoLatency <= 1) {
+        assessment = 'Excellent ( <=1 ms )';
+    } else if (serverIoLatency < 5) {
+        assessment = 'Very good ( <5 ms )';
+    } else if (serverIoLatency < 10) {
+        assessment = 'Good ( <10 ms )';
+    } else if (serverIoLatency < 20) {
+        assessment = 'Poor ( <20 ms )';
+    } else if (serverIoLatency < 100) {
+        assessment = 'Bad ( <100 ms )';
+    } else if (serverIoLatency < 500) {
+        assessment = 'Very bad ( <500 ms )';
+    } else if (serverIoLatency >= 500) {
+        assessment = 'Awful ( >=500 ms )';
+    }
+
+    return { serverIoLatency, assessment };
+}
+
+function getSqlInstanceMetricDataQueries(databaseHostId: string, instanceName: string) {
+    logger.debug('Generating SQL instance metric data queries', { databaseHostId, instanceName });
+    const metricDataQueries = CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES.map(metricName => ({
+        Id: metricName,
+        MetricStat: {
+            Metric: {
+                Namespace: CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE,
+                MetricName: metricName,
+                Dimensions: [
+                    {
+                        Name: 'databaseHostId',
+                        Value: databaseHostId
+                    },
+                    {
+                        Name: 'sqlInstanceName',
+                        Value: instanceName
+                    }
+                ]
+            },
+            Period: 3600 * 24, // 24 hours
+            Stat: 'Maximum',
+            Unit: getUnitForMetric(metricName)
+        },
+        ReturnData: true
+    }));
+    logger.debug('Metric data queries for SQL instance:', metricDataQueries);
+
+    const params = {
+        StartTime: new Date(Date.now() - 7 * 24 * 3600 * 1000), // 7 days
+        EndTime: new Date(),
+        MetricDataQueries: metricDataQueries
+    };
+    return params;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1131,5 +1243,9 @@ export {
     extractSqlInstanceName,
     escapeBackslash,
     getEc2Hostname,
-    getInstancesWithResourceForDemo
+    getInstancesWithResourceForDemo,
+    getRedisConnection,
+    getUnitForMetric,
+    assessMssqlServerPerformance,
+    getSqlInstanceMetricDataQueries
 };

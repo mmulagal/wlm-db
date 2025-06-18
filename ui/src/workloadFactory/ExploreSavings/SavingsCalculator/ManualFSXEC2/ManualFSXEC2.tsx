@@ -1,16 +1,16 @@
 import { DsTypography } from '@netapp/design-system';
-import styles from './ManualFSXEC2.module.scss';
-import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+import styles from './ManualFSXEC2.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 import { setSelectedManualInstanceType } from '../../../../store/workloadFactory/exploreSavingsSlice';
-import { useDispatch } from 'react-redux';
 
 const ManualFSXEC2 = () => {
     const { selectedManualInstanceType } = useAppSelector(state => state.exploreSavings);
-    //Getting the Data from state
+    // Getting the Data from state
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(
         state => state.exploreSavings.getManualInstanceTypeList
     );
@@ -24,13 +24,13 @@ const ManualFSXEC2 = () => {
             const value = val?.instanceType || '';
             let label2 = '';
             if (val?.vCpus) {
-                label2 += val?.vCpus + 'vCPU, ';
+                label2 += `${val?.vCpus}vCPU, `;
             }
             if (val?.ramInMib) {
-                label2 += formatSize(val?.ramInMib, 'mib') + ' RAM, ';
+                label2 += `${formatSize(val?.ramInMib, 'mib')} RAM, `;
             }
             if (val?.iopsInMbps) {
-                label2 += val?.iopsInMbps + 'Mbps';
+                label2 += `${val?.iopsInMbps}Mbps`;
             }
             const option = generateOptionType(value, value, label2, false, '', val);
 
@@ -56,7 +56,7 @@ const ManualFSXEC2 = () => {
         <div className={styles.manualFSXEC2}>
             <DsTypography variant="Semibold_14">EC2 specifications</DsTypography>
             <SelectField
-                label={'Instance type'}
+                label="Instance type"
                 isClearable={false}
                 variant="two-lines"
                 value={selectedManualInstanceType}
@@ -64,7 +64,7 @@ const ManualFSXEC2 = () => {
                     dispatch(setSelectedManualInstanceType(selectedOptions));
                 }}
                 isLoading={instanceTypeLoading}
-                isSearchable={true}
+                isSearchable
                 options={generateInstances}
                 className={`${styles.setWidth} savings-calculator-input-fields`}
             />

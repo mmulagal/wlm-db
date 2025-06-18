@@ -1,13 +1,14 @@
 import { Table, useTable, Typography, TableTopBar, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
+import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './ExploreSavingsTableV2.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHost } from '../ExploreSavingsUtils';
 import { WLF_TABS } from '../../../utils/consts';
-import { useEffect, useState } from 'react';
 import {
     renderAllocatedCapacity,
     renderCellData,
@@ -17,7 +18,6 @@ import {
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
 import useResize from '../../../common/hooks/useResize';
-import { useNavigate } from 'react-router-dom';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -59,7 +59,7 @@ const ExploreSavingsTableV2 = () => {
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
-            let result: any = [];
+            const result: any = [];
             unManagedHostFormatedList?.map((perRow: any) => {
                 if (
                     !headerSelectedMultiCredIdsList.includes(perRow?.credentialId) ||
@@ -67,16 +67,16 @@ const ExploreSavingsTableV2 = () => {
                 ) {
                     return;
                 }
-                let instanceList: any = [];
-                let instanceNameList: any = [];
+                const instanceList: any = [];
+                const instanceNameList: any = [];
                 perRow?.ec2Details?.map((row: any) => {
                     if (row?.name) {
                         instanceNameList.push(row?.name);
                     }
                     if (row?.name && row?.id) {
-                        instanceList.push(row?.name + ' | ID: ' + row?.id);
+                        instanceList.push(`${row?.name} | ID: ${row?.id}`);
                     } else if (row?.id) {
-                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
+                        instanceList.push(`${GENERAL.NOT_AVAILABLE} | ID: ${row?.id}`);
                     }
                 });
                 const rowData = {
@@ -106,48 +106,45 @@ const ExploreSavingsTableV2 = () => {
         }
     }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
-    const lastColDetails = () => {
-        return {
-            id: '11',
-            Header: '',
-            accessor: '',
-            isSticky: true,
-            width: windowSize.width >= 1920 ? '15.37%' : '247px',
-            renderCell: (cellData: any, rowData: any) => {
-                return !rowData?.isDetected ? (
-                    <Popover
-                        popoverClass={styles['copy-popover']}
-                        children={'To explore savings on this host first detect the instances.'}
-                        trigger="hover"
-                        isAppendedToBody={true}
-                        container={
-                            <div
-                                className={styles.detectManageDisable}
-                                onClick={() => {}}
-                                id="explore-savings-table-button"
-                            >
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {GENERAL.ES_SAVINGS}
-                                </Typography>
-                            </div>
-                        }
-                    />
-                ) : (
-                    <div
-                        className={styles.detectManage}
-                        onClick={() => {
-                            onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
-                        }}
-                        id="explore-savings-table-button"
-                    >
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {GENERAL.ES_SAVINGS}
-                        </Typography>
-                    </div>
-                );
-            }
-        };
-    };
+    const lastColDetails = () => ({
+        id: '11',
+        Header: '',
+        accessor: '',
+        isSticky: true,
+        width: windowSize.width >= 1920 ? '15.37%' : '247px',
+        renderCell: (cellData: any, rowData: any) =>
+            !rowData?.isDetected ? (
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    children="To explore savings on this host first detect the instances."
+                    trigger="hover"
+                    isAppendedToBody
+                    container={
+                        <div
+                            className={styles.detectManageDisable}
+                            onClick={() => {}}
+                            id="explore-savings-table-button"
+                        >
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                {GENERAL.ES_SAVINGS}
+                            </Typography>
+                        </div>
+                    }
+                />
+            ) : (
+                <div
+                    className={styles.detectManage}
+                    onClick={() => {
+                        onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                    }}
+                    id="explore-savings-table-button"
+                >
+                    <Typography variant="Regular_14" className={styles.textStyle}>
+                        {GENERAL.ES_SAVINGS}
+                    </Typography>
+                </div>
+            )
+    });
 
     const ExploreSavingsColDefs: ColumnProps[] = [
         {
@@ -175,9 +172,7 @@ const ExploreSavingsTableV2 = () => {
                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData,
                 'serverInstallationMode'
             ),
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
         // {
         //     Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
@@ -201,22 +196,18 @@ const ExploreSavingsTableV2 = () => {
                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData,
                 'totalInstance'
             ),
-            renderCell: (cellData: string) => {
-                return (
-                    <div>
-                        {cellData && Number(cellData) !== 0 ? (
-                            <>
-                                <Typography variant="Regular_14">
-                                    {cellData} {Number(cellData) > 1 ? 'instances' : 'instance'}
-                                </Typography>
-                            </>
-                        ) : (
-                            ''
-                        )}
-                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
-                    </div>
-                );
-            }
+            renderCell: (cellData: string) => (
+                <div>
+                    {cellData && Number(cellData) !== 0 ? (
+                        <Typography variant="Regular_14">
+                            {cellData} {Number(cellData) > 1 ? 'instances' : 'instance'}
+                        </Typography>
+                    ) : (
+                        ''
+                    )}
+                    {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                </div>
+            )
         },
         {
             Header: GENERAL.DB_HOST_INSTANCE,
@@ -225,9 +216,7 @@ const ExploreSavingsTableV2 = () => {
             width: windowSize.width >= 1920 ? '15.12%' : '243px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderInstanceListText(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderInstanceListText(cellData, rowData, styles)
         },
         {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
@@ -236,9 +225,7 @@ const ExploreSavingsTableV2 = () => {
             width: windowSize.width >= 1920 ? '12.57%' : '202px',
             isSortable: true,
             accessorForTextFilter: 'allocatedCapacityText',
-            renderCell: (cellData: string | number, rowData: any) => {
-                return renderAllocatedCapacity(cellData, rowData);
-            }
+            renderCell: (cellData: string | number, rowData: any) => renderAllocatedCapacity(cellData, rowData)
         },
         {
             Header: GENERAL.DB_HOST_AVAILABILITY,
@@ -249,9 +236,7 @@ const ExploreSavingsTableV2 = () => {
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
-            renderCell: (cellData: any, rowData: any) => {
-                return renderUnmanagedAZ(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderUnmanagedAZ(cellData, rowData, styles)
         },
         {
             id: '8',
@@ -260,9 +245,7 @@ const ExploreSavingsTableV2 = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         {
             id: '9',
@@ -271,9 +254,7 @@ const ExploreSavingsTableV2 = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         {
             id: '10',
@@ -282,17 +263,15 @@ const ExploreSavingsTableV2 = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
         },
         lastColDetails()
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -305,7 +284,7 @@ const ExploreSavingsTableV2 = () => {
     return (
         <div className={styles.exploreSavingTable}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
                 pluralTitle={
                     selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
@@ -319,9 +298,9 @@ const ExploreSavingsTableV2 = () => {
                 }
             />
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
             />
         </div>
     );

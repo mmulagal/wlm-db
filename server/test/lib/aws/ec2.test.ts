@@ -56,10 +56,10 @@ describe('EC2 Lib', () => {
             ]
         };
         const resp = await getAmis(CREDENTIALS_ID, REGION, params);
-        expect(resp).toEqual(ec2Images);
+        expect(resp).toEqual(ec2Images.windowsImages);
     });
 
-    it('should return a list of Vpis', async () => {
+    it('should return a list of VPCs', async () => {
         const resp = await describeVpc(CREDENTIALS_ID, DEFAULT_AWS_REGION, {});
         expect(resp).toEqual(vpcList);
     });

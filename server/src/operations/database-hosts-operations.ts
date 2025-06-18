@@ -95,9 +95,10 @@ import {
 } from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
-    calculateFsxwStorageEfficiencyUsingCloudwatch
+    calculateFsxwStorageEfficiencyUsingCloudwatch,
+    getSqlInstanceUtilizationAndPerformance
 } from './aws/cloud-watch-operations';
-import { getEc2Hostname, isDemo } from '../utils/utils';
+import { assessMssqlServerPerformance, getEc2Hostname, isDemo } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
@@ -1940,6 +1941,7 @@ async function getDatabaseInstancesSummary(
     let nodeTopologyData: any;
     let ontapStorageSavings: any;
     let databases: any;
+    let resourceTrendsData: any;
     const errormessages: { [index: string]: string } = {};
 
     const instanceNames = databaseInstances.map((instance: DatabaseInstance) => instance.database_instance_name);
@@ -1972,7 +1974,8 @@ async function getDatabaseInstancesSummary(
             databasesCount,
             nodeTopologyData,
             ontapStorageSavings,
-            databases
+            databases,
+            resourceTrendsData
         ] = await Promise.all(
             [
                 ...(shouldQueryServerDetails
@@ -2066,6 +2069,17 @@ async function getDatabaseInstancesSummary(
                               isSqlAuthEnabled
                           )
                       ]
+                    : [Promise.resolve()]),
+                ...(getResourceutilization || getPerformance
+                    ? [
+                          getSqlInstanceUtilizationAndPerformance(
+                              accountId,
+                              region,
+                              credentialsId,
+                              databaseHostId,
+                              databaseInstances
+                          )
+                      ]
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
@@ -2134,13 +2148,50 @@ async function getDatabaseInstancesSummary(
         databaseInstanceDetails.storage = storageData?.[index];
         databaseInstanceDetails.sqlServerDeploymentType = databaseDeploymentType || '';
 
-        const instanceResourceUtilizationData = resourceUtilizationData?.[instanceName];
-        if (getResourceutilization && instanceResourceUtilizationData) {
-            databaseInstanceDetails.resourceUtilization = {
-                cpu: instanceResourceUtilizationData.cpuUtilization! || {},
-                memory: instanceResourceUtilizationData.memoryUtilization! || {},
-                disk: instanceResourceUtilizationData.diskUtilization! || {}
+        if (getPerformance && performanceData?.[instanceName]) {
+            databaseInstanceDetails.performance = {
+                assessment: instancePerformanceData?.assessment,
+                rwMetrics: instancePerformanceData!
             };
+        }
+        // Need to maintain old qurey for instances API when CW metrics are not available
+
+        if (resourceTrendsData?.[instanceName] && getPerformance) {
+            const instanceResourceTrendsData = resourceTrendsData?.[instanceName] || {};
+            if (instanceResourceTrendsData.serverIOLatency.length > 0) {
+                const { serverIoLatency, assessment } = assessMssqlServerPerformance(
+                    instanceResourceTrendsData.serverIOLatency
+                );
+                databaseInstanceDetails.performance = {
+                    assessment,
+                    rwMetrics: {
+                        latency: {
+                            read: instanceResourceTrendsData.readLatency,
+                            write: instanceResourceTrendsData.writeLatency,
+                            serverIo: serverIoLatency
+                        },
+                        iops: {
+                            read: instanceResourceTrendsData.readIops,
+                            write: instanceResourceTrendsData.writeIops
+                        },
+                        throughput: {
+                            read: instanceResourceTrendsData.readThroughput,
+                            write: instanceResourceTrendsData.writeThroughput
+                        }
+                    }
+                };
+            }
+        }
+
+        const instanceResourceUtilizationData = resourceUtilizationData?.[instanceName];
+        if (getResourceutilization) {
+            if (instanceResourceUtilizationData) {
+                databaseInstanceDetails.resourceUtilization = {
+                    memory: instanceResourceUtilizationData.memoryUtilization ?? {},
+                    disk: instanceResourceUtilizationData.diskUtilization ?? {},
+                    cpu: resourceTrendsData?.[instanceName]?.cpuUsed ?? []
+                };
+            }
         }
         if (getProtection && protectionData) {
             databaseInstanceDetails.protection = protectionData?.[index];

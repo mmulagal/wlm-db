@@ -4,15 +4,17 @@ import {
     Button,
     DsTypography,
     TooltipInfo,
-    Typography
+    Typography,
+    Table,
+    useTable
 } from '@netapp/design-system';
-import { Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
 import styles from './PreviewDefault.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { ReactComponent as ActionRequiredIcon } from '../../../../assets/action-required.svg';
-import { useDispatch } from 'react-redux';
 import {
     setCloudWatch,
     setDBName,
@@ -26,7 +28,6 @@ import {
     setSNSState,
     setTags
 } from '../../../../store/mssql/mssqlFormSlice';
-import { useEffect } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { DEFAULT_MASTER_KEY, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import {
@@ -197,16 +198,15 @@ const PreviewDefault = () => {
             isSortable: false,
 
             width: '23.2%',
-            renderCell: (cellData: any, rowData: any) => {
-                return cellData === 'Resource rollback' ? (
+            renderCell: (cellData: any, rowData: any) =>
+                cellData === 'Resource rollback' ? (
                     <div className={styles.resourceContainer}>
                         <DsTypography variant="Regular_14">{cellData}</DsTypography>
                         <TooltipInfo>{GENERAL.RESOURCE_ROLLBACK_TOOLTIP}</TooltipInfo>
                     </div>
                 ) : (
                     <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                );
-            }
+                )
         },
         {
             Header: GENERAL.DEFAULT,
@@ -223,18 +223,16 @@ const PreviewDefault = () => {
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isSorting: false,
         columns: PreviewDefaultColDefs,
         rows: data,
         pageSize: 50
     });
-    const setHeader = () => {
-        return <Typography variant="Regular_14">{GENERAL.PD_HEADER_TEXT}</Typography>;
-    };
+    const setHeader = () => <Typography variant="Regular_14">{GENERAL.PD_HEADER_TEXT}</Typography>;
 
     const handleConfig = () => {
         dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
@@ -267,7 +265,7 @@ const PreviewDefault = () => {
                         </div>
                         <div className={styles.table}>
                             <Table
-                                //@ts-ignore
+                                // @ts-ignore
                                 tableProps={tableProps}
                                 variant="innerTable"
                             />

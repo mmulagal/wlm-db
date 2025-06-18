@@ -1,12 +1,12 @@
 import { Table, useTable, TableTopBar, DsTypography, ButtonWithDropdown } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './InnerTable.module.scss';
 
-import { useEffect, useMemo } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { ReactComponent as MenuIcon } from '../../../../assets/menu-icon2.svg';
 import BulkCloneContainer from '../../../../common/BulkAction/BulkCloneContainer';
@@ -27,9 +27,8 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                 ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
                 selectedRowsForOptimizeInnerPage
             );
-        } else {
-            return data;
         }
+        return data;
     }, [selectedRowsForOptimizeInnerPage, data, inProgressResourceOptimizeData]);
 
     const TableColDefs: ColumnProps[] = [
@@ -41,9 +40,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             filterOptions: 'auto',
             isSticky: true,
             width: fromPage === WLF_TABS.DASHBOARD ? '216px' : '211px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'SQL instance name',
@@ -81,9 +78,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             filterOptions: 'auto',
             isSticky: true,
             width: fromPage === WLF_TABS.DASHBOARD ? 'auto' : 'auto',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             Header: 'Clone age',
@@ -97,9 +92,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             ],
             isSticky: true,
             width: fromPage === WLF_TABS.DASHBOARD ? '154px' : '211px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (rowData?.cloneAge || 0) + ' days';
-            }
+            renderCell: (cellData: any, rowData: any) => `${rowData?.cloneAge || 0} days`
         },
         {
             Header: '',
@@ -163,7 +156,7 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
     const colDefsForInstance = TableColDefs.filter((item: any) => item.id !== '2' && item.id !== '3');
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -182,24 +175,24 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted databases`}
-                singularTitle={'Impacted database'}
+                pluralTitle="Impacted databases"
+                singularTitle="Impacted database"
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkCloneContainer
-                    action1={'Delete'}
-                    action2={'Refresh'}
+                    action1="Delete"
+                    action2="Refresh"
                     onClick={(val: any) => {
                         handleBulkActionForClone(val, 'bulk', selectedRowsForOptimizeInnerPage);
                     }}
                 />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
             />
         </div>
     );

@@ -1,10 +1,10 @@
 import { DsTypography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import { ReactComponent as Tagmage } from '../../../../assets/tag.svg';
 
 import styles from './TagComponent.module.scss';
 import Tag from '../../../../common/Tag/Tag';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 import { GENERAL } from '../../../../utils/appConstants';
 
@@ -47,6 +47,7 @@ const TagComponent = ({ tagHeight, type }: TagComponentProps) => {
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
             case 'Space allocation':
             case 'Space reservation':
+            case 'Multipath I/O Timeout':
                 setTagData(['Reliability']);
                 break;
 

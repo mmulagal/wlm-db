@@ -18,12 +18,10 @@ const Tags = () => {
     const dispatch = useDispatch();
     const tags = useAppSelector((state: any) => state.mssqlForm.tags);
 
-    //@ts-ignore
-    const emptyTagItems = useMemo(() => {
-        return tags.filter((tag: Tag) => !tag.key);
-    }, [tags]);
+    // @ts-ignore
+    const emptyTagItems = useMemo(() => tags.filter((tag: Tag) => !tag.key), [tags]);
 
-    //Set the Header text here
+    // Set the Header text here
     const setHeader = () => {
         const nonEmptyTagCount = tags.length - emptyTagItems.length;
         return (
@@ -33,13 +31,12 @@ const Tags = () => {
         );
     };
 
-    //@ts-ignore
+    // @ts-ignore
     const isAddDisabled = useMemo(() => {
         if (emptyTagItems.length || tags.length >= 40) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }, [tags]);
 
     const handleAddNewTag = () => {
@@ -50,11 +47,7 @@ const Tags = () => {
     const handleChange = (idx: number, prop: string, value: string) => {
         const re = /^([a-zA-Z0-9+\\=._:/@+-]*)$/;
         if (!value || re.test(value)) {
-            const updatedTags = [
-                ...tags.map((tag: Tag) => {
-                    return { key: tag.key, value: tag.value };
-                })
-            ];
+            const updatedTags = [...tags.map((tag: Tag) => ({ key: tag.key, value: tag.value }))];
             updatedTags[idx][prop] = value;
             dispatch(setTags(updatedTags));
             dispatch(setIsWizardTouched(true));
@@ -69,7 +62,7 @@ const Tags = () => {
     };
 
     return (
-        <div className={''}>
+        <div className="">
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="20"
@@ -82,11 +75,11 @@ const Tags = () => {
                                 {GENERAL.TAGS_HEADING_MSG}
                             </Typography>
                             <Button
-                                variant={'text'}
+                                variant="text"
                                 className={styles.addNewButton}
                                 isDisabled={isAddDisabled}
                                 onClick={handleAddNewTag}
-                                isThin={true}
+                                isThin
                             >
                                 {GENERAL.ADD_NEW_TAG}
                             </Button>
@@ -99,46 +92,44 @@ const Tags = () => {
                                 {GENERAL.TAG_VALUE}
                             </Typography>
                         </div>
-                        {tags.map((tagData: Tag, index: number) => {
-                            return (
-                                <div className={styles.tagItemContainer}>
-                                    <div className={styles.itemKey}>
-                                        <TextField
-                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                handleChange(index, 'key', e.target.value);
-                                            }}
-                                            placeholder={GENERAL.TAG_KEY_PLACEHOLDER}
-                                            value={tagData.key}
-                                            className={styles.keyField}
-                                            // @ts-ignore
-                                            maxlength={127}
-                                        />
-                                    </div>
-                                    <div className={styles.seperator}> : </div>
-                                    <div className={styles.itemValue}>
-                                        <TextField
-                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                handleChange(index, 'value', e.target.value);
-                                            }}
-                                            placeholder={GENERAL.TAG_VALUE_PLACEHOLDER}
-                                            value={tagData.value}
-                                            className={styles.keyField}
-                                            // @ts-ignore
-                                            maxlength={255}
-                                        />
-                                    </div>
-                                    {tags.length > 1 && (
-                                        <Button
-                                            variant="text"
-                                            onClick={() => handleDeleteTag(index)}
-                                            className={styles.closeButton}
-                                        >
-                                            <CloseIcon />
-                                        </Button>
-                                    )}
+                        {tags.map((tagData: Tag, index: number) => (
+                            <div className={styles.tagItemContainer}>
+                                <div className={styles.itemKey}>
+                                    <TextField
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            handleChange(index, 'key', e.target.value);
+                                        }}
+                                        placeholder={GENERAL.TAG_KEY_PLACEHOLDER}
+                                        value={tagData.key}
+                                        className={styles.keyField}
+                                        // @ts-ignore
+                                        maxlength={127}
+                                    />
                                 </div>
-                            );
-                        })}
+                                <div className={styles.seperator}> : </div>
+                                <div className={styles.itemValue}>
+                                    <TextField
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            handleChange(index, 'value', e.target.value);
+                                        }}
+                                        placeholder={GENERAL.TAG_VALUE_PLACEHOLDER}
+                                        value={tagData.value}
+                                        className={styles.keyField}
+                                        // @ts-ignore
+                                        maxlength={255}
+                                    />
+                                </div>
+                                {tags.length > 1 && (
+                                    <Button
+                                        variant="text"
+                                        onClick={() => handleDeleteTag(index)}
+                                        className={styles.closeButton}
+                                    >
+                                        <CloseIcon />
+                                    </Button>
+                                )}
+                            </div>
+                        ))}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

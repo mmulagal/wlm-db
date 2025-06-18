@@ -21,8 +21,8 @@ const ChatbotHeader = ({ mapParamsToPayload }: ChatbotHeaderPropTypes) => {
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
 
     const startNewChat = () => {
-        let defaultParams = getChatbotParamsFromPayload(mssqlFormData);
-        let defaultObj: any = {};
+        const defaultParams = getChatbotParamsFromPayload(mssqlFormData);
+        const defaultObj: any = {};
         Object.keys(defaultParams).map((key: string) => {
             defaultObj[key] = null;
         });
@@ -42,7 +42,7 @@ const ChatbotHeader = ({ mapParamsToPayload }: ChatbotHeaderPropTypes) => {
                     {CHATBOT.WELCOME_PAGE.START_NEW_CHAT}
                 </Typography>
             </div>
-            <div className={styles['disclaimer']}>
+            <div className={styles.disclaimer}>
                 <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
                     {CHATBOT.HEADER.DISCLAIMER}
                 </DsTooltipInfo>

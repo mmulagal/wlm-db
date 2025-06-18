@@ -116,34 +116,31 @@
 }
 
 @media screen and (min-width: 1920px) {
-    
     [class*='subSection'] {
         width: 48.33%;
 
-        .optimizeByCategory{
+        .optimizeByCategory {
             width: 100%;
 
-            .mainSection{
+            .mainSection {
                 width: 100%;
-                
-                .optimizeSeparator{
+
+                .optimizeSeparator {
                     width: 100%;
-                    
                 }
-                [class*='topSection']{
+                [class*='topSection'] {
                     width: 100%;
-                    .tile1{
+                    .tile1 {
                         width: 25.9%;
 
-                        .section1{
+                        .section1 {
                             width: 23.33%;
                         }
 
-                        .section2{
+                        .section2 {
                             width: 86.67%;
                         }
                     }
-                
                 }
             }
         }

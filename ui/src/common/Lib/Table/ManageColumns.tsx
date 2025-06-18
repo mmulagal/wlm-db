@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
+import classNames from 'classnames';
+import { Checkbox, Popover } from '@netapp/design-system';
 import styles from './ManageColumns.module.scss';
 import { ButtonBase } from '../ButtonBase/ButtonBase';
-import classNames from 'classnames';
 import { ReactComponent as AddIcon } from '../../../assets/ic_columns.svg';
 import { ColumnProps } from './Table';
 
 import { ColumnStateType } from './useTable';
 
-import { Checkbox, Popover } from '@netapp/design-system';
 import { HashTable } from '../../../utils/utilityFunctions';
 
 interface ManageColumnsPanelProps extends ManageColumnsProps {
@@ -51,12 +51,14 @@ export const ManageColumnsPanel = ({
         setInternalState(newState);
     };
 
-    const areAllSelectableColumnsChecked = useMemo(() => {
-        return allColumns.every(({ id }) => {
-            const singleColumnState = internalState[String(id)];
-            return singleColumnState?.isHidden !== true || singleColumnState?.isRemovalDisabled;
-        });
-    }, [internalState, allColumns]);
+    const areAllSelectableColumnsChecked = useMemo(
+        () =>
+            allColumns.every(({ id }) => {
+                const singleColumnState = internalState[String(id)];
+                return singleColumnState?.isHidden !== true || singleColumnState?.isRemovalDisabled;
+            }),
+        [internalState, allColumns]
+    );
 
     return (
         <div className={styles['manage-column-panel']}>
@@ -141,12 +143,12 @@ export const ManageColumns = (props: ManageColumnsProps) => {
     return (
         <Popover
             visible={isOpen}
-            isAppendedToBody={true}
+            isAppendedToBody
             popoverClass={styles['manage-columns-panel']}
             container={
                 <ButtonBase
                     className={classNames(styles.button, {
-                        [styles['opened']]: isOpen
+                        [styles.opened]: isOpen
                     })}
                     onClick={() => setIsOpen(prev => !prev)}
                 >

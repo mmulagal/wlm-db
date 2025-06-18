@@ -1,9 +1,9 @@
 import { DsTypography, TextField } from '@netapp/design-system';
-import styles from './SaveConfigSavings.module.scss';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-//@ts-ignore
+// @ts-ignore
 import sanitizeHTML from 'sanitize-html';
+import styles from './SaveConfigSavings.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { setSaveConfigName } from '../../../../../store/workloadFactory/exploreSavingsSlice';
 

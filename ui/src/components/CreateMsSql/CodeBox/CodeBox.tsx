@@ -1,11 +1,13 @@
+import { Typography, useDialog, Popover, Button, DsTooltipInfo } from '@netapp/design-system';
+import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { uniq, isEqual } from 'lodash';
+import { useDispatch } from 'react-redux';
 import styles from './CodeBox.module.scss';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 
-import { Typography, useDialog, Popover, Button, DsTooltipInfo } from '@netapp/design-system';
-import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
-import { useState, useRef, useEffect, useMemo } from 'react';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import {
     cfDownloadName,
@@ -15,10 +17,7 @@ import {
     handleDownloadYAML
 } from '../../../utils/utilityFunctions';
 
-import { uniq, isEqual } from 'lodash';
-
 import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
-import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation, useGetTerraformSetupMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import {
@@ -123,9 +122,9 @@ const CodeBox = () => {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
             ) : rightPanelTemplateResponse?.template ? (
-                <ThemeProvider theme={'dark'} isRoot={false}>
+                <ThemeProvider theme="dark" isRoot={false}>
                     {/* @ts-ignore */}
-                    <SyntaxHighlighter wrapLongLines={true} language="yaml">
+                    <SyntaxHighlighter wrapLongLines language="yaml">
                         {rightPanelTemplateResponse?.template}
                     </SyntaxHighlighter>
                 </ThemeProvider>
@@ -163,12 +162,10 @@ const CodeBox = () => {
                     className={`${styles.colorAutomation} ${styles.awsCli} ${styles.newClass}`}
                 >
                     {rightPanelTemplateResponse?.cliCommand ? (
-                        <>
-                            <HighlightText
-                                text={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
-                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
-                            />
-                        </>
+                        <HighlightText
+                            text={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
+                            searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                        />
                     ) : (
                         <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
                     )}
@@ -188,10 +185,12 @@ const CodeBox = () => {
     const copyResponseData = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return rightPanelTemplateResponse?.template;
-        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+        }
+        if (dropDownValue === CODE_VIEWER.REST_API) {
             console.log(rightPanelMaskedResponse);
             return rightPanelResponse;
-        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+        }
+        if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return rightPanelTemplateResponse?.cliCommand;
         }
     };
@@ -329,7 +328,7 @@ const CodeBox = () => {
         const resBody = createMssqlPayload(changeObjectForm);
         const res = JSON.stringify(resBody, null, 2);
 
-        //@ts-ignore
+        // @ts-ignore
         setRightPanelResponse(
             CURL_REQ_TEMPLATE(
                 baseUrl,
@@ -351,7 +350,7 @@ const CodeBox = () => {
         };
         const resBody = createMssqlPayload(changeObjectForm);
 
-        //@ts-ignore
+        // @ts-ignore
         setRightPanelMaskedResponse(resBody);
     };
 
@@ -381,17 +380,15 @@ const CodeBox = () => {
     const handleRedirectToCF = () => {
         if (isDemoMode) {
             openDemoInfoDialog();
+        } else if (!formData || !isEqual(mssqlFormData, formData)) {
+            // If form changed so template API will get called again to get latest CF url
+            dispatch(setIsLoading(true));
+            setFormData(mssqlFormData);
+            getTemplateResponse(true);
         } else {
-            if (!formData || !isEqual(mssqlFormData, formData)) {
-                // If form changed so template API will get called again to get latest CF url
-                dispatch(setIsLoading(true));
-                setFormData(mssqlFormData);
-                getTemplateResponse(true);
-            } else {
-                // If data is already stored
-                if (rightPanelTemplateResponse?.url) {
-                    window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
-                }
+            // If data is already stored
+            if (rightPanelTemplateResponse?.url) {
+                window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
             }
         }
     };
@@ -399,11 +396,14 @@ const CodeBox = () => {
     const setCssId = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return UI_IDS.WIZARD_CODEBOX_CF;
-        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+        }
+        if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return UI_IDS.WIZARD_CODEBOX_AWS_CLI;
-        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+        }
+        if (dropDownValue === CODE_VIEWER.REST_API) {
             return UI_IDS.WIZARD_CODEBOX_REST_API;
-        } else if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+        }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM) {
             return UI_IDS.WIZARD_CODEBOX_TF;
         }
     };
@@ -527,21 +527,19 @@ const CodeBox = () => {
                                         popoverClass={styles['copy-popover']}
                                         children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                         container={
-                                            <>
-                                                <CopyToClipboardCommon
-                                                    tooltipTitle={'Copied to clipboard'}
-                                                    value={copyResponseData()}
-                                                    iconProvided={
-                                                        <div
-                                                            className={styles.menuItem}
-                                                            id={UI_IDS.WIZARD_CODEBOX_COPY}
-                                                            onClick={handleCopy}
-                                                        >
-                                                            <Copy />
-                                                        </div>
-                                                    }
-                                                />
-                                            </>
+                                            <CopyToClipboardCommon
+                                                tooltipTitle="Copied to clipboard"
+                                                value={copyResponseData()}
+                                                iconProvided={
+                                                    <div
+                                                        className={styles.menuItem}
+                                                        id={UI_IDS.WIZARD_CODEBOX_COPY}
+                                                        onClick={handleCopy}
+                                                    >
+                                                        <Copy />
+                                                    </div>
+                                                }
+                                            />
                                         }
                                     />
                                 ))}

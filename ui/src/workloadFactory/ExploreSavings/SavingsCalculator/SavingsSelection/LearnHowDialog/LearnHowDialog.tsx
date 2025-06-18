@@ -1,9 +1,9 @@
 import { AccordionCard, AccordionCardContent, AccordionController, DsTypography, Popover } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import styles from './LearnHowDialog.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
 
 import { ReactComponent as CopyIcon } from '../../../../../assets/ic_copy.svg';
-import { useEffect, useState } from 'react';
 import CopyToClipboardCommon from '../../../../../common/CopyToClipboard/copyToClipboard';
 
 const LearnHowDialog = ({ type }: { type: string }) => {
@@ -50,7 +50,7 @@ const LearnHowDialog = ({ type }: { type: string }) => {
                                                 <div>{GENERAL.LEARN_HOW_DIALOG.STEP1_POINT2}</div>
                                                 <div className={styles['dialog-body']}>
                                                     <div className={styles['code-box']}>
-                                                        <div className={styles['code']}>
+                                                        <div className={styles.code}>
                                                             <pre>
                                                                 <DsTypography variant="Regular_14">
                                                                     {JSON.stringify(
@@ -61,10 +61,10 @@ const LearnHowDialog = ({ type }: { type: string }) => {
                                                                 </DsTypography>
                                                             </pre>
                                                         </div>
-                                                        <div className={styles['copy']}>
+                                                        <div className={styles.copy}>
                                                             <Popover
                                                                 popoverClass={styles['copy-popover']}
-                                                                children={'Permissions copied'}
+                                                                children="Permissions copied"
                                                                 container={
                                                                     <CopyToClipboardCommon
                                                                         value={JSON.stringify(
@@ -72,9 +72,7 @@ const LearnHowDialog = ({ type }: { type: string }) => {
                                                                             null,
                                                                             1
                                                                         )}
-                                                                        iconProvided={
-                                                                            <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                                                        }
+                                                                        iconProvided={<CopyIcon fill="#A7A7A7" />}
                                                                     />
                                                                 }
                                                             />

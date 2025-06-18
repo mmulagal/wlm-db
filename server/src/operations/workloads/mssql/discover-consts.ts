@@ -225,11 +225,17 @@ const HOST_AND_SQL_INFO_PS1 = [
 
       If ($Target.TargetAddress -ne $null) {
         $item.DriveLetters | ForEach-Object {
-          $DriveTargetMap.Add($_, $Target.TargetAddress)
+          if(-not $DriveTargetMap.ContainsKey($_)) {
+            $DriveTargetMap.Add($_, @())
+          } 
+          $DriveTargetMap[$_] += ($Target.TargetAddress)
         }
-      } ElseIf ($item.SerialNumber -ne $null) {
-        $item.DriveLetters | ForEach-Object {
-          $DriveTargetMap.Add($_, $item.SerialNumber)
+    } ElseIf ($item.SerialNumber -ne $null) {
+      $item.DriveLetters | ForEach-Object {
+        if(-not $DriveTargetMap.ContainsKey($_)) {
+          $DriveTargetMap.Add($_, @())
+        } 
+        $DriveTargetMap[$_] += ($item.SerialNumber)
         }
       }
     }
@@ -649,7 +655,9 @@ const HOST_AND_SQL_INFO_PS1 = [
 
             $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
               if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
-                New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] }
+                $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] | ForEach-Object {
+                  New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $_ }
+                }
               } elseif ($SMBConnections -contains $sqlInstanceDriveLetterOrPath) {
                 New-Object -TypeName PSObject -Property @{ SmbSharePath = $sqlInstanceDriveLetterOrPath }     
               } elseif ($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetterOrPath) { 

@@ -11,8 +11,6 @@ import StorageSavingResource from '../../../ResourcePage/StorageSavingResource/S
 import { useAppSelector } from '../../../../store/storeHooks';
 import { getAggrStorageSavings } from '../../../../utils/utilityFunctions';
 import DatabaseHostOverviewApiV2 from '../../../ResourcePage/ResourceHomePage/DatabaseHostOverviewApiV2';
-import DBDistributionSection from '../../../ResourcePage/DBDistributionSection/DBDistributionSection';
-import StoragePerformance from '../../../ResourcePage/StoragePerformance/StoragePerformance';
 
 const ResourceMSSQLOverview = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
@@ -23,28 +21,28 @@ const ResourceMSSQLOverview = () => {
             <div className={styles.leftSide}>
                 <ResourceHeader />
 
-                {/* <div className={styles.commonBlock}>
+                <div className={styles.commonBlock}>
                     <CPUUtilizationCard />
                     <LatencyCard />
-                </div> */}
-
-                <div className={styles.commonBlock}>
-                    <DBDistributionSection />
                 </div>
+
+                {/* <div className={styles.commonBlock}>
+                    <DBDistributionSection />
+                </div> */}
 
                 <div className={styles.commonBlock}>
                     <ProtectedDatabases />
                     <CapacityUtilization />
                 </div>
 
-                {/* <div className={styles.commonBlock}>
+                <div className={styles.commonBlock}>
                     <IOPSCard />
                     <ThroughputCard />
-                </div> */}
-
-                <div className={styles.commonBlock}>
-                    <StoragePerformance />
                 </div>
+
+                {/* <div className={styles.commonBlock}>
+                    <StoragePerformance />
+                </div> */}
 
                 <div className={styles.barContainer}>
                     <div className={styles.commonContainer}>

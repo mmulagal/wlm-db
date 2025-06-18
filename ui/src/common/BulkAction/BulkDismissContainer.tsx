@@ -33,7 +33,7 @@ const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) =>
                     onClick={() => onClick(CONFIG_STATE_ACTIONS.ACTIVE, hasSomeActive)}
                     isDisabled={checkForOnlyActive}
                 >
-                    {'Reactivate'}
+                    Reactivate
                 </DsButton>
                 <SeparatorComponent variant="vertical" height="16px" />
                 <DsButton
@@ -41,7 +41,7 @@ const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) =>
                     onClick={() => onClick(CONFIG_STATE_ACTIONS.POSTPONED, hasSomePostponed)}
                     isDisabled={checkForOnlyPostponed}
                 >
-                    {'Postpone for 30 days'}
+                    Postpone for 30 days
                 </DsButton>
                 <SeparatorComponent variant="vertical" height="16px" />
                 <DsButton
@@ -49,7 +49,7 @@ const BulkDismissContainer = ({ onClick, rowData }: BulkActionContainerProps) =>
                     onClick={() => onClick(CONFIG_STATE_ACTIONS.DISMISS, hasSomeDismissed)}
                     isDisabled={checkForOnlyDismissed}
                 >
-                    {'Dismiss'}
+                    Dismiss
                 </DsButton>
             </div>
         );

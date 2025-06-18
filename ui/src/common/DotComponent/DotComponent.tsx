@@ -6,13 +6,11 @@ type Dot = {
     value: string;
 };
 
-const DotComponent = ({ color, value }: Dot) => {
-    return (
-        <div className={styles.dot}>
-            <div className={styles.dotImage} style={{ backgroundColor: color }} />
-            <DsTypography variant="Regular_14">{value}</DsTypography>
-        </div>
-    );
-};
+const DotComponent = ({ color, value }: Dot) => (
+    <div className={styles.dot}>
+        <div className={styles.dotImage} style={{ backgroundColor: color }} />
+        <DsTypography variant="Regular_14">{value}</DsTypography>
+    </div>
+);
 
 export default DotComponent;

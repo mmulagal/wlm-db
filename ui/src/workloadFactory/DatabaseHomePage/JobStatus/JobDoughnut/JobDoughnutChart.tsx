@@ -1,6 +1,5 @@
 import { Typography } from '@netapp/design-system';
-import { Chart } from 'chart.js';
-import { registerables } from 'chart.js';
+import { Chart, registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './JobDoughnutchart.module.scss';
@@ -19,7 +18,7 @@ const JobDoughnutChart = ({ jobsSummaryData, jobsSummaryLoading }: any) => {
         }
     };
 
-    var config = {
+    const config = {
         type: 'doughnut',
         data: {
             datasets: [
@@ -40,7 +39,7 @@ const JobDoughnutChart = ({ jobsSummaryData, jobsSummaryLoading }: any) => {
 
     useEffect(() => {
         if (ref.current) {
-            //@ts-ignore
+            // @ts-ignore
             var myDoughnut = new Chart(ref.current, config);
             setDoughnutChart(myDoughnut);
         }
@@ -59,11 +58,11 @@ const JobDoughnutChart = ({ jobsSummaryData, jobsSummaryLoading }: any) => {
             </div>
             {/* @ts-ignore */}
             {(jobsSummaryLoading || !jobsSummaryData || jobsSummaryData?.totalJobs == 0) && (
-                <div className={styles.emptyCircle}></div>
+                <div className={styles.emptyCircle} />
             )}
 
             {!jobsSummaryLoading && jobsSummaryData?.totalJobs !== 0 && (
-                <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
+                <canvas ref={ref} id="chart-area" width={162} height={162} />
             )}
         </div>
     );

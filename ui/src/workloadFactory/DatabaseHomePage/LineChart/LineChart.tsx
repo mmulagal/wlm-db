@@ -43,18 +43,18 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
     };
 
     useEffect(() => {
-        //@ts-ignore
+        // @ts-ignore
         const ctx = chartRef?.current?.getContext('2d');
 
-        var gradientStroke = ctx.createLinearGradient(0, 50, 0, 400);
+        const gradientStroke = ctx.createLinearGradient(0, 50, 0, 400);
         gradientStroke.addColorStop(0, '#68C6B3');
         gradientStroke.addColorStop(1, endColor);
 
-        var gradientFill = ctx.createLinearGradient(0, 0, 0, 150);
+        const gradientFill = ctx.createLinearGradient(0, 0, 0, 150);
         gradientFill.addColorStop(0, '#68C6B3');
         gradientFill.addColorStop(1, endColor);
 
-        var gradientStroke2 = ctx.createLinearGradient(0, 50, 0, 400);
+        const gradientStroke2 = ctx.createLinearGradient(0, 50, 0, 400);
         gradientStroke2.addColorStop(0, '#FE5502');
         gradientStroke2.addColorStop(1, 'rgba(104, 198, 179, 0.00)');
 
@@ -72,26 +72,21 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
         const constructLabel = () => {
             if (selectedTimeFrame === 'Last 7 days') {
                 return formattedLast7DaysDates;
-            } else if (selectedTimeFrame === 'Last 14 days') {
-                return formattedLast14DaysDates;
-            } else if (selectedTimeFrame === 'Last 30 days') {
-                return formattedLast30DaysDates;
-            } else {
-                return formattedLast24Hour();
             }
+            if (selectedTimeFrame === 'Last 14 days') {
+                return formattedLast14DaysDates;
+            }
+            if (selectedTimeFrame === 'Last 30 days') {
+                return formattedLast30DaysDates;
+            }
+            return formattedLast24Hour();
         };
 
-        const constructDataSuccess = () => {
-            return timelineData?.completed;
-        };
+        const constructDataSuccess = () => timelineData?.completed;
 
-        const constructDataFailed = () => {
-            return timelineData?.failed;
-        };
+        const constructDataFailed = () => timelineData?.failed;
 
-        const constructDataWarning = () => {
-            return timelineData?.warning;
-        };
+        const constructDataWarning = () => timelineData?.warning;
 
         const setMaxGraceValue = () => {
             if (
@@ -124,8 +119,8 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                 return 1;
             }
         };
-        //@ts-ignore
-        var mayBarChart = new Chart(ctx, {
+        // @ts-ignore
+        const mayBarChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: constructLabel(),
@@ -191,7 +186,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                     },
                     tooltip: {
                         enabled: false, // Disable the default tooltip
-                        external: function (context) {
+                        external(context) {
                             let tooltipEl = document.getElementById('chartjs-tooltip');
 
                             // Create the tooltip element if it doesn't exist
@@ -214,16 +209,16 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 
                             // Hide the tooltip if there is no data
                             if (tooltipModel.opacity === 0) {
-                                //@ts-ignore
+                                // @ts-ignore
                                 tooltipEl.style.opacity = 0;
                                 return;
                             }
 
                             // Set tooltip position
                             const position = context.chart.canvas.getBoundingClientRect();
-                            tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
-                            tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
-                            //@ts-ignore
+                            tooltipEl.style.left = `${position.left + window.pageXOffset + tooltipModel.caretX}px`;
+                            tooltipEl.style.top = `${position.top + window.pageYOffset + tooltipModel.caretY}px`;
+                            // @ts-ignore
                             tooltipEl.style.opacity = 1;
 
                             // Clear existing content
@@ -245,7 +240,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                                 }
 
                                 if (selectedTimeFrame === 'Last 30 days') {
-                                    label = context.tooltip.title[0] + ' | ' + label;
+                                    label = `${context.tooltip.title[0]} | ${label}`;
                                 }
 
                                 // Create a tooltip row
@@ -281,7 +276,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 
                 scales: {
                     x: {
-                        display: selectedTimeFrame === 'Last 30 days' ? false : true, // Hide X axis labels
+                        display: selectedTimeFrame !== 'Last 30 days', // Hide X axis labels
                         grid: {
                             display: false
                         },
@@ -291,7 +286,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                     },
 
                     y: {
-                        //display: false,
+                        // display: false,
                         beginAtZero: true,
                         grace: setMaxGraceValue(),
 
@@ -310,8 +305,15 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
             }
         });
 
+        // Cleanup: destroy chart and remove tooltip
         return () => {
             mayBarChart.destroy();
+
+            // Remove tooltip from DOM
+            const tooltipEl = document.getElementById('chartjs-tooltip');
+            if (tooltipEl && tooltipEl.parentNode) {
+                tooltipEl.parentNode.removeChild(tooltipEl);
+            }
         };
     }, [selectedTimeFrame, timelineData]);
 
@@ -323,7 +325,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         <NoData />
                     </div>
                 ))}
-            <canvas ref={chartRef} width={336} height={131}></canvas>
+            <canvas ref={chartRef} width={336} height={131} />
 
             {/* <Typography variant="Semibold_14" className={styles.text}>
                 24 hours trend

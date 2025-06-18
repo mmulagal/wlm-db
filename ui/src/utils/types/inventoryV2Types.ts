@@ -13,7 +13,6 @@ export interface InventorySliceData {
     tableManageColumnState: any;
     selectedFilterValue: {} | any;
     selectedInventoryTab: string;
-    optimizeInnerPageValues: {} | any;
     selectedOptimizeConfig: any;
     breadCrumbSelectedFrom: string;
     defaultFilterOptions: {} | any;
@@ -52,15 +51,14 @@ export interface InventorySliceData {
     oracleInstancesData: Record<string, OracleInstanceData> | null;
     perfMssqlInstancesData: any;
     inProgressInstances: any;
-    manageHostSelectedRows: any;
-    valuesNotFilled: boolean;
-    detectHostRadio: string;
     detectManageUserName: string;
     detectManagePassword: string;
     detectOntapUsername: string;
     detectOntapPassword: string;
-    detectedInstanceId: string;
-    inventoryExpandedRowHostData: any;
+    detectWindowsAuthentication: {
+        username: string;
+        password: string;
+    };
     resetManagedData: boolean;
     removeSecNodeDiscoveredList: Array<string>;
     unManagedPerfInstanceIdsList: Array<string>;
@@ -68,13 +66,11 @@ export interface InventorySliceData {
     selectedHeaderTab: string;
     isRefreshed: boolean;
     managedAssessmentHostIdsList: Array<string>;
-    managedAssessmentHostData: any;
     allmssqlHostAssessmentData: any;
     allmssqlHostAssessmentLoading: boolean;
     potentialSavingsHostData: {
         [key: string]: any;
     };
-    selectedRowsForManage: Array<any>;
     hostTableRows: Array<any>;
     instanceTableRows: Array<any>;
     databaseTableRows: Array<any>;
@@ -154,7 +150,7 @@ export interface InventoryTableInstanceDatInterface {
     };
     storage?: {
         fsxn?: {
-            protocol?: Array<String>;
+            protocol?: Array<string>;
             size?: number;
             used?: number;
             spaceSavings?: number;
@@ -186,7 +182,7 @@ export interface InventoryTableInstanceDatInterface {
 
 export interface StorageInterface {
     fsxn?: {
-        protocol?: Array<String>;
+        protocol?: Array<string>;
         size?: number;
         used?: number;
         spaceSavings?: number;
@@ -310,7 +306,7 @@ export interface ManagedHostsRowInterface {
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
-    ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
+    ssmStatus?: string; // Connected,NotConnected,Connecting,Disconnected, N\A
     loading?: boolean;
     databaseInstanceDetails?: Array<{
         databaseInstanceId?: string;
@@ -389,7 +385,7 @@ export interface InstancesHostsRowInterface {
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
-    ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
+    ssmStatus?: string; // Connected,NotConnected,Connecting,Disconnected, N\A
     loading?: boolean;
     databaseInstanceDetails?: Array<DatabaseInstanceDetailsInterface>;
     clusterNodeDetails?: Array<{
@@ -524,6 +520,7 @@ export interface SQLServerInstancesDiscovered {
     sqlServerProductYear?: string;
     isDefaultInstance?: boolean;
     windowsAuthentication?: boolean;
+    windowsDomainUserAuthentication?: boolean;
     sqlServerEdition?: string;
     sqlServerEngineEdition?: number;
     sqlServerName?: string;

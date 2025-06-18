@@ -1,4 +1,5 @@
 import { DsTypography, PasswordField, Popover, TextField } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import styles from './FSXPasswordContent.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -10,7 +11,6 @@ import {
     setSqlServerPassword,
     setSqlServerUserName
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { isValidPassword, isValidSqlUsername } from '../../../../utils/utilityFunctions';
@@ -35,27 +35,25 @@ const PasswordContent = ({
     username
 }: PasswordContentProps) => {
     const dispatch = useDispatch();
-    const tooltipText = () => {
-        return (
-            <DsTypography variant="Regular_13" className={styles.infoMsg}>
-                <DsTypography variant="Regular_13">The password must be:</DsTypography>
-                <div className={styles.list}>
-                    <div className={styles.listItem}>
-                        <Bullet />
-                        <div className={styles.textWidth}>Between 8 and 50 characters in length.</div>
-                    </div>
-                    <div className={styles.listItem}>
-                        <Bullet />
-                        <div className={styles.textWidth}>At least one character and one digit.</div>
-                    </div>
-                    <div className={styles.listItem}>
-                        <Bullet />
-                        <div className={styles.textWidth}>Must not contain non-English letters or "admin".</div>
-                    </div>
+    const tooltipText = () => (
+        <DsTypography variant="Regular_13" className={styles.infoMsg}>
+            <DsTypography variant="Regular_13">The password must be:</DsTypography>
+            <div className={styles.list}>
+                <div className={styles.listItem}>
+                    <Bullet />
+                    <div className={styles.textWidth}>Between 8 and 50 characters in length.</div>
                 </div>
-            </DsTypography>
-        );
-    };
+                <div className={styles.listItem}>
+                    <Bullet />
+                    <div className={styles.textWidth}>At least one character and one digit.</div>
+                </div>
+                <div className={styles.listItem}>
+                    <Bullet />
+                    <div className={styles.textWidth}>Must not contain non-English letters or "admin".</div>
+                </div>
+            </div>
+        </DsTypography>
+    );
 
     const isValidConfirmPassword = (confirmPassword: string) => {
         if (confirmPassword.length > 0 && password !== confirmPassword) {
@@ -71,12 +69,7 @@ const PasswordContent = ({
 
             <div className={styles.textArea}>
                 {type === 'fsx' && (
-                    <TextField
-                        label={GENERAL.USER_NAME}
-                        value={username}
-                        className={styles.textField}
-                        isDisabled={true}
-                    />
+                    <TextField label={GENERAL.USER_NAME} value={username} className={styles.textField} isDisabled />
                 )}
                 {type === 'sql' && (
                     <TextField
@@ -103,17 +96,17 @@ const PasswordContent = ({
                     />
                     <div className={styles.dialogFooterDialog}>
                         <Popover
-                            popoverClass={''}
+                            popoverClass=""
                             children={tooltipText()}
                             trigger="hover"
-                            isAppendedToBody={true}
+                            isAppendedToBody
                             container={<TooltipIcon />}
                         />
                     </div>
                 </div>
 
                 <PasswordField
-                    label={'Confirm password'}
+                    label="Confirm password"
                     error={useDelayedError(isValidConfirmPassword(confirmPassword))}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setConfirmPassword(e.target.value);

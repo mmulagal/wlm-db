@@ -73,8 +73,6 @@ import {
     NOT_AVAILABLE,
     PREPARE_PSMODULES_RELATIVE_PATH,
     SINGLE_AZ,
-    AL2023_AMI_NAME,
-    AMAZON_LINUX_AMI_PATH,
     HA,
     PGSQL_DEFAULT_INSTANCE_NAME,
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
@@ -97,7 +95,7 @@ import {
     GET_ACTIVE_DIRECTORY_DETAILS,
     FEATURE_PREPREQUISITES
 } from './workloads/mssql/discover-consts';
-import { deleteParameters, getParameter, getParametersByPath, sendSSMCommand } from '../lib/aws/ssm';
+import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { listFsxOntapCredentials, registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import { NodeDetails, ResourceDetails, SSMParamterObject, MultipleCommandSsmResponse } from '../utils/common-types';
@@ -126,7 +124,7 @@ import {
 } from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { preSignedUrl } from '../lib/aws/s3';
-import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
+import { getAmazonLinux2023AmiList, getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types/database-hosts.types';
 import { copyScriptsToHost } from './resource-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -2264,15 +2262,11 @@ async function discoverPgSqlResources(
         ec2InstanceIds
     });
 
-    // TODO: Cache this API call
-    // This function is expecting credentials, but we can add these permissions to our app and make credId optional.
-    // that might reduce the number of calls to user's AWS account.
-    const amazonLinuxAmis = await getParametersByPath(credentialsId, region, AMAZON_LINUX_AMI_PATH);
-    const al2023ImageId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
+    const al2023ImageIdList = compact(await getAmazonLinux2023AmiList(credentialsId, region));
 
     const filters = [
         { Name: 'platform-details', Values: ['Linux/UNIX'] },
-        ...(al2023ImageId ? [{ Name: 'image-id', Values: [al2023ImageId] }] : [])
+        ...(!isEmpty(al2023ImageIdList) ? [{ Name: 'image-id', Values: al2023ImageIdList }] : [])
     ];
     const { ec2Instances, NextToken } = await discoverEc2Instances(
         accountId,
@@ -2711,7 +2705,7 @@ async function discoverOracleResources(
     const filters = [
         {
             Name: 'platform-details',
-            Values: ['Red Hat Enterprise Linux*']
+            Values: ['Red Hat Enterprise Linux*', 'SUSE Linux*']
         },
         { Name: 'instance-state-name', Values: ['running'] }
     ];

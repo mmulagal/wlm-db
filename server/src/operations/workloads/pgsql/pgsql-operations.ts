@@ -383,7 +383,10 @@ async function getPgSqlDatabaseInstancesDetails(
 
     const existingInstanceIDs = new Set(instanceDetails?.map(({ databaseInstanceId }) => databaseInstanceId));
     const updatedInstanceDetails = [
-        ...(instanceDetails ?? []),
+        ...(instanceDetails ?? []).map(instance => ({
+            ...instance,
+            isManaged: managedInstancesName.some(managed => managed.databaseInstanceId === instance.databaseInstanceId)
+        })),
         ...managedInstancesName.filter(({ databaseInstanceId }) => !existingInstanceIDs.has(databaseInstanceId))
     ];
     return updatedInstanceDetails;

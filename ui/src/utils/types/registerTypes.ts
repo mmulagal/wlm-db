@@ -86,6 +86,8 @@ export interface WizardState {
     ontapPasswordFromWizard?: string;
     mssqlUserNameFromWizard?: string;
     mssqlPasswordFromWizard?: string;
+    windowsAuthenticationUsernameFromWizard?: string;
+    windowsAuthenticationPasswordFromWizard?: string;
     authenticationTypeSelected?: string;
     hitNext?: boolean;
     installMissingAWS?: boolean;
@@ -110,6 +112,24 @@ export interface ExtendedManageStates extends ManageStates {
 }
 
 export type RegisterResourceCredResult = {
-    data?: { sqlServerError?: string; fsxnError?: string; manageReadiness?: any };
+    data?: { sqlServerError?: string; fsxnError?: string; manageReadiness?: ManageReadinessData };
     error?: any;
 };
+
+export interface RegisterDetail {
+    resourceId: string;
+    databaseCount: string;
+    sqlServerEdition: string;
+    sqlServerError: string;
+    fsxnError: string;
+    requiredModuleError: string;
+    manageReadiness: ManageReadinessData; // Adjust type if you have a specific structure
+}
+
+export interface RegisterResourceCredBulkResultItem {
+    ec2InstanceId: string;
+    credentialsId: string;
+    region: string;
+    error: string;
+    registerDetails: RegisterDetail[];
+}

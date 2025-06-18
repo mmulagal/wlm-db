@@ -1,62 +1,44 @@
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import LineGraph from '../../LineGraph/LineGraph';
 import styles from './ThroughputCard.module.scss';
 import SeparatorComponent from '../../../../../common/SeparatorComponent/SeparatorComponent';
+import { useAppSelector } from '../../../../../store/storeHooks';
 
 const ThroughputCard = () => {
-    const loading = false; // Replace with actual loading state
-    const datasets = [
-        [789.3, 131.4, 837.7, 686.1, 392.5, 248, 74.3, 549.5],
-        [8170.5, 947.3, 952.9, 1472.5, 12547, 737.3, 8691.6, 704.1]
-    ];
+    const { resourceDetails, resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
-    const readDataPoints = [
-        {
-            statisticsDate: '2025-05-01T08:31:16.132Z',
-            average: 789.3126781934094
-        },
-        {
-            statisticsDate: '2025-05-02T08:31:16.132Z',
-            average: 131.3848757782748
-        },
-        {
-            statisticsDate: '2025-05-03T08:31:16.132Z',
-            average: 837.6582723242235
-        },
-        {
-            statisticsDate: '2025-05-04T08:31:16.132Z',
-            average: 686.0780704238648
-        },
-        {
-            statisticsDate: '2025-05-05T08:31:16.132Z',
-            average: 392.48716331861993
-        },
-        {
-            statisticsDate: '2025-05-06T08:31:16.132Z',
-            average: 248.0066763654408
-        },
-        {
-            statisticsDate: '2025-05-07T08:31:16.132Z',
-            average: 74.26160337552743
-        },
-        {
-            statisticsDate: '2025-05-08T08:31:16.132Z',
-            average: 549.5012413874157
-        }
-    ];
+    const [datasets, setDatasets] = useState<number[][]>([[], []]);
+    const [readDataPoints, setReadDataPoints] = useState<{ statisticsDate: string; average: number }[]>([]);
+
+    useEffect(() => {
+        const readThroughput = Array.isArray(resourceDetails?.performance?.rwMetrics?.throughput?.read)
+            ? resourceDetails.performance.rwMetrics.throughput.read
+            : [];
+        const writeThroughput = Array.isArray(resourceDetails?.performance?.rwMetrics?.throughput?.write)
+            ? resourceDetails.performance.rwMetrics.throughput.write
+            : [];
+
+        setDatasets([readThroughput.map(item => item.value), writeThroughput.map(item => item.value)]);
+
+        setReadDataPoints(
+            readThroughput.map(item => ({
+                statisticsDate: item.timestamp,
+                average: item.value
+            }))
+        );
+    }, [resourceDetails]);
+
     return (
         <div className={styles.throughputCard}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Latency
+                    Throughput
                 </DsTypography>
 
                 <div className={styles.rightTopValue}>
-                    <DsTypography variant="Regular_20">R: {loading ? <DsFlashingDotsLoader /> : '32 ms'}</DsTypography>
-
-                    <SeparatorComponent variant="vertical" height="20px" />
-
-                    <DsTypography variant="Regular_20">W: {loading ? <DsFlashingDotsLoader /> : '20 ms'}</DsTypography>
+                    <DsTypography variant="Regular_20">{resourceLoading && <DsFlashingDotsLoader />}</DsTypography>
                 </div>
             </div>
 
@@ -68,7 +50,7 @@ const ThroughputCard = () => {
                         return `${date.getDate()}/${date.getMonth() + 1}`;
                     })}
                     legend={['Read', 'Write']}
-                    color={['#012CAD', '#0BAFFC']}
+                    color={isDarkTheme ? ['#71B9E0', '#4066DA'] : ['#012CAD', '#0BAFFC']}
                 />
             </div>
         </div>

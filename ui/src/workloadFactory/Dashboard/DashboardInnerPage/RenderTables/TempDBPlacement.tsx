@@ -1,12 +1,12 @@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
+import { useMemo, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo, useEffect } from 'react';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
-import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from './FirstColumnComponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
@@ -32,8 +32,8 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
-        let uniqueResourceList: Array<string> = [];
+        const storageTierAssessmentData: any = [];
+        const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
@@ -71,7 +71,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             tempDBPlacement: tempDbPlacementObj?.current,
-                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
+                            id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[tempDbPlacementObj?.status],
                             data: instanceData,
@@ -104,9 +104,8 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                 ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
                 selectedRowsForOptimize
             );
-        } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT);
         }
+        return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT);
     }, [selectedRowsForOptimize, inProgressOptimizationData, tableData]);
 
     const TableColDefs: ColumnProps[] = [
@@ -118,9 +117,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
             filterOptions: 'auto',
             isSticky: true,
             width: '310px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
-            }
+            renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
         {
             Header: 'Host name',
@@ -135,9 +132,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
             id: '3',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             id: '4',
@@ -164,9 +159,9 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: true,
         isSorting: false,
@@ -193,18 +188,18 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
     return (
         <div className={styles.renderTable}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Not-optimized instances`}
-                singularTitle={'Not-optimized instance'}
+                pluralTitle="Not-optimized instances"
+                singularTitle="Not-optimized instance"
             />
             {selectedRowsForOptimize.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
             />
         </div>
     );

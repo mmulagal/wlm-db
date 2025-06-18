@@ -23,7 +23,7 @@ import {
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
-import { addCacheMiddleware } from '../../utils/aws-sdk-middlewares';
+import addCacheMiddleware from '../../utils/aws-sdk-middlewares';
 import { AWSSDKCacheParams } from '../../utils/common-types';
 import getLogger from '../../utils/logger';
 

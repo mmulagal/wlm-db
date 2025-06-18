@@ -5,7 +5,7 @@ import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import ms from 'ms';
-import getMetricStatistics from '../../../src/lib/aws/cloud-watch';
+import { getMetricStatistics, getCloudWatchMetrics } from '../../../src/lib/aws/cloud-watch';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
 describe('Cloud watch Lib', () => {
@@ -27,5 +27,34 @@ describe('Cloud watch Lib', () => {
         });
 
         expect(resp.Datapoints).toBeDefined();
+    });
+
+    it('Get metrics data command', async () => {
+        const resp = await getCloudWatchMetrics(CREDENTIALS_ID, DEFAULT_AWS_REGION, {
+            EndTime: new Date(),
+            MetricDataQueries: [
+                {
+                    Id: 'cpuused_sum',
+                    MetricStat: {
+                        Metric: {
+                            Namespace: 'netapp/wlmdb/performance',
+                            MetricName: 'cpuUsed',
+                            Dimensions: [
+                                {
+                                    Name: 'FileSystemId',
+                                    Value: 'fs-1234567890abcdef0'
+                                }
+                            ]
+                        },
+                        Period: 600,
+                        Stat: 'Sum'
+                    },
+                    ReturnData: true
+                }
+            ],
+            StartTime: new Date(Date.now() - ms('1d'))
+        });
+
+        expect(resp).toBeDefined();
     });
 });

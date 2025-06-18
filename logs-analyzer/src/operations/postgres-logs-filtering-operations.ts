@@ -74,18 +74,20 @@ async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed:
     });
 }
 
-async function getUniquePostgresErrors(logs: PostgresLog[]) {
+async function getUniquePostgresErrors(logs: PostgresLog[], uniqueLogsCountToConsider: number) {
     logger.debug('Grouping PostgreSQL logs by message');
     const groupedLogs = groupBy(logs, 'message');
-    const uniqueErrorLogs = Object.keys(groupedLogs).map(key => {
-        const [{ context: errorContext, message: errorMessage, severity }] = groupedLogs[key];
-        return {
-            errorContext,
-            errorMessage,
-            errorCount: groupedLogs[key].length,
-            severity
-        };
-    });
+    const uniqueErrorLogs = Object.keys(groupedLogs)
+        .slice(0, uniqueLogsCountToConsider)
+        .map(key => {
+            const [{ context: errorContext, message: errorMessage, severity }] = groupedLogs[key];
+            return {
+                errorContext,
+                errorMessage,
+                errorCount: groupedLogs[key].length,
+                severity
+            };
+        });
     return { uniqueErrorLogs };
 }
 

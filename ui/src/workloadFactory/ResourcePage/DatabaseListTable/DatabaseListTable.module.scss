@@ -31,4 +31,15 @@
             gap: 17px;
         }
     }
+
+    .protectionIcons {
+        display: flex;
+        gap: 32px;
+        align-items: center;
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
 }

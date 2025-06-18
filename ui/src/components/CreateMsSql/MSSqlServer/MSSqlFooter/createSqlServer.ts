@@ -25,12 +25,11 @@ const createMssqlPayload = (state: any) => {
                 state.mssqlForm.license?.selectedLicenseId?.value,
                 state.mssqlForm.license?.selectedLicenseId?.data?.amiName
             ];
-        } else {
-            return [
-                state.mssqlForm.license?.selectedCustomAMI?.value,
-                state.mssqlForm.license?.selectedCustomAMI?.data?.amiName
-            ];
         }
+        return [
+            state.mssqlForm.license?.selectedCustomAMI?.value,
+            state.mssqlForm.license?.selectedCustomAMI?.data?.amiName
+        ];
     })();
 
     const encryptionKey = (() => {
@@ -38,16 +37,14 @@ const createMssqlPayload = (state: any) => {
         if (encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT) {
             if (state.mssqlForm.encryption?.selectedRow) {
                 return state.mssqlForm.encryption?.selectedRow[0]?.id;
-            } else {
-                return '';
             }
-        } else {
-            return state.mssqlForm.encryption?.encryptionArn;
+            return '';
         }
+        return state.mssqlForm.encryption?.encryptionArn;
     })();
 
     const fileSystem = (() => {
-        let fsObj = {
+        const fsObj = {
             fsxFileSystemId: '',
             fsxUsername: '',
             fsxPassword: ''
@@ -79,25 +76,22 @@ const createMssqlPayload = (state: any) => {
         if (value1?.length === 2) {
             if (value1[1] === 'GBps') {
                 return value1[0] * 1024;
-            } else {
-                return value1[0];
             }
-        } else {
-            return value;
+            return value1[0];
         }
+        return value;
     })();
 
     const fsxIOPS = (() => {
         const type = state.mssqlForm?.provisionedIOPS?.provisionedType;
         if (type === GENERAL.AUTOMATIC) {
             return 3;
-        } else {
-            return state.mssqlForm?.provisionedIOPS?.IOPSValue || 0;
         }
+        return state.mssqlForm?.provisionedIOPS?.IOPSValue || 0;
     })();
 
     const ontapSgGroupIdsList = (() => {
-        let ontapSgGroupList = [];
+        const ontapSgGroupList = [];
         const sgType = state.mssqlForm.securityGroup?.selectedSecurityType;
         const vpcsg = state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value;
         if (sgType === GENERAL.USE_AN_EXISTING_SECURITY && vpcsg) {
@@ -117,17 +111,15 @@ const createMssqlPayload = (state: any) => {
         const deploymentType = state.mssqlForm.dbDeploymentModel?.value;
         if (deploymentType === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             return FSX_DEPLOYMENT_MODE.SINGLE_AZ_1;
-        } else {
-            return FSX_DEPLOYMENT_MODE.MULTI_AZ_1;
         }
+        return FSX_DEPLOYMENT_MODE.MULTI_AZ_1;
     })();
 
     const selectedSnapshotPolicy = (() => {
         if (state.mssqlForm.snapshotPolicyToggle === true) {
             return 'daily_weekretention';
-        } else {
-            return 'none';
         }
+        return 'none';
     })();
 
     payload = {
@@ -154,20 +146,20 @@ const createMssqlPayload = (state: any) => {
             securityGroupId: state.mssqlForm.activeDirectory?.domainName?.data?.securityGroupId || ''
         },
         fsxConfiguration: {
-            fsxDeploymentMode: fsxDeploymentMode,
+            fsxDeploymentMode,
             fsxFileSystemId: fileSystem?.fsxFileSystemId,
             fsxUsername: fileSystem?.fsxUsername,
             fsxPassword: fileSystem?.fsxPassword,
-            databaseSize: databaseSize,
+            databaseSize,
             ontapSgGroupId: ontapSgGroupIdsList,
-            fsxVolThroughput: fsxVolThroughput,
-            fsxIOPS: fsxIOPS,
+            fsxVolThroughput,
+            fsxIOPS,
             encryptionKey: encryptionKey || '',
             snapshotPolicy: selectedSnapshotPolicy || ''
         },
         sqlConfiguration: {
             sqlDeploymentMode: state.mssqlForm.dbDeploymentModel?.value || SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE,
-            isCustomAmi: state.mssqlForm.license?.selectedLicenseType === FORM_OPTIONS.CUSTOM_AMI ? true : false,
+            isCustomAmi: state.mssqlForm.license?.selectedLicenseType === FORM_OPTIONS.CUSTOM_AMI,
             sqlAmiId: licenseId || '',
             sqlAmiName: licenceName || '',
             serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
@@ -215,52 +207,52 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
             (isFsxnExisting(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNExistingName);
 
         const licenseIdCheck = !state.mssqlForm.license.selectedLicenseId;
-        //Check for VPC values
+        // Check for VPC values
         if (vpcStateValue) {
             dispatch(setVPCSelectedValue(false));
         } else {
             dispatch(setVPCSelectedValue(true));
         }
-        //Check for AZ values
+        // Check for AZ values
         if (azStateValue) {
             dispatch(setAZSelectedValue(false));
         } else {
             dispatch(setAZSelectedValue(true));
         }
 
-        //Check for DB cred password
-        dispatch(setDBCredentialPasswordValue(dbCredStateValue ? false : true));
+        // Check for DB cred password
+        dispatch(setDBCredentialPasswordValue(!dbCredStateValue));
         const checkForUserName = isValidUserName(state.mssqlForm.dbCredentials.name);
 
-        //Check of AD values
+        // Check of AD values
         if (adStateValue) {
             dispatch(setActiveDirectoryValue(false));
         } else {
             dispatch(setActiveDirectoryValue(true));
         }
 
-        //Check for FsxN Name
-        dispatch(setFSXNNameValue(fsxStateValue ? false : true));
+        // Check for FsxN Name
+        dispatch(setFSXNNameValue(!fsxStateValue));
 
-        //Check for DB Name - InvalidName
+        // Check for DB Name - InvalidName
         const input = state.mssqlForm.dbName;
         const dataBaseNameValue =
             (input && input.length > 15) || !/^[a-zA-Z0-9]/.test(input?.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
-        const isDBValueValid = dataBaseNameValue ? true : false;
+        const isDBValueValid = !!dataBaseNameValue;
         if (dataBaseNameValue) {
             dispatch(setDBNameValue(false));
         } else {
             dispatch(setDBNameValue(true));
         }
 
-        //Check for License ID
+        // Check for License ID
         if (licenseIdCheck) {
             dispatch(setLicenseIdValue(false));
         } else {
             dispatch(setLicenseIdValue(true));
         }
 
-        //Proceed for post call
+        // Proceed for post call
         if (
             !vpcStateValue &&
             !azStateValue &&

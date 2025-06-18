@@ -1,5 +1,7 @@
 import {
     CloudWatchClient,
+    GetMetricDataCommand,
+    GetMetricDataCommandInput,
     GetMetricStatisticsCommand,
     GetMetricStatisticsCommandInput
 } from '@aws-sdk/client-cloudwatch';
@@ -23,11 +25,25 @@ async function getCloudWatchClient(region: string, credentialsId: string) {
     }
 }
 
-export default async function getMetricStatistics(
+async function getCloudWatchMetrics(
     credentialsId: string,
     region: string,
-    params: GetMetricStatisticsCommandInput
+    params: GetMetricDataCommandInput,
+    accountId?: string
 ) {
+    logger.info('Get cloud watch metrics:', { region, credentialsId, params, accountId });
+    try {
+        const client = await getCloudWatchClient(region, credentialsId);
+        const command = new GetMetricDataCommand(params);
+        const response = await client.send(command);
+        return response;
+    } catch (error) {
+        logger.error('Error getting metric data:', error);
+        throw error;
+    }
+}
+
+async function getMetricStatistics(credentialsId: string, region: string, params: GetMetricStatisticsCommandInput) {
     logger.info('Get metric statistics :', region, credentialsId, params);
     try {
         const client = await getCloudWatchClient(region, credentialsId);
@@ -39,3 +55,5 @@ export default async function getMetricStatistics(
         throw error;
     }
 }
+
+export { getMetricStatistics, getCloudWatchMetrics };

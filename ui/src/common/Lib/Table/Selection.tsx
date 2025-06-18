@@ -1,6 +1,6 @@
 import React from 'react';
-import { SelectionType } from './useTable';
 import { Checkbox, CheckButton } from '@netapp/design-system';
+import { SelectionType } from './useTable';
 
 interface SelectionCellProps {
     selectionType: SelectionType;
@@ -23,26 +23,18 @@ const MultipleSelectionCell = ({
     onChange,
     isDisabled,
     ...rest
-}: Omit<SelectionCellProps, 'selectionType'>) => {
-    return (
-        <Checkbox
-            variant={'tableCheckbox'}
-            isChecked={isSelected}
-            onChange={onChange}
-            isDisabled={isDisabled}
-            {...rest}
-        />
-    );
-};
+}: Omit<SelectionCellProps, 'selectionType'>) => (
+    <Checkbox variant="tableCheckbox" isChecked={isSelected} onChange={onChange} isDisabled={isDisabled} {...rest} />
+);
 
 const SingleSelectionCell = ({
     isSelected,
     onChange,
     isDisabled,
     ...rest
-}: Omit<SelectionCellProps, 'selectionType'>) => {
-    return <CheckButton isChecked={isSelected} onChange={onChange} isDisabled={isDisabled} {...rest} />;
-};
+}: Omit<SelectionCellProps, 'selectionType'>) => (
+    <CheckButton isChecked={isSelected} onChange={onChange} isDisabled={isDisabled} {...rest} />
+);
 
 export const SELECTION_TYPE = {
     NONE: 'none',

@@ -97,14 +97,15 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
         ref
     ) => {
         const SELECT_ALL = 'selectAll';
-        const SELECT_ALL_CHIP: DsSelectItemProps = useMemo(() => {
-            return {
+        const SELECT_ALL_CHIP: DsSelectItemProps = useMemo(
+            () => ({
                 id: SELECT_ALL,
                 label: 'Select all',
                 value: SELECT_ALL,
                 className: SELECT_ALL
-            };
-        }, []);
+            }),
+            []
+        );
         const DEFAULT_DROPDOWN_WIDTH = 182;
 
         const inputRef = useRef<HTMLInputElement>(null);
@@ -136,9 +137,7 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
         }, [isExpanded]);
 
         useEffect(() => {
-            setSelectOptions(ops => {
-                return JSON.stringify(optionsWithAll) === JSON.stringify(ops) ? ops : optionsWithAll;
-            });
+            setSelectOptions(ops => (JSON.stringify(optionsWithAll) === JSON.stringify(ops) ? ops : optionsWithAll));
         }, [optionsWithAll]);
 
         useEffect(() => {
@@ -161,9 +160,9 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
 
         useEffect(() => {
             if (selectedOptionIds) {
-                setSelectedOptIds(ids => {
-                    return JSON.stringify(ids) !== JSON.stringify(selectedOptionIds) ? selectedOptionIds : ids;
-                });
+                setSelectedOptIds(ids =>
+                    JSON.stringify(ids) !== JSON.stringify(selectedOptionIds) ? selectedOptionIds : ids
+                );
             }
         }, [selectedOptionIds]);
 
@@ -193,7 +192,7 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
             if (inputRef.current) {
                 inputRef.current.setAttribute('isInputSelect', 'true');
             }
-        }, [formatLabel]); //formatLabel needs to stay in the dependencies array to force the useEffect to run
+        }, [formatLabel]); // formatLabel needs to stay in the dependencies array to force the useEffect to run
 
         useEffect(() => {
             const placement = dropDown?.placement || 'right';
@@ -216,9 +215,8 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
         }, [dropDown?.placement, dropDown, formatLabel]);
 
         const chipsToOptions = useCallback(
-            (chips: Chip[]) => {
-                return selectOptions.filter(option => chips.map(chip => chip.id).includes(option.id.toString()));
-            },
+            (chips: Chip[]) =>
+                selectOptions.filter(option => chips.map(chip => chip.id).includes(option.id.toString())),
             [selectOptions]
         );
 
@@ -255,14 +253,12 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
                 let chips = (inputText as SelectChip[]) || [];
                 if (event.target.checked === true) {
                     if (id === SELECT_ALL) {
-                        chips = optionsWithAll.map<SelectChip>(chip => {
-                            return {
-                                id: chip.id.toString(),
-                                isSelected: true,
-                                label: chip.label,
-                                isHidden: chip.id === SELECT_ALL
-                            };
-                        });
+                        chips = optionsWithAll.map<SelectChip>(chip => ({
+                            id: chip.id.toString(),
+                            isSelected: true,
+                            label: chip.label,
+                            isHidden: chip.id === SELECT_ALL
+                        }));
                     } else {
                         const chipsWithoutSelectAll = chips.filter(chip => chip.id !== SELECT_ALL);
                         chips = [
@@ -275,7 +271,7 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
                             ...chipsWithoutSelectAll,
                             {
                                 id,
-                                label: label,
+                                label,
                                 isSelected: true,
                                 isHidden: false
                             }
@@ -313,12 +309,10 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
 
             const handleOnChipChange = (chips: Chip[]) => {
                 setInputText(
-                    chips.map<SelectChip>(chip => {
-                        return {
-                            ...chip,
-                            isSelected: true
-                        };
-                    })
+                    chips.map<SelectChip>(chip => ({
+                        ...chip,
+                        isSelected: true
+                    }))
                 );
 
                 changeEventWithActionButtons(chips);
@@ -330,9 +324,8 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
                         return formatLabel(
                             inputText.filter(item => item.id !== SELECT_ALL).map<string>(chip => chip.label)
                         );
-                    } else {
-                        return formatLabel(inputText ? [inputText] : undefined);
                     }
+                    return formatLabel(inputText ? [inputText] : undefined);
                 }
 
                 switch (formatLabel) {
@@ -426,14 +419,12 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
             const OptionItem = ({ option }: { option: DsSelectItemProps }) => {
                 const { id, label, className = '', isDisabled, style = {}, 'data-testid': dataTestId } = option;
 
-                const customeLabel = () => {
-                    return formatOptionLabel && options.length > 0 ? formatOptionLabel(option) : label;
-                };
+                const customeLabel = () =>
+                    formatOptionLabel && options.length > 0 ? formatOptionLabel(option) : label;
 
                 if (selectionType === 'single' || options.length === 0) {
-                    const isSingleItemSelected = (id: string | number) => {
-                        return selectedOptIds.includes(id) ? 'isSelected' : '';
-                    };
+                    const isSingleItemSelected = (id: string | number) =>
+                        selectedOptIds.includes(id) ? 'isSelected' : '';
 
                     return (
                         <DsTypography
@@ -452,33 +443,32 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
                             {customeLabel()}
                         </DsTypography>
                     );
-                } else {
-                    const isSelected = (id: string) => {
-                        const chipList = (inputText || []) as SelectChip[];
-                        if (id === SELECT_ALL) {
-                            return (
-                                chipList.filter(chip => chip.id !== SELECT_ALL).length ===
-                                selectOptions.filter(chip => chip.id !== SELECT_ALL).length
-                            );
-                        }
-
-                        return chipList.some(chip => chip.id === id.toString());
-                    };
-
-                    return (
-                        <DsCheckbox
-                            key={id}
-                            id={id.toString()}
-                            title={customeLabel()}
-                            onSelect={(id, event) => handleCheckSelectItem(event, id, option)}
-                            isSelected={isSelected(id.toString())}
-                            className={`selectItem ${className}`}
-                            style={style}
-                            isDisabled={isDisabled}
-                            data-testid={dataTestId}
-                        />
-                    );
                 }
+                const isSelected = (id: string) => {
+                    const chipList = (inputText || []) as SelectChip[];
+                    if (id === SELECT_ALL) {
+                        return (
+                            chipList.filter(chip => chip.id !== SELECT_ALL).length ===
+                            selectOptions.filter(chip => chip.id !== SELECT_ALL).length
+                        );
+                    }
+
+                    return chipList.some(chip => chip.id === id.toString());
+                };
+
+                return (
+                    <DsCheckbox
+                        key={id}
+                        id={id.toString()}
+                        title={customeLabel()}
+                        onSelect={(id, event) => handleCheckSelectItem(event, id, option)}
+                        isSelected={isSelected(id.toString())}
+                        className={`selectItem ${className}`}
+                        style={style}
+                        isDisabled={isDisabled}
+                        data-testid={dataTestId}
+                    />
+                );
             };
 
             const dropActions: [DsButtonProps, DsButtonProps] = [
@@ -518,9 +508,9 @@ export const DsSelectFsx = forwardRef<HTMLDivElement, DsSelectProps>(
             ];
 
             return {
-                //@ts-ignore
+                // @ts-ignore
                 boundariesRef: inputRef,
-                offsetX: offsetX,
+                offsetX,
                 maxHeight: dropDown?.maxHeight,
                 onExpandChange: isExpanded => {
                     setExpanded(isExpanded);

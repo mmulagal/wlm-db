@@ -12,30 +12,26 @@ type accordionType = {
 
 const ISConnectivity = ({ handleToggle, openKey }: accordionType) => {
     const resourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
-    const contentArea = () => {
-        return (
-            <>
+    const contentArea = () => (
+        <>
+            <div className={commonStyles.row}>
+                <Typography variant="Semibold_14" className={commonStyles.heading}>
+                    {GENERAL.VPC_INFO}
+                </Typography>
+                <Typography variant="Regular_14">{resourceDetails?.topology?.vpcId}</Typography>
+            </div>
+            {resourceDetails?.storage?.fsxn?.protocol && (
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        {GENERAL.VPC_INFO}
+                        {GENERAL.ACCESS_PROTOCOL}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.vpcId}</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.storage?.fsxn?.protocol?.join(',')}</Typography>
                 </div>
-                {resourceDetails?.storage?.fsxn?.protocol && (
-                    <div className={commonStyles.row}>
-                        <Typography variant="Semibold_14" className={commonStyles.heading}>
-                            {GENERAL.ACCESS_PROTOCOL}
-                        </Typography>
-                        <Typography variant="Regular_14">
-                            {resourceDetails?.storage?.fsxn?.protocol?.join(',')}
-                        </Typography>
-                    </div>
-                )}
-            </>
-        );
-    };
+            )}
+        </>
+    );
     return (
-        <div className={''}>
+        <div className="">
             <DbAccordion
                 heading="Connectivity"
                 toggle={handleToggle}

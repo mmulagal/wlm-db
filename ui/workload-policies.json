@@ -55,9 +55,7 @@
             {
                 "Sid": "FSxNGroup",
                 "Effect": "Allow",
-                "Action": [
-                    "fsx:TagResource"
-                ],
+                "Action": ["fsx:TagResource"],
                 "Resource": "*",
                 "Condition": {
                     "StringLike": {
@@ -76,6 +74,7 @@
                     "cloudformation:ValidateTemplate",
                     "cloudformation:DescribeAccountLimits",
                     "cloudwatch:GetMetricStatistics",
+                    "cloudwatch:GetMetricData",
                     "ds:DescribeDirectories",
                     "ec2:CreateLaunchTemplate",
                     "ec2:CreateLaunchTemplateVersion",
@@ -136,13 +135,8 @@
             {
                 "Sid": "ArnGroup",
                 "Effect": "Allow",
-                "Action": [
-                    "cloudformation:SignalResource"
-                ],
-                "Resource": [
-                    "arn:aws:cloudformation:*:*:stack/WLMDB*",
-                    "arn:aws:logs:*:*:log-group:WLMDB*"
-                ]
+                "Action": ["cloudformation:SignalResource"],
+                "Resource": ["arn:aws:cloudformation:*:*:stack/WLMDB*", "arn:aws:logs:*:*:log-group:WLMDB*"]
             },
             {
                 "Sid": "IAMGroup",
@@ -187,12 +181,7 @@
             {
                 "Sid": "SSMParameterStore",
                 "Effect": "Allow",
-                "Action": [
-                    "ssm:GetParameter",
-                    "ssm:GetParameters",
-                    "ssm:PutParameter",
-                    "ssm:DeleteParameters"
-                ],
+                "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameters"],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             }
         ]
@@ -205,6 +194,7 @@
                 "Effect": "Allow",
                 "Action": [
                     "cloudwatch:GetMetricStatistics",
+                    "cloudwatch:GetMetricData",
                     "sns:ListTopics",
                     "ec2:DescribeInstances",
                     "ec2:DescribeVpcs",
@@ -245,28 +235,18 @@
                     "bedrock:GetFoundationModelAvailability",
                     "bedrock:ListInferenceProfiles"
                 ],
-                "Resource": [
-                    "*"
-                ]
+                "Resource": ["*"]
             },
             {
                 "Sid": "SSMParameterStore",
                 "Effect": "Allow",
-                "Action": [
-                    "ssm:GetParameter",
-                    "ssm:GetParameters",
-                    "ssm:PutParameter",
-                    "ssm:DeleteParameters"
-                ],
+                "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameters"],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             },
             {
                 "Sid": "SSMResponseCloudWatch",
                 "Effect": "Allow",
-                "Action": [
-                    "logs:GetLogEvents",
-                    "logs:PutRetentionPolicy"
-                ],
+                "Action": ["logs:GetLogEvents", "logs:PutRetentionPolicy"],
                 "Resource": "arn:aws:logs:*:*:log-group:netapp/wlmdb/*"
             }
         ]
@@ -277,10 +257,7 @@
             {
                 "Sid": "WellArchitecturedFsxGroup",
                 "Effect": "Allow",
-                "Action": [
-                    "fsx:UpdateFileSystem",
-                    "fsx:UpdateVolume"
-                ],
+                "Action": ["fsx:UpdateFileSystem", "fsx:UpdateVolume"],
                 "Resource": "*"
             }
         ]
@@ -304,99 +281,84 @@
         ]
     },
     "instance-profile": {
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Action": [
-				"cloudwatch:List*",
-				"cloudwatch:Get*",
-				"cloudwatch:Describe*"
-			],
-			"Effect": "Allow",
-			"Resource": "*",
-			"Sid": "CloudWatchStatement"
-		},
-		{
-			"Action": [
-				"logs:CreateLogStream",
-				"logs:CreateLogGroup",
-				"logs:GetLogEvents",
-				"logs:GetLogDelivery",
-				"logs:GetLogRecord",
-				"logs:ListLogDeliveries",
-				"logs:DescribeLogGroups",
-				"logs:DescribeLogStreams",
-				"logs:PutLogEvents",
-				"logs:TagResource"
-			],
-			"Effect": "Allow",
-			"Resource": "*",
-			"Sid": "CloudLogStatement"
-		},
-		{
-			"Action": [
-				"sts:GetCallerIdentity"
-			],
-			"Effect": "Allow",
-			"Resource": "*",
-			"Sid": "STSStatement"
-		},
-		{
-			"Action": [
-				"ssm:DescribeAssociation",
-				"ssm:GetDeployablePatchSnapshotForInstance",
-				"ssm:GetDocument",
-				"ssm:DescribeDocument",
-				"ssm:GetManifest",
-				"ssm:ListAssociations",
-				"ssm:ListInstanceAssociations",
-				"ssm:GetCommandInvocation",
-				"ec2messages:GetEndpoint",
-				"ec2messages:GetMessages"
-			],
-			"Effect": "Allow",
-			"Resource": "*",
-			"Sid": "SSMListStatement"
-		},
-		{
-			"Action": [
-				"fsx:DescribeFileSystems",
-				"fsx:DescribeVolumes",
-				"fsx:DescribeStorageVirtualMachines"
-			],
-			"Effect": "Allow",
-			"Resource": "*",
-			"Sid": "FsxStatement"
-		},
-		{
-			"Action": [
-				"ssmmessages:CreateControlChannel",
-				"ssmmessages:CreateDataChannel",
-				"ssmmessages:OpenControlChannel",
-				"ssmmessages:OpenDataChannel",
-				"ssm:PutInventory",
-				"ssm:PutComplianceItems",
-				"ssm:PutConfigurePackageResult",
-				"ssm:UpdateAssociationStatus",
-				"ssm:UpdateInstanceAssociationStatus",
-				"ssm:UpdateInstanceInformation",
-				"ssm:SendCommand"
-			],
-			"Effect": "Allow",
-			"Resource": "*",
-			"Sid": "SSMCreateStatement"
-		},
-		{
-			"Action": [
-				"ssm:GetParameter",
-				"ssm:GetParameters",
-				"ssm:PutParameter",
-				"ssm:GetParametersByPath"
-			],
-			"Effect": "Allow",
-			"Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*",
-			"Sid": "SSMGetPutParameter"
-		}
-	]
-}
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": ["cloudwatch:List*", "cloudwatch:Get*", "cloudwatch:Describe*", "cloudwatch:PutMetricData"],
+                "Effect": "Allow",
+                "Resource": "*",
+                "Sid": "CloudWatchStatement"
+            },
+            {
+                "Action": [
+                    "logs:CreateLogStream",
+                    "logs:CreateLogGroup",
+                    "logs:GetLogEvents",
+                    "logs:GetLogDelivery",
+                    "logs:GetLogRecord",
+                    "logs:ListLogDeliveries",
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                    "logs:PutLogEvents",
+                    "logs:TagResource"
+                ],
+                "Effect": "Allow",
+                "Resource": "*",
+                "Sid": "CloudLogStatement"
+            },
+            {
+                "Action": ["sts:GetCallerIdentity"],
+                "Effect": "Allow",
+                "Resource": "*",
+                "Sid": "STSStatement"
+            },
+            {
+                "Action": [
+                    "ssm:DescribeAssociation",
+                    "ssm:GetDeployablePatchSnapshotForInstance",
+                    "ssm:GetDocument",
+                    "ssm:DescribeDocument",
+                    "ssm:GetManifest",
+                    "ssm:ListAssociations",
+                    "ssm:ListInstanceAssociations",
+                    "ssm:GetCommandInvocation",
+                    "ec2messages:GetEndpoint",
+                    "ec2messages:GetMessages"
+                ],
+                "Effect": "Allow",
+                "Resource": "*",
+                "Sid": "SSMListStatement"
+            },
+            {
+                "Action": ["fsx:DescribeFileSystems", "fsx:DescribeVolumes", "fsx:DescribeStorageVirtualMachines"],
+                "Effect": "Allow",
+                "Resource": "*",
+                "Sid": "FsxStatement"
+            },
+            {
+                "Action": [
+                    "ssmmessages:CreateControlChannel",
+                    "ssmmessages:CreateDataChannel",
+                    "ssmmessages:OpenControlChannel",
+                    "ssmmessages:OpenDataChannel",
+                    "ssm:PutInventory",
+                    "ssm:PutComplianceItems",
+                    "ssm:PutConfigurePackageResult",
+                    "ssm:UpdateAssociationStatus",
+                    "ssm:UpdateInstanceAssociationStatus",
+                    "ssm:UpdateInstanceInformation",
+                    "ssm:SendCommand"
+                ],
+                "Effect": "Allow",
+                "Resource": "*",
+                "Sid": "SSMCreateStatement"
+            },
+            {
+                "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:GetParametersByPath"],
+                "Effect": "Allow",
+                "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*",
+                "Sid": "SSMGetPutParameter"
+            }
+        ]
+    }
 }

@@ -1,8 +1,8 @@
 import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useMemo } from 'react';
 import styles from './InnerTable.module.scss';
 
-import { useMemo } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 
 const DataFilesOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
@@ -24,16 +24,14 @@ const DataFilesOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }
             filterOptions: 'auto',
             isSticky: true,
             width: 'auto',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
 
         lastColDetails(type, {}, '230px')
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -47,16 +45,16 @@ const DataFilesOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted databases`}
-                singularTitle={'Impacted database'}
+                pluralTitle="Impacted databases"
+                singularTitle="Impacted database"
             />
 
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

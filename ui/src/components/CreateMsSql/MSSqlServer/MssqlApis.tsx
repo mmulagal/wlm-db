@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetAdsListQuery,
@@ -35,7 +36,6 @@ import {
     addVpcList,
     getThroughputRegionList
 } from '../../../store/mssql/mssqlSlice';
-import { useEffect, useState } from 'react';
 
 import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
 import { formatKmsData } from '../../../utils/utilityFunctions';
@@ -78,7 +78,7 @@ const MssqlApis = () => {
     // fsxnSkip to skip FSxN API call when credentialId, regionCode, vpcId is not defined
     const [vpcDependentApiSkip, setVpcDependentApiSkip] = useState(true);
 
-    //Getting the Data from state
+    // Getting the Data from state
     const selectedCredentialData = useAppSelector(state => state.mssqlForm.awsAccount.selectedCredential);
     const selectedRegionData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
     const selectedVpcData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
@@ -282,7 +282,7 @@ const MssqlApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [credentialData, credentialLoading, credentialError]);
 
-    //Handle dependency cases
+    // Handle dependency cases
     useEffect(() => {
         const credId = selectedCredentialData?.data ? selectedCredentialData.data?.credentialsId : undefined;
         const regionCode = selectedRegionData?.data ? selectedRegionData.data?.regionCode : undefined;
@@ -571,12 +571,10 @@ const MssqlApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configData, configLoading, configError]);
 
-    //To update chatbot msg loading status
+    // To update chatbot msg loading status
     useEffect(() => {
         dispatch(setIsReceivingMsg(vpcLoading));
     }, [vpcLoading]);
-
-    return;
 };
 
 export default MssqlApis;

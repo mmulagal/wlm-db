@@ -4,7 +4,7 @@ import { isEmpty } from 'lodash-es';
 import { DATABASE_TYPE, JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
-import { AuditStatus, DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
+import { AuditStatus, HttpErrorCodes } from '../../utils/consts';
 
 import { getArtifactsRegionBucketName, sqlResponseParsing } from '../../utils/utils';
 import {
@@ -12,6 +12,7 @@ import {
     LOGS_ANALYZER_MODEL_IDS,
     LOGS_ANALYZER_PACKAGE_NAME,
     LOGS_ANALYZER_PACKAGE_VERSION,
+    LOGS_COUNT_TO_CONSIDER,
     MODEL_AVAILABILITY_STATUS
 } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { listDatabaseInstances } from '../../lib/database/db';
@@ -185,12 +186,14 @@ async function handleLogsAnalysis(
     region: string,
     managedInstance: DatabaseInstancesIncludingResource,
     jobId: string,
+    logsCountToConsider: number = LOGS_COUNT_TO_CONSIDER,
+    logsAnalyzerFromTimestamp: number = 1,
     inferenceConfig?: InferenceConfigType,
     logsAnalyzerS3SignedUrl?: string
 ) {
     logger.info(
         `Handling logs analysis for accountId: ${accountId}, credentialsId: ${credentialsId}, region: ${region}`,
-        { logsAnalyzerS3SignedUrl, inferenceConfig }
+        { logsAnalyzerS3SignedUrl, inferenceConfig, logsCountToConsider, logsAnalyzerFromTimestamp, jobId }
     );
     let jobStatus;
     let jobError;
@@ -223,11 +226,7 @@ async function handleLogsAnalysis(
         }
         const s3SignedUrl =
             logsAnalyzerS3SignedUrl ||
-            (await getPreSignedUrl(
-                DEFAULT_AWS_REGION,
-                getArtifactsRegionBucketName(DEFAULT_AWS_REGION),
-                LOGS_ANALYZER_BUNDLE_PATH
-            ));
+            (await getPreSignedUrl(region, getArtifactsRegionBucketName(region), LOGS_ANALYZER_BUNDLE_PATH));
 
         const logsPathQuery =
             'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH';
@@ -253,6 +252,8 @@ async function handleLogsAnalysis(
                       version: LOGS_ANALYZER_PACKAGE_VERSION,
                       instanceId: activeNodeInstanceId,
                       region,
+                      logsCountToConsider,
+                      logsAnalyzerFromTimestamp,
                       inferenceProfileArn,
                       jobId,
                       inferenceConfig
@@ -335,9 +336,22 @@ async function triggerLogsAnalysis(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
+    logsCountToConsider?: number,
+    logsAnalyzerFromTimestamp?: number,
     inferenceConfig?: InferenceConfigType,
     logsAnalyzerS3SignedUrl?: string
 ) {
+    logger.info('Triggering logs analysis:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        logsCountToConsider,
+        logsAnalyzerFromTimestamp,
+        inferenceConfig,
+        logsAnalyzerS3SignedUrl
+    });
     const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
         region,
@@ -357,7 +371,7 @@ async function triggerLogsAnalysis(
     } = managedInstance;
 
     let jobsStatus: string = JOBSTATUS.IN_PROGRESS;
-    let jobId: string = 'test';
+    let jobId: string;
     try {
         const savedInstanceName = `${resourceName}\\${instanceName}`;
         const jobName = `Logs analysis for ${savedInstanceName}`;
@@ -377,6 +391,8 @@ async function triggerLogsAnalysis(
             region,
             managedInstance,
             jobId,
+            logsCountToConsider,
+            logsAnalyzerFromTimestamp,
             inferenceConfig,
             logsAnalyzerS3SignedUrl
         );

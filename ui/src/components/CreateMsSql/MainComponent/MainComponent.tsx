@@ -1,15 +1,14 @@
-import { StepLayout, WizardContent, WizardFooter } from '@netapp/design-system';
+import { StepLayout, WizardContent, WizardFooter, Spinner } from '@netapp/design-system';
 
+import { useState } from 'react';
 import MSSqlFooter from '../MSSqlServer/MSSqlFooter/MSSqlFooter';
 
 import MSSqlHeader from '../MSSqlServer/MSSqlHeader/MSSqlHeader';
 import styles from './MainComponent.module.scss';
-import { Spinner } from '@netapp/design-system';
 import { useAppSelector } from '../../../store/storeHooks';
 import CreateMsSqlLayout from '../CreateMsSqlLayout/CreateMsSqlLayout';
 import MSSqlServer from '../MSSqlServer/MSSqlServer';
 import CodeBox from '../CodeBox/CodeBox';
-import { useState } from 'react';
 import MssqlApis from '../MSSqlServer/MssqlApis';
 
 const MainComponent = () => {
@@ -29,7 +28,7 @@ const MainComponent = () => {
         <div className={styles.mainContainer}>
             {loading && (
                 <>
-                    <div className={styles.loaderOverlay}></div>
+                    <div className={styles.loaderOverlay} />
                     <div className={styles.spinnerPlacement}>
                         <Spinner isLarge />
                     </div>

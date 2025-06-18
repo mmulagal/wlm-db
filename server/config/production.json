@@ -27,6 +27,11 @@
             "purge": {
                 "interval": "24h"
             }
+        },
+        "deployments": {
+            "purge": {
+                "older-than": "30d"
+            }
         }
     },
     "reporting": {

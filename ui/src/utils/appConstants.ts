@@ -1,9 +1,10 @@
 export const SELECT_CONFIG = {
-    STANDARD_CREATE: `Standard create`,
-    EASY_CREATE: `Easy create`,
+    STANDARD_CREATE: 'Standard create',
+    EASY_CREATE: 'Easy create',
     ADVANCED_CREATE: 'Advanced create',
     QUICK_CREATE: 'Quick create',
-    STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
+    STANDARD_CREATE_CONTENT:
+        'You set all of the configuration options, including availability, security, backups, and maintenance.',
     EASY_CREATE_CONTENT:
         'Use a recommended best-practice configuration. You can change most configuration options after you create the database.',
     COMING_SOON: 'Coming soon',
@@ -18,7 +19,7 @@ export const SELECT_CONFIG = {
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
     NO_SAVED_CONFIG: 'There are no saved Microsoft SQL configurations.',
-    NO_SAVED_CONFIG_PGSQL: `There are no saved PostgreSQL configurations.`,
+    NO_SAVED_CONFIG_PGSQL: 'There are no saved PostgreSQL configurations.',
     MAX_CONFIG_LIMIT:
         "You have reached the maximum limit of 100 configurations. Before you can save a new configuration, you'll need to delete an old configuration first.",
     DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
@@ -219,11 +220,11 @@ export const GENERAL = {
     DB_CREATE_SUCCESS_MSG: 'DB creation is in progress',
     PERMISSION_REQUIRED: 'Permissions required',
     CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],
-    //Constants for Security group
+    // Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
     GENERATED_SECURITY_GROUP: 'Create a new security group',
     EXISTING_SECURITY_GROUP: 'Existing security group',
-    //Constants for Op system
+    // Constants for Op system
     WIN_SERVER_2016: 'Windows server 2016',
     WIN_SERVER_2019: 'Windows server 2019',
     WIN_SERVER_2022: 'Windows server 2022',
@@ -231,7 +232,7 @@ export const GENERAL = {
     WIN_SERVER_2019_VERSION: '2019',
     WIN_SERVER_2022_VERSION: '2022',
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
-    //Constants for DB Deployment
+    // Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
     FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Failover Cluster Instance across multiple Availability Zones',
     PGSQL_STANDALONE: 'Deploy your PostgreSQL Server on a single node',
@@ -241,7 +242,7 @@ export const GENERAL = {
     HIGH_AVAILABILITY: 'High availability (HA)',
     SINGLE_INSTANCE: 'Single Instance',
     SINGLE_INSTANCE_TEXT: 'Deploy your SQL Server on a single node.',
-    //Constants for DB Edition
+    // Constants for DB Edition
     SQL_SERVER_STANDARD: 'Standard',
     SQL_SERVER_STANDARD_EDITION: 'SQL Server Standard Edition',
     SQL_SERVER_STANDARD_EDITION_TEXT:
@@ -254,7 +255,7 @@ export const GENERAL = {
     SQL_SERVER_ENTERPRiSE_EDITION: 'SQL Server Enterprise Edition',
     SQL_SERVER_ENTERPRiSE_EDITION_TEXT:
         'Comprehensive high-end capabilities for mission-critical applications with demanding database workloads and business intelligence requirements.',
-    //Constants for DB version
+    // Constants for DB version
     SQL_SERVER_2019: 'SQL Server 2019',
     SQL_SERVER_2016: 'SQL Server 2016',
     SQL_SERVER_2022: 'SQL Server 2022',
@@ -262,7 +263,7 @@ export const GENERAL = {
     SQL_SERVER_2016_VERSION: '2016',
     SQL_SERVER_2022_VERSION: '2022',
     VERSION: 'Version',
-    //Constants for License accordion
+    // Constants for License accordion
     LICENSE_TEXT:
         'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
@@ -275,7 +276,7 @@ export const GENERAL = {
     SELECT_AMI_NAME: 'Select AMI Name',
     FILTER_SQL_SERVER_AMI: 'Filter SQL Server AMI',
     SELECT_SQL_SERVER_AMI: 'Select SQL Server AMI',
-    //Constants for DB name accordion
+    // Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
         'The cluster name must be 15 characters or less. The first character can be a letter (a-z or A-Z) or a number (0-9). Subsequent characters can be a letter, number, or hyphen (-).',
@@ -284,7 +285,7 @@ export const GENERAL = {
     DB_NAME_TOOLTIP2: 'The first character can be a letter (a-z or A-Z) or a number (0-9)',
     DB_NAME_TOOLTIP3: 'Subsequent characters can be a letter, number, or hyphen (-)',
     KEY_PAIR_NAME: 'Key pair',
-    //Constants for Storage capacity
+    // Constants for Storage capacity
     CAPACITY: 'Capacity',
     UNIT: 'Unit',
     CAPACITY_PGSQL_TOOLTIP:
@@ -292,30 +293,30 @@ export const GENERAL = {
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
     ERROR_CAPACITY: 'Supported capacity should be between 120 GiB to 86 TiB.',
-    //Provisioned IOPS
+    // Provisioned IOPS
     AUTOMATIC: 'Automatic',
     USER_PROVISIONED: 'User-provisioned',
     IOPS_VALUE: 'IOPS value',
     AUTOMATIC_IOPS: '3 IOPS per GiB of SSD storage will be created.',
     PLACEHOLDER_PROVISIONED: '3072 - 160000 IOPS',
     THROUGHPUT: 'Throughput',
-    //SIMPLE NOTIFICATION SERVICES
+    // SIMPLE NOTIFICATION SERVICES
     SNS: 'Enable the Simple Notification Service (SNS) for this configuration',
     SNS_TEXT: 'Enter an SNS topic for Microsoft SQL Server to send notifications and alerts.',
     SNS_TEXT_PGSQL: 'Enter an SNS topic for PostgreSQL Server to send notifications and alerts.',
     ARN: 'ARN',
-    //Cloud watch
+    // Cloud watch
     CLOUD_WATCH_MONITORING: 'CloudWatch monitoring',
     RESOURCE_ROLLBACK: 'Resource rollback',
     CLOUD_WATCH_TEXT:
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
     CLOUD_WATCH_TEXT_PGSQL:
         'Set up monitors and automated insights for this PostgreSQL deployment using CloudWatch Application Insights.',
-    //Resource Text
+    // Resource Text
     RESOURCE_TEXT_ONE: 'When a deployment fails, your provisioned resources will not be rolled back by default.',
     RESOURCE_TEXT_TWO:
         'The provisioned resources will be deleted when you delete your deployment from the AWS console.',
-    //FSX Accordion
+    // FSX Accordion
     CREATE_NEW_FSXN: 'Create new FSx for ONTAP',
     CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
     SELECT_EXISTING_FSX: 'Select an existing FSx for ONTAP ',
@@ -328,13 +329,13 @@ export const GENERAL = {
     PASSWORD_FSX_2: 'The password must contain at least one letter and one number.',
     PASSWORD_FSX_3: 'The password cannot contain the user name.',
     PASSWORD_FSX_4: 'The password cannot contain the word "admin".',
-    //Active Directory
+    // Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
     AD_TEXT:
         'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain. Ensure that you have connection between the Active Directory and the VPC.',
     PASSWORD: 'Password',
-    //Region VPC accordion
+    // Region VPC accordion
     REGION: 'Region',
     REGION_VPC_TEXT:
         'Choose the Virtual private cloud (VPC). The VPC defines the virtual  networking  environment for this DB instance.',
@@ -342,7 +343,7 @@ export const GENERAL = {
     CREATE_NEW_VPC: 'Create new VPC',
     REGION_VPC: 'Region & VPC',
     VPC: 'VPC',
-    //Availability zone
+    // Availability zone
     AZ_TEXT:
         'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled. The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
@@ -350,7 +351,7 @@ export const GENERAL = {
     CLUSTER_CONFIG_PGSQL: 'Node configuration - Select subnet:',
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
-    //DB credential
+    // DB credential
     DATABASE_CREDENTIAL_TEXT:
         'Create a new service account for SQL server or use existing service account credentials in the Active Directory',
     DATABASE_CREDENTIAL_TEXT_PGSQL: 'Provide password to the postgres user',
@@ -371,7 +372,7 @@ export const GENERAL = {
     PASSWORD_CRED_LI_4:
         'Non-alphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%)',
     PASSWORD_CRED_4: "The password can't contain the user name.",
-    //Encryption
+    // Encryption
     ENCRYPTION_TEXT:
         'Select the key to encrypt this database storage (FSx for ONTAP). You can select from master keys in your account or enter the ARN of a key from a different account.',
     ENCRYPTION_SELECT_FROM_ACCOUNT: 'Select a key from your account',
@@ -431,7 +432,7 @@ export const GENERAL = {
     REMOVE_FROM_WORKSPACE: 'Remove from workspace',
     TABLES_SUMMARY: 'Tables summary',
     TABLES: 'Tables',
-    //Estimation cost
+    // Estimation cost
     ESTIMATED_COST: 'Estimated cost',
     ESTIMATED_SUBTEXT: 'Estimate of charges incurred to deploy the following resources.',
     RESOURCES: 'Resources',
@@ -459,7 +460,7 @@ export const GENERAL = {
     REMOVE_DIALOG_CONTENT_FIRST_PART: (weType: string) => `You are about to remove the ${weType} working environment`,
     REMOVE_DIALOG_CONTENT_SECOND_PART: 'from workspace.',
     REMOVE_DIALOG_NOTICE: (weType: string) => `This will not affect the ${weType} instance.`,
-    //PREVIEW DEFAULT
+    // PREVIEW DEFAULT
     PREVIEW_DEFAULT_TEXT:
         'Easy create sets the following configurations to their default values, some of which can be changed later. If you want to change any of these settings now, use',
     PD_HEADER_TEXT: 'View the default configuration created by the system',
@@ -627,7 +628,7 @@ export const GENERAL = {
     JOBS_STATUS_OVER_TIME: 'Job status over time',
     JOB_MONITORING: 'Job monitoring',
     POLICY_MANAGEMENT: 'Policy management',
-    //Job Monitoring constants
+    // Job Monitoring constants
     JM_COMPLETED: 'Completed',
     JM_IN_PROGRESS: 'In Progress',
     JM_FAILED: 'Failed',
@@ -645,7 +646,7 @@ export const GENERAL = {
     JM_DOWNLOAD_PROGRESS: 'Download in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table was downloaded',
     DEMO_TITLE: 'Redirect to CloudFormation',
-    DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`,
+    DEMO_CONTENT: "When using a Demo account you won't be redirected to the AWS CloudFormation service.",
     FSXN_SVM_ERROR: [
         'Selected FSX has more than ',
         ' SVMs. Amazon FSx does not support having more than ',
@@ -941,7 +942,7 @@ export const GENERAL = {
     SQL_SERVER_MANAGED: 'SQL server instance is currently managed.',
     SSM_CONNECTION_DOWN: 'SSM is not connected',
     STORAGE_NOT_PRESENT: 'Storage could not be identified',
-    //Sandbox constants
+    // Sandbox constants
     SANDBOX: 'Sandbox',
     SANDBOXES: 'Sandboxes',
     SANDBOX_HEADER_CONTENT:
@@ -1006,7 +1007,7 @@ export const GENERAL = {
     ES_TOTAL_STORAGE_AMOUNT: 'Total storage amount',
     ES_TOTAL_PROVISIONED_IOPS: 'Total provisioned IOPS',
     ES_TOTAL_THROUGHPUT_MBPS: 'Total throughput MB/s',
-    //Explore savings
+    // Explore savings
     IOPS_DISABLE_TOOLTIP: "IOPS doesn't apply to this disc type volumes.",
     THROUGHPUT_DISABLE_TOOLTIP: "Throughput doesn't apply to this disc type volumes.",
     ES_SNAPSHOT_FREQUENCY: 'Snapshot frequency',
@@ -1184,7 +1185,6 @@ export const GENERAL = {
     HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
     NOT_OPTIMIZED_SHARED_DRIVES:
         'Drive size optimization isn’t possible because data is on the same shared drive. You’ll need to change the storage layout before resizing the drive.',
-    ASSESSMENT_IN_PROGRESS: 'Well-architected analysis has not been run yet.',
     ASSESSMENT_FOR_MANAGE: 'Well-architected analysis is only supported for registered instances.',
     FSXN_OPTIMIZE_SUPPORTED:
         'Well-architected analysis is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',

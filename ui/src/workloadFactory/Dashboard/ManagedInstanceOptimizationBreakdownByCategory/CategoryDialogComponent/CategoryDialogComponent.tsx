@@ -1,10 +1,10 @@
 import { DsFlashingDotsLoader, DsTypography, Table, useTable, TableTopBar } from '@netapp/design-system';
-import styles from './CategoryDialogComponent.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect } from 'react';
-import { setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
+import styles from './CategoryDialogComponent.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { GENERAL } from '../../../../utils/appConstants';
 
@@ -29,20 +29,14 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
                             <div className={styles.firstColText}>
                                 {(rowData?.status === INVENTORY_STATUS.RUNNING ||
                                     rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}
-                                    ></div>
+                                    <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
                                 )}
                                 {(rowData?.status === INVENTORY_STATUS.STOPPED ||
                                     rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}
-                                    ></div>
+                                    <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
                                 )}
                                 {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}
-                                    ></div>
+                                    <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
                                 )}
                                 <DsTypography variant="Regular_13">
                                     {rowData?.status === INVENTORY_STATUS.RUNNING ||
@@ -67,37 +61,30 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
             accessor: 'hostName',
             width: '30%',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
             id: '3',
-            Header: `Well-architected issues`,
-            accessor: 'score',
+            Header: 'Well-architected issues',
+            accessor: 'optimized',
             width: '30%',
             isSortable: true,
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         }
     ];
 
     const firstEnabledRow = () => {
-        const enabledRow = tableData?.find((row: any) => {
-            return row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP;
-        });
+        const enabledRow = tableData?.find((row: any) => row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
         if (enabledRow) {
             return enabledRow?.id;
-        } else {
-            return null;
         }
+        return null;
     };
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         selectAllProps: false,
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         defaultSelectedRows: selectedRow ? [selectedRow.id] : [firstEnabledRow()],
         isSorting: false,
@@ -127,15 +114,15 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
             </DsTypography>
             <div className={styles.table}>
                 <TableTopBar
-                    //@ts-ignore
+                    // @ts-ignore
                     tableProps={tableProps}
                     pluralTitle="Not-optimized instances"
                     singularTitle="Not-optimized instance"
                 />
                 <Table
-                    //@ts-ignore
+                    // @ts-ignore
                     tableProps={tableProps}
-                    isDoubleRow={true}
+                    isDoubleRow
                 />
             </div>
         </div>

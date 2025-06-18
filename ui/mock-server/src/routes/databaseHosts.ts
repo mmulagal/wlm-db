@@ -157,36 +157,30 @@ router.post(
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/discover/resource-credentials`,
+    `${BASE_URL}/v1/register-credentials`,
     async (req: {}, res: any) => {
         setTimeout(() => {
-            generateResponse(res, 200, [{
-                credentialsId: "3ad8702c-a2fd-48d2-be50-1ba6ce83acd5",
-                ec2InstanceId: "i-0db20e831d1ce41e3",
-                region: "ap-south-1",
-                databaseCount: 10,
-                sqlServerEdition: 'Standard',
-                sqlServerError: '',
-                fsxnError: '',
-                "manageReadiness": { 
-                    "assessment" : { 
-                        "missingSqlPermissions": [],
-                        "missingModules": []
-                    },
-                    "remediation": {
-                        "missingSqlPermissions": [],
-                        "missingModules": []
-                    },
-                    "dbcreation": {
-                        "missingSqlPermissions": [],
-                        "missingModules": []
-                    },
-                    "sandbox": {
-                        "missingSqlPermissions":[],
-                        "missingModules": []
+            generateResponse(res, 200, 
+                [
+                    {
+                        "ec2InstanceId": "i-0aa85d4735ae74bf6",
+                        "credentialsId": "3ad8702c-a2fd-48d2-be50-1ba6ce83acd5",
+                        "region": "ap-southeast-1",
+                        "error": "",
+                        "registerDetails": [
+                            {
+                                "resourceId": "fs-0420e46c6ee7561ed",
+                                "databaseCount": "5",
+                                "sqlServerEdition": "a",
+                                "sqlServerError": "",
+                                "fsxnError": "",
+                                "requiredModuleError": "",
+                                "manageReadiness": []
+                            }
+                        ]
                     }
-                }
-            }]);
+                ]
+            );
         }, 5000);
     }
 );

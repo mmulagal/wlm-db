@@ -18,6 +18,15 @@ const initialState: WorkloadFactoryResourceEntities = {
             clusterName: '',
             activeNode: ''
         },
+        resourceTrend: {
+            cpuUsed: [],
+            readThroughput: [],
+            writeThroughput: [],
+            readIops: [],
+            writeIops: [],
+            readLatency: [],
+            writeLatency: []
+        },
         topology: {
             awsAccount: '',
             region: '',
@@ -110,12 +119,7 @@ const initialState: WorkloadFactoryResourceEntities = {
         },
 
         resourceUtilization: {
-            cpu: {
-                percentUsed: '',
-                used: '',
-                total: '',
-                remaining: ''
-            },
+            cpu: [],
             disk: {
                 percentUsed: '',
                 used: '',

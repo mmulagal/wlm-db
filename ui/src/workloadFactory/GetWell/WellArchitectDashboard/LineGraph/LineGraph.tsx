@@ -9,9 +9,8 @@ import {
     LineElement,
     Filler
 } from 'chart.js';
-import styles from './ChartStyles.module.scss';
-
 import React, { useMemo, useState } from 'react';
+import styles from './ChartStyles.module.scss';
 
 import { Span } from '../../../../ui-components/Typography';
 import { useCurrentTheme } from '../../../../common/ThemeProvider/ThemeProvider2';
@@ -22,6 +21,7 @@ import {
     YTickFormatter,
     XYData
 } from '../../../../ui-components/Charts/chartCommon';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler);
 
@@ -41,8 +41,10 @@ const LineGraph = React.memo(
         height?: number;
         yTickFormatter?: YTickFormatter;
     }) => {
+        const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
         const [chartContext, setChartContext] = useState<any>(null);
-        const tokens = useCurrentTheme().tokens;
+        const { tokens } = useCurrentTheme();
 
         const state = useMemo(() => {
             if (!chartContext) {
@@ -57,7 +59,7 @@ const LineGraph = React.memo(
 
             const gradient = () => {
                 const colorAsRgb = hexToRgb(color);
-                //@ts-ignore
+                // @ts-ignore
                 const gradient = chartContext.createLinearGradient(0, 0, 0, legend ? height - 20 : height);
                 gradient.addColorStop(0, `rgba(${colorAsRgb[0]},${colorAsRgb[1]},${colorAsRgb[2]}, 0.1)`);
                 gradient.addColorStop(1, `rgba(${colorAsRgb[0]},${colorAsRgb[1]},${colorAsRgb[2]}, 0)`);
@@ -68,7 +70,7 @@ const LineGraph = React.memo(
             const labels = categories;
 
             const datasets = (!Array.isArray(data[0]) ? [data] : data).map((values, index, arr) => {
-                let colorRgb = Array.isArray(color) ? color[index] : color;
+                const colorRgb = Array.isArray(color) ? color[index] : color;
 
                 return {
                     data: values,
@@ -113,11 +115,11 @@ const LineGraph = React.memo(
                         ticks: {
                             padding: 0,
                             backdropPadding: 0,
-                            color: '#404040',
+                            color: isDarkTheme ? '#ffffff' : '#404040',
                             font: {
                                 size: 13,
                                 lineHeight: '20px',
-                                family: `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`
+                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"'
                             }
                         }
                     },
@@ -132,12 +134,12 @@ const LineGraph = React.memo(
                         ticks: {
                             padding: 16,
                             backdropPadding: 0,
-                            color: '#404040',
+                            color: isDarkTheme ? '#ffffff' : '#404040',
                             callback: yTickFormatter,
                             font: {
                                 size: 13,
                                 lineHeight: '20px',
-                                family: `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`
+                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"'
                             }
                         }
                     }
@@ -163,7 +165,7 @@ const LineGraph = React.memo(
                             const backgroundColor = Array.isArray(color) ? color[index] : color;
                             return (
                                 <div key={label}>
-                                    <div className={styles.box} style={{ backgroundColor: backgroundColor }} />
+                                    <div className={styles.box} style={{ backgroundColor }} />
                                     <Span level={13}>{label}</Span>
                                 </div>
                             );

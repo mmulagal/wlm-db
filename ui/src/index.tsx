@@ -23,13 +23,11 @@ i18next
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
-    <>
-        <ReduxContextProvider store={store}>
-            <BrowserRouter>
-                <DialogContextProvider>
-                    <App />
-                </DialogContextProvider>
-            </BrowserRouter>
-        </ReduxContextProvider>
-    </>
+    <ReduxContextProvider store={store}>
+        <BrowserRouter>
+            <DialogContextProvider>
+                <App />
+            </DialogContextProvider>
+        </BrowserRouter>
+    </ReduxContextProvider>
 );

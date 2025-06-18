@@ -1,9 +1,9 @@
 import { Button, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 // import { useProtectBackupMutation } from '../../../utils/apiService';
-import { useAppSelector } from '../../../store/storeHooks';
 import { useNavigate } from 'react-router-dom';
-import { navigateToCanvas } from '../../../utils/appConfig';
 import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../store/storeHooks';
+import { navigateToCanvas } from '../../../utils/appConfig';
 import { useDeployPgsqlTemplateMutation } from '../../../utils/apiService';
 import {
     setDeployRedirectToCfLink,
@@ -37,11 +37,11 @@ function PostgressFooter() {
             dispatch(setIsLoading(true));
             dispatch(setMultiDataStatus({}));
             dispatch(setDeployRedirectToCfLink(null));
-            deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
+            deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload })
                 .then((data: any) => {
                     dispatch(setIsLoading(false));
                     if (!data?.error) {
-                        let stackName = data?.data?.cloudFormationStackId;
+                        const stackName = data?.data?.cloudFormationStackId;
                         const url = data?.data?.cloudFormationUrl;
                         const warning = data?.data?.warningMessage;
                         if (stackName && !warning) {
@@ -81,32 +81,28 @@ function PostgressFooter() {
         message = (
             <>
                 {GENERAL.CREATE_PGSQL_INFO_MESSAGE_WLM[0]}
-                {
-                    <>
-                        <Button
-                            Component="button"
-                            variant="text"
-                            onClick={() => {
-                                clearTimeout(notificationMsg);
-                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                if (isWorkloadFactoryStatus) {
-                                    navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
-                                } else {
-                                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
-                                }
+                <Button
+                    Component="button"
+                    variant="text"
+                    onClick={() => {
+                        clearTimeout(notificationMsg);
+                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                        if (isWorkloadFactoryStatus) {
+                            navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
+                        } else {
+                            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                        }
 
-                                dispatch(clearNotifications());
-                            }}
-                        >
-                            {GENERAL.CREATE_PGSQL_INFO_MESSAGE_WLM[1]}
-                        </Button>
-                    </>
-                }
+                        dispatch(clearNotifications());
+                    }}
+                >
+                    {GENERAL.CREATE_PGSQL_INFO_MESSAGE_WLM[1]}
+                </Button>
                 {GENERAL.CREATE_PGSQL_INFO_MESSAGE_WLM[2]}
             </>
         );
 
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message }));
         notificationMsg = setTimeout(() => {
             handleNavigation();
             dispatch(setIsRefreshed(true));
@@ -122,15 +118,13 @@ function PostgressFooter() {
             } else {
                 navigate('../../fsxdb');
             }
+        } else if (isWorkloadFactoryStatus) {
+            navigateToCanvas('/');
         } else {
-            if (isWorkloadFactoryStatus) {
-                navigateToCanvas('/');
-            } else {
-                postBlueXPMessage({
-                    type: BlueXPListeners.navigate,
-                    payload: { pathname: '../../../../../fsxhome', replace: true }
-                });
-            }
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: { pathname: '../../../../../fsxhome', replace: true }
+            });
         }
     };
 

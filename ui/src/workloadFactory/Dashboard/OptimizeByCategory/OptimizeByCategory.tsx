@@ -1,4 +1,6 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography, useDialog } from '@netapp/design-system';
+import { useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import { ReactComponent as Storage } from '../../../assets/Storage.svg';
 import { ReactComponent as Applications } from '../../../assets/Application.svg';
 import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
@@ -6,9 +8,10 @@ import { ReactComponent as Cloning } from '../../../assets/Cloning.svg';
 import { ReactComponent as Compute } from '../../../assets/Compute.svg';
 import styles from './OptimizeByCategory.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useMemo } from 'react';
-import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import { getAssessmentHostListGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
+import {
+    getAssessmentGroupedByCategory,
+    getAssessmentHostListGroupedByCategory
+} from '../../DatabaseHomePage/DatabaseHomeUtils';
 import {
     setFSXId,
     setGwPageLoadInstanceData,
@@ -19,7 +22,6 @@ import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/
 import { selectedTabSelection, setSelectedAssessmentRow } from '../../../store/workloadFactory/databaseHomeSlice';
 import { sortListOfDict } from '../../../utils/utilityFunctions';
 import { INVENTORY_STATUS, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
-import { useDispatch } from 'react-redux';
 import store from '../../../store/store';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
@@ -28,19 +30,23 @@ import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import { useTranslation } from 'react-i18next';
 
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
-    const categoryData = useMemo(() => {
-        return getAssessmentGroupedByCategory(allmssqlHostAssessmentData);
-    }, [allmssqlHostAssessmentData]);
+    const categoryData = useMemo(
+        () => getAssessmentGroupedByCategory(allmssqlHostAssessmentData),
+        [allmssqlHostAssessmentData]
+    );
     const { multiDataLoading } = useAppSelector(state => state.headers);
 
-    const loading = useMemo(() => {
-        return allmssqlHostAssessmentLoading || multiDataLoading;
-    }, [allmssqlHostAssessmentLoading, multiDataLoading]);
+    const loading = useMemo(
+        () => allmssqlHostAssessmentLoading || multiDataLoading,
+        [allmssqlHostAssessmentLoading, multiDataLoading]
+    );
 
     const redirectToGetWellPage = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
@@ -87,15 +93,15 @@ const OptimizeByCategory = () => {
     };
 
     const handleClick = () => {
-        let tableData = sortListOfDict(
+        const tableData = sortListOfDict(
             getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData) || [],
             'status',
             false
         );
-        let isOnlineInstance = tableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
+        const isOnlineInstance = tableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
         setDialog(
             <DialogComponent
-                header={`Fix well-architected issues`}
+                header="Fix well-architected issues"
                 content={<CategoryDialogComponent tableData={tableData} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
@@ -123,12 +129,12 @@ const OptimizeByCategory = () => {
                     {loading && <DsFlashingDotsLoader />}
                     <DsButton
                         variant="secondary"
-                        isThin={true}
+                        isThin
                         onClick={() => handleClick()}
                         isDisabled={loading}
                         data-testid="wlm-db-optimize-instances-by-category"
                     >
-                        {GENERAL.OPTIMIZE}
+                        {t('databases.well-architect.view-and-fix')}
                     </DsButton>
                 </div>
             </div>
@@ -149,7 +155,7 @@ const OptimizeByCategory = () => {
 
                             <DsTypography variant="Semibold_14">{GENERAL.STORAGE}</DsTypography>
                         </div>
-                        <div className={styles.section3}></div>
+                        <div className={styles.section3} />
                     </div>
                     <div className={styles.tile1}>
                         <div className={styles.section1}>
@@ -164,7 +170,7 @@ const OptimizeByCategory = () => {
                             </div>
                             <DsTypography variant="Semibold_14">{GENERAL.COMPUTE}</DsTypography>
                         </div>
-                        <div className={styles.section3}></div>
+                        <div className={styles.section3} />
                     </div>
                     <div className={styles.tile2}>
                         <div className={styles.section1}>
@@ -198,7 +204,7 @@ const OptimizeByCategory = () => {
                             </div>
                             <DsTypography variant="Semibold_14">{GENERAL.RESILIENCY}</DsTypography>
                         </div>
-                        <div className={styles.section3}></div>
+                        <div className={styles.section3} />
                     </div>
                     <div className={styles.tile1}>
                         <div className={styles.section1}>
@@ -213,7 +219,7 @@ const OptimizeByCategory = () => {
                             </div>
                             <DsTypography variant="Semibold_14">{GENERAL.CLONING}</DsTypography>
                         </div>
-                        <div className={styles.section3}></div>
+                        <div className={styles.section3} />
                     </div>
                 </div>
             </div>

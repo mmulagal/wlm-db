@@ -124,7 +124,14 @@ ec2Mock.on(DescribeSubnetsCommand).resolves(subnetsResponse);
 
 ec2Mock.on(DescribeSecurityGroupsCommand).resolves(securityGroupsResponse);
 
-ec2Mock.on(DescribeImagesCommand).resolves(ec2ImagesResponse);
+ec2Mock.on(DescribeImagesCommand).resolves(ec2ImagesResponse.windowsImages);
+
+ec2Mock
+    .on(DescribeImagesCommand, {
+        Owners: ['amazon'],
+        Filters: [{ Name: 'name', Values: ['al2023-ami-2023*-x86_64'] }]
+    })
+    .resolves(ec2ImagesResponse.AmazonLinux2023Images);
 
 ec2Mock
     .on(DescribeImagesCommand, {

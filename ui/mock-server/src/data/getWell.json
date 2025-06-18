@@ -661,6 +661,18 @@
                     ]
                 },
                 {
+                    "name": "mpio-timeout",
+                    "status": "not-optimized",
+                    "recommended": "60",
+                    "severity": "warning",
+                    "recommendation": "Configure the Microsoft Multipath I/O (MPIO) timeout setting on the host to 60 seconds to ensure connectivity and stability during FSx for ONTAP failovers. The 60-second setting prevents disk disconnections, application errors, and potential data loss caused by insufficient timeout settings.",
+                    "tags": ["Reliability"],
+                    "violationDetails": [],
+                    "totalObjectsAssessed": 1,
+                    "totalObjectsInViolation": 0
+                },
+
+                {
                     "name": "ntfs-allocation-unit-size",
                     "recommended": "65536",
                     "status": "not-optimized",

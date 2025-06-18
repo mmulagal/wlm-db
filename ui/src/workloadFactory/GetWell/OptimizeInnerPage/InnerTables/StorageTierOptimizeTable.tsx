@@ -1,11 +1,11 @@
 import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useMemo } from 'react';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
@@ -34,9 +34,7 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
             filterOptions: 'auto',
             isSticky: true,
             width: windowSize.width >= 1920 ? 'auto' : '481px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
 
         {
@@ -45,15 +43,13 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
             id: '3',
             width: windowSize.width >= 1920 ? 'auto' : '481px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;
-            }
+            renderCell: (cellData: string) => (cellData ? `${cellData}%` : GENERAL.NOT_AVAILABLE)
         },
         lastColDetails(type, {}, '310px')
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
+        // @ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -77,18 +73,18 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted volumes`}
-                singularTitle={'Impacted volume'}
+                pluralTitle="Impacted volumes"
+                singularTitle="Impacted volume"
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
             )}
             <Table
-                //@ts-ignore
+                // @ts-ignore
                 tableProps={tableProps}
-                isDoubleRow={true}
+                isDoubleRow
                 key={Date.now()}
             />
         </div>

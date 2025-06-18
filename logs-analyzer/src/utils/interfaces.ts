@@ -5,6 +5,9 @@ interface ErrorLg {
     errorMessage: string;
     errorCount: number;
     severity: string;
+    firstOccurrence?: number;
+    lastOccurrence?: number;
+    errorCode?: string;
 }
 
 interface Content {
@@ -65,13 +68,44 @@ interface ErrorLog {
     error: string;
     cause: string;
     count: number;
-    severity: string | number;
-}
-interface ErrorLogWithScript extends ErrorLog {
-    sql?: { query: string }[];
+    severity?: string | number;
+    firstOccurrence?: number;
+    lastOccurrence?: number;
+    errorCode?: string;
 }
 
 interface ErrorLogWithAdditionalInfo extends ErrorLog {
     additionalInfo?: string;
 }
-export { MessageObj, ToolUse, ErrorLg, ToolSpec, MsSqlErrorLog, ErrorLogWithScript, ErrorLogWithAdditionalInfo };
+
+interface ErrorLogWithScriptAndDetails extends ErrorLog {
+    sql?: { query: string }[];
+}
+
+interface AgentArgs {
+    logsPath: string;
+    sqlAuthEnabled: boolean;
+    databaseInstanceName: string;
+    jobId: string;
+    instanceId: string;
+    logLevel: string;
+    region: string;
+    modelId: string;
+    modelRegion: string;
+    timestamp: number;
+    logsCountToConsider: number;
+    topP: number;
+    temperature: number;
+    maxTokens: number;
+}
+
+export {
+    MessageObj,
+    ToolUse,
+    ErrorLg,
+    ToolSpec,
+    MsSqlErrorLog,
+    ErrorLogWithAdditionalInfo,
+    ErrorLogWithScriptAndDetails,
+    AgentArgs
+};

@@ -20,41 +20,39 @@ const SquareComponent = ({
     loadingInFirstRow = false,
     isLoading = false,
     isSmall = false
-}: SC) => {
-    return (
-        <div className={styles.container}>
-            {!boldValue && (
-                <div className={styles.headerArea}>
-                    <Typography className={styles.valueText} variant="Semibold_14">
-                        {value}
-                    </Typography>
-
-                    {loadingInFirstRow && !isSmall && (
-                        <div className={styles.loadingClass}>
-                            <DsFlashingDotsLoader />
-                        </div>
-                    )}
-
-                    {loadingInFirstRow && isSmall && (
-                        <div className={styles.loadingClassSmall}>
-                            <DsFlashingDotsLoader />
-                        </div>
-                    )}
-                </div>
-            )}
-            {boldValue && <Typography variant="Semibold_14">{value}</Typography>}
-            <div className={styles.bottomRow}>
-                <div className={styles.square} style={{ backgroundColor: color }} />
-                <Typography
-                    variant="Regular_14"
-                    style={{ lineHeight: 'unset', width: 'max-content', whiteSpace: 'nowrap' }}
-                >
-                    {text}
+}: SC) => (
+    <div className={styles.container}>
+        {!boldValue && (
+            <div className={styles.headerArea}>
+                <Typography className={styles.valueText} variant="Semibold_14">
+                    {value}
                 </Typography>
-                {isLoading && <DsFlashingDotsLoader />}
+
+                {loadingInFirstRow && !isSmall && (
+                    <div className={styles.loadingClass}>
+                        <DsFlashingDotsLoader />
+                    </div>
+                )}
+
+                {loadingInFirstRow && isSmall && (
+                    <div className={styles.loadingClassSmall}>
+                        <DsFlashingDotsLoader />
+                    </div>
+                )}
             </div>
+        )}
+        {boldValue && <Typography variant="Semibold_14">{value}</Typography>}
+        <div className={styles.bottomRow}>
+            <div className={styles.square} style={{ backgroundColor: color }} />
+            <Typography
+                variant="Regular_14"
+                style={{ lineHeight: 'unset', width: 'max-content', whiteSpace: 'nowrap' }}
+            >
+                {text}
+            </Typography>
+            {isLoading && <DsFlashingDotsLoader />}
         </div>
-    );
-};
+    </div>
+);
 
 export default SquareComponent;

@@ -49,7 +49,7 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-6)' }} />
-                                <Typography variant="Regular_14">{'Completed with issues'}</Typography>
+                                <Typography variant="Regular_14">Completed with issues</Typography>
                                 {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                             <Typography variant="Semibold_14">
@@ -110,7 +110,7 @@ const JobDistribution = () => {
                         <div className={styles.rowData}>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-6)' }} />
-                                <Typography variant="Regular_14">{'Completed with issues'}</Typography>
+                                <Typography variant="Regular_14">Completed with issues</Typography>
                                 {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                             <Typography variant="Semibold_14">
