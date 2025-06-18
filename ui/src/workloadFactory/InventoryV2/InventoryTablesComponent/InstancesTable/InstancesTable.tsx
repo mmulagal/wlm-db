@@ -3,7 +3,6 @@ import {
     DsButton,
     DsFlashingDotsLoader,
     DsTypography,
-    DsTooltipInfo,
     Popover,
     postBlueXPMessage,
     useDialog
@@ -12,6 +11,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import { manageActionCol, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
@@ -67,7 +68,6 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
-import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -588,27 +588,40 @@ const InstancesTable = () => {
             Header: 'Protection status',
             accessor: 'protectionText',
             id: '7',
-            width: '330px',
+            width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'protectionText'),
             renderCell: (cellData: string, rowData: any) => {
-                let loadingPS = rowData?.loading || rowData?.subLoading;
+                let loading = rowData?.loading || rowData?.subLoading;
                 if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-                    loadingPS = true;
+                    loading = true;
                 }
-
                 return (
                     <>
                         {cellData && (
                             <div className={styles.colTextProtection}>
                                 <div className={styles.protection}>
-                                    <div className={styles.protectionIcons}>
-                                        <ProtectionIcons protectionData={rowData?.protection} />
-                                    </div>
+                                    {cellData === GENERAL.PROTECTED && (
+                                        <ProtectedIcon
+                                            style={{
+                                                // @ts-ignore
+                                                '--icon-primary-color': 'var(--green-60)'
+                                            }}
+                                        />
+                                    )}
+                                    {cellData === GENERAL.NOT_PROTECTED && (
+                                        <NotProtectedIcon
+                                            style={{
+                                                // @ts-ignore
+                                                '--icon-primary-color': 'var(--grey-45)'
+                                            }}
+                                        />
+                                    )}
+                                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
                                 </div>
                             </div>
                         )}
-                        {!cellData && loadingPS && <DsFlashingDotsLoader />}
-                        {!cellData && !loadingPS && (
+                        {!cellData && loading && <DsFlashingDotsLoader />}
+                        {!cellData && !loading && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {GENERAL.NOT_AVAILABLE}
                             </DsTypography>
