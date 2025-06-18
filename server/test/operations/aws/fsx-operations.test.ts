@@ -17,9 +17,10 @@ import {
     tagFsxResource,
     isFsxwAwsBackupEnabled,
     updateVolumeSizeAndWaitForUpdate,
-    updateFsxBackup
+    updateFsxBackup,
+    isInstanceAppConsistentBackupEnabled
 } from '../../../src/operations/aws/fsx-operations';
-import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID, CREDENTIALS_ID } from '../../utils/consts';
 import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
@@ -112,5 +113,28 @@ describe('Testcases for Amazon FSx resources operations', () => {
                 dailyAutomaticBackupStartTime: '10:00'
             })
         ).resolves.not.toThrow();
+    });
+
+    it('should test app consistent backup', async () => {
+        const volumeDBMap: Array<{ ontapVolumeuuid: string; databaseName: string }> = [
+            { ontapVolumeuuid: 'ad251a8f-da34-11ef-b315-11b9ce95d982', databaseName: 'salesdb' },
+            { ontapVolumeuuid: '74a8a789-c5dd-11ef-b315-11b9ce95d982', databaseName: 'inventory' },
+            { ontapVolumeuuid: '438cc269-edeb-11ef-994b-3b81e03bea3e', databaseName: 'analytics' }
+        ];
+        const volUuids = [
+            'ad251a8f-da34-11ef-b315-11b9ce95d982',
+            '74a8a789-c5dd-11ef-b315-11b9ce95d982',
+            '438cc269-edeb-11ef-994b-3b81e03bea3e'
+        ];
+        const res = await isInstanceAppConsistentBackupEnabled(
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            'fs-4242424242',
+            volUuids,
+            volumeDBMap,
+            'i-4242424242'
+        );
+        expect(res).toBeDefined();
+        expect(Object.values(res).every(Boolean)).toBe(true);
     });
 });

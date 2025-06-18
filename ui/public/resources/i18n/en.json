@@ -24,7 +24,15 @@
             "unauthenticated": "Unauthenticated",
             "enter-password": "Enter password",
             "coming-soon": "Coming soon",
-            "enter": "Enter"
+            "enter": "Enter",
+            "local-snapshots": "Local snapshots",
+            "remote-replications": "Remote replications",
+            "fsx-for-ontap-backup": "FSx for ONTAP backup",
+            "native-sql-server-backup": "Native SQL Server Backup",
+            "storage-consistent": "storage (crash) consistent",
+            "application-consistent": "app-consistent",
+            "protected": "Protected",
+            "not_protected": "Not protected"
         },
         "register-flow": {
             "register-bulk-disable-tooltip": "Register multiple instances will be applicable for Microsoft SQL Server unregistered instances only.",
@@ -108,7 +116,8 @@
             "windows-authentication": "Windows authentication"
         },
         "well-architect": {
-            "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis."
+            "assessment-in-progress": "Well-architected analysis has not been run yet. You can either run an ad-hoc scan now or wait for the next scheduled analysis.",
+            "view-and-fix": "View and fix"
         }
     }
 }

@@ -66,7 +66,7 @@ const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
         {
             id: '3',
             Header: 'Well-architected issues',
-            accessor: 'score',
+            accessor: 'optimized',
             width: '30%',
             isSortable: true,
             renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE

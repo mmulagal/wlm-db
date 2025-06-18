@@ -7,21 +7,14 @@ import {
 import {
     DiscoverMsSqlResponseBody,
     DiscoverQuery,
-    DiscoverInstanceParams,
-    DiscoverCredentialsRequestBody,
-    DiscoverCredentialsResponse,
     SqlInstancesRequestQuery,
-    PrepareResourceResponseBody,
-    MultiInstanceManageMsSqlRequestBody,
     MultiInstanceUnmanageResponseBody,
     UnmanageInstanceParams,
     DatabaseInstanceQueryString,
     DiscoverPgSqlResponseBody,
-    MultiHostManageResponseBody,
-    DiscoverOracleResponseBody,
-    JobBasedManageResponseBody
+    DiscoverOracleResponseBody
 } from '../types/discover.types';
-import { GenericHeaders, CredentialsIdParams, AccountIdParams } from '../types/generic.types';
+import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
 const DiscoveryBaseRequest = {
     Headers: GenericHeaders,
@@ -49,34 +42,6 @@ const DiscoverMsSqlSchema = {
     }
 };
 
-const PrepareForManageSchema = {
-    ...DiscoveryBaseRequest,
-    params: DiscoverInstanceParams,
-    summary: 'Prepare the EC2 for managing resources',
-    description:
-        'Install the required PowerShell modules and copy database artifacts required by a Workload Factory managed resource.',
-    response: {
-        200: PrepareResourceResponseBody
-    }
-};
-// const ManageMsSqlSchema = {
-//     ...DiscoveryBaseRequest,
-//     params: DiscoverInstanceParams,
-//     hide: process.env.NODE_ENV === 'production',
-//     summary: 'Manage EC2 instances hosting Microsoft SQL Server. (deprecated)',
-//     description: `Manage AWS EC2 instances hosting Microsoft SQL Server.
-//     EC2 instances meeting the following constraints are managed:
-//     <ul>
-//         <li> Instance is in running state.
-//         <li> Host operating system is Microsoft Windows.
-//         <li> Architecture is x86_64.
-//         <li> Underlying storage is FSx for NetApp.
-//     </ul>`,
-//     response: {
-//         200: ManageMsSqlResponseBody
-//     }
-// };
-
 const UnManageMsSqlSchema = {
     ...DiscoveryBaseRequest,
     params: UnmanageInstanceParams,
@@ -85,40 +50,6 @@ const UnManageMsSqlSchema = {
     description: 'Deregister SQL Server database instances managed by Workload Factory.',
     response: {
         200: MultiInstanceUnmanageResponseBody
-    }
-};
-
-const ManageMsSqlSchemaV2 = {
-    ...DiscoveryBaseRequest,
-    params: AccountIdParams,
-    body: MultiInstanceManageMsSqlRequestBody,
-    summary: '(Deprecated) Register SQL Server instances',
-    description: 'Deprecated. Use /v2/mssql/manage instead.',
-    response: {
-        200: MultiHostManageResponseBody
-    }
-};
-
-const JobBasedManageSchema = {
-    ...DiscoveryBaseRequest,
-    params: AccountIdParams,
-    body: MultiInstanceManageMsSqlRequestBody,
-    summary: 'Register SQL Server instances',
-    description: 'Register SQL Server instances',
-    response: {
-        200: JobBasedManageResponseBody
-    }
-};
-
-const DiscoverCredentialsSchema = {
-    Headers: GenericHeaders,
-    tags: [RouteTags.DISCOVER],
-    params: DiscoverInstanceParams,
-    body: DiscoverCredentialsRequestBody,
-    summary: 'Discover credentials',
-    description: 'Store the credentials for a given discovered resource in SSM Parameter Store',
-    response: {
-        200: DiscoverCredentialsResponse
     }
 };
 
@@ -204,16 +135,12 @@ const OracleResourceDetailsSchema = {
 };
 
 export {
-    DiscoverCredentialsSchema,
     DiscoverMsSqlSchema,
-    PrepareForManageSchema,
     MsSqlInstancesSchema,
     UnManageMsSqlSchema,
-    ManageMsSqlSchemaV2,
     DiscoverPgSqlSchema,
     PgSqlResourceDetailsSchema,
     DiscoverOracleSchema,
     UnManagePgSqlSchema,
-    JobBasedManageSchema,
     OracleResourceDetailsSchema
 };

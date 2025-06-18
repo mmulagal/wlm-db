@@ -365,13 +365,14 @@ Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 
 const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
-    sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    sqlInstanceNames: string[] = [DEFAULT_MSSQL_INSTANCE_NAME],
     windowsUser: boolean = false,
     checkManageReadiness: boolean = false
 ) => ` 
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
         $ProgressPreference = 'SilentlyContinue'
         $checkManageReadiness = [System.Convert]::ToBoolean('${checkManageReadiness}')
+        $windowsUser = [System.Convert]::ToBoolean('${windowsUser}')
 
         $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
         if ($connection -ne $True) {
@@ -391,7 +392,7 @@ const validateSQLInstanceConnectivity = (
 
     try {
         $ec2instanceId = '${ec2instanceId}'
-        $sqlinstancename = '${sqlinstancename}'
+        $sqlInstanceNames = '${JSON.stringify(sqlInstanceNames)}' | ConvertFrom-Json
 
         # Check if sqlcmd is installed or not
         $sqlcmdInstalled = (Get-Command -Type Application sqlcmd 2> $null) -ne $null
@@ -400,95 +401,119 @@ const validateSQLInstanceConnectivity = (
             $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed,,  ensure the "Path" environment variable contains the path of the command and retry the operation')
             $responseObject.add('sqlInstanceConnectivity', $False)
         } else {
-            $sqlquery = @"
-            SET NOCOUNT ON;
-                SELECT 
-                    SERVERPROPERTY('edition') AS sqlEdition,
-                    (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
-                    ${
-                        // prettier-ignore
-                        checkManageReadiness
-                            ? ',(SELECT permission_name FROM fn_my_permissions(NULL, \'SERVER\') FOR JSON PATH) as permissions'
-                            : ''
-                    }
-                FOR JSON PATH
-"@
-
             $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
             $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
-            ${
-                windowsUser
-                    ? `
-                    $domainList = $credobject.domain
-                    $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
-                    if ($sqlCredentials -eq $null) {
-                        $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' }
-                    }
-                `
-                    : `
-                    $sqlList = $credobject.sql
-                    $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
-                `
-            }
 
-            if ($sqlCredentials -eq $null) {
-                $errorMessage = "No SQL instance found with the name $sqlinstancename"
-                throw $errorMessage
-            }
+            $responseObject['instances'] = @()
 
-            $sqlCredential = New-Object PSObject -Property @{
-                username = $sqlCredentials.username
-                password = $sqlCredentials.password
-            }
-            
-            $serverInstanceName = "$env:COMPUTERNAME"
-            If($sqlinstancename -ne 'MSSQLSERVER') {
-                $serverInstanceName = "$env:COMPUTERNAME\\$sqlinstancename"
-                
-            }
-
-            if ($sqlCredential.username -eq $null -or $sqlCredential.password -eq $null) {
-                $errorMessage = "SQL credentials not found for the instance $sqlinstancename"
-                throw $errorMessage
-            }
+            $sqlquery = @"
+                SET NOCOUNT ON;
+                    SELECT 
+                        SERVERPROPERTY('edition') AS sqlEdition,
+                        (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
+                        ${
+                            // prettier-ignore
+                            checkManageReadiness
+                                ? ',(SELECT permission_name FROM fn_my_permissions(NULL, \'SERVER\') FOR JSON PATH) as permissions'
+                                : ''
+                        }
+                    FOR JSON PATH
+"@
 
             ${
                 windowsUser
                     ? `
-                    ${enableCredSSP}
+                    ${enableCredSSP} 
                     ${invokeCommandWithCredSSP}
-                    $sqlresult = Invoke-CommandWithCredSSP -sqlquery $sqlquery -extraArguments -r1
-                    ${disableCredSSP}
                 `
-                    : '$sqlresult = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $sqlquery -y 0 -r1 2> $null'
+                    : ''
             }
+            $sqlInstanceNames | ForEach-Object {
+                $sqlinstancename = $_
+                try {
+                    ${
+                        windowsUser
+                            ? `
+                            $domainList = $credobject.domain
+                            $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+                            if ($sqlCredentials -eq $null) {
+                                $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' }
+                            }
+                        `
+                            : `
+                            $sqlList = $credobject.sql
+                            $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+                        `
+                    }
 
-            if([string]::IsNullOrEmpty($sqlresult)) {
-                if (-not $responseObject.ContainsKey('sqlInstanceConnectivity')) {
-                    $responseObject.add('sqlInstanceConnectivity', $False)
-                }
-                if (-not $responseObject.ContainsKey('sqlerror')) {
-                    $responseObject.add('sqlerror', "SQLCMD execution failed. Verify credentials.")
+                    if ($sqlCredentials -eq $null) {
+                        $errorMessage = "No SQL instance found with the name $sqlinstancename"
+                        throw $errorMessage
+                    }
+
+                    $sqlCredential = New-Object PSObject -Property @{
+                        username = $sqlCredentials.username
+                        password = $sqlCredentials.password
+                    }
+                    
+                    $serverInstanceName = "$env:COMPUTERNAME"
+                    If($sqlinstancename -ne 'MSSQLSERVER') {
+                        $serverInstanceName = "$env:COMPUTERNAME\\$sqlinstancename"
+                        
+                    }
+
+                    if ($sqlCredential.username -eq $null -or $sqlCredential.password -eq $null) {
+                        $errorMessage = "SQL credentials not found for the instance $sqlinstancename"
+                        throw $errorMessage
+                    }
+
+                    ${
+                        windowsUser
+                            ? `
+                            $sqlresult = Invoke-CommandWithCredSSP -sqlquery $sqlquery -extraArguments -r1
+                        `
+                            : '$sqlresult = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $sqlquery -y 0 -r1 2> $null'
+                    }
+
+                    if([string]::IsNullOrEmpty($sqlresult)) {
+                        $responseObject['instances'] += @{
+                            sqlInstanceName = $sqlinstancename
+                            sqlInstanceConnectivity = $False
+                            sqlerror = "SQLCMD execution failed. Verify credentials."
+                        }
+                    }
+                    else {
+                        $sqlresult = $sqlresult | ConvertFrom-Json
+                        $instanceResponse = @{
+                            sqlInstanceName = $sqlinstancename
+                            sqlEdition = $sqlresult.sqlEdition
+                            noOfDatabases = $sqlresult.noOfDatabases
+                            sqlInstanceConnectivity = $True
+                        }
+                        
+                        if($checkManageReadiness -eq $True) {
+                            $unavailablePsModuleList = @()
+                            $currentSqlPermissions = $sqlresult.permissions | ForEach-Object { $_.permission_name }
+                            $instanceResponse['sqlPermissions'] = $currentSqlPermissions
+                            $requiredPsModuleList = @(${REQUIRED_PS_MODULES_FOR_MANAGEMENT})
+                            $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
+                            If (Get-Command -Name pwsh -ErrorAction SilentlyContinue) {
+                                $availablePsModuleList += 'Powershell 7'
+                            }
+                            $instanceResponse['availablePsModules'] = $availablePsModuleList
+                        }
+                        $responseObject['instances'] += $instanceResponse
+                    }
+                } catch {
+                    $responseObject['instances'] += @{
+                        sqlInstanceName = $sqlinstancename
+                        sqlInstanceConnectivity = $False
+                        sqlerror = $_.Exception.Message
+                    }
                 }
             }
-            else {
-                $sqlresult = $sqlresult | ConvertFrom-Json
-                $responseObject.add('sqlEdition', $sqlresult.sqlEdition)
-                $responseObject.add('noOfDatabases', $sqlresult.noOfDatabases)
-                
-                if($checkManageReadiness -eq $True) {
-                    $unavailablePsModuleList = @()
-                    $currentSqlPermissions = $sqlresult.permissions | ForEach-Object { $_.permission_name }
-                    $responseObject.add('sqlPermissions', $currentSqlPermissions)
-                    $requiredPsModuleList = @(${REQUIRED_PS_MODULES_FOR_MANAGEMENT})
-                    $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
-                    If (Get-Command -Name pwsh -ErrorAction SilentlyContinue) {
-                        $availablePsModuleList += 'Powershell 7'
-                    }
-                    $responseObject.add('availablePsModules', $availablePsModuleList)
-                    }
-                $responseObject.add('sqlInstanceConnectivity', $True)
-            }
+            ${windowsUser ? `${disableCredSSP}` : ''}
+           
         }
     } catch {
         if (-not $responseObject.ContainsKey('sqlerror')) {
@@ -500,7 +525,7 @@ const validateSQLInstanceConnectivity = (
     }
 `;
 
-const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
+const validateOntapConnectivity = (fsxids: string[], fsxregion: string) => `
     $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
@@ -518,17 +543,30 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
 
     Import-Module -Name $ssmmodulePath
 
-    try {
-        $FSxID = '${fsxid}'
-        $FSxRegion = '${fsxregion}'
+    $fsxids = '${JSON.stringify(fsxids)}' | ConvertFrom-Json
+    $responseObject['fsxResults'] = @()
 
-        ${ontapRestRequest}
-        $ontapresult = Invoke-ONTAPRequest -ApiEndPoint '/cluster?fields=version'
+    $fsxids | ForEach-Object {
+        $fsxid = $_
+        try {
+            $FSxRegion = '${fsxregion}'
 
-        $responseObject.add('ontapconnectivity', $True)
-    } catch {
-        $responseObject.add('ontaperror', $_.Exception.Message)
-        $responseObject.add('ontapconnectivity', $False)
+            # Ensure ontapRestRequest is defined or replace it with the correct implementation
+            ${ontapRestRequest}
+            $ontapresult = Invoke-ONTAPRequest -ApiEndPoint '/cluster?fields=version'
+
+            $responseObject['fsxResults'] += @{
+                'fsxId' = $fsxid
+                'ontapconnectivity' = $True
+
+            }
+        } catch {
+            $responseObject['fsxResults'] += @{
+                'fsxId' = $fsxid
+                'ontaperror' = $_.Exception.Message
+                'ontapconnectivity' = $False
+            }
+        }
     }
 `;
 

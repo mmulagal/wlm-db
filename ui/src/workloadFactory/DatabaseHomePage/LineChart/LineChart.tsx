@@ -305,8 +305,15 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
             }
         });
 
+        // Cleanup: destroy chart and remove tooltip
         return () => {
             mayBarChart.destroy();
+
+            // Remove tooltip from DOM
+            const tooltipEl = document.getElementById('chartjs-tooltip');
+            if (tooltipEl && tooltipEl.parentNode) {
+                tooltipEl.parentNode.removeChild(tooltipEl);
+            }
         };
     }, [selectedTimeFrame, timelineData]);
 

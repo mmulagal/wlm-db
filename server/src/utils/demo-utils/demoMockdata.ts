@@ -3750,6 +3750,30 @@ const mockResourceAssessmentData = {
     }
 };
 
+const DEMO_REGISTER_RESPONSE = {
+    databaseCount: '10',
+    sqlServerEdition: 'Standard Edition (64-bit)',
+    manageReadiness: {
+        missingSqlCmd: false,
+        assessment: {
+            missingSqlPermissions: [],
+            missingModules: []
+        },
+        remediation: {
+            missingSqlPermissions: [],
+            missingModules: []
+        },
+        dbcreation: {
+            missingSqlPermissions: [],
+            missingModules: []
+        },
+        sandbox: {
+            missingSqlPermissions: [],
+            missingModules: []
+        }
+    }
+};
+
 export {
     masterStackData,
     validationStack1Data,
@@ -3774,5 +3798,6 @@ export {
     onpremStdUploadObject,
     onPremAOAGAUploadObject,
     onPremFCIUploadObject,
-    mockResourceAssessmentData
+    mockResourceAssessmentData,
+    DEMO_REGISTER_RESPONSE
 };

@@ -33,7 +33,8 @@ import {
     AWS_FSX_TYPE,
     HttpErrorCodes,
     DEFAULT_INSTANCE_NAME,
-    HA
+    HA,
+    SNAPCENTER_BACKUP_SNAPSHOT_COMMENT
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import {
@@ -44,11 +45,12 @@ import {
     VolumeRecord
 } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { convertToBytes, divideArrayIntoChunks, getFsxArn, isDemo, sleep } from '../../utils/utils';
+import { convertToBytes, divideArrayIntoChunks, getFsxArn, isDemo, sleep, sqlResponseParsing } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
+import { GET_SNAPSHOT_DETAILS, OntapRestRequestParams } from '../workloads/mssql/continuous-optimization-scripts';
 
 const logger = getLogger();
 
@@ -891,6 +893,49 @@ async function validateSvmCountCapacity(
     }
 }
 
+async function isInstanceAppConsistentBackupEnabled(
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    volumesToCheck: string[],
+    volumeDBMap: Array<{ ontapVolumeuuid: string; databaseName: string }>,
+    activeNodeInstanceid: string
+) {
+    logger.info(
+        'Checking if app consistent backup details for MSSQL server are available in snapshot',
+        fsxId,
+        credentialsId,
+        region
+    );
+    try {
+        const ontapApiQueryParams: OntapRestRequestParams = {
+            queryFilter: `comment=${SNAPCENTER_BACKUP_SNAPSHOT_COMMENT}&max_records=1`,
+            queryFields: 'comment'
+        };
+        const command = [GET_SNAPSHOT_DETAILS(volumesToCheck, fsxId, region, ontapApiQueryParams)];
+        const ssmComment = 'Get snapshot copy details for volumes';
+        const rawResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceid, ssmComment);
+        const { response: ssmResponse, error: ssmError } = sqlResponseParsing(rawResponse);
+        if (!isEmpty(ssmError) || isEmpty(ssmResponse)) {
+            throw Error(
+                `Error executing SSM command to retrieve snapshot copy details for volumes: ${volumesToCheck}. Error: ${ssmError}`
+            );
+        }
+        const appConsistentBackupMap: Record<string, boolean> = {};
+
+        for (const db of volumeDBMap) {
+            const { databaseName, ontapVolumeuuid } = db;
+            const { comment = '' } = ssmResponse[ontapVolumeuuid];
+            appConsistentBackupMap[databaseName] = isDemoFlow || comment === SNAPCENTER_BACKUP_SNAPSHOT_COMMENT;
+        }
+
+        return appConsistentBackupMap;
+    } catch (error) {
+        const errorMsg = `Error while fetching app consistent backup details: ${error}`;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    }
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -910,5 +955,6 @@ export {
     updateVolumeSizeAndWaitForUpdate,
     getIscsiTargetAddresses,
     updateFsxBackup,
-    validateSvmCountCapacity
+    validateSvmCountCapacity,
+    isInstanceAppConsistentBackupEnabled
 };

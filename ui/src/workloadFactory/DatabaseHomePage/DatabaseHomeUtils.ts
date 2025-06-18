@@ -1104,11 +1104,13 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
                 const optBreakDown = formatOptimizationBreakDown(cardsData);
                 let score = '';
                 score = `${optBreakDown?.total?.percent || '0'}%`;
+                const optimized = optBreakDown?.total?.optimized || 0;
                 if (score !== '100%') {
                     const perTableData: any = {
                         id: id++,
                         hostName: databaseHost?.databaseHostName,
                         score,
+                        optimized,
                         databaseInstanceName: instance?.databaseInstanceName,
                         databaseHostId: databaseHost?.databaseHostId,
                         instanceId: instance?.databaseInstanceId,

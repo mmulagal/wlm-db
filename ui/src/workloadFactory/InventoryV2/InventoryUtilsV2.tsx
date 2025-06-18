@@ -364,7 +364,11 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 manageReadiness: statusObj?.[0]?.manageReadiness,
                 statusColText: isManagedRow?.[0]?.isManaged
                     ? INVENTORY_STATUS.MANAGED
-                    : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED
+                    : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED,
+                isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
+                windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
+                sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
+                windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
             };
         });
     }
@@ -402,7 +406,11 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     storageSavingsText: getStorageSavingsText(perRow || {}),
                     allocatedCapacity,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-                    manageReadiness: statusObj?.[0]?.manageReadiness
+                    manageReadiness: statusObj?.[0]?.manageReadiness,
+                    isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
+                    windowsAuthentication: statusObj?.[0]?.windowsAuthentication,
+                    sqlServerAuthentication: statusObj?.[0]?.sqlServerAuthentication,
+                    windowsDomainUserAuthentication: statusObj?.[0]?.windowsDomainUserAuthentication
                 };
             }
             return instRow;
@@ -1196,7 +1204,10 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
                         isFsxRegistered: !fsxCredentialValidationFailed,
-                        manageReadiness: perRow?.manageReadiness
+                        manageReadiness: perRow?.manageReadiness,
+                        windowsAuthentication: isWindowAuthentication,
+                        sqlServerAuthentication: isSqlAuthentication,
+                        windowsDomainUserAuthentication: isWindowsDomainAuthentication
                     };
                 } else {
                     statusObj = {
@@ -1205,7 +1216,10 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
                         isFsxRegistered: !fsxCredentialValidationFailed,
-                        manageReadiness: perRow?.manageReadiness
+                        manageReadiness: perRow?.manageReadiness,
+                        windowsAuthentication: isWindowAuthentication,
+                        sqlServerAuthentication: isSqlAuthentication,
+                        windowsDomainUserAuthentication: isWindowsDomainAuthentication
                     };
                 }
                 result = [...result, ...[statusObj]];
@@ -2266,7 +2280,8 @@ export const updateSqlServerInstancesForUnmanaged = (
                         (instRow?.databaseInstanceName ?? '').toLowerCase()
                 );
                 const statusObj = nonManagedStatus?.filter(
-                    (per: StatusObjInterface) => per?.name === instRow?.databaseInstanceName
+                    (per: StatusObjInterface) =>
+                        per?.name?.toLowerCase() === instRow?.databaseInstanceName?.toLowerCase()
                 );
                 const allocatedCapacity = instRow?.allocatedCapacity
                     ? instRow?.allocatedCapacity

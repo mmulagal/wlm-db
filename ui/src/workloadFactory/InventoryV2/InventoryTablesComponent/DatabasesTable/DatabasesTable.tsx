@@ -1,9 +1,8 @@
 import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -13,11 +12,12 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { ColumnProps, Table } from '../../../../common/Lib/Table/Table';
 import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
-import { isAwsBackupEnabledText } from '../../InventoryUtilsV2';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
+import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
 
 const DatabasesTable = () => {
+    const { t } = useTranslation();
     const { selectedInventoryTab, selectedFilterValue, databaseTableRows, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
@@ -137,19 +137,6 @@ const DatabasesTable = () => {
         return undefined;
     };
 
-    const protectionTooltipText = (data: any) => (
-        <div className={styles.protectionTooltip}>
-            <DsTypography variant="Semibold_13" className={styles.textHeight}>
-                {GENERAL.PROTECTED_BY}:
-            </DsTypography>
-            {data.map((val: any, index: number) => (
-                <DsTypography key={index} variant="Regular_13" className={styles.textHeight}>
-                    {val}
-                </DsTypography>
-            ))}
-        </div>
-    );
-
     const DatabasesColDefs: ColumnProps[] = [
         {
             id: '1',
@@ -215,56 +202,20 @@ const DatabasesTable = () => {
             Header: 'Protection status',
             accessor: 'isProtected',
             id: '5',
-            width: '200px',
+            width: '330px',
             filterOptions: getFilterOptions(databaseTableRows, 'isProtected'),
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
-                const protectedByList = [];
-                const awsBackup = isAwsBackupEnabledText(rowData, '');
-                if (
-                    protectionData?.isFsxOntapSnapshotsEnabled &&
-                    String(protectionData?.isFsxOntapSnapshotsEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
-                ) {
-                    protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
-                }
-                if (awsBackup && String(awsBackup)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) {
-                    protectedByList.push(GENERAL.AWS_BACKUP);
-                }
-                if (
-                    protectionData?.isSqlNativeEnabled &&
-                    String(protectionData?.isSqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
-                ) {
-                    protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
-                }
 
                 return (
                     <>
                         {protectionData && (
                             <div className={styles.colTextProtection}>
                                 <div className={styles.protection}>
-                                    {cellData === GENERAL.PROTECTED && (
-                                        <ProtectedIcon
-                                            style={{
-                                                // @ts-ignore
-                                                '--icon-primary-color': 'var(--green-60)'
-                                            }}
-                                        />
-                                    )}
-                                    {cellData === GENERAL.NOT_PROTECTED && (
-                                        <NotProtectedIcon
-                                            style={{
-                                                // @ts-ignore
-                                                '--icon-primary-color': 'var(--grey-45)'
-                                            }}
-                                        />
-                                    )}
-                                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                    <div className={styles.protectionIcons}>
+                                        <ProtectionIcons protectionData={protectionData} />
+                                    </div>
                                 </div>
-                                {protectedByList?.length > 0 && (
-                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        {protectionTooltipText(protectedByList)}
-                                    </TooltipInfo>
-                                )}
                             </div>
                         )}
                         {!protectionData && GENERAL.NOT_AVAILABLE}

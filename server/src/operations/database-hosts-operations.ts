@@ -75,7 +75,8 @@ import {
     getCostAllocationTagFsxResource,
     isFsxwAwsBackupEnabled,
     getMappedOntapVolumes,
-    getStorageDataFromOntap
+    getStorageDataFromOntap,
+    isInstanceAppConsistentBackupEnabled
 } from './aws/fsx-operations';
 import {
     DatabaseInstance,
@@ -94,9 +95,10 @@ import {
 } from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
-    calculateFsxwStorageEfficiencyUsingCloudwatch
+    calculateFsxwStorageEfficiencyUsingCloudwatch,
+    getSqlInstanceUtilizationAndPerformance
 } from './aws/cloud-watch-operations';
-import { getEc2Hostname, isDemo } from '../utils/utils';
+import { assessMssqlServerPerformance, getEc2Hostname, isDemo } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
@@ -350,7 +352,9 @@ async function getProtectionStatus(
                     ebs: Boolean(ebsBackup)
                 },
                 isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup[instName]),
-                isCRREnabled: isDemoFlow ? true : checkAllTrue(crrBackup[instName])
+                isCRREnabled: isDemoFlow ? true : checkAllTrue(crrBackup[instName]),
+                isAppConsistentBackupEnabled:
+                    isDemoFlow || checkAllTrue(protectionResponse?.isAppConsistentBackupEnabled[instName] ?? {})
             };
             return acc;
         }, {} as Record<string, any>);
@@ -362,6 +366,7 @@ async function getProtectionStatus(
                 protectedDatabases: Number.isNaN(Number(nativeBackupCount)) ? 0 : Number(nativeBackupCount),
                 isAwsBackupEnabled: commonResult[iName]?.isAwsBackupEnabled ?? { fsxn: 'N/A', fsxw: false, ebs: false },
                 isFsxOntapSnapshotsEnabled: commonResult[iName]?.isFsxOntapSnapshotsEnabled ?? 'N/A',
+                isAppConsistentBackupEnabled: commonResult[iName]?.isAppConsistentBackupEnabled ?? 'N/A',
                 isCRREnabled: commonResult[iName]?.isCRREnabled ?? 'N/A'
             };
         });
@@ -1519,6 +1524,7 @@ async function getProtectionDetails(
     awsBackup: Record<string, BackupType>;
     ontapBackup: Record<string, BackupType>;
     crrBackup: Record<string, BackupType>;
+    isAppConsistentBackupEnabled: Record<string, BackupType>;
 }> {
     logger.info('Getting Proteciton details', {
         credentialsId,
@@ -1568,31 +1574,41 @@ async function getProtectionDetails(
     const awsBackup: Record<string, BackupType> = {};
     const ontapBackup: Record<string, BackupType> = {};
     const crrBackup: Record<string, BackupType> = {};
+    const isAppConsistentBackupEnabled: Record<string, BackupType> = {};
 
     await Promise.all(
         Object.entries(instanceVolumeMapping).map(async ([instanceName]) => {
-            const [awsBackupInstance, ontapBackupInstance, crrBackupInstance] = await Promise.all([
-                isFsxnAwsBackupEnabled(
-                    credentialsId,
-                    region,
-                    fileSystemId,
-                    volumeUuids[instanceName],
-                    volumeDBMap[instanceName],
-                    activeNodeInstanceId
-                ),
-                getOntapVolumesSnapshotCount(
-                    credentialsId,
-                    region,
-                    fileSystemId,
-                    volumeRecords[instanceName],
-                    volumeDBMap[instanceName]
-                ),
-                fetchCrrBackupDetails(
-                    instanceDetails?.filter(instance => instance.database_instance_name === instanceName) || [],
-                    volumeRecords[instanceName],
-                    volumeDBMap[instanceName]
-                )
-            ]);
+            const [awsBackupInstance, ontapBackupInstance, crrBackupInstance, databaseAppConsistentBackupMap] =
+                await Promise.all([
+                    isFsxnAwsBackupEnabled(
+                        credentialsId,
+                        region,
+                        fileSystemId,
+                        volumeUuids[instanceName],
+                        volumeDBMap[instanceName],
+                        activeNodeInstanceId
+                    ),
+                    getOntapVolumesSnapshotCount(
+                        credentialsId,
+                        region,
+                        fileSystemId,
+                        volumeRecords[instanceName],
+                        volumeDBMap[instanceName]
+                    ),
+                    fetchCrrBackupDetails(
+                        instanceDetails?.filter(instance => instance.database_instance_name === instanceName) || [],
+                        volumeRecords[instanceName],
+                        volumeDBMap[instanceName]
+                    ),
+                    isInstanceAppConsistentBackupEnabled(
+                        credentialsId,
+                        region,
+                        fileSystemId,
+                        volumeUuids[instanceName],
+                        volumeDBMap[instanceName],
+                        activeNodeInstanceId!
+                    )
+                ]);
 
             awsBackup[instanceName] = {
                 ...awsBackupInstance,
@@ -1606,10 +1622,11 @@ async function getProtectionDetails(
                 },
                 {}
             );
+            isAppConsistentBackupEnabled[instanceName] = { ...databaseAppConsistentBackupMap };
         })
     );
 
-    return { awsBackup, ontapBackup, crrBackup };
+    return { awsBackup, ontapBackup, crrBackup, isAppConsistentBackupEnabled };
 }
 
 async function getInstanceOntapDetails(
@@ -1737,7 +1754,7 @@ async function getDatabaseDetails(
         const [
             { databases } = { databases: [] },
             backedupDatabases,
-            { awsBackup = [], ontapBackup = [], crrBackup = [] } = {}
+            { awsBackup = [], ontapBackup = [], crrBackup = [], isAppConsistentBackupEnabled = [] } = {}
         ] = await Promise.all(
             [
                 getDataBasesSummary(
@@ -1816,7 +1833,10 @@ async function getDatabaseDetails(
                                                           e.backedupDatabases === database.databaseName
                                                   )
                                           ),
-                                isCRREnabled: isDemoFlow ? true : checkKey(crrBackup[instName], database.databaseName)
+                                isCRREnabled: isDemoFlow ? true : checkKey(crrBackup[instName], database.databaseName),
+                                isAppConsistentBackupEnabled:
+                                    isDemoFlow ||
+                                    checkKey(isAppConsistentBackupEnabled[instName], database.databaseName)
                             }
                         })
                     })
@@ -1921,6 +1941,7 @@ async function getDatabaseInstancesSummary(
     let nodeTopologyData: any;
     let ontapStorageSavings: any;
     let databases: any;
+    let resourceTrendsData: any;
     const errormessages: { [index: string]: string } = {};
 
     const instanceNames = databaseInstances.map((instance: DatabaseInstance) => instance.database_instance_name);
@@ -1953,7 +1974,8 @@ async function getDatabaseInstancesSummary(
             databasesCount,
             nodeTopologyData,
             ontapStorageSavings,
-            databases
+            databases,
+            resourceTrendsData
         ] = await Promise.all(
             [
                 ...(shouldQueryServerDetails
@@ -2047,6 +2069,17 @@ async function getDatabaseInstancesSummary(
                               isSqlAuthEnabled
                           )
                       ]
+                    : [Promise.resolve()]),
+                ...(getResourceutilization || getPerformance
+                    ? [
+                          getSqlInstanceUtilizationAndPerformance(
+                              accountId,
+                              region,
+                              credentialsId,
+                              databaseHostId,
+                              databaseInstances
+                          )
+                      ]
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
@@ -2115,13 +2148,50 @@ async function getDatabaseInstancesSummary(
         databaseInstanceDetails.storage = storageData?.[index];
         databaseInstanceDetails.sqlServerDeploymentType = databaseDeploymentType || '';
 
-        const instanceResourceUtilizationData = resourceUtilizationData?.[instanceName];
-        if (getResourceutilization && instanceResourceUtilizationData) {
-            databaseInstanceDetails.resourceUtilization = {
-                cpu: instanceResourceUtilizationData.cpuUtilization! || {},
-                memory: instanceResourceUtilizationData.memoryUtilization! || {},
-                disk: instanceResourceUtilizationData.diskUtilization! || {}
+        if (getPerformance && performanceData?.[instanceName]) {
+            databaseInstanceDetails.performance = {
+                assessment: instancePerformanceData?.assessment,
+                rwMetrics: instancePerformanceData!
             };
+        }
+        // Need to maintain old qurey for instances API when CW metrics are not available
+
+        if (resourceTrendsData?.[instanceName] && getPerformance) {
+            const instanceResourceTrendsData = resourceTrendsData?.[instanceName] || {};
+            if (instanceResourceTrendsData.serverIOLatency.length > 0) {
+                const { serverIoLatency, assessment } = assessMssqlServerPerformance(
+                    instanceResourceTrendsData.serverIOLatency
+                );
+                databaseInstanceDetails.performance = {
+                    assessment,
+                    rwMetrics: {
+                        latency: {
+                            read: instanceResourceTrendsData.readLatency,
+                            write: instanceResourceTrendsData.writeLatency,
+                            serverIo: serverIoLatency
+                        },
+                        iops: {
+                            read: instanceResourceTrendsData.readIops,
+                            write: instanceResourceTrendsData.writeIops
+                        },
+                        throughput: {
+                            read: instanceResourceTrendsData.readThroughput,
+                            write: instanceResourceTrendsData.writeThroughput
+                        }
+                    }
+                };
+            }
+        }
+
+        const instanceResourceUtilizationData = resourceUtilizationData?.[instanceName];
+        if (getResourceutilization) {
+            if (instanceResourceUtilizationData) {
+                databaseInstanceDetails.resourceUtilization = {
+                    memory: instanceResourceUtilizationData.memoryUtilization ?? {},
+                    disk: instanceResourceUtilizationData.diskUtilization ?? {},
+                    cpu: resourceTrendsData?.[instanceName]?.cpuUsed ?? []
+                };
+            }
         }
         if (getProtection && protectionData) {
             databaseInstanceDetails.protection = protectionData?.[index];
@@ -2254,5 +2324,6 @@ export {
     getInstanceDetails,
     getAllClusterNodeDetails,
     getInstanceOntapDetails,
-    getEc2ResourceInfo
+    getEc2ResourceInfo,
+    isInstanceAppConsistentBackupEnabled
 };

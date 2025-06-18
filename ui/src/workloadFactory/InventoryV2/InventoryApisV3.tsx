@@ -1927,7 +1927,7 @@ const InventoryApisV3 = () => {
                 dispatch(setInventoryTableData(updatedResult));
             }
         }
-    }, [databaseHostsData]);
+    }, [databaseHostsData, fsxCredentialStatusObj]);
 
     // This data is coming from database-hosts pgsql API
     useEffect(() => {

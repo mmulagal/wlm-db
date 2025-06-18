@@ -1,5 +1,6 @@
-import { CloudWatchClient, GetMetricStatisticsCommand } from '@aws-sdk/client-cloudwatch';
+import { CloudWatchClient, GetMetricStatisticsCommand, GetMetricDataCommand } from '@aws-sdk/client-cloudwatch';
 import { mockClient } from 'aws-sdk-client-mock';
+import { CLOUD_WATCH_METRICS_RESPONSE } from '../../../utils/consts';
 
 const cloudwatchMock = mockClient(CloudWatchClient);
 
@@ -137,3 +138,5 @@ cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'VolumeWriteBytes' }
         }
     ]
 });
+
+cloudwatchMock.on(GetMetricDataCommand).resolves(CLOUD_WATCH_METRICS_RESPONSE);

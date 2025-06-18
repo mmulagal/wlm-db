@@ -2,16 +2,17 @@ import throat from 'throat';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
-import { compact, isEmpty } from 'lodash-es';
+import { attempt, cloneDeep, compact, isEmpty, uniqBy } from 'lodash-es';
 import {
     derivePropertiesFromARN,
+    escapeBackslash,
     generateSqlResourceId,
     getArtifactsRegionBucketName,
     isDemo,
     retryWithDelay
 } from '../utils/utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
-import { MultiInstanceManageMsSqlRequestBodyType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
+import { SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 import {
     CloudProviders,
@@ -19,36 +20,69 @@ import {
     HttpErrorCodes,
     POWERSHELL_7_RELATIVE_PATH,
     PREPARE_PSMODULES_RELATIVE_PATH,
+    PSMODULES_RELATIVE_PATH,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES,
     RESOURCE_SOURCE,
     RESOURCESTYPE,
-    SqlServerDeploymentModel
+    SqlServerDeploymentModel,
+    SSM_PARAM_PREFIX,
+    SSM_PARAMETERS_BASE_PATH
 } from '../utils/consts';
-import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
+import { callSsmExecution, getSSMConnectionStatus, ssmPutParameters } from './aws/ssm-operations';
 import { describeInstance, paginateDescribeEbsVolumes } from '../lib/aws/ec2';
 import { getHostAndSqlServerInfo } from './discover-operations';
 import {
     ACTIVE_DIRECTORY,
     CHECK_POWERSHELL7_AVAILABLE,
+    CLUSTER_NETWORK_IP_INFO_PS1,
     FAILURE_INFO,
+    FEATURE_PREPREQUISITES,
     GET_ACTIVE_DIRECTORY_DETAILS,
+    GET_MISSING_RESOURCE_DETAILS,
     INSTALL_POWERSHELL_7,
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
+    IS_DATABASE_CREATE_POSSIBLE,
     IS_PS7_AVAILABLE,
-    REQUIRED_PS_MODULES_FOR_MANAGEMENT
+    REQUIRED_PS_MODULES_FOR_MANAGEMENT,
+    UNAVAILABLE_PS_MODULES
 } from './workloads/mssql/discover-consts';
 import { getResources } from './database/database-operations';
 import { createResource, listDatabaseInstances, upsertDatabaseInstance } from '../lib/database/db';
 import { tagResources } from './aws/sqs-operations';
 import { createAssessmentData } from './demo-operations';
 import { preSignedUrl } from '../lib/aws/s3';
-import { DatabaseInstance } from '../utils/common-types';
+import {
+    DatabaseInstance,
+    DatabaseInstanceRegistration,
+    FSxCredsRegistration,
+    SSMParamterObject
+} from '../utils/common-types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
+import { getParameter, deleteParameters } from '../lib/aws/ssm';
+import { registerFsxOntapCredentials, listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
+import {
+    MultiInstanceManageMsSqlRequestBodyType,
+    MultiInstanceManageResponseBodyType,
+    RegisterCredentialsResponseType,
+    RegisterCredentialsType,
+    SingleInstanceRegisterCredentialsRequestBodyType,
+    SingleRegisterCredentialsResponseType
+} from '../routes/types/register.types';
+import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { DEMO_REGISTER_RESPONSE } from '../utils/demo-utils/demoMockdata';
+import {
+    copyPowerShellModule,
+    validateOntapConnectivity,
+    validateSQLInstanceConnectivity
+} from './workloads/mssql/ssm-script-utils';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
 
 const { getPreSignedUrl } = preSignedUrl;
+
+const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 
 async function installPowershell7(
     accountId: string,
@@ -740,6 +774,411 @@ async function installAndManageSqlInstances(
     );
 }
 
+async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstanceManageMsSqlRequestBodyType[]) {
+    logger.info('Manage SQL Server instances (v2):', {
+        accountId,
+        instancesToBeManagedLength: itemsTobeManged.length
+    });
+
+    const manageResponse: MultiInstanceManageResponseBodyType = [];
+    let auditlogResponse = '';
+    await Promise.all(
+        itemsTobeManged.map(
+            throat(3, async (item: MultiInstanceManageMsSqlRequestBodyType) => {
+                try {
+                    const {
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        databaseInstanceNames: databaseInstanceNameList,
+                        databaseHostId
+                    } = item;
+
+                    /* SSM is a must for all remaining validations */
+                    const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
+                    if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                        throw createError(HttpErrorCodes.VALIDATION_ERROR, 'No SSM connectivity.');
+                    }
+
+                    const [ec2Details, discoverDetails, clusterNetworkIpDetails, adDetails, missingResourceDetails] =
+                        await Promise.all([
+                            describeInstance(
+                                credentialsId,
+                                region,
+                                { InstanceIds: [ec2InstanceId] },
+                                { useCache: true }
+                            ),
+                            getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
+                                ec2InstanceId
+                            ]),
+                            callSsmExecution(
+                                credentialsId,
+                                region,
+                                CLUSTER_NETWORK_IP_INFO_PS1,
+                                ec2InstanceId,
+                                'Get cluster network info',
+                                accountId
+                            ),
+                            callSsmExecution(
+                                credentialsId,
+                                region,
+                                GET_ACTIVE_DIRECTORY_DETAILS,
+                                ec2InstanceId,
+                                'Get AD details',
+                                accountId
+                            ),
+                            callSsmExecution(
+                                credentialsId,
+                                region,
+                                GET_MISSING_RESOURCE_DETAILS,
+                                ec2InstanceId,
+                                'Get missing resources',
+                                accountId
+                            )
+                        ]);
+
+                    const node1InstanceId = ec2InstanceId;
+                    let node2InstanceId: string | undefined;
+                    const precheckErrorList: string[] = [];
+                    const missingResourceJson = JSON.parse(missingResourceDetails!);
+
+                    if (missingResourceJson[IS_PS7_AVAILABLE] === false) {
+                        precheckErrorList.push(
+                            'PowerShell 7 is required for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4.'
+                        );
+                    }
+                    if (missingResourceJson[UNAVAILABLE_PS_MODULES]) {
+                        precheckErrorList.push(
+                            `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare".`
+                        );
+                    }
+
+                    const { awsAccountId } =
+                        derivePropertiesFromARN(
+                            ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn || ''
+                        ) || {};
+
+                    if (isEmpty(awsAccountId)) {
+                        precheckErrorList.push('Failed to get AWS account ID.');
+                    }
+
+                    if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
+                        precheckErrorList.push('Failed to get network interface details.');
+                    } else if (clusterNetworkIpDetails) {
+                        const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } =
+                            JSON.parse(clusterNetworkIpDetails);
+                        if (clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1) {
+                            // FCI/AOAG environment
+                            const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
+                                credentialsId,
+                                region,
+                                clusterNetworkIpDetailsJson.clusterNetworkIps,
+                                { useCache: true }
+                            );
+                            const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
+                            if (!isEmpty(temp)) {
+                                if (!isDemoFlow) {
+                                    node2InstanceId = temp.ec2InstanceId;
+                                }
+
+                                const node2ssmStatus = await getSSMConnectionStatus(
+                                    credentialsId,
+                                    region,
+                                    node2InstanceId!
+                                );
+                                if (node2ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                                    precheckErrorList.push(`No SSM connectivity on partner node ${node2InstanceId}.`);
+                                } else {
+                                    const node2missingResourceDetails = await callSsmExecution(
+                                        credentialsId,
+                                        region,
+                                        GET_MISSING_RESOURCE_DETAILS,
+                                        node2InstanceId!,
+                                        'Get missing resources',
+                                        accountId
+                                    );
+
+                                    const node2missingResourceJson = JSON.parse(node2missingResourceDetails!);
+
+                                    if (node2missingResourceJson[IS_PS7_AVAILABLE] === false) {
+                                        precheckErrorList.push(
+                                            `PowerShell 7 is required for managing the resource on partner node ${node2InstanceId}. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4.`
+                                        );
+                                    }
+                                    if (node2missingResourceJson[UNAVAILABLE_PS_MODULES]) {
+                                        precheckErrorList.push(
+                                            `PowerShell modules ${node2missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource on partner node ${node2InstanceId}. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare".`
+                                        );
+                                    }
+                                    if (node2missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
+                                        precheckErrorList.push(
+                                            `Files required for database operations are not available on partner node ${node2InstanceId}. Install them using the API "/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare".`
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (isEmpty(adDetails) || adDetails?.includes(FAILURE_INFO)) {
+                        precheckErrorList.push('Failed to get Active Directory details.');
+                    }
+
+                    const { count, items } = discoverDetails;
+
+                    if (count <= 0) {
+                        precheckErrorList.push(
+                            'Only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be managed.'
+                        );
+                    }
+
+                    if (!isEmpty(precheckErrorList)) {
+                        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, precheckErrorList.join('\n'));
+                    }
+
+                    const [{ sqlServerInstances } = {}] = items || [];
+                    let resourceId;
+                    let isResourceTobeCreated: boolean;
+                    if (isDemoFlow && databaseHostId) {
+                        resourceId = databaseHostId;
+                        isResourceTobeCreated = false;
+                    } else {
+                        // A resource ID is a hash generated using available EC2 instance IDs.
+                        resourceId = generateSqlResourceId(node1InstanceId, node2InstanceId);
+                        const {
+                            items: [resourceDetails]
+                        } = await getResources(accountId, resourceId, credentialsId, region);
+
+                        isResourceTobeCreated = !resourceDetails;
+                    }
+                    const alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
+                        credentialsId,
+                        resourceId,
+                        region
+                    });
+
+                    const itemsStatus: {
+                        databaseInstanceName: string;
+                        databaseInstanceGuid?: string;
+                        status: string;
+                        errorMessage?: string;
+                    }[] = [];
+                    if (sqlServerInstances && sqlServerInstances.length > 0) {
+                        auditlogResponse += `${sqlServerInstances[0].sqlServerName}\\${databaseInstanceNameList.join(
+                            ','
+                        )};`;
+                    }
+
+                    await Promise.all(
+                        databaseInstanceNameList.map(async dbInst => {
+                            const sqlInstanceInfo = sqlServerInstances?.find(
+                                (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
+                            );
+
+                            if (alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === dbInst)) {
+                                itemsStatus.push({
+                                    databaseInstanceName: dbInst,
+                                    databaseInstanceGuid: sqlInstanceInfo?.serverGuid,
+                                    status: 'failed',
+                                    errorMessage: 'Instance is already managed.'
+                                });
+                            } else if (isEmpty(sqlInstanceInfo)) {
+                                itemsStatus.push({
+                                    databaseInstanceName: dbInst,
+                                    status: 'failed',
+                                    errorMessage: 'SQL Server instance not found.'
+                                });
+                            } else {
+                                try {
+                                    const { windowsAuthentication, sqlServerAuthentication, serverGuid, storage } =
+                                        sqlInstanceInfo;
+                                    const storageInfo = storage?.find(
+                                        (elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN
+                                    );
+                                    const storageProtocols = storage
+                                        ?.filter((elem: { type: string }) => elem.type === STORAGE_TYPE.FSXN)
+                                        .map((elem: any) => elem.protocol);
+
+                                    if (windowsAuthentication === false && sqlServerAuthentication === false) {
+                                        throw Error(
+                                            'Authentication to SQL Server instance is not possible. Check if the SQL Server service is running, stored credentials are valid, or windows authentication is enabled.'
+                                        );
+                                    }
+
+                                    if (isEmpty(storageInfo)) {
+                                        throw Error(
+                                            'SQL Server instance is not hosted on storage of type FSx for NetApp.'
+                                        );
+                                    }
+
+                                    if (
+                                        sqlInstanceInfo.sqlServerDeploymentType ===
+                                        SqlServerDeploymentModel.SQL_AOAG_SHORT
+                                    ) {
+                                        throw Error('Always On availability group environments are not supported.');
+                                    }
+
+                                    try {
+                                        await verifyAndAddFSxOntapCredentials(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            storageInfo!.id
+                                        );
+                                    } catch (error: any) {
+                                        // verifyAndAddFSxOntapCredentials() is used by both V1 and V2 versions
+                                        // of the API.  The prefix 'Unable to manage' is alredy added by V2 API.
+                                        // To avoid duplication of sentence, we remove the sentence, if present.
+                                        const errorMessage = error?.message?.replace(
+                                            'Unable to manage the instance. Reason: ',
+                                            ''
+                                        );
+                                        throw Error(isEmpty(errorMessage) ? error : errorMessage);
+                                    }
+
+                                    if (isResourceTobeCreated) {
+                                        const {
+                                            domainName: activeDirectoryDomainName,
+                                            ipAddresses: activeDirectoryIpAddresses
+                                        } = JSON.parse(adDetails!)[ACTIVE_DIRECTORY];
+                                        const ebsVolumes = await paginateDescribeEbsVolumes(
+                                            credentialsId,
+                                            region,
+                                            {
+                                                Filters: [
+                                                    {
+                                                        Name: 'attachment.instance-id',
+                                                        Values: node2InstanceId
+                                                            ? [node1InstanceId, node2InstanceId]
+                                                            : [node1InstanceId]
+                                                    }
+                                                ]
+                                            },
+                                            undefined,
+                                            { useCache: true }
+                                        );
+                                        const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
+                                            iops: volume.Iops,
+                                            size: volume.Size,
+                                            isRoot: volume.Attachments?.some(
+                                                attachment =>
+                                                    attachment.Device === '/dev/xvda' ||
+                                                    attachment.Device === '/dev/sda1'
+                                            ),
+                                            volumeType: volume.VolumeType,
+                                            volumeId: volume.VolumeId,
+                                            throughput: volume.Throughput
+                                        }));
+
+                                        await createResource(accountId, {
+                                            resourceId,
+                                            credentialsId,
+                                            storageType: STORAGE_TYPE.FSXN,
+                                            resourceName: sqlInstanceInfo.sqlServerName,
+                                            cloudProviderAccountId: awsAccountId!,
+                                            cloudProviderName: CloudProviders.AWS,
+                                            resourceType: RESOURCESTYPE.MSSQL,
+                                            coRelationId: storageInfo!.id,
+                                            region,
+                                            metadata: {
+                                                creationDate: Date.now(),
+                                                node1InstanceId,
+                                                node2InstanceId,
+                                                sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
+                                                source: RESOURCE_SOURCE.DISCOVER,
+                                                fsxSvmId: storageInfo!.svmId,
+                                                storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                                                ...(activeDirectoryDomainName && {
+                                                    activeDirectoryName: activeDirectoryDomainName
+                                                }),
+                                                ...(activeDirectoryIpAddresses && {
+                                                    activeDirectoryAddress: activeDirectoryIpAddresses.join()
+                                                }),
+                                                ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
+                                            }
+                                        });
+
+                                        isResourceTobeCreated = false;
+                                    }
+
+                                    tagResources(
+                                        credentialsId,
+                                        region,
+                                        awsAccountId!,
+                                        accountId,
+                                        storageInfo!.id,
+                                        node1InstanceId,
+                                        node2InstanceId
+                                    );
+
+                                    let dbInstanceName;
+                                    if (isDemoFlow) {
+                                        dbInstanceName =
+                                            sqlInstanceInfo.sqlServerInstance !== 'MSSQLSERVER'
+                                                ? sqlInstanceInfo.sqlServerName + sqlInstanceInfo.sqlServerInstance
+                                                : sqlInstanceInfo.sqlServerInstance;
+                                    } else {
+                                        dbInstanceName = sqlInstanceInfo.sqlServerInstance;
+                                    }
+
+                                    await upsertDatabaseInstance(accountId, {
+                                        credentialsId,
+                                        resourceId,
+                                        region,
+                                        databaseInstanceId: serverGuid!,
+                                        databaseInstanceName: dbInstanceName,
+                                        fsxnIds: storageInfo!.id,
+                                        isDefault: sqlInstanceInfo.isDefaultInstance,
+                                        source: RESOURCE_SOURCE.DISCOVER,
+                                        sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
+                                        fsxSvmId: { [storageInfo!.id]: storageInfo!.svmId },
+                                        storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                                        databaseType: DatabaseTypes.MS_SQL_SERVER
+                                    });
+                                    if (isDemoFlow) {
+                                        await createAssessmentData(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            resourceId,
+                                            serverGuid!
+                                        );
+                                    }
+
+                                    itemsStatus.push({
+                                        databaseInstanceName: dbInst,
+                                        databaseInstanceGuid: serverGuid,
+                                        status: 'success'
+                                    });
+                                } catch (error) {
+                                    itemsStatus.push({
+                                        databaseInstanceName: dbInst,
+                                        status: 'failed',
+                                        errorMessage: `${error}`
+                                    });
+                                }
+                            }
+                        })
+                    );
+                    manageResponse.push({ resourceId, instances: itemsStatus, credentialsId, region, ec2InstanceId });
+                } catch (error: any) {
+                    const err = `Unable to manage instance '${item.ec2InstanceId}'. Reason: ${error.message}`;
+                    manageResponse.push({
+                        hostErrorMessage: err,
+                        credentialsId: item.credentialsId,
+                        region: item.region,
+                        ec2InstanceId: item.ec2InstanceId,
+                        instances: item.databaseInstanceNames.map(name => ({ databaseInstanceName: name }))
+                    });
+                }
+            })
+        )
+    );
+    updateLongRunningAuditGroup(undefined, undefined, auditlogResponse);
+
+    return { hosts: manageResponse };
+}
+
 async function manageSqlInstances(accountId: string, resourcesToBeManaged: MultiInstanceManageMsSqlRequestBodyType[]) {
     logger.info('Register sql instances', { accountId, resourcesToBeManagedLength: resourcesToBeManaged.length });
 
@@ -761,4 +1200,622 @@ async function manageSqlInstances(accountId: string, resourcesToBeManaged: Multi
     return { jobId };
 }
 
-export { manageSqlInstances };
+function getErrorMessage(detectResponse: Record<string, string[]>[]) {
+    logger.debug('Get detect resource error message', { detectResponse });
+
+    let errorMessage = '';
+    detectResponse.forEach(item => {
+        if (item.hasOwnProperty('requiredModuleError') && item.requiredModuleError) {
+            errorMessage += `requiredModuleError: ${item.requiredModuleError}, `;
+        }
+        if (item.hasOwnProperty('sqlServerError') && item.sqlServerError) {
+            errorMessage += `sqlServerError: ${item.sqlServerError}, `;
+        }
+        if (item.hasOwnProperty('fsxnError') && item.fsxnError) {
+            errorMessage += `fsxnError: ${item.fsxnError}`;
+        }
+    });
+    errorMessage = errorMessage?.replace(', ', '');
+    return errorMessage;
+}
+
+function prepareParametersToStore(instanceIds: string[], credentials: RegisterCredentialsType[]) {
+    logger.debug('prepare parameters to store', { instanceIds });
+
+    return credentials.reduce((acc: SSMParamterObject[], { resourceId, resourceType, username, password }) => {
+        if (resourceType === RESOURCESTYPE.MSSQL) {
+            const sqlItem = acc.find(el => el.value.sql);
+
+            if (sqlItem && Array.isArray(sqlItem.value.sql)) {
+                sqlItem.value.sql.push({
+                    sqlinstancename: resourceId,
+                    username,
+                    password
+                });
+            } else {
+                instanceIds.forEach(instanceId =>
+                    acc.push({
+                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                        value: {
+                            sql: [
+                                {
+                                    sqlinstancename: resourceId,
+                                    username,
+                                    password
+                                }
+                            ]
+                        }
+                    })
+                );
+            }
+        } else if (resourceType === RESOURCESTYPE.FSX) {
+            acc.push({
+                path: `${SSM_PARAMETERS_BASE_PATH}/${resourceId}`,
+                value: {
+                    fsx: {
+                        username,
+                        password
+                    }
+                }
+            });
+        } else if (resourceType === RESOURCESTYPE.WINDOWS_USER) {
+            const windowsUserItem = acc.find(el => el.value.domain);
+
+            if (windowsUserItem && Array.isArray(windowsUserItem.value.domain)) {
+                windowsUserItem.value.domain.push({
+                    sqlinstancename: resourceId,
+                    username: escapeBackslash(username),
+                    password
+                });
+            } else {
+                instanceIds.forEach(instanceId =>
+                    acc.push({
+                        path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                        value: {
+                            domain: [
+                                {
+                                    sqlinstancename: resourceId,
+                                    username: escapeBackslash(username),
+                                    password
+                                }
+                            ]
+                        }
+                    })
+                );
+            }
+        }
+        return acc;
+    }, []);
+}
+
+async function registerResourceCredentials(
+    accountId: string,
+    credentialsTobeValidated: SingleInstanceRegisterCredentialsRequestBodyType[]
+) {
+    logger.info('Register resource credentials', {
+        accountId,
+        credentialsTobeValidatedLength: credentialsTobeValidated.length
+    });
+
+    if (!credentialsTobeValidated?.length) {
+        throw new Error('No credentials to be registered.');
+    }
+
+    const response: RegisterCredentialsResponseType = [];
+
+    await Promise.all(
+        credentialsTobeValidated.map(
+            throat(3, async resource => {
+                const { credentialsId, region, ec2InstanceId, credentials } = resource;
+                const registerResponse = await validateAndStoreDiscoveredParameters(
+                    accountId,
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    credentials,
+                    undefined,
+                    true
+                );
+
+                response.push({
+                    ec2InstanceId,
+                    credentialsId,
+                    region,
+                    registerDetails: Array.isArray(registerResponse) ? registerResponse : [registerResponse]
+                });
+            })
+        )
+    );
+
+    return response;
+}
+
+async function validateAndStoreDiscoveredParameters(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    credentials: RegisterCredentialsType[],
+    clusterNodesIpAddress?: string[],
+    checkManageReadiness: boolean = false,
+    singleInstanceRegistration: boolean = false
+) {
+    logger.info('Validate and store SSM parameters', {
+        accountId,
+        credentialsId,
+        region,
+        instanceId,
+        checkManageReadiness
+    });
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (singleInstanceRegistration) {
+            return DEMO_REGISTER_RESPONSE;
+        }
+        const response: SingleRegisterCredentialsResponseType[] = [];
+        credentials.forEach(cred => {
+            if (cred.resourceType !== RESOURCESTYPE.FSX) {
+                response.push({ ...DEMO_REGISTER_RESPONSE, resourceId: cred.resourceId });
+            }
+        });
+        return response;
+    }
+
+    try {
+        if (!accountId || !credentialsId || !region || !instanceId) {
+            logger.error('Invalid input parameters', { accountId, credentialsId, region, instanceId });
+            throw new Error('Invalid input parameters');
+        }
+
+        credentials = uniqBy(credentials, 'resourceId');
+        const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
+        const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
+        const windowsUserCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.WINDOWS_USER);
+        if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials) && isEmpty(windowsUserCredentials)) {
+            throw new Error('Credentials cannot be empty');
+        }
+
+        let instanceIds = [instanceId];
+        if (clusterNodesIpAddress && !isEmpty(clusterNodesIpAddress)) {
+            try {
+                const clusterNodeDetails =
+                    (await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNodesIpAddress, {
+                        useCache: true
+                    })) || [];
+                instanceIds = clusterNodeDetails.map(e => e.ec2InstanceId);
+            } catch (error) {
+                logger.error('Error while generating resource id for SSM parameter: ', error);
+            }
+        }
+
+        const detectResponse = await validateCredentials(
+            accountId,
+            credentialsId,
+            region,
+            instanceId,
+            fsxCredentials,
+            sqlCredentials,
+            windowsUserCredentials,
+            instanceIds,
+            checkManageReadiness
+        );
+
+        // resource-credentials support until UI makes changes to use register-credentials API across
+
+        if (singleInstanceRegistration) {
+            const errorMessage = getErrorMessage(detectResponse);
+            if (errorMessage) {
+                logger.error('Failed to validate credentials', errorMessage);
+                throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+            }
+
+            const instanceDetails = detectResponse.find(item => item.resourceId === credentials[0]?.resourceId);
+            if (instanceDetails) {
+                return {
+                    databaseCount: instanceDetails.databaseCount,
+                    sqlServerEdition: instanceDetails.sqlServerEdition,
+                    manageReadiness: instanceDetails.manageReadiness,
+                    sqlServerError: instanceDetails.sqlServerError,
+                    requiredModuleError: instanceDetails.requiredModuleError,
+                    fsxnError: instanceDetails.fsxnError
+                } as SingleRegisterCredentialsResponseType;
+            }
+        }
+
+        return detectResponse;
+    } catch (error: any) {
+        logger.error('Failed to validate credentials', error);
+        throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
+    }
+}
+
+async function rewriteOrDeleteSSMParameter(
+    credentialsId: string,
+    region: string,
+    instanceIds: string[],
+    paramsToDelete: string[],
+    instancesToBeDeleted: string[],
+    fsxCredentials: RegisterCredentialsType,
+    sqlCredentials: RegisterCredentialsType[],
+    windowsUserCredentials: RegisterCredentialsType[]
+) {
+    logger.info('Calling rewriteOrDeleteSSMParameter', {
+        credentialsId,
+        region,
+        instanceIds,
+        paramsToDelete,
+        instancesToBeDeleted,
+        fsxCredentials,
+        sqlCredentials,
+        windowsUserCredentials
+    });
+    if (
+        sqlCredentials.length === instancesToBeDeleted.length ||
+        windowsUserCredentials.length === instancesToBeDeleted.length
+    ) {
+        // Delete the parameter store all credentials are invalid
+        instanceIds.forEach(instanceId => paramsToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`));
+        await deleteSSMParameter(credentialsId, region, paramsToDelete);
+    } else {
+        // Rewrite parameter store after removing invalid credentials
+        const latestSqlCredentials = sqlCredentials.filter(e => !instancesToBeDeleted.includes(e.resourceId));
+        const latestWindowsUserCredentials = windowsUserCredentials.filter(
+            e => !instancesToBeDeleted.includes(e.resourceId)
+        );
+        const creds = prepareParametersToStore(instanceIds, [
+            ...(fsxCredentials ? [fsxCredentials] : []),
+            ...latestSqlCredentials,
+            ...latestWindowsUserCredentials
+        ]);
+        await ssmPutParameters(credentialsId, region, creds);
+    }
+}
+
+async function validateCredentials(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    fsxCredentials: RegisterCredentialsType | undefined,
+    sqlCredentials: RegisterCredentialsType[],
+    windowsUserCredentials: RegisterCredentialsType[],
+    instanceIds: string[],
+    checkManageReadiness: boolean = false
+) {
+    logger.info('Validate credentials', {
+        instanceId,
+        fsxCredentials,
+        sqlCredentials,
+        instanceIds,
+        windowsUserCredentials,
+        checkManageReadiness
+    });
+
+    const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
+
+    const ssmParameters = [`${SSM_PARAM_PREFIX}${fsxCredentials?.resourceId}`];
+    instanceIds.forEach(instance => ssmParameters.push(`${SSM_PARAM_PREFIX}${instance}`));
+
+    if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+        const errorMessage = `Unable to validate the credentials through SSM, for host ${instanceId}`;
+        logger.error(errorMessage);
+
+        await deleteSSMParameter(credentialsId, region, ssmParameters);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    const newSqlCredentials = cloneDeep(sqlCredentials);
+    await verifyAndCreateCredentials(
+        credentialsId,
+        region,
+        instanceId,
+        fsxCredentials,
+        newSqlCredentials,
+        windowsUserCredentials,
+        instanceIds
+    );
+
+    let parsedResponse;
+
+    try {
+        let command = '$WarningPreference = "SilentlyContinue";';
+
+        if (fsxCredentials || sqlCredentials.length || windowsUserCredentials) {
+            // Get signed url for aws_ssm.zip to install the ps modules
+            const bucketname = getArtifactsRegionBucketName(region);
+            const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
+            const moduleNames = `
+  'AWS.Tools.SimpleSystemsManagement'
+`;
+            command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
+        }
+
+        if (fsxCredentials) {
+            command += `${validateOntapConnectivity([fsxCredentials.resourceId], region)};\n`;
+        }
+
+        if (sqlCredentials.length) {
+            const resourcesWithSqlAuth = sqlCredentials.map(cred => cred.resourceId);
+            command += `${validateSQLInstanceConnectivity(
+                instanceId,
+                resourcesWithSqlAuth,
+                false,
+                checkManageReadiness
+            )};\n`;
+        }
+
+        if (!isEmpty(windowsUserCredentials)) {
+            const resourcesWithWindowsAuth = windowsUserCredentials.map(cred => cred.resourceId);
+            command += `${validateSQLInstanceConnectivity(
+                instanceId,
+                resourcesWithWindowsAuth,
+                true,
+                checkManageReadiness
+            )};\n`;
+        }
+
+        command += '$responseObject | ConvertTo-Json -Compress';
+
+        const ssmresponse = await callSsmExecution(
+            credentialsId,
+            region,
+            [command],
+            instanceId,
+            'Validate credentials',
+            undefined,
+            false
+        );
+
+        const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
+        parsedResponse = attempt(JSON.parse, cleanResponse);
+
+        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+
+        if (!parsedResponse) {
+            throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
+        }
+
+        const response: Record<string, any>[] = [];
+        const paramsToDelete: string[] = [];
+        const instancesToBeDeleted: string[] = [];
+
+        if (fsxCredentials) {
+            parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
+                if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
+                    response.push({
+                        resourceId: fsxCredentials.resourceId,
+                        fsxnError: fsxResult.ontaperror
+                    });
+                    paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+                } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
+                    await registerFsxOntapCredentials(
+                        accountId,
+                        credentialsId,
+                        region,
+                        fsxCredentials.resourceId,
+                        fsxCredentials.password
+                    );
+                }
+            });
+        }
+
+        if (sqlCredentials.length || windowsUserCredentials.length) {
+            parsedResponse.instances.forEach((instance: DatabaseInstanceRegistration) => {
+                if (instance.sqlInstanceConnectivity === false) {
+                    instancesToBeDeleted.push(sqlCredentials[0]?.resourceId ?? windowsUserCredentials[0]?.resourceId);
+                    response.push({ resourceId: instance.sqlInstanceName, sqlServerError: instance?.sqlerror });
+                } else {
+                    const {
+                        sqlPermissions = [],
+                        availablePsModules = [],
+                        sqlInstanceConnectivity,
+                        sqlEdition,
+                        noOfDatabases,
+                        sqlInstanceName
+                    } = instance || {};
+
+                    const manageReadiness = checkManageReadiness
+                        ? Object.fromEntries(
+                              Object.entries(FEATURE_PREPREQUISITES).map(([key, value]) => [
+                                  key.toLowerCase(),
+                                  {
+                                      missingSqlPermissions: value.SQL_PERMISSIONS.filter(
+                                          x => !sqlPermissions.includes(x)
+                                      ),
+                                      missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                                  }
+                              ])
+                          )
+                        : undefined;
+
+                    response.push({
+                        resourceId: sqlInstanceName,
+                        sqlServerEdition: sqlEdition,
+                        databaseCount: noOfDatabases,
+                        ...(checkManageReadiness && {
+                            manageReadiness: { ...manageReadiness, missingSqlCmd: !sqlInstanceConnectivity }
+                        })
+                    });
+                }
+            });
+        }
+
+        if (instancesToBeDeleted.length > 0) {
+            await rewriteOrDeleteSSMParameter(
+                credentialsId,
+                region,
+                instanceIds,
+                paramsToDelete,
+                instancesToBeDeleted,
+                fsxCredentials!,
+                newSqlCredentials,
+                windowsUserCredentials
+            );
+        }
+        return response;
+    } catch (error: any) {
+        // delete the ssm parameters if its already created
+        const paramsToDelete: string[] = [];
+        const instancesToBeDeleted: string[] = [];
+
+        if (fsxCredentials) {
+            paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+        }
+
+        if (sqlCredentials.length || windowsUserCredentials.length) {
+            instancesToBeDeleted.push(
+                ...(sqlCredentials ?? []).map(e => e.resourceId),
+                ...(windowsUserCredentials ?? []).map(e => e.resourceId)
+            );
+        }
+
+        await rewriteOrDeleteSSMParameter(
+            credentialsId,
+            region,
+            instanceIds,
+            paramsToDelete,
+            instancesToBeDeleted,
+            fsxCredentials!,
+            newSqlCredentials,
+            windowsUserCredentials
+        );
+
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Unable to validate the credentials . Reason: ${error?.message}.`
+        );
+    }
+}
+
+async function verifyAndCreateCredentials(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    fsxCredentials: RegisterCredentialsType | undefined,
+    sqlCredentials: RegisterCredentialsType[],
+    windowsUserCredentials: RegisterCredentialsType[],
+    instanceIds: string[]
+) {
+    logger.info('Verify and create credentials', { instanceId });
+
+    if (fsxCredentials) {
+        const SSMParameter = await getParameter(
+            credentialsId,
+            region,
+            `${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`
+        );
+        if (!SSMParameter) {
+            const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
+            setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), fsxCredentials.resourceId]);
+        }
+    }
+
+    if (sqlCredentials.length || windowsUserCredentials.length) {
+        const existingParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
+        if (!existingParameters) {
+            const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
+            setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), ...instanceIds]);
+        } else {
+            const { sql, domain } = JSON.parse(existingParameters);
+            if (sql) {
+                const newSqlInstances = sqlCredentials.map(e => e.resourceId);
+                sql.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
+                    if (!newSqlInstances.includes(e.sqlinstancename)) {
+                        sqlCredentials.push({
+                            resourceId: e.sqlinstancename,
+                            resourceType: RESOURCESTYPE.MSSQL,
+                            username: e.username,
+                            password: e.password
+                        });
+                    }
+                });
+            }
+            if (domain) {
+                const newDomainUsers = windowsUserCredentials.map(e => e.resourceId);
+                domain.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
+                    if (!newDomainUsers.includes(e.sqlinstancename)) {
+                        windowsUserCredentials.push({
+                            resourceId: e.sqlinstancename,
+                            resourceType: RESOURCESTYPE.WINDOWS_USER,
+                            username: e.username,
+                            password: e.password
+                        });
+                    }
+                });
+            }
+        }
+    }
+
+    const creds = prepareParametersToStore(instanceIds, [
+        ...(fsxCredentials ? [fsxCredentials] : []),
+        ...sqlCredentials,
+        ...windowsUserCredentials
+    ]);
+
+    await ssmPutParameters(credentialsId, region, creds);
+}
+
+async function deleteSSMParameter(credentialsId: string, region: string, ssmParameterNames: string[]) {
+    logger.info('Delete SSM parameter', { credentialsId, region, ssmParameterNames });
+
+    const newlyAddedSSMParameters: string[] = (await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS)) || [];
+    const ssmParamRegex = /\/netapp\/wlmdb\/(.*)/;
+
+    if (!isEmpty(newlyAddedSSMParameters) && !isEmpty(ssmParameterNames)) {
+        const filteredSSMParameters = (ssmParameterNames || []).filter(param => {
+            const [, lastPart] = param.match(ssmParamRegex) || [];
+            return newlyAddedSSMParameters.includes(lastPart);
+        });
+
+        if (filteredSSMParameters?.length) {
+            await deleteParameters(credentialsId, region, filteredSSMParameters);
+        }
+    }
+}
+
+async function verifyAndAddFSxOntapCredentials(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fsxNId: string
+) {
+    logger.info('Verify and add FSx ONTAP credentials', { accountId, credentialsId, region, fsxStorageId: fsxNId });
+
+    if (!isEmpty(fsxNId)) {
+        // Check if the FSx credentials are already present in SSM parameter store
+        const fsxCredentials = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${fsxNId}`);
+
+        if (!fsxCredentials) {
+            let credentials;
+
+            try {
+                ({ credentials } = await listFsxOntapCredentials(accountId, fsxNId));
+
+                if (isEmpty(credentials)) {
+                    throw new Error('FSx for ONTAP storage credentials not found');
+                }
+            } catch (error: any) {
+                throw createError(
+                    HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                    `Unable to manage the instance. Reason: FSx for ONTAP storage '${fsxNId}' isn't registered with FSxN core service.`
+                );
+            }
+
+            const preparedCreds = prepareParametersToStore(
+                [''],
+                [
+                    {
+                        resourceId: fsxNId,
+                        resourceType: RESOURCESTYPE.FSX,
+                        username: credentials?.userName,
+                        password: credentials?.password
+                    }
+                ]
+            );
+
+            await ssmPutParameters(credentialsId, region, preparedCreds);
+        }
+    }
+}
+
+export { manageSqlInstances, registerResourceCredentials, manageSqlServerV2, validateAndStoreDiscoveredParameters };
