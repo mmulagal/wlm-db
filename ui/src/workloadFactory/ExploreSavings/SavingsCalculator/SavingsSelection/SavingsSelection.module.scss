@@ -140,3 +140,16 @@
         }
     }
 }
+
+@media screen and (min-width: 1920px) {
+    .savingsSelection {
+        .widthSet {
+            width: 100%;
+        }
+        .secondRow {
+            .instanceTypeContainer {
+                width: 100%;
+            }
+        }
+    }
+}
