@@ -2,7 +2,7 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import { attempt, trimEnd, trimStart, camelCase, isEmpty } from 'lodash-es';
+import { attempt, trimEnd, trimStart, camelCase, isEmpty, isObject } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
@@ -1179,6 +1179,10 @@ function getSqlInstanceMetricDataQueries(databaseHostId: string, instanceName: s
     return params;
 }
 
+function isNonEmptyObject(obj: any) {
+    return isObject(obj) && !isEmpty(obj);
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1245,6 +1249,7 @@ export {
     getEc2Hostname,
     getInstancesWithResourceForDemo,
     getRedisConnection,
+    isNonEmptyObject,
     getUnitForMetric,
     assessMssqlServerPerformance,
     getSqlInstanceMetricDataQueries
