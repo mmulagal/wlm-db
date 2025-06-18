@@ -154,7 +154,8 @@ enum RouteTags {
     ASSESSMENT = 'Well Architected',
     ONPREM_TCO = 'OnPremises TCO',
     NOTIFICATION = 'Notification',
-    LOGS_ANALYSIS = 'Logs Analysis'
+    LOGS_ANALYSIS = 'Logs Analysis',
+    REGISTER = 'Register'
 }
 
 enum HttpErrorCodes {
