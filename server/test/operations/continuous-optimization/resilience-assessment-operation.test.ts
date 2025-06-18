@@ -145,7 +145,7 @@ describe('Snapshot policy assessment', () => {
             volumeAssessmentData as any,
             violations
         );
-        const dates = Object.values(result).map((dateValues: any) => new Date(dateValues));
+        const dates = Object.values(result).map((dateValues: any) => new Date(dateValues.create_time));
         expect(dates.length).toBeGreaterThan(0);
     });
 });

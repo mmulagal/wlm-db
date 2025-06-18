@@ -34,7 +34,7 @@ import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { getInstanceInfo } from '../database/database-operations';
 import { describeFSx } from '../../lib/aws/fsx';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../workloads/mssql/resiliency-scripts';
-import { GET_LATEST_SNAPSHOT_TIME } from '../workloads/mssql/continuous-optimization-scripts';
+import { GET_SNAPSHOT_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { isFsxnAwsBackupEnabled } from '../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../database/job-operations';
@@ -100,7 +100,7 @@ async function collectVolumeSnapshotCopiesData(
             .filter((vol: Record<string, string>) => violations?.includes(vol?.name))
             .map((vol: Record<string, string>) => vol?.uuid);
 
-        const command = [GET_LATEST_SNAPSHOT_TIME(volumesToCheck, fsxId, region)];
+        const command = [GET_SNAPSHOT_DETAILS(volumesToCheck, fsxId, region)];
         const ssmComment = 'Get snapshot copy details for volumes';
         const rawResponse = await callSsmExecution(
             credentialsId,
@@ -132,6 +132,7 @@ async function collectSnapshotCopyData(
     instanceRecord: WorkloadInstance,
     volumes: Array<{ Key?: string; Value?: string }> = []
 ) {
+    logger.info('Collecting snapshot copy data for volumes:', instanceRecord?.name, volumes);
     const violatedVols = getVolumesWithoutSnapshotPolicy(volumes);
     try {
         if (violatedVols.length) {
@@ -143,7 +144,7 @@ async function collectSnapshotCopyData(
                 violatedVols
             );
             volumes.forEach((volDetail: Record<string, string>) => {
-                const snapshotTimestamp = new Date(res?.[volDetail?.uuid]).getTime().toString();
+                const snapshotTimestamp = new Date(res?.[volDetail?.uuid]?.create_time).getTime().toString();
                 volDetail[OptimizeStorageConfigs.MOST_RECENT_SNAPSHOT_TIMESTAMP] = snapshotTimestamp ?? null;
             });
         }

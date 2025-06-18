@@ -19,6 +19,16 @@ import {
 } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate, GET_FCI_NAME } from './ssm-script-utils';
 
+/**
+ * Parameters for making a REST request to ONTAP.
+ * @property queryFilter - A filter expression to specify conditions for filtering fields in the request.
+ * @property queryFields - The field to include in the output. Pass one field at a time
+ */
+interface OntapRestRequestParams {
+    queryFilter?: string;
+    queryFields?: string;
+}
+
 const JSON_CHECK = `
         function Test-ValidJson {
             param (
@@ -1347,8 +1357,17 @@ const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
     return (Deflate-String $response)
 `;
 
-const GET_LATEST_SNAPSHOT_TIME = (volumeUuids: string[], fsxId: string, region: string) => `
+const GET_SNAPSHOT_DETAILS = (
+    volumeUuids: string[],
+    fsxId: string,
+    region: string,
+    fields: OntapRestRequestParams = {
+        queryFilter: 'order_by=create_time desc&max_records=1',
+        queryFields: 'create_time'
+    }
+) => `
     # Get list of creation dates for latest snapshot copies of each volume
+
     Start-Transcript -Path ${RESILIENCY_OPTIMIZE_LOG_PATH} -Append | Out-Null
     ${JSON_CHECK};
     $response = @{}
@@ -1358,8 +1377,8 @@ const GET_LATEST_SNAPSHOT_TIME = (volumeUuids: string[], fsxId: string, region: 
     $FSxID = '${fsxId}'
     $FSxRegion = '${region}'
     $apiEndpoint = '/storage/volumes/'
-    $apiQueryFilter = "order_by=create_time desc&max_records=1"
-    $apiQueryFields = "fields=create_time"
+    $apiQueryFilter = "${fields.queryFilter}"
+    $apiQueryFields = "fields=${fields.queryFields}"
     ${ontapRestRequest}
     try {
         Write-Information "Getting snapshot copy details for volumes: $volumes"
@@ -1367,7 +1386,12 @@ const GET_LATEST_SNAPSHOT_TIME = (volumeUuids: string[], fsxId: string, region: 
             try {
                 Write-Information "Getting snapshot copy details for volume: $volume"
                 $rawRes = Invoke-ONTAPRequest -ApiEndpoint ($apiEndpoint + $volume + '/snapshots') -ApiQueryFilter $apiQueryFilter -ApiQueryFields $apiQueryFields
-                $response.response[$volume] = $rawRes.records.create_time
+                $fieldsList = "${fields.queryFields}".Split(',') | ForEach-Object { $_.Trim() }
+                $resultObj = @{}
+                foreach ($field in $fieldsList) {
+                    $resultObj[$field] = $rawRes.records | ForEach-Object { $_.$field }
+                }
+                $response.response[$volume] = $resultObj
             } catch {
                 $response.errors[$volume] = $_.Exception.Message
                 Write-Information "Error occurred while fetching snapshot copy details for volume: $volume. Error: $_.Exception.Message"
@@ -1529,6 +1553,7 @@ const GET_SANDBOX_DETAILS = (instanceName: string, sqlAuthEnabled: boolean, quer
 `;
 
 export {
+    OntapRestRequestParams,
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
@@ -1547,6 +1572,6 @@ export {
     SET_VOLUME_SNAPSHOT_POLICY,
     SET_MAXDOP,
     JSON_CHECK,
-    GET_LATEST_SNAPSHOT_TIME,
+    GET_SNAPSHOT_DETAILS,
     GET_SANDBOX_DETAILS
 };
