@@ -15,7 +15,8 @@ import {
     getInstanceTypesFromInstanceRequirementsForManagedInstances,
     getInstanceTypesFromInstanceRequirements,
     waitForInstanceToBeStopped,
-    instanceTypeChangePreReqs
+    instanceTypeChangePreReqs,
+    getAmazonLinux2023AmiList
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -155,5 +156,11 @@ describe('EC2 Operations', () => {
         } catch (error) {
             expect(error).toBeUndefined();
         }
+    });
+
+    it('Get Amazon Linux 2023 AMI List', async () => {
+        const amiList = await getAmazonLinux2023AmiList(credentialsId, DEFAULT_AWS_REGION);
+        expect(Array.isArray(amiList)).toBeTruthy();
+        expect(amiList).toBeDefined();
     });
 });

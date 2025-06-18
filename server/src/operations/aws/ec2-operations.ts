@@ -997,6 +997,28 @@ async function instanceTypeChangePreReqs(
     }
 }
 
+async function getAmazonLinux2023AmiList(credentialsId: string, region: string): Promise<(string | undefined)[]> {
+    logger.info('Get Amazon Linux 2023 AMI List', { credentialsId, region });
+
+    const amis = await getAmis(
+        credentialsId,
+        region,
+        {
+            Owners: [AMI_OWNERS.AMAZON],
+            Filters: [
+                {
+                    Name: 'name',
+                    Values: ['al2023-ami-2023*-x86_64']
+                }
+            ]
+        },
+        { useCache: true }
+    );
+
+    const { Images: amisList } = amis || {};
+    return (amisList || []).map(image => image.ImageId);
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -1018,5 +1040,6 @@ export {
     determineBiggerInstance,
     determineSmallerInstance,
     waitForInstanceToBeStopped,
-    instanceTypeChangePreReqs
+    instanceTypeChangePreReqs,
+    getAmazonLinux2023AmiList
 };
