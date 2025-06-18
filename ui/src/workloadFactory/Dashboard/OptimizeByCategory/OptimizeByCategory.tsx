@@ -30,9 +30,11 @@ import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import { useTranslation } from 'react-i18next';
 
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
     const categoryData = useMemo(
@@ -132,7 +134,7 @@ const OptimizeByCategory = () => {
                         isDisabled={loading}
                         data-testid="wlm-db-optimize-instances-by-category"
                     >
-                        {GENERAL.OPTIMIZE}
+                        {t('databases.well-architect.view-and-fix')}
                     </DsButton>
                 </div>
             </div>
