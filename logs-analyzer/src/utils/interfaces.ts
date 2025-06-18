@@ -72,7 +72,11 @@ interface ErrorLog {
     firstOccurrence?: number;
     lastOccurrence?: number;
     errorCode?: string;
-    tokenUsageForCauseIdentification?: number;
+    tokenUsageForCauseIdentification?: {
+        input: number;
+        output: number;
+        total: number;
+    };
 }
 
 interface ErrorLogWithAdditionalInfo extends ErrorLog {

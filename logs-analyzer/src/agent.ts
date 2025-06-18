@@ -109,8 +109,16 @@ interface RemediationRecommendation {
     lastOccurrence?: number;
     errorCode?: string;
     tokenUsage?: {
-        causeIdentification?: number;
-        remediationRecommendation?: number;
+        causeIdentification?: {
+            input: number;
+            output: number;
+            total: number;
+        };
+        remediationRecommendation?: {
+            input: number;
+            output: number;
+            total: number;
+        };
     };
 }
 
@@ -157,7 +165,7 @@ async function initiateLogsAnalysis(inputText: string) {
             INFERENCE_CONFIG
         );
         messages.push(message);
-        const { totalTokens: tokenUsageForIntentIdentification = 0 } = usage || {};
+        const { inputTokens, outputTokens, totalTokens } = usage || {};
         if (stopReason === 'tool_use') {
             await handleToolUse(client, message, messages, toolConfig, uniqueQueryMap, INFERENCE_CONFIG);
         }
@@ -182,9 +190,21 @@ async function initiateLogsAnalysis(inputText: string) {
                 statusFilePath,
                 remediationRecommendation,
                 totalTokens: {
-                    tokenUsageForIntentIdentification,
-                    totalTokensForRemediation: sumTokenUsage(remediationRecommendation, 'remediationRecommendation'),
-                    totalTokensForCauseIdentification: sumTokenUsage(remediationRecommendation, 'causeIdentification')
+                    tokenUsageForIntentIdentification: {
+                        input: inputTokens,
+                        output: outputTokens,
+                        total: totalTokens
+                    },
+                    totalTokensForRemediation: {
+                        input: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'input'),
+                        output: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'output'),
+                        totalTokens: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'total')
+                    },
+                    totalTokensForCauseIdentification: {
+                        input: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'input'),
+                        output: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'output'),
+                        totalTokens: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'total')
+                    },
                 }
             }
         };
@@ -205,10 +225,11 @@ async function initiateLogsAnalysis(inputText: string) {
 
 function sumTokenUsage(
     recommendations: RemediationRecommendation[],
-    key: 'causeIdentification' | 'remediationRecommendation'
+    key: 'causeIdentification' | 'remediationRecommendation',
+    type: 'input' | 'output' | 'total'
 ): number {
     return recommendations.reduce((sum, rec) => {
-        const tokenUsage = rec?.tokenUsage?.[key];
+        const tokenUsage = rec?.tokenUsage?.[key]?.[type];
         return sum + (tokenUsage || 0);
     }, 0);
 }
@@ -298,7 +319,7 @@ async function analyzeErrorLogs(
                     inferenceConfig
                 );
 
-                const { message, usage: { totalTokens: tokenUsageForCauseIdentification = 0 } = {} } = response;
+                const { message, usage: { totalTokens: total = 0, outputTokens: output, inputTokens: input } = {} } = response;
                 if (message.role === ConversationRole.ASSISTANT) {
                     const { content: [{ text }] = [] } = message;
                     if (text) {
@@ -308,7 +329,11 @@ async function analyzeErrorLogs(
                             errorCode,
                             severity,
                             errorCount,
-                            tokenUsageForCauseIdentification
+                            tokenUsageForCauseIdentification: {
+                                input,
+                                output,
+                                total
+                            }
                         });
                         errorLogsWithScripts.push(...data);
                     }
@@ -474,7 +499,7 @@ async function recommendRemediation(
                     undefined,
                     inferenceConfig
                 );
-                const { message, usage: { totalTokens: remediationRecommendationTokens = 0 } = {} } = response;
+                const { message, usage: { totalTokens: total = 0, inputTokens: input = 0, outputTokens: output = 0 } = {} } = response;
                 const { content: [{ text }] = [] } = message;
                 if (text) {
                     const { remediation } = JSON.parse(text);
@@ -489,7 +514,11 @@ async function recommendRemediation(
                         errorCode,
                         tokenUsage: {
                             causeIdentification,
-                            remediationRecommendation: remediationRecommendationTokens
+                            remediationRecommendation: {
+                                input,
+                                output, // Assuming no output tokens for remediation recommendation
+                                total
+                            }
                         }
                     });
                 } else {
