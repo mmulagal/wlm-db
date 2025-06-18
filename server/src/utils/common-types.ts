@@ -331,19 +331,13 @@ interface NetworkInterface {
     availabilityZone?: string;
 }
 
+type SqlCredential = { sqlinstancename: string; username: string; password: string };
+type OracleCredential = { oracleinstancename: string; username: string; password: string };
+
 interface SSMParamterObject {
     path: string;
     value: {
-        [key: string]:
-            | {
-                  username: string;
-                  password: string;
-              }
-            | {
-                  sqlinstancename: string;
-                  username: string;
-                  password: string;
-              }[];
+        [key: string]: { username: string; password: string } | Array<SqlCredential | OracleCredential>;
     };
 }
 
@@ -704,6 +698,13 @@ interface DatabaseInstanceRegistration {
     availablePsModules?: string[];
 }
 
+interface OracleInstanceRegistration {
+    oracleInstanceName: string;
+    oracleInstanceConnectivity: boolean;
+    oracleError?: string;
+    oracleEdition?: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -769,5 +770,8 @@ export {
     OptimizeMpioTimeoutParams,
     AWSSDKCacheParams,
     FSxCredsRegistration,
-    DatabaseInstanceRegistration
+    DatabaseInstanceRegistration,
+    OracleCredential,
+    SqlCredential,
+    OracleInstanceRegistration
 };

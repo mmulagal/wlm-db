@@ -11,6 +11,7 @@ import '../simulator/scopes/aws/cloud-watch-logs-scope';
 import {
     manageSqlInstances,
     manageSqlServerV2,
+    validateAndStoreDiscoveredOracleParameters,
     validateAndStoreDiscoveredParameters
 } from '../../src/operations/manage-operations';
 import { faker } from '@faker-js/faker';
@@ -97,6 +98,59 @@ describe('Manage operations', () => {
             params
         );
         expect(response).toBeDefined();
+    });
+
+    it('Validate Oracle discovered resource credentials', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const params = [
+            {
+                resourceId: 'ordbsdl',
+                resourceType: 'ORACLE',
+                username: 'username',
+                password: 'password'
+            },
+            {
+                resourceId: 'fs-0d5efc3057c4cb',
+                resourceType: 'FSX',
+                username: 'username',
+                password: 'password'
+            }
+        ];
+        const response = await validateAndStoreDiscoveredOracleParameters(
+            ACCOUNT_ID,
+            credentialsId,
+            TEST_REGION,
+            'i-0e5af83448e1b83ef',
+            params
+        );
+        expect(response).toEqual([{ resourceId: 'ordbsdl', oracleServerVersion: '19.0.0.0.0' }]);
+    });
+
+    it('should throw error if no Oracle resources are provided', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const params = [
+            {
+                resourceId: 'somemssql',
+                resourceType: 'MSSQL',
+                username: 'username',
+                password: 'password'
+            },
+            {
+                resourceId: 'somepg',
+                resourceType: 'PGSQL',
+                username: 'username',
+                password: 'password'
+            }
+        ];
+        await expect(
+            validateAndStoreDiscoveredOracleParameters(
+                ACCOUNT_ID,
+                credentialsId,
+                TEST_REGION,
+                'i-0e5af83448e1b83ef',
+                params
+            )
+        ).rejects.toThrow();
     });
 
     it('Manage EC2 hosting SQL Server V2: No SSM connectivity)', async () => {

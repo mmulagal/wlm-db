@@ -86,7 +86,9 @@ const RegisterCredentials = Type.Object({
         description:
             'For types MSSQL and WINDOWS_USER, this is the sql instannce name. For FSX, this is the file system ID.'
     }),
-    resourceType: Type.String({ enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL, RESOURCESTYPE.WINDOWS_USER] }),
+    resourceType: Type.String({
+        enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL, RESOURCESTYPE.WINDOWS_USER, RESOURCESTYPE.ORACLE]
+    }),
     username: Type.String({
         minLength: 1,
         description: 'Username for the resource. For windows domain user, use DOMAIN\\username format.',
@@ -142,6 +144,12 @@ const SingleInstanceRegisterCredentialsRequestBody = Type.Object({
             description: 'Check if the instance is ready for management. Default is false.',
             default: false
         })
+    ),
+    ec2HostDbType: Type.Optional(
+        Type.String({
+            description: 'Database type of the EC2 host',
+            examples: ['MSSQL', 'ORACLE', 'PGSQL']
+        })
     )
 });
 
@@ -171,7 +179,9 @@ const SingleRegisterCredentialsResponse = Type.Object({
             dbcreation: ManageReadinessObject,
             sandbox: ManageReadinessObject
         })
-    )
+    ),
+    oracleServerError: Type.Optional(Type.String()),
+    oracleServerVersion: Type.Optional(Type.String())
 });
 
 const RegisterCredentialsResponse = Type.Array(
