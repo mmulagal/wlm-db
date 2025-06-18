@@ -1,7 +1,8 @@
 import createError from 'http-errors';
-import { WLMDB_RESOURCE_CLASS, WF_NOTIFICATION_RESOURCE_TYPE } from '../utils/consts';
+import { WLMDB_RESOURCE_CLASS, WF_NOTIFICATION_RESOURCE_TYPE, WF_NOTIFICATION_PRIORITY } from '../utils/consts';
 import sendWFNotification from '../lib/cloud-manager/wf-notification';
 import getLogger from '../utils/logger';
+import { isNonEmptyObject } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -22,6 +23,7 @@ export interface WFNotification {
     action?: string;
     userId?: string;
     service?: string;
+    link?: string;
 }
 
 /**
@@ -46,37 +48,21 @@ export async function prepareWFNotificationRequest(
     });
 
     try {
-        const {
-            content,
-            subject,
-            resourceType = WF_NOTIFICATION_RESOURCE_TYPE,
-            resourceId,
-            workload = WLMDB_RESOURCE_CLASS,
-            priority = 'Recommendation',
-            resourceName,
-            notificationType,
-            actionRequired = false,
-            persist = false,
-            ttl = 3600,
-            action = ''
-        } = notificationData;
-
         const notification: WFNotification = {
-            content,
-            subject,
-            resourceType,
-            resourceId,
-            workload,
-            priority,
-            resourceName,
+            ...notificationData,
+            resourceType: notificationData.resourceType ?? WF_NOTIFICATION_RESOURCE_TYPE,
+            workload: notificationData.workload ?? WLMDB_RESOURCE_CLASS,
+            priority: notificationData.priority ?? WF_NOTIFICATION_PRIORITY.WF_RECOMMENDATION,
+            persist: notificationData.persist ?? false,
+            ttl: notificationData.ttl ?? 3600,
+            action: notificationData.action ?? '',
             timestamp: Date.now(),
-            notificationType,
-            actionRequired,
-            persist,
-            ttl,
-            action,
             userId,
-            service
+            service,
+            ...(isNonEmptyObject(notificationData.actionRequired) && {
+                actionRequired: notificationData.actionRequired
+            }),
+            ...(isNonEmptyObject(notificationData.link) && { link: notificationData.link })
         };
 
         logger.debug('Prepared WF notification request body', notification);

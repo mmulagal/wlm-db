@@ -745,15 +745,6 @@ async function getSqlInstanceLicenseRecommendations(
         );
     }
 
-    // considering EC2 instances with all SQL server instances with EBS volumes ONLY, as we are calculating EBS savings; if there is any other storage then NOT considering such an instance; not even a combination of EBS and FSX too
-    // Fix - DBS-6071 - can be removed once fix is verified
-    // partnerNodeDetails?.forEach(partnerNode => {
-    //     const { sqlServerInstances: partnerSqlServerInstances } = partnerNode;
-    //     if (partnerSqlServerInstances && partnerSqlServerInstances?.length > 0) {
-    //         sqlServerInstances = sqlServerInstances?.concat(partnerSqlServerInstances);
-    //     }
-    // });
-
     if (!isFsxwCalcs) {
         sqlServerInstances?.forEach(server => {
             if (
