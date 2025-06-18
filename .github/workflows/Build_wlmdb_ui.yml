@@ -1,13 +1,13 @@
 name: UI Build & Deploy Staging
 
 on:
- # push:
- #   branches:
- #     - master
- #   paths:
- #     - ui/**
- # schedule:
- #     - cron: '40 3 * * *' # Every Day at 05:05AM (Cron is UTC)
+  push:
+    branches:
+      - master
+    paths:
+      - ui/**
+  schedule:
+      - cron: '40 3 * * *' # Every Day at 05:05AM (Cron is UTC)
   workflow_dispatch:
 
 env:
