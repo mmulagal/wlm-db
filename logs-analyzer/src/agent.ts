@@ -198,12 +198,12 @@ async function initiateLogsAnalysis(inputText: string) {
                     totalTokensForRemediation: {
                         input: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'input'),
                         output: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'output'),
-                        totalTokens: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'total')
+                        total: sumTokenUsage(remediationRecommendation, 'remediationRecommendation', 'total')
                     },
                     totalTokensForCauseIdentification: {
                         input: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'input'),
                         output: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'output'),
-                        totalTokens: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'total')
+                        total: sumTokenUsage(remediationRecommendation, 'causeIdentification', 'total')
                     },
                 }
             }
