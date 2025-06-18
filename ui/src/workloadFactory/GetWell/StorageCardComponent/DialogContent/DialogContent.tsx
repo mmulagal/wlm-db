@@ -734,7 +734,6 @@ const DialogContent = ({
 
             case 'Multipath I/O Status':
             case 'Multipath I/O Policy':
-                // case 'Multipath I/O Timeout':
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -842,9 +841,6 @@ const DialogContent = ({
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
-                                    <div>
-                                        <Bullet />
-                                    </div>
                                     <DsTypography variant="Regular_14">
                                         No disruption to your services is expected during this process.
                                     </DsTypography>
