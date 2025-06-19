@@ -129,7 +129,9 @@ const ProtectionPerStorageTypeResponse = Type.Object({
         ebs: Type.Boolean({ default: false })
     }),
     isFsxOntapSnapshotsEnabled: Type.Union([Type.Boolean({ default: false }), Type.String({ enum: ['N/A'] })]),
-    isAppConsistentBackupEnabled: Type.Union([Type.Boolean({ default: false }), Type.String({ enum: ['N/A'] })]),
+    isAppConsistentBackupEnabled: Type.Optional(
+        Type.Union([Type.Boolean({ default: false }), Type.String({ enum: ['N/A'] })])
+    ),
     protectedDatabases: Type.Optional(Type.Number({ description: 'Number of protected databases' }))
 });
 type ProtectionPerStorageTypeResponseType = Static<typeof ProtectionPerStorageTypeResponse>;
