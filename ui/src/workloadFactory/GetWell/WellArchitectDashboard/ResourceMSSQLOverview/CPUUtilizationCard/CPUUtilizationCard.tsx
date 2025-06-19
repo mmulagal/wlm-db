@@ -36,7 +36,7 @@ const CPUUtilizationCard = () => {
                     data={dataPoints.map(datapoint => Number((datapoint.value || 0).toFixed(1)))}
                     categories={dataPoints.map(datapoint => {
                         const date = new Date(datapoint.timestamp);
-                        return `${date.getDate()}/${date.getMonth() + 1}`;
+                        return `${date.getUTCDate()}/${date.getUTCMonth() + 1}`;
                     })}
                     yTickFormatter={twoFractionDigits}
                     color={!isDarkTheme ? '#A815F3' : '#DE9EFF'}

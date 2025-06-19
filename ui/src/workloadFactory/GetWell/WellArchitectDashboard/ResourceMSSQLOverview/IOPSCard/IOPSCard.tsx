@@ -52,7 +52,7 @@ const IOPSCard = () => {
                     data={datasets}
                     categories={readDataPoints.map(datapoint => {
                         const date = new Date(datapoint.statisticsDate);
-                        return `${date.getDate()}/${date.getMonth() + 1}`;
+                        return `${date.getUTCDate()}/${date.getUTCMonth() + 1}`;
                     })}
                     legend={['Read', 'Write']}
                     color={isDarkTheme ? ['#71B9E0', '#4066DA'] : ['#012CAD', '#0BAFFC']}
