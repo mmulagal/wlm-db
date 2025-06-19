@@ -372,12 +372,12 @@ try {
     if (isActiveInstance()) {
         await execute('node_modules/prisma/build/index.js migrate deploy');
     }
+    logger.info('Database initialized');
 } catch (error) {
     logger.error('Failed to initialize database', error);
 }
-logger.info('Database initialized');
-// Initialize cron jobs
 
+// Initialize cron jobs
 if (isActiveInstance()) {
     initiateCronOperations();
 }

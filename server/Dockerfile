@@ -1,6 +1,8 @@
-FROM node:alpine3.20
+FROM node:lts-alpine3.21
 
 RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
+# This font is needed for the image generation by AWS diagram as code
+RUN apk add --no-cache font-liberation
 RUN mkdir -p /log
 # Create a new user "netappuser" with UID 1000 and group name "netappgroup"
 RUN addgroup -S netappgroup && adduser -S -G netappgroup -u 1001 netappuser
@@ -31,6 +33,7 @@ COPY resources/mssql/templates/main.tf ./resources/mssql/templates/main.tf
 COPY resources/mssql/terraform ./resources/mssql/terraform/
 COPY resources/pgsql/templates ./resources/pgsql/templates/
 COPY resources/pgsql/terraform ./resources/pgsql/terraform/
+COPY resources/packages ./resources/packages/
 
 COPY dist/src ./
 
@@ -44,6 +47,7 @@ COPY patches ./patches/
 USER root
 RUN chown -R netappuser:netappgroup ./resources/mssql
 RUN chown -R netappuser:netappgroup ./resources/pgsql
+RUN chown -R netappuser:netappgroup ./resources/packages
 USER netappuser
 
 RUN npm ci --omit=dev

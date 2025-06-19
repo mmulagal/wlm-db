@@ -19,7 +19,7 @@ async function initializeDatabase() {
 
 // Function to validate user input
 function validateInput(input: string): boolean {
-    return /^[a-zA-Z0-9_./\s]+$/.test(input);
+    return /^[a-zA-Z0-9_./:\-\s]+$/.test(input);
 }
 
 async function execute(command: string, timeout?: number, cwd?: string) {
@@ -29,13 +29,15 @@ async function execute(command: string, timeout?: number, cwd?: string) {
         throw new Error('Invalid command input');
     }
 
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         exec(command, { cwd, timeout }, (error: any, stdout: any, stderr: any) => {
-            if (error) {
-                logger.error('Failed to execute shell commands', error);
+            const err = error ?? stderr;
+            if (err) {
+                logger.error('Failed to execute shell commands', err);
+                return reject(err instanceof Error ? err : new Error(err));
             }
-            resolve(stdout || stderr);
+            resolve(stdout);
         });
     });
 }
