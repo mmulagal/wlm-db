@@ -19,6 +19,7 @@ import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
 import ScheduledAWSBackupDialog from './ScheduledAWSBackupDialog';
+import { useTranslation } from 'react-i18next';
 
 type DialogType = {
     type: string;
@@ -40,6 +41,7 @@ const DialogContent = ({
     operation = 'single'
 }: DialogType) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { selectedRecommendedInstance, selectedDatabaseStorageType, recommendedInstanceInBulk } = useAppSelector(
         state => state.getWellOptimize
     );
@@ -112,7 +114,7 @@ const DialogContent = ({
     const driveSizeMissingPermissions = (missingPermissions: Array<string>) => (
         <div className={styles['storage-tier-block']}>
             <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                <DsTypography variant="Semibold_14">{t('databases.well-architect.action-summary')}</DsTypography>
                 <DsTypography variant="Regular_14">
                     Workload Factory recommends increasing the FSx for ONTAP volume size. However, the required modify
                     permissions are currently missing.
@@ -121,7 +123,7 @@ const DialogContent = ({
 
             <div className={styles['first-section']}>
                 <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                    Action required
+                    {t('databases.well-architect.action-required')}
                 </DsTypography>
                 <DsTypography variant="Regular_14" style={{ width: '712px' }}>
                     Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with this action.
@@ -175,22 +177,22 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends managing old and costly clones by either deleting or
-                                refreshing them.
+                                {t('databases.well-architect.clone-refresh-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        Workload Factory will refresh the selected clones. Refreshing a clone will
-                                        synchronize it with its source, making it identical and cost-efficient.
+                                        {t('databases.well-architect.clone-refresh-what-will-happen')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -206,7 +208,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        No disruption to your services is expected during this process.
+                                        {t('databases.well-architect.note1')}
                                     </DsTypography>
                                 </div>
 
@@ -215,8 +217,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Select Continue to authorize Workload Factory to automatically perform these
-                                        actions on your behalf.
+                                        {t('databases.well-architect.note2')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -227,22 +228,22 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends managing old and costly clones by either deleting or
-                                refreshing them.
+                                {t('databases.well-architect.clone-delete-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        Workload Factory will delete the selected clones. Deleting a clone will remove
-                                        it permanently, freeing up storage space and reducing costs.
+                                        {t('databases.well-architect.clone-delete-what-will-happen')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -258,7 +259,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        No disruption to your services is expected during this process.
+                                        {t('databases.well-architect.note1')}
                                     </DsTypography>
                                 </div>
 
@@ -267,8 +268,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Select Continue to authorize Workload Factory to automatically perform these
-                                        actions on your behalf.
+                                        {t('databases.well-architect.note2')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -279,16 +279,17 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends optimizing your SQL Server's performance by adjusting its
-                                storage tiers.
+                                {t('databases.well-architect.storage-tier-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
@@ -296,8 +297,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Volume tiering policy change: The tiering policy for your SQL Server volumes
-                                        will be modified.
+                                        {t('databases.well-architect.storage-tier-what-will-happen-content1')}
                                     </DsTypography>
                                 </div>
 
@@ -306,7 +306,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Cloud retrieval policy update: The cloud retrieval policy will be updated.
+                                        {t('databases.well-architect.storage-tier-what-will-happen-content2')}
                                     </DsTypography>
                                 </div>
 
@@ -315,8 +315,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Data movement: The data will move gradually from the capacity tier to the
-                                        performance tier.
+                                        {t('databases.well-architect.storage-tier-what-will-happen-content3')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -348,17 +347,17 @@ const DialogContent = ({
                 return missingPermissions && missingPermissions.length ? (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends increasing the FSx for ONTAP file system capacity to
-                                maintain the right headroom. However, the required modify permissions are currently
-                                missing.
+                                {t('databases.well-architect.file-system-headroom-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Action required
+                                {t('databases.well-architect.action-required')}
                             </DsTypography>
                             <DsTypography variant="Regular_14">Choose one of the following options.</DsTypography>
                         </div>
@@ -448,7 +447,9 @@ const DialogContent = ({
                 ) : (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
                                 Workload Factory recommends increasing the FSx for ONTAP file system capacity to
                                 maintain the right headroom.
@@ -457,7 +458,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
@@ -501,16 +502,17 @@ const DialogContent = ({
                 ) : (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends updating the provisioned capacity for your SQL Server log
-                                volume and iSCSI LUN so that their sizing will be 25% of the user data volume.
+                                {t('databases.well-architect.log-drive-size-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
@@ -518,9 +520,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Log volume provisioned capacity update: The provisioned capacity of your SQL
-                                        Server log volume and iSCSI LUN will be increased to maintain the right sizing
-                                        relative to the user data volume.
+                                        {t('databases.well-architect.log-drive-size-what-will-happen')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -554,16 +554,17 @@ const DialogContent = ({
                 ) : (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends updating the provisioned capacity for your SQL Server TempDB
-                                volume and iSCSI LUN so that their sizing will be 10% of the user data volume.
+                                {t('databases.well-architect.tempdb-drive-size-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
@@ -571,9 +572,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        TempDB volume provisioned capacity update: The provisioned capacity of your SQL
-                                        Server TempDB volume and iSCSI LUN will be increased to maintain the right
-                                        sizing relative to the user data volume.
+                                        {t('databases.well-architect.tempdb-drive-size-what-will-happen')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -613,22 +612,22 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends updating the FSx for ONTAP volumes configuration to meet
-                                vendor best practices for SQL Server.
+                                {t('databases.well-architect.autosize-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        Configuration update: The FSx for ONTAP volume configuration will be updated to
-                                        align with vendor best practices for SQL Server.
+                                        {t('databases.well-architect.autosize-what-will-happen')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -636,7 +635,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Well-architected configuration
+                                {t('databases.well-architect.well-architected-configuration')}
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
@@ -675,22 +674,24 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends updating the FSx for ONTAP iSCSI LUNs configuration to meet
-                                vendor best practices for SQL Server.
+                                {t('databases.well-architect.os-type-space-allocation-reservation-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        Configuration update: The FSx for ONTAP iSCSI LUNs configuration will be updated
-                                        to align with vendor best practices for SQL Server.
+                                        {t(
+                                            'databases.well-architect.os-type-space-allocation-reservation-what-will-happen'
+                                        )}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -698,7 +699,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Well-architected configuration
+                                {t('databases.well-architect.well-architected-configuration')}
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
@@ -737,22 +738,22 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends updating Microsoft Multipath I/O configuration to meet
-                                vendor best practices for SQL Server.
+                                {t('databases.well-architect.mpio-status-policy-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        Configuration update: The Microsoft Multipath I/O configuration will be updated
-                                        to align with vendor best practices for SQL Server.
+                                        {t('databases.well-architect.mpio-status-policy-what-will-happen')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -760,7 +761,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Well-architected configuration
+                                {t('databases.well-architect.well-architected-configuration')}
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
@@ -798,25 +799,22 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends optimizing Microsoft Multipath I/O (MPIO) performance by
-                                adjusting the MPIO timeout setting to the best practice value of 60 seconds. Configure
-                                the MPIO timeout setting on the host to 60 seconds to ensure connectivity and stability
-                                during FSx for ONTAP failovers.
+                                {t('databases.well-architect.mpio-timeout-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        The MPIO timeout setting will be set to 60 seconds to prevent disconnections
-                                        during FSx for ONTAP failovers, ensuring system stability and preventing
-                                        potential data loss.
+                                        {t('databases.well-architect.mpio-timeout-what-will-happen')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -824,7 +822,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Well-architected configuration
+                                {t('databases.well-architect.well-architected-configuration')}
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
@@ -842,7 +840,7 @@ const DialogContent = ({
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        No disruption to your services is expected during this process.
+                                        {t('databases.well-architect.note1')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -860,22 +858,22 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory intends to update Microsoft Multipath I/O configuration to meet vendor
-                                best practices for SQL Server.
+                                {t('databases.well-architect.mpio-sessions-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        Configuration update: The Microsoft Multipath I/O configuration will be updated
-                                        to align with vendor best practices for SQL Server.
+                                        {t('databases.well-architect.mpio-sessions-what-will-happen')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -883,7 +881,7 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Well-architected configuration
+                                {t('databases.well-architect.well-architected-configuration')}
                             </DsTypography>
                             <div className={styles['dialog-body']}>
                                 <div className={styles['code-box']}>
@@ -920,61 +918,37 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
-                            <DsTypography variant="Regular_14">
-                                Before taking action, you should understand that changing the NTFS allocation unit size
-                                to 64K requires reformatting the drives. This is a manual process that can only be done
-                                by the user and can lead to data loss if not handled properly.
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
                             </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Please note the following important considerations:
+                                {t('databases.well-architect.ntfs-allocation-action-summary1')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.ntfs-allocation-action-summary2')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Downtime warning</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.downtime-warning')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                It is crucial that you schedule this task during a maintenance window to minimize
-                                disruptions to your operations. This process could involve data loss and downtime. To
-                                prepare, carefully verify that all data has been backed up, and ensure that all files
-                                and data are moved to a different drive before starting the reformatting process.
+                                {t('databases.well-architect.ntfs-allocation-downtime-warning-content')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Optimization steps
+                                {t('databases.well-architect.optimization-steps')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
                                     </div>
-                                    <DsTypography variant="Regular_14">Open Windows Disk Management.</DsTypography>
-                                </div>
-
-                                <div className={styles.row}>
-                                    <div>
-                                        <Bullet />
-                                    </div>
                                     <DsTypography variant="Regular_14">
-                                        Identify the SQL drives to format (Data, Log, TempDB).
-                                    </DsTypography>
-                                </div>
-
-                                <div className={styles.row}>
-                                    <div>
-                                        <Bullet />
-                                    </div>
-                                    <DsTypography variant="Regular_14">Format one drive at a time.</DsTypography>
-                                </div>
-
-                                <div className={styles.row}>
-                                    <div>
-                                        <Bullet />
-                                    </div>
-                                    <DsTypography variant="Regular_14">
-                                        Select 64K in the Allocation unit size drop-down menu.
+                                        {t('databases.well-architect.ntfs-allocation-optimization-steps1')}
                                     </DsTypography>
                                 </div>
 
@@ -983,7 +957,34 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Repeat steps 1-4 for all SQL Server drives (Data, Log, TempDB)
+                                        {t('databases.well-architect.ntfs-allocation-optimization-steps2')}
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.ntfs-allocation-optimization-steps3')}
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.ntfs-allocation-optimization-steps4')}
+                                    </DsTypography>
+                                </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.ntfs-allocation-optimization-steps5')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -1177,22 +1178,22 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends optimizing your SQL Server's performance by adjusting the
-                                MAXDOP value.
+                                {t('databases.well-architect.maxdop-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Regular_14">
-                                        SQL query will be executed to modify max degree of parallelism (MAXDOP) setting
-                                        on the server.
+                                        {t('databases.well-architect.maxdop-what-will-happen')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -1224,16 +1225,17 @@ const DialogContent = ({
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.action-summary')}
+                            </DsTypography>
                             <DsTypography variant="Regular_14">
-                                Workload Factory recommends optimizing your MSSQL server's network performance by
-                                adjusting its network adapter settings.
+                                {t('databases.well-architect.rss-action-summary')}
                             </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                What will happen
+                                {t('databases.well-architect.what-will-happen')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
