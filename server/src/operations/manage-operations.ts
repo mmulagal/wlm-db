@@ -1567,7 +1567,7 @@ async function validateCredentials(
     );
 
     try {
-        let isLinuxHost;
+        let isLinuxHost = false;
         if (fsxCredentials) {
             const { Reservations = [] } = await describeInstance(credentialsId, region, {
                 InstanceIds: [instanceId]
@@ -1874,10 +1874,15 @@ async function validateOracleCredentials(
             if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
                 response.push({
                     resourceId: fsxCredentials.resourceId,
+                    resourceType: RESOURCESTYPE.FSX,
                     fsxnError: fsxResult.ontaperror
                 });
                 paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
             } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
+                response.push({
+                    resourceId: fsxCredentials.resourceId,
+                    resourceType: RESOURCESTYPE.FSX
+                });
                 await registerFsxOntapCredentials(
                     accountId,
                     credentialsId,
@@ -1895,12 +1900,14 @@ async function validateOracleCredentials(
                 instancesToBeDeleted.push(instance.oracleInstanceName);
                 response.push({
                     resourceId: instance.oracleInstanceName,
+                    resourceType: RESOURCESTYPE.ORACLE,
                     oracleServerError: instance.oracleError
                 });
             } else if (instance.oracleInstanceConnectivity === true) {
                 const { oracleInstanceName, oracleEdition } = instance;
                 response.push({
                     resourceId: oracleInstanceName,
+                    resourceType: RESOURCESTYPE.ORACLE,
                     oracleServerVersion: oracleEdition
                 });
             }

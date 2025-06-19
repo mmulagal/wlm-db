@@ -126,7 +126,9 @@ describe('Manage operations', () => {
             oracleCredentials,
             [TEST_EC2_INSTANCE_ID]
         );
-        expect(response).toEqual([{ resourceId: 'ordbsdl', oracleServerVersion: '19.0.0.0.0' }]);
+        expect(response).toEqual([
+            { resourceId: 'ordbsdl', oracleServerVersion: '19.0.0.0.0', resourceType: 'ORACLE' }
+        ]);
     });
 
     it('Manage EC2 hosting SQL Server V2: No SSM connectivity)', async () => {
