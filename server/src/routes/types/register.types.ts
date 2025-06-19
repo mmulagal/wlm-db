@@ -155,6 +155,7 @@ type BulkRegisterCredentialsRequestBodyType = Static<typeof BulkRegisterCredenti
 
 const SingleRegisterCredentialsResponse = Type.Object({
     resourceId: Type.Optional(Type.String()),
+    resourceType: Type.Optional(Type.String()),
     databaseCount: Type.Optional(Type.String()),
     sqlServerEdition: Type.Optional(Type.String()),
     sqlServerError: Type.Optional(Type.String()),

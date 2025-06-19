@@ -1355,7 +1355,17 @@ async function validateAndStoreDiscoveredParameters(
         const response: SingleRegisterCredentialsResponseType[] = [];
         credentials.forEach(cred => {
             if (cred.resourceType !== RESOURCESTYPE.FSX) {
-                response.push({ ...DEMO_REGISTER_RESPONSE, resourceId: cred.resourceId });
+                response.push({
+                    ...DEMO_REGISTER_RESPONSE,
+                    resourceType: cred.resourceType,
+                    resourceId: cred.resourceId
+                });
+            } else {
+                response.push({
+                    resourceId: cred.resourceId,
+                    resourceType: cred.resourceType,
+                    fsxnError: ''
+                });
             }
         });
         return response;
@@ -1584,10 +1594,16 @@ async function validateCredentials(
                 if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
                     response.push({
                         resourceId: fsxCredentials.resourceId,
+                        resourceType: RESOURCESTYPE.FSX,
                         fsxnError: fsxResult.ontaperror
                     });
                     paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
                 } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
+                    response.push({
+                        resourceId: fsxCredentials.resourceId,
+                        resourceType: RESOURCESTYPE.FSX,
+                        fsxnError: ''
+                    });
                     await registerFsxOntapCredentials(
                         accountId,
                         credentialsId,
@@ -1630,6 +1646,7 @@ async function validateCredentials(
 
                     response.push({
                         resourceId: sqlInstanceName,
+                        resourceType: RESOURCESTYPE.MSSQL,
                         sqlServerEdition: sqlEdition,
                         databaseCount: noOfDatabases,
                         ...(checkManageReadiness && {
