@@ -1,4 +1,4 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import styles from './CPUUtilizationCard.module.scss';
 import LineGraph from '../../LineGraph/LineGraph';
@@ -7,7 +7,7 @@ import { GENERAL } from '../../../../../utils/appConstants';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
 const CPUUtilizationCard = () => {
-    const { resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const { resourceDetails, resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const [dataPoints, setDataPoints] = useState<any[]>([]);
@@ -23,12 +23,7 @@ const CPUUtilizationCard = () => {
                     {GENERAL.CPU_UTILIZATION}
                 </DsTypography>
 
-                {/* <div className={styles.rightTopValue}>
-                    <DsTypography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                        {!resourceLoading && dataPoints.length > 0 && `${dataPoints[dataPoints.length - 1].value} %`}
-                    </DsTypography>
-                    {resourceLoading && <DsFlashingDotsLoader />}
-                </div> */}
+                <div className={styles.rightTopValue}>{resourceLoading && <DsFlashingDotsLoader />}</div>
             </div>
 
             <div className={styles.mainSection}>
