@@ -155,7 +155,6 @@ const WellArchitectDashboard = () => {
         const { password } = sqlServerPasswords;
         const credList = [];
         credList.push({
-            // @ts-ignore
             resourceId: databaseInstanceName || resourceDetails?.databaseInstanceName,
             resourceType: DETECT_HOST_VAR.MSSQL,
             username: sqlServerUserName,
@@ -175,17 +174,17 @@ const WellArchitectDashboard = () => {
     const handleFSXAdminApply = async (value: string) => {
         dispatch(setPasswordResetLoading(true));
         try {
+            const credList = value === RESET_PASSWORD_TYPE.FSXADMIN ? createPayload() : createSqlPayload();
             const payload = {
                 items: [
                     {
-                        // @ts-ignore
+                        ...credList,
                         ec2InstanceId:
                             ec2InstanceId ||
                             resourceDetails?.nodeTopology?.ec2Details[0]?.id ||
                             resetDetails?.ec2InstanceId,
                         region: selectedResourceRegionId,
-                        credentialsId: selectedResourceCredId,
-                        credentials: value === RESET_PASSWORD_TYPE.FSXADMIN ? createPayload() : createSqlPayload()
+                        credentialsId: selectedResourceCredId
                     }
                 ]
             };

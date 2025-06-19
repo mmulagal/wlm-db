@@ -139,17 +139,18 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         const sqlServerInstance =
             manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
         try {
+            const credList = createDetectHostPayload(
+                sqlServerInstance,
+                manageSingleInstanceData?.fsxId,
+                manageSingleInstanceData
+            );
             const payload = {
                 items: [
                     {
+                        ...credList,
                         ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
                         region: manageSingleInstanceData?.regionId,
-                        credentialsId: manageSingleInstanceData?.credentialId,
-                        credentials: createDetectHostPayload(
-                            sqlServerInstance,
-                            manageSingleInstanceData?.fsxId,
-                            manageSingleInstanceData
-                        )
+                        credentialsId: manageSingleInstanceData?.credentialId
                     }
                 ]
             };
