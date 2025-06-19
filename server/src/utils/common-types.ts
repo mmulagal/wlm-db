@@ -225,7 +225,7 @@ interface UserDatabase {
         isFsxOntapSnapshotsEnabled: boolean;
         isSqlNativeEnabled: boolean;
         isCRREnabled: boolean;
-        isAppConsistentBackupEnabled?: boolean;
+        isAppConsistentBackupEnabled?: boolean | string;
     };
     collation: string;
 }
