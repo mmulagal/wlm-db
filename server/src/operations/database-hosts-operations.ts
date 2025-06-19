@@ -1086,7 +1086,7 @@ async function getDatabaseHostSummaryV2(
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLowerCase());
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
-    if (isEmpty(instancesManaged)) {
+    if (instancesManaged && isEmpty(instancesManaged)) {
         instancesManaged =
             resourceDetail.database_instances && !isEmpty(resourceDetail.database_instances)
                 ? resourceDetail.database_instances.map(instance => ({ ...instance, resource: resourceDetail }))
@@ -1665,7 +1665,8 @@ async function getInstanceDetails(
         [instanceDetails] = await listDatabaseInstances(accountId, {
             resourceId: databaseHostId,
             credentialsId,
-            sqlInstanceId: databaseInstanceId
+            sqlInstanceId: databaseInstanceId,
+            region
         });
         resourceDetails = instanceDetails?.resource;
     }

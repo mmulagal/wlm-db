@@ -1696,24 +1696,19 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         fields,
         parentJobId
     });
-
-    const managedInstance = (await getInstanceInfo(
-        accountId,
-        credentialsId,
-        databaseHostId,
-        databaseInstanceId,
-        region
-    )) as DatabaseInstancesIncludingResource;
-    if (isEmpty(managedInstance)) {
-        const errorMessage = `No managed database instance by account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId} found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
-    }
-    const {
-        resource: { resource_name: resourceName },
-        database_instance_name: instanceName
-    } = managedInstance;
     try {
+        const managedInstance = (await getInstanceInfo(
+            accountId,
+            credentialsId,
+            databaseHostId,
+            databaseInstanceId,
+            region
+        )) as DatabaseInstancesIncludingResource;
+
+        const {
+            resource: { resource_name: resourceName },
+            database_instance_name: instanceName
+        } = managedInstance;
         const savedInstanceName = `${resourceName}\\${instanceName}`;
         const jobName = `Microsoft SQL Server assessment for instance ${savedInstanceName}`;
         const jobDescription = `${jobName}`;
