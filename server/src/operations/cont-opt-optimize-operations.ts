@@ -2004,7 +2004,8 @@ async function enableMpioTimeout(optimizeMpioTimeoutParams: OptimizeMpioTimeoutP
         fsxId,
         serverNameWithHostName,
         parentJobId,
-        databaseHostId
+        databaseHostId,
+        instanceMetadata
     } = optimizeMpioTimeoutParams;
 
     logger.info(
@@ -2108,6 +2109,15 @@ async function enableMpioTimeout(optimizeMpioTimeoutParams: OptimizeMpioTimeoutP
             resourceName: serverNameWithHostName,
             cloudProviderAccountId: accountId
         };
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                instanceId,
+                [OptimizeOperatingSystemParams.MPIO_TIMEOUT],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
         await triggerAssessmentAfterOptimization(
             credentialsId,
             region,

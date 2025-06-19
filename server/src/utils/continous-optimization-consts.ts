@@ -261,7 +261,7 @@ const STORAGE_CONFIGURATION_ASSESMENT_MAP = {
         'tiering-min-cooling-days'
     ],
     luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
-    os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size']
+    os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size', 'mpio-timeout']
 };
 
 const ASSESSMENT_CONFIGS = {
