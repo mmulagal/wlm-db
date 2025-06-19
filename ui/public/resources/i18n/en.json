@@ -67,7 +67,7 @@
             "previous": "Previous",
             "next": "Next",
             "register": "Register",
-            "manage-detect-fail-message": "Workload Factory was unable to authenticate the SQL Server instance. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.",
+            "manage-detect-fail-message": "Workload Factory was unable to authenticate. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.",
             "bulk-instance-select-text": "Select multiple Microsoft SQL Server instances that share the same authentication credentials and FSx for ONTAP credentials.",
             "register-instance-failed": "Register instance failed",
             "select-instance-page-content1": "Selecting multiple instances requires shared credentials.",

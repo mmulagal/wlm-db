@@ -10,8 +10,7 @@ import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice
 import {
     useLazyGetSubTaskListQuery,
     useManageBulkV2MssqlInstanceMutation,
-    useRegisterResourceCredentialsBulkMutation,
-    useRegisterResourceCredentialsMutation
+    useRegisterResourceCredentialsBulkMutation
 } from '../../../../utils/apiService';
 import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
@@ -28,11 +27,7 @@ import {
     updateDetectBulkResponse
 } from './ManageInstanceUtils';
 import { ACTION_TYPE, DETECT_PAYLOAD_SIZE } from '../../../../utils/consts';
-import {
-    BulkDetectedInstance,
-    RegisterResourceCredResult,
-    UseWizardReturn
-} from '../../../../utils/types/registerTypes';
+import { BulkDetectedInstance, UseWizardReturn } from '../../../../utils/types/registerTypes';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -62,7 +57,6 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const dispatch = useDispatch();
 
-    const [registerResourceCred] = useRegisterResourceCredentialsMutation();
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const [manageBulkV2InstanceApi] = useManageBulkV2MssqlInstanceMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -145,21 +139,29 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         const sqlServerInstance =
             manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
         try {
-            const result: RegisterResourceCredResult = await registerResourceCred({
-                credentialId: manageSingleInstanceData?.credentialId,
-                regionId: manageSingleInstanceData?.regionId,
-                instanceId: manageSingleInstanceData?.ec2InstanceId,
-                payload: createDetectHostPayload(
-                    sqlServerInstance,
-                    manageSingleInstanceData?.fsxId,
-                    manageSingleInstanceData
-                )
-            });
-            if (result && !result?.error) {
-                if (result?.data?.sqlServerError || result?.data?.fsxnError) {
+            const payload = {
+                items: [
+                    {
+                        ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
+                        region: manageSingleInstanceData?.regionId,
+                        credentialsId: manageSingleInstanceData?.credentialId,
+                        credentials: createDetectHostPayload(
+                            sqlServerInstance,
+                            manageSingleInstanceData?.fsxId,
+                            manageSingleInstanceData
+                        )
+                    }
+                ]
+            };
+            const result = await registerResourceCredBulk({ payload });
+            if (result && !result?.error && result?.data) {
+                if (
+                    result?.data?.[0]?.registerDetails?.[0]?.sqlServerError ||
+                    result?.data?.[0]?.registerDetails?.[0]?.fsxnError
+                ) {
                     const error = [];
-                    error.push(result?.data?.sqlServerError || '');
-                    error.push(result?.data?.fsxnError || '');
+                    error.push(result?.data?.[0]?.registerDetails?.[0]?.sqlServerError || '');
+                    error.push(result?.data?.[0]?.registerDetails?.[0]?.fsxnError || '');
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
@@ -175,8 +177,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         manageSingleInstanceData
                     );
                     dispatch(setInventoryTableData(updatedInventoryTableData));
-                    if (result?.data?.manageReadiness) {
-                        dispatch(setManageSingleInstanceReadiness(result?.data?.manageReadiness));
+                    if (result?.data?.[0]?.registerDetails?.[0]?.manageReadiness) {
+                        dispatch(
+                            setManageSingleInstanceReadiness(result?.data?.[0]?.registerDetails?.[0]?.manageReadiness)
+                        );
                     }
                     goToNextStep();
                 }
