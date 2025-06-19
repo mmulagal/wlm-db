@@ -1339,27 +1339,16 @@ async function registerResourceCredentials(
     await Promise.all(
         credentialsTobeValidated.map(
             throat(3, async resource => {
-                const { credentialsId, region, ec2InstanceId, credentials, ec2HostDbType } = resource;
-                let registerResponse;
-                if (ec2HostDbType && ec2HostDbType === DatabaseTypes.ORACLE) {
-                    registerResponse = await validateAndStoreDiscoveredOracleParameters(
-                        accountId,
-                        credentialsId,
-                        region,
-                        ec2InstanceId,
-                        credentials
-                    );
-                } else {
-                    registerResponse = await validateAndStoreDiscoveredParameters(
-                        accountId,
-                        credentialsId,
-                        region,
-                        ec2InstanceId,
-                        credentials,
-                        undefined,
-                        true
-                    );
-                }
+                const { credentialsId, region, ec2InstanceId, credentials } = resource;
+                const registerResponse = await validateAndStoreDiscoveredParameters(
+                    accountId,
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    credentials,
+                    undefined,
+                    true
+                );
 
                 response.push({
                     ec2InstanceId,
@@ -1424,8 +1413,14 @@ async function validateAndStoreDiscoveredParameters(
         credentials = uniqBy(credentials, 'resourceId');
         const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
         const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
+        const oracleCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.ORACLE);
         const windowsUserCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.WINDOWS_USER);
-        if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials) && isEmpty(windowsUserCredentials)) {
+        if (
+            isEmpty(fsxCredentials) &&
+            isEmpty(sqlCredentials) &&
+            isEmpty(windowsUserCredentials) &&
+            isEmpty(oracleCredentials)
+        ) {
             throw new Error('Credentials cannot be empty');
         }
 
@@ -1450,6 +1445,7 @@ async function validateAndStoreDiscoveredParameters(
             fsxCredentials,
             sqlCredentials,
             windowsUserCredentials,
+            oracleCredentials,
             instanceIds,
             checkManageReadiness
         );
@@ -1533,6 +1529,7 @@ async function validateCredentials(
     fsxCredentials: RegisterCredentialsType | undefined,
     sqlCredentials: RegisterCredentialsType[],
     windowsUserCredentials: RegisterCredentialsType[],
+    oracleCredentials: RegisterCredentialsType[] = [],
     instanceIds: string[],
     checkManageReadiness: boolean = false
 ) {
@@ -1569,150 +1566,49 @@ async function validateCredentials(
         instanceIds
     );
 
-    let parsedResponse;
-
     try {
-        let command = '$WarningPreference = "SilentlyContinue";';
-
-        if (fsxCredentials || sqlCredentials.length || windowsUserCredentials) {
-            // Get signed url for aws_ssm.zip to install the ps modules
-            const bucketname = getArtifactsRegionBucketName(region);
-            const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
-            const moduleNames = `
-  'AWS.Tools.SimpleSystemsManagement'
-`;
-            command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
-        }
-
+        let isLinuxHost;
         if (fsxCredentials) {
-            command += `${validateOntapConnectivity([fsxCredentials.resourceId], region)};\n`;
-        }
-
-        if (sqlCredentials.length) {
-            const resourcesWithSqlAuth = sqlCredentials.map(cred => cred.resourceId);
-            command += `${validateSQLInstanceConnectivity(
-                instanceId,
-                resourcesWithSqlAuth,
-                false,
-                checkManageReadiness
-            )};\n`;
-        }
-
-        if (!isEmpty(windowsUserCredentials)) {
-            const resourcesWithWindowsAuth = windowsUserCredentials.map(cred => cred.resourceId);
-            command += `${validateSQLInstanceConnectivity(
-                instanceId,
-                resourcesWithWindowsAuth,
-                true,
-                checkManageReadiness
-            )};\n`;
-        }
-
-        command += '$responseObject | ConvertTo-Json -Compress';
-
-        const ssmresponse = await callSsmExecution(
-            credentialsId,
-            region,
-            [command],
-            instanceId,
-            'Validate credentials',
-            undefined,
-            false
-        );
-
-        const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
-        parsedResponse = attempt(JSON.parse, cleanResponse);
-
-        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
-
-        if (!parsedResponse) {
-            throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
-        }
-
-        const response: Record<string, any>[] = [];
-        const paramsToDelete: string[] = [];
-        const instancesToBeDeleted: string[] = [];
-
-        if (fsxCredentials) {
-            parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
-                if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
-                    response.push({
-                        resourceId: fsxCredentials.resourceId,
-                        resourceType: RESOURCESTYPE.FSX,
-                        fsxnError: fsxResult.ontaperror
-                    });
-                    paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-                } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
-                    response.push({
-                        resourceId: fsxCredentials.resourceId,
-                        resourceType: RESOURCESTYPE.FSX,
-                        fsxnError: ''
-                    });
-                    await registerFsxOntapCredentials(
-                        accountId,
-                        credentialsId,
-                        region,
-                        fsxCredentials.resourceId,
-                        fsxCredentials.password
-                    );
-                }
+            const { Reservations = [] } = await describeInstance(credentialsId, region, {
+                InstanceIds: [instanceId]
             });
+            const { Platform } = Reservations[0]?.Instances?.[0] || {};
+
+            // Platform Field:
+            // This field is available for Windows instances and will have the value windows if the instance is running Windows.
+            // For Linux-based instances, this field is null
+            if (Platform?.toLowerCase() === 'windows') {
+                isLinuxHost = false;
+            } else {
+                isLinuxHost = true;
+            }
         }
-
-        if (sqlCredentials.length || windowsUserCredentials.length) {
-            parsedResponse.instances.forEach((instance: DatabaseInstanceRegistration) => {
-                if (instance.sqlInstanceConnectivity === false) {
-                    instancesToBeDeleted.push(sqlCredentials[0]?.resourceId ?? windowsUserCredentials[0]?.resourceId);
-                    response.push({ resourceId: instance.sqlInstanceName, sqlServerError: instance?.sqlerror });
-                } else {
-                    const {
-                        sqlPermissions = [],
-                        availablePsModules = [],
-                        sqlInstanceConnectivity,
-                        sqlEdition,
-                        noOfDatabases,
-                        sqlInstanceName
-                    } = instance || {};
-
-                    const manageReadiness = checkManageReadiness
-                        ? Object.fromEntries(
-                              Object.entries(FEATURE_PREPREQUISITES).map(([key, value]) => [
-                                  key.toLowerCase(),
-                                  {
-                                      missingSqlPermissions: value.SQL_PERMISSIONS.filter(
-                                          x => !sqlPermissions.includes(x)
-                                      ),
-                                      missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
-                                  }
-                              ])
-                          )
-                        : undefined;
-
-                    response.push({
-                        resourceId: sqlInstanceName,
-                        resourceType: RESOURCESTYPE.MSSQL,
-                        sqlServerEdition: sqlEdition,
-                        databaseCount: noOfDatabases,
-                        ...(checkManageReadiness && {
-                            manageReadiness: { ...manageReadiness, missingSqlCmd: !sqlInstanceConnectivity }
-                        })
-                    });
-                }
-            });
-        }
-
-        if (instancesToBeDeleted.length > 0) {
-            await rewriteOrDeleteSSMParameter(
+        const isOracleInstance = oracleCredentials.some(cred => cred.resourceType === RESOURCESTYPE.ORACLE);
+        let response;
+        if (isLinuxHost || isOracleInstance) {
+            response = await validateOracleCredentials(
+                accountId,
                 credentialsId,
                 region,
-                instanceIds,
-                paramsToDelete,
-                instancesToBeDeleted,
-                fsxCredentials!,
+                instanceId,
+                fsxCredentials,
+                oracleCredentials,
+                instanceIds
+            );
+        } else {
+            response = await validateWindowsCredentials(
+                accountId,
+                credentialsId,
+                region,
+                instanceId,
+                fsxCredentials,
                 newSqlCredentials,
-                windowsUserCredentials
+                windowsUserCredentials,
+                instanceIds,
+                checkManageReadiness
             );
         }
+
         return response;
     } catch (error: any) {
         // delete the ssm parameters if its already created
@@ -1746,6 +1642,284 @@ async function validateCredentials(
             `Unable to validate the credentials . Reason: ${error?.message}.`
         );
     }
+}
+
+async function validateWindowsCredentials(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    fsxCredentials: RegisterCredentialsType | undefined,
+    sqlCredentials: RegisterCredentialsType[],
+    windowsUserCredentials: RegisterCredentialsType[],
+    instanceIds: string[],
+    checkManageReadiness: boolean = false
+) {
+    logger.info('Validate Windows credentials', {
+        accountId,
+        credentialsId,
+        region,
+        instanceId,
+        sqlCredentialsLength: sqlCredentials.length,
+        windowsUserCredentialsLength: windowsUserCredentials.length,
+        instanceIds,
+        checkManageReadiness
+    });
+
+    let parsedResponse;
+    let command = '$WarningPreference = "SilentlyContinue";';
+    const newSqlCredentials = cloneDeep(sqlCredentials);
+
+    if (fsxCredentials || sqlCredentials.length || windowsUserCredentials) {
+        // Get signed url for aws_ssm.zip to install the ps modules
+        const bucketname = getArtifactsRegionBucketName(region);
+        const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
+        const moduleNames = `
+  'AWS.Tools.SimpleSystemsManagement'
+`;
+        command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
+    }
+
+    if (fsxCredentials) {
+        command += `${validateOntapConnectivity([fsxCredentials.resourceId], region)};\n`;
+    }
+
+    if (sqlCredentials.length) {
+        const resourcesWithSqlAuth = sqlCredentials.map(cred => cred.resourceId);
+        command += `${validateSQLInstanceConnectivity(
+            instanceId,
+            resourcesWithSqlAuth,
+            false,
+            checkManageReadiness
+        )};\n`;
+    }
+
+    if (!isEmpty(windowsUserCredentials)) {
+        const resourcesWithWindowsAuth = windowsUserCredentials.map(cred => cred.resourceId);
+        command += `${validateSQLInstanceConnectivity(
+            instanceId,
+            resourcesWithWindowsAuth,
+            true,
+            checkManageReadiness
+        )};\n`;
+    }
+
+    command += '$responseObject | ConvertTo-Json -Compress';
+
+    const ssmresponse = await callSsmExecution(
+        credentialsId,
+        region,
+        [command],
+        instanceId,
+        'Validate credentials',
+        undefined,
+        false
+    );
+
+    const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
+    parsedResponse = attempt(JSON.parse, cleanResponse);
+
+    parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+
+    if (!parsedResponse) {
+        throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
+    }
+
+    const response: Record<string, any>[] = [];
+    const paramsToDelete: string[] = [];
+    const instancesToBeDeleted: string[] = [];
+
+    if (fsxCredentials) {
+        parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
+            if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
+                response.push({
+                    resourceId: fsxCredentials.resourceId,
+                    resourceType: RESOURCESTYPE.FSX,
+                    fsxnError: fsxResult.ontaperror
+                });
+                paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+            } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
+                response.push({
+                    resourceId: fsxCredentials.resourceId,
+                    resourceType: RESOURCESTYPE.FSX,
+                    fsxnError: ''
+                });
+                await registerFsxOntapCredentials(
+                    accountId,
+                    credentialsId,
+                    region,
+                    fsxCredentials.resourceId,
+                    fsxCredentials.password
+                );
+            }
+        });
+    }
+
+    if (sqlCredentials.length || windowsUserCredentials.length) {
+        parsedResponse.instances.forEach((instance: DatabaseInstanceRegistration) => {
+            if (instance.sqlInstanceConnectivity === false) {
+                instancesToBeDeleted.push(sqlCredentials[0]?.resourceId ?? windowsUserCredentials[0]?.resourceId);
+                response.push({ resourceId: instance.sqlInstanceName, sqlServerError: instance?.sqlerror });
+            } else {
+                const {
+                    sqlPermissions = [],
+                    availablePsModules = [],
+                    sqlInstanceConnectivity,
+                    sqlEdition,
+                    noOfDatabases,
+                    sqlInstanceName
+                } = instance || {};
+
+                const manageReadiness = checkManageReadiness
+                    ? Object.fromEntries(
+                          Object.entries(FEATURE_PREPREQUISITES).map(([key, value]) => [
+                              key.toLowerCase(),
+                              {
+                                  missingSqlPermissions: value.SQL_PERMISSIONS.filter(x => !sqlPermissions.includes(x)),
+                                  missingModules: value.MODULES.filter(x => !availablePsModules.includes(x))
+                              }
+                          ])
+                      )
+                    : undefined;
+
+                response.push({
+                    resourceId: sqlInstanceName,
+                    resourceType: RESOURCESTYPE.MSSQL,
+                    sqlServerEdition: sqlEdition,
+                    databaseCount: noOfDatabases,
+                    ...(checkManageReadiness && {
+                        manageReadiness: { ...manageReadiness, missingSqlCmd: !sqlInstanceConnectivity }
+                    })
+                });
+            }
+        });
+    }
+
+    if (instancesToBeDeleted.length > 0) {
+        await rewriteOrDeleteSSMParameter(
+            credentialsId,
+            region,
+            instanceIds,
+            paramsToDelete,
+            instancesToBeDeleted,
+            fsxCredentials!,
+            newSqlCredentials,
+            windowsUserCredentials
+        );
+    }
+    return response;
+}
+
+async function validateOracleCredentials(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    fsxCredentials: RegisterCredentialsType | undefined,
+    oracleCredentials: RegisterCredentialsType[],
+    instanceIds: string[]
+) {
+    logger.info('Validate Oracle credentials', {
+        accountId,
+        credentialsId,
+        region,
+        instanceId,
+        oracleCredentialsLength: oracleCredentials.length
+    });
+
+    let command = '';
+    let parsedResponse;
+    if (fsxCredentials) {
+        command += `${validateOracleInstanceFsxConnectivity(fsxCredentials.resourceId, region)}\n`;
+    }
+
+    if (oracleCredentials.length) {
+        command += oracleCredentials.reduce(
+            (acc: string, { resourceId }) => `${acc}${validateOracleInstanceConnectivity(instanceId, resourceId)}\n`,
+            ''
+        );
+    }
+
+    command += 'echo $resultObject';
+
+    const ssmresponse = await callSsmExecution(
+        credentialsId,
+        region,
+        [command],
+        instanceId,
+        'Validate Oracle Credentials',
+        accountId,
+        undefined,
+        undefined,
+        undefined,
+        SSM_RUN_SHELL_SCRIPT_DOC,
+        SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+    );
+
+    const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
+    parsedResponse = attempt(JSON.parse, cleanResponse);
+
+    parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+
+    if (!parsedResponse) {
+        throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
+    }
+
+    const response: Record<string, any>[] = [];
+    const paramsToDelete: string[] = [];
+    const instancesToBeDeleted: string[] = [];
+
+    if (fsxCredentials) {
+        parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
+            if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
+                response.push({
+                    resourceId: fsxCredentials.resourceId,
+                    fsxnError: fsxResult.ontaperror
+                });
+                paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+            } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
+                await registerFsxOntapCredentials(
+                    accountId,
+                    credentialsId,
+                    region,
+                    fsxCredentials.resourceId,
+                    fsxCredentials.password
+                );
+            }
+        });
+    }
+
+    if (oracleCredentials.length) {
+        parsedResponse.instances.forEach((instance: OracleInstanceRegistration) => {
+            if (instance.oracleInstanceConnectivity === false) {
+                instancesToBeDeleted.push(instance.oracleInstanceName);
+                response.push({
+                    resourceId: instance.oracleInstanceName,
+                    oracleServerError: instance.oracleError
+                });
+            } else if (instance.oracleInstanceConnectivity === true) {
+                const { oracleInstanceName, oracleEdition } = instance;
+                response.push({
+                    resourceId: oracleInstanceName,
+                    oracleServerVersion: oracleEdition
+                });
+            }
+        });
+    }
+
+    if (instancesToBeDeleted.length > 0) {
+        await rewriteOrDeleteSSMParameter(
+            credentialsId,
+            region,
+            instanceIds,
+            paramsToDelete,
+            instancesToBeDeleted,
+            fsxCredentials!,
+            oracleCredentials,
+            []
+        );
+    }
+    return response;
 }
 
 async function verifyAndCreateCredentials(
@@ -1892,184 +2066,10 @@ async function verifyAndAddFSxOntapCredentials(
     }
 }
 
-async function validateAndStoreDiscoveredOracleParameters(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    instanceId: string,
-    credentials: RegisterCredentialsType[]
-) {
-    logger.info('Validate credentials for oracle instances', {
-        accountId,
-        credentialsId,
-        region,
-        instanceId,
-        credentialsLength: credentials.length
-    });
-
-    const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
-    credentials = uniqBy(credentials, 'resourceId');
-    const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
-    const oracleInstanceCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.ORACLE);
-
-    if (isEmpty(fsxCredentials) && isEmpty(oracleInstanceCredentials)) {
-        throw new Error('Credentials cannot be empty');
-    }
-
-    const ssmParameters = [`${SSM_PARAM_PREFIX}${fsxCredentials?.resourceId}`];
-    let instanceIds = [instanceId];
-    instanceIds.forEach(instance => ssmParameters.push(`${SSM_PARAM_PREFIX}${instance}`));
-
-    if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
-        const errorMessage = `Unable to validate oracle credentials through SSM, for host ${instanceId}`;
-        logger.error(errorMessage);
-
-        await deleteSSMParameter(credentialsId, region, ssmParameters);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    }
-
-    const newOracleInstanceCredentials = cloneDeep(oracleInstanceCredentials);
-    await verifyAndCreateCredentials(
-        credentialsId,
-        region,
-        instanceId,
-        fsxCredentials,
-        newOracleInstanceCredentials,
-        [],
-        instanceIds
-    );
-
-    let parsedResponse;
-
-    try {
-        let command = '';
-        if (fsxCredentials) {
-            command += `${validateOracleInstanceFsxConnectivity(fsxCredentials.resourceId, region)}\n`;
-        }
-
-        if (newOracleInstanceCredentials.length) {
-            command += newOracleInstanceCredentials.reduce(
-                (acc: string, { resourceId }) =>
-                    `${acc}${validateOracleInstanceConnectivity(instanceId, resourceId)}\n`,
-                ''
-            );
-        }
-
-        command += 'echo $resultObject';
-
-        const ssmresponse = await callSsmExecution(
-            credentialsId,
-            region,
-            [command],
-            instanceId,
-            'Validate Oracle Credentials',
-            accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
-
-        const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
-        parsedResponse = attempt(JSON.parse, cleanResponse);
-
-        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
-
-        if (!parsedResponse) {
-            throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
-        }
-
-        const response: Record<string, any>[] = [];
-        const paramsToDelete: string[] = [];
-        const instancesToBeDeleted: string[] = [];
-
-        if (fsxCredentials) {
-            parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
-                if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
-                    response.push({
-                        resourceId: fsxCredentials.resourceId,
-                        fsxnError: fsxResult.ontaperror
-                    });
-                    paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-                } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
-                    await registerFsxOntapCredentials(
-                        accountId,
-                        credentialsId,
-                        region,
-                        fsxCredentials.resourceId,
-                        fsxCredentials.password
-                    );
-                }
-            });
-        }
-
-        if (newOracleInstanceCredentials.length) {
-            parsedResponse.instances.forEach((instance: OracleInstanceRegistration) => {
-                if (instance.oracleInstanceConnectivity === false) {
-                    instancesToBeDeleted.push(instance.oracleInstanceName);
-                    response.push({
-                        resourceId: instance.oracleInstanceName,
-                        oracleServerError: instance.oracleError
-                    });
-                } else if (instance.oracleInstanceConnectivity === true) {
-                    const { oracleInstanceName, oracleEdition } = instance;
-                    response.push({
-                        resourceId: oracleInstanceName,
-                        oracleServerVersion: oracleEdition
-                    });
-                }
-            });
-        }
-
-        if (instancesToBeDeleted.length > 0) {
-            await rewriteOrDeleteSSMParameter(
-                credentialsId,
-                region,
-                instanceIds,
-                paramsToDelete,
-                instancesToBeDeleted,
-                fsxCredentials!,
-                newOracleInstanceCredentials,
-                []
-            );
-        }
-        return response;
-    } catch (error: any) {
-        // delete the ssm parameters if its already created
-        const paramsToDelete: string[] = [];
-        const instancesToBeDeleted: string[] = [];
-
-        if (fsxCredentials) {
-            paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-        }
-
-        if (newOracleInstanceCredentials.length) {
-            instancesToBeDeleted.push(...(newOracleInstanceCredentials ?? []).map(e => e.resourceId));
-        }
-
-        await rewriteOrDeleteSSMParameter(
-            credentialsId,
-            region,
-            instanceIds,
-            paramsToDelete,
-            instancesToBeDeleted,
-            fsxCredentials!,
-            newOracleInstanceCredentials,
-            []
-        );
-
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to validate the credentials . Reason: ${error?.message}.`
-        );
-    }
-}
-
 export {
     manageSqlInstances,
     registerResourceCredentials,
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
-    validateAndStoreDiscoveredOracleParameters
+    validateOracleCredentials
 };

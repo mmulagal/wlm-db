@@ -144,12 +144,6 @@ const SingleInstanceRegisterCredentialsRequestBody = Type.Object({
             description: 'Check if the instance is ready for management. Default is false.',
             default: false
         })
-    ),
-    ec2HostDbType: Type.Optional(
-        Type.String({
-            description: 'Database type of the EC2 host',
-            examples: ['MSSQL', 'ORACLE', 'PGSQL']
-        })
     )
 });
 
