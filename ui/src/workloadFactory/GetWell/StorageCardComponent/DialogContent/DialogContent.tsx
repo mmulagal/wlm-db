@@ -2,6 +2,7 @@ import { Button, DsTypography, SelectField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
@@ -19,7 +20,6 @@ import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
 import ScheduledAWSBackupDialog from './ScheduledAWSBackupDialog';
-import { useTranslation } from 'react-i18next';
 
 type DialogType = {
     type: string;
@@ -48,7 +48,7 @@ const DialogContent = ({
 
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        recommendationOptions?.map((option: any) => {
+        recommendationOptions?.forEach((option: any) => {
             const label2 = option?.savingsOpportunity?.savingsOpportunityPercentage
                 ? `Savings opportunity: ${option?.savingsOpportunity?.savingsOpportunityPercentage}%`
                 : '';
@@ -58,11 +58,11 @@ const DialogContent = ({
             dispatch(setSelectedRecommendedInstance(options[0]));
         }
         return options;
-    }, [recommendationOptions]);
+    }, [recommendationOptions, dispatch]); // Added 'dispatch' to the dependency array to comply with React Hooks rules and prevent stale closures
 
     const generateRecommendedInstanceTypesForHost = (instance: any) => {
         const options: optionType[] = [];
-        instance?.recommendationOptions?.map((option: any) => {
+        instance?.recommendationOptions?.forEach((option: any) => {
             const label2 = option?.savingsOpportunity?.savingsOpportunityPercentage
                 ? `Savings opportunity: ${option?.savingsOpportunity?.savingsOpportunityPercentage}%`
                 : '';
@@ -108,16 +108,17 @@ const DialogContent = ({
                 return 'Multipath I/O Sessions = 5';
             case 'Multipath I/O Timeout':
                 return 'Multipath I/O Timeout = 60 seconds';
+            default:
+                return '';
         }
     };
 
-    const driveSizeMissingPermissions = (missingPermissions: Array<string>) => (
+    const driveSizeMissingPermissions = (missingPermissionsList: Array<string>) => (
         <div className={styles['storage-tier-block']}>
             <div className={styles['first-section']}>
                 <DsTypography variant="Semibold_14">{t('databases.well-architect.action-summary')}</DsTypography>
                 <DsTypography variant="Regular_14">
-                    Workload Factory recommends increasing the FSx for ONTAP volume size. However, the required modify
-                    permissions are currently missing.
+                    {t('databases.well-architect.drive-size-missing-permission-action-summary')}
                 </DsTypography>
             </div>
 
@@ -126,7 +127,7 @@ const DialogContent = ({
                     {t('databases.well-architect.action-required')}
                 </DsTypography>
                 <DsTypography variant="Regular_14" style={{ width: '712px' }}>
-                    Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with this action.
+                    {t('databases.well-architect.drive-size-and-headroom-action-content1')}
                 </DsTypography>
                 <div className={styles.content}>
                     <div className={styles.row}>
@@ -134,7 +135,7 @@ const DialogContent = ({
                             <Bullet />
                         </div>
                         <DsTypography variant="Regular_14">
-                            Sign in to the AWS Management Console and open the IAM service.
+                            {t('databases.well-architect.drive-size-and-headroom-action-content2')}
                         </DsTypography>
                     </div>
                     <div className={styles.row}>
@@ -142,20 +143,20 @@ const DialogContent = ({
                             <Bullet />
                         </div>
                         <DsTypography variant="Regular_14">
-                            Edit the policy for role and add AWS FSx for ONTAP modify permissions.
+                            {t('databases.well-architect.drive-size-and-headroom-action-content3')}
                         </DsTypography>
                     </div>
                     <div className={styles['dialog-body']}>
                         <div className={styles['code-box']}>
                             <div className={styles.code}>
                                 <DsTypography variant="Regular_14">
-                                    {missingPermissions.map((permission: string) => (
+                                    {missingPermissionsList.map((permission: string) => (
                                         <DsTypography variant="Regular_14">{permission}</DsTypography>
                                     ))}
                                 </DsTypography>
                                 <div className={styles.copy}>
                                     <CopyToClipboardCommon
-                                        value={missingPermissions}
+                                        value={missingPermissionsList}
                                         iconProvided={
                                             <div className={styles.menuItem}>
                                                 <CopyIcon />
@@ -359,16 +360,17 @@ const DialogContent = ({
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
                                 {t('databases.well-architect.action-required')}
                             </DsTypography>
-                            <DsTypography variant="Regular_14">Choose one of the following options.</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.file-system-headroom-choose-option1')}
+                            </DsTypography>
                         </div>
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Option 1: Grant FSx for ONTAP modify permissions
+                                {t('databases.well-architect.file-system-headroom-option1-content')}
                             </DsTypography>
                             <DsTypography variant="Regular_14" style={{ width: '712px' }}>
-                                Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with
-                                this action.
+                                {t('databases.well-architect.drive-size-and-headroom-action-content1')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
@@ -376,7 +378,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Sign in to the AWS Management Console and open the IAM service.
+                                        {t('databases.well-architect.drive-size-and-headroom-action-content2')}
                                     </DsTypography>
                                 </div>
                                 <div className={styles.row}>
@@ -384,7 +386,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Edit the policy for role and add AWS FSx for ONTAP modify permissions.
+                                        {t('databases.well-architect.drive-size-and-headroom-action-content3')}
                                     </DsTypography>
                                 </div>
                                 <div className={styles['dialog-body']}>
@@ -413,31 +415,34 @@ const DialogContent = ({
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Option 2: AWS Management Console
+                                {t('databases.well-architect.file-system-headroom-option2')}
                             </DsTypography>
                             <DsTypography variant="Regular_14" style={{ width: '712px' }}>
-                                Increase the file system capacity directly from the AWS Management Console.
+                                {t('databases.well-architect.file-system-headroom-option2-content1')}
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <DsTypography variant="Semibold_14">1|</DsTypography>
-                                    <DsTypography variant="Regular_14">Open the Amazon FSx console.</DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.file-system-headroom-option2-content2')}
+                                    </DsTypography>
                                 </div>
                                 <div className={styles.row}>
                                     <DsTypography variant="Semibold_14">2|</DsTypography>
-                                    <DsTypography variant="Regular_14">Choose File systems.</DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.file-system-headroom-option2-content3')}
+                                    </DsTypography>
                                 </div>
                                 <div className={styles.row}>
                                     <DsTypography variant="Semibold_14">3|</DsTypography>
                                     <DsTypography variant="Regular_14">
-                                        Select the FSx for ONTAP file system that you want to update SSD storage
-                                        capacity.
+                                        {t('databases.well-architect.file-system-headroom-option2-content4')}
                                     </DsTypography>
                                 </div>
                                 <div className={styles.row}>
                                     <DsTypography variant="Semibold_14">4|</DsTypography>
                                     <DsTypography variant="Regular_14">
-                                        Update storage capacity to the desired capacity{' '}
+                                        {t('databases.well-architect.file-system-headroom-option2-content5')}
                                         {recommendedSizeInGib ? `${recommendedSizeInGib} GiB.` : '.'}
                                     </DsTypography>
                                 </div>
@@ -1243,7 +1248,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        All TCP offloading features will be disabled.
+                                        {t('databases.well-architect.rss-what-will-happen-content1')}
                                     </DsTypography>
                                 </div>
 
@@ -1252,8 +1257,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        The number of receive queues will be set to 8 if the number of vCPUs is greater
-                                        than 8, or to the number of vCPUs if it is 8 or fewer.
+                                        {t('databases.well-architect.rss-what-will-happen-content2')}
                                     </DsTypography>
                                 </div>
 
@@ -1262,7 +1266,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        The RSS profile will be configured to NUMAStatic.
+                                        {t('databases.well-architect.rss-what-will-happen-content3')}
                                     </DsTypography>
                                 </div>
 
@@ -1271,7 +1275,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        The base processor number will be set to 2.
+                                        {t('databases.well-architect.rss-what-will-happen-content4')}
                                     </DsTypography>
                                 </div>
 
@@ -1280,7 +1284,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        The system will be rebooted after changes to these network adapter settings.
+                                        {t('databases.well-architect.rss-what-will-happen-content5')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -1326,10 +1330,25 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
+            default:
+                return (
+                    <DsTypography variant="Regular_14">
+                        {t('databases.well-architect.no-configurations-available')}
+                    </DsTypography>
+                );
         }
     };
 
     return <div className={styles.dialogContent}>{setContent()}</div>;
+};
+
+DialogContent.defaultProps = {
+    recommendationOptions: undefined,
+    missingPermissions: undefined,
+    recommendedSizeInGib: undefined,
+    bulkRecommendationOptions: undefined,
+    missingPatchList: undefined,
+    operation: undefined
 };
 
 export default DialogContent;
