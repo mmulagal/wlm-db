@@ -162,13 +162,9 @@ async function updateAssesmentResultsInInstanceMetadata(
         ),
         managedInstance ?? getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId),
         updateInHost
-            ? (async () => {
-                  if (managedInstance.resource && !isEmpty(managedInstance.resource)) {
-                      return [managedInstance.resource];
-                  }
-                  const { items = [] } = await getResources(accountId, databaseHostId, credentialsId, region);
-                  return items;
-              })()
+            ? managedInstance.resource && !isEmpty(managedInstance.resource)
+                ? [managedInstance.resource]
+                : getResources(accountId, databaseHostId, credentialsId, region).then(({ items = [] }) => items)
             : Promise.resolve([])
     ]);
     const { metadata } = instanceDetails as unknown as DatabaseInstance;
